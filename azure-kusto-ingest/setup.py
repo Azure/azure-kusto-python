@@ -12,7 +12,7 @@ except ImportError:
     logger.warn("Wheel is not available, disabling bdist_wheel hook")
     cmdclass = {}
 
-PACKAGE_NAME = "kusto-ingest-client"
+PACKAGE_NAME = "azure-kusto-ingest"
 
 # a-b-c => a/b/c
 package_folder_path = PACKAGE_NAME.replace('-', path.sep)
@@ -42,7 +42,6 @@ setup(
         'Programming Language :: Python :: 3.6',
         'License :: OSI Approved :: MIT License',
     ],
-    py_modules=[PACKAGE_NAME],
     packages=find_packages(),
     install_requires=[
         'adal>=0.4.5',
@@ -63,9 +62,6 @@ setup(
         'python-dateutil>=2.6.0',
         'requests>=2.13.0',
         'six>=1.10.0',
-    ],
-    dependency_links=[
-        'http://52.173.187.55/simple/kusto_client-0.4.1-py2.py3-none-any.whl',
     ],
     cmdclass=cmdclass,
 )

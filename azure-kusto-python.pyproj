@@ -26,32 +26,55 @@
     <Folder Include="azure-kusto-data\azure\" />
     <Folder Include="azure-kusto-data\azure\kusto\" />
     <Folder Include="azure-kusto-data\azure\kusto\data\" />
+    <Folder Include="azure-kusto-data\tests\" />
     <Folder Include="azure-kusto-ingest\" />
     <Folder Include="azure-kusto-ingest\azure\" />
     <Folder Include="azure-kusto-ingest\azure\kusto\" />
     <Folder Include="azure-kusto-ingest\azure\kusto\ingest\" />
+    <Folder Include="azure-kusto-ingest\tests\" />
+    <Folder Include="azure-kusto-ingest\tests\input\" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="azure-kusto-data\azure\kusto\data\kusto_client.py" />
+    <Compile Include="azure-kusto-data\azure\kusto\data\kusto_exceptions.py" />
     <Compile Include="azure-kusto-data\azure\kusto\data\version.py" />
     <Compile Include="azure-kusto-data\azure\kusto\data\__init__.py" />
     <Compile Include="azure-kusto-data\azure\kusto\__init__.py" />
     <Compile Include="azure-kusto-data\azure\__init__.py" />
     <Compile Include="azure-kusto-data\azure_bdist_wheel.py" />
     <Compile Include="azure-kusto-data\setup.py" />
+    <Compile Include="azure-kusto-data\tests\converter_test.py" />
+    <Compile Include="azure-kusto-data\tests\functional_test.py" />
+    <Compile Include="azure-kusto-data\tests\sample_driver.py" />
+    <Compile Include="azure-kusto-ingest\azure\kusto\ingest\connection_string.py" />
+    <Compile Include="azure-kusto-ingest\azure\kusto\ingest\descriptors.py" />
+    <Compile Include="azure-kusto-ingest\azure\kusto\ingest\ingestion_blob_info.py" />
+    <Compile Include="azure-kusto-ingest\azure\kusto\ingest\ingestion_properties.py" />
+    <Compile Include="azure-kusto-ingest\azure\kusto\ingest\kusto_ingest_client.py" />
+    <Compile Include="azure-kusto-ingest\azure\kusto\ingest\kusto_ingest_client_exceptions.py" />
     <Compile Include="azure-kusto-ingest\azure\kusto\ingest\version.py" />
     <Compile Include="azure-kusto-ingest\azure\kusto\ingest\__init__.py" />
     <Compile Include="azure-kusto-ingest\azure\kusto\__init__.py" />
     <Compile Include="azure-kusto-ingest\azure\__init__.py" />
     <Compile Include="azure-kusto-ingest\azure_bdist_wheel.py" />
     <Compile Include="azure-kusto-ingest\setup.py" />
+    <Compile Include="azure-kusto-ingest\tests\connection_string_test.py" />
+    <Compile Include="azure-kusto-ingest\tests\descriptors_test.py" />
+    <Compile Include="azure-kusto-ingest\tests\ingestion_blob_info_test.py" />
+    <Compile Include="azure-kusto-ingest\tests\sample.py" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="azure-kusto-data\MANIFEST.in" />
     <Content Include="azure-kusto-data\README.rst" />
+    <Content Include="azure-kusto-data\requirements.txt" />
     <Content Include="azure-kusto-data\setup.cfg" />
     <Content Include="azure-kusto-ingest\MANIFEST.in" />
     <Content Include="azure-kusto-ingest\README.rst" />
     <Content Include="azure-kusto-ingest\setup.cfg" />
+    <Content Include="azure-kusto-ingest\tests\input\dataset.csv" />
+    <Content Include="azure-kusto-ingest\tests\input\dataset.csv.gz" />
+    <Content Include="azure-kusto-ingest\tests\input\dataset.json" />
+    <Content Include="azure-kusto-ingest\tests\input\dataset.jsonz.gz" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in

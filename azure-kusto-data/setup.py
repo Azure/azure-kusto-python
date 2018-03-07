@@ -53,14 +53,13 @@ setup(
         'License :: OSI Approved :: MIT License',
     ],
     keywords='kusto wrapper client library',
-    py_modules=[PACKAGE_NAME],
     packages=find_packages(),
     install_requires=[
         'adal>=0.4.0',
         'pandas>=0.15.0',
     ],
     extras_require={
-        'test': ['nose>=1.3.7'],
+        'tests': ['nose>=1.3.7'],
     },
     cmdclass=cmdclass,
 )
