@@ -2,7 +2,7 @@
 """
 
 import unittest
-from kusto_ingest_client.connection_string import _ConnectionString
+from azure.kusto.ingest.connection_string import _ConnectionString
 
 class ConnectionStringTest(unittest.TestCase):
     """

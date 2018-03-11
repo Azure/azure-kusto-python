@@ -1,17 +1,17 @@
 """ Test class for FileDescriptor and BlobDescriptor
 """
 
-import os
+from os import path
 import unittest
-from kusto_ingest_client.descriptors import FileDescriptor
+from azure.kusto.ingest.descriptors import FileDescriptor
 
 class DescriptorsTest(unittest.TestCase):
     """ Test class for FileDescriptor and BlobDescriptor
     """
     def test_unzipped_file_with_size(self):
         """ Tests FileDescriptor with size and unzipped file """
-        path = os.path.join(os.getcwd(), "test", "Input", "dataset.csv")
-        descriptor = FileDescriptor(path, 10)
+        filePath = path.join(path.dirname(path.abspath(__file__)), "Input", "dataset.csv")
+        descriptor = FileDescriptor(filePath, 10)
         self.assertEqual(descriptor.size, 1569)
         self.assertTrue(descriptor.zipped_file().endswith(".csv.gz"))
         descriptor.delete_files(True)
@@ -19,8 +19,8 @@ class DescriptorsTest(unittest.TestCase):
 
     def test_unzipped_file_without_size(self):
         """ Tests FileDescriptor without size and unzipped file """
-        path = os.path.join(os.getcwd(), "test", "Input", "dataset.csv")
-        descriptor = FileDescriptor(path, 0)
+        filePath = path.join(path.dirname(path.abspath(__file__)), "Input", "dataset.csv")
+        descriptor = FileDescriptor(filePath, 0)
         self.assertEqual(descriptor.size, 1569)
         self.assertTrue(descriptor.zipped_file().endswith(".csv.gz"))
         descriptor.delete_files(True)
@@ -28,17 +28,17 @@ class DescriptorsTest(unittest.TestCase):
 
     def test_zipped_file_with_size(self):
         """ Tests FileDescriptor with size and zipped file """
-        path = os.path.join(os.getcwd(), "test", "Input", "dataset.csv.gz")
-        descriptor = FileDescriptor(path, 10)
+        filePath = path.join(path.dirname(path.abspath(__file__)), "Input", "dataset.csv.gz")
+        descriptor = FileDescriptor(filePath, 10)
         self.assertEqual(descriptor.size, 10)
-        self.assertEqual(descriptor.zipped_file(), path)
+        self.assertEqual(descriptor.zipped_file(), filePath)
         descriptor.delete_files(True)
 
 
     def test_zipped_file_without_size(self):
         """ Tests FileDescriptor without size and zipped file """
-        path = os.path.join(os.getcwd(), "test", "Input", "dataset.csv.gz")
-        descriptor = FileDescriptor(path, 0)
+        filePath = path.join(path.dirname(path.abspath(__file__)), "Input", "dataset.csv.gz")
+        descriptor = FileDescriptor(filePath, 0)
         self.assertEqual(descriptor.size, 2305)
-        self.assertEqual(descriptor.zipped_file(), path)
+        self.assertEqual(descriptor.zipped_file(), filePath)
         descriptor.delete_files(True)

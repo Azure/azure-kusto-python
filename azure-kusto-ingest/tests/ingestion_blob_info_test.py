@@ -3,10 +3,10 @@
 
 import unittest
 import re
-from kusto_ingest_client.kusto_ingest_client_exceptions import KustoDuplicateMappingError
-from kusto_ingest_client.ingestion_blob_info import _IngestionBlobInfo
-from kusto_ingest_client.descriptors import BlobDescriptor
-from kusto_ingest_client.ingestion_properties import (
+from azure.kusto.ingest.kusto_ingest_client_exceptions import KustoDuplicateMappingError
+from azure.kusto.ingest.ingestion_blob_info import _IngestionBlobInfo
+from azure.kusto.ingest.descriptors import BlobDescriptor
+from azure.kusto.ingest.ingestion_properties import (
     IngestionProperties,
     DataFormat,
     CsvColumnMapping,
