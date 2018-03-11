@@ -64,6 +64,7 @@
     <Compile Include="azure-kusto-ingest\tests\sample.py" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include=".travis.yml" />
     <Content Include="azure-kusto-data\MANIFEST.in" />
     <Content Include="azure-kusto-data\README.rst" />
     <Content Include="azure-kusto-data\requirements.txt" />
