@@ -9,8 +9,7 @@ import uuid
 from datetime import datetime, timedelta
 
 from azure.storage.common import CloudStorageAccount
-
-from kusto_client import KustoClient
+from azure.kusto.data import KustoClient
 from .descriptors import BlobDescriptor, FileDescriptor
 from .connection_string import _ConnectionString
 from .ingestion_blob_info import _IngestionBlobInfo
