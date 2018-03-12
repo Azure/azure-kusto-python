@@ -10,7 +10,7 @@ class DescriptorsTest(unittest.TestCase):
     """
     def test_unzipped_file_with_size(self):
         """ Tests FileDescriptor with size and unzipped file """
-        filePath = path.join(path.dirname(path.abspath(__file__)), "Input", "dataset.csv")
+        filePath = path.join(path.dirname(path.abspath(__file__)), "input", "dataset.csv")
         descriptor = FileDescriptor(filePath, 10)
         self.assertEqual(descriptor.size, 1569)
         self.assertTrue(descriptor.zipped_file().endswith(".csv.gz"))
@@ -19,7 +19,7 @@ class DescriptorsTest(unittest.TestCase):
 
     def test_unzipped_file_without_size(self):
         """ Tests FileDescriptor without size and unzipped file """
-        filePath = path.join(path.dirname(path.abspath(__file__)), "Input", "dataset.csv")
+        filePath = path.join(path.dirname(path.abspath(__file__)), "input", "dataset.csv")
         descriptor = FileDescriptor(filePath, 0)
         self.assertEqual(descriptor.size, 1569)
         self.assertTrue(descriptor.zipped_file().endswith(".csv.gz"))
@@ -28,7 +28,7 @@ class DescriptorsTest(unittest.TestCase):
 
     def test_zipped_file_with_size(self):
         """ Tests FileDescriptor with size and zipped file """
-        filePath = path.join(path.dirname(path.abspath(__file__)), "Input", "dataset.csv.gz")
+        filePath = path.join(path.dirname(path.abspath(__file__)), "input", "dataset.csv.gz")
         descriptor = FileDescriptor(filePath, 10)
         self.assertEqual(descriptor.size, 10)
         self.assertEqual(descriptor.zipped_file(), filePath)
@@ -37,7 +37,7 @@ class DescriptorsTest(unittest.TestCase):
 
     def test_zipped_file_without_size(self):
         """ Tests FileDescriptor without size and zipped file """
-        filePath = path.join(path.dirname(path.abspath(__file__)), "Input", "dataset.csv.gz")
+        filePath = path.join(path.dirname(path.abspath(__file__)), "input", "dataset.csv.gz")
         descriptor = FileDescriptor(filePath, 0)
         self.assertEqual(descriptor.size, 2305)
         self.assertEqual(descriptor.zipped_file(), filePath)
