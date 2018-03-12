@@ -46,6 +46,9 @@
     <Compile Include="azure-kusto-data\tests\converter_test.py" />
     <Compile Include="azure-kusto-data\tests\functional_test.py" />
     <Compile Include="azure-kusto-data\tests\sample_driver.py" />
+    <Compile Include="azure-kusto-data\tests\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="azure-kusto-ingest\azure\kusto\ingest\connection_string.py" />
     <Compile Include="azure-kusto-ingest\azure\kusto\ingest\descriptors.py" />
     <Compile Include="azure-kusto-ingest\azure\kusto\ingest\ingestion_blob_info.py" />
@@ -62,6 +65,9 @@
     <Compile Include="azure-kusto-ingest\tests\descriptors_test.py" />
     <Compile Include="azure-kusto-ingest\tests\ingestion_blob_info_test.py" />
     <Compile Include="azure-kusto-ingest\tests\sample.py" />
+    <Compile Include="azure-kusto-ingest\tests\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Content Include=".travis.yml" />

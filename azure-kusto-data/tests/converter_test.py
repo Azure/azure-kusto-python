@@ -4,8 +4,7 @@ Converter tests of the client.
 
 import unittest
 from datetime import timedelta
-from kusto_client.kusto_client import KustoResultIter
-
+from azure.kusto.data import KustoResultIter
 
 class ConverterTests(unittest.TestCase):
     """
