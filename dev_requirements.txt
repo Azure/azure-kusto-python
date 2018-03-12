@@ -1,4 +1,3 @@
 -e azure-kusto-data
 -e azure-kusto-ingest
 pytest>=3.2.0
---force-reinstall azure-mgmt-nspkg==1.0.0
