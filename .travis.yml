@@ -1,14 +1,11 @@
 language: python
 python:
   - "2.7"
-  - "3"
   - "3.4"
   - "3.5"
   - "3.6"
 install:
   - pip install -r dev_requirements.txt
-  - pip install -e azure-kusto-data
-  - pip install -e azure-kusto-ingest
 script:
   - pytest azure-kusto-data
   - pytest azure-kusto-ingest
