@@ -24,14 +24,14 @@ class FileDescriptor(object):
             self._zip_file()
 
     def _zip_file(self):
-        with open(self.path, 'rb') as f_in, gzip.open(self.zipped_temp_file.file.name, "wb") as f_out:
+        with open(self.path, 'rb') as f_in, gzip.open(self.zipped_temp_file.name, "wb") as f_out:
             shutil.copyfileobj(f_in, f_out)
         self.size = int(os.path.getsize(f_in.name))
 
     def zipped_file(self):
         """ Gets the path to the zipped file to upload to a blob. """
         if self.zipped_temp_file is not None:
-            return self.zipped_temp_file.file.name
+            return self.zipped_temp_file.name
         return self.path
 
     def delete_files(self, success):
