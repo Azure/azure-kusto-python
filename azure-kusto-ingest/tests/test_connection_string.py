@@ -4,7 +4,7 @@
 import unittest
 from azure.kusto.ingest.connection_string import _ConnectionString
 
-class ConnectionStringTest(unittest.TestCase):
+class ConnectionStringTests(unittest.TestCase):
     """
     Tests class connection_string
     """
