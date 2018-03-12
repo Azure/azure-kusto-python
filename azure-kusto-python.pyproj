@@ -43,8 +43,8 @@
     <Compile Include="azure-kusto-data\azure\__init__.py" />
     <Compile Include="azure-kusto-data\azure_bdist_wheel.py" />
     <Compile Include="azure-kusto-data\setup.py" />
-    <Compile Include="azure-kusto-data\tests\converter_test.py" />
-    <Compile Include="azure-kusto-data\tests\functional_test.py" />
+    <Compile Include="azure-kusto-data\tests\test_converter.py" />
+    <Compile Include="azure-kusto-data\tests\test_functional.py" />
     <Compile Include="azure-kusto-data\tests\sample_driver.py" />
     <Compile Include="azure-kusto-data\tests\__init__.py">
       <SubType>Code</SubType>
@@ -61,9 +61,9 @@
     <Compile Include="azure-kusto-ingest\azure\__init__.py" />
     <Compile Include="azure-kusto-ingest\azure_bdist_wheel.py" />
     <Compile Include="azure-kusto-ingest\setup.py" />
-    <Compile Include="azure-kusto-ingest\tests\connection_string_test.py" />
-    <Compile Include="azure-kusto-ingest\tests\descriptors_test.py" />
-    <Compile Include="azure-kusto-ingest\tests\ingestion_blob_info_test.py" />
+    <Compile Include="azure-kusto-ingest\tests\test_connection_string.py" />
+    <Compile Include="azure-kusto-ingest\tests\test_descriptors.py" />
+    <Compile Include="azure-kusto-ingest\tests\test_ingestion_blob_info.py" />
     <Compile Include="azure-kusto-ingest\tests\sample.py" />
     <Compile Include="azure-kusto-ingest\tests\__init__.py">
       <SubType>Code</SubType>
