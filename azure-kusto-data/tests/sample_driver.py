@@ -2,8 +2,7 @@
 A simple example how to use KustoClient
 """
 
-from kusto_client.kusto_client import KustoClient
-from kusto_client.kusto_exceptions import KustoServiceError
+from azure.kusto.data import KustoClient, KustoServiceError
 
 # TODO: this should become functional test at some point.
 

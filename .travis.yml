@@ -9,4 +9,5 @@ install:
   - pip install -e azure-kusto-data
   - pip install -e azure-kusto-ingest
 script:
-  - pytest
+  - pytest azure-kusto-data
+  - pytest azure-kusto-ingest

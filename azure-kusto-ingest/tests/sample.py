@@ -2,8 +2,8 @@
 
 import time
 import os
-from kusto_client import KustoClient
-from kusto_ingest_client import (
+from azure.kusto.data import KustoClient
+from azure.kusto.ingest import (
     KustoIngestClient,
     IngestionProperties,
     JsonColumnMapping,
