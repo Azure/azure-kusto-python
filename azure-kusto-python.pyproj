@@ -80,6 +80,7 @@
     <Content Include="azure-kusto-data\setup.cfg" />
     <Content Include="azure-kusto-ingest\MANIFEST.in" />
     <Content Include="azure-kusto-ingest\README.rst" />
+    <Content Include="azure-kusto-ingest\requirements.txt" />
     <Content Include="azure-kusto-ingest\setup.cfg" />
     <Content Include="azure-kusto-ingest\tests\input\dataset.csv" />
     <Content Include="azure-kusto-ingest\tests\input\dataset.csv.gz" />
