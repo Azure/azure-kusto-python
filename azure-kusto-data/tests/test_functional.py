@@ -5,9 +5,9 @@ Functional tests of the client.
 import json
 import unittest
 from dateutil.tz.tz import tzutc
-from _datetime import datetime, timedelta
+from datetime import datetime, timedelta
 
-from kusto_client.kusto_client import KustoResponse
+from azure.kusto.data import KustoResponse
 
 # Sample response against all tests should be run
 RESPONSE_TEXT = """

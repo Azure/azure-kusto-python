@@ -1,10 +1,12 @@
 language: python
-cache: pip
 python:
   - "2.7"
   - "3"
   - "3.4"
   - "3.5"
   - "3.6"
+install:
+  - pip install -e azure-kusto-data
+  - pip install -e azure-kusto-ingest
 script:
   - pytest
