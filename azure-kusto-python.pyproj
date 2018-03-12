@@ -82,6 +82,7 @@
     <Content Include="azure-kusto-ingest\tests\input\dataset.csv.gz" />
     <Content Include="azure-kusto-ingest\tests\input\dataset.json" />
     <Content Include="azure-kusto-ingest\tests\input\dataset.jsonz.gz" />
+    <Content Include="dev_requirements.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in
