@@ -6,7 +6,7 @@ python:
   - "3.5"
   - "3.6"
 install:
-  - pip -e install azure-kusto-data
-  - pip -e install azure-kusto-ingest
+  - pip install -e azure-kusto-data
+  - pip install -e azure-kusto-ingest
 script:
   - pytest
