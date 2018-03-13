@@ -26,7 +26,7 @@ with open(path.join(package_folder_path, 'version.py'), 'r') as fd:
 setup(
     name=PACKAGE_NAME,
     version=VERSION,
-    description=('Kusto ingest client.'),
+    description='Kusto Ingest Client',
     long_description=open('README.rst', 'r').read(),
     license='MIT',
     author='Microsoft Corporation',
