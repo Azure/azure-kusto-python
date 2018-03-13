@@ -3,6 +3,8 @@
 
 import unittest
 import re
+import json
+from uuid import UUID
 from azure.kusto.ingest.ingestion_blob_info import _IngestionBlobInfo
 from azure.kusto.ingest import (
     KustoDuplicateMappingError,
@@ -18,26 +20,7 @@ from azure.kusto.ingest import (
     ValidationImplications,
     )
 
-KUSTO_MESSAGE_REGEX = '{"BlobPath":"somepath","RawDataSize":[0-9]+,"DatabaseName":"database",\
-"TableName":"table",\
-"RetainBlobOnSuccess":(false|true),\
-"FlushImmediately":(false|true),\
-"IgnoreSizeLimit":(false|true),\
-("ReportLevel":[0-2],)?\
-("ReportMethod":[0-2],)?\
-("IngestionStatusInTable":null,)?\
-"SourceMessageCreationTime":"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}.[0-9]{6}",\
-"Id":"[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}",\
-("BlobPathEncrypted":null,)?\
-"AdditionalProperties":\
-{"authorizationContext":"authorizationContextText",\
-"tags":"\\[\\\\"tag\\\\",\\\\"drop-by:dropByTags\\\\",\\\\"ingest-by:ingestByTags\\\\"]",\
-"ingestIfNotExists":"\\[\\\\"ingestIfNotExistTags\\\\"]",\
-("csvMapping":"\\[{\\\\"DataType\\\\":\\\\"cslDataType\\\\",\\\\"Name\\\\":\\\\"ColumnName\\\\",\\\\"Ordinal\\\\":1}]",\
-|"csvMappingReference":"csvMappingReference",\
-|"jsonMapping":"\\[{\\\\"column\\\\":\\\\"ColumnName\\\\",\\\\"datatype\\\\":\\\\"datatype\\\\",\\\\"path\\\\":\\\\"jsonpath\\\\"}]",\
-|"jsonMappingReference":"jsonMappingReference",)?\
-"ValidationPolicy":"{\\\\"ValidationImplications\\\\":[0-1],\\\\"ValidationOptions\\\\":[0-2]}","format":"(csv|json)"}}'
+TIMESTAMP_REGEX = "[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}.[0-9]{6}"
 
 class IngestionBlobInfoTest(unittest.TestCase):
     """ Tests serialization of ingestion blob info. This serialization will be queued to the DM """
@@ -60,10 +43,7 @@ class IngestionBlobInfoTest(unittest.TestCase):
                                         )
         blob = BlobDescriptor("somepath", 10)
         blob_info = _IngestionBlobInfo(blob, properties, deleteSourcesOnSuccess=True, authContext="authorizationContextText")
-        blob_info_json = blob_info.to_json()
-        match = re.match(KUSTO_MESSAGE_REGEX, blob_info_json)
-        self.assertTrue(match is not None)
-        self.assertTrue("csvMapping" in blob_info_json)
+        self.verify_ingestion_blob_info_result(blob_info.to_json())
 
     def test_blob_csv_mapping_reference(self):
         """ Tests serialization of ingestion blob info with csv mapping reference. """
@@ -84,10 +64,7 @@ class IngestionBlobInfoTest(unittest.TestCase):
                                         )
         blob = BlobDescriptor("somepath", 10)
         blob_info = _IngestionBlobInfo(blob, properties, deleteSourcesOnSuccess=True, authContext="authorizationContextText")
-        blob_info_json = blob_info.to_json()
-        match = re.match(KUSTO_MESSAGE_REGEX, blob_info_json)
-        self.assertTrue(match is not None)
-        self.assertTrue("csvMappingReference" in blob_info_json)
+        self.verify_ingestion_blob_info_result(blob_info.to_json())
 
     def test_blob_info_json_mapping(self):
         """ Tests serialization of json ingestion blob info. """
@@ -108,10 +85,7 @@ class IngestionBlobInfoTest(unittest.TestCase):
                                         )
         blob = BlobDescriptor("somepath", 10)
         blob_info = _IngestionBlobInfo(blob, properties, deleteSourcesOnSuccess=True, authContext="authorizationContextText")
-        blob_info_json = blob_info.to_json()
-        match = re.match(KUSTO_MESSAGE_REGEX, blob_info_json)
-        self.assertTrue(match is not None)
-        self.assertTrue("jsonMapping" in blob_info_json)
+        self.verify_ingestion_blob_info_result(blob_info.to_json())
 
     def test_blob_json_mapping_reference(self):
         """ Tests serialization of ingestion blob info with json mapping reference. """
@@ -132,10 +106,7 @@ class IngestionBlobInfoTest(unittest.TestCase):
                                         )
         blob = BlobDescriptor("somepath", 10)
         blob_info = _IngestionBlobInfo(blob, properties, deleteSourcesOnSuccess=True, authContext="authorizationContextText")
-        blob_info_json = blob_info.to_json()
-        match = re.match(KUSTO_MESSAGE_REGEX, blob_info_json)
-        self.assertTrue(match is not None)
-        self.assertTrue("jsonMappingReference" in blob_info_json)
+        self.verify_ingestion_blob_info_result(blob_info.to_json())
 
     def test_blob_info_csv_exceptions(self):
         """ Tests invalid ingestion properties. """
@@ -144,3 +115,23 @@ class IngestionBlobInfoTest(unittest.TestCase):
                                 table="table",
                                 mapping="mapping",
                                 mapptingReference="mappingReference")
+
+    def verify_ingestion_blob_info_result(self, ingestion_blob_info):
+        result = json.loads(ingestion_blob_info)
+        self.assertIsNotNone(result)
+        self.assertIsInstance(result, dict)
+        self.assertEquals(result["BlobPath"], "somepath")
+        self.assertEquals(result["DatabaseName"], "database")
+        self.assertEquals(result["TableName"], "table")
+        self.assertIsInstance(result["RawDataSize"], int)
+        self.assertIsInstance(result["IgnoreSizeLimit"], bool)
+        self.assertIsInstance(result["FlushImmediately"], bool)
+        self.assertIsInstance(result["RetainBlobOnSuccess"], bool)
+        self.assertIsInstance(result["ReportMethod"], int)
+        self.assertIsInstance(result["ReportLevel"], int)
+        self.assertIsInstance(UUID(result["Id"]), UUID)
+        self.assertRegex(result["SourceMessageCreationTime"], TIMESTAMP_REGEX)
+        self.assertEquals(result["AdditionalProperties"]["authorizationContext"], "authorizationContextText")
+        self.assertEquals(result["AdditionalProperties"]["ingestIfNotExists"], '[\"ingestIfNotExistTags\"]')
+        self.assertEquals(result["AdditionalProperties"]["ValidationPolicy"], '{\"ValidationImplications\":1,\"ValidationOptions\":1}')
+        self.assertEquals(result["AdditionalProperties"]["tags"], '[\"tag\",\"drop-by:dropByTags\",\"ingest-by:ingestByTags\"]')
