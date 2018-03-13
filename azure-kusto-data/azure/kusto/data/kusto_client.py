@@ -101,7 +101,7 @@ class KustoResultIter(object):
 
 class KustoResponse(object):
     """ Wrapper for response """
-    # TODO: add support to get additional infromation from response, like execution time
+    # TODO: add support to get additional information from response, like execution time
 
     def __init__(self, json_response):
         self.json_response = json_response
