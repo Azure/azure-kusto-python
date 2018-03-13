@@ -20,11 +20,11 @@ class FileDescriptor(object):
             file_path, extension = os.path.splitext(self.path)
             suffix = extension + ".gz"
             prefix = os.path.basename(file_path) + "__"
-            self.zipped_temp_file = tempfile.NamedTemporaryFile("wb", suffix=suffix, prefix=prefix)
+            self.zipped_temp_file = tempfile.TemporaryFile("wb", suffix=suffix, prefix=prefix)
             self._zip_file()
 
     def _zip_file(self):
-        with open(self.path, 'rb') as f_in, gzip.open(self.zipped_temp_file.name, "wb") as f_out:
+        with open(self.path, 'rb') as f_in, gzip.open(self.zipped_temp_file, "wb") as f_out:
             shutil.copyfileobj(f_in, f_out)
         self.size = int(os.path.getsize(f_in.name))
 
