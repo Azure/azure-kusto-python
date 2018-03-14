@@ -81,8 +81,8 @@ CSV_IGNESTION_PROPERTIES = IngestionProperties("PythonTest",
                                                "Deft",
                                                dataFormat=DataFormat.csv,
                                                mapping=Helpers.create_deft_table_csv_mappings())
-CSV_FILE_PATH = os.path.join(os.getcwd(), "test", "input", "dataset.csv")
-ZIPPED_CSV_FILE_PATH = os.path.join(os.getcwd(), "test", "input", "dataset.csv.gz")
+CSV_FILE_PATH = os.path.join(os.getcwd(), "azure-kusto-ingest", "tests", "input", "dataset.csv")
+ZIPPED_CSV_FILE_PATH = os.path.join(os.getcwd(), "azure-kusto-ingest", "tests", "input", "dataset.csv.gz")
 KUSTO_INGEST_CLIENT.ingest_from_multiple_files([CSV_FILE_PATH, ZIPPED_CSV_FILE_PATH],
                                                False,
                                                CSV_IGNESTION_PROPERTIES)
@@ -98,8 +98,8 @@ for row in RESPONSE.iter_all():
 JSON_INGESTION_PROPERTIES = IngestionProperties("PythonTest", "Deft",
                                                 dataFormat=DataFormat.json,
                                                 mapping=Helpers.create_deft_table_json_mappings())
-JSON_FILE_PATH = os.path.join(os.getcwd(), "test", "input", "dataset.json")
-ZIPPED_JSON_FILE_PATH = os.path.join(os.getcwd(), "test", "input", "dataset.jsonz.gz")
+JSON_FILE_PATH = os.path.join(os.getcwd(), "azure-kusto-ingest", "tests", "input", "dataset.json")
+ZIPPED_JSON_FILE_PATH = os.path.join(os.getcwd(), "azure-kusto-ingest", "tests", "input", "dataset.jsonz.gz")
 KUSTO_INGEST_CLIENT.ingest_from_multiple_files([JSON_FILE_PATH, ZIPPED_JSON_FILE_PATH],
                                                False,
                                                JSON_INGESTION_PROPERTIES)

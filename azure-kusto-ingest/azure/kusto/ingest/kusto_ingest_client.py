@@ -88,14 +88,14 @@ class KustoIngestClient:
             else:
                 descriptor = FileDescriptor(file, deleteSourcesOnSuccess=delete_sources_on_success)
             file_descriptors.append(descriptor)
-            blob_name = ingestion_properties.database + "__" + ingestion_properties.table + "__" + str(uuid.uuid4()) + "__" + os.path.basename(descriptor.path)
+            blob_name = ingestion_properties.database + "__" + ingestion_properties.table + "__" + str(uuid.uuid4()) + "__" + descriptor.stream_name
             container_details = random.choice(self._temp_storage_objects)
             storage_client = CloudStorageAccount(container_details.storage_account_name,
                                                  sas_token=container_details.sas)
             blob_service = storage_client.create_block_blob_service()
-            blob_service.create_blob_from_path(container_name=container_details.object_name,
+            blob_service.create_blob_from_stream(container_name=container_details.object_name,
                                                blob_name=blob_name,
-                                               file_path=descriptor.path)
+                                               stream=descriptor.zipped_stream)
             url = blob_service.make_blob_url(container_details.object_name,
                                              blob_name,
                                              sas_token=container_details.sas)
