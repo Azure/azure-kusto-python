@@ -5,7 +5,6 @@ import os
 from io import BytesIO
 import shutil
 from gzip import GzipFile
-import zipapp
 import tempfile
 
 class FileDescriptor(object):
