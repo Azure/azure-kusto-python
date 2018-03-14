@@ -115,7 +115,10 @@ class FunctionalTests(unittest.TestCase):
         for row in response.iter_all():
             if row[0] is not None:
                 self.assertEqual(type(row[0]), datetime)
-                self.assertEqual(type(row[1]), str)
+                try:
+                    self.assertEqual(type(row[1]), str)
+                except AssertionError:
+                    self.assertEqual(type(row[1]).encode('utf-8'), str)
                 self.assertEqual(type(row[2]), int)
                 self.assertEqual(type(row[3]), float)
                 self.assertEqual(type(row[4]), bool)

@@ -1,6 +1,7 @@
 """ Test class for FileDescriptor and BlobDescriptor
 """
 
+import sys
 from os import path
 import unittest
 from azure.kusto.ingest import FileDescriptor
@@ -14,7 +15,8 @@ class DescriptorsTest(unittest.TestCase):
         descriptor = FileDescriptor(filePath, 10)
         self.assertGreater(descriptor.size, 10)
         self.assertTrue(descriptor.stream_name.endswith(".csv.gz"))
-        self.assertTrue(descriptor.zipped_stream.readable(), True)
+        if sys.version_info[0] >= 3:
+            self.assertTrue(descriptor.zipped_stream.readable(), True)
         self.assertEquals(descriptor.zipped_stream.tell(), 0)
         self.assertEqual(descriptor.zipped_stream.closed, False)
         descriptor.delete_files(True)
@@ -26,7 +28,8 @@ class DescriptorsTest(unittest.TestCase):
         descriptor = FileDescriptor(filePath, 0)
         self.assertGreater(descriptor.size, 0)
         self.assertTrue(descriptor.stream_name.endswith(".csv.gz"))
-        self.assertTrue(descriptor.zipped_stream.readable(), True)
+        if sys.version_info[0] >= 3:
+            self.assertTrue(descriptor.zipped_stream.readable(), True)
         self.assertEquals(descriptor.zipped_stream.tell(), 0)
         self.assertEqual(descriptor.zipped_stream.closed, False)
         descriptor.delete_files(True)
@@ -38,7 +41,8 @@ class DescriptorsTest(unittest.TestCase):
         descriptor = FileDescriptor(filePath, 10)
         self.assertEqual(descriptor.size, 10)
         self.assertTrue(descriptor.stream_name.endswith(".csv.gz"))
-        self.assertTrue(descriptor.zipped_stream.readable(), True)
+        if sys.version_info[0] >= 3:
+            self.assertTrue(descriptor.zipped_stream.readable(), True)
         self.assertEquals(descriptor.zipped_stream.tell(), 0)
         self.assertEqual(descriptor.zipped_stream.closed, False)
         descriptor.delete_files(True)
@@ -50,7 +54,8 @@ class DescriptorsTest(unittest.TestCase):
         descriptor = FileDescriptor(filePath, 0)
         self.assertEqual(descriptor.size, 2305)
         self.assertTrue(descriptor.stream_name.endswith(".csv.gz"))
-        self.assertTrue(descriptor.zipped_stream.readable(), True)
+        if sys.version_info[0] >= 3:
+            self.assertTrue(descriptor.zipped_stream.readable(), True)
         self.assertEquals(descriptor.zipped_stream.tell(), 0)
         self.assertEqual(descriptor.zipped_stream.closed, False)
         descriptor.delete_files(True)

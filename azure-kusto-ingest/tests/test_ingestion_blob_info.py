@@ -130,7 +130,7 @@ class IngestionBlobInfoTest(unittest.TestCase):
         self.assertIsInstance(result["ReportMethod"], int)
         self.assertIsInstance(result["ReportLevel"], int)
         self.assertIsInstance(UUID(result["Id"]), UUID)
-        self.assertRegex(result["SourceMessageCreationTime"], TIMESTAMP_REGEX)
+        self.assertRegexpMatches(result["SourceMessageCreationTime"], TIMESTAMP_REGEX)
         self.assertEquals(result["AdditionalProperties"]["authorizationContext"], "authorizationContextText")
         self.assertEquals(result["AdditionalProperties"]["ingestIfNotExists"], '[\"ingestIfNotExistTags\"]')
         self.assertEquals(result["AdditionalProperties"]["ValidationPolicy"], '{\"ValidationImplications\":1,\"ValidationOptions\":1}')
