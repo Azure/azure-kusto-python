@@ -43,7 +43,7 @@ class IngestionBlobInfoTest(unittest.TestCase):
                                         )
         blob = BlobDescriptor("somepath", 10)
         blob_info = _IngestionBlobInfo(blob, properties, deleteSourcesOnSuccess=True, authContext="authorizationContextText")
-        self.verify_ingestion_blob_info_result(blob_info.to_json())
+        self._verify_ingestion_blob_info_result(blob_info.to_json())
 
     def test_blob_csv_mapping_reference(self):
         """ Tests serialization of ingestion blob info with csv mapping reference. """
@@ -64,7 +64,7 @@ class IngestionBlobInfoTest(unittest.TestCase):
                                         )
         blob = BlobDescriptor("somepath", 10)
         blob_info = _IngestionBlobInfo(blob, properties, deleteSourcesOnSuccess=True, authContext="authorizationContextText")
-        self.verify_ingestion_blob_info_result(blob_info.to_json())
+        self._verify_ingestion_blob_info_result(blob_info.to_json())
 
     def test_blob_info_json_mapping(self):
         """ Tests serialization of json ingestion blob info. """
@@ -85,7 +85,7 @@ class IngestionBlobInfoTest(unittest.TestCase):
                                         )
         blob = BlobDescriptor("somepath", 10)
         blob_info = _IngestionBlobInfo(blob, properties, deleteSourcesOnSuccess=True, authContext="authorizationContextText")
-        self.verify_ingestion_blob_info_result(blob_info.to_json())
+        self._verify_ingestion_blob_info_result(blob_info.to_json())
 
     def test_blob_json_mapping_reference(self):
         """ Tests serialization of ingestion blob info with json mapping reference. """
@@ -106,7 +106,7 @@ class IngestionBlobInfoTest(unittest.TestCase):
                                         )
         blob = BlobDescriptor("somepath", 10)
         blob_info = _IngestionBlobInfo(blob, properties, deleteSourcesOnSuccess=True, authContext="authorizationContextText")
-        self.verify_ingestion_blob_info_result(blob_info.to_json())
+        self._verify_ingestion_blob_info_result(blob_info.to_json())
 
     def test_blob_info_csv_exceptions(self):
         """ Tests invalid ingestion properties. """
@@ -116,13 +116,13 @@ class IngestionBlobInfoTest(unittest.TestCase):
                                 mapping="mapping",
                                 mapptingReference="mappingReference")
 
-    def verify_ingestion_blob_info_result(self, ingestion_blob_info):
+    def _verify_ingestion_blob_info_result(self, ingestion_blob_info):
         result = json.loads(ingestion_blob_info)
         self.assertIsNotNone(result)
         self.assertIsInstance(result, dict)
-        self.assertEquals(result["BlobPath"], "somepath")
-        self.assertEquals(result["DatabaseName"], "database")
-        self.assertEquals(result["TableName"], "table")
+        self.assertEquals(str(result["BlobPath"]), "somepath")
+        self.assertEquals(str(result["DatabaseName"]), "database")
+        self.assertEquals(str(result["TableName"]), "table")
         self.assertIsInstance(result["RawDataSize"], int)
         self.assertIsInstance(result["IgnoreSizeLimit"], bool)
         self.assertIsInstance(result["FlushImmediately"], bool)
@@ -131,7 +131,7 @@ class IngestionBlobInfoTest(unittest.TestCase):
         self.assertIsInstance(result["ReportLevel"], int)
         self.assertIsInstance(UUID(result["Id"]), UUID)
         self.assertRegexpMatches(result["SourceMessageCreationTime"], TIMESTAMP_REGEX)
-        self.assertEquals(result["AdditionalProperties"]["authorizationContext"], "authorizationContextText")
-        self.assertEquals(result["AdditionalProperties"]["ingestIfNotExists"], '[\"ingestIfNotExistTags\"]')
-        self.assertEquals(result["AdditionalProperties"]["ValidationPolicy"], '{\"ValidationImplications\":1,\"ValidationOptions\":1}')
-        self.assertEquals(result["AdditionalProperties"]["tags"], '[\"tag\",\"drop-by:dropByTags\",\"ingest-by:ingestByTags\"]')
+        self.assertEquals(str(result["AdditionalProperties"]["authorizationContext"]), "authorizationContextText")
+        self.assertEquals(str(result["AdditionalProperties"]["ingestIfNotExists"]), '[\"ingestIfNotExistTags\"]')
+        self.assertEquals(str(result["AdditionalProperties"]["ValidationPolicy"]), '{\"ValidationImplications\":1,\"ValidationOptions\":1}')
+        self.assertEquals(str(result["AdditionalProperties"]["tags"]), '[\"tag\",\"drop-by:dropByTags\",\"ingest-by:ingestByTags\"]')
