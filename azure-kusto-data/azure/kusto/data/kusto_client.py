@@ -51,13 +51,7 @@ class KustoResultIter(object):
         self.last = len(json_result['Rows'])
         # Here we keep converter functions for each type that we need to take special care
         # (e.g. convert)
-        self.converters_lambda_mappings = {'DateTime': self.to_datetime, 'TimeSpan': self.to_timedelta, 'unicode': self.from_unicode}
-
-    @staticmethod
-    def from_unicode(value):
-        if value is None:
-            return None
-        return value.encode('utf-8')
+        self.converters_lambda_mappings = {'DateTime': self.to_datetime, 'TimeSpan': self.to_timedelta}
 
     @staticmethod
     def to_datetime(value):
