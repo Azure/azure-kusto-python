@@ -12,7 +12,7 @@ class DescriptorsTest(unittest.TestCase):
         """ Tests FileDescriptor with size and unzipped file """
         filePath = path.join(path.dirname(path.abspath(__file__)), "input", "dataset.csv")
         descriptor = FileDescriptor(filePath, 10)
-        self.assertEqual(descriptor.size, 1578)
+        self.assertEqual(descriptor.size, 1569)
         self.assertTrue(descriptor.zipped_file().endswith(".csv.gz"))
         descriptor.delete_files(True)
         self.assertEqual(descriptor.zipped_temp_file.closed, True)
@@ -21,7 +21,7 @@ class DescriptorsTest(unittest.TestCase):
         """ Tests FileDescriptor without size and unzipped file """
         filePath = path.join(path.dirname(path.abspath(__file__)), "input", "dataset.csv")
         descriptor = FileDescriptor(filePath, 0)
-        self.assertEqual(descriptor.size, 1578)
+        self.assertEqual(descriptor.size, 1569)
         self.assertTrue(descriptor.zipped_file().endswith(".csv.gz"))
         descriptor.delete_files(True)
         self.assertEqual(descriptor.zipped_temp_file.closed, True)
