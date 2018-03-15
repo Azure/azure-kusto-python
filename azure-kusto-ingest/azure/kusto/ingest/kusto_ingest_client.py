@@ -21,24 +21,27 @@ class KustoIngestClient:
     KustoIngestClient works with both 2.x and 3.x flavors of Python.
     All primitive types are supported.
     KustoIngestClient takes care of ADAL authentication, and queueing ingest jobs.
-    To use KustoIngestClient, you can choose between three ways of authentication.
+    When using KustoIngestClient, you can choose between three options for authenticating:
 
-    For the first option, you'll need to have your own AAD application and know your
+    Option 1:
+    You'll need to have your own AAD application and know your
     client credentials (client_id and client_secret).
     >>> kusto_cluster = 'https://ingest-help.kusto.windows.net'
     >>> kusto_ingest_client = KustoIngestClient(kusto_cluster,
                                    client_id='your_app_id',
                                    client_secret='your_app_secret')
 
-    For the second option, you can use KustoClient's client id
-    (set as a default in the constructor) and authenticate using your username and password.
+    Option 2:
+    You can use KustoClient's client id (set as a default in the constructor) 
+    and authenticate using your username and password.
     >>> kusto_cluster = 'https://ingest-help.kusto.windows.net'
     >>> kusto_ingest_client = KustoIngestClient(kusto_cluster,
                                    username='your_username',
                                    password='your_password')
 
-    For the third option, you can use KustoClient's client id (set as a default in
-    the constructor) and authenticate using your username and an AAD pop up.
+    Option 3:
+    You can use KustoClient's client id (set as a default in the constructor) 
+    and authenticate using your username and an AAD pop up.
     >>> kusto_cluster = 'https://ingest-help.kusto.windows.net'
     >>> kusto_ingest_client = KustoIngestClient(kusto_cluster)
     """
