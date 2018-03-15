@@ -71,6 +71,7 @@
     <Compile Include="azure-kusto-ingest\tests\__init__.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="build_packages.py" />
   </ItemGroup>
   <ItemGroup>
     <Content Include=".travis.yml" />

@@ -1,31 +1,31 @@
 # Microsoft Azure Kusto Library for Python
-Kusto Python Client Library provides the capability to query Kusto clusters with Python.
+Kusto Python Client Library provides the capability to query Kusto clusters with Python.<br>
 Kusto Python Ingest Client is a python library that allows sending data to Kusto service - i.e. ingest data. 
 
 ## Install
 ### Option 1: Via PyPi
 To install via the Python Package Index (PyPI), type:
 
-pip install azure-kusto-data
-pip install azure-kusto-ingest
+* pip install azure-kusto-data
+* pip install azure-kusto-ingest
 
 ### Option 2: Source Via Git
 To get the source code of the SDK via git just type:
 
 git clone git://github.com/Azure/azure-kusto-python.git
 
-cd ./azure-kusto-python/azure-kusto-data
+cd ./azure-kusto-python/azure-kusto-data<br>
 python setup.py install
 
-cd ../azure-kusto-ingest
+cd ../azure-kusto-ingest<br>
 python setup.py install
 
 ### Option 3: Source Zip
 Download a zip of the code via GitHub or PyPi. Then follow the same instructions in option 2.
 
 ## Minimum Requirements
-Python 2.7, 3.4, 3.5, or 3.6.
-See setup.py for dependencies
+* Python 2.7, 3.4, 3.5, or 3.6.
+* See setup.py for dependencies
 
 ## Authentication methods:
 
@@ -44,7 +44,7 @@ from azure.kusto.data import KustoClient
 kusto_cluster = 'https://help.kusto.windows.net'
 
 # In case you want to authenticate with AAD application.
-client_id = '<insert here your AAD application id>'
+client_id = '<insert here your AAD application ID>'
 client_secret = '<insert here your AAD application key>'
 client = KustoClient(kusto_cluster=kusto_cluster, client_id=client_id, client_secret=client_secret)
 
