@@ -213,6 +213,8 @@ class KustoClient(object):
             The password matching the username of the user making the request to Kusto
         version : 'v1', optional
             REST API version, defaults to v1.
+        authority : 'microsoft.com', optional
+            In case your tenant is not microsoft please use this param.
         """
         self.kusto_cluster = kusto_cluster
         self.version = version
