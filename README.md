@@ -1,6 +1,6 @@
 # Microsoft Azure Kusto Library for Python
-Kusto Python Client Library provides the capability to query Kusto clusters with Python.<br>
-Kusto Python Ingest Client is a python library that allows sending data to Kusto service - i.e. ingest data. 
+*azure-kusto-data* Package provides the capability to query Kusto clusters with Python.<br>
+*azure-kusto-ingest* package allows sending data to Kusto service - i.e. ingest data. 
 
 ## Install
 ### Option 1: Via PyPi
