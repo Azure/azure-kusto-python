@@ -74,11 +74,17 @@ ingestion_properties = IngestionProperties(database="database name", table="tabl
 ingest_client = KustoIngestClient("https://ingest-clustername.kusto.windows.net", username="username@microsoft.com")
 ingest_client = KustoIngestClient("https://ingest-clustername.kusto.windows.net", client_id="aad app id", client_secret="secret")
 
-descriptor = FileDecriptor("E:\\filePath.csv", 3333) # 3333 is the raw size of the data.
-ingest_client.__IngestFromMultipleFiles__([descriptor], deleteSourcesOnSuccess=True, ingestion_properties)  
+file_descriptor = FileDecriptor("E:\\filePath.csv", 3333) # 3333 is the raw size of the data.
+ingest_client.ingest_from_multiple_files([file_descriptor],
+										  delete_sources_on_success=True,
+										  ingestion_properties)  
 
-ingest_client.__IngestFromMultipleFiles__(["E:\\filePath.csv"], deleteSourcesOnSuccess=True, ingestion_properties)  
-ingest_client.__IngestFromMultipleBlobs__([BlobDescriptor("https://path-to-blob.csv.gz?sas", 10)], # 10 is the raw size of the data.
-                                          deleteSourcesOnSuccess=True, 
-                                          ingestion_properties=ingestion_properties)  
+ingest_client.ingest_from_multiple_files(["E:\\filePath.csv"],
+										  delete_sources_on_success=True,
+										  ingestion_properties)
+
+blob_descriptor = BlobDescriptor("https://path-to-blob.csv.gz?sas", 10) # 10 is the raw size of the data.
+ingest_client.ingest_from_multiple_files([blob_descriptor]),
+                                          delete_sources_on_success=True, 
+                                          ingestion_properties)  
 ```
