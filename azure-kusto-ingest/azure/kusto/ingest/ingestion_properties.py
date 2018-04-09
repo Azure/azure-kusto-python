@@ -95,3 +95,10 @@ class IngestionProperties:
         self.report_level = reportLevel
         self.report_method = reportMethod
         self.validation_policy = validationPolicy
+
+    def get_mapping_format(self):
+        """ Dictating the corresponding mapping to the format name """
+        if self.format == DataFormat.json:
+            return "json"
+        else:
+            return "csv"

@@ -77,7 +77,7 @@ KUSTO_INGEST_CLIENT = KustoIngestClient("https://ingest-toshetah.kusto.windows.n
 KUSTO_CLIENT.execute("PythonTest", ".drop table Deft ifexists")
 
 # Sanity test - ingest from csv to a non-existing table
-CSV_IGNESTION_PROPERTIES = IngestionProperties("PythonTest",
+CSV_INGESTION_PROPERTIES = IngestionProperties("PythonTest",
                                                "Deft",
                                                dataFormat=DataFormat.csv,
                                                mapping=Helpers.create_deft_table_csv_mappings())
@@ -85,7 +85,8 @@ CSV_FILE_PATH = os.path.join(os.getcwd(), "azure-kusto-ingest", "tests", "input"
 ZIPPED_CSV_FILE_PATH = os.path.join(os.getcwd(), "azure-kusto-ingest", "tests", "input", "dataset.csv.gz")
 KUSTO_INGEST_CLIENT.ingest_from_multiple_files([CSV_FILE_PATH, ZIPPED_CSV_FILE_PATH],
                                                False,
-                                               CSV_IGNESTION_PROPERTIES)
+                                               CSV_INGESTION_PROPERTIES)
+
 time.sleep(60)
 RESPONSE = KUSTO_CLIENT.execute("PythonTest", "Deft | count")
 for row in RESPONSE.iter_all():
@@ -150,6 +151,23 @@ time.sleep(60)
 RESPONSE = KUSTO_CLIENT.execute("PythonTest", "Deft | count")
 for row in RESPONSE.iter_all():
     if int(row['Count']) == 28:
+        print("Completed ingest with existing ingest-by tag successfully.")
+    else:
+        print("Deft | count = " + str(row['Count']))
+
+# Test ingest with TSV format and csvMapping
+TSV_INGESTION_PROPERTIES = IngestionProperties("PythonTest",
+                                               "Deft",
+                                               dataFormat=DataFormat.tsv,
+                                               mapping=Helpers.create_deft_table_csv_mappings())
+TSV_FILE_PATH = os.path.join(os.getcwd(), "azure-kusto-ingest", "tests", "input", "dataset.tsv")
+KUSTO_INGEST_CLIENT.ingest_from_multiple_files([TSV_FILE_PATH],
+                                               False,
+                                               TSV_INGESTION_PROPERTIES)
+time.sleep(60)
+RESPONSE = KUSTO_CLIENT.execute("PythonTest", "Deft | count")
+for row in RESPONSE.iter_all():
+    if int(row['Count']) == 38:
         print("Completed ingest with existing ingest-by tag successfully.")
     else:
         print("Deft | count = " + str(row['Count']))
