@@ -15,6 +15,7 @@ class DataFormat(Enum):
     sohsv = "sohsv"
     json = "json"
     psv = "psv"
+    avro = "avro"
 
 class ValidationOptions(IntEnum):
     """ Validation options to ingest command """
@@ -95,3 +96,10 @@ class IngestionProperties:
         self.report_level = reportLevel
         self.report_method = reportMethod
         self.validation_policy = validationPolicy
+
+    def get_mapping_format(self):
+        """ Dictating the corresponding mapping to the format """
+        if self.format == DataFormat.json or self.format == DataFormat.avro:
+            return self.format.name
+        else:
+            return DataFormat.csv.name

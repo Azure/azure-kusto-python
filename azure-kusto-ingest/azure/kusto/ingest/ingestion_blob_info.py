@@ -41,9 +41,9 @@ class _IngestionBlobInfo:
             additional_properties["ingestIfNotExists"] = _IngestionBlobInfo._convert_list_to_json(ingestionProperties.ingest_if_not_exists)
         if ingestionProperties.mapping:
             json_string = _IngestionBlobInfo._convert_dict_to_json(ingestionProperties.mapping)
-            additional_properties[ingestionProperties.format.name + "Mapping"] = json_string
+            additional_properties[ingestionProperties.get_mapping_format() + "Mapping"] = json_string
         if ingestionProperties.mapping_reference:
-            key = ingestionProperties.format.name + "MappingReference"
+            key = ingestionProperties.get_mapping_format() + "MappingReference"
             additional_properties[key] = ingestionProperties.mapping_reference
         if ingestionProperties.validation_policy:
             additional_properties["ValidationPolicy"] = _IngestionBlobInfo._convert_dict_to_json(ingestionProperties.validation_policy)
