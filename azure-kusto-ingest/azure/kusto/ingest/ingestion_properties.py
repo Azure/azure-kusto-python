@@ -98,7 +98,7 @@ class IngestionProperties:
         self.validation_policy = validationPolicy
 
     def get_mapping_format(self):
-        """ Dictating the corresponding mapping to the format name """
+        """ Dictating the corresponding mapping to the format """
         if self.format == DataFormat.json or self.format == DataFormat.avro:
             return self.format.name
         else:
