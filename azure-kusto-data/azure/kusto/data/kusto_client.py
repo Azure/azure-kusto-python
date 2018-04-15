@@ -222,7 +222,7 @@ class KustoClient(object):
         self.kusto_cluster = kusto_cluster
         self.version = version
         self.adal_context = adal.AuthenticationContext('https://login.windows.net/{0}/'.format(authority or 'microsoft.com'))
-        self.client_id = client_id or "ad30ae9e-ac1b-4249-8817-d24f5d7ad3de"
+        self.client_id = client_id or "db662dc1-0cfe-4e1c-a843-19a68e65be58"
         self.client_secret = client_secret
         self.username = username
         self.password = password
