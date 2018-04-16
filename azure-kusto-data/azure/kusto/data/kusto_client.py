@@ -228,7 +228,7 @@ class KustoClient(object):
         self.password = password
         self.request_headers = None
 
-    def execute(self, kusto_database, query, accept_partial_results=False):
+    def execute(self, kusto_database, query, accept_partial_results=False, timeout=None):
         """ Execute a simple query or management command
 
         Parameters
@@ -241,12 +241,14 @@ class KustoClient(object):
             Optional parameter. If query fails, but we receive some results, we consider results as partial.
             If this is True, results are returned to client, even if there are exceptions.
             If this is False, exception is raised. Default is False.
+        timeout : float, optional
+            Optional parameter. Network timeout in seconds. Default is no timeout.
         """
         if query.startswith('.'):
-            return self.execute_mgmt(kusto_database, query, accept_partial_results)
-        return self.execute_query(kusto_database, query, accept_partial_results)
+            return self.execute_mgmt(kusto_database, query, accept_partial_results, timeout)
+        return self.execute_query(kusto_database, query, accept_partial_results, timeout)
 
-    def execute_query(self, kusto_database, query, accept_partial_results=False):
+    def execute_query(self, kusto_database, query, accept_partial_results=False, timeout=None):
         """ Execute a simple query
 
         Parameters
@@ -261,11 +263,13 @@ class KustoClient(object):
             Optional parameter. If query fails, but we receive some results, we consider results as partial.
             If this is True, results are returned to client, even if there are exceptions.
             If this is False, exception is raised. Default is False.
+        timeout : float, optional
+            Optional parameter. Network timeout in seconds. Default is no timeout.
         """
         query_endpoint = '{0}/{1}/rest/query'.format(self.kusto_cluster, self.version)
-        return self._execute(kusto_database, query, query_endpoint, accept_partial_results)
+        return self._execute(kusto_database, query, query_endpoint, accept_partial_results, timeout)
 
-    def execute_mgmt(self, kusto_database, query, accept_partial_results=False):
+    def execute_mgmt(self, kusto_database, query, accept_partial_results=False, timeout=None):
         """ Execute a management command
 
         Parameters
@@ -280,11 +284,13 @@ class KustoClient(object):
             Optional parameter. If query fails, but we receive some results, we consider results as partial.
             If this is True, results are returned to client, even if there are exceptions.
             If this is False, exception is raised. Default is False.
+        timeout : float, optional
+            Optional parameter. Network timeout in seconds. Default is no timeout.
         """
         query_endpoint = '{0}/{1}/rest/mgmt'.format(self.kusto_cluster, self.version)
-        return self._execute(kusto_database, query, query_endpoint, accept_partial_results)
+        return self._execute(kusto_database, query, query_endpoint, accept_partial_result, timeout)
 
-    def _execute(self, kusto_database, kusto_query, query_endpoint, accept_partial_results=False):
+    def _execute(self, kusto_database, kusto_query, query_endpoint, accept_partial_results=False, timeout=None):
         """ Executes given query against this client """
 
         request_payload = {
@@ -304,7 +310,8 @@ class KustoClient(object):
         response = requests.post(
             query_endpoint,
             headers=self.request_headers,
-            json=request_payload
+            json=request_payload,
+            timeout=timeout
         )
 
         if response.status_code == 200:
