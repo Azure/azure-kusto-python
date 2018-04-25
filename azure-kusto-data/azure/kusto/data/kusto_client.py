@@ -288,7 +288,7 @@ class KustoClient(object):
             Optional parameter. Network timeout in seconds. Default is no timeout.
         """
         query_endpoint = '{0}/{1}/rest/mgmt'.format(self.kusto_cluster, self.version)
-        return self._execute(kusto_database, query, query_endpoint, accept_partial_result, timeout)
+        return self._execute(kusto_database, query, query_endpoint, accept_partial_results, timeout)
 
     def _execute(self, kusto_database, kusto_query, query_endpoint, accept_partial_results=False, timeout=None):
         """ Executes given query against this client """
