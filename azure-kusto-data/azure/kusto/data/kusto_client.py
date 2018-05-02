@@ -47,7 +47,7 @@ class KustoResultIter(object):
         for column in json_result['Columns']:
             self.index2column_mapping.append(column['ColumnName'])
             self.index2type_mapping.append(column['DataType'])
-        self.next = 0
+        self._next = 0
         self.last = len(json_result['Rows'])
         # Here we keep converter functions for each type that we need to take special care
         # (e.g. convert)
@@ -84,10 +84,10 @@ class KustoResultIter(object):
         return self.__next__()
 
     def __next__(self):
-        if self.next >= self.last:
+        if self._next >= self.last:
             raise StopIteration
         else:
-            row = self.json_result['Rows'][self.next]
+            row = self.json_result['Rows'][self._next]
             result_dict = {}
             for index, value in enumerate(row):
                 data_type = self.index2type_mapping[index]
@@ -95,7 +95,7 @@ class KustoResultIter(object):
                     result_dict[self.index2column_mapping[index]] = self.converters_lambda_mappings[data_type](value)
                 else:
                     result_dict[self.index2column_mapping[index]] = value
-            self.next = self.next + 1
+            self._next = self._next + 1
             return KustoResult(self.index2column_mapping, result_dict)
 
 
