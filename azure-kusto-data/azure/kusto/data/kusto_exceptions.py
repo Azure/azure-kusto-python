@@ -2,6 +2,8 @@
 
 class KustoError(Exception):
     """ Base class for all exceptions raised by the Kusto Python Client Libraries. """
+    # review: they the desire to subvert the MRO with the 'instance' parameter
+    # passed to super()?
     def __init__(self, instance, messages):
         super(KustoError, instance).__init__(messages)
 

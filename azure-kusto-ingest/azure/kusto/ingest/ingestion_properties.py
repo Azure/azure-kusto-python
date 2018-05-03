@@ -2,11 +2,15 @@
 This file has all classes to define ingestion properties
 """
 
+# review: your setup.py says you support Python 2.7, but the 'enum' module was
+# not added to the stdlib until Python 3.4 and I don't see any backported version
+# of it in your install_requires.
 from enum import Enum, IntEnum
 from .kusto_ingest_client_exceptions import KustoDuplicateMappingError
 
 class DataFormat(Enum):
-    """ All data formats supported by Kusto """
+    """All data formats supported by Kusto."""
+
     csv = "csv"
     tsv = "tsv"
     log = "log"
@@ -16,6 +20,7 @@ class DataFormat(Enum):
     json = "json"
     psv = "psv"
     avro = "avro"
+
 
 class ValidationOptions(IntEnum):
     """ Validation options to ingest command """
@@ -48,26 +53,30 @@ class ReportMethod(Enum):
     Table = 1
     QueueAndTable = 2
 
-class ColumnMapping():
+
+# review: why the base class if there is no API commonality between, e.g.
+# CSVColumnMapping and JSONColumnMapping?
+class ColumnMapping(object):
     """ abstract class to column mapping """
     pass
 
-class CsvColumnMapping(ColumnMapping):
+class CSVColumnMapping(ColumnMapping):
     """ Class to represent a csv column mapping """
     def __init__(self, columnName, cslDataType, ordinal):
         self.Name = columnName
         self.DataType = cslDataType
         self.Ordinal = ordinal
 
-class JsonColumnMapping(ColumnMapping):
+class JSONColumnMapping(ColumnMapping):
     """ Class to represent a json column mapping """
-    def __init__(self, columnName, jsonPath, cslDataType=None):
-        self.column = columnName
-        self.path = jsonPath
-        self.datatype = cslDataType
+    def __init__(self, column_name, json_path, csl_data_type=None):
+        self.column = column_name
+        self.path = json_path
+        self.datatype = csl_data_type
 
 class IngestionProperties:
     """ Class to represent ingestion properties """
+
     def __init__(self, database, table,
                  dataFormat=DataFormat.csv,
                  mapping=None,
@@ -79,10 +88,9 @@ class IngestionProperties:
                  flushImmediately=False,
                  reportLevel=ReportLevel.DoNotReport,
                  reportMethod=ReportMethod.Queue,
-                 validationPolicy=None
-                ):
+                 validationPolicy=None):
         if mapping is not None and mapptingReference is not None:
-            raise KustoDuplicateMappingError()
+            raise KustoDuplicateMappingError  # review: provide a message for the exception.
         self.database = database
         self.table = table
         self.format = dataFormat

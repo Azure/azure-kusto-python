@@ -1,7 +1,4 @@
-"""
-This module constains all classes to get Kusto responses.
-Including error handling.
-"""
+"""This module constains all classes to get Kusto responses, including error handling."""
 
 from datetime import timedelta, datetime
 import re
@@ -16,11 +13,20 @@ import pandas
 from .kusto_exceptions import KustoServiceError
 from .version import VERSION
 
+
 # Regex for TimeSpan
 TIMESPAN_PATTERN = re.compile(r'((?P<d>[0-9]*).)?(?P<h>[0-9]{2}):(?P<m>[0-9]{2}):(?P<s>[0-9]{2})(.(?P<ms>[0-9]*))?')
 
+
+# review: the full name of this class is azure.kusto.kusto_client.KustoResult.
+# That's a lot of 'kusto' ;) . There is no need to repeat the name 'kusto' in
+# module's name nor in the class name when it's already obvious from the package
+# name.
+# review: why subclass dict instead of a function that translates indexes into
+# columns?
 class KustoResult(dict):
-    """ Simple wrapper around dictionary, to enable both index and key access to rows in result """
+    """Simple wrapper around dictionary, to enable both index and key access to rows."""
+
     def __init__(self, index2column_mapping, *args, **kwargs):
         super(KustoResult, self).__init__(*args, **kwargs)
         # TODO: this is not optimal, if client will not access all fields.
@@ -28,18 +34,25 @@ class KustoResult(dict):
         # even if client don't use it.
         # In this case, it would be better for KustoResult to extend list class. In this case,
         # KustoResultIter.index2column_mapping should be reversed, e.g. column2index_mapping.
+        # review: is this supposed to be part of the public API? If not then
+        # start with a '_'.
         self.index2column_mapping = index2column_mapping
 
     def __getitem__(self, key):
-        if isinstance(key, int):
-            val = dict.__getitem__(self, self.index2column_mapping[key])
+        # review: avoid type checks as it means people can't pass in anything
+        # but an int (e.g. this won't' work with a long in Python 2).
+        try:
+            column_key = self.index2column_mapping[key]
+        except KeyError:
+            return super(KustoResult, self).__getitem__(key)
         else:
-            val = dict.__getitem__(self, key)
-        return val
+            return super(KustoResult, self).__getitem__(column_key)
 
 
 class KustoResultIter(object):
-    """ Iterator over returned rows """
+    # review: No leading or trailing spaces, end in a period.
+    """An iterator over returned rows."""
+
     def __init__(self, json_result):
         self.json_result = json_result
         self.index2column_mapping = []
@@ -51,6 +64,8 @@ class KustoResultIter(object):
         self.last = len(json_result['Rows'])
         # Here we keep converter functions for each type that we need to take special care
         # (e.g. convert)
+        # review: this could be made in a 'converters' parameter to let people
+        # control things that way as well.
         self.converters_lambda_mappings = {'DateTime': self.to_datetime, 'TimeSpan': self.to_timedelta}
 
     @staticmethod
@@ -79,11 +94,13 @@ class KustoResultIter(object):
     def __iter__(self):
         return self
 
+    # review: for Python 2/3 compatibility help, look into the 'six' project.
     def next(self):
-        """ Gets the next value """
+        """Return the next value."""
         return self.__next__()
 
     def __next__(self):
+        # review: self.next is the name of a method above; you have a name clash.
         if self.next >= self.last:
             raise StopIteration
         else:
@@ -95,10 +112,15 @@ class KustoResultIter(object):
                     result_dict[self.index2column_mapping[index]] = self.converters_lambda_mappings[data_type](value)
                 else:
                     result_dict[self.index2column_mapping[index]] = value
-            self.next = self.next + 1
+            self.next += 1
+            # review: any reason this can't be a generator so this can become your
+            # __iter__() method?
             return KustoResult(self.index2column_mapping, result_dict)
 
 
+# review: this entire class doesn't quite seem needed. If you documented what
+# the JSON response was then all you would need is to turn to_dataframe() into
+# a function that took in a JSON response.
 class KustoResponse(object):
     """ Wrapper for response """
     # TODO: add support to get additional information from response, like execution time
@@ -106,10 +128,14 @@ class KustoResponse(object):
     def __init__(self, json_response):
         self.json_response = json_response
 
+    # review: this method is unnecessary; just document that the attribute
+    # 'json_response' exists.
     def get_raw_response(self):
         """ Gets the json response got from Kusto """
         return self.json_response
 
+    # review: eithe document that the JSON response has a 'Tables' key or
+    # turn this into a property.
     def get_table_count(self):
         """ Gets the tables Count. """
         return len(self.json_response['Tables'])
@@ -173,7 +199,7 @@ class KustoClient(object):
     --------
     When using KustoClient, you can choose between three options for authenticating:
 
-    Option 1: 
+    Option 1:
     You'll need to have your own AAD application and know your client credentials (client_id and client_secret).
     >>> kusto_cluster = 'https://help.kusto.windows.net'
     >>> kusto_client = KustoClient(kusto_cluster, client_id='your_app_id', client_secret='your_app_secret')
@@ -197,6 +223,11 @@ class KustoClient(object):
     >>>    print(row["ColumnName"])    """
 
     def __init__(self, kusto_cluster, client_id=None, client_secret=None, username=None, password=None, version='v1', authority=None):
+        # review: why are you suddenly  documenting the individual parameters?
+        # And don't document the types unless you really mean it. And if you
+        # do then make them type hints and use mypy to help keep you honest.
+        # And does this follow any known docstring formatting style in the
+        # Python community (e.g. Sphinx, Google, etc.)?
         """
         Kusto Client constructor.
 

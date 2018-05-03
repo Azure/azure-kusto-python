@@ -1,17 +1,23 @@
-""" A class to parse uris recieved from the DM.
-"""
+"""Parse URIs recieved from the DM."""
 
 import re
 
+
+_URI_FORMAT = re.compile("https://(\\w+).(queue|blob).core.windows.net/([\\w,-]+)\\?(.*)")
+
+
 class _ConnectionString:
-    def __init__(self, storage_account_name, objectType, objectName, sas):
+    # review: docstring.
+
+    # review: Read PEP 8 for naming of parameters.
+    def __init__(self, storage_account_name, object_type, object_name, sas):
         self.storage_account_name = storage_account_name
-        self.object_type = objectType
-        self.object_name = objectName
+        self.object_type = object_type
+        self.object_name = object_name
         self.sas = sas
 
-    @staticmethod
-    def parse(uri):
+    @classmethod
+    def parse(cls, uri):
         """ Parses uri into a _ConnectionString object """
-        match = re.search("https://(\\w+).(queue|blob).core.windows.net/([\\w,-]+)\\?(.*)", uri)
-        return _ConnectionString(match.group(1), match.group(2), match.group(3), match.group(4))
+        match = _URI_FORMAT.search(uri)
+        return cls(match.group(1), match.group(2), match.group(3), match.group(4))

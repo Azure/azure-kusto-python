@@ -6,13 +6,16 @@ import base64
 import os
 import random
 import uuid
-from datetime import datetime, timedelta
+# review: just import the module; it's easier to read the code as you then know
+# where every object comes from.
+import datetime
 
 from azure.storage.common import CloudStorageAccount
 from azure.kusto.data import KustoClient
 from .descriptors import BlobDescriptor, FileDescriptor
 from .connection_string import _ConnectionString
 from .ingestion_blob_info import _IngestionBlobInfo
+
 
 class KustoIngestClient:
     """
@@ -32,7 +35,7 @@ class KustoIngestClient:
                                    client_secret='your_app_secret')
 
     Option 2:
-    You can use KustoClient's client id (set as a default in the constructor) 
+    You can use KustoClient's client id (set as a default in the constructor)
     and authenticate using your username and password.
     >>> kusto_cluster = 'https://ingest-help.kusto.windows.net'
     >>> kusto_ingest_client = KustoIngestClient(kusto_cluster,
@@ -40,7 +43,7 @@ class KustoIngestClient:
                                    password='your_password')
 
     Option 3:
-    You can use KustoClient's client id (set as a default in the constructor) 
+    You can use KustoClient's client id (set as a default in the constructor)
     and authenticate using your username and an AAD pop up.
     >>> kusto_cluster = 'https://ingest-help.kusto.windows.net'
     >>> kusto_ingest_client = KustoIngestClient(kusto_cluster)
@@ -100,15 +103,18 @@ class KustoIngestClient:
             The ingestion properties.
         """
         self._refresh_containers_if_needed()
-        blobs = list()
-        file_descriptors = list()
+        blobs = []
+        file_descriptors = []
         for file in files:
             if isinstance(file, FileDescriptor):
                 descriptor = file
             else:
                 descriptor = FileDescriptor(file, deleteSourcesOnSuccess=delete_sources_on_success)
             file_descriptors.append(descriptor)
-            blob_name = ingestion_properties.database + "__" + ingestion_properties.table + "__" + str(uuid.uuid4()) + "__" + descriptor.stream_name
+            blob_name = "__".join([ingestion_properties.database,
+                                   ingestion_properties.table,
+                                   str(uuid.uuid4()), descriptor.stream_name])
+            # review: I assume this doesn't need to be cryptographically random?
             container_details = random.choice(self._temp_storage_objects)
             storage_client = CloudStorageAccount(container_details.storage_account_name,
                                                  sas_token=container_details.sas)
@@ -122,7 +128,7 @@ class KustoIngestClient:
             blobs.append(BlobDescriptor(url, descriptor.size))
         self.ingest_from_multiple_blobs(blobs, delete_sources_on_success, ingestion_properties)
         for descriptor in file_descriptors:
-            descriptor.delete_files(True)
+            descriptor.delete_files(True)  # review: 'True' what? When calling things with non-descript literals, always use the keyword argument to provide context.
 
     def ingest_from_multiple_blobs(self, blobs, delete_sources_on_success, ingestion_properties):
         """
@@ -154,22 +160,26 @@ class KustoIngestClient:
             queue_service.put_message(queue_details.object_name, encoded)
 
     def _refresh_containers_if_needed(self):
-        if (self._last_time_refreshed_containers > datetime.utcnow() - timedelta(hours=2)
+        if (self._last_time_refreshed_containers > datetime.datetime.utcnow() - datetime.timedelta(hours=2)
                 or not self._temp_storage_objects):
             self._last_time_refreshed_containers = datetime.utcnow()
             self._temp_storage_objects = self._get_temp_storage_objects()
 
     def _get_temp_storage_objects(self):
+        # review: where does self._kusto_client get set?
         response = self._kusto_client.execute_mgmt("NetDefaultDB", ".create tempstorage")
-        storages = list()
+        storages = []
+        # review: Is there an iter_some()? ;) Otherwise change the name or
+        # simply define the iterator protocol for the object.
         for row in response.iter_all():
             storages.append(_ConnectionString.parse(row["StorageRoot"]))
         return storages
 
     def _refresh_queues_if_needed(self):
-        if (self._last_time_refreshed_queues > datetime.utcnow() - timedelta(hours=2)
-                or not self._queues):
-            self._last_time_refreshed_queues = datetime.utcnow()
+        now = datetime.datetime.utcnow()
+        too_old = self._last_time_refreshed_queues > (now - datetime.timedelta(hours=2))
+        if too_old or not self._queues:
+            self._last_time_refreshed_queues = now
             self._queues = self._get_queues()
 
     def _get_queues(self):
@@ -181,9 +191,9 @@ class KustoIngestClient:
         return queues
 
     def _refresh_token_if_needed(self):
-        if (self._last_time_refreshed_token > datetime.utcnow() - timedelta(hours=2)
+        if (self._last_time_refreshed_token > datetime.datetime.utcnow() - datetime.timedelta(hours=2)
                 or not self._kusto_token):
-            self._last_time_refreshed_token = datetime.utcnow()
+            self._last_time_refreshed_token = datetime.datetime.utcnow()
             self._kusto_token = self._get_kusto_token()
 
     def _get_kusto_token(self):
