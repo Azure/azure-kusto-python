@@ -224,7 +224,7 @@ class FunctionalTests(unittest.TestCase):
         self.assertEqual(timedelta(), rows[1]['TimeFlying'])
 
         self.assertIsNone(rows[2]['Timestamp'])
-        self.assertIs(rows[2]['Name'], '')
+        self.assertIn(rows[2]['Name'], ['', u''])
         self.assertIsNone(rows[2]['Altitude'])
         self.assertIsNone(rows[2]['Temperature'], 2)
         self.assertIsNone(rows[2]['IsFlying'])
