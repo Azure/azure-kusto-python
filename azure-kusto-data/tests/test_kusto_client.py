@@ -4,7 +4,7 @@
 import os
 import json
 import unittest
-from unittest import mock
+from mock import patch, MagicMock
 from datetime import datetime, timedelta
 from dateutil.tz.tz import tzutc
 from pandas import DataFrame, Series
@@ -39,8 +39,8 @@ def mocked_requests_post(*args, **kwargs):
 digits_words = [ "Zero", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "ten" ]
 
 class KustoClientTests(unittest.TestCase):
-    @mock.patch('requests.post', side_effect=mocked_requests_post)
-    @mock.patch('azure.kusto.data.aad_helper._AadHelper.acquire_token', side_effect=mocked_aad_helper)
+    @patch('requests.post', side_effect=mocked_requests_post)
+    @patch('azure.kusto.data.aad_helper._AadHelper.acquire_token', side_effect=mocked_aad_helper)
     def test_sanity_query(self, mock_post, mock_aad):
         client = KustoClient("https://somecluster.kusto.windows.net")
         response = client.execute_query("PythonTest", "Deft")
@@ -127,8 +127,8 @@ class KustoClientTests(unittest.TestCase):
             if expected["xint16"] > 0:
                 expected["xdynamicWithNulls"] = '{{"rowId":{0},"arr":[0,{0}]}}'.format(expected["xint16"])
             
-    @mock.patch('requests.post', side_effect=mocked_requests_post)
-    @mock.patch('azure.kusto.data.aad_helper._AadHelper.acquire_token', side_effect=mocked_aad_helper)
+    @patch('requests.post', side_effect=mocked_requests_post)
+    @patch('azure.kusto.data.aad_helper._AadHelper.acquire_token', side_effect=mocked_aad_helper)
     def test_sanity_control_command(self, mock_post, mock_aad):
         client = KustoClient("https://somecluster.kusto.windows.net")
         response = client.execute_mgmt("NetDefaultDB", ".show version")
@@ -143,8 +143,8 @@ class KustoClientTests(unittest.TestCase):
         self.assertEqual(result['ServiceType'], "Engine")
         self.assertEqual(result['ProductVersion'], "KustoMain_2018.04.29.5")
 
-    @mock.patch('requests.post', side_effect=mocked_requests_post)
-    @mock.patch('azure.kusto.data.aad_helper._AadHelper.acquire_token', side_effect=mocked_aad_helper)
+    @patch('requests.post', side_effect=mocked_requests_post)
+    @patch('azure.kusto.data.aad_helper._AadHelper.acquire_token', side_effect=mocked_aad_helper)
     def test_sanity_data_frame(self, mock_post, mock_aad):
         client = KustoClient("https://somecluster.kusto.windows.net")
         df = client.execute_query("PythonTest", "Deft").to_dataframe(errors="ignore")
