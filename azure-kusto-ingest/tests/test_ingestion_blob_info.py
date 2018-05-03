@@ -20,7 +20,6 @@ from azure.kusto.ingest import (
     ValidationImplications,
     )
 
-TIMESTAMP_REGEX = "[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}.[0-9]{6}"
 
 class IngestionBlobInfoTest(unittest.TestCase):
     """ Tests serialization of ingestion blob info. This serialization will be queued to the DM """
@@ -130,10 +129,11 @@ class IngestionBlobInfoTest(unittest.TestCase):
         self.assertIsInstance(result["ReportMethod"], int)
         self.assertIsInstance(result["ReportLevel"], int)
         self.assertIsInstance(UUID(result["Id"]), UUID)
-        self.assertRegexpMatches(result["SourceMessageCreationTime"], TIMESTAMP_REGEX)
+        self.assertRegexpMatches(result["SourceMessageCreationTime"],
+                                 "[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}.[0-9]{6}")
         self.assertEquals(result["AdditionalProperties"]["authorizationContext"], "authorizationContextText")
         self.assertEquals(result["AdditionalProperties"]["ingestIfNotExists"], '[\"ingestIfNotExistTags\"]')
-        self.assertIn(result["AdditionalProperties"]["ValidationPolicy"], 
-                      ('{\"ValidationImplications\":1,\"ValidationOptions\":1}', 
+        self.assertIn(result["AdditionalProperties"]["ValidationPolicy"],
+                      ('{\"ValidationImplications\":1,\"ValidationOptions\":1}',
                       '{"ValidationImplications":ValidationImplications.BestEffort,"ValidationOptions":ValidationOptions.ValidateCsvInputConstantColumns}'))
         self.assertEquals(result["AdditionalProperties"]["tags"], '[\"tag\",\"drop-by:dropByTags\",\"ingest-by:ingestByTags\"]')
