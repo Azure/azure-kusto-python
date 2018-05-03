@@ -86,7 +86,7 @@ class KustoClientTests(unittest.TestCase):
             self.assertEqual(row["xdynamicWithNulls"], expected["xdynamicWithNulls"])
             
             self.assertEqual(type(row["rownumber"]), type(expected["rownumber"]))
-            self.assertEqual(type(row["rowguid"]), type(expected["rowguid"]))
+            self.assertIn(type(row["rowguid"]), [type(expected["rowguid"]), unicode])
             self.assertEqual(type(row["xdouble"]), type(expected["xdouble"]))
             self.assertEqual(type(row["xfloat"]), type(expected["xfloat"]))
             self.assertEqual(type(row["xbool"]), type(expected["xbool"]))
