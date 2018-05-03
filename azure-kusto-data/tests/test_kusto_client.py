@@ -86,7 +86,7 @@ class KustoClientTests(unittest.TestCase):
             self.assertEqual(row["xdynamicWithNulls"], expected["xdynamicWithNulls"])
             
             self.assertEqual(type(row["rownumber"]), type(expected["rownumber"]))
-            self.assertIn(type(row["rowguid"]), [type(expected["rowguid"]), unicode])
+            self._assert_str_or_unicode(type(row["rowguid"]))
             self.assertEqual(type(row["xdouble"]), type(expected["xdouble"]))
             self.assertEqual(type(row["xfloat"]), type(expected["xfloat"]))
             self.assertEqual(type(row["xbool"]), type(expected["xbool"]))
@@ -98,12 +98,12 @@ class KustoClientTests(unittest.TestCase):
             self.assertEqual(type(row["xuint32"]), type(expected["xuint32"]))
             self.assertEqual(type(row["xuint64"]), type(expected["xuint64"]))
             self.assertEqual(type(row["xdate"]), type(expected["xdate"]))
-            self.assertIn(type(row["xsmalltext"]), [type(expected["xsmalltext"]), unicode])
-            self.assertIn(type(row["xtext"]), [type(expected["xtext"]), unicode])
-            self.assertIn(type(row["xnumberAsText"]), [type(expected["xnumberAsText"]), unicode])
+            self._assert_str_or_unicode(type(row["xsmalltext"]))
+            self._assert_str_or_unicode(type(row["xtext"]))
+            self._assert_str_or_unicode(type(row["xnumberAsText"]))
             self.assertEqual(type(row["xtime"]), type(expected["xtime"]))
-            self.assertIn(type(row["xtextWithNulls"]), [type(expected["xtextWithNulls"]), unicode])
-            self.assertIn(type(row["xdynamicWithNulls"]), [type(expected["xdynamicWithNulls"]), unicode])
+            self._assert_str_or_unicode(type(row["xtextWithNulls"]))
+            self._assert_str_or_unicode(type(row["xdynamicWithNulls"]))
 
             expected["rownumber"] = 0 if expected["rownumber"] is None else expected["rownumber"] + 1
             expected["rowguid"] = "0000000{0}-0000-0000-0001-020304050607".format(expected["rownumber"])
@@ -201,3 +201,9 @@ class KustoClientTests(unittest.TestCase):
                    "xtext", "xnumberAsText", "xtime", "xtextWithNulls", "xdynamicWithNulls"]
         expectedDf = DataFrame(expectedDict, columns=columns, copy=True)
         assert_frame_equal(df, expectedDf)
+
+    def _assert_str_or_unicode(self, actual):
+        try:
+            self.assertEqual(actual, str)
+        except AssertionError:
+            self.assertEqual(actual, unicode)
