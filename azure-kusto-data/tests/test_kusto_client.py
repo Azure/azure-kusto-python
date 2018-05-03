@@ -102,8 +102,8 @@ class KustoClientTests(unittest.TestCase):
             self.assertIn(type(row["xtext"]), [type(expected["xtext"]), unicode])
             self.assertIn(type(row["xnumberAsText"]), [type(expected["xnumberAsText"]), unicode])
             self.assertEqual(type(row["xtime"]), type(expected["xtime"]))
-            self.assertEqual(type(row["xtextWithNulls"]), type(expected["xtextWithNulls"]))
-            self.assertEqual(type(row["xdynamicWithNulls"]), type(expected["xdynamicWithNulls"]))
+            self.assertIn(type(row["xtextWithNulls"]), [type(expected["xtextWithNulls"]), unicode])
+            self.assertIn(type(row["xdynamicWithNulls"]), [type(expected["xdynamicWithNulls"]), unicode])
 
             expected["rownumber"] = 0 if expected["rownumber"] is None else expected["rownumber"] + 1
             expected["rowguid"] = "0000000{0}-0000-0000-0001-020304050607".format(expected["rownumber"])
