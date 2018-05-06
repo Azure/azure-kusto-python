@@ -4,7 +4,6 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>f9929b44-7edf-4436-9e6a-2bf7ecc96a26</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>azure-kusto-data\tests\sample_driver.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -84,6 +83,7 @@
     <Content Include="azure-kusto-data\requirements.txt" />
     <Content Include="azure-kusto-data\setup.cfg" />
     <Content Include="azure-kusto-data\tests\input\deft.json" />
+    <Content Include="azure-kusto-data\tests\input\querypartialresults.json" />
     <Content Include="azure-kusto-data\tests\input\versionshowcommandresult.json" />
     <Content Include="azure-kusto-ingest\MANIFEST.in" />
     <Content Include="azure-kusto-ingest\README.rst" />
