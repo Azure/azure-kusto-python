@@ -206,7 +206,7 @@ class KustoClientTests(unittest.TestCase):
                              -4004000400, 5005000500, -6006000600, 7007000700, -8008000800,
                              9009000900], dtype='timedelta64[ns]'),
             "xtextWithNulls": Series(['', '', '', '', '', '', '', '', '', '', ''], dtype=object),
-            "xdynamicWithNulls": Series([None, '', {'rowId': 1, 'arr': [0, 1]},
+            "xdynamicWithNulls": Series([None, None, {'rowId': 1, 'arr': [0, 1]},
                                          {'rowId': 2, 'arr': [0, 2]}, {'rowId': 3, 'arr': [0, 3]},
                                          {'rowId': 4, 'arr': [0, 4]}, {'rowId': 5, 'arr': [0, 5]},
                                          {'rowId': 6, 'arr': [0, 6]}, {'rowId': 7, 'arr': [0, 7]},
