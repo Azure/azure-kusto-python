@@ -7,6 +7,7 @@ from datetime import timedelta
 import re
 
 import json
+import uuid
 import dateutil.parser
 import requests
 import pandas
@@ -127,11 +128,15 @@ class KustoResponse(object):
 
     def has_exceptions(self):
         """ Checkes whether an exception was thrown. """
+        if isinstance(self.json_response, list):
+            return list(filter(lambda x: x['FrameType'] == 'DataSetCompletion', self.json_response))[0]['HasErrors']
         return 'Exceptions' in self.json_response
 
     def get_exceptions(self):
         """ Gets the excpetions got from Kusto if exists. """
-        if 'Exceptions' in self.json_response:
+        if self.has_exceptions():
+            if isinstance(self.json_response, list):
+                return list(filter(lambda x: x['FrameType'] == 'DataSetCompletion', self.json_response))[0]['OneApiErrors']
             return self.json_response['Exceptions']
         return None
 
@@ -333,7 +338,8 @@ class KustoClient(object):
             'Content-Type': 'application/json',
             'Accept-Encoding': 'gzip,deflate',
             'Fed': 'True',
-            'x-ms-client-version':'Kusto.Python.Client:' + VERSION,
+            'x-ms-client-version': 'Kusto.Python.Client:' + VERSION,
+            'x-ms-client-request-id': 'KPC.execute;' + str(uuid.uuid4()),
         }
 
         response = requests.post(

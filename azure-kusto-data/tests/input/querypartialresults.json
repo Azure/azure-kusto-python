@@ -1,0 +1,170 @@
+[{
+	"FrameType": "DataSetHeader",
+	"IsProgressive": false,
+	"Version": "v2.0"
+},
+{
+	"FrameType": "DataTable",
+	"TableId": 0,
+	"TableName": "@ExtendedProperties",
+	"TableKind": "QueryProperties",
+	"Columns": [{
+		"ColumnName": "TableId",
+		"ColumnType": "int"
+	},
+	{
+		"ColumnName": "Key",
+		"ColumnType": "string"
+	},
+	{
+		"ColumnName": "Value",
+		"ColumnType": "dynamic"
+	}],
+	"Rows": [[1,
+	"Visualization",
+	"{\"Visualization\":null,\"Title\":null,\"XColumn\":null,\"Series\":null,\"YColumns\":null,\"XTitle\":null,\"YTitle\":null,\"XAxis\":null,\"YAxis\":null,\"Legend\":null,\"YSplit\":null,\"Accumulate\":false,\"IsQuerySorted\":false,\"Kind\":null}"],
+	{
+		"OneApiErrors": [{
+			"error": {
+				"code": "LimitsExceeded",
+				"message": "Request is invalid and cannot be executed.",
+				"@type": "Kusto.Data.Exceptions.KustoServicePartialQueryFailureLimitsExceededException",
+				"@message": "Query execution has exceeded the allowed limits (2161770499): .",
+				"@context": {
+					"timestamp": "2018-05-06T07:22:22.8756889Z",
+					"machineName": "RD0003FFBEB9CE",
+					"processName": "Kusto.Azure.Svc",
+					"processId": 1664,
+					"threadId": 6872,
+					"appDomainName": "RdRuntime",
+					"clientRequestd": "unspecified;e7af3932-18f9-425f-97d8-653153800e31",
+					"activityId": "aae3aa70-2735-4af9-beb4-bd9a24a830b4",
+					"subActivityId": "aae3aa70-2735-4af9-beb4-bd9a24a830b4",
+					"activityType": "PO-OWIN-CallContext",
+					"parentActivityId": "aae3aa70-2735-4af9-beb4-bd9a24a830b4",
+					"activityStack": "(Activity stack: CRID=unspecified;e7af3932-18f9-425f-97d8-653153800e31 ARID=aae3aa70-2735-4af9-beb4-bd9a24a830b4 > PO-OWIN-CallContext/aae3aa70-2735-4af9-beb4-bd9a24a830b4)"
+				},
+				"@permanent": false,
+				"@debug": "Query execution has exceeded the allowed limits (2161770499): .\r\n[0]Kusto.Data.Exceptions.KustoServicePartialQueryFailureLimitsExceededException: Query execution has exceeded the allowed limits (2161770499): .\r\nTimestamp=2018-05-06T07:22:22.8756889Z\r\nClientRequestId=unspecified;e7af3932-18f9-425f-97d8-653153800e31\r\nActivityId=aae3aa70-2735-4af9-beb4-bd9a24a830b4\r\nActivityType=PO-OWIN-CallContext\r\nMachineName=RD0003FFBEB9CE\r\nProcessName=Kusto.Azure.Svc\r\nProcessId=1664\r\nThreadId=6872\r\nAppDomainName=RdRuntime\r\nActivityStack=(Activity stack: CRID=unspecified;e7af3932-18f9-425f-97d8-653153800e31 ARID=aae3aa70-2735-4af9-beb4-bd9a24a830b4 > PO-OWIN-CallContext/aae3aa70-2735-4af9-beb4-bd9a24a830b4)\r\nMonitoredActivityContext=ActivityType=PO-OWIN-CallContext, Timestamp=2018-05-06T07:22:22.8600180Z, ParentActivityId=aae3aa70-2735-4af9-beb4-bd9a24a830b4, TimeSinceStarted=15.6709 [ms]\r\n\r\nErrorCode=2161770499\r\nErrorMessage=\r\n   at Kusto.Cloud.Platform.Communication.PlatformExceptionDetail..ctor(Exception ex) in D:\\Builds\\1359\\Kusto\\KustoMain\\Sources\\Kusto\\Src\\Common\\Kusto.Cloud.Platform\\Communication\\PlatformExceptionDetail.cs:line 202\r\n   at Kusto.Cloud.Platform.Communication.PlatformExceptionDetail.FromException(Exception ex) in D:\\Builds\\1359\\Kusto\\KustoMain\\Sources\\Kusto\\Src\\Common\\Kusto.Cloud.Platform\\Communication\\PlatformExceptionDetail.cs:line 107\r\n   at Kusto.Data.Data.Impl.QueryV2Converter.WriteError(KdsErrorFrame errorFrame) in D:\\Builds\\1359\\Kusto\\KustoMain\\Sources\\Kusto\\Src\\Client\\Kusto.Data\\Data\\KustoDataStream.cs:line 757\r\n   at Kusto.Data.Data.Impl.QueryV2Converter.WriteDataTable(KdsTabularHeaderFrame tableHeader) in D:\\Builds\\1359\\Kusto\\KustoMain\\Sources\\Kusto\\Src\\Client\\Kusto.Data\\Data\\KustoDataStream.cs:line 736\r\n   at Kusto.Data.Data.Impl.QueryV2Converter.WriteJsonImpl(Stream stream) in D:\\Builds\\1359\\Kusto\\KustoMain\\Sources\\Kusto\\Src\\Client\\Kusto.Data\\Data\\KustoDataStream.cs:line 573\r\n   at Kusto.Data.Data.Impl.QueryV2Converter.WriteJson(JsonWriter writer, Object value, JsonSerializer serializer) in D:\\Builds\\1359\\Kusto\\KustoMain\\Sources\\Kusto\\Src\\Client\\Kusto.Data\\Data\\KustoDataStream.cs:line 553\r\n   at Newtonsoft.Json.Serialization.JsonSerializerInternalWriter.SerializeConvertable(JsonWriter writer, JsonConverter converter, Object value, JsonContract contract, JsonContainerContract collectionContract, JsonProperty containerProperty)\r\n   at Newtonsoft.Json.Serialization.JsonSerializerInternalWriter.Serialize(JsonWriter jsonWriter, Object value, Type objectType)\r\n   at Newtonsoft.Json.JsonSerializer.SerializeInternal(JsonWriter jsonWriter, Object value, Type objectType)\r\n   at Kusto.Gateway.KustoHttpResponseMessageFormatter.<>c__DisplayClass2_0.<CreateHttpResponseMessageUsingKustoQueryResultsEncoder>b__0(Stream stream, HttpContent httpContent, TransportContext context) in D:\\Builds\\1359\\Kusto\\KustoMain\\Sources\\Kusto\\Src\\Hosts\\Kusto.Gateway\\FrontendHttp\\KustoHttpResponseMessageFormatter.cs:line 84\r\n   at System.Net.Http.PushStreamContent.<>c__DisplayClass1.<Taskify>b__0(Stream stream, HttpContent content, TransportContext transportContext)\r\n   at System.Net.Http.PushStreamContent.<SerializeToStreamAsync>d__3.MoveNext()\r\n   at System.Runtime.CompilerServices.AsyncTaskMethodBuilder.Start[TStateMachine](TStateMachine& stateMachine)\r\n   at System.Net.Http.PushStreamContent.SerializeToStreamAsync(Stream stream, TransportContext context)\r\n   at System.Net.Http.HttpContent.CopyToAsync(Stream stream, TransportContext context)\r\n   at System.Web.Http.Owin.HttpMessageHandlerAdapter.<SendResponseContentAsync>d__20.MoveNext()\r\n   at System.Runtime.CompilerServices.AsyncTaskMethodBuilder.Start[TStateMachine](TStateMachine& stateMachine)\r\n   at System.Web.Http.Owin.HttpMessageHandlerAdapter.SendResponseContentAsync(HttpRequestMessage request, HttpResponseMessage response, IOwinResponse owinResponse, CancellationToken cancellationToken)\r\n   at System.Web.Http.Owin.HttpMessageHandlerAdapter.SendResponseMessageAsync(HttpRequestMessage request, HttpResponseMessage response, IOwinResponse owinResponse, CancellationToken cancellationToken)\r\n   at System.Web.Http.Owin.HttpMessageHandlerAdapter.<InvokeCore>d__0.MoveNext()\r\n   at System.Runtime.CompilerServices.AsyncTaskMethodBuilder.Start[TStateMachine](TStateMachine& stateMachine)\r\n   at System.Web.Http.Owin.HttpMessageHandlerAdapter.InvokeCore(IOwinContext context, IOwinRequest owinRequest, IOwinResponse owinResponse)\r\n   at Microsoft.Owin.Security.Infrastructure.AuthenticationMiddleware`1.<Invoke>d__0.MoveNext()\r\n   at System.Runtime.CompilerServices.AsyncTaskMethodBuilder.Start[TStateMachine](TStateMachine& stateMachine)\r\n   at Microsoft.Owin.Security.Infrastructure.AuthenticationMiddleware`1.Invoke(IOwinContext context)\r\n   at Microsoft.Owin.Cors.CorsMiddleware.<Invoke>d__0.MoveNext()\r\n   at System.Runtime.CompilerServices.AsyncTaskMethodBuilder.Start[TStateMachine](TStateMachine& stateMachine)\r\n   at Microsoft.Owin.Cors.CorsMiddleware.Invoke(IDictionary`2 environment)\r\n   at Microsoft.Owin.Security.Infrastructure.AuthenticationMiddleware`1.<Invoke>d__0.MoveNext()\r\n   at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state, Boolean preserveSyncCtx)\r\n   at System.Threading.ExecutionContext.Run(ExecutionContext executionContext, ContextCallback callback, Object state, Boolean preserveSyncCtx)\r\n   at System.Runtime.CompilerServices.AsyncMethodBuilderCore.MoveNextRunner.Run()\r\n   at System.Threading.Tasks.AwaitTaskContinuation.RunOrScheduleAction(Action action, Boolean allowInlining, Task& currentTask)\r\n   at System.Threading.Tasks.Task.FinishContinuations()\r\n   at System.Threading.Tasks.Task`1.TrySetResult(TResult result)\r\n   at System.Runtime.CompilerServices.AsyncTaskMethodBuilder`1.SetResult(TResult result)\r\n   at System.Runtime.CompilerServices.AsyncTaskMethodBuilder`1.SetResult(Task`1 completedTask)\r\n   at Microsoft.Owin.Security.Infrastructure.AuthenticationHandler.<BaseInitializeAsync>d__0.MoveNext()\r\n   at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state, Boolean preserveSyncCtx)\r\n   at System.Threading.ExecutionContext.Run(ExecutionContext executionContext, ContextCallback callback, Object state, Boolean preserveSyncCtx)\r\n   at System.Runtime.CompilerServices.AsyncMethodBuilderCore.MoveNextRunner.Run()\r\n   at System.Threading.Tasks.AwaitTaskContinuation.RunOrScheduleAction(Action action, Boolean allowInlining, Task& currentTask)\r\n   at System.Threading.Tasks.Task.FinishContinuations()\r\n   at System.Threading.Tasks.Task.Finish(Boolean bUserDelegateExecuted)\r\n   at System.Threading.Tasks.Task.ExecuteWithThreadLocal(Task& currentTaskSlot)\r\n   at System.Threading.Tasks.Task.ExecuteEntry(Boolean bPreventDoubleExecution)\r\n   at System.Threading.ThreadPoolWorkQueue.Dispatch()\r\n\r\n"
+			}
+		}]
+	}]
+},
+{
+	"FrameType": "DataTable",
+	"TableId": 1,
+	"TableName": "PrimaryResult",
+	"TableKind": "PrimaryResult",
+	"Columns": [{
+		"ColumnName": "x",
+		"ColumnType": "long"
+	}],
+	"Rows": [[1]]
+},
+{
+	"FrameType": "DataTable",
+	"TableId": 2,
+	"TableName": "QueryCompletionInformation",
+	"TableKind": "QueryCompletionInformation",
+	"Columns": [{
+		"ColumnName": "Timestamp",
+		"ColumnType": "datetime"
+	},
+	{
+		"ColumnName": "ClientRequestId",
+		"ColumnType": "string"
+	},
+	{
+		"ColumnName": "ActivityId",
+		"ColumnType": "guid"
+	},
+	{
+		"ColumnName": "SubActivityId",
+		"ColumnType": "guid"
+	},
+	{
+		"ColumnName": "ParentActivityId",
+		"ColumnType": "guid"
+	},
+	{
+		"ColumnName": "Level",
+		"ColumnType": "int"
+	},
+	{
+		"ColumnName": "LevelName",
+		"ColumnType": "string"
+	},
+	{
+		"ColumnName": "StatusCode",
+		"ColumnType": "int"
+	},
+	{
+		"ColumnName": "StatusCodeName",
+		"ColumnType": "string"
+	},
+	{
+		"ColumnName": "EventType",
+		"ColumnType": "int"
+	},
+	{
+		"ColumnName": "EventTypeName",
+		"ColumnType": "string"
+	},
+	{
+		"ColumnName": "Payload",
+		"ColumnType": "string"
+	}],
+	"Rows": [["2018-05-06T07:22:22.8809412Z",
+	"unspecified;e7af3932-18f9-425f-97d8-653153800e31",
+	"aae3aa70-2735-4af9-beb4-bd9a24a830b4",
+	"2d3d8179-5f80-4909-91e4-956c3ebf8422",
+	"69d41440-714b-46dd-8ca0-7ed0c20802da",
+	2,
+	"Error",
+	-2133196797,
+	"Query result set too large (E_QUERY_RESULT_SET_TOO_LARGE). (-2133196797)",
+	1,
+	"QueryLimitsExceeded",
+	"{\"Count\":1,\"Text\":\"Queryresultsethasexceededtheinternalrecordcountlimit1(E_QUERY_RESULT_SET_TOO_LARGE;seehttp: //aka.ms/kustoquerylimits)\"}"],
+	["2018-05-06T07:22:22.8809412Z",
+	"unspecified;e7af3932-18f9-425f-97d8-653153800e31",
+	"aae3aa70-2735-4af9-beb4-bd9a24a830b4",
+	"2d3d8179-5f80-4909-91e4-956c3ebf8422",
+	"69d41440-714b-46dd-8ca0-7ed0c20802da",
+	6,
+	"Stats",
+	0,
+	"S_OK (0)",
+	0,
+	"QueryResourceConsumption",
+	"{\"ExecutionTime\":0.0,\"resource_usage\":{\"cache\":{\"memory\":{\"hits\":0,\"misses\":0,\"total\":0},\"disk\":{\"hits\":0,\"misses\":0,\"total\":0}},\"cpu\":{\"user\":\"00: 00: 00\",\"kernel\":\"00: 00: 00\",\"totalcpu\":\"00: 00: 00\"},\"memory\":{\"peak_per_node\":0}},\"dataset_statistics\":[{\"table_row_count\":1,\"table_size\":8}]}"]]
+},
+{
+	"FrameType": "DataSetCompletion",
+	"HasErrors": true,
+	"Cancelled": false,
+	"OneApiErrors": [{
+		"error": {
+			"code": "LimitsExceeded",
+			"message": "Request is invalid and cannot be executed.",
+			"@type": "Kusto.Data.Exceptions.KustoServicePartialQueryFailureLimitsExceededException",
+			"@message": "Query execution has exceeded the allowed limits (2161770499): .",
+			"@context": {
+				"timestamp": "2018-05-06T07:22:22.8756889Z",
+				"machineName": "RD0003FFBEB9CE",
+				"processName": "Kusto.Azure.Svc",
+				"processId": 1664,
+				"threadId": 6872,
+				"appDomainName": "RdRuntime",
+				"clientRequestd": "unspecified;e7af3932-18f9-425f-97d8-653153800e31",
+				"activityId": "aae3aa70-2735-4af9-beb4-bd9a24a830b4",
+				"subActivityId": "aae3aa70-2735-4af9-beb4-bd9a24a830b4",
+				"activityType": "PO-OWIN-CallContext",
+				"parentActivityId": "aae3aa70-2735-4af9-beb4-bd9a24a830b4",
+				"activityStack": "(Activity stack: CRID=unspecified;e7af3932-18f9-425f-97d8-653153800e31 ARID=aae3aa70-2735-4af9-beb4-bd9a24a830b4 > PO-OWIN-CallContext/aae3aa70-2735-4af9-beb4-bd9a24a830b4)"
+			},
+			"@permanent": false,
+			"@debug": "Query execution has exceeded the allowed limits (2161770499): .\r\n[0]Kusto.Data.Exceptions.KustoServicePartialQueryFailureLimitsExceededException: Query execution has exceeded the allowed limits (2161770499): .\r\nTimestamp=2018-05-06T07:22:22.8756889Z\r\nClientRequestId=unspecified;e7af3932-18f9-425f-97d8-653153800e31\r\nActivityId=aae3aa70-2735-4af9-beb4-bd9a24a830b4\r\nActivityType=PO-OWIN-CallContext\r\nMachineName=RD0003FFBEB9CE\r\nProcessName=Kusto.Azure.Svc\r\nProcessId=1664\r\nThreadId=6872\r\nAppDomainName=RdRuntime\r\nActivityStack=(Activity stack: CRID=unspecified;e7af3932-18f9-425f-97d8-653153800e31 ARID=aae3aa70-2735-4af9-beb4-bd9a24a830b4 > PO-OWIN-CallContext/aae3aa70-2735-4af9-beb4-bd9a24a830b4)\r\nMonitoredActivityContext=ActivityType=PO-OWIN-CallContext, Timestamp=2018-05-06T07:22:22.8600180Z, ParentActivityId=aae3aa70-2735-4af9-beb4-bd9a24a830b4, TimeSinceStarted=15.6709 [ms]\r\n\r\nErrorCode=2161770499\r\nErrorMessage=\r\n   at Kusto.Cloud.Platform.Communication.PlatformExceptionDetail..ctor(Exception ex) in D:\\Builds\\1359\\Kusto\\KustoMain\\Sources\\Kusto\\Src\\Common\\Kusto.Cloud.Platform\\Communication\\PlatformExceptionDetail.cs:line 202\r\n   at Kusto.Cloud.Platform.Communication.PlatformExceptionDetail.FromException(Exception ex) in D:\\Builds\\1359\\Kusto\\KustoMain\\Sources\\Kusto\\Src\\Common\\Kusto.Cloud.Platform\\Communication\\PlatformExceptionDetail.cs:line 107\r\n   at Kusto.Data.Data.Impl.QueryV2Converter.WriteSetCompletion() in D:\\Builds\\1359\\Kusto\\KustoMain\\Sources\\Kusto\\Src\\Client\\Kusto.Data\\Data\\KustoDataStream.cs:line 662\r\n   at Kusto.Data.Data.Impl.QueryV2Converter.WriteJson(JsonWriter writer, Object value, JsonSerializer serializer) in D:\\Builds\\1359\\Kusto\\KustoMain\\Sources\\Kusto\\Src\\Client\\Kusto.Data\\Data\\KustoDataStream.cs:line 555\r\n   at Newtonsoft.Json.Serialization.JsonSerializerInternalWriter.SerializeConvertable(JsonWriter writer, JsonConverter converter, Object value, JsonContract contract, JsonContainerContract collectionContract, JsonProperty containerProperty)\r\n   at Newtonsoft.Json.Serialization.JsonSerializerInternalWriter.Serialize(JsonWriter jsonWriter, Object value, Type objectType)\r\n   at Newtonsoft.Json.JsonSerializer.SerializeInternal(JsonWriter jsonWriter, Object value, Type objectType)\r\n   at Kusto.Gateway.KustoHttpResponseMessageFormatter.<>c__DisplayClass2_0.<CreateHttpResponseMessageUsingKustoQueryResultsEncoder>b__0(Stream stream, HttpContent httpContent, TransportContext context) in D:\\Builds\\1359\\Kusto\\KustoMain\\Sources\\Kusto\\Src\\Hosts\\Kusto.Gateway\\FrontendHttp\\KustoHttpResponseMessageFormatter.cs:line 84\r\n   at System.Net.Http.PushStreamContent.<>c__DisplayClass1.<Taskify>b__0(Stream stream, HttpContent content, TransportContext transportContext)\r\n   at System.Net.Http.PushStreamContent.<SerializeToStreamAsync>d__3.MoveNext()\r\n   at System.Runtime.CompilerServices.AsyncTaskMethodBuilder.Start[TStateMachine](TStateMachine& stateMachine)\r\n   at System.Net.Http.PushStreamContent.SerializeToStreamAsync(Stream stream, TransportContext context)\r\n   at System.Net.Http.HttpContent.CopyToAsync(Stream stream, TransportContext context)\r\n   at System.Web.Http.Owin.HttpMessageHandlerAdapter.<SendResponseContentAsync>d__20.MoveNext()\r\n   at System.Runtime.CompilerServices.AsyncTaskMethodBuilder.Start[TStateMachine](TStateMachine& stateMachine)\r\n   at System.Web.Http.Owin.HttpMessageHandlerAdapter.SendResponseContentAsync(HttpRequestMessage request, HttpResponseMessage response, IOwinResponse owinResponse, CancellationToken cancellationToken)\r\n   at System.Web.Http.Owin.HttpMessageHandlerAdapter.SendResponseMessageAsync(HttpRequestMessage request, HttpResponseMessage response, IOwinResponse owinResponse, CancellationToken cancellationToken)\r\n   at System.Web.Http.Owin.HttpMessageHandlerAdapter.<InvokeCore>d__0.MoveNext()\r\n   at System.Runtime.CompilerServices.AsyncTaskMethodBuilder.Start[TStateMachine](TStateMachine& stateMachine)\r\n   at System.Web.Http.Owin.HttpMessageHandlerAdapter.InvokeCore(IOwinContext context, IOwinRequest owinRequest, IOwinResponse owinResponse)\r\n   at Microsoft.Owin.Security.Infrastructure.AuthenticationMiddleware`1.<Invoke>d__0.MoveNext()\r\n   at System.Runtime.CompilerServices.AsyncTaskMethodBuilder.Start[TStateMachine](TStateMachine& stateMachine)\r\n   at Microsoft.Owin.Security.Infrastructure.AuthenticationMiddleware`1.Invoke(IOwinContext context)\r\n   at Microsoft.Owin.Cors.CorsMiddleware.<Invoke>d__0.MoveNext()\r\n   at System.Runtime.CompilerServices.AsyncTaskMethodBuilder.Start[TStateMachine](TStateMachine& stateMachine)\r\n   at Microsoft.Owin.Cors.CorsMiddleware.Invoke(IDictionary`2 environment)\r\n   at Microsoft.Owin.Security.Infrastructure.AuthenticationMiddleware`1.<Invoke>d__0.MoveNext()\r\n   at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state, Boolean preserveSyncCtx)\r\n   at System.Threading.ExecutionContext.Run(ExecutionContext executionContext, ContextCallback callback, Object state, Boolean preserveSyncCtx)\r\n   at System.Runtime.CompilerServices.AsyncMethodBuilderCore.MoveNextRunner.Run()\r\n   at System.Threading.Tasks.AwaitTaskContinuation.RunOrScheduleAction(Action action, Boolean allowInlining, Task& currentTask)\r\n   at System.Threading.Tasks.Task.FinishContinuations()\r\n   at System.Threading.Tasks.Task`1.TrySetResult(TResult result)\r\n   at System.Runtime.CompilerServices.AsyncTaskMethodBuilder`1.SetResult(TResult result)\r\n   at System.Runtime.CompilerServices.AsyncTaskMethodBuilder`1.SetResult(Task`1 completedTask)\r\n   at Microsoft.Owin.Security.Infrastructure.AuthenticationHandler.<BaseInitializeAsync>d__0.MoveNext()\r\n   at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state, Boolean preserveSyncCtx)\r\n   at System.Threading.ExecutionContext.Run(ExecutionContext executionContext, ContextCallback callback, Object state, Boolean preserveSyncCtx)\r\n   at System.Runtime.CompilerServices.AsyncMethodBuilderCore.MoveNextRunner.Run()\r\n   at System.Threading.Tasks.AwaitTaskContinuation.RunOrScheduleAction(Action action, Boolean allowInlining, Task& currentTask)\r\n   at System.Threading.Tasks.Task.FinishContinuations()\r\n   at System.Threading.Tasks.Task.Finish(Boolean bUserDelegateExecuted)\r\n   at System.Threading.Tasks.Task.ExecuteWithThreadLocal(Task& currentTaskSlot)\r\n   at System.Threading.Tasks.Task.ExecuteEntry(Boolean bPreventDoubleExecution)\r\n   at System.Threading.ThreadPoolWorkQueue.Dispatch()\r\n\r\n"
+		}
+	}]
+}]
