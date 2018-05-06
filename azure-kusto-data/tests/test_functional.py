@@ -4,8 +4,8 @@ Functional tests of the client.
 
 import json
 import unittest
-from dateutil.tz.tz import tzutc
 from datetime import datetime, timedelta
+from dateutil.tz.tz import tzutc
 
 from azure.kusto.data import KustoResponse
 
