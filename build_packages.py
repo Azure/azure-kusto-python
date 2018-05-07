@@ -2,7 +2,7 @@ import argparse
 import os
 from subprocess import check_call
 
-DEFAULT_DESTINATION_FOLDER = "../dist"
+DEFAULT_DESTINATION_FOLDER = os.path.join("..", "dist")
 package_list = ['azure-kusto-data', 'azure-kusto-ingest']
 
 

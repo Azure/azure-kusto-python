@@ -24,14 +24,21 @@ class ConverterTests(unittest.TestCase):
         self.assertEqual(KustoResultIter.to_timedelta('02:04:03'), timedelta(hours=2, minutes=4, seconds=3))
         # Test milliseconds
         self.assertEqual(KustoResultIter.to_timedelta('00:00:00.099'), timedelta(milliseconds=99))
-        self.assertEqual(KustoResultIter.to_timedelta('02:04:03.0123'), timedelta(hours=2, minutes=4, seconds=3, milliseconds=123))
+        self.assertEqual(KustoResultIter.to_timedelta('02:04:03.0123'), timedelta(hours=2, minutes=4, seconds=3, microseconds=12300))
         # Test days
         self.assertEqual(KustoResultIter.to_timedelta('01.00:00:00'), timedelta(days=1))
         self.assertEqual(KustoResultIter.to_timedelta('02.04:05:07'), timedelta(days=2, hours=4, minutes=5, seconds=7))
+        # Test negative
+        self.assertEqual(KustoResultIter.to_timedelta('-01.00:00:00'), -timedelta(days=1))
+        self.assertEqual(KustoResultIter.to_timedelta('-02.04:05:07'), -timedelta(days=2, hours=4, minutes=5, seconds=7))
         # Test all together
         self.assertEqual(KustoResultIter.to_timedelta('00.00:00:00.000'), timedelta(seconds=0))
         self.assertEqual(KustoResultIter.to_timedelta('02.04:05:07.789'), timedelta(days=2, hours=4, minutes=5, seconds=7, milliseconds=789))
         self.assertEqual(KustoResultIter.to_timedelta('03.00:00:00.111'), timedelta(days=3, milliseconds=111))
+        # Test from Ticks
+        self.assertEqual(KustoResultIter.to_timedelta(-80080008), timedelta(microseconds=-8008001))
+        self.assertEqual(KustoResultIter.to_timedelta(10010001), timedelta(microseconds=1001000))
+
 
     def test_to_timestamp_fail(self):
         """
@@ -41,6 +48,8 @@ class ConverterTests(unittest.TestCase):
         self.assertRaises(ValueError, KustoResultIter.to_timedelta, 'foo')
         self.assertRaises(ValueError, KustoResultIter.to_timedelta, '00')
         self.assertRaises(ValueError, KustoResultIter.to_timedelta, '00:00')
+        self.assertRaises(ValueError, KustoResultIter.to_timedelta, '03.00:00:00.')
+        self.assertRaises(ValueError, KustoResultIter.to_timedelta, '03.00:00:00.111a')
 
     def test_to_datetime(self):
         """ Tests datetime read by KustoResultIter """

@@ -4,86 +4,170 @@ Functional tests of the client.
 
 import json
 import unittest
-from dateutil.tz.tz import tzutc
 from datetime import datetime, timedelta
+from dateutil.tz.tz import tzutc
 
 from azure.kusto.data import KustoResponse
 
 # Sample response against all tests should be run
 RESPONSE_TEXT = """
+[{
+	"FrameType": "DataSetHeader",
+	"IsProgressive": false,
+	"Version": "v2.0"
+},
 {
-   "Tables":[
-      {
-         "Columns":[
-            {
-               "ColumnName":"Timestamp",
-               "DataType":"DateTime"
-            },
-            {
-               "ColumnName":"Name",
-               "DataType":"String"
-            },
-            {
-               "ColumnName":"Altitude",
-               "DataType":"Int64"
-            },
-            {
-               "ColumnName":"Temperature",
-               "DataType":"Double"
-            },
-            {
-               "ColumnName":"IsFlying",
-               "DataType":"SByte"
-            },
-            {
-               "ColumnName":"TimeFlying",
-               "DataType":"TimeSpan"
-            }
-         ],
-         "TableName":"Table_0",
-         "Rows":[
-            [
-               "2016-06-06T15:35:00Z",
-               "foo",
-               101,
-               3.14,
-               false,
-               "4.01:02:03.567"
-            ],
-            [
-               "2016-06-07T16:00:00Z",
-               "bar",
-               555,
-               2.71,
-               true,
-               "00:00:00"
-            ],
-            [
-               null,
-               null,
-               null,
-               null,
-               null,
-               null
-            ]
-         ]
-      },
-      {
-         "Columns":[
-            {
-               "ColumnName":"Value",
-               "DataType":"String"
-            }
-         ],
-         "TableName":"Table_1",
-         "Rows":[
-            [
-               {"Visualization":"table","Title":"","Accumulate":false,"IsQuerySorted":false,"Annotation":""}
-            ]
-         ]
-      }
-   ]
-}
+	"FrameType": "DataTable",
+	"TableId": 0,
+	"TableName": "@ExtendedProperties",
+	"TableKind": "QueryProperties",
+	"Columns": [{
+		"ColumnName": "TableId",
+		"ColumnType": "int"
+	},
+	{
+		"ColumnName": "Key",
+		"ColumnType": "string"
+	},
+	{
+		"ColumnName": "Value",
+		"ColumnType": "dynamic"
+	}],
+	"Rows": [[1,
+	"Visualization",
+	"{\\"Visualization\\":null,\\"Title\\":null,\\"XColumn\\":null,\\"Series\\":null,\\"YColumns\\":null,\\"XTitle\\":null,\\"YTitle\\":null,\\"XAxis\\":null,\\"YAxis\\":null,\\"Legend\\":null,\\"YSplit\\":null,\\"Accumulate\\":false,\\"IsQuerySorted\\":false,\\"Kind\\":null}"]]
+},
+{
+	"FrameType": "DataTable",
+	"TableId": 1,
+	"TableName": "temp",
+	"TableKind": "PrimaryResult",
+	"Columns": [{
+		"ColumnName": "Timestamp",
+		"ColumnType": "datetime"
+	},
+	{
+		"ColumnName": "Name",
+		"ColumnType": "string"
+	},
+	{
+		"ColumnName": "Altitude",
+		"ColumnType": "long"
+	},
+	{
+		"ColumnName": "Temperature",
+		"ColumnType": "real"
+	},
+	{
+		"ColumnName": "IsFlying",
+		"ColumnType": "bool"
+	},
+	{
+		"ColumnName": "TimeFlying",
+		"ColumnType": "timespan"
+	}],
+	"Rows": [["2016-06-06T15:35:00Z",
+	"foo",
+	101,
+	3.14,
+	false,
+	3493235670000],
+	["2016-06-07T16:00:00Z",
+	"bar",
+	555,
+	2.71,
+	true,
+	0],
+	[null,
+	"",
+	null,
+	null,
+	null,
+	null]]
+},
+{
+	"FrameType": "DataTable",
+	"TableId": 2,
+	"TableName": "QueryCompletionInformation",
+	"TableKind": "QueryCompletionInformation",
+	"Columns": [{
+		"ColumnName": "Timestamp",
+		"ColumnType": "datetime"
+	},
+	{
+		"ColumnName": "ClientRequestId",
+		"ColumnType": "string"
+	},
+	{
+		"ColumnName": "ActivityId",
+		"ColumnType": "guid"
+	},
+	{
+		"ColumnName": "SubActivityId",
+		"ColumnType": "guid"
+	},
+	{
+		"ColumnName": "ParentActivityId",
+		"ColumnType": "guid"
+	},
+	{
+		"ColumnName": "Level",
+		"ColumnType": "int"
+	},
+	{
+		"ColumnName": "LevelName",
+		"ColumnType": "string"
+	},
+	{
+		"ColumnName": "StatusCode",
+		"ColumnType": "int"
+	},
+	{
+		"ColumnName": "StatusCodeName",
+		"ColumnType": "string"
+	},
+	{
+		"ColumnName": "EventType",
+		"ColumnType": "int"
+	},
+	{
+		"ColumnName": "EventTypeName",
+		"ColumnType": "string"
+	},
+	{
+		"ColumnName": "Payload",
+		"ColumnType": "string"
+	}],
+	"Rows": [["2018-05-01T09:32:38.916566Z",
+	"unspecified;e8e72755-786b-4bdc-835d-ea49d63d09fd",
+	"5935a050-e466-48a0-991d-0ec26bd61c7e",
+	"8182b177-7a80-4158-aca8-ff4fd8e7d3f8",
+	"6f3c1072-2739-461c-8aa7-3cfc8ff528a8",
+	4,
+	"Info",
+	0,
+	"S_OK (0)",
+	4,
+	"QueryInfo",
+	"{\\"Count\\":1,\\"Text\\":\\"Querycompletedsuccessfully\\"}"],
+	["2018-05-01T09:32:38.916566Z",
+	"unspecified;e8e72755-786b-4bdc-835d-ea49d63d09fd",
+	"5935a050-e466-48a0-991d-0ec26bd61c7e",
+	"8182b177-7a80-4158-aca8-ff4fd8e7d3f8",
+	"6f3c1072-2739-461c-8aa7-3cfc8ff528a8",
+	6,
+	"Stats",
+	0,
+	"S_OK (0)",
+	0,
+	"QueryResourceConsumption",
+	"{\\"ExecutionTime\\":0.0156222,\\"resource_usage\\":{\\"cache\\":{\\"memory\\":{\\"hits\\":13,\\"misses\\":0,\\"total\\":13},\\"disk\\":{\\"hits\\":0,\\"misses\\":0,\\"total\\":0}},\\"cpu\\":{\\"user\\":\\"00: 00: 00\\",\\"kernel\\":\\"00: 00: 00\\",\\"totalcpu\\":\\"00: 00: 00\\"},\\"memory\\":{\\"peak_per_node\\":16777312}},\\"dataset_statistics\\":[{\\"table_row_count\\":3,\\"table_size\\":191}]}"]]
+},
+{
+	"FrameType": "DataSetCompletion",
+	"HasErrors": false,
+	"Cancelled": false
+}]
 """
 
 
@@ -101,7 +185,7 @@ class FunctionalTests(unittest.TestCase):
             row_count = row_count + 1
         self.assertEqual(row_count, 3)
 
-        self.assertEqual(2, response.get_table_count())
+        self.assertEqual(5, response.get_table_count())
         # Test access by index and by column name
         for row in response.iter_all():
             self.assertEqual(row[0], row['Timestamp'])
@@ -140,7 +224,7 @@ class FunctionalTests(unittest.TestCase):
         self.assertEqual(timedelta(), rows[1]['TimeFlying'])
 
         self.assertIsNone(rows[2]['Timestamp'])
-        self.assertIsNone(rows[2]['Name'])
+        self.assertIn(rows[2]['Name'], ['', u''])
         self.assertIsNone(rows[2]['Altitude'])
         self.assertIsNone(rows[2]['Temperature'], 2)
         self.assertIsNone(rows[2]['IsFlying'])
@@ -152,10 +236,10 @@ class FunctionalTests(unittest.TestCase):
     def test_invalid_table(self):
         """ Tests calling of table with index that doesn't exists """
         response = KustoResponse(json.loads(RESPONSE_TEXT))
-        self.assertRaises(IndexError, response.iter_all, 4)
-        self.assertRaises(IndexError, response.iter_all, -3)
+        self.assertRaises(IndexError, response.iter_all, 7)
+        self.assertRaises(IndexError, response.iter_all, -6)
 
-    def test_columndont_exist(self):
+    def test_column_dont_exist(self):
         """ Tests accessing column that doesn't exists """
         response = KustoResponse(json.loads(RESPONSE_TEXT))
         row = list(response.iter_all())[0]

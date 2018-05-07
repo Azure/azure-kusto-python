@@ -1,0 +1,1 @@
+{"Tables":[{"TableName":"Table_0","Columns":[{"ColumnName":"BuildVersion","DataType":"String"},{"ColumnName":"BuildTime","DataType":"DateTime"},{"ColumnName":"ServiceType","DataType":"String"},{"ColumnName":"ProductVersion","DataType":"String"}],"Rows":[["1.0.6693.14577","2018-04-29T08:05:54Z","Engine","KustoMain_2018.04.29.5"]]}]}

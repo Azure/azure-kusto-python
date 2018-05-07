@@ -4,8 +4,6 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>f9929b44-7edf-4436-9e6a-2bf7ecc96a26</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>
-    </StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -27,6 +25,7 @@
     <Folder Include="azure-kusto-data\azure\kusto\" />
     <Folder Include="azure-kusto-data\azure\kusto\data\" />
     <Folder Include="azure-kusto-data\tests\" />
+    <Folder Include="azure-kusto-data\tests\input\" />
     <Folder Include="azure-kusto-ingest\" />
     <Folder Include="azure-kusto-ingest\azure\" />
     <Folder Include="azure-kusto-ingest\azure\kusto\" />
@@ -35,6 +34,9 @@
     <Folder Include="azure-kusto-ingest\tests\input\" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="azure-kusto-data\azure\kusto\data\aad_helper.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="azure-kusto-data\azure\kusto\data\kusto_client.py" />
     <Compile Include="azure-kusto-data\azure\kusto\data\kusto_exceptions.py" />
     <Compile Include="azure-kusto-data\azure\kusto\data\version.py" />
@@ -46,6 +48,7 @@
     <Compile Include="azure-kusto-data\tests\test_converter.py" />
     <Compile Include="azure-kusto-data\tests\test_functional.py" />
     <Compile Include="azure-kusto-data\tests\sample_driver.py" />
+    <Compile Include="azure-kusto-data\tests\test_kusto_client.py" />
     <Compile Include="azure-kusto-data\tests\__init__.py">
       <SubType>Code</SubType>
     </Compile>
@@ -79,6 +82,9 @@
     <Content Include="azure-kusto-data\README.rst" />
     <Content Include="azure-kusto-data\requirements.txt" />
     <Content Include="azure-kusto-data\setup.cfg" />
+    <Content Include="azure-kusto-data\tests\input\deft.json" />
+    <Content Include="azure-kusto-data\tests\input\querypartialresults.json" />
+    <Content Include="azure-kusto-data\tests\input\versionshowcommandresult.json" />
     <Content Include="azure-kusto-ingest\MANIFEST.in" />
     <Content Include="azure-kusto-ingest\README.rst" />
     <Content Include="azure-kusto-ingest\requirements.txt" />

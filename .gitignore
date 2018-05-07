@@ -294,5 +294,7 @@ build/
 
 # Wheel files
 *.whl
-/.pytest_cache/v/cache/lastfailed
 *.tar.gz
+
+# pytest temp files
+*lastfailed
