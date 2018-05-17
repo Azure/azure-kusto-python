@@ -46,7 +46,7 @@ setup(
         'adal>=0.4.5',
         'appdirs>=1.4.3',
         'asn1crypto>=0.21.1',
-        'azure-kusto-data>=0.0.1',
+        'azure-kusto-data>=0.0.3',
         'azure-storage-blob>=1.1.0',
         'azure-storage-common>=1.1.0',
         'azure-storage-queue>=1.1.0',
