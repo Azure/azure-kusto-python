@@ -37,7 +37,6 @@ def mocked_requests_post(*args, **kwargs):
             file_name = "querypartialresults.json"
         elif 'Deft' in kwargs['json']['csl']:
             file_name = 'deft.json'
-        print(os.path.dirname(__file__))
         return MockResponse(json.loads(open(os.path.join(os.path.dirname(__file__), 'input', file_name), 'r').read()), 200)
     elif args[0] == 'https://somecluster.kusto.windows.net/v1/rest/mgmt':
         return MockResponse(json.loads(open(os.path.join(os.path.dirname(__file__), 'input', 'versionshowcommandresult.json'), 'r').read()), 200)
