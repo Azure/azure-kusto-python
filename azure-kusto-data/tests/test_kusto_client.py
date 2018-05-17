@@ -37,7 +37,6 @@ def mocked_requests_post(*args, **kwargs):
             file_name = "querypartialresults.json"
         elif 'Deft' in kwargs['json']['csl']:
             file_name = 'deft.json'
-        print(os.path.dirname(__file__))
         return MockResponse(json.loads(open(os.path.join(os.path.dirname(__file__), 'input', file_name), 'r').read()), 200)
     elif args[0] == 'https://somecluster.kusto.windows.net/v1/rest/mgmt':
         return MockResponse(json.loads(open(os.path.join(os.path.dirname(__file__), 'input', 'versionshowcommandresult.json'), 'r').read()), 200)
@@ -202,9 +201,9 @@ class KustoClientTests(unittest.TestCase):
             "xtext": Series(['', 'Zero', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven',
                              'Eight', 'Nine'], dtype=object),
             "xnumberAsText": Series(['', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'], dtype=object),
-            "xtime": Series(['NaT', 0, 1001000100, -2002000200, 3003000300,
-                             -4004000400, 5005000500, -6006000600, 7007000700, -8008000800,
-                             9009000900], dtype='timedelta64[ns]'),
+            "xtime": Series(['NaT', 0, "00:00:01.0010001", "-00:00:02.0020002", "00:00:03.0030003",
+                             "-00:00:04.0040004", "00:00:05.0050005", "-00:00:06.0060006", "00:00:07.0070007", 
+                             "-00:00:08.0080008", "00:00:09.0090009"], dtype='timedelta64[ns]'),
             "xtextWithNulls": Series(['', '', '', '', '', '', '', '', '', '', ''], dtype=object),
             "xdynamicWithNulls": Series([None, None, {'rowId': 1, 'arr': [0, 1]},
                                          {'rowId': 2, 'arr': [0, 2]}, {'rowId': 3, 'arr': [0, 3]},

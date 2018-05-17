@@ -160,12 +160,13 @@ class KustoResponse(object):
 
         for col in kusto_columns:
             col_name = col["ColumnName"]
-            if col["ColumnType"].lower() == "timespan":
-                frame[col_name] = pandas.to_timedelta(frame[col_name])
-            elif col["ColumnType"].lower() == "dynamic":
+            col_type = col['ColumnType'] if 'ColumnType' in col else col['DataType']
+            if col_type.lower() == "timespan":
+                frame[col_name] = pandas.to_timedelta(frame[col_name].apply(lambda t: t.replace(".", " days ") if t and '.' in t.split(":")[0] else t))
+            elif col_type.lower() == "dynamic":
                 frame[col_name] = frame[col_name].apply(lambda x: json.loads(x) if x else None)
             else:
-                pandas_type = self._kusto_to_data_frame_data_types[col['ColumnType'] if 'ColumnType' in col else col['DataType']]
+                pandas_type = self._kusto_to_data_frame_data_types[col_type]
                 frame[col_name] = frame[col_name].astype(pandas_type, errors=errors)
 
         return frame
@@ -187,7 +188,7 @@ class KustoResponse(object):
         'real' : 'float64',
         'string' : 'object',
         'bool' : 'object',
-        'Guid' : 'object',
+        'guid' : 'object',
         'timespan' : 'object',
 
         # Support V1
