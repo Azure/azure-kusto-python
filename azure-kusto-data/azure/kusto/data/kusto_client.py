@@ -162,7 +162,7 @@ class KustoResponse(object):
             col_name = col["ColumnName"]
             col_type = col['ColumnType'] if 'ColumnType' in col else col['DataType']
             if col_type.lower() == "timespan":
-                frame[col_name] = pandas.to_timedelta(frame[col_name].apply(lambda t: t.replace(".", " days ") if '.' in t else t))
+                frame[col_name] = pandas.to_timedelta(frame[col_name].apply(lambda t: t.replace(".", " days ") if t and '.' in t.split(":")[0] else t))
             elif col_type.lower() == "dynamic":
                 frame[col_name] = frame[col_name].apply(lambda x: json.loads(x) if x else None)
             else:
