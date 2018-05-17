@@ -350,7 +350,6 @@ class KustoClient(object):
             timeout=timeout
         )
 
-        print("Hello")
         if response.status_code == 200:
             kusto_response = KustoResponse(response.json())
             if kusto_response.has_exceptions() and not accept_partial_results:
