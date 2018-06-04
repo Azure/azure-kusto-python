@@ -8,7 +8,7 @@ from adal import AuthenticationContext
 
 class _AadHelper(object):
     def __init__(self, kusto_cluster, client_id=None, client_secret=None, username=None, password=None, authority=None):
-        self.adal_context = AuthenticationContext('https://login.windows.net/{0}/'.format(authority or 'microsoft.com'))
+        self.adal_context = AuthenticationContext('https://login.windows.net/{0}'.format(authority or 'microsoft.com'))
         self.kusto_cluster = kusto_cluster
         self.client_id = client_id or "db662dc1-0cfe-4e1c-a843-19a68e65be58"
         self.client_secret = client_secret
