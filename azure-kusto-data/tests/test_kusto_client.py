@@ -4,6 +4,7 @@
 import os
 import json
 import unittest
+from six import text_type
 from datetime import datetime, timedelta
 from mock import patch
 from dateutil.tz.tz import tzutc
@@ -43,7 +44,17 @@ def mocked_requests_post(*args, **kwargs):
 
     return MockResponse(None, 404)
 
-DIGIT_WORDS = ["Zero", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "ten"]
+DIGIT_WORDS = [text_type("Zero"),
+               text_type("One"),
+               text_type("Two"),
+               text_type("Three"),
+               text_type("Four"),
+               text_type("Five"),
+               text_type("Six"),
+               text_type("Seven"),
+               text_type("Eight"),
+               text_type("Nine"),
+               text_type("ten")]
 
 class KustoClientTests(unittest.TestCase):
     """ A class to test KustoClient. """
@@ -54,7 +65,7 @@ class KustoClientTests(unittest.TestCase):
         client = KustoClient("https://somecluster.kusto.windows.net")
         response = client.execute_query("PythonTest", "Deft")
         expected = {"rownumber": None,
-                    "rowguid": "",
+                    "rowguid": text_type(""),
                     "xdouble": None,
                     "xfloat": None,
                     "xbool": None,
@@ -66,12 +77,12 @@ class KustoClientTests(unittest.TestCase):
                     "xuint32": None,
                     "xuint64": None,
                     "xdate": None,
-                    "xsmalltext": "",
-                    "xtext": "",
-                    "xnumberAsText": "",
+                    "xsmalltext": text_type(""),
+                    "xtext": text_type(""),
+                    "xnumberAsText": text_type(""),
                     "xtime": None,
-                    "xtextWithNulls": "",
-                    "xdynamicWithNulls": ""}
+                    "xtextWithNulls": text_type(""),
+                    "xdynamicWithNulls": text_type("")}
 
         for row in response.iter_all():
             self.assertEqual(row["rownumber"], expected["rownumber"])
@@ -95,7 +106,7 @@ class KustoClientTests(unittest.TestCase):
             self.assertEqual(row["xdynamicWithNulls"], expected["xdynamicWithNulls"])
 
             self.assertEqual(type(row["rownumber"]), type(expected["rownumber"]))
-            self._assert_str_or_unicode(type(row["rowguid"]))
+            self.assertEqual(type(row["rowguid"]), type(expected["rowguid"]))
             self.assertEqual(type(row["xdouble"]), type(expected["xdouble"]))
             self.assertEqual(type(row["xfloat"]), type(expected["xfloat"]))
             self.assertEqual(type(row["xbool"]), type(expected["xbool"]))
@@ -107,15 +118,15 @@ class KustoClientTests(unittest.TestCase):
             self.assertEqual(type(row["xuint32"]), type(expected["xuint32"]))
             self.assertEqual(type(row["xuint64"]), type(expected["xuint64"]))
             self.assertEqual(type(row["xdate"]), type(expected["xdate"]))
-            self._assert_str_or_unicode(type(row["xsmalltext"]))
-            self._assert_str_or_unicode(type(row["xtext"]))
-            self._assert_str_or_unicode(type(row["xnumberAsText"]))
+            self.assertEqual(type(row["xsmalltext"]), type(expected["xsmalltext"]))
+            self.assertEqual(type(row["xtext"]), type(expected["xtext"]))
+            self.assertEqual(type(row["xnumberAsText"]), type(expected["xnumberAsText"]))
             self.assertEqual(type(row["xtime"]), type(expected["xtime"]))
-            self._assert_str_or_unicode(type(row["xtextWithNulls"]))
-            self._assert_str_or_unicode(type(row["xdynamicWithNulls"]))
+            self.assertEqual(type(row["xtextWithNulls"]), type(expected["xtextWithNulls"]))
+            self.assertEqual(type(row["xdynamicWithNulls"]), type(expected["xdynamicWithNulls"]))
 
             expected["rownumber"] = 0 if expected["rownumber"] is None else expected["rownumber"] + 1
-            expected["rowguid"] = "0000000{0}-0000-0000-0001-020304050607".format(expected["rownumber"])
+            expected["rowguid"] = text_type("0000000{0}-0000-0000-0001-020304050607".format(expected["rownumber"]))
             expected["xdouble"] = round(float(0) if expected["xdouble"] is None else expected["xdouble"] + 1.0001, 4)
             expected["xfloat"] = round(float(0) if expected["xfloat"] is None else expected["xfloat"] + 1.01, 2)
             expected["xbool"] = False if expected["xbool"] is None else not expected["xbool"]
@@ -128,13 +139,13 @@ class KustoClientTests(unittest.TestCase):
             expected["xuint64"] = 0 if expected["xuint64"] is None else expected["xuint64"] + 1
             expected["xdate"] = (expected["xdate"] or datetime(2013, 1, 1, 1, 1, 1, 0, tzinfo=tzutc()))
             expected["xdate"] = expected["xdate"].replace(year=expected["xdate"].year + 1)
-            expected["xsmalltext"] = DIGIT_WORDS[expected["xint16"]]
-            expected["xtext"] = DIGIT_WORDS[expected["xint16"]]
-            expected["xnumberAsText"] = str(expected["xint16"])
+            expected["xsmalltext"] = DIGIT_WORDS[int(expected["xint16"])]
+            expected["xtext"] = DIGIT_WORDS[int(expected["xint16"])]
+            expected["xnumberAsText"] = text_type(expected["xint16"])
             microseconds = 1001 if expected["rownumber"] == 5 else 1000
             expected["xtime"] = timedelta() if expected["xtime"] is None else (abs(expected["xtime"]) + timedelta(seconds=1, microseconds=microseconds)) * (-1)**(expected["rownumber"]+1)
             if expected["xint16"] > 0:
-                expected["xdynamicWithNulls"] = '{{"rowId":{0},"arr":[0,{0}]}}'.format(expected["xint16"])
+                expected["xdynamicWithNulls"] = text_type('{{"rowId":{0},"arr":[0,{0}]}}'.format(expected["xint16"]))
 
     @patch('requests.post', side_effect=mocked_requests_post)
     @patch('azure.kusto.data.aad_helper._AadHelper.acquire_token', side_effect=mocked_aad_helper)
@@ -235,9 +246,3 @@ range x from 1 to 2 step 1 """
         results = list(response.iter_all())
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0]['x'], 1)
-
-    def _assert_str_or_unicode(self, actual):
-        try:
-            self.assertEqual(actual, str)
-        except AssertionError:
-            self.assertEqual(actual, unicode)

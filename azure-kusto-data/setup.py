@@ -56,6 +56,7 @@ setup(
     install_requires=[
         'adal>=0.4.0',
         'pandas>=0.15.0',
+        'six>=1.10.0',
     ],
     extras_require={
         'tests': ['nose>=1.3.7'],
