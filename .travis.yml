@@ -10,3 +10,13 @@ install:
 script:
   - pytest azure-kusto-data
   - pytest azure-kusto-ingest
+deploy:
+  provider: pypi
+  user: microsoftkusto
+  skip_upload_docs: true
+  # password: use $PYPI_PASSWORD
+  distributions: "travis_deploy" # Manual step
+  on:
+    tags: true
+    python: '3.6'
+    branch: master
