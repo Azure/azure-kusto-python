@@ -11,6 +11,8 @@ import uuid
 import dateutil.parser
 import requests
 import pandas
+import six
+import numbers
 
 from .aad_helper import _AadHelper
 from .kusto_exceptions import KustoServiceError
@@ -31,14 +33,14 @@ class KustoResult(dict):
         self.index2column_mapping = index2column_mapping
 
     def __getitem__(self, key):
-        if isinstance(key, int):
+        if isinstance(key, numbers.Number):
             val = dict.__getitem__(self, self.index2column_mapping[key])
         else:
             val = dict.__getitem__(self, key)
         return val
 
 
-class KustoResultIter(object):
+class KustoResultIter(six.Iterator):
     """ Iterator over returned rows """
     def __init__(self, json_result):
         self.json_result = json_result
@@ -47,8 +49,8 @@ class KustoResultIter(object):
         for column in json_result['Columns']:
             self.index2column_mapping.append(column['ColumnName'])
             self.index2type_mapping.append(column['ColumnType'] if 'ColumnType' in column else column['DataType'])
-        self.next = 0
-        self.last = len(json_result['Rows'])
+        self.row_index = 0
+        self.rows_count = len(json_result['Rows'])
         # Here we keep converter functions for each type that we need to take special care
         # (e.g. convert)
         self.converters_lambda_mappings = {
@@ -70,7 +72,7 @@ class KustoResultIter(object):
         """ Converts a string to a timedelta """
         if value is None:
             return None
-        if isinstance(value, int):
+        if isinstance(value, numbers.Number):
             return timedelta(microseconds=(float(value)/10))
         match = TIMESPAN_PATTERN.match(value)
         if match:
@@ -89,24 +91,19 @@ class KustoResultIter(object):
     def __iter__(self):
         return self
 
-    def next(self):
-        """ Gets the next value """
-        return self.__next__()
-
     def __next__(self):
-        if self.next >= self.last:
+        if self.row_index >= self.rows_count:
             raise StopIteration
-        else:
-            row = self.json_result['Rows'][self.next]
-            result_dict = {}
-            for index, value in enumerate(row):
-                data_type = self.index2type_mapping[index]
-                if data_type in self.converters_lambda_mappings:
-                    result_dict[self.index2column_mapping[index]] = self.converters_lambda_mappings[data_type](value)
-                else:
-                    result_dict[self.index2column_mapping[index]] = value
-            self.next = self.next + 1
-            return KustoResult(self.index2column_mapping, result_dict)
+        row = self.json_result['Rows'][self.row_index]
+        result_dict = {}
+        for index, value in enumerate(row):
+            data_type = self.index2type_mapping[index]
+            if data_type in self.converters_lambda_mappings:
+                result_dict[self.index2column_mapping[index]] = self.converters_lambda_mappings[data_type](value)
+            else:
+                result_dict[self.index2column_mapping[index]] = value
+        self.row_index = self.row_index + 1
+        return KustoResult(self.index2column_mapping, result_dict)
 
 
 class KustoResponse(object):
