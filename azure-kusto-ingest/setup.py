@@ -43,7 +43,6 @@ setup(
     ],
     packages=find_packages(),
     install_requires=[
-        'adal>=0.4.5',
         'appdirs>=1.4.3',
         'asn1crypto>=0.21.1',
         'azure-kusto-data>=0.0.4',
