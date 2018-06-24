@@ -54,7 +54,7 @@ setup(
     keywords='kusto wrapper client library',
     packages=find_packages(),
     install_requires=[
-        'adal>=0.4.0',
+        'adal>=1.0.0',
         'pandas>=0.15.0',
         'six>=1.10.0',
     ],

@@ -4,6 +4,7 @@ Functional tests of the client.
 
 import json
 import unittest
+from six import text_type
 from datetime import datetime, timedelta
 from dateutil.tz.tz import tzutc
 
@@ -199,10 +200,7 @@ class FunctionalTests(unittest.TestCase):
         for row in response.iter_all():
             if row[0] is not None:
                 self.assertEqual(type(row[0]), datetime)
-                try:
-                    self.assertEqual(type(row[1]), str)
-                except AssertionError:
-                    self.assertEqual(type(row[1]), unicode)
+                self.assertEqual(type(row[1]), text_type)
                 self.assertEqual(type(row[2]), int)
                 self.assertEqual(type(row[3]), float)
                 self.assertEqual(type(row[4]), bool)
