@@ -9,13 +9,14 @@ class DataFormat(Enum):
     """ All data formats supported by Kusto """
     csv = "csv"
     tsv = "tsv"
-    log = "log"
-    storageanalyticslogformat = "storageanalyticslogformat"
     scsv = "scsv"
     sohsv = "sohsv"
-    json = "json"
     psv = "psv"
+    txt = "txt"
+    json = "json"
+    singlejson = "singlejson"
     avro = "avro"
+    parquet = "parquet"
 
 class ValidationOptions(IntEnum):
     """ Validation options to ingest command """
