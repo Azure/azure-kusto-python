@@ -258,7 +258,6 @@ class KustoClient(object):
         """
         self.kusto_cluster = kusto_cluster
         self._aad_helper = _AadHelper(kusto_cluster, client_id, client_secret, username, password, authority)
-        self.request_headers = None
 
     def execute(self, kusto_database, query, accept_partial_results=False, timeout=None):
         """ Execute a simple query or management command
@@ -331,10 +330,11 @@ class KustoClient(object):
         }
 
         access_token = self._aad_helper.acquire_token()
-        self.request_headers = {
+        request_headers = {
             'Authorization': 'Bearer {0}'.format(access_token),
-            'Content-Type': 'application/json',
+            'Accept': 'application/json',
             'Accept-Encoding': 'gzip,deflate',
+            'Content-Type': 'application/json',
             'Fed': 'True',
             'x-ms-client-version': 'Kusto.Python.Client:' + VERSION,
             'x-ms-client-request-id': 'KPC.execute;' + str(uuid.uuid4()),
@@ -342,7 +342,7 @@ class KustoClient(object):
 
         response = requests.post(
             query_endpoint,
-            headers=self.request_headers,
+            headers=request_headers,
             json=request_payload,
             timeout=timeout
         )
