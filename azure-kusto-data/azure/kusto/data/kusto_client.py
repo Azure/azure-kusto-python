@@ -334,7 +334,7 @@ class KustoClient(object):
             'Authorization': 'Bearer {0}'.format(access_token),
             'Accept': 'application/json',
             'Accept-Encoding': 'gzip,deflate',
-            'Content-Type': 'application/json',
+            'Content-Type': 'application/json; charset=utf-8',
             'Fed': 'True',
             'x-ms-client-version': 'Kusto.Python.Client:' + VERSION,
             'x-ms-client-request-id': 'KPC.execute;' + str(uuid.uuid4()),
