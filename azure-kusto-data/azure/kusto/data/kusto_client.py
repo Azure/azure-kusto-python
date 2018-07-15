@@ -153,7 +153,7 @@ class KustoResponse(object):
         kusto_columns = table["Columns"]
 
         col_names = [col["ColumnName"] for col in kusto_columns]
-        frame = pandas.DataFrame(rows_data, columns=col_names, )
+        frame = pandas.DataFrame(rows_data, columns=col_names)
 
         for col in kusto_columns:
             col_name = col["ColumnName"]
