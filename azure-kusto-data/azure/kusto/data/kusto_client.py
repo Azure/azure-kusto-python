@@ -165,8 +165,6 @@ class KustoResponse(object):
             elif col_type in self._kusto_to_data_frame_data_types:
                 pandas_type = self._kusto_to_data_frame_data_types[col_type]
                 frame[col_name] = frame[col_name].astype(pandas_type, errors=errors)
-            else:
-                frame[col_name] = frame[col_name].astype('object', errors=errors)
 
         return frame
 
