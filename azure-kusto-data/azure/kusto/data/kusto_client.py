@@ -162,7 +162,7 @@ class KustoResponse(object):
                 frame[col_name] = pandas.to_timedelta(frame[col_name].apply(lambda t: t.replace(".", " days ") if t and '.' in t.split(":")[0] else t))
             elif col_type.lower() == "dynamic":
                 frame[col_name] = frame[col_name].apply(lambda x: json.loads(x) if x else None)
-            else:
+            elif col_type in self._kusto_to_data_frame_data_types:
                 pandas_type = self._kusto_to_data_frame_data_types[col_type]
                 frame[col_name] = frame[col_name].astype(pandas_type, errors=errors)
 
@@ -179,14 +179,22 @@ class KustoResponse(object):
         return self.json_response['Tables'][table_id]
 
     _kusto_to_data_frame_data_types = {
-        'datetime' : 'datetime64[ns]',
-        'int' : 'int32',
-        'long' : 'int64',
-        'real' : 'float64',
-        'string' : 'object',
-        'bool' : 'object',
-        'guid' : 'object',
-        'timespan' : 'object',
+        'bool': 'bool',
+        'uint8': 'int64',
+        'int16': 'int64',
+        'uint16': 'int64',
+        'int': 'int64',
+        'uint': 'int64',
+        'long': 'int64',
+        'ulong': 'int64',
+        'float': 'float64',
+        'real': 'float64',
+        'decimal': 'float64',
+        'string': 'object',
+        'datetime': 'datetime64[ns]',
+        'guid': 'object',
+        'timespan': 'timedelta64[ns]',
+        'dynamic': 'object',
 
         # Support V1
         'DateTime' : 'datetime64[ns]',
