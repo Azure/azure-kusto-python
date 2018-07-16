@@ -14,8 +14,9 @@ import pandas
 import six
 import numbers
 
-from .aad_helper import _AadHelper
-from .kusto_exceptions import KustoServiceError
+from azure.kusto.data import KustoConnectionStringBuilder
+from ._aad_helper import _AadHelper
+from .exceptions import KustoServiceError
 from .version import VERSION
 
 # Regex for TimeSpan
@@ -199,7 +200,7 @@ class KustoResponse(object):
         'TimeSpan' : 'object',
     }
 
-class KustoClient(object):
+class _KustoClient(object):
     """
     Kusto client for Python.
 
@@ -235,7 +236,7 @@ class KustoClient(object):
     >>>    print(row[0])
     >>>    print(row["ColumnName"])    """
 
-    def __init__(self, kusto_cluster, client_id=None, client_secret=None, username=None, password=None, authority=None):
+    def __init__(self, kcsb):
         """
         Kusto Client constructor.
 
@@ -256,8 +257,8 @@ class KustoClient(object):
         authority : 'microsoft.com', optional
             In case your tenant is not microsoft please use this param.
         """
-        self.kusto_cluster = kusto_cluster
-        self._aad_helper = _AadHelper(kusto_cluster, client_id, client_secret, username, password, authority)
+        self.kusto_cluster = kcsb.connection_string
+        self._aad_helper = _AadHelper(kcsb)
         self.request_headers = None
 
     def execute(self, kusto_database, query, accept_partial_results=False, timeout=None):

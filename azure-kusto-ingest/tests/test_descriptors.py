@@ -4,7 +4,7 @@
 import sys
 from os import path
 import unittest
-from azure.kusto.ingest import FileDescriptor
+from azure.kusto.ingest.descriptors import FileDescriptor
 
 class DescriptorsTest(unittest.TestCase):
     """ Test class for FileDescriptor and BlobDescriptor

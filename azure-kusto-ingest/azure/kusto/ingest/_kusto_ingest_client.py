@@ -1,6 +1,4 @@
-"""
-    Kusto ingest client for Python.
-"""
+"""Kusto ingest client for Python."""
 
 import base64
 import os
@@ -9,12 +7,12 @@ import uuid
 from datetime import datetime, timedelta
 
 from azure.storage.common import CloudStorageAccount
-from azure.kusto.data import KustoClient
+from azure.kusto.data import KustoClientFactory
 from .descriptors import BlobDescriptor, FileDescriptor
-from .connection_string import _ConnectionString
-from .ingestion_blob_info import _IngestionBlobInfo
+from ._connection_string import _ConnectionString
+from ._ingestion_blob_info import _IngestionBlobInfo
 
-class KustoIngestClient:
+class _KustoIngestClient:
     """
     Kusto ingest client for Python.
 
@@ -45,13 +43,7 @@ class KustoIngestClient:
     >>> kusto_cluster = 'https://ingest-help.kusto.windows.net'
     >>> kusto_ingest_client = KustoIngestClient(kusto_cluster)
     """
-    def __init__(self,
-                 kusto_cluster,
-                 client_id=None,
-                 client_secret=None,
-                 username=None,
-                 password=None,
-                 authority=None):
+    def __init__(self, kcsb):
         """
         Kusto Client constructor.
         Parameters
@@ -73,12 +65,7 @@ class KustoIngestClient:
         authority : 'microsoft.com', optional
             In case your tenant is not microsoft please use this param.
         """
-        self._kusto_client = KustoClient(kusto_cluster,
-                                         client_id=client_id,
-                                         client_secret=client_secret,
-                                         username=username,
-                                         password=password,
-                                         authority=authority)
+        self._kusto_client = KustoClientFactory.create_csl_provider(kcsb)
         self._last_time_refreshed_containers = datetime.min
         self._temp_storage_objects = None
         self._last_time_refreshed_queues = datetime.min

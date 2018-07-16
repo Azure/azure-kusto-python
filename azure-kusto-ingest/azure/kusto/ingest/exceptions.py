@@ -1,6 +1,6 @@
 """ All exceptions can be raised by kusto_ingest_client """
 
-from azure.kusto.data import KustoClientError
+from azure.kusto.data.exceptions import KustoClientError
 
 class KustoDuplicateMappingError(KustoClientError):
     """

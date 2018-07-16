@@ -35,11 +35,11 @@
     <Folder Include="azure-kusto-ingest\tests\input\" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="azure-kusto-data\azure\kusto\data\aad_helper.py">
+    <Compile Include="azure-kusto-data\azure\kusto\data\_aad_helper.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="azure-kusto-data\azure\kusto\data\kusto_client.py" />
-    <Compile Include="azure-kusto-data\azure\kusto\data\kusto_exceptions.py" />
+    <Compile Include="azure-kusto-data\azure\kusto\data\_kusto_client.py" />
+    <Compile Include="azure-kusto-data\azure\kusto\data\exceptions.py" />
     <Compile Include="azure-kusto-data\azure\kusto\data\version.py" />
     <Compile Include="azure-kusto-data\azure\kusto\data\__init__.py" />
     <Compile Include="azure-kusto-data\azure\kusto\__init__.py" />
@@ -53,12 +53,12 @@
     <Compile Include="azure-kusto-data\tests\__init__.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="azure-kusto-ingest\azure\kusto\ingest\connection_string.py" />
+    <Compile Include="azure-kusto-ingest\azure\kusto\ingest\_connection_string.py" />
     <Compile Include="azure-kusto-ingest\azure\kusto\ingest\descriptors.py" />
-    <Compile Include="azure-kusto-ingest\azure\kusto\ingest\ingestion_blob_info.py" />
+    <Compile Include="azure-kusto-ingest\azure\kusto\ingest\_ingestion_blob_info.py" />
     <Compile Include="azure-kusto-ingest\azure\kusto\ingest\ingestion_properties.py" />
-    <Compile Include="azure-kusto-ingest\azure\kusto\ingest\kusto_ingest_client.py" />
-    <Compile Include="azure-kusto-ingest\azure\kusto\ingest\kusto_ingest_client_exceptions.py" />
+    <Compile Include="azure-kusto-ingest\azure\kusto\ingest\_kusto_ingest_client.py" />
+    <Compile Include="azure-kusto-ingest\azure\kusto\ingest\exceptions.py" />
     <Compile Include="azure-kusto-ingest\azure\kusto\ingest\version.py" />
     <Compile Include="azure-kusto-ingest\azure\kusto\ingest\__init__.py" />
     <Compile Include="azure-kusto-ingest\azure\kusto\__init__.py" />
