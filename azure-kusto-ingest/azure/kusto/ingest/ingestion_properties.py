@@ -1,12 +1,10 @@
-"""
-This file has all classes to define ingestion properties
-"""
+"""This file has all classes to define ingestion properties."""
 
 from enum import Enum, IntEnum
 from .kusto_ingest_client_exceptions import KustoDuplicateMappingError
 
 class DataFormat(Enum):
-    """ All data formats supported by Kusto """
+    """All data formats supported by Kusto."""
     csv = "csv"
     tsv = "tsv"
     scsv = "scsv"
@@ -19,18 +17,18 @@ class DataFormat(Enum):
     parquet = "parquet"
 
 class ValidationOptions(IntEnum):
-    """ Validation options to ingest command """
+    """Validation options to ingest command."""
     DoNotValidate = 0
     ValidateCsvInputConstantColumns = 1
     ValidateCsvInputColumnLevelOnly = 2
 
 class ValidationImplications(IntEnum):
-    """ Validation implications to ingest command """
+    """Validation implications to ingest command."""
     Fail = 0
     BestEffort = 1
 
 class ValidationPolicy():
-    """ Validation policy to ingest command """
+    """Validation policy to ingest command."""
     def __init__(self,
                  validationOptions=ValidationOptions.DoNotValidate,
                  validationImplications=ValidationImplications.BestEffort):
@@ -38,23 +36,23 @@ class ValidationPolicy():
         self.ValidationImplications = validationImplications
 
 class ReportLevel(Enum):
-    """ Report level to ingest command """
+    """Report level to ingest command."""
     FailuresOnly = 0
     DoNotReport = 1
     FailuresAndSuccesses = 2
 
 class ReportMethod(Enum):
-    """ Report method to ingest command """
+    """Report method to ingest command."""
     Queue = 0
     Table = 1
     QueueAndTable = 2
 
 class ColumnMapping():
-    """ abstract class to column mapping """
+    """Abstract class to column mapping."""
     pass
 
 class CsvColumnMapping(ColumnMapping):
-    """ Class to represent a csv column mapping """
+    """Class to represent a csv column mapping."""
     def __init__(self, columnName, cslDataType, ordinal):
         self.Name = columnName
         self.DataType = cslDataType
@@ -68,11 +66,11 @@ class JsonColumnMapping(ColumnMapping):
         self.datatype = cslDataType
 
 class IngestionProperties:
-    """ Class to represent ingestion properties """
+    """Class to represent ingestion properties."""
     def __init__(self, database, table,
                  dataFormat=DataFormat.csv,
                  mapping=None,
-                 mapptingReference=None,
+                 mappingReference=None,
                  additionalTags=None,
                  ingestIfNotExists=None,
                  ingestByTags=None,
@@ -80,15 +78,16 @@ class IngestionProperties:
                  flushImmediately=False,
                  reportLevel=ReportLevel.DoNotReport,
                  reportMethod=ReportMethod.Queue,
-                 validationPolicy=None
+                 validationPolicy=None,
+                 additionalProperties=None
                 ):
-        if mapping is not None and mapptingReference is not None:
+        if mapping is not None and mappingReference is not None:
             raise KustoDuplicateMappingError()
         self.database = database
         self.table = table
         self.format = dataFormat
         self.mapping = mapping
-        self.mapping_reference = mapptingReference
+        self.mapping_reference = mappingReference
         self.additional_tags = additionalTags
         self.ingest_if_not_exists = ingestIfNotExists
         self.ingest_by_tags = ingestByTags
@@ -97,9 +96,10 @@ class IngestionProperties:
         self.report_level = reportLevel
         self.report_method = reportMethod
         self.validation_policy = validationPolicy
+        self.additional_properties = additionalProperties
 
     def get_mapping_format(self):
-        """ Dictating the corresponding mapping to the format """
+        """Dictating the corresponding mapping to the format."""
         if self.format == DataFormat.json or self.format == DataFormat.avro:
             return self.format.name
         else:
