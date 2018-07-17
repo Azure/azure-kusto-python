@@ -25,7 +25,7 @@ class _IngestionBlobInfo:
         # TODO: Add support for ingestion statuses
         #self.properties["IngestionStatusInTable"] = None
         #self.properties["BlobPathEncrypted"] = None
-        additional_properties = dict()
+        additional_properties = ingestionProperties.additional_properties or dict()
         additional_properties["authorizationContext"] = authContext
 
         tags = list()
