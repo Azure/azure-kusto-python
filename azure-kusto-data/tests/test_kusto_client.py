@@ -197,7 +197,7 @@ class KustoClientTests(unittest.TestCase):
                                7.0007, 8.0008, 9.0009]),
             "xfloat": Series([None, 0., 1.01, 2.02, 3.03, 4.04, 5.05, 6.06, 7.07, 8.08, 9.09]),
             "xbool": Series([None, False, True, False, True, False, True, False, True, False,
-                             True], dtype=object),
+                             True], dtype=bool),
             "xint16": Series([None, 0., 1., 2., 3., 4., 5., 6., 7., 8., 9.]),
             "xint32": Series([None, 0., 1., 2., 3., 4., 5., 6., 7., 8., 9.]),
             "xint64": Series([None, 0., 1., 2., 3., 4., 5., 6., 7., 8., 9.]),
