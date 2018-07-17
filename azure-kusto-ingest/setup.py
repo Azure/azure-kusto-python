@@ -1,5 +1,4 @@
-""" Setup for Azure.Kusto.Ingest
-"""
+"""Setup for Azure.Kusto.Ingest"""
 
 import re
 from os import path
@@ -43,22 +42,10 @@ setup(
     ],
     packages=find_packages(),
     install_requires=[
-        'appdirs>=1.4.3',
-        'asn1crypto>=0.21.1',
-        'azure-kusto-data>=0.0.6',
+        'azure-kusto-data>={}'.format(VERSION),
         'azure-storage-blob>=1.1.0',
         'azure-storage-common>=1.1.0',
         'azure-storage-queue>=1.1.0',
-        'azure-nspkg>=1.0.0',
-        'cffi>=1.9.1',
-        'cryptography>=1.8.1',
-        'idna>=2.5',
-        'packaging>=16.8',
-        'pycparser>=2.17',
-        'PyJWT>=1.4.2',
-        'pyparsing>=2.2.0',
-        'python-dateutil>=2.6.0',
-        'requests>=2.13.0',
         'six>=1.10.0',
     ],
     cmdclass=cmdclass,
