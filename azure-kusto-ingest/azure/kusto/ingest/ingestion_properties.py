@@ -80,7 +80,7 @@ class IngestionProperties:
                  reportLevel=ReportLevel.DoNotReport,
                  reportMethod=ReportMethod.Queue,
                  validationPolicy=None,
-                 sourceMessageCreationTime=None
+                 additionalProperties=None
                 ):
         if mapping is not None and mappingReference is not None:
             raise KustoDuplicateMappingError()
@@ -97,7 +97,7 @@ class IngestionProperties:
         self.report_level = reportLevel
         self.report_method = reportMethod
         self.validation_policy = validationPolicy
-        self.source_message_creation_time = sourceMessageCreationTime or datetime.utcnow().isoformat()
+        self.additional_properties = additionalProperties
 
     def get_mapping_format(self):
         """Dictating the corresponding mapping to the format."""

@@ -3,6 +3,7 @@
 
 import json
 import uuid
+from datetime import datetime
 from .descriptors import BlobDescriptor
 
 class _IngestionBlobInfo:
@@ -19,12 +20,15 @@ class _IngestionBlobInfo:
         self.properties["IgnoreSizeLimit"] = False
         self.properties["ReportLevel"] = ingestionProperties.report_level.value
         self.properties["ReportMethod"] = ingestionProperties.report_method.value
-        self.properties["SourceMessageCreationTime"] = ingestionProperties.source_message_creation_time
+        self.properties["SourceMessageCreationTime"] = datetime.utcnow().isoformat()
+
         self.properties["Id"] = str(uuid.uuid4())
         # TODO: Add support for ingestion statuses
         #self.properties["IngestionStatusInTable"] = None
         #self.properties["BlobPathEncrypted"] = None
-        additional_properties = dict()
+        print(ingestionProperties.additional_properties)
+        additional_properties = ingestionProperties.additional_properties or dict()
+        print(additional_properties)
         additional_properties["authorizationContext"] = authContext
 
         tags = list()
@@ -51,6 +55,7 @@ class _IngestionBlobInfo:
 
         if additional_properties:
             self.properties["AdditionalProperties"] = additional_properties
+        print(additional_properties)
 
     def to_json(self):
         """ Converts this object to a json string """
