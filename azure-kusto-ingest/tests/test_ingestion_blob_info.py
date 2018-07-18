@@ -52,7 +52,7 @@ class IngestionBlobInfoTest(unittest.TestCase):
         properties = IngestionProperties(database="database",
                                          table="table",
                                          dataFormat=DataFormat.csv,
-                                         mapptingReference="csvMappingReference",
+                                         mappingReference="csvMappingReference",
                                          additionalTags=["tag"],
                                          ingestIfNotExists=["ingestIfNotExistTags"],
                                          ingestByTags=["ingestByTags"],
@@ -94,7 +94,7 @@ class IngestionBlobInfoTest(unittest.TestCase):
         properties = IngestionProperties(database="database",
                                          table="table",
                                          dataFormat=DataFormat.json,
-                                         mapptingReference="jsonMappingReference",
+                                         mappingReference="jsonMappingReference",
                                          additionalTags=["tag"],
                                          ingestIfNotExists=["ingestIfNotExistTags"],
                                          ingestByTags=["ingestByTags"],
@@ -114,7 +114,7 @@ class IngestionBlobInfoTest(unittest.TestCase):
             IngestionProperties(database="database",
                                 table="table",
                                 mapping="mapping",
-                                mapptingReference="mappingReference")
+                                mappingReference="mappingReference")
 
     def _verify_ingestion_blob_info_result(self, ingestion_blob_info):
         result = json.loads(ingestion_blob_info)
