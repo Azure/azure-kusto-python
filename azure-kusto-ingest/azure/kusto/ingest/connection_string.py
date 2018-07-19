@@ -13,5 +13,5 @@ class _ConnectionString:
     @staticmethod
     def parse(uri):
         """ Parses uri into a _ConnectionString object """
-        match = re.search("https://(\\w+).(queue|blob).core.windows.net/([\\w,-]+)\\?(.*)", uri)
+        match = re.search("https://(\\w+).(queue|blob|table).core.windows.net/([\\w,-]+)\\?(.*)", uri)
         return _ConnectionString(match.group(1), match.group(2), match.group(3), match.group(4))
