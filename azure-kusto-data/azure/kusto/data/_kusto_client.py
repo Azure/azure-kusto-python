@@ -15,7 +15,7 @@ import six
 import numbers
 
 from azure.kusto.data import KustoConnectionStringBuilder
-from ._aad_helper import _AadHelper
+from .security import _AadHelper
 from .exceptions import KustoServiceError
 from .version import VERSION
 

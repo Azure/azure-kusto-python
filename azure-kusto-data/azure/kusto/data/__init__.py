@@ -1,11 +1,8 @@
 from enum import Enum
+from six import text_type
+from .security import AuthenticationMethod
 from .version import VERSION
 __version__ = VERSION
-
-class AuthenticationMethod(Enum):
-    aad_username_password = "aad_username_password"
-    aad_application_key = "aad_application_key"
-    aad_device_login = "aad_device_login"
 
 class KustoConnectionStringBuilder(dict):
     class _Keywords(Enum):
@@ -78,7 +75,7 @@ class KustoConnectionStringBuilder(dict):
         self[KustoConnectionStringBuilder._Keywords.authority_id] = value
 
 def _ensure_value_is_valid(value):
-    if not isinstance(value, str):
+    if not isinstance(value, text_type):
         raise TypeError
     if not value or not value.strip():
         raise ValueError

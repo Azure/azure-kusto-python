@@ -1,12 +1,18 @@
-""" A module to acquire tokens from AAD.
-"""
+"""A module contains all kusto security related classes."""
 
 from datetime import timedelta, datetime
+from enum import Enum
 import webbrowser
 import dateutil.parser
 from adal import AuthenticationContext
-from azure.kusto.data import KustoConnectionStringBuilder, AuthenticationMethod
 from azure.kusto.data.exceptions import KustoClientError
+
+
+class AuthenticationMethod(Enum):
+    """Enum represnting all authentication methods available in Kusto."""
+    aad_username_password = "aad_username_password"
+    aad_application_key = "aad_application_key"
+    aad_device_login = "aad_device_login"
 
 class _AadHelper(object):
     def __init__(self, kcsb):
@@ -29,7 +35,7 @@ class _AadHelper(object):
             self._client_id = "db662dc1-0cfe-4e1c-a843-19a68e65be58"
 
     def acquire_token(self):
-        """ A method to acquire tokens from AAD. """
+        """A method to acquire tokens from AAD."""
         token_response = self._adal_context.acquire_token(self._kusto_cluster, self._username, self._client_id)
         if token_response is not None:
             expiration_date = dateutil.parser.parse(token_response['expiresOn'])
@@ -53,6 +59,6 @@ class _AadHelper(object):
             webbrowser.open(code['verification_url'])
             token_response = self._adal_context.acquire_token_with_device_code(self._kusto_cluster, code, self._client_id)
         else:
-            raise KustoClientError("Please choose authentication method from azure.kusto.data.AuthenticationMethod")
+            raise KustoClientError("Please choose authentication method from azure.kusto.data.security.AuthenticationMethod")
 
         return token_response['accessToken']

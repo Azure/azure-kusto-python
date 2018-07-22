@@ -16,14 +16,14 @@ from azure.kusto.data.exceptions import KustoServiceError
 
 # This method will be used by the mock to replace KustoClient._acquire_token
 def mocked_aad_helper(*args, **kwargs):
-    """ A class to mock _aad_halper. """
+    """A class to mock _aad_halper."""
     return None
 
 # This method will be used by the mock to replace requests.post
 def mocked_requests_post(*args, **kwargs):
-    """ A class to mock requests package. """
+    """A class to mock requests package."""
     class MockResponse:
-        """ A class to mock KustoResponse. """
+        """A class to mock KustoResponse."""
         def __init__(self, json_data, status_code):
             self.json_data = json_data
             self.text = text_type(json_data)
@@ -31,7 +31,7 @@ def mocked_requests_post(*args, **kwargs):
             self.headers = None
 
         def json(self):
-            """ Get json data from response. """
+            """Get json data from response."""
             return self.json_data
 
     if args[0] == 'https://somecluster.kusto.windows.net/v2/rest/query':
@@ -58,11 +58,11 @@ DIGIT_WORDS = [text_type("Zero"),
                text_type("ten")]
 
 class KustoClientTests(unittest.TestCase):
-    """ A class to test KustoClient. """
+    """A class to test KustoClient."""
     @patch('requests.post', side_effect=mocked_requests_post)
-    @patch('azure.kusto.data._aad_helper._AadHelper.acquire_token', side_effect=mocked_aad_helper)
+    @patch('azure.kusto.data.security._AadHelper.acquire_token', side_effect=mocked_aad_helper)
     def test_sanity_query(self, mock_post, mock_aad):
-        """ Test query V2. """
+        """Test query V2."""
         kcsb = KustoConnectionStringBuilder.with_aad_device_authentication("https://somecluster.kusto.windows.net")
         client = KustoClientFactory.create_csl_provider(kcsb)
         response = client.execute_query("PythonTest", "Deft")
@@ -150,7 +150,7 @@ class KustoClientTests(unittest.TestCase):
                 expected["xdynamicWithNulls"] = text_type('{{"rowId":{0},"arr":[0,{0}]}}'.format(expected["xint16"]))
 
     @patch('requests.post', side_effect=mocked_requests_post)
-    @patch('azure.kusto.data._aad_helper._AadHelper.acquire_token', side_effect=mocked_aad_helper)
+    @patch('azure.kusto.data.security._AadHelper.acquire_token', side_effect=mocked_aad_helper)
     def test_sanity_control_command(self, mock_post, mock_aad):
         """Tests contol command."""
         kcsb = KustoConnectionStringBuilder.with_aad_device_authentication("https://somecluster.kusto.windows.net")
@@ -174,9 +174,9 @@ class KustoClientTests(unittest.TestCase):
         self.assertEqual(result['ProductVersion'], "KustoMain_2018.04.29.5")
 
     @patch('requests.post', side_effect=mocked_requests_post)
-    @patch('azure.kusto.data._aad_helper._AadHelper.acquire_token', side_effect=mocked_aad_helper)
+    @patch('azure.kusto.data.security._AadHelper.acquire_token', side_effect=mocked_aad_helper)
     def test_sanity_data_frame(self, mock_post, mock_aad):
-        """ Tests KustoResponse to pandas.DataFrame. """
+        """Tests KustoResponse to pandas.DataFrame."""
         kcsb = KustoConnectionStringBuilder.with_aad_device_authentication("https://somecluster.kusto.windows.net")
         client = KustoClientFactory.create_csl_provider(kcsb)
         data_frame = client.execute_query("PythonTest", "Deft").to_dataframe(errors="ignore")
@@ -235,9 +235,9 @@ class KustoClientTests(unittest.TestCase):
         assert_frame_equal(data_frame, expected_data_frame)
 
     @patch('requests.post', side_effect=mocked_requests_post)
-    @patch('azure.kusto.data._aad_helper._AadHelper.acquire_token', side_effect=mocked_aad_helper)
+    @patch('azure.kusto.data.security._AadHelper.acquire_token', side_effect=mocked_aad_helper)
     def test_partial_results(self, mock_post, mock_aad):
-        """ Tests partial results. """
+        """Tests partial results."""
         kcsb = KustoConnectionStringBuilder.with_aad_device_authentication("https://somecluster.kusto.windows.net")
         client = KustoClientFactory.create_csl_provider(kcsb)
         query = """\
