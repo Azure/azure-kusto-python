@@ -1,10 +1,10 @@
-""" E2E tests for kusto_ingest_client """
+"""E2E tests for kusto_ingest_client."""
 
 import time
 import os
-from azure.kusto.data import KustoClient
-from azure.kusto.ingest import (
-    KustoIngestClient,
+from azure.kusto.data import KustoClientFactory, KustoConnectionStringBuilder
+from azure.kusto.ingest import KustoIngestFactory
+from azure.kusto.ingest.ingestion_properties import (
     IngestionProperties,
     JsonColumnMapping,
     CsvColumnMapping,
@@ -17,13 +17,13 @@ from azure.kusto.ingest import (
     )
 
 class Helpers:
-    """ A class to define mappings to deft table. """
+    """A class to define mappings to deft table."""
     def __init__(self):
         pass
 
     @staticmethod
     def create_deft_table_csv_mappings():
-        """ A method to define csv mappings to deft table. """
+        """A method to define csv mappings to deft table."""
         mappings = list()
         mappings.append(CsvColumnMapping(columnName="rownumber", cslDataType="int", ordinal=0))
         mappings.append(CsvColumnMapping(columnName="rowguid", cslDataType="string", ordinal=1))
@@ -48,7 +48,7 @@ class Helpers:
 
     @staticmethod
     def create_deft_table_json_mappings():
-        """ A method to define json mappings to deft table. """
+        """A method to define json mappings to deft table."""
         mappings = list()
         mappings.append(JsonColumnMapping(columnName="rownumber", jsonPath="$.rownumber", cslDataType="int"))
         mappings.append(JsonColumnMapping(columnName="rowguid", jsonPath="$.rowguid", cslDataType="string"))
@@ -71,8 +71,10 @@ class Helpers:
         mappings.append(JsonColumnMapping(columnName="xdynamicWithNulls", jsonPath="$.xdynamicWithNulls", cslDataType="dynamic"))
         return mappings
 
-KUSTO_CLIENT = KustoClient("https://toshetah.kusto.windows.net")
-KUSTO_INGEST_CLIENT = KustoIngestClient("https://ingest-toshetah.kusto.windows.net")
+kcsb = KustoConnectionStringBuilder.with_aad_device_authentication("https://toshetah.kusto.windows.net")
+dm_kcsb = KustoConnectionStringBuilder.with_aad_device_authentication("https://ingest-toshetah.kusto.windows.net")
+KUSTO_CLIENT = KustoClientFactory.create_csl_provider(kcsb)
+KUSTO_INGEST_CLIENT = KustoIngestFactory.create_ingest_client(dm_kcsb)
 
 KUSTO_CLIENT.execute("PythonTest", ".drop table Deft ifexists")
 
