@@ -36,7 +36,7 @@ setup(
     version=VERSION,
     description='Kusto Data Client',
     long_description=open('README.rst', 'r').read(),
-    url='https://kusto.azurewebsites.net/docs/api/kusto_python_client_library.html',
+    url='https://github.com/Azure/azure-kusto-python',
     author='Microsoft Corporation',
     author_email='kustalk@microsoft.com',
     license='MIT',
