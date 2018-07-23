@@ -1,4 +1,6 @@
 # Microsoft Azure Kusto Library for Python
+[![](https://travis-ci.org/Azure/azure-kusto-python.svg?branch=master)](https://travis-ci.org/Azure/azure-kusto-python)
+
 *azure-kusto-data* Package provides the capability to query Kusto clusters with Python.<br>
 *azure-kusto-ingest* Package allows sending data to Kusto service - i.e. ingest data. 
 
