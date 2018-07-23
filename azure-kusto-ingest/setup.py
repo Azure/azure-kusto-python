@@ -30,7 +30,7 @@ setup(
     license='MIT',
     author='Microsoft Corporation',
     author_email='kustalk@microsoft.com',
-    url='https://kusto.azurewebsites.net/docs/api/kusto_python_client_library.html',
+    url='https://github.com/Azure/azure-kusto-python',
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Programming Language :: Python',
