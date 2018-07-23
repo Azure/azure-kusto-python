@@ -1,5 +1,4 @@
-""" Test class for FileDescriptor and BlobDescriptor
-"""
+"""Test class for FileDescriptor and BlobDescriptor."""
 
 import sys
 from os import path
@@ -7,8 +6,7 @@ import unittest
 from azure.kusto.ingest.descriptors import FileDescriptor
 
 class DescriptorsTest(unittest.TestCase):
-    """ Test class for FileDescriptor and BlobDescriptor
-    """
+    """Test class for FileDescriptor and BlobDescriptor."""
     def test_unzipped_file_with_size(self):
         """ Tests FileDescriptor with size and unzipped file """
         filePath = path.join(path.dirname(path.abspath(__file__)), "input", "dataset.csv")
@@ -23,7 +21,7 @@ class DescriptorsTest(unittest.TestCase):
         self.assertEqual(descriptor.zipped_stream.closed, True)
 
     def test_unzipped_file_without_size(self):
-        """ Tests FileDescriptor without size and unzipped file """
+        """Tests FileDescriptor without size and unzipped file."""
         filePath = path.join(path.dirname(path.abspath(__file__)), "input", "dataset.csv")
         descriptor = FileDescriptor(filePath, 0)
         self.assertGreater(descriptor.size, 0)
@@ -36,7 +34,7 @@ class DescriptorsTest(unittest.TestCase):
         self.assertEqual(descriptor.zipped_stream.closed, True)
 
     def test_zipped_file_with_size(self):
-        """ Tests FileDescriptor with size and zipped file """
+        """Tests FileDescriptor with size and zipped file."""
         filePath = path.join(path.dirname(path.abspath(__file__)), "input", "dataset.csv.gz")
         descriptor = FileDescriptor(filePath, 10)
         self.assertEqual(descriptor.size, 10)
@@ -49,7 +47,7 @@ class DescriptorsTest(unittest.TestCase):
         self.assertEqual(descriptor.zipped_stream.closed, True)
 
     def test_zipped_file_without_size(self):
-        """ Tests FileDescriptor without size and zipped file """
+        """Tests FileDescriptor without size and zipped file."""
         filePath = path.join(path.dirname(path.abspath(__file__)), "input", "dataset.csv.gz")
         descriptor = FileDescriptor(filePath, 0)
         self.assertEqual(descriptor.size, 2305)
