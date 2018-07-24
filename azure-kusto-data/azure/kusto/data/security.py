@@ -5,6 +5,7 @@ from enum import Enum
 import webbrowser
 import dateutil.parser
 from adal import AuthenticationContext
+from azure.kusto.data import KustoConnectionStringBuilder
 from azure.kusto.data.exceptions import KustoClientError
 
 
@@ -17,21 +18,23 @@ class AuthenticationMethod(Enum):
 class _AadHelper(object):
     def __init__(self, kcsb):
         try:
-            authority = kcsb.authority_id
+            authority = kcsb.authority_id or 'microsoft.com'
         except KeyError:
             authority = 'microsoft.com'
-        self._kusto_cluster = kcsb.connection_string
+        self._kusto_cluster = kcsb.data_source
         self._adal_context = AuthenticationContext('https://login.windows.net/{0}'.format(authority))
-        self._authentication_method = kcsb.authentication_method
         self._username = None
-        if kcsb.authentication_method is AuthenticationMethod.aad_username_password:
+        if kcsb.aad_user_id is not None:
+            self._authentication_method = AuthenticationMethod.aad_username_password
             self._client_id = "db662dc1-0cfe-4e1c-a843-19a68e65be58"
-            self._username = kcsb[kcsb._Keywords.user_id]
-            self._password = kcsb[kcsb._Keywords.password]
-        elif kcsb.authentication_method is AuthenticationMethod.aad_application_key:
+            self._username = kcsb.aad_user_id
+            self._password = kcsb.password
+        elif kcsb.application_client_id is not None:
+            self._authentication_method = AuthenticationMethod.aad_application_key
             self._client_id = kcsb[kcsb._Keywords.application_client_id]
-            self._client_secret =  kcsb[kcsb._Keywords.application_key]
-        elif kcsb.authentication_method is AuthenticationMethod.aad_device_login:
+            self._client_secret = kcsb[kcsb._Keywords.application_key]
+        else:
+            self._authentication_method = AuthenticationMethod.aad_device_login
             self._client_id = "db662dc1-0cfe-4e1c-a843-19a68e65be58"
 
     def acquire_token(self):

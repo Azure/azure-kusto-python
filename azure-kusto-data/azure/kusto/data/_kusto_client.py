@@ -265,7 +265,7 @@ class _KustoClient(object):
         authority : 'microsoft.com', optional
             In case your tenant is not microsoft please use this param.
         """
-        self.kusto_cluster = kcsb.connection_string
+        self.kusto_cluster = kcsb.data_source
         self._aad_helper = _AadHelper(kcsb)
 
     def execute(self, kusto_database, query, accept_partial_results=False, timeout=None):
