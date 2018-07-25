@@ -34,13 +34,13 @@ def mocked_requests_post(*args, **kwargs):
             """Get json data from response."""
             return self.json_data
 
-    if args[0] == 'https://somecluster.kusto.windows.net/v2/rest/query':
+    if args[0] == text_type('https://somecluster.kusto.windows.net/v2/rest/query'):
         if 'truncationmaxrecords' in kwargs['json']['csl']:
-            file_name = "querypartialresults.json"
+            file_name = text_type("querypartialresults.json")
         elif 'Deft' in kwargs['json']['csl']:
-            file_name = 'deft.json'
+            file_name = text_type('deft.json')
         return MockResponse(json.loads(open(os.path.join(os.path.dirname(__file__), 'input', file_name), 'r').read()), 200)
-    elif args[0] == 'https://somecluster.kusto.windows.net/v1/rest/mgmt':
+    elif args[0] == text_type('https://somecluster.kusto.windows.net/v1/rest/mgmt'):
         return MockResponse(json.loads(open(os.path.join(os.path.dirname(__file__), 'input', 'versionshowcommandresult.json'), 'r').read()), 200)
 
     return MockResponse(None, 404)
@@ -63,7 +63,7 @@ class KustoClientTests(unittest.TestCase):
     @patch('azure.kusto.data.security._AadHelper.acquire_token', side_effect=mocked_aad_helper)
     def test_sanity_query(self, mock_post, mock_aad):
         """Test query V2."""
-        kcsb = KustoConnectionStringBuilder.with_aad_device_authentication("https://somecluster.kusto.windows.net")
+        kcsb = KustoConnectionStringBuilder.with_aad_device_authentication(text_type("https://somecluster.kusto.windows.net"))
         client = KustoClientFactory.create_csl_provider(kcsb)
         response = client.execute_query("PythonTest", "Deft")
         expected = {"rownumber": None,
@@ -153,7 +153,7 @@ class KustoClientTests(unittest.TestCase):
     @patch('azure.kusto.data.security._AadHelper.acquire_token', side_effect=mocked_aad_helper)
     def test_sanity_control_command(self, mock_post, mock_aad):
         """Tests contol command."""
-        kcsb = KustoConnectionStringBuilder.with_aad_device_authentication("https://somecluster.kusto.windows.net")
+        kcsb = KustoConnectionStringBuilder.with_aad_device_authentication(text_type("https://somecluster.kusto.windows.net"))
         client = KustoClientFactory.create_csl_provider(kcsb)
         response = client.execute_mgmt("NetDefaultDB", ".show version")
         self.assertEqual(response.get_table_count(), 1)
@@ -177,7 +177,7 @@ class KustoClientTests(unittest.TestCase):
     @patch('azure.kusto.data.security._AadHelper.acquire_token', side_effect=mocked_aad_helper)
     def test_sanity_data_frame(self, mock_post, mock_aad):
         """Tests KustoResponse to pandas.DataFrame."""
-        kcsb = KustoConnectionStringBuilder.with_aad_device_authentication("https://somecluster.kusto.windows.net")
+        kcsb = KustoConnectionStringBuilder.with_aad_device_authentication(text_type("https://somecluster.kusto.windows.net"))
         client = KustoClientFactory.create_csl_provider(kcsb)
         data_frame = client.execute_query("PythonTest", "Deft").to_dataframe(errors="ignore")
         self.assertEqual(len(data_frame.columns), 19)
@@ -238,7 +238,7 @@ class KustoClientTests(unittest.TestCase):
     @patch('azure.kusto.data.security._AadHelper.acquire_token', side_effect=mocked_aad_helper)
     def test_partial_results(self, mock_post, mock_aad):
         """Tests partial results."""
-        kcsb = KustoConnectionStringBuilder.with_aad_device_authentication("https://somecluster.kusto.windows.net")
+        kcsb = KustoConnectionStringBuilder.with_aad_device_authentication(text_type("https://somecluster.kusto.windows.net"))
         client = KustoClientFactory.create_csl_provider(kcsb)
         query = """\
 set truncationmaxrecords = 1;
