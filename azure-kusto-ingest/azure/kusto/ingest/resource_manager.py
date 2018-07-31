@@ -1,6 +1,6 @@
 """This module is serve as a cache to all resources needed by the kusto ingest client."""
 
-import datetime
+from datetime import datetime, timedelta
 import random
 
 from .connection_string import _ConnectionString
@@ -27,7 +27,7 @@ class _ResourceManager:
     def __init__(self, 
                  kusto_client):
         self._kusto_client = kusto_client
-        self._cache_lifetime = datetime.timedelta(hours=5)
+        self._cache_lifetime = timedelta(hours=5)
 
         self._ingest_client_resources = None
         self._ingest_client_resources_last_update = None
@@ -37,10 +37,10 @@ class _ResourceManager:
 
     def _refresh_ingest_client_resources(self):
         if not self._ingest_client_resources \
-           or self._ingest_client_resources_last_update + self._cache_lifetime <= datetime.datetime.now() \
+           or self._ingest_client_resources_last_update + self._cache_lifetime <= datetime.now() \
            or not self._ingest_client_resources.is_applicable():
                 self._ingest_client_resources = self._get_ingest_client_resources_from_service()
-                self._ingest_client_resources_last_update = datetime.datetime.now()  
+                self._ingest_client_resources_last_update = datetime.now()  
 
     def _get_resource_by_name(self, df, resource_name):
         resource = df[df['ResourceTypeName'] == resource_name].StorageRoot.map(_ConnectionString.parse).tolist()
@@ -60,9 +60,9 @@ class _ResourceManager:
     def _refresh_authorization_context(self):
         if not self._authorization_context \
            or self._authorization_context.isspace() \
-           or self._authorization_context_last_update + self._cache_lifetime <= datetime.datetime.now():
+           or self._authorization_context_last_update + self._cache_lifetime <= datetime.now():
                 self._authorization_context = self._get_authorization_context_from_service()
-                self._authorization_context_last_update = datetime.datetime.now()
+                self._authorization_context_last_update = datetime.now()
     
     def _get_authorization_context_from_service(self):
         df = self._kusto_client.execute("NetDefaultDB", ".get kusto identity token").to_dataframe()
