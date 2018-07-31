@@ -2,8 +2,8 @@ from azure.kusto.ingest import KustoIngestClient, IngestionProperties, FileDescr
 
 ingestion_properties = IngestionProperties(database="database name", table="table name", dataFormat=DataFormat.csv)
 
-ingest_client = KustoIngestClient("https://ingest-clustername.kusto.windows.net")
-ingest_client = KustoIngestClient("https://ingest-clustername.kusto.windows.net", client_id="aad app id", client_secret="secret")
+ingest_client = KustoIngestClient("https://ingest-<clustername>.kusto.windows.net")
+ingest_client = KustoIngestClient("https://ingest-<clustername>.kusto.windows.net", client_id="aad app id", client_secret="secret")
 
 file_descriptor = FileDescriptor("E:\\filePath.csv", 3333) # 3333 is the raw size of the data in bytes.
 ingest_client.ingest_from_multiple_files([file_descriptor],
