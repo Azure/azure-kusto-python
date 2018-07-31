@@ -1,12 +1,8 @@
-"""
-    Kusto ingest client for Python.
-"""
+"""Kusto ingest client for Python."""
 
 import base64
-import os
 import random
 import uuid
-from datetime import datetime, timedelta
 
 from azure.storage.common import CloudStorageAccount
 from azure.kusto.data import KustoClient
@@ -73,13 +69,13 @@ class KustoIngestClient:
         authority : 'microsoft.com', optional
             In case your tenant is not microsoft please use this param.
         """
-        self._kusto_client = KustoClient(kusto_cluster,
+        kusto_client = KustoClient(kusto_cluster,
                                          client_id=client_id,
                                          client_secret=client_secret,
                                          username=username,
                                          password=password,
                                          authority=authority)
-        self._resources_manager = _ResourceManager(self._kusto_client)
+        self._resource_manager = _ResourceManager(kusto_client)
 
     def ingest_from_multiple_files(self, files, delete_sources_on_success, ingestion_properties):
         """
@@ -103,7 +99,7 @@ class KustoIngestClient:
                 descriptor = FileDescriptor(file, deleteSourcesOnSuccess=delete_sources_on_success)
             file_descriptors.append(descriptor)
             blob_name = ingestion_properties.database + "__" + ingestion_properties.table + "__" + str(uuid.uuid4()) + "__" + descriptor.stream_name
-            container_details = self._resources_manager.get_container()
+            container_details = self._resource_manager.get_container()
             storage_client = CloudStorageAccount(container_details.storage_account_name,
                                                  sas_token=container_details.sas)
             blob_service = storage_client.create_block_blob_service()
@@ -133,12 +129,12 @@ class KustoIngestClient:
             The ingestion properties.
         """
         for blob in blobs:
-            queues = self._resources_manager.get_ingestion_queues()
+            queues = self._resource_manager.get_ingestion_queues()
             queue_details = random.choice(queues)
             storage_client = CloudStorageAccount(queue_details.storage_account_name,
                                                  sas_token=queue_details.sas)
             queue_service = storage_client.create_queue_service()
-            authorization_context = self._resources_manager.get_authorization_context()
+            authorization_context = self._resource_manager.get_authorization_context()
             ingestion_blob_info = _IngestionBlobInfo(blob,
                                                      ingestion_properties,
                                                      delete_sources_on_success,

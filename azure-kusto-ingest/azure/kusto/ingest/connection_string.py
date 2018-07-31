@@ -1,5 +1,4 @@
-""" A class to parse uris recieved from the DM.
-"""
+"""A class to parse uris recieved from the DM."""
 
 import re
 

@@ -2,6 +2,7 @@
 
 import time
 import os
+
 from azure.kusto.data import KustoClient
 from azure.kusto.ingest import (
     KustoIngestClient,

@@ -1,9 +1,9 @@
-""" This module represents the object to write to azure queue that the DM is listening to.
-"""
+"""This module represents the object to write to azure queue that the DM is listening to."""
 
 import json
 import uuid
 from datetime import datetime
+
 from .descriptors import BlobDescriptor
 
 class _IngestionBlobInfo:
