@@ -27,7 +27,7 @@ class _ResourceManager:
     def __init__(self, 
                  kusto_client):
         self._kusto_client = kusto_client
-        self._cache_lifetime = timedelta(hours=5)
+        self._refresh_period = timedelta(hours=1)
 
         self._ingest_client_resources = None
         self._ingest_client_resources_last_update = None
@@ -37,7 +37,7 @@ class _ResourceManager:
 
     def _refresh_ingest_client_resources(self):
         if not self._ingest_client_resources \
-           or self._ingest_client_resources_last_update + self._cache_lifetime <= datetime.now() \
+           or (self._ingest_client_resources_last_update + self._refresh_period) <= datetime.now() \
            or not self._ingest_client_resources.is_applicable():
                 self._ingest_client_resources = self._get_ingest_client_resources_from_service()
                 self._ingest_client_resources_last_update = datetime.now()  
@@ -60,7 +60,7 @@ class _ResourceManager:
     def _refresh_authorization_context(self):
         if not self._authorization_context \
            or self._authorization_context.isspace() \
-           or self._authorization_context_last_update + self._cache_lifetime <= datetime.now():
+           or (self._authorization_context_last_update + self._refresh_period) <= datetime.now():
                 self._authorization_context = self._get_authorization_context_from_service()
                 self._authorization_context_last_update = datetime.now()
     
