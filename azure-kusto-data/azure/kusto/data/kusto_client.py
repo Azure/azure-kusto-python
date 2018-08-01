@@ -389,4 +389,3 @@ class KustoClient(object):
             return kusto_response
         else:
             raise KustoServiceError([response.json()], response)
-

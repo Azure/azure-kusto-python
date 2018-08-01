@@ -373,4 +373,3 @@ range x from 1 to 2 step 1"""
         results = list(response.iter_all())
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0]["x"], 1)
-

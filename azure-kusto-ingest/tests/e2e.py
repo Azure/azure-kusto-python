@@ -244,4 +244,3 @@ for row in RESPONSE.iter_all():
         print("Completed ingest with existing ingest-by tag successfully.")
     else:
         print("Deft | count = " + str(row["Count"]))
-
