@@ -1,6 +1,7 @@
 """This file has all classes to define ingestion properties."""
 
 from enum import Enum, IntEnum
+
 from .kusto_ingest_client_exceptions import KustoDuplicateMappingError
 
 class DataFormat(Enum):

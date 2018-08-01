@@ -1,5 +1,4 @@
-""" A file contains all descriptors ingest command should work with.
-"""
+"""A file contains all descriptors ingest command should work with."""
 
 import os
 from io import BytesIO
