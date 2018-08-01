@@ -11,16 +11,16 @@ class _IngestClientResources:
                  failed_ingestions_queues = None,
                  successful_ingestions_queues = None,
                  containers = None,
-                 status_table = None
+                 status_tables = None
                  ):
         self.secured_ready_for_aggregation_queues = secured_ready_for_aggregation_queues
         self.failed_ingestions_queues = failed_ingestions_queues
         self.successful_ingestions_queues = successful_ingestions_queues
         self.containers = containers
-        self.status_table = status_table
+        self.status_tables = status_tables
     
     def is_applicable(self):
-        resources = [self.secured_ready_for_aggregation_queues, self.failed_ingestions_queues, self.failed_ingestions_queues, self.containers, self.status_table]
+        resources = [self.secured_ready_for_aggregation_queues, self.failed_ingestions_queues, self.failed_ingestions_queues, self.containers, self.status_tables]
         return all(resources)
 
 class _ResourceManager:
@@ -53,9 +53,9 @@ class _ResourceManager:
         failed_ingestions_queues = self._get_resource_by_name(df, 'FailedIngestionsQueue')
         successful_ingestions_queues = self._get_resource_by_name(df, 'SuccessfulIngestionsQueue')
         containers = self._get_resource_by_name(df, 'TempStorage')
-        status_table = self._get_resource_by_name(df, 'IngestionsStatusTable')[0]
+        status_tables = self._get_resource_by_name(df, 'IngestionsStatusTable')
 
-        return _IngestClientResources(secured_ready_for_aggregation_queues, failed_ingestions_queues, successful_ingestions_queues, containers, status_table)
+        return _IngestClientResources(secured_ready_for_aggregation_queues, failed_ingestions_queues, successful_ingestions_queues, containers, status_tables)
 
     def _refresh_authorization_context(self):
         if not self._authorization_context \
@@ -85,9 +85,9 @@ class _ResourceManager:
         current_containers = self._ingest_client_resources.containers
         return random.choice(current_containers)
     
-    def get_ingestions_status_table(self):
+    def get_ingestions_status_tables(self):
         self._refresh_ingest_client_resources()
-        return self._ingest_client_resources.status_table
+        return self._ingest_client_resources.status_tables
     
     def get_authorization_context(self):
         self._refresh_authorization_context()

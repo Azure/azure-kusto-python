@@ -9,7 +9,7 @@ from azure.storage.common import CloudStorageAccount
 from azure.kusto.data import KustoClient
 from .descriptors import BlobDescriptor, FileDescriptor
 from .ingestion_blob_info import _IngestionBlobInfo
-from .resource_manager import _ResourceManager
+from ._resource_manager import _ResourceManager
 
 class KustoIngestClient:
     """
