@@ -11,6 +11,7 @@ from .descriptors import BlobDescriptor, FileDescriptor
 from .ingestion_blob_info import _IngestionBlobInfo
 from ._resource_manager import _ResourceManager
 
+
 class KustoIngestClient:
     """
     Kusto ingest client for Python.
@@ -42,13 +43,16 @@ class KustoIngestClient:
     >>> kusto_cluster = 'https://ingest-help.kusto.windows.net'
     >>> kusto_ingest_client = KustoIngestClient(kusto_cluster)
     """
-    def __init__(self,
-                 kusto_cluster,
-                 client_id=None,
-                 client_secret=None,
-                 username=None,
-                 password=None,
-                 authority=None):
+
+    def __init__(
+        self,
+        kusto_cluster,
+        client_id=None,
+        client_secret=None,
+        username=None,
+        password=None,
+        authority=None,
+    ):
         """
         Kusto Client constructor.
         Parameters
@@ -70,12 +74,14 @@ class KustoIngestClient:
         authority : 'microsoft.com', optional
             In case your tenant is not microsoft please use this param.
         """
-        kusto_client = KustoClient(kusto_cluster,
-                                         client_id=client_id,
-                                         client_secret=client_secret,
-                                         username=username,
-                                         password=password,
-                                         authority=authority)
+        kusto_client = KustoClient(
+            kusto_cluster,
+            client_id=client_id,
+            client_secret=client_secret,
+            username=username,
+            password=password,
+            authority=authority,
+        )
         self._resource_manager = _ResourceManager(kusto_client)
 
     def ingest_from_multiple_files(self, files, delete_sources_on_success, ingestion_properties):
@@ -99,18 +105,29 @@ class KustoIngestClient:
             else:
                 descriptor = FileDescriptor(file, deleteSourcesOnSuccess=delete_sources_on_success)
             file_descriptors.append(descriptor)
-            blob_name = ingestion_properties.database + "__" + ingestion_properties.table + "__" + str(uuid.uuid4()) + "__" + descriptor.stream_name
+            blob_name = (
+                ingestion_properties.database
+                + "__"
+                + ingestion_properties.table
+                + "__"
+                + str(uuid.uuid4())
+                + "__"
+                + descriptor.stream_name
+            )
             containers = self._resource_manager.get_containers()
             container_details = random.choice(containers)
-            storage_client = CloudStorageAccount(container_details.storage_account_name,
-                                                 sas_token=container_details.sas)
+            storage_client = CloudStorageAccount(
+                container_details.storage_account_name, sas_token=container_details.sas
+            )
             blob_service = storage_client.create_block_blob_service()
-            blob_service.create_blob_from_stream(container_name=container_details.object_name,
-                                               blob_name=blob_name,
-                                               stream=descriptor.zipped_stream)
-            url = blob_service.make_blob_url(container_details.object_name,
-                                             blob_name,
-                                             sas_token=container_details.sas)
+            blob_service.create_blob_from_stream(
+                container_name=container_details.object_name,
+                blob_name=blob_name,
+                stream=descriptor.zipped_stream,
+            )
+            url = blob_service.make_blob_url(
+                container_details.object_name, blob_name, sas_token=container_details.sas
+            )
             blobs.append(BlobDescriptor(url, descriptor.size))
         self.ingest_from_multiple_blobs(blobs, delete_sources_on_success, ingestion_properties)
         for descriptor in file_descriptors:
@@ -133,14 +150,14 @@ class KustoIngestClient:
         for blob in blobs:
             queues = self._resource_manager.get_ingestion_queues()
             queue_details = random.choice(queues)
-            storage_client = CloudStorageAccount(queue_details.storage_account_name,
-                                                 sas_token=queue_details.sas)
+            storage_client = CloudStorageAccount(
+                queue_details.storage_account_name, sas_token=queue_details.sas
+            )
             queue_service = storage_client.create_queue_service()
             authorization_context = self._resource_manager.get_authorization_context()
-            ingestion_blob_info = _IngestionBlobInfo(blob,
-                                                     ingestion_properties,
-                                                     delete_sources_on_success,
-                                                     authorization_context)
+            ingestion_blob_info = _IngestionBlobInfo(
+                blob, ingestion_properties, delete_sources_on_success, authorization_context
+            )
             ingestion_blob_info_json = ingestion_blob_info.to_json()
-            encoded = base64.b64encode(ingestion_blob_info_json.encode('utf-8')).decode('utf-8')
+            encoded = base64.b64encode(ingestion_blob_info_json.encode("utf-8")).decode("utf-8")
             queue_service.put_message(queue_details.object_name, encoded)

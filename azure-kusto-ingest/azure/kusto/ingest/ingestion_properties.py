@@ -4,8 +4,10 @@ from enum import Enum, IntEnum
 
 from .kusto_ingest_client_exceptions import KustoDuplicateMappingError
 
+
 class DataFormat(Enum):
     """All data formats supported by Kusto."""
+
     csv = "csv"
     tsv = "tsv"
     scsv = "scsv"
@@ -17,71 +19,94 @@ class DataFormat(Enum):
     avro = "avro"
     parquet = "parquet"
 
+
 class ValidationOptions(IntEnum):
     """Validation options to ingest command."""
+
     DoNotValidate = 0
     ValidateCsvInputConstantColumns = 1
     ValidateCsvInputColumnLevelOnly = 2
 
+
 class ValidationImplications(IntEnum):
     """Validation implications to ingest command."""
+
     Fail = 0
     BestEffort = 1
 
-class ValidationPolicy():
+
+class ValidationPolicy:
     """Validation policy to ingest command."""
-    def __init__(self,
-                 validationOptions=ValidationOptions.DoNotValidate,
-                 validationImplications=ValidationImplications.BestEffort):
+
+    def __init__(
+        self,
+        validationOptions=ValidationOptions.DoNotValidate,
+        validationImplications=ValidationImplications.BestEffort,
+    ):
         self.ValidationOptions = validationOptions
         self.ValidationImplications = validationImplications
 
+
 class ReportLevel(Enum):
     """Report level to ingest command."""
+
     FailuresOnly = 0
     DoNotReport = 1
     FailuresAndSuccesses = 2
 
+
 class ReportMethod(Enum):
     """Report method to ingest command."""
+
     Queue = 0
     Table = 1
     QueueAndTable = 2
 
-class ColumnMapping():
+
+class ColumnMapping:
     """Abstract class to column mapping."""
+
     pass
+
 
 class CsvColumnMapping(ColumnMapping):
     """Class to represent a csv column mapping."""
+
     def __init__(self, columnName, cslDataType, ordinal):
         self.Name = columnName
         self.DataType = cslDataType
         self.Ordinal = ordinal
 
+
 class JsonColumnMapping(ColumnMapping):
     """ Class to represent a json column mapping """
+
     def __init__(self, columnName, jsonPath, cslDataType=None):
         self.column = columnName
         self.path = jsonPath
         self.datatype = cslDataType
 
+
 class IngestionProperties:
     """Class to represent ingestion properties."""
-    def __init__(self, database, table,
-                 dataFormat=DataFormat.csv,
-                 mapping=None,
-                 mappingReference=None,
-                 additionalTags=None,
-                 ingestIfNotExists=None,
-                 ingestByTags=None,
-                 dropByTags=None,
-                 flushImmediately=False,
-                 reportLevel=ReportLevel.DoNotReport,
-                 reportMethod=ReportMethod.Queue,
-                 validationPolicy=None,
-                 additionalProperties=None
-                ):
+
+    def __init__(
+        self,
+        database,
+        table,
+        dataFormat=DataFormat.csv,
+        mapping=None,
+        mappingReference=None,
+        additionalTags=None,
+        ingestIfNotExists=None,
+        ingestByTags=None,
+        dropByTags=None,
+        flushImmediately=False,
+        reportLevel=ReportLevel.DoNotReport,
+        reportMethod=ReportMethod.Queue,
+        validationPolicy=None,
+        additionalProperties=None,
+    ):
         if mapping is not None and mappingReference is not None:
             raise KustoDuplicateMappingError()
         self.database = database
