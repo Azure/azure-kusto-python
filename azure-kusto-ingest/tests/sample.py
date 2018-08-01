@@ -1,5 +1,5 @@
 from azure.kusto.data import KustoConnectionStringBuilder
-from azure.kusto.ingest import KustoIngestFactory
+from azure.kusto.ingest import KustoIngestClient
 from azure.kusto.ingest.ingestion_properties import IngestionProperties, DataFormat
 from azure.kusto.ingest.descriptors import FileDescriptor, BlobDescriptor
 
@@ -9,8 +9,8 @@ kcsb1 = KustoConnectionStringBuilder.with_aad_device_authentication("https://ing
 kcsb2 = KustoConnectionStringBuilder.with_aad_application_key_authentication("https://ingest-clustername.kusto.windows.net",
                                                                              application_client_id="aad app id", application_key="secret")
 
-ingest_client = KustoIngestFactory.create_ingest_client(kcsb1) # Authenticating interactively
-ingest_client = KustoIngestFactory.create_ingest_client(kcsb2) # Authenticating with app id
+ingest_client = KustoIngestClient(kcsb1) # Authenticating interactively
+ingest_client = KustoIngestClient(kcsb2) # Authenticating with app id
 
 file_descriptor = FileDescriptor("E:\\filePath.csv", 3333) # 3333 is the raw size of the data in bytes.
 ingest_client.ingest_from_multiple_files([file_descriptor],
