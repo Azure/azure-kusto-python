@@ -1,7 +1,6 @@
 """This module is serve as a cache to all resources needed by the kusto ingest client."""
 
 from datetime import datetime, timedelta
-import random
 
 from .connection_string import _ConnectionString
 
@@ -80,10 +79,9 @@ class _ResourceManager:
         self._refresh_ingest_client_resources()
         return self._ingest_client_resources.successful_ingestions_queues
 
-    def get_container(self):
+    def get_containers(self):
         self._refresh_ingest_client_resources()
-        current_containers = self._ingest_client_resources.containers
-        return random.choice(current_containers)
+        return self._ingest_client_resources.containers
     
     def get_ingestions_status_tables(self):
         self._refresh_ingest_client_resources()
