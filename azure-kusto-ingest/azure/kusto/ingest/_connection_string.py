@@ -3,6 +3,7 @@
 
 import re
 
+
 class _ConnectionString:
     def __init__(self, storage_account_name, objectType, objectName, sas):
         self.storage_account_name = storage_account_name

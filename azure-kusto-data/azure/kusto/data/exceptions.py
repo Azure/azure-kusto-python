@@ -1,7 +1,9 @@
 """ All kusto exceptions that can be thrown from this client. """
 
+
 class KustoError(Exception):
     """ Base class for all exceptions raised by the Kusto Python Client Libraries. """
+
     def __init__(self, instance, messages):
         super(KustoError, instance).__init__(messages)
 
@@ -10,6 +12,7 @@ class KustoServiceError(KustoError):
     """
     Raised when the Kusto service was unable to process a request.
     """
+
     def __init__(self, messages, http_response, kusto_response=None):
         super(KustoServiceError, self).__init__(self, messages)
         self.http_response = http_response
@@ -36,5 +39,6 @@ class KustoClientError(KustoError):
     """
     Raised when a Kusto client is unable to send or complete a request.
     """
+
     def __init__(self, messages):
         super(KustoClientError, self).__init__(self, messages)

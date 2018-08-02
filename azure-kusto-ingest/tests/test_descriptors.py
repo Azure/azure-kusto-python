@@ -5,8 +5,10 @@ from os import path
 import unittest
 from azure.kusto.ingest.descriptors import FileDescriptor
 
+
 class DescriptorsTest(unittest.TestCase):
     """Test class for FileDescriptor and BlobDescriptor."""
+
     def test_unzipped_file_with_size(self):
         """ Tests FileDescriptor with size and unzipped file """
         filePath = path.join(path.dirname(path.abspath(__file__)), "input", "dataset.csv")

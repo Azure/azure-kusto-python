@@ -1,7 +1,9 @@
 from enum import Enum
 from six import text_type
 from .version import VERSION
+
 __version__ = VERSION
+
 
 class KustoConnectionStringBuilder(dict):
     class _Keywords(Enum):
@@ -14,10 +16,10 @@ class KustoConnectionStringBuilder(dict):
 
     def __init__(self, connection_string, *args, **kwargs):
         self._constructing = True
-        if connection_string is not None and '=' not in connection_string.split(';')[0]:
-            connection_string = 'Data Source=' + connection_string
-        for kvp_string in connection_string.split(';'):
-            kvp = kvp_string.split('=')
+        if connection_string is not None and "=" not in connection_string.split(";")[0]:
+            connection_string = "Data Source=" + connection_string
+        for kvp_string in connection_string.split(";"):
+            kvp = kvp_string.split("=")
             self[kvp[0]] = kvp[1]
         super(KustoConnectionStringBuilder, self).__init__(*args, **kwargs)
         self._is_valid()
@@ -35,8 +37,7 @@ class KustoConnectionStringBuilder(dict):
     def update(self, *args, **kwargs):
         if args:
             if len(args) > 1:
-                raise TypeError("update expected at most 1 arguments, "
-                                "got %d" % len(args))
+                raise TypeError("update expected at most 1 arguments, " "got %d" % len(args))
             other = dict(args[0])
             for key in other:
                 self[key] = other[key]
@@ -55,22 +56,32 @@ class KustoConnectionStringBuilder(dict):
     def with_aad_user_password_authentication(cls, connection_string, user_id, password):
         _ensure_value_is_valid(user_id)
         _ensure_value_is_valid(password)
-        return cls(connection_string,\
-            {KustoConnectionStringBuilder._Keywords.aad_user_id: user_id,\
-            KustoConnectionStringBuilder._Keywords.password: password})
+        return cls(
+            connection_string,
+            {
+                KustoConnectionStringBuilder._Keywords.aad_user_id: user_id,
+                KustoConnectionStringBuilder._Keywords.password: password,
+            },
+        )
 
     @classmethod
-    def with_aad_application_key_authentication(cls, connection_string, application_client_id, application_key):
+    def with_aad_application_key_authentication(
+        cls, connection_string, application_client_id, application_key
+    ):
         _ensure_value_is_valid(application_client_id)
         _ensure_value_is_valid(application_key)
-        return cls(connection_string,\
-            {KustoConnectionStringBuilder._Keywords.application_client_id: application_client_id,\
-            KustoConnectionStringBuilder._Keywords.application_key: application_key})
+        return cls(
+            connection_string,
+            {
+                KustoConnectionStringBuilder._Keywords.application_client_id: application_client_id,
+                KustoConnectionStringBuilder._Keywords.application_key: application_key,
+            },
+        )
 
     @classmethod
     def with_aad_device_authentication(cls, connection_string):
         return cls(connection_string)
-    
+
     @property
     def data_source(self):
         if KustoConnectionStringBuilder._Keywords.data_source in self:
@@ -113,27 +124,50 @@ class KustoConnectionStringBuilder(dict):
 
     def _is_valid(self):
         _ensure_value_is_valid(self[KustoConnectionStringBuilder._Keywords.data_source])
-        error_message_template = "specified '{0}' authentication method has incorrect properties set"
+        error_message_template = (
+            "specified '{0}' authentication method has incorrect properties set"
+        )
         if KustoConnectionStringBuilder._Keywords.aad_user_id in self:
-            error_message = error_message_template.format(KustoConnectionStringBuilder._Keywords.aad_user_id.value)
+            error_message = error_message_template.format(
+                KustoConnectionStringBuilder._Keywords.aad_user_id.value
+            )
             _ensure_value_is_valid(self[KustoConnectionStringBuilder._Keywords.password])
-            self._ensure_value_does_not_exists(KustoConnectionStringBuilder._Keywords.application_client_id, error_message)
-            self._ensure_value_does_not_exists(KustoConnectionStringBuilder._Keywords.application_key, error_message)
+            self._ensure_value_does_not_exists(
+                KustoConnectionStringBuilder._Keywords.application_client_id, error_message
+            )
+            self._ensure_value_does_not_exists(
+                KustoConnectionStringBuilder._Keywords.application_key, error_message
+            )
         elif KustoConnectionStringBuilder._Keywords.application_client_id in self:
-            error_message = error_message_template.format(KustoConnectionStringBuilder._Keywords.application_client_id.value)
+            error_message = error_message_template.format(
+                KustoConnectionStringBuilder._Keywords.application_client_id.value
+            )
             _ensure_value_is_valid(self[KustoConnectionStringBuilder._Keywords.application_key])
-            self._ensure_value_does_not_exists(KustoConnectionStringBuilder._Keywords.aad_user_id, error_message)
-            self._ensure_value_does_not_exists(KustoConnectionStringBuilder._Keywords.password, error_message)
+            self._ensure_value_does_not_exists(
+                KustoConnectionStringBuilder._Keywords.aad_user_id, error_message
+            )
+            self._ensure_value_does_not_exists(
+                KustoConnectionStringBuilder._Keywords.password, error_message
+            )
         else:
-            error_message = error_message_template.format('Device login')
-            self._ensure_value_does_not_exists(KustoConnectionStringBuilder._Keywords.application_client_id, error_message)
-            self._ensure_value_does_not_exists(KustoConnectionStringBuilder._Keywords.application_key, error_message)
-            self._ensure_value_does_not_exists(KustoConnectionStringBuilder._Keywords.aad_user_id, error_message)
-            self._ensure_value_does_not_exists(KustoConnectionStringBuilder._Keywords.password, error_message)
+            error_message = error_message_template.format("Device login")
+            self._ensure_value_does_not_exists(
+                KustoConnectionStringBuilder._Keywords.application_client_id, error_message
+            )
+            self._ensure_value_does_not_exists(
+                KustoConnectionStringBuilder._Keywords.application_key, error_message
+            )
+            self._ensure_value_does_not_exists(
+                KustoConnectionStringBuilder._Keywords.aad_user_id, error_message
+            )
+            self._ensure_value_does_not_exists(
+                KustoConnectionStringBuilder._Keywords.password, error_message
+            )
 
     def _ensure_value_does_not_exists(self, value, error_message):
         if value in self:
             raise AssertionError(error_message)
+
 
 def _ensure_value_is_valid(value):
     if not isinstance(value, text_type):
@@ -141,8 +175,10 @@ def _ensure_value_is_valid(value):
     if not value or not value.strip():
         raise ValueError
 
+
 class KustoClientFactory(object):
     @staticmethod
     def create_csl_provider(kusto_connection_string_builder):
         from ._kusto_client import _KustoClient
+
         return _KustoClient(kusto_connection_string_builder)

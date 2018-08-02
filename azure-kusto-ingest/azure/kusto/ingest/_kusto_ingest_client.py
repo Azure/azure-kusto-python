@@ -12,6 +12,7 @@ from .descriptors import BlobDescriptor, FileDescriptor
 from ._connection_string import _ConnectionString
 from ._ingestion_blob_info import _IngestionBlobInfo
 
+
 class _KustoIngestClient:
     """
     Kusto ingest client for Python.
@@ -43,6 +44,7 @@ class _KustoIngestClient:
     >>> kusto_cluster = 'https://ingest-help.kusto.windows.net'
     >>> kusto_ingest_client = KustoIngestClient(kusto_cluster)
     """
+
     def __init__(self, kcsb):
         """
         Kusto Client constructor.
@@ -95,17 +97,28 @@ class _KustoIngestClient:
             else:
                 descriptor = FileDescriptor(file, deleteSourcesOnSuccess=delete_sources_on_success)
             file_descriptors.append(descriptor)
-            blob_name = ingestion_properties.database + "__" + ingestion_properties.table + "__" + str(uuid.uuid4()) + "__" + descriptor.stream_name
+            blob_name = (
+                ingestion_properties.database
+                + "__"
+                + ingestion_properties.table
+                + "__"
+                + str(uuid.uuid4())
+                + "__"
+                + descriptor.stream_name
+            )
             container_details = random.choice(self._temp_storage_objects)
-            storage_client = CloudStorageAccount(container_details.storage_account_name,
-                                                 sas_token=container_details.sas)
+            storage_client = CloudStorageAccount(
+                container_details.storage_account_name, sas_token=container_details.sas
+            )
             blob_service = storage_client.create_block_blob_service()
-            blob_service.create_blob_from_stream(container_name=container_details.object_name,
-                                               blob_name=blob_name,
-                                               stream=descriptor.zipped_stream)
-            url = blob_service.make_blob_url(container_details.object_name,
-                                             blob_name,
-                                             sas_token=container_details.sas)
+            blob_service.create_blob_from_stream(
+                container_name=container_details.object_name,
+                blob_name=blob_name,
+                stream=descriptor.zipped_stream,
+            )
+            url = blob_service.make_blob_url(
+                container_details.object_name, blob_name, sas_token=container_details.sas
+            )
             blobs.append(BlobDescriptor(url, descriptor.size))
         self.ingest_from_multiple_blobs(blobs, delete_sources_on_success, ingestion_properties)
         for descriptor in file_descriptors:
@@ -129,20 +142,22 @@ class _KustoIngestClient:
         self._refresh_token_if_needed()
         for blob in blobs:
             queue_details = random.choice(self._queues)
-            storage_client = CloudStorageAccount(queue_details.storage_account_name,
-                                                 sas_token=queue_details.sas)
+            storage_client = CloudStorageAccount(
+                queue_details.storage_account_name, sas_token=queue_details.sas
+            )
             queue_service = storage_client.create_queue_service()
-            ingestion_blob_info = _IngestionBlobInfo(blob,
-                                                     ingestion_properties,
-                                                     delete_sources_on_success,
-                                                     self._kusto_token)
+            ingestion_blob_info = _IngestionBlobInfo(
+                blob, ingestion_properties, delete_sources_on_success, self._kusto_token
+            )
             ingestion_blob_info_json = ingestion_blob_info.to_json()
-            encoded = base64.b64encode(ingestion_blob_info_json.encode('utf-8')).decode('utf-8')
+            encoded = base64.b64encode(ingestion_blob_info_json.encode("utf-8")).decode("utf-8")
             queue_service.put_message(queue_details.object_name, encoded)
 
     def _refresh_containers_if_needed(self):
-        if (self._last_time_refreshed_containers > datetime.utcnow() - timedelta(hours=2)
-                or not self._temp_storage_objects):
+        if (
+            self._last_time_refreshed_containers > datetime.utcnow() - timedelta(hours=2)
+            or not self._temp_storage_objects
+        ):
             self._last_time_refreshed_containers = datetime.utcnow()
             self._temp_storage_objects = self._get_temp_storage_objects()
 
@@ -154,27 +169,32 @@ class _KustoIngestClient:
         return storages
 
     def _refresh_queues_if_needed(self):
-        if (self._last_time_refreshed_queues > datetime.utcnow() - timedelta(hours=2)
-                or not self._queues):
+        if (
+            self._last_time_refreshed_queues > datetime.utcnow() - timedelta(hours=2)
+            or not self._queues
+        ):
             self._last_time_refreshed_queues = datetime.utcnow()
             self._queues = self._get_queues()
 
     def _get_queues(self):
-        response = self._kusto_client.execute_mgmt("NetDefaultDB",
-                                                   '.get ingestion queues "SecuredReadyForAggregationQueue" withsas')
+        response = self._kusto_client.execute_mgmt(
+            "NetDefaultDB", '.get ingestion queues "SecuredReadyForAggregationQueue" withsas'
+        )
         queues = list()
         for row in response.iter_all():
             queues.append(_ConnectionString.parse(row["Uri"]))
         return queues
 
     def _refresh_token_if_needed(self):
-        if (self._last_time_refreshed_token > datetime.utcnow() - timedelta(hours=2)
-                or not self._kusto_token):
+        if (
+            self._last_time_refreshed_token > datetime.utcnow() - timedelta(hours=2)
+            or not self._kusto_token
+        ):
             self._last_time_refreshed_token = datetime.utcnow()
             self._kusto_token = self._get_kusto_token()
 
     def _get_kusto_token(self):
-        response = self._kusto_client.execute_mgmt("NetDefaultDB", '.get kusto identity token')
+        response = self._kusto_client.execute_mgmt("NetDefaultDB", ".get kusto identity token")
         for row in response.iter_all():
             result = row["AuthorizationContext"]
         return result
