@@ -11,7 +11,7 @@ import pandas
 import six
 import numbers
 
-from .exceptions import KustoServiceError as KustoServiceError
+from .exceptions import KustoServiceError
 from .security import _AadHelper
 from .version import VERSION
 
