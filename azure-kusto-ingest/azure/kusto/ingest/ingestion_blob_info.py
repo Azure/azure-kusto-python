@@ -6,6 +6,7 @@ from datetime import datetime
 
 from .descriptors import BlobDescriptor
 
+
 class _IngestionBlobInfo:
     def __init__(self, blob, ingestionProperties, deleteSourcesOnSuccess=True, authContext=None):
         if not isinstance(blob, BlobDescriptor):
@@ -23,8 +24,8 @@ class _IngestionBlobInfo:
         self.properties["SourceMessageCreationTime"] = datetime.utcnow().isoformat()
         self.properties["Id"] = str(uuid.uuid4())
         # TODO: Add support for ingestion statuses
-        #self.properties["IngestionStatusInTable"] = None
-        #self.properties["BlobPathEncrypted"] = None
+        # self.properties["IngestionStatusInTable"] = None
+        # self.properties["BlobPathEncrypted"] = None
         additional_properties = ingestionProperties.additional_properties or dict()
         additional_properties["authorizationContext"] = authContext
 
@@ -38,15 +39,21 @@ class _IngestionBlobInfo:
         if tags:
             additional_properties["tags"] = _IngestionBlobInfo._convert_list_to_json(tags)
         if ingestionProperties.ingest_if_not_exists:
-            additional_properties["ingestIfNotExists"] = _IngestionBlobInfo._convert_list_to_json(ingestionProperties.ingest_if_not_exists)
+            additional_properties["ingestIfNotExists"] = _IngestionBlobInfo._convert_list_to_json(
+                ingestionProperties.ingest_if_not_exists
+            )
         if ingestionProperties.mapping:
             json_string = _IngestionBlobInfo._convert_dict_to_json(ingestionProperties.mapping)
-            additional_properties[ingestionProperties.get_mapping_format() + "Mapping"] = json_string
+            additional_properties[
+                ingestionProperties.get_mapping_format() + "Mapping"
+            ] = json_string
         if ingestionProperties.mapping_reference:
             key = ingestionProperties.get_mapping_format() + "MappingReference"
             additional_properties[key] = ingestionProperties.mapping_reference
         if ingestionProperties.validation_policy:
-            additional_properties["ValidationPolicy"] = _IngestionBlobInfo._convert_dict_to_json(ingestionProperties.validation_policy)
+            additional_properties["ValidationPolicy"] = _IngestionBlobInfo._convert_dict_to_json(
+                ingestionProperties.validation_policy
+            )
         if ingestionProperties.format:
             additional_properties["format"] = ingestionProperties.format.name
 
@@ -60,19 +67,19 @@ class _IngestionBlobInfo:
     @staticmethod
     def _convert_list_to_json(array):
         """ Converts array to a json string """
-        return json.dumps(array,
-                          skipkeys=False,
-                          allow_nan=False,
-                          indent=None,
-                          separators=(',', ':'))
+        return json.dumps(
+            array, skipkeys=False, allow_nan=False, indent=None, separators=(",", ":")
+        )
 
     @staticmethod
     def _convert_dict_to_json(array):
         """ Converts array to a json string """
-        return json.dumps(array,
-                          skipkeys=False,
-                          allow_nan=False,
-                          indent=None,
-                          separators=(',', ':'),
-                          sort_keys=True,
-                          default=lambda o: o.__dict__)
+        return json.dumps(
+            array,
+            skipkeys=False,
+            allow_nan=False,
+            indent=None,
+            separators=(",", ":"),
+            sort_keys=True,
+            default=lambda o: o.__dict__,
+        )

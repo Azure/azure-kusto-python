@@ -11,7 +11,8 @@ from .ingestion_properties import (
     CsvColumnMapping,
     JsonColumnMapping,
     IngestionProperties,
-    )
+)
 
 from .version import VERSION
+
 __version__ = VERSION
