@@ -1,6 +1,4 @@
-"""
-Functional tests of the client.
-"""
+"""Functional tests of the client."""
 
 import json
 import unittest
@@ -173,12 +171,10 @@ RESPONSE_TEXT = """
 
 
 class FunctionalTests(unittest.TestCase):
-    """
-    E2E tests, from part where response is received from Kusto. This does not include access to actual Kusto cluster.
-    """
+    """E2E tests, from part where response is received from Kusto. This does not include access to actual Kusto cluster."""
 
     def test_valid_response(self):
-        """ Tests on happy path, validating response and iterations over it """
+        """Tests on happy path, validating response and iterations over it."""
         response = KustoResponse(json.loads(RESPONSE_TEXT))
         # Test that basic iteration works
         row_count = 0
@@ -189,12 +185,12 @@ class FunctionalTests(unittest.TestCase):
         self.assertEqual(5, response.get_table_count())
         # Test access by index and by column name
         for row in response.iter_all():
-            self.assertEqual(row[0], row['Timestamp'])
-            self.assertEqual(row[1], row['Name'])
-            self.assertEqual(row[2], row['Altitude'])
-            self.assertEqual(row[3], row['Temperature'])
-            self.assertEqual(row[4], row['IsFlying'])
-            self.assertEqual(row[5], row['TimeFlying'])
+            self.assertEqual(row[0], row["Timestamp"])
+            self.assertEqual(row[1], row["Name"])
+            self.assertEqual(row[2], row["Altitude"])
+            self.assertEqual(row[3], row["Temperature"])
+            self.assertEqual(row[4], row["IsFlying"])
+            self.assertEqual(row[5], row["TimeFlying"])
 
         # Test all types
         for row in response.iter_all():
@@ -207,45 +203,48 @@ class FunctionalTests(unittest.TestCase):
                 self.assertEqual(type(row[5]), timedelta)
         # Test actual values
         rows = list(response.iter_all())
-        self.assertEqual(datetime(2016, 6, 6, 15, 35, tzinfo=tzutc()), rows[0]['Timestamp'])
-        self.assertEqual('foo', rows[0]['Name'])
-        self.assertEqual(101, rows[0]['Altitude'])
-        self.assertAlmostEqual(3.14, rows[0]['Temperature'], 2)
-        self.assertEqual(False, rows[0]['IsFlying'])
-        self.assertEqual(timedelta(days=4, hours=1, minutes=2, seconds=3, milliseconds=567), rows[0]['TimeFlying'])
+        self.assertEqual(datetime(2016, 6, 6, 15, 35, tzinfo=tzutc()), rows[0]["Timestamp"])
+        self.assertEqual("foo", rows[0]["Name"])
+        self.assertEqual(101, rows[0]["Altitude"])
+        self.assertAlmostEqual(3.14, rows[0]["Temperature"], 2)
+        self.assertEqual(False, rows[0]["IsFlying"])
+        self.assertEqual(
+            timedelta(days=4, hours=1, minutes=2, seconds=3, milliseconds=567),
+            rows[0]["TimeFlying"],
+        )
 
-        self.assertEqual(datetime(2016, 6, 7, 16, tzinfo=tzutc()), rows[1]['Timestamp'])
-        self.assertEqual('bar', rows[1]['Name'])
-        self.assertEqual(555, rows[1]['Altitude'])
-        self.assertAlmostEqual(2.71, rows[1]['Temperature'], 2)
-        self.assertEqual(True, rows[1]['IsFlying'])
-        self.assertEqual(timedelta(), rows[1]['TimeFlying'])
+        self.assertEqual(datetime(2016, 6, 7, 16, tzinfo=tzutc()), rows[1]["Timestamp"])
+        self.assertEqual("bar", rows[1]["Name"])
+        self.assertEqual(555, rows[1]["Altitude"])
+        self.assertAlmostEqual(2.71, rows[1]["Temperature"], 2)
+        self.assertEqual(True, rows[1]["IsFlying"])
+        self.assertEqual(timedelta(), rows[1]["TimeFlying"])
 
-        self.assertIsNone(rows[2]['Timestamp'])
-        self.assertIn(rows[2]['Name'], ['', u''])
-        self.assertIsNone(rows[2]['Altitude'])
-        self.assertIsNone(rows[2]['Temperature'], 2)
-        self.assertIsNone(rows[2]['IsFlying'])
-        self.assertIsNone(rows[2]['TimeFlying'])
+        self.assertIsNone(rows[2]["Timestamp"])
+        self.assertIn(rows[2]["Name"], ["", u""])
+        self.assertIsNone(rows[2]["Altitude"])
+        self.assertIsNone(rows[2]["Temperature"], 2)
+        self.assertIsNone(rows[2]["IsFlying"])
+        self.assertIsNone(rows[2]["TimeFlying"])
         # Test second table
         rows = list(response.iter_all(1))
         self.assertEqual(1, len(rows))
 
     def test_invalid_table(self):
-        """ Tests calling of table with index that doesn't exists """
+        """Tests calling of table with index that doesn't exists."""
         response = KustoResponse(json.loads(RESPONSE_TEXT))
         self.assertRaises(IndexError, response.iter_all, 7)
         self.assertRaises(IndexError, response.iter_all, -6)
 
     def test_column_dont_exist(self):
-        """ Tests accessing column that doesn't exists """
+        """Tests accessing column that doesn't exists."""
         response = KustoResponse(json.loads(RESPONSE_TEXT))
         row = list(response.iter_all())[0]
         self.assertRaises(IndexError, row.__getitem__, 10)
-        self.assertRaises(KeyError, row.__getitem__, 'NonexistentColumn')
+        self.assertRaises(KeyError, row.__getitem__, "NonexistentColumn")
 
     def test_interating_after_end(self):
-        """ Tests StopIteration is raised when the response ends. """
+        """Tests StopIteration is raised when the response ends."""
         response = KustoResponse(json.loads(RESPONSE_TEXT))
         iterator = response.iter_all()
         iterator.__next__()
