@@ -222,6 +222,7 @@ class _KustoResponse(object):
         "TimeSpan": "object",
     }
 
+
 class KustoClient(object):
     """
     Kusto client for Python.
