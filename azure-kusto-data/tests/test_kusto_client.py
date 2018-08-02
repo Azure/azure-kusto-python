@@ -1,5 +1,4 @@
-""" E2E class for KustoClient
-"""
+"""E2E class for KustoClient."""
 
 import os
 import json
@@ -11,7 +10,8 @@ from dateutil.tz.tz import tzutc
 from pandas import DataFrame, Series
 from pandas.util.testing import assert_frame_equal
 
-from azure.kusto.data import KustoClientFactory, KustoConnectionStringBuilder
+from azure.kusto.data import KustoConnectionStringBuilder
+from azure.kusto.data.net import KustoClient
 from azure.kusto.data.exceptions import KustoServiceError
 
 # This method will be used by the mock to replace KustoClient._acquire_token
@@ -37,11 +37,11 @@ def mocked_requests_post(*args, **kwargs):
             """Get json data from response."""
             return self.json_data
 
-    if args[0] == text_type("https://somecluster.kusto.windows.net/v2/rest/query"):
+    if args[0] == "https://somecluster.kusto.windows.net/v2/rest/query":
         if "truncationmaxrecords" in kwargs["json"]["csl"]:
-            file_name = text_type("querypartialresults.json")
+            file_name = "querypartialresults.json"
         elif "Deft" in kwargs["json"]["csl"]:
-            file_name = text_type("deft.json")
+            file_name = "deft.json"
         return MockResponse(
             json.loads(
                 open(os.path.join(os.path.dirname(__file__), "input", file_name), "r").read()
@@ -89,7 +89,7 @@ class KustoClientTests(unittest.TestCase):
         kcsb = KustoConnectionStringBuilder.with_aad_device_authentication(
             text_type("https://somecluster.kusto.windows.net")
         )
-        client = KustoClientFactory.create_csl_provider(kcsb)
+        client = KustoClient(kcsb)
         response = client.execute_query("PythonTest", "Deft")
         expected = {
             "rownumber": None,
@@ -200,7 +200,7 @@ class KustoClientTests(unittest.TestCase):
         kcsb = KustoConnectionStringBuilder.with_aad_device_authentication(
             text_type("https://somecluster.kusto.windows.net")
         )
-        client = KustoClientFactory.create_csl_provider(kcsb)
+        client = KustoClient(kcsb)
         response = client.execute_mgmt("NetDefaultDB", ".show version")
         self.assertEqual(response.get_table_count(), 1)
         row_count = 0
@@ -223,7 +223,7 @@ class KustoClientTests(unittest.TestCase):
         kcsb = KustoConnectionStringBuilder.with_aad_device_authentication(
             text_type("https://somecluster.kusto.windows.net")
         )
-        client = KustoClientFactory.create_csl_provider(kcsb)
+        client = KustoClient(kcsb)
         data_frame = client.execute_query("PythonTest", "Deft").to_dataframe(errors="ignore")
         self.assertEqual(len(data_frame.columns), 19)
         expected_dict = {
@@ -375,10 +375,10 @@ class KustoClientTests(unittest.TestCase):
         kcsb = KustoConnectionStringBuilder.with_aad_device_authentication(
             text_type("https://somecluster.kusto.windows.net")
         )
-        client = KustoClientFactory.create_csl_provider(kcsb)
+        client = KustoClient(kcsb)
         query = """\
 set truncationmaxrecords = 1;
-range x from 1 to 2 step 1 """
+range x from 1 to 2 step 1"""
         self.assertRaises(KustoServiceError, client.execute_query, "PythonTest", query)
         response = client.execute_query("PythonTest", query, accept_partial_results=True)
         self.assertTrue(response.has_exceptions())

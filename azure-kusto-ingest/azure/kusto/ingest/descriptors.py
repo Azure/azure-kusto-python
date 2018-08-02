@@ -1,5 +1,4 @@
-""" A file contains all descriptors ingest command should work with.
-"""
+"""A file contains all descriptors ingest command should work with."""
 
 import os
 from io import BytesIO
@@ -9,7 +8,7 @@ import tempfile
 
 
 class FileDescriptor(object):
-    """ A class that defines a file to ingest. """
+    """A class that defines a file to ingest."""
 
     def __init__(self, path, size=0, deleteSourcesOnSuccess=False):
         self.path = path
@@ -31,10 +30,8 @@ class FileDescriptor(object):
             self.zipped_stream.seek(0)
 
     def delete_files(self, success):
-        """
-        Deletes the gz file if the original file was not zipped.
-        In case of success deletes the original file as well.
-        """
+        """Deletes the gz file if the original file was not zipped.
+        In case of success deletes the original file as well."""
         if self.zipped_stream is not None:
             self.zipped_stream.close()
         if success and self.delete_sources_on_success:
@@ -42,7 +39,7 @@ class FileDescriptor(object):
 
 
 class BlobDescriptor(object):
-    """ A class that defines a blob to ingest. """
+    """A class that defines a blob to ingest."""
 
     def __init__(self, path, size):
         self.path = path

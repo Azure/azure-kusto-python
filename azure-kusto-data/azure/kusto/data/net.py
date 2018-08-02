@@ -1,7 +1,4 @@
-"""
-This module constains all classes to get Kusto responses.
-Including error handling.
-"""
+"""This module constains all classes to get Kusto responses. Including error handling."""
 
 from datetime import timedelta
 import re
@@ -14,9 +11,8 @@ import pandas
 import six
 import numbers
 
-from azure.kusto.data import KustoConnectionStringBuilder
+from .exceptions import KustoServiceError as KustoServiceError
 from .security import _AadHelper
-from .exceptions import KustoServiceError
 from .version import VERSION
 
 # Regex for TimeSpan
@@ -25,11 +21,11 @@ TIMESPAN_PATTERN = re.compile(
 )
 
 
-class KustoResult(dict):
-    """ Simple wrapper around dictionary, to enable both index and key access to rows in result """
+class _KustoResult(dict):
+    """Simple wrapper around dictionary, to enable both index and key access to rows in result."""
 
     def __init__(self, index2column_mapping, *args, **kwargs):
-        super(KustoResult, self).__init__(*args, **kwargs)
+        super(_KustoResult, self).__init__(*args, **kwargs)
         # TODO: this is not optimal, if client will not access all fields.
         # In that case, we are having unnecessary perf hit to convert Timestamp,
         # even if client don't use it.
@@ -45,8 +41,8 @@ class KustoResult(dict):
         return val
 
 
-class KustoResultIter(six.Iterator):
-    """ Iterator over returned rows """
+class _KustoResultIter(six.Iterator):
+    """Iterator over returned rows."""
 
     def __init__(self, json_result):
         self.json_result = json_result
@@ -70,14 +66,14 @@ class KustoResultIter(six.Iterator):
 
     @staticmethod
     def to_datetime(value):
-        """ Converts a string to a datetime """
+        """Converts a string to a datetime."""
         if value is None:
             return None
         return dateutil.parser.parse(value)
 
     @staticmethod
     def to_timedelta(value):
-        """ Converts a string to a timedelta """
+        """Converts a string to a timedelta."""
         if value is None:
             return None
         if isinstance(value, numbers.Number):
@@ -114,11 +110,11 @@ class KustoResultIter(six.Iterator):
             else:
                 result_dict[self.index2column_mapping[index]] = value
         self.row_index = self.row_index + 1
-        return KustoResult(self.index2column_mapping, result_dict)
+        return _KustoResult(self.index2column_mapping, result_dict)
 
 
-class KustoResponse(object):
-    """ Wrapper for response """
+class _KustoResponse(object):
+    """Wrapper for response."""
 
     # TODO: add support to get additional information from response, like execution time
 
@@ -126,17 +122,17 @@ class KustoResponse(object):
         self.json_response = json_response
 
     def get_raw_response(self):
-        """ Gets the json response got from Kusto """
+        """Gets the json response got from Kusto."""
         return self.json_response
 
     def get_table_count(self):
-        """ Gets the tables Count. """
+        """Gets the tables Count."""
         if isinstance(self.json_response, list):
             return len(self.json_response)
         return len(self.json_response["Tables"])
 
     def has_exceptions(self):
-        """ Checkes whether an exception was thrown. """
+        """Checkes whether an exception was thrown."""
         if isinstance(self.json_response, list):
             return list(
                 filter(lambda x: x["FrameType"] == "DataSetCompletion", self.json_response)
@@ -157,10 +153,10 @@ class KustoResponse(object):
         """ Returns iterator to get rows from response """
         if table_id == -1:
             table_id = self._get_default_table_id()
-        return KustoResultIter(self._get_table(table_id))
+        return _KustoResultIter(self._get_table(table_id))
 
     def to_dataframe(self, errors="raise"):
-        """ Returns Pandas data frame. """
+        """Returns Pandas data frame."""
         if not self.json_response:
             return pandas.DataFrame()
 
@@ -226,8 +222,7 @@ class KustoResponse(object):
         "TimeSpan": "object",
     }
 
-
-class _KustoClient(object):
+class KustoClient(object):
     """
     Kusto client for Python.
 
@@ -377,7 +372,7 @@ class _KustoClient(object):
         )
 
         if response.status_code == 200:
-            kusto_response = KustoResponse(response.json())
+            kusto_response = _KustoResponse(response.json())
             if kusto_response.has_exceptions() and not accept_partial_results:
                 raise KustoServiceError(kusto_response.get_exceptions(), response, kusto_response)
             return kusto_response

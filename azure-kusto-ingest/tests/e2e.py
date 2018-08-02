@@ -2,8 +2,8 @@
 
 import time
 import os
-from azure.kusto.data import KustoClientFactory, KustoConnectionStringBuilder
-from azure.kusto.ingest import KustoIngestFactory
+from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
+from azure.kusto.ingest import KustoIngestClient
 from azure.kusto.ingest.ingestion_properties import (
     IngestionProperties,
     JsonColumnMapping,
@@ -134,8 +134,8 @@ kcsb = KustoConnectionStringBuilder.with_aad_device_authentication(
 dm_kcsb = KustoConnectionStringBuilder.with_aad_device_authentication(
     "https://ingest-toshetah.kusto.windows.net"
 )
-KUSTO_CLIENT = KustoClientFactory.create_csl_provider(kcsb)
-KUSTO_INGEST_CLIENT = KustoIngestFactory.create_ingest_client(dm_kcsb)
+KUSTO_CLIENT = KustoClient(kcsb)
+KUSTO_INGEST_CLIENT = KustoIngestClient(dm_kcsb)
 
 KUSTO_CLIENT.execute("PythonTest", ".drop table Deft ifexists")
 

@@ -1,6 +1,4 @@
-"""
-Functional tests of the client.
-"""
+"""Functional tests of the client."""
 
 import json
 import unittest
@@ -8,7 +6,7 @@ from six import text_type
 from datetime import datetime, timedelta
 from dateutil.tz.tz import tzutc
 
-from azure.kusto.data._kusto_client import KustoResponse
+from azure.kusto.data.net import _KustoResponse
 
 # Sample response against all tests should be run
 RESPONSE_TEXT = """
@@ -173,13 +171,11 @@ RESPONSE_TEXT = """
 
 
 class FunctionalTests(unittest.TestCase):
-    """
-    E2E tests, from part where response is received from Kusto. This does not include access to actual Kusto cluster.
-    """
+    """E2E tests, from part where response is received from Kusto. This does not include access to actual Kusto cluster."""
 
     def test_valid_response(self):
-        """ Tests on happy path, validating response and iterations over it """
-        response = KustoResponse(json.loads(RESPONSE_TEXT))
+        """Tests on happy path, validating response and iterations over it."""
+        response = _KustoResponse(json.loads(RESPONSE_TEXT))
         # Test that basic iteration works
         row_count = 0
         for _ in response.iter_all():
@@ -235,21 +231,21 @@ class FunctionalTests(unittest.TestCase):
         self.assertEqual(1, len(rows))
 
     def test_invalid_table(self):
-        """ Tests calling of table with index that doesn't exists """
-        response = KustoResponse(json.loads(RESPONSE_TEXT))
+        """Tests calling of table with index that doesn't exists."""
+        response = _KustoResponse(json.loads(RESPONSE_TEXT))
         self.assertRaises(IndexError, response.iter_all, 7)
         self.assertRaises(IndexError, response.iter_all, -6)
 
     def test_column_dont_exist(self):
-        """ Tests accessing column that doesn't exists """
-        response = KustoResponse(json.loads(RESPONSE_TEXT))
+        """Tests accessing column that doesn't exists."""
+        response = _KustoResponse(json.loads(RESPONSE_TEXT))
         row = list(response.iter_all())[0]
         self.assertRaises(IndexError, row.__getitem__, 10)
         self.assertRaises(KeyError, row.__getitem__, "NonexistentColumn")
 
     def test_interating_after_end(self):
-        """ Tests StopIteration is raised when the response ends. """
-        response = KustoResponse(json.loads(RESPONSE_TEXT))
+        """Tests StopIteration is raised when the response ends."""
+        response = _KustoResponse(json.loads(RESPONSE_TEXT))
         iterator = response.iter_all()
         iterator.__next__()
         iterator.__next__()

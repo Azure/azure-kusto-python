@@ -19,10 +19,7 @@ class AuthenticationMethod(Enum):
 
 class _AadHelper(object):
     def __init__(self, kcsb):
-        try:
-            authority = kcsb.authority_id or "microsoft.com"
-        except KeyError:
-            authority = "microsoft.com"
+        authority = kcsb.authority_id or "microsoft.com"
         self._kusto_cluster = kcsb.data_source
         self._adal_context = AuthenticationContext(
             "https://login.windows.net/{0}".format(authority)

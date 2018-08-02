@@ -7,6 +7,8 @@ python:
 install:
   - pip install -r dev_requirements.txt
   - pip install --force-reinstall azure-nspkg==1.0.0
+before_script:
+  - if [[ "$TRAVIS_PYTHON_VERSION" == "3.6" ]]; then black . --line-length 100 --check; fi
 script:
   - pytest azure-kusto-data
   - pytest azure-kusto-ingest

@@ -1,5 +1,4 @@
-""" Tests serialization of ingestion blob info. This serialization will be queued to the DM
-"""
+"""Tests serialization of ingestion blob info. This serialization will be queued to the DM."""
 
 import unittest
 import re
@@ -24,10 +23,10 @@ TIMESTAMP_REGEX = "[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}.[0-9]{6
 
 
 class IngestionBlobInfoTest(unittest.TestCase):
-    """ Tests serialization of ingestion blob info. This serialization will be queued to the DM """
+    """Tests serialization of ingestion blob info. This serialization will be queued to the DM."""
 
     def test_blob_info_csv_mapping(self):
-        """ Tests serialization of csv ingestion blob info. """
+        """Tests serialization of csv ingestion blob info."""
         validation_policy = ValidationPolicy(
             ValidationOptions.ValidateCsvInputConstantColumns, ValidationImplications.BestEffort
         )
@@ -52,7 +51,7 @@ class IngestionBlobInfoTest(unittest.TestCase):
         self._verify_ingestion_blob_info_result(blob_info.to_json())
 
     def test_blob_csv_mapping_reference(self):
-        """ Tests serialization of ingestion blob info with csv mapping reference. """
+        """Tests serialization of ingestion blob info with csv mapping reference."""
         validation_policy = ValidationPolicy(
             ValidationOptions.ValidateCsvInputConstantColumns, ValidationImplications.BestEffort
         )
@@ -77,7 +76,7 @@ class IngestionBlobInfoTest(unittest.TestCase):
         self._verify_ingestion_blob_info_result(blob_info.to_json())
 
     def test_blob_info_json_mapping(self):
-        """ Tests serialization of json ingestion blob info. """
+        """Tests serialization of json ingestion blob info."""
         validation_policy = ValidationPolicy(
             ValidationOptions.ValidateCsvInputConstantColumns, ValidationImplications.BestEffort
         )
@@ -102,7 +101,7 @@ class IngestionBlobInfoTest(unittest.TestCase):
         self._verify_ingestion_blob_info_result(blob_info.to_json())
 
     def test_blob_json_mapping_reference(self):
-        """ Tests serialization of ingestion blob info with json mapping reference. """
+        """Tests serialization of ingestion blob info with json mapping reference."""
         validation_policy = ValidationPolicy(
             ValidationOptions.ValidateCsvInputConstantColumns, ValidationImplications.BestEffort
         )
@@ -127,7 +126,7 @@ class IngestionBlobInfoTest(unittest.TestCase):
         self._verify_ingestion_blob_info_result(blob_info.to_json())
 
     def test_blob_info_csv_exceptions(self):
-        """ Tests invalid ingestion properties. """
+        """Tests invalid ingestion properties."""
         with self.assertRaises(KustoDuplicateMappingError):
             IngestionProperties(
                 database="database",

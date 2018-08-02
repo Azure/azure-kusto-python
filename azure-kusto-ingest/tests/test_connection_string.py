@@ -1,19 +1,14 @@
-""" Tests class _connection_string
-"""
+"""Tests class _connection_string."""
 
 import unittest
 from azure.kusto.ingest._connection_string import _ConnectionString
 
 
 class ConnectionStringTests(unittest.TestCase):
-    """
-    Tests class connection_string
-    """
+    """Tests class connection_string."""
 
     def test_blob_uri(self):
-        """
-        Tests parsing blob uris
-        """
+        """Tests parsing blob uris."""
         storage_name = "storageaccountname"
         container_name = "containername"
         container_sas = "somesas"
@@ -28,9 +23,7 @@ class ConnectionStringTests(unittest.TestCase):
         self.assertEqual(connection_string.object_name, container_name)
 
     def test_queue_uri(self):
-        """
-        Tests parsing queues uris
-        """
+        """Tests parsing queues uris."""
         storage_name = "storageaccountname"
         queue_name = "queuename"
         queue_sas = "somesas"

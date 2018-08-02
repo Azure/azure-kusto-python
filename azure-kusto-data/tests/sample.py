@@ -1,7 +1,7 @@
 ﻿"""A simple example how to use KustoClient."""
 
 from six import text_type
-from azure.kusto.data import KustoClientFactory, KustoConnectionStringBuilder
+from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
 from azure.kusto.data.exceptions import KustoServiceError
 
 # TODO: this should become functional test at some point.
@@ -14,11 +14,11 @@ CLIENT_SECRET = text_type("<insert here your AAD application key>")
 kcsb = KustoConnectionStringBuilder.with_aad_application_key_authentication(
     KUSTO_CLUSTER, CLIENT_ID, CLIENT_SECRET
 )
-KUSTO_CLIENT = KustoClientFactory.create_csl_provider(kcsb)
+KUSTO_CLIENT = KustoClient(kcsb)
 
 # In case you want to authenticate with the logged in AAD user.
 kcsb = KustoConnectionStringBuilder.with_aad_device_authentication(KUSTO_CLUSTER)
-KUSTO_CLIENT = KustoClientFactory.create_csl_provider(kcsb)
+KUSTO_CLIENT = KustoClient(kcsb)
 
 KUSTO_DATABASE = "Samples"
 KUSTO_QUERY = "StormEvents | take 10"
@@ -55,7 +55,7 @@ except KustoServiceError as error:
 kcsb = KustoConnectionStringBuilder.with_aad_device_authentication(
     text_type("https://kustolab.kusto.windows.net")
 )
-KUSTO_CLIENT = KustoClientFactory.create_csl_provider(kcsb)
+KUSTO_CLIENT = KustoClient(kcsb)
 RESPONSE = KUSTO_CLIENT.execute("ML", ".show version")
 QUERY = """
 let max_t = datetime(2016-09-03);
