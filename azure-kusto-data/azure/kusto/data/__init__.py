@@ -1,16 +1,16 @@
 import uuid
 import requests
-from enum import Enum
+from enum import Enum, unique
 
 from six import text_type
 
-from .exceptions import KustoServiceError as _KustoServiceError
 from .version import VERSION
 
 __version__ = VERSION
 
 
 class KustoConnectionStringBuilder(object):
+    @unique
     class _ValidKeywords(Enum):
         data_source = "Data Source"
         aad_user_id = "AAD User ID"
@@ -42,7 +42,7 @@ class KustoConnectionStringBuilder(object):
 
     def __init__(self, connection_string):
         self._internal_dict = {}
-        if connection_string is not None and "=" not in connection_string.split(";")[0]:
+        if connection_string is not None and "=" not in connection_string.partition(";")[0]:
             connection_string = "Data Source=" + connection_string
         for kvp_string in connection_string.split(";"):
             kvp = kvp_string.split("=")

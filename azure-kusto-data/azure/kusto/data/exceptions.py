@@ -17,19 +17,19 @@ class KustoServiceError(KustoError):
         self.kusto_response = kusto_response
 
     def get_raw_http_response(self):
-        """Gets the http response."""
+        """Get the http response."""
         return self.http_response
 
     def is_semantic_error(self):
-        """Checks if a response is a semantic error."""
+        """Check if a response is a semantic error."""
         return "Semantic error:" in self.http_response.text
 
     def has_partial_results(self):
-        """Checks if a response exists."""
+        """Check if a response exists."""
         return self.kusto_response is not None
 
     def get_partial_results(self):
-        """Gets the Kusto response."""
+        """Get the Kusto response."""
         return self.kusto_response
 
 

@@ -1,4 +1,4 @@
-"""A module contains all kusto security related classes."""
+"""All security-related classes for Kusto."""
 
 from datetime import timedelta, datetime
 from enum import Enum
@@ -39,13 +39,13 @@ class _AadHelper(object):
             self._client_id = "db662dc1-0cfe-4e1c-a843-19a68e65be58"
 
     def acquire_token(self):
-        """A method to acquire tokens from AAD."""
+        """Acquire tokens from AAD."""
         token_response = self._adal_context.acquire_token(
             self._kusto_cluster, self._username, self._client_id
         )
         if token_response is not None:
             expiration_date = dateutil.parser.parse(token_response["expiresOn"])
-            if expiration_date > datetime.utcnow() + timedelta(minutes=5):
+            if expiration_date > (datetime.utcnow() + timedelta(minutes=5)):
                 return token_response["accessToken"]
 
         if self._authentication_method is AuthenticationMethod.aad_username_password:
