@@ -5,7 +5,7 @@ class KustoError(Exception):
     """Base class for all exceptions raised by the Kusto Python Client Libraries."""
 
     def __init__(self, instance, messages):
-        super(KustoError, instance).__init__(messages)
+        pass
 
 
 class KustoServiceError(KustoError):
@@ -37,4 +37,4 @@ class KustoClientError(KustoError):
     """Raised when a Kusto client is unable to send or complete a request."""
 
     def __init__(self, messages):
-        super(KustoClientError, self).__init__(self, messages)
+        pass
