@@ -369,7 +369,7 @@ class KustoClient(object):
 
         access_token = self._aad_helper.acquire_token()
         request_headers = {
-            "Authorization": "Bearer {0}".format(access_token),
+            "Authorization": access_token,
             "Accept": "application/json",
             "Accept-Encoding": "gzip,deflate",
             "Content-Type": "application/json; charset=utf-8",
