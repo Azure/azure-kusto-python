@@ -5,6 +5,7 @@ from enum import Enum
 import webbrowser
 import dateutil.parser
 from adal import AuthenticationContext
+from adal.constants import TokenResponseFields, OAuth2DeviceCodeResponseParameters, AADConstants
 from azure.kusto.data import KustoConnectionStringBuilder
 from azure.kusto.data.exceptions import KustoClientError
 
@@ -22,7 +23,9 @@ class _AadHelper(object):
         authority = kcsb.authority_id or "microsoft.com"
         self._kusto_cluster = kcsb.data_source
         self._adal_context = AuthenticationContext(
-            "https://login.windows.net/{0}".format(authority)
+            "https://{0}/{1}".format(
+                AADConstants.WORLD_WIDE_AUTHORITY, authority
+            )
         )
         self._username = None
         if kcsb.aad_user_id is not None:
@@ -40,27 +43,33 @@ class _AadHelper(object):
 
     def acquire_token(self):
         """Acquire tokens from AAD."""
-        token_response = self._adal_context.acquire_token(
+        token = self._adal_context.acquire_token(
             self._kusto_cluster, self._username, self._client_id
         )
-        if token_response is not None:
-            expiration_date = dateutil.parser.parse(token_response["expiresOn"])
+        if token is not None:
+            expiration_date = dateutil.parser.parse(token["expiresOn"])
             if expiration_date > (datetime.utcnow() + timedelta(minutes=5)):
-                return token_response["accessToken"]
+                return _get_header(token)
+            elif TokenResponseFields.REFRESH_TOKEN in token:
+                token = self._adal_context.acquire_token_with_refresh_token(
+                    token[TokenResponseFields.REFRESH_TOKEN], self._client_id, self._kusto_cluster
+                )
+                if token is not None:
+                    return _get_header(token)
 
         if self._authentication_method is AuthenticationMethod.aad_username_password:
-            token_response = self._adal_context.acquire_token_with_username_password(
+            token = self._adal_context.acquire_token_with_username_password(
                 self._kusto_cluster, self._username, self._password, self._client_id
             )
         elif self._authentication_method is AuthenticationMethod.aad_application_key:
-            token_response = self._adal_context.acquire_token_with_client_credentials(
+            token = self._adal_context.acquire_token_with_client_credentials(
                 self._kusto_cluster, self._client_id, self._client_secret
             )
         elif self._authentication_method is AuthenticationMethod.aad_device_login:
             code = self._adal_context.acquire_user_code(self._kusto_cluster, self._client_id)
-            print(code["message"])
-            webbrowser.open(code["verification_url"])
-            token_response = self._adal_context.acquire_token_with_device_code(
+            print(code[OAuth2DeviceCodeResponseParameters.MESSAGE])
+            webbrowser.open(code[OAuth2DeviceCodeResponseParameters.VERIFICATION_URL])
+            token = self._adal_context.acquire_token_with_device_code(
                 self._kusto_cluster, code, self._client_id
             )
         else:
@@ -68,4 +77,10 @@ class _AadHelper(object):
                 "Please choose authentication method from azure.kusto.data.security.AuthenticationMethod"
             )
 
-        return token_response["accessToken"]
+        return _get_header(token)
+
+@staticmethod
+def _get_header(token):
+    return "{0} {1}".format(
+        token[TokenResponseFields.TOKEN_TYPE], token[TokenResponseFields.ACCESS_TOKEN]
+    )
