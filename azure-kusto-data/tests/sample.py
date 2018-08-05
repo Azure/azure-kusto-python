@@ -1,16 +1,15 @@
 ﻿"""A simple example how to use KustoClient."""
 
-from six import text_type
 from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
 from azure.kusto.data.exceptions import KustoServiceError
 
 # TODO: this should become functional test at some point.
 
-KUSTO_CLUSTER = text_type("https://help.kusto.windows.net")
+KUSTO_CLUSTER = "https://help.kusto.windows.net"
 
 # In case you want to authenticate with AAD application.
-CLIENT_ID = text_type("<insert here your AAD application id>")
-CLIENT_SECRET = text_type("<insert here your AAD application key>")
+CLIENT_ID = "<insert here your AAD application id>"
+CLIENT_SECRET = "<insert here your AAD application key>"
 kcsb = KustoConnectionStringBuilder.with_aad_application_key_authentication(
     KUSTO_CLUSTER, CLIENT_ID, CLIENT_SECRET
 )
@@ -53,7 +52,7 @@ except KustoServiceError as error:
 
 # Testing data frames
 kcsb = KustoConnectionStringBuilder.with_aad_device_authentication(
-    text_type("https://kustolab.kusto.windows.net")
+    "https://kustolab.kusto.windows.net"
 )
 KUSTO_CLIENT = KustoClient(kcsb)
 RESPONSE = KUSTO_CLIENT.execute("ML", ".show version")

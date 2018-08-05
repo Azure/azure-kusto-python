@@ -6,12 +6,11 @@ import webbrowser
 import dateutil.parser
 from adal import AuthenticationContext
 from adal.constants import TokenResponseFields, OAuth2DeviceCodeResponseParameters, AADConstants
-from azure.kusto.data import KustoConnectionStringBuilder
 from azure.kusto.data.exceptions import KustoClientError
 
 
 class AuthenticationMethod(Enum):
-    """Enum represnting all authentication methods available in Kusto."""
+    """Enum represnting all authentication methods available in Kusto with Python."""
 
     aad_username_password = "aad_username_password"
     aad_application_key = "aad_application_key"
@@ -23,9 +22,7 @@ class _AadHelper(object):
         authority = kcsb.authority_id or "microsoft.com"
         self._kusto_cluster = kcsb.data_source
         self._adal_context = AuthenticationContext(
-            "https://{0}/{1}".format(
-                AADConstants.WORLD_WIDE_AUTHORITY, authority
-            )
+            "https://{0}/{1}".format(AADConstants.WORLD_WIDE_AUTHORITY, authority)
         )
         self._username = None
         if kcsb.aad_user_id is not None:
@@ -78,6 +75,7 @@ class _AadHelper(object):
             )
 
         return _get_header(token)
+
 
 @staticmethod
 def _get_header(token):

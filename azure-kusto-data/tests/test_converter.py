@@ -2,7 +2,7 @@
 
 import unittest
 from datetime import timedelta
-from azure.kusto.data.net import _KustoResultIter
+from azure.kusto.data._response import _KustoResultIter
 
 
 class ConverterTests(unittest.TestCase):

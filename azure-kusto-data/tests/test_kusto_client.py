@@ -10,8 +10,7 @@ from dateutil.tz.tz import tzutc
 from pandas import DataFrame, Series
 from pandas.util.testing import assert_frame_equal
 
-from azure.kusto.data import KustoConnectionStringBuilder
-from azure.kusto.data.net import KustoClient
+from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
 from azure.kusto.data.exceptions import KustoServiceError
 
 # This method will be used by the mock to replace KustoClient._acquire_token
