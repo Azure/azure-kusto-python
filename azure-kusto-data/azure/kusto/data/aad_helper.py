@@ -35,13 +35,13 @@ class _AadHelper(object):
         if token is not None:
             expiration_date = dateutil.parser.parse(token[TokenResponseFields.EXPIRES_ON])
             if expiration_date > datetime.now() + timedelta(minutes=5):
-                return _get_header(token)
+                return _AadHelper._get_header(token)
             elif TokenResponseFields.REFRESH_TOKEN in token:
                 token = self.adal_context.acquire_token_with_refresh_token(
                     token[TokenResponseFields.REFRESH_TOKEN], self.client_id, self.kusto_cluster
                 )
                 if token is not None:
-                    return _get_header(token)
+                    return _AadHelper._get_header(token)
 
         if self.client_secret is not None and self.client_id is not None:
             token = self.adal_context.acquire_token_with_client_credentials(
@@ -58,11 +58,10 @@ class _AadHelper(object):
             token = self.adal_context.acquire_token_with_device_code(
                 self.kusto_cluster, code, self.client_id
             )
-        return _get_header(token)
+        return _AadHelper._get_header(token)
 
-
-@staticmethod
-def _get_header(token):
-    return "{0} {1}".format(
-        token[TokenResponseFields.TOKEN_TYPE], token[TokenResponseFields.ACCESS_TOKEN]
-    )
+    @staticmethod
+    def _get_header(token):
+        return "{0} {1}".format(
+            token[TokenResponseFields.TOKEN_TYPE], token[TokenResponseFields.ACCESS_TOKEN]
+        )
