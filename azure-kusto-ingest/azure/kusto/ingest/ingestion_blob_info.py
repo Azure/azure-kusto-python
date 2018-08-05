@@ -62,11 +62,11 @@ class _IngestionBlobInfo:
         """ Converts this object to a json string """
         return _convert_list_to_json(self.properties)
 
+
 def _convert_list_to_json(array):
     """ Converts array to a json string """
-    return json.dumps(
-        array, skipkeys=False, allow_nan=False, indent=None, separators=(",", ":")
-    )
+    return json.dumps(array, skipkeys=False, allow_nan=False, indent=None, separators=(",", ":"))
+
 
 def _convert_dict_to_json(array):
     """ Converts array to a json string """

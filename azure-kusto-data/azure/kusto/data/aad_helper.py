@@ -60,6 +60,7 @@ class _AadHelper(object):
             )
         return _get_header(token)
 
+
 def _get_header(token):
     return "{0} {1}".format(
         token[TokenResponseFields.TOKEN_TYPE], token[TokenResponseFields.ACCESS_TOKEN]
