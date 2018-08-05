@@ -27,16 +27,15 @@ class _AadHelper(object):
 
     def acquire_token(self):
         """A method to acquire tokens from AAD."""
-        token = self.adal_context.acquire_token(
-            self.kusto_cluster, self.username, self.client_id
-        )
+        token = self.adal_context.acquire_token(self.kusto_cluster, self.username, self.client_id)
         if token is not None:
             expiration_date = dateutil.parser.parse(token["expiresOn"])
             if expiration_date < datetime.now() + timedelta(minutes=5):
-                token = self.adal_context.acquire_token_with_refresh_token(token["refreshToken"], self.client_id, self.kusto_cluster)
+                token = self.adal_context.acquire_token_with_refresh_token(
+                    token["refreshToken"], self.client_id, self.kusto_cluster
+                )
             return "{0} {1}".format(token["tokenType"], token["accessToken"])
-        
-        
+
         if self.client_secret is not None and self.client_id is not None:
             token = self.adal_context.acquire_token_with_client_credentials(
                 self.kusto_cluster, self.client_id, self.client_secret
