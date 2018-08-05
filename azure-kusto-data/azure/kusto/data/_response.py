@@ -11,8 +11,8 @@ import pandas
 import six
 import numbers
 
-from .aad_helper import _AadHelper
-from .kusto_exceptions import KustoServiceError
+from .exceptions import KustoServiceError
+from .security import _AadHelper
 from .version import VERSION
 
 # Regex for TimeSpan
@@ -21,11 +21,11 @@ TIMESPAN_PATTERN = re.compile(
 )
 
 
-class KustoResult(dict):
+class _KustoResult(dict):
     """Simple wrapper around dictionary, to enable both index and key access to rows in result."""
 
     def __init__(self, index2column_mapping, *args, **kwargs):
-        super(KustoResult, self).__init__(*args, **kwargs)
+        super(_KustoResult, self).__init__(*args, **kwargs)
         # TODO: this is not optimal, if client will not access all fields.
         # In that case, we are having unnecessary perf hit to convert Timestamp,
         # even if client don't use it.
@@ -41,7 +41,7 @@ class KustoResult(dict):
         return val
 
 
-class KustoResultIter(six.Iterator):
+class _KustoResultIter(six.Iterator):
     """Iterator over returned rows."""
 
     def __init__(self, json_result):
@@ -110,10 +110,10 @@ class KustoResultIter(six.Iterator):
             else:
                 result_dict[self.index2column_mapping[index]] = value
         self.row_index = self.row_index + 1
-        return KustoResult(self.index2column_mapping, result_dict)
+        return _KustoResult(self.index2column_mapping, result_dict)
 
 
-class KustoResponse(object):
+class _KustoResponse(object):
     """Wrapper for response."""
 
     # TODO: add support to get additional information from response, like execution time
@@ -153,7 +153,7 @@ class KustoResponse(object):
         """ Returns iterator to get rows from response """
         if table_id == -1:
             table_id = self._get_default_table_id()
-        return KustoResultIter(self._get_table(table_id))
+        return _KustoResultIter(self._get_table(table_id))
 
     def to_dataframe(self, errors="raise"):
         """Returns Pandas data frame."""
@@ -221,171 +221,3 @@ class KustoResponse(object):
         "Guid": "object",
         "TimeSpan": "object",
     }
-
-
-class KustoClient(object):
-    """
-    Kusto client for Python.
-
-    KustoClient works with both 2.x and 3.x flavors of Python. All primitive types are supported.
-    KustoClient takes care of ADAL authentication, parsing response and giving you typed result set.
-
-    Test are run using nose.
-
-    Examples
-    --------
-    When using KustoClient, you can choose between three options for authenticating:
-
-    Option 1:
-    You'll need to have your own AAD application and know your client credentials (client_id and client_secret).
-    >>> kusto_cluster = 'https://help.kusto.windows.net'
-    >>> kusto_client = KustoClient(kusto_cluster, client_id='your_app_id', client_secret='your_app_secret')
-
-    Option 2:
-    You can use KustoClient's client id (set as a default in the constructor) and authenticate using your username and password.
-    >>> kusto_cluster = 'https://help.kusto.windows.net'
-    >>> kusto_client = KustoClient(kusto_cluster, username='your_username', password='your_password')
-
-    Option 3:
-    You can use KustoClient's client id (set as a default in the constructor) and authenticate using your username and an AAD pop up.
-    >>> kusto_cluster = 'https://help.kusto.windows.net'
-    >>> kusto_client = KustoClient(kusto_cluster)
-
-    After connecting, use the kusto_client instance to execute a management command or a query:
-    >>> kusto_database = 'Samples'
-    >>> response = kusto_client.execute_query(kusto_database, 'StormEvents | take 10')
-    You can access rows now by index or by key.
-    >>> for row in response.iter_all():
-    >>>    print(row[0])
-    >>>    print(row["ColumnName"])    """
-
-    def __init__(
-        self,
-        kusto_cluster,
-        client_id=None,
-        client_secret=None,
-        username=None,
-        password=None,
-        authority=None,
-    ):
-        """
-        Kusto Client constructor.
-
-        Parameters
-        ----------
-        kusto_cluster : str
-            Kusto cluster endpoint. Example: https://help.kusto.windows.net
-        client_id : str
-            The AAD application ID of the application making the request to Kusto
-        client_secret : str
-            The AAD application key of the application making the request to Kusto.
-            if this is given, then username/password should not be.
-        username : str
-            The username of the user making the request to Kusto.
-            if this is given, then password must follow and the client_secret should not be given.
-        password : str
-            The password matching the username of the user making the request to Kusto
-        authority : 'microsoft.com', optional
-            In case your tenant is not microsoft please use this param.
-        """
-        self.kusto_cluster = kusto_cluster
-        self._aad_helper = _AadHelper(
-            kusto_cluster, client_id, client_secret, username, password, authority
-        )
-
-    def execute(self, kusto_database, query, accept_partial_results=False, timeout=None):
-        """ Execute a simple query or management command
-
-        Parameters
-        ----------
-        kusto_database : str
-            Database against query will be executed.
-        query : str
-            Query to be executed
-        accept_partial_results : bool
-            Optional parameter. If query fails, but we receive some results, we consider results as partial.
-            If this is True, results are returned to client, even if there are exceptions.
-            If this is False, exception is raised. Default is False.
-        timeout : float, optional
-            Optional parameter. Network timeout in seconds. Default is no timeout.
-        """
-        if query.startswith("."):
-            return self.execute_mgmt(kusto_database, query, accept_partial_results, timeout)
-        return self.execute_query(kusto_database, query, accept_partial_results, timeout)
-
-    def execute_query(self, kusto_database, query, accept_partial_results=False, timeout=None):
-        """ Execute a simple query
-
-        Parameters
-        ----------
-        kusto_database : str
-            Database against query will be executed.
-        kusto_query : str
-            Query to be executed
-        query_endpoint : str
-            The query's endpoint
-        accept_partial_results : bool
-            Optional parameter. If query fails, but we receive some results, we consider results as partial.
-            If this is True, results are returned to client, even if there are exceptions.
-            If this is False, exception is raised. Default is False.
-        timeout : float, optional
-            Optional parameter. Network timeout in seconds. Default is no timeout.
-        """
-        query_endpoint = "{0}/v2/rest/query".format(self.kusto_cluster)
-        return self._execute(kusto_database, query, query_endpoint, accept_partial_results, timeout)
-
-    def execute_mgmt(self, kusto_database, query, accept_partial_results=False, timeout=None):
-        """ Execute a management command
-
-        Parameters
-        ----------
-        kusto_database : str
-            Database against query will be executed.
-        kusto_query : str
-            Query to be executed
-        query_endpoint : str
-            The query's endpoint
-        accept_partial_results : bool
-            Optional parameter. If query fails, but we receive some results, we consider results as partial.
-            If this is True, results are returned to client, even if there are exceptions.
-            If this is False, exception is raised. Default is False.
-        timeout : float, optional
-            Optional parameter. Network timeout in seconds. Default is no timeout.
-        """
-        query_endpoint = "{0}/v1/rest/mgmt".format(self.kusto_cluster)
-        return self._execute(kusto_database, query, query_endpoint, accept_partial_results, timeout)
-
-    def _execute(
-        self,
-        kusto_database,
-        kusto_query,
-        query_endpoint,
-        accept_partial_results=False,
-        timeout=None,
-    ):
-        """ Executes given query against this client """
-
-        request_payload = {"db": kusto_database, "csl": kusto_query}
-
-        access_token = self._aad_helper.acquire_token()
-        request_headers = {
-            "Authorization": access_token,
-            "Accept": "application/json",
-            "Accept-Encoding": "gzip,deflate",
-            "Content-Type": "application/json; charset=utf-8",
-            "Fed": "True",
-            "x-ms-client-version": "Kusto.Python.Client:" + VERSION,
-            "x-ms-client-request-id": "KPC.execute;" + str(uuid.uuid4()),
-        }
-
-        response = requests.post(
-            query_endpoint, headers=request_headers, json=request_payload, timeout=timeout
-        )
-
-        if response.status_code == 200:
-            kusto_response = KustoResponse(response.json())
-            if kusto_response.has_exceptions() and not accept_partial_results:
-                raise KustoServiceError(kusto_response.get_exceptions(), response, kusto_response)
-            return kusto_response
-        else:
-            raise KustoServiceError([response.json()], response)

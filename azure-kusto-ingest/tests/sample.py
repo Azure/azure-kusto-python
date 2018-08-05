@@ -1,19 +1,23 @@
-from azure.kusto.ingest import (
-    KustoIngestClient,
-    IngestionProperties,
-    FileDescriptor,
-    BlobDescriptor,
-    DataFormat,
-)
+from azure.kusto.data import KustoConnectionStringBuilder
+from azure.kusto.ingest import KustoIngestClient
+from azure.kusto.ingest.ingestion_properties import IngestionProperties, DataFormat
+from azure.kusto.ingest.descriptors import FileDescriptor, BlobDescriptor
 
 ingestion_properties = IngestionProperties(
     database="database name", table="table name", dataFormat=DataFormat.csv
 )
 
-ingest_client = KustoIngestClient("https://ingest-<clustername>.kusto.windows.net")
-ingest_client = KustoIngestClient(
-    "https://ingest-<clustername>.kusto.windows.net", client_id="aad app id", client_secret="secret"
+kcsb1 = KustoConnectionStringBuilder.with_aad_device_authentication(
+    "https://ingest-clustername.kusto.windows.net"
 )
+kcsb2 = KustoConnectionStringBuilder.with_aad_application_key_authentication(
+    "https://ingest-clustername.kusto.windows.net",
+    application_client_id="aad app id",
+    application_key="secret",
+)
+
+ingest_client = KustoIngestClient(kcsb1)  # Authenticating interactively
+ingest_client = KustoIngestClient(kcsb2)  # Authenticating with app id
 
 file_descriptor = FileDescriptor(
     "E:\\filePath.csv", 3333

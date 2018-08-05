@@ -10,7 +10,8 @@ from dateutil.tz.tz import tzutc
 from pandas import DataFrame, Series
 from pandas.util.testing import assert_frame_equal
 
-from azure.kusto.data import KustoClient, KustoServiceError
+from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
+from azure.kusto.data.exceptions import KustoServiceError
 
 # This method will be used by the mock to replace KustoClient._acquire_token
 def mocked_aad_helper(*args, **kwargs):
@@ -27,7 +28,7 @@ def mocked_requests_post(*args, **kwargs):
 
         def __init__(self, json_data, status_code):
             self.json_data = json_data
-            self.text = str(json_data)
+            self.text = text_type(json_data)
             self.status_code = status_code
             self.headers = None
 
@@ -46,7 +47,7 @@ def mocked_requests_post(*args, **kwargs):
             ),
             200,
         )
-    elif args[0] == "https://somecluster.kusto.windows.net/v1/rest/mgmt":
+    elif args[0] == text_type("https://somecluster.kusto.windows.net/v1/rest/mgmt"):
         return MockResponse(
             json.loads(
                 open(
@@ -81,10 +82,13 @@ class KustoClientTests(unittest.TestCase):
     """A class to test KustoClient."""
 
     @patch("requests.post", side_effect=mocked_requests_post)
-    @patch("azure.kusto.data.aad_helper._AadHelper.acquire_token", side_effect=mocked_aad_helper)
+    @patch("azure.kusto.data.security._AadHelper.acquire_token", side_effect=mocked_aad_helper)
     def test_sanity_query(self, mock_post, mock_aad):
         """Test query V2."""
-        client = KustoClient("https://somecluster.kusto.windows.net")
+        kcsb = KustoConnectionStringBuilder.with_aad_device_authentication(
+            text_type("https://somecluster.kusto.windows.net")
+        )
+        client = KustoClient(kcsb)
         response = client.execute_query("PythonTest", "Deft")
         expected = {
             "rownumber": None,
@@ -189,10 +193,13 @@ class KustoClientTests(unittest.TestCase):
                 )
 
     @patch("requests.post", side_effect=mocked_requests_post)
-    @patch("azure.kusto.data.aad_helper._AadHelper.acquire_token", side_effect=mocked_aad_helper)
+    @patch("azure.kusto.data.security._AadHelper.acquire_token", side_effect=mocked_aad_helper)
     def test_sanity_control_command(self, mock_post, mock_aad):
         """Tests contol command."""
-        client = KustoClient("https://somecluster.kusto.windows.net")
+        kcsb = KustoConnectionStringBuilder.with_aad_device_authentication(
+            text_type("https://somecluster.kusto.windows.net")
+        )
+        client = KustoClient(kcsb)
         response = client.execute_mgmt("NetDefaultDB", ".show version")
         self.assertEqual(response.get_table_count(), 1)
         row_count = 0
@@ -209,10 +216,13 @@ class KustoClientTests(unittest.TestCase):
         self.assertEqual(result["ProductVersion"], "KustoMain_2018.04.29.5")
 
     @patch("requests.post", side_effect=mocked_requests_post)
-    @patch("azure.kusto.data.aad_helper._AadHelper.acquire_token", side_effect=mocked_aad_helper)
+    @patch("azure.kusto.data.security._AadHelper.acquire_token", side_effect=mocked_aad_helper)
     def test_sanity_data_frame(self, mock_post, mock_aad):
         """Tests KustoResponse to pandas.DataFrame."""
-        client = KustoClient("https://somecluster.kusto.windows.net")
+        kcsb = KustoConnectionStringBuilder.with_aad_device_authentication(
+            text_type("https://somecluster.kusto.windows.net")
+        )
+        client = KustoClient(kcsb)
         data_frame = client.execute_query("PythonTest", "Deft").to_dataframe(errors="ignore")
         self.assertEqual(len(data_frame.columns), 19)
         expected_dict = {
@@ -358,10 +368,13 @@ class KustoClientTests(unittest.TestCase):
         assert_frame_equal(data_frame, expected_data_frame)
 
     @patch("requests.post", side_effect=mocked_requests_post)
-    @patch("azure.kusto.data.aad_helper._AadHelper.acquire_token", side_effect=mocked_aad_helper)
+    @patch("azure.kusto.data.security._AadHelper.acquire_token", side_effect=mocked_aad_helper)
     def test_partial_results(self, mock_post, mock_aad):
         """Tests partial results."""
-        client = KustoClient("https://somecluster.kusto.windows.net")
+        kcsb = KustoConnectionStringBuilder.with_aad_device_authentication(
+            text_type("https://somecluster.kusto.windows.net")
+        )
+        client = KustoClient(kcsb)
         query = """\
 set truncationmaxrecords = 1;
 range x from 1 to 2 step 1"""
