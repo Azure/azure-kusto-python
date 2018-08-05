@@ -27,28 +27,30 @@ class _AadHelper(object):
 
     def acquire_token(self):
         """A method to acquire tokens from AAD."""
-        token_response = self.adal_context.acquire_token(
+        token = self.adal_context.acquire_token(
             self.kusto_cluster, self.username, self.client_id
         )
-        if token_response is not None:
-            expiration_date = dateutil.parser.parse(token_response["expiresOn"])
-            if expiration_date > datetime.utcnow() + timedelta(minutes=5):
-                return token_response["accessToken"]
-
+        if token is not None:
+            expiration_date = dateutil.parser.parse(token["expiresOn"])
+            if expiration_date < datetime.now() + timedelta(minutes=5):
+                token = self.adal_context.acquire_token_with_refresh_token(token["refreshToken"], self.client_id, self.kusto_cluster)
+            return "{0} {1}".format(token["tokenType"], token["accessToken"])
+        
+        
         if self.client_secret is not None and self.client_id is not None:
-            token_response = self.adal_context.acquire_token_with_client_credentials(
+            token = self.adal_context.acquire_token_with_client_credentials(
                 self.kusto_cluster, self.client_id, self.client_secret
             )
         elif self.username is not None and self.password is not None:
-            token_response = self.adal_context.acquire_token_with_username_password(
+            token = self.adal_context.acquire_token_with_username_password(
                 self.kusto_cluster, self.username, self.password, self.client_id
             )
         else:
             code = self.adal_context.acquire_user_code(self.kusto_cluster, self.client_id)
             print(code["message"])
             webbrowser.open(code["verification_url"])
-            token_response = self.adal_context.acquire_token_with_device_code(
+            token = self.adal_context.acquire_token_with_device_code(
                 self.kusto_cluster, code, self.client_id
             )
 
-        return token_response["accessToken"]
+        return "{0} {1}".format(token["tokenType"], token["accessToken"])
