@@ -297,4 +297,7 @@ build/
 *.tar.gz
 
 # pytest temp files
-*lastfailed
+.pytest_cache*
+
+# VS code files
+.vscode*
