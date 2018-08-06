@@ -241,6 +241,6 @@ time.sleep(60)
 RESPONSE = KUSTO_CLIENT.execute("PythonTest", "Deft | count")
 for row in RESPONSE.iter_all():
     if int(row["Count"]) == 38:
-        print("Completed ingest with existing ingest-by tag successfully.")
+        print("Completed ingest TSV from CSV mapping successfully.")
     else:
         print("Deft | count = " + str(row["Count"]))

@@ -160,4 +160,4 @@ class KustoIngestClient:
             )
             ingestion_blob_info_json = ingestion_blob_info.to_json()
             encoded = base64.b64encode(ingestion_blob_info_json.encode("utf-8")).decode("utf-8")
-            queue_service.put_message(queue_details.object_name, encoded)
+            queue_service.put_message(queue_name=queue_details.object_name, content=encoded)
