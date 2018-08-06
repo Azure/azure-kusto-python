@@ -1,4 +1,4 @@
-"""A file contains all descriptors ingest command should work with."""
+"""Descriptors the ingest command should work with."""
 
 import os
 from io import BytesIO
@@ -8,7 +8,7 @@ import tempfile
 
 
 class FileDescriptor(object):
-    """A class that defines a file to ingest."""
+    """A file to ingest."""
 
     def __init__(self, path, size=0, deleteSourcesOnSuccess=False):
         self.path = path
@@ -39,7 +39,7 @@ class FileDescriptor(object):
 
 
 class BlobDescriptor(object):
-    """A class that defines a blob to ingest."""
+    """A blob to ingest."""
 
     def __init__(self, path, size):
         self.path = path

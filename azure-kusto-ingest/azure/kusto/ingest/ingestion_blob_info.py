@@ -9,8 +9,6 @@ from .descriptors import BlobDescriptor
 
 class _IngestionBlobInfo:
     def __init__(self, blob, ingestionProperties, deleteSourcesOnSuccess=True, authContext=None):
-        if not isinstance(blob, BlobDescriptor):
-            raise TypeError("blob must be of type BlobDescriptor")
         self.properties = dict()
         self.properties["BlobPath"] = blob.path
         self.properties["RawDataSize"] = blob.size
@@ -26,10 +24,10 @@ class _IngestionBlobInfo:
         # TODO: Add support for ingestion statuses
         # self.properties["IngestionStatusInTable"] = None
         # self.properties["BlobPathEncrypted"] = None
-        additional_properties = ingestionProperties.additional_properties or dict()
+        additional_properties = ingestionProperties.additional_properties or {}
         additional_properties["authorizationContext"] = authContext
 
-        tags = list()
+        tags = []
         if ingestionProperties.additional_tags:
             tags.extend(ingestionProperties.additional_tags)
         if ingestionProperties.drop_by_tags:
@@ -37,13 +35,13 @@ class _IngestionBlobInfo:
         if ingestionProperties.ingest_by_tags:
             tags.extend(["ingest-by:" + ingest for ingest in ingestionProperties.ingest_by_tags])
         if tags:
-            additional_properties["tags"] = _IngestionBlobInfo._convert_list_to_json(tags)
+            additional_properties["tags"] = _convert_list_to_json(tags)
         if ingestionProperties.ingest_if_not_exists:
-            additional_properties["ingestIfNotExists"] = _IngestionBlobInfo._convert_list_to_json(
+            additional_properties["ingestIfNotExists"] = _convert_list_to_json(
                 ingestionProperties.ingest_if_not_exists
             )
         if ingestionProperties.mapping:
-            json_string = _IngestionBlobInfo._convert_dict_to_json(ingestionProperties.mapping)
+            json_string = _convert_dict_to_json(ingestionProperties.mapping)
             additional_properties[
                 ingestionProperties.get_mapping_format() + "Mapping"
             ] = json_string
@@ -51,7 +49,7 @@ class _IngestionBlobInfo:
             key = ingestionProperties.get_mapping_format() + "MappingReference"
             additional_properties[key] = ingestionProperties.mapping_reference
         if ingestionProperties.validation_policy:
-            additional_properties["ValidationPolicy"] = _IngestionBlobInfo._convert_dict_to_json(
+            additional_properties["ValidationPolicy"] = _convert_dict_to_json(
                 ingestionProperties.validation_policy
             )
         if ingestionProperties.format:
@@ -62,24 +60,22 @@ class _IngestionBlobInfo:
 
     def to_json(self):
         """ Converts this object to a json string """
-        return _IngestionBlobInfo._convert_list_to_json(self.properties)
+        return _convert_list_to_json(self.properties)
 
-    @staticmethod
-    def _convert_list_to_json(array):
-        """ Converts array to a json string """
-        return json.dumps(
-            array, skipkeys=False, allow_nan=False, indent=None, separators=(",", ":")
-        )
 
-    @staticmethod
-    def _convert_dict_to_json(array):
-        """ Converts array to a json string """
-        return json.dumps(
-            array,
-            skipkeys=False,
-            allow_nan=False,
-            indent=None,
-            separators=(",", ":"),
-            sort_keys=True,
-            default=lambda o: o.__dict__,
-        )
+def _convert_list_to_json(array):
+    """ Converts array to a json string """
+    return json.dumps(array, skipkeys=False, allow_nan=False, indent=None, separators=(",", ":"))
+
+
+def _convert_dict_to_json(array):
+    """ Converts array to a json string """
+    return json.dumps(
+        array,
+        skipkeys=False,
+        allow_nan=False,
+        indent=None,
+        separators=(",", ":"),
+        sort_keys=True,
+        default=lambda o: o.__dict__,
+    )
