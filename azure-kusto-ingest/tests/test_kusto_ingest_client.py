@@ -65,7 +65,7 @@ def mocked_create_blob_from_stream(self, *args, **kwargs):
     tc.assertEqual(self.sas_token, "sas")
     tc.assertEqual(kwargs["container_name"], "tempstorage")
     tc.assertIsNotNone(kwargs["blob_name"])
-    tc.assertRegex(kwargs["blob_name"], BLOB_NAME_REGEX)
+    tc.assertRegexpMatches(kwargs["blob_name"], BLOB_NAME_REGEX)
     tc.assertIsNotNone(kwargs["stream"])
 
 
@@ -85,10 +85,10 @@ def mocked_queue_put_message(self, *args, **kwargs):
     result = json.loads(ingestion_blob_info_json)
     tc.assertIsNotNone(result)
     tc.assertIsInstance(result, dict)
-    tc.assertRegex(result["BlobPath"], BLOB_URL_REGEX)
+    tc.assertRegexpMatches(result["BlobPath"], BLOB_URL_REGEX)
     tc.assertEquals(result["DatabaseName"], "database")
     tc.assertEquals(result["TableName"], "table")
-    tc.assertEquals(result["RawDataSize"], 1578)
+    tc.assertGreater(result["RawDataSize"], 0)
     tc.assertEquals(result["AdditionalProperties"]["authorizationContext"], "authorization_context")
 
 
