@@ -8,8 +8,8 @@ from six import text_type
 from azure.storage.common import CloudStorageAccount
 
 from azure.kusto.data import KustoClient
-from .descriptors import BlobDescriptor, FileDescriptor
-from .ingestion_blob_info import _IngestionBlobInfo
+from ._descriptors import BlobDescriptor, FileDescriptor
+from ._ingestion_blob_info import _IngestionBlobInfo
 from ._resource_manager import _ResourceManager
 
 

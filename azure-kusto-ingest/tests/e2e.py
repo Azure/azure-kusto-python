@@ -152,11 +152,11 @@ KUSTO_INGEST_CLIENT.ingest_from_multiple_files(
 
 time.sleep(60)
 RESPONSE = KUSTO_CLIENT.execute("PythonTest", "Deft | count")
-for row in RESPONSE.iter_all():
+for row in RESPONSE.primary_results:
     if int(row["Count"]) == 20:
         print("Completed ingest from CSV mapping successfully.")
     else:
-        print("Deft | count = " + row["Count"])
+        print("Deft | count = " + text_type(row["Count"]))
 
 # Sanity test - ingest from json to an existing table
 JSON_INGESTION_PROPERTIES = IngestionProperties(
@@ -174,7 +174,7 @@ KUSTO_INGEST_CLIENT.ingest_from_multiple_files(
 )
 time.sleep(60)
 RESPONSE = KUSTO_CLIENT.execute("PythonTest", "Deft | count")
-for row in RESPONSE.iter_all():
+for row in RESPONSE.primary_results:
     if int(row["Count"]) == 24:
         print("Completed ingest from json mapping successfully.")
     else:
@@ -204,7 +204,7 @@ KUSTO_INGEST_CLIENT.ingest_from_multiple_files(
 )
 time.sleep(60)
 RESPONSE = KUSTO_CLIENT.execute("PythonTest", "Deft | count")
-for row in RESPONSE.iter_all():
+for row in RESPONSE.primary_results:
     if int(row["Count"]) == 28:
         print("Completed ingest from json mapping with full ingestion properties successfully.")
     else:
@@ -224,11 +224,11 @@ KUSTO_INGEST_CLIENT.ingest_from_multiple_files(
 )
 time.sleep(60)
 RESPONSE = KUSTO_CLIENT.execute("PythonTest", "Deft | count")
-for row in RESPONSE.iter_all():
+for row in RESPONSE.primary_results:
     if int(row["Count"]) == 28:
         print("Completed ingest with existing ingest-by tag successfully.")
     else:
-        print("Deft | count = " + str(row["Count"]))
+        print("Deft | count = " + text_type(row["Count"]))
 
 # Test ingest with TSV format and csvMapping
 TSV_INGESTION_PROPERTIES = IngestionProperties(
@@ -241,7 +241,7 @@ TSV_FILE_PATH = os.path.join(os.getcwd(), "azure-kusto-ingest", "tests", "input"
 KUSTO_INGEST_CLIENT.ingest_from_multiple_files([TSV_FILE_PATH], False, TSV_INGESTION_PROPERTIES)
 time.sleep(60)
 RESPONSE = KUSTO_CLIENT.execute("PythonTest", "Deft | count")
-for row in RESPONSE.iter_all():
+for row in RESPONSE.primary_results:
     if int(row["Count"]) == 38:
         print("Completed ingest TSV from CSV mapping successfully.")
     else:

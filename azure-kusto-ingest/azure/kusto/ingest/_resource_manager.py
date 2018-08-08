@@ -2,7 +2,7 @@
 
 from datetime import datetime, timedelta
 
-from .connection_string import _ConnectionString
+from ._connection_string import _ConnectionString
 
 
 class _IngestClientResources:
