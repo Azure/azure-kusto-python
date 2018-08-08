@@ -2,7 +2,7 @@
 
 from enum import Enum, IntEnum
 
-from .kusto_ingest_client_exceptions import KustoDuplicateMappingError
+from .exceptions import KustoDuplicateMappingError
 
 
 class DataFormat(Enum):
