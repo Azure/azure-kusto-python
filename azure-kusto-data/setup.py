@@ -24,7 +24,7 @@ package_folder_path = PACKAGE_NAME.replace("-", path.sep)
 # a-b-c => a.b.c
 namespace_name = PACKAGE_NAME.replace("-", ".")
 
-with open(path.join(package_folder_path, "version.py"), "r") as fd:
+with open(path.join(package_folder_path, "_version.py"), "r") as fd:
     VERSION = re.search(r'^VERSION\s*=\s*[\'"]([^\'"]*)[\'"]', fd.read(), re.MULTILINE).group(1)
 
 CURRENT_PATH = path.abspath(path.dirname(__file__))
