@@ -3,6 +3,7 @@
 import base64
 import random
 import uuid
+from six import text_type
 
 from azure.storage.common import CloudStorageAccount
 
@@ -110,7 +111,7 @@ class KustoIngestClient:
                 + "__"
                 + ingestion_properties.table
                 + "__"
-                + str(uuid.uuid4())
+                + text_type(uuid.uuid4())
                 + "__"
                 + descriptor.stream_name
             )

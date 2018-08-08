@@ -3,6 +3,7 @@
 import json
 import uuid
 from datetime import datetime
+from six import text_type
 
 from .descriptors import BlobDescriptor
 
@@ -20,7 +21,7 @@ class _IngestionBlobInfo:
         self.properties["ReportLevel"] = ingestionProperties.report_level.value
         self.properties["ReportMethod"] = ingestionProperties.report_method.value
         self.properties["SourceMessageCreationTime"] = datetime.utcnow().isoformat()
-        self.properties["Id"] = str(uuid.uuid4())
+        self.properties["Id"] = text_type(uuid.uuid4())
         # TODO: Add support for ingestion statuses
         # self.properties["IngestionStatusInTable"] = None
         # self.properties["BlobPathEncrypted"] = None

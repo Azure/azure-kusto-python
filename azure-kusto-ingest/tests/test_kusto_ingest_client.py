@@ -6,6 +6,7 @@ import unittest
 from mock import patch
 import base64
 import re
+from six import text_type
 
 from azure.kusto.data import KustoClient, KustoServiceError
 from azure.kusto.ingest import KustoIngestClient, IngestionProperties, DataFormat
@@ -33,7 +34,7 @@ def mocked_requests_post(*args, **kwargs):
 
         def __init__(self, json_data, status_code):
             self.json_data = json_data
-            self.text = str(json_data)
+            self.text = text_type(json_data)
             self.status_code = status_code
             self.headers = None
 

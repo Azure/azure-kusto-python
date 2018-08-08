@@ -26,7 +26,7 @@ def mocked_requests_post(*args, **kwargs):
 
         def __init__(self, json_data, status_code):
             self.json_data = json_data
-            self.text = str(json_data)
+            self.text = text_type(json_data)
             self.status_code = status_code
             self.headers = None
 
