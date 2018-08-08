@@ -1,4 +1,4 @@
-from .kusto_ingest_client import KustoIngestClient
+from ._kusto_ingest_client import KustoIngestClient
 from ._descriptors import BlobDescriptor, FileDescriptor
 from ._ingestion_properties import (
     DataFormat,
