@@ -1,4 +1,4 @@
-"""E2E class for KustoClient."""
+"""Tests for KustoClient."""
 
 import os
 import json
@@ -12,22 +12,21 @@ from pandas.util.testing import assert_frame_equal
 
 from azure.kusto.data import KustoClient, KustoServiceError
 
-# This method will be used by the mock to replace KustoClient._acquire_token
+
 def mocked_aad_helper(*args, **kwargs):
-    """A class to mock _aad_halper."""
+    """Mock to replace _AadHelper._acquire_token"""
     return None
 
 
-# This method will be used by the mock to replace requests.post
 def mocked_requests_post(*args, **kwargs):
-    """A class to mock requests package."""
+    """Mock to replace requests.post"""
 
     class MockResponse:
-        """A class to mock KustoResponse."""
+        """Mock class for KustoResponse."""
 
         def __init__(self, json_data, status_code):
             self.json_data = json_data
-            self.text = str(json_data)
+            self.text = text_type(json_data)
             self.status_code = status_code
             self.headers = None
 
@@ -40,24 +39,18 @@ def mocked_requests_post(*args, **kwargs):
             file_name = "querypartialresults.json"
         elif "Deft" in kwargs["json"]["csl"]:
             file_name = "deft.json"
-        return MockResponse(
-            json.loads(
-                open(os.path.join(os.path.dirname(__file__), "input", file_name), "r").read()
-            ),
-            200,
-        )
+        with open(
+            os.path.join(os.path.dirname(__file__), "input", file_name), "r"
+        ) as response_file:
+            data = response_file.read()
+        return MockResponse(json.loads(data), 200)
+
     elif args[0] == "https://somecluster.kusto.windows.net/v1/rest/mgmt":
-        return MockResponse(
-            json.loads(
-                open(
-                    os.path.join(
-                        os.path.dirname(__file__), "input", "versionshowcommandresult.json"
-                    ),
-                    "r",
-                ).read()
-            ),
-            200,
-        )
+        with open(
+            os.path.join(os.path.dirname(__file__), "input", "versionshowcommandresult.json"), "r"
+        ) as response_file:
+            data = response_file.read()
+        return MockResponse(json.loads(data), 200)
 
     return MockResponse(None, 404)
 
@@ -78,7 +71,7 @@ DIGIT_WORDS = [
 
 
 class KustoClientTests(unittest.TestCase):
-    """A class to test KustoClient."""
+    """Tests class for KustoClient."""
 
     @patch("requests.post", side_effect=mocked_requests_post)
     @patch("azure.kusto.data.aad_helper._AadHelper.acquire_token", side_effect=mocked_aad_helper)

@@ -3,6 +3,7 @@
 import base64
 import random
 import uuid
+from six import text_type
 
 from azure.storage.common import CloudStorageAccount
 
@@ -110,7 +111,7 @@ class KustoIngestClient:
                 + "__"
                 + ingestion_properties.table
                 + "__"
-                + str(uuid.uuid4())
+                + text_type(uuid.uuid4())
                 + "__"
                 + descriptor.stream_name
             )
@@ -160,4 +161,4 @@ class KustoIngestClient:
             )
             ingestion_blob_info_json = ingestion_blob_info.to_json()
             encoded = base64.b64encode(ingestion_blob_info_json.encode("utf-8")).decode("utf-8")
-            queue_service.put_message(queue_details.object_name, encoded)
+            queue_service.put_message(queue_name=queue_details.object_name, content=encoded)
