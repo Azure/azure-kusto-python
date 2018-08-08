@@ -13,6 +13,4 @@ from .ingestion_properties import (
     IngestionProperties,
 )
 
-from .version import VERSION
-
-__version__ = VERSION
+from ._version import VERSION as __version__
