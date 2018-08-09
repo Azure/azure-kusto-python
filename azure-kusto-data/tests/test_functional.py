@@ -196,21 +196,21 @@ class FunctionalTests(unittest.TestCase):
         ]
 
         # Test access by index and by column name
-        row = response.primary_results[0]
-        self.assertEqual(row[0], row["Timestamp"])
-        self.assertEqual(row[1], row["Name"])
-        self.assertEqual(row[2], row["Altitude"])
-        self.assertEqual(row[3], row["Temperature"])
-        self.assertEqual(row[4], row["IsFlying"])
-        self.assertEqual(row[5], row["TimeFlying"])
+        for row in response.primary_results:
+            self.assertEqual(row[0], row["Timestamp"])
+            self.assertEqual(row[1], row["Name"])
+            self.assertEqual(row[2], row["Altitude"])
+            self.assertEqual(row[3], row["Temperature"])
+            self.assertEqual(row[4], row["IsFlying"])
+            self.assertEqual(row[5], row["TimeFlying"])
 
-        # Test all types
-        self.assertEqual(type(row[0]), datetime)
-        self.assertEqual(type(row[1]), text_type)
-        self.assertEqual(type(row[2]), int)
-        self.assertEqual(type(row[3]), float)
-        self.assertEqual(type(row[4]), bool)
-        self.assertEqual(type(row[5]), timedelta)
+            # Test all types
+            self.assertEqual(type(row[0]), datetime)
+            self.assertEqual(type(row[1]), text_type)
+            self.assertEqual(type(row[2]), int)
+            self.assertEqual(type(row[3]), float)
+            self.assertEqual(type(row[4]), bool)
+            self.assertEqual(type(row[5]), timedelta)
 
         for i in range(0, len(response.primary_results)):
             row = response.primary_results[i]
