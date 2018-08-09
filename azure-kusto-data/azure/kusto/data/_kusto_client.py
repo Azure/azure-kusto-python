@@ -468,7 +468,13 @@ class KustoClient(object):
         )
 
     def _execute(
-        self, endpoint, kusto_database, kusto_query, accept_partial_results=False, timeout=None
+        self,
+        endpoint,
+        kusto_database,
+        kusto_query,
+        accept_partial_results=False,
+        timeout=None,
+        get_raw_response=False,
     ):
         """Executes given query against this client"""
 
@@ -490,6 +496,9 @@ class KustoClient(object):
         )
 
         if response.status_code == 200:
+            if get_raw_response:
+                return response
+
             if endpoint.endswith("v2/rest/query"):
                 kusto_response = _KustoResponseDataSetV2(response.json())
             else:
