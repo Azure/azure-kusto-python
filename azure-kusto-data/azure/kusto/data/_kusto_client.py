@@ -260,7 +260,7 @@ class _KustoResponseDataSet(six.Iterator):
                     query_status_table[0]["ClientRequestId"]
                     if "ClientRequestId" in query_status_table[0]
                     else query_status_table[0]["ClientActivityId"],
-                    query_status_table[0]["StatusCodeName"],
+                    query_status_table[0]["StatusDescription"],
                 )
         return None
 
