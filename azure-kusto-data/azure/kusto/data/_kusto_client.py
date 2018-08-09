@@ -3,9 +3,11 @@
 from datetime import timedelta
 import re
 
+from abc import ABCMeta, abstractmethod
 import json
 import uuid
 import dateutil.parser
+from enum import Enum
 import requests
 import pandas
 import six
@@ -19,6 +21,15 @@ from ._version import VERSION
 _TIMESPAN_PATTERN = re.compile(
     r"(-?)((?P<d>[0-9]*).)?(?P<h>[0-9]{2}):(?P<m>[0-9]{2}):(?P<s>[0-9]{2}(\.[0-9]+)?$)"
 )
+
+
+class WellKnownDataSet(Enum):
+    """Categorizes data tables according to the role they play in the data set that a Kusto query returns."""
+
+    PrimaryResult = ("PrimaryResult",)
+    QueryCompletionInformation = ("QueryCompletionInformation",)
+    TableOfContents = ("TableOfContents",)
+    QueryProperties = ("QueryProperties",)
 
 
 class _KustoResultRow(six.Iterator):
@@ -53,11 +64,10 @@ class _KustoResultRow(six.Iterator):
             column = self._columns[key]
             value = self._row[key]
         else:
-            column = next((c for c in self._columns if c.column_name == key), None)
+            column = next((column for column in self._columns if column.column_name == key), None)
             if not column:
                 raise KeyError
             value = self._row[column.ordinal]
-
         if column.column_type in self.converters_lambda_mappings:
             return self.converters_lambda_mappings[column.column_type](value)
         return value
@@ -107,18 +117,18 @@ class _KustoResultColumn(object):
 class _KustoResultTable(six.Iterator):
     """Iterator over a Kusto result table."""
 
-    def __init__(self, json_result):
-        self.table_name = json_result["TableName"]
-        self.table_id = json_result["TableId"] if "TableId" in json_result else None
-        self.table_kind = json_result["TableKind"] if "TableKind" in json_result else None
+    def __init__(self, json_table):
+        self.table_name = json_table["TableName"]
+        self.table_id = json_table["TableId"]
+        self.table_kind = json_table["TableKind"]
         self.columns = []
         ordinal = 0
-        for column in json_result["Columns"]:
+        for column in json_table["Columns"]:
             self.columns.append(_KustoResultColumn(column, ordinal))
             ordinal += 1
-        self.rows_count = len(json_result["Rows"])
+        self.rows_count = len(json_table["Rows"])
         self.columns_count = len(self.columns)
-        self._rows = json_result["Rows"]
+        self._rows = json_table["Rows"]
         self._row_index = 0
 
     def __iter__(self):
@@ -193,76 +203,63 @@ class _KustoResultTable(six.Iterator):
 
 
 class _KustoResponseDataSet(six.Iterator):
-    """Wrapper for response."""
+    """Represents the parsed data set carried by the response to a Kusto request."""
 
-    def __init__(self, json_response, is_v2):
-        self.is_v2 = is_v2
+    def __init__(self):
+        self._tables_names = [t.table_name for t in self.tables]
         self._index = 0
-        if self.is_v2:
-            deta_set_header = list(
-                filter(lambda x: x["FrameType"] == "DataSetHeader", json_response)
-            )[0]
-            deta_set_completion = list(
-                filter(lambda x: x["FrameType"] == "DataSetCompletion", json_response)
-            )[0]
-            json_response.remove(deta_set_header)
-            json_response.remove(deta_set_completion)
-            self.deta_set_header = _DataSetHeader(deta_set_header)
-            self.deta_set_completion = _DataSetCompletion(deta_set_completion)
-            self.tables = [_KustoResultTable(json) for json in json_response]
-            self.tables_count = len(self.tables)
-        else:
-            if len(json_response["Tables"]) == 1:
-                self.tables = [_KustoResultTable(json_response["Tables"][0])]
-                self.tables_count = 1
-            else:
-                tables = json_response["Tables"][:-1]
-                toc = _KustoResultTable(json_response["Tables"][-1])
-                self.tables = []
-                for i in range(0, len(tables)):
-                    table = tables[i]
-                    table["TableName"] = toc
-                    table["TableName"] = toc[i]["Name"]
-                    table["TableId"] = toc[i]["Id"]
-                    table["TableKind"] = toc[i]["Kind"]
-                    self.tables.append(_KustoResultTable(table))
-
-            self.tables_count = len(self.tables)
+        self.tables_count = len(self.tables)
 
     @property
     def primary_results(self):
         if self.tables_count == 1:
             return self.tables[0]
-        primary = list(filter(lambda x: x.table_kind == "PrimaryResult", self.tables))
+        primary = list(
+            filter(lambda x: x.table_kind == WellKnownDataSet.PrimaryResult, self.tables)
+        )
         if len(primary) == 1:
             return primary[0]
         return primary
 
-    def has_exceptions(self):
-        """Checkes whether an exception was thrown."""
-        if self.is_v2:
-            return self.deta_set_completion.has_errors
-        query_status_table = next((t for t in self.tables if t.table_name == "QueryStatus"), None)
-        if query_status_table:
-            return query_status_table[0]["StatusCode"] != 0
-        return False
+    @property
+    def errors_count(self):
+        """Checks whether an exception was thrown."""
+        query_status_table = next(
+            (t for t in self.tables if t.table_kind == WellKnownDataSet.QueryCompletionInformation),
+            None,
+        )
+        if not query_status_table:
+            return 0
+        min_level = 4
+        errors = 0
+        for i in range(0, len(query_status_table)):
+            if query_status_table[i][self._error_column] < 4:
+                if query_status_table[i][self._error_column] < min_level:
+                    min_level = query_status_table[i][self._error_column]
+                    errors = 1
+                elif query_status_table[i][self._error_column] == min_level:
+                    errors += 1
+
+        return errors
 
     def get_exceptions(self):
         """Gets the excpetions retrieved from Kusto if exists."""
-        if self.has_exceptions():
-            if self.is_v2:
-                return self.deta_set_completion.errors
-            query_status_table = next(
-                (t for t in self.tables if t.table_name == "QueryStatus"), None
-            )
-            if query_status_table:
-                return "Please provide the following data ot Kusto: CRID='{0}' Description:'{1}'".format(
-                    query_status_table[0]["ClientRequestId"]
-                    if "ClientRequestId" in query_status_table[0]
-                    else query_status_table[0]["ClientActivityId"],
-                    query_status_table[0]["StatusDescription"],
+        query_status_table = next(
+            (t for t in self.tables if t.table_kind == WellKnownDataSet.QueryCompletionInformation),
+            None,
+        )
+        if not query_status_table:
+            return
+        result = []
+        for i in range(0, len(query_status_table)):
+            if query_status_table[i][self._error_column] < 4:
+                result.append(
+                    "Please provide the following data ot Kusto: CRID='{0}' Description:'{1}'".format(
+                        query_status_table[i][self._crid_column],
+                        query_status_table[i][self._status_column],
+                    )
                 )
-        return None
+        return result
 
     def __iter__(self):
         return self
@@ -277,6 +274,7 @@ class _KustoResponseDataSet(six.Iterator):
     def __getitem__(self, key):
         if isinstance(key, numbers.Number):
             return self.tables[key]
+        return self.tables[self._tables_names.index(key)]
 
     def __len__(self):
         return self.tables_count
@@ -285,21 +283,52 @@ class _KustoResponseDataSet(six.Iterator):
         return pandas.DataFrame(data=self.tables, columns=[t.table_name for t in self.tables])
 
 
-class _DataSetHeader(object):
-    """Header of response. Exists only in v2(queries)"""
+class _KustoResponseDataSetV1(_KustoResponseDataSet):
 
-    def __init__(self, json):
-        self.is_progressive = json["IsProgressive"]
-        self.version = json["Version"]
+    _status_column = "StatusDescription"
+    _crid_column = "ClientActivityId"
+    _error_column = "Severity"
+    _v1_tables_kinds = {
+        "QueryResult": WellKnownDataSet.PrimaryResult,
+        "@ExtendedProperties": WellKnownDataSet.QueryProperties,
+        "QueryStatus": WellKnownDataSet.QueryCompletionInformation,
+    }
+
+    def __init__(self, json_response):
+        if len(json_response["Tables"]) <= 2:
+            json_response["Tables"][0]["TableKind"] = WellKnownDataSet.PrimaryResult
+            json_response["Tables"][0]["TableId"] = 0
+
+            if len(json_response["Tables"]) == 2:
+                json_response["Tables"][1]["TableKind"] = WellKnownDataSet.QueryProperties
+                json_response["Tables"][1]["TableId"] = 1
+            self.tables = [_KustoResultTable(t) for t in json_response["Tables"]]
+            self.tables_count = len(json_response["Tables"])
+        else:
+            json_tables = json_response["Tables"][:-1]
+            toc = _KustoResultTable(json_response["Tables"][-1])
+            for i in range(0, len(json_tables)):
+                json_table = json_tables[i]
+                json_table["TableName"] = toc[i]["Name"]
+                json_table["TableId"] = toc[i]["Id"]
+                json_table["TableKind"] = self._v1_tables_kinds[toc[i]["Kind"]]
+                self.tables.append(_KustoResultTable(json_table))
+
+        super(_KustoResponseDataSetV1, self).__init__()
 
 
-class _DataSetCompletion(object):
-    """Completion of response. Exists only in v2(queries)"""
+class _KustoResponseDataSetV2(_KustoResponseDataSet):
 
-    def __init__(self, json):
-        self.has_errors = json["HasErrors"]
-        self.cancelled = json["Cancelled"]
-        self.errors = json["OneApiErrors"] if "OneApiErrors" in json else None
+    _status_column = "Payload"
+    _error_column = "Level"
+    _crid_column = "ClientRequestId"
+
+    def __init__(self, json_response):
+        json_response = [t for t in json_response if t["FrameType"] == "DataTable"]
+        for json_table in json_response:
+            json_table["TableKind"] = WellKnownDataSet[json_table["TableKind"]]
+        self.tables = [_KustoResultTable(json_table) for json_table in json_response]
+        super(_KustoResponseDataSetV2, self).__init__()
 
 
 class KustoClient(object):
@@ -461,10 +490,12 @@ class KustoClient(object):
         )
 
         if response.status_code == 200:
-            kusto_response = _KustoResponseDataSet(
-                response.json(), endpoint.endswith("v2/rest/query")
-            )
-            if kusto_response.has_exceptions() and not accept_partial_results:
+            if endpoint.endswith("v2/rest/query"):
+                kusto_response = _KustoResponseDataSetV2(response.json())
+            else:
+                kusto_response = _KustoResponseDataSetV1(response.json())
+
+            if kusto_response.errors_count > 0 and not accept_partial_results:
                 raise KustoServiceError(kusto_response.get_exceptions(), response, kusto_response)
             return kusto_response
         else:

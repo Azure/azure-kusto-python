@@ -363,8 +363,8 @@ set truncationmaxrecords = 1;
 range x from 1 to 2 step 1"""
         self.assertRaises(KustoServiceError, client.execute_query, "PythonTest", query)
         response = client.execute_query("PythonTest", query, accept_partial_results=True)
-        self.assertTrue(response.has_exceptions())
-        self.assertEqual(response.get_exceptions()[0]["error"]["code"], "LimitsExceeded")
+        self.assertEqual(response.errors_count, 1)
+        self.assertIn("E_QUERY_RESULT_SET_TOO_LARGE", response.get_exceptions()[0])
         self.assertEqual(len(response), 3)
         results = list(response.primary_results)
         self.assertEqual(len(results), 1)
