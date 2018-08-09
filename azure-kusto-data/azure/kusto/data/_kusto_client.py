@@ -497,7 +497,7 @@ class KustoClient(object):
 
         if response.status_code == 200:
             if get_raw_response:
-                return response
+                return response.json()
 
             if endpoint.endswith("v2/rest/query"):
                 kusto_response = _KustoResponseDataSetV2(response.json())
