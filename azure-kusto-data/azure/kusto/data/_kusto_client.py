@@ -112,7 +112,9 @@ class _KustoResultTable(object):
     def __init__(self, json_table):
         self.table_name = json_table["TableName"]
         self.table_id = json_table["TableId"] if "TableId" in json_table else None
-        self.table_kind = WellKnownDataSet[json_table["TableKind"]] if "TableKind" in json_table else None
+        self.table_kind = (
+            WellKnownDataSet[json_table["TableKind"]] if "TableKind" in json_table else None
+        )
         self.columns = []
         ordinal = 0
         for column in json_table["Columns"]:
@@ -243,8 +245,7 @@ class _KustoResponseDataSet(object):
             if q[self._error_column] < 4:
                 result.append(
                     "Please provide the following data ot Kusto: CRID='{0}' Description:'{1}'".format(
-                        q[self._crid_column],
-                        q[self._status_column],
+                        q[self._crid_column], q[self._status_column]
                     )
                 )
         return result
@@ -296,9 +297,10 @@ class _KustoResponseDataSetV1(_KustoResponseDataSet):
 
 
 class _KustoResponseDataSetV2(_KustoResponseDataSet):
-
     def __init__(self, json_response):
-        super(_KustoResponseDataSetV2, self).__init__([t for t in json_response if t["FrameType"] == "DataTable"])
+        super(_KustoResponseDataSetV2, self).__init__(
+            [t for t in json_response if t["FrameType"] == "DataTable"]
+        )
         self._status_column = "Payload"
         self._error_column = "Level"
         self._crid_column = "ClientRequestId"
