@@ -177,7 +177,7 @@ class FunctionalTests(unittest.TestCase):
         """Tests on happy path, validating response and iterations over it."""
         response = _KustoResponseDataSetV2(json.loads(RESPONSE_TEXT))
         # Test that basic iteration works
-        self.assertEqual(3, len(response))
+        self.assertEqual(len(response), 3)
         self.assertEqual(len(list(response.primary_results)), 3)
         table = list(response.tables[0])
         self.assertEqual(1, len(table))
@@ -205,12 +205,12 @@ class FunctionalTests(unittest.TestCase):
             self.assertEqual(row[5], row["TimeFlying"])
 
             # Test all types
-            self.assertEqual(type(row[0]), datetime)
+            self.assertEqual(type(row[0]), datetime if row[0] else type(None))
             self.assertEqual(type(row[1]), text_type)
-            self.assertEqual(type(row[2]), int)
-            self.assertEqual(type(row[3]), float)
-            self.assertEqual(type(row[4]), bool)
-            self.assertEqual(type(row[5]), timedelta)
+            self.assertEqual(type(row[2]), int if row[2] else type(None))
+            self.assertEqual(type(row[3]), float if row[3] else type(None))
+            self.assertEqual(type(row[4]), bool if row[4] is not None else type(None))
+            self.assertEqual(type(row[5]), timedelta if row[5] is not None else type(None))
 
         for i in range(0, len(response.primary_results)):
             row = response.primary_results[i]
@@ -229,13 +229,12 @@ class FunctionalTests(unittest.TestCase):
         response = _KustoResponseDataSetV2(json.loads(RESPONSE_TEXT))
         row = response.primary_results[0]
         self.assertRaises(IndexError, row.__getitem__, 10)
-        self.assertRaises(KeyError, row.__getitem__, "NonexistentColumn")
+        self.assertRaises(LookupError, row.__getitem__, "NonexistentColumn")
 
     def test_iterating_after_end(self):
         """Tests StopIteration is raised when the response ends."""
         response = _KustoResponseDataSetV2(json.loads(RESPONSE_TEXT))
-        iterator = response.primary_results
-        iterator.__next__()
-        iterator.__next__()
-        iterator.__next__()
-        self.assertRaises(StopIteration, iterator.__next__)
+        row_count = 0
+        for _ in response.primary_results:
+            row_count += 1
+        self.assertEqual(row_count, 3)
