@@ -234,7 +234,4 @@ class FunctionalTests(unittest.TestCase):
     def test_iterating_after_end(self):
         """Tests StopIteration is raised when the response ends."""
         response = _KustoResponseDataSetV2(json.loads(RESPONSE_TEXT))
-        row_count = 0
-        for _ in response.primary_results:
-            row_count += 1
-        self.assertEqual(row_count, 3)
+        self.assertEqual(sum(1 for _ in response.primary_results), 3)

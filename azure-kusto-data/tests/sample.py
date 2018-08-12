@@ -32,12 +32,12 @@ except KustoServiceError as error:
     print("2. Error:", error)
     print("2. Is semantic error:", error.is_semantic_error())
     print("2. Has partial results:", error.has_partial_results())
-    print("2. Result size:", len(list(error.get_partial_results().iter_all())))
+    print("2. Result size:", len(error.get_partial_results()))
 
 RESPONSE = KUSTO_CLIENT.execute(KUSTO_DATABASE, KUSTO_QUERY, accept_partial_results=True)
-print("3. Response has exception:", RESPONSE.has_exceptions())
+print("3. Response error count: ", RESPONSE.errors_count)
 print("3. Exceptions:", RESPONSE.get_exceptions())
-print("3. Result size:", len(list(RESPONSE.primary_results)))
+print("3. Result size:", len(RESPONSE.primary_results))
 
 # Query has semantic error
 KUSTO_QUERY = "StormEvents | where foo = bar"

@@ -58,7 +58,8 @@ setup(
         "pandas>=0.15.0",
         "python-dateutil>=2.6.0",
         "requests>=2.13.0",
+        "six>=1.10.0",
     ],
-    extras_require={"tests": ["nose>=1.3.7", "mock>=2.0.0", "six>=1.10.0"]},
+    extras_require={"tests": ["nose>=1.3.7", "mock>=2.0.0"]},
     cmdclass=cmdclass,
 )

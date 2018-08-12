@@ -10,6 +10,7 @@ import dateutil.parser
 from enum import Enum
 import requests
 import pandas
+import six
 import numbers
 
 from .aad_helper import _AadHelper
@@ -188,17 +189,29 @@ class _KustoResultTable(object):
         "TimeSpan": "object",
     }
 
-
-class _KustoResponseDataSet(object):
+@six.add_metaclass(ABCMeta)
+class _KustoResponseDataSet():
     """Represents the parsed data set carried by the response to a Kusto request."""
 
     def __init__(self, json_response):
         self.tables = [_KustoResultTable(t) for t in json_response]
         self.tables_count = len(self.tables)
         self._tables_names = [t.table_name for t in self.tables]
-        self._error_column = None
-        self._crid_column = None
-        self._status_column = None
+
+    @property
+    @abstractmethod
+    def _error_column(self):
+        raise NotImplementedError
+
+    @property
+    @abstractmethod
+    def _crid_column(self):
+        raise NotImplementedError
+
+    @property
+    @abstractmethod
+    def _status_column(self):
+        raise NotImplementedError
 
     @property
     def primary_results(self):
@@ -265,11 +278,14 @@ class _KustoResponseDataSet(object):
         return self.tables_count
 
     def to_dataframe(self):
-        return pandas.DataFrame(data=self.tables, columns=[t.table_name for t in self.tables])
+        return pandas.DataFrame(data=self.tables, columns=self._tables_names)
 
 
 class _KustoResponseDataSetV1(_KustoResponseDataSet):
 
+    _status_column = "StatusDescription"
+    _crid_column = "ClientActivityId"
+    _error_column = "Severity"
     _tables_kinds = {
         "QueryResult": WellKnownDataSet.PrimaryResult,
         "@ExtendedProperties": WellKnownDataSet.QueryProperties,
@@ -278,9 +294,6 @@ class _KustoResponseDataSetV1(_KustoResponseDataSet):
 
     def __init__(self, json_response):
         super(_KustoResponseDataSetV1, self).__init__(json_response["Tables"])
-        self._status_column = "StatusDescription"
-        self._crid_column = "ClientActivityId"
-        self._error_column = "Severity"
         if self.tables_count <= 2:
             self.tables[0].table_kind = WellKnownDataSet.PrimaryResult
             self.tables[0].table_id = 0
@@ -297,13 +310,14 @@ class _KustoResponseDataSetV1(_KustoResponseDataSet):
 
 
 class _KustoResponseDataSetV2(_KustoResponseDataSet):
+    _status_column = "Payload"
+    _error_column = "Level"
+    _crid_column = "ClientRequestId"
+    
     def __init__(self, json_response):
         super(_KustoResponseDataSetV2, self).__init__(
             [t for t in json_response if t["FrameType"] == "DataTable"]
         )
-        self._status_column = "Payload"
-        self._error_column = "Level"
-        self._crid_column = "ClientRequestId"
 
 
 class KustoClient(object):
