@@ -6,7 +6,7 @@ from six import text_type
 from datetime import datetime, timedelta
 from dateutil.tz.tz import tzutc
 
-from azure.kusto.data._kusto_client import _KustoResponseDataSetV2
+from azure.kusto.data._response import _KustoResponseDataSetV2
 
 # Sample response against all tests should be run
 RESPONSE_TEXT = """

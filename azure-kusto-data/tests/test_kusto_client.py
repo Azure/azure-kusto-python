@@ -12,7 +12,7 @@ from pandas.util.testing import assert_frame_equal
 
 from azure.kusto.data import KustoClient
 from azure.kusto.data.exceptions import KustoServiceError
-from azure.kusto.data._kusto_client import WellKnownDataSet
+from azure.kusto.data._response import WellKnownDataSet
 
 
 def mocked_aad_helper(*args, **kwargs):
