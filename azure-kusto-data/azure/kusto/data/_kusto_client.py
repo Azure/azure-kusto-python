@@ -189,8 +189,9 @@ class _KustoResultTable(object):
         "TimeSpan": "object",
     }
 
+
 @six.add_metaclass(ABCMeta)
-class _KustoResponseDataSet():
+class _KustoResponseDataSet:
     """Represents the parsed data set carried by the response to a Kusto request."""
 
     def __init__(self, json_response):
@@ -313,7 +314,7 @@ class _KustoResponseDataSetV2(_KustoResponseDataSet):
     _status_column = "Payload"
     _error_column = "Level"
     _crid_column = "ClientRequestId"
-    
+
     def __init__(self, json_response):
         super(_KustoResponseDataSetV2, self).__init__(
             [t for t in json_response if t["FrameType"] == "DataTable"]
