@@ -79,7 +79,14 @@ class KustoClient(object):
             kusto_cluster, client_id, client_secret, username, password, authority
         )
 
-    def execute(self, kusto_database, query, accept_partial_results=False, timeout=None, get_raw_response=False):
+    def execute(
+        self,
+        kusto_database,
+        query,
+        accept_partial_results=False,
+        timeout=None,
+        get_raw_response=False,
+    ):
         """ Execute a simple query or management command
 
         Parameters
@@ -98,10 +105,21 @@ class KustoClient(object):
             Optional parameter. Whether to get a raw response, or a parsed one.
         """
         if query.startswith("."):
-            return self.execute_mgmt(kusto_database, query, accept_partial_results, timeout, get_raw_response)
-        return self.execute_query(kusto_database, query, accept_partial_results, timeout, get_raw_response)
+            return self.execute_mgmt(
+                kusto_database, query, accept_partial_results, timeout, get_raw_response
+            )
+        return self.execute_query(
+            kusto_database, query, accept_partial_results, timeout, get_raw_response
+        )
 
-    def execute_query(self, kusto_database, query, accept_partial_results=False, timeout=None, get_raw_response=False):
+    def execute_query(
+        self,
+        kusto_database,
+        query,
+        accept_partial_results=False,
+        timeout=None,
+        get_raw_response=False,
+    ):
         """ Execute a simple query
 
         Parameters
@@ -122,10 +140,22 @@ class KustoClient(object):
             Optional parameter. Whether to get a raw response, or a parsed one.
         """
         return self._execute(
-            self._query_endpoint, kusto_database, query, accept_partial_results, timeout, get_raw_response
+            self._query_endpoint,
+            kusto_database,
+            query,
+            accept_partial_results,
+            timeout,
+            get_raw_response,
         )
 
-    def execute_mgmt(self, kusto_database, query, accept_partial_results=False, timeout=None, get_raw_response=False):
+    def execute_mgmt(
+        self,
+        kusto_database,
+        query,
+        accept_partial_results=False,
+        timeout=None,
+        get_raw_response=False,
+    ):
         """ Execute a management command
 
         Parameters
@@ -146,7 +176,12 @@ class KustoClient(object):
             Optional parameter. Whether to get a raw response, or a parsed one.
         """
         return self._execute(
-            self._mgmt_endpoint, kusto_database, query, accept_partial_results, timeout, get_raw_response
+            self._mgmt_endpoint,
+            kusto_database,
+            query,
+            accept_partial_results,
+            timeout,
+            get_raw_response,
         )
 
     def _execute(
