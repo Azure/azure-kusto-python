@@ -10,7 +10,8 @@ from dateutil.tz.tz import tzutc
 from pandas import DataFrame, Series
 from pandas.util.testing import assert_frame_equal
 
-from azure.kusto.data import KustoClient, KustoServiceError
+from azure.kusto.data import KustoClient
+from azure.kusto.data.exceptions import KustoServiceError
 
 
 def mocked_aad_helper(*args, **kwargs):
@@ -101,7 +102,7 @@ class KustoClientTests(unittest.TestCase):
             "xdynamicWithNulls": text_type(""),
         }
 
-        for row in response.iter_all():
+        for row in response.primary_results:
             self.assertEqual(row["rownumber"], expected["rownumber"])
             self.assertEqual(row["rowguid"], expected["rowguid"])
             self.assertEqual(row["xdouble"], expected["xdouble"])
@@ -187,12 +188,12 @@ class KustoClientTests(unittest.TestCase):
         """Tests contol command."""
         client = KustoClient("https://somecluster.kusto.windows.net")
         response = client.execute_mgmt("NetDefaultDB", ".show version")
-        self.assertEqual(response.get_table_count(), 1)
+        self.assertEqual(len(response), 1)
         row_count = 0
-        for _ in response.iter_all():
+        for _ in response.primary_results:
             row_count += 1
         self.assertEqual(row_count, 1)
-        result = list(response.iter_all())[0]
+        result = response.primary_results[0]
         self.assertEqual(result["BuildVersion"], "1.0.6693.14577")
         self.assertEqual(
             result["BuildTime"],
@@ -206,7 +207,9 @@ class KustoClientTests(unittest.TestCase):
     def test_sanity_data_frame(self, mock_post, mock_aad):
         """Tests KustoResponse to pandas.DataFrame."""
         client = KustoClient("https://somecluster.kusto.windows.net")
-        data_frame = client.execute_query("PythonTest", "Deft").to_dataframe(errors="ignore")
+        data_frame = client.execute_query("PythonTest", "Deft").primary_results.to_dataframe(
+            errors="ignore"
+        )
         self.assertEqual(len(data_frame.columns), 19)
         expected_dict = {
             "rownumber": Series([None, 0., 1., 2., 3., 4., 5., 6., 7., 8., 9.]),
@@ -360,9 +363,9 @@ set truncationmaxrecords = 1;
 range x from 1 to 2 step 1"""
         self.assertRaises(KustoServiceError, client.execute_query, "PythonTest", query)
         response = client.execute_query("PythonTest", query, accept_partial_results=True)
-        self.assertTrue(response.has_exceptions())
-        self.assertEqual(response.get_exceptions()[0]["error"]["code"], "LimitsExceeded")
-        self.assertEqual(response.get_table_count(), 5)
-        results = list(response.iter_all())
+        self.assertEqual(response.errors_count, 1)
+        self.assertIn("E_QUERY_RESULT_SET_TOO_LARGE", response.get_exceptions()[0])
+        self.assertEqual(len(response), 3)
+        results = list(response.primary_results)
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0]["x"], 1)

@@ -1,7 +1,6 @@
-from .kusto_ingest_client import KustoIngestClient
-from .descriptors import BlobDescriptor, FileDescriptor
-from .kusto_ingest_client_exceptions import KustoDuplicateMappingError
-from .ingestion_properties import (
+from ._kusto_ingest_client import KustoIngestClient
+from ._descriptors import BlobDescriptor, FileDescriptor
+from ._ingestion_properties import (
     DataFormat,
     ValidationPolicy,
     ValidationImplications,
@@ -13,6 +12,4 @@ from .ingestion_properties import (
     IngestionProperties,
 )
 
-from .version import VERSION
-
-__version__ = VERSION
+from ._version import VERSION as __version__

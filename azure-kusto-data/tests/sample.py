@@ -1,6 +1,7 @@
 ﻿"""A simple example how to use KustoClient."""
 
-from azure.kusto.data import KustoClient, KustoServiceError
+from azure.kusto.data import KustoClient
+from azure.kusto.data.exceptions import KustoServiceError
 
 # TODO: this should become functional test at some point.
 
@@ -20,7 +21,7 @@ KUSTO_DATABASE = "Samples"
 KUSTO_QUERY = "StormEvents | take 10"
 
 RESPONSE = KUSTO_CLIENT.execute(KUSTO_DATABASE, KUSTO_QUERY)
-for row in RESPONSE.iter_all():
+for row in RESPONSE.primary_results:
     print(row[0], " ", row["EventType"])
 
 # Query is too big to be executed
@@ -31,12 +32,12 @@ except KustoServiceError as error:
     print("2. Error:", error)
     print("2. Is semantic error:", error.is_semantic_error())
     print("2. Has partial results:", error.has_partial_results())
-    print("2. Result size:", len(list(error.get_partial_results().iter_all())))
+    print("2. Result size:", len(error.get_partial_results()))
 
 RESPONSE = KUSTO_CLIENT.execute(KUSTO_DATABASE, KUSTO_QUERY, accept_partial_results=True)
-print("3. Response has exception:", RESPONSE.has_exceptions())
+print("3. Response error count: ", RESPONSE.errors_count)
 print("3. Exceptions:", RESPONSE.get_exceptions())
-print("3. Result size:", len(list(RESPONSE.iter_all())))
+print("3. Result size:", len(RESPONSE.primary_results))
 
 # Query has semantic error
 KUSTO_QUERY = "StormEvents | where foo = bar"

@@ -3,58 +3,42 @@
 from datetime import timedelta
 import re
 
+from abc import ABCMeta, abstractmethod
 import json
 import uuid
 import dateutil.parser
+from enum import Enum
 import requests
 import pandas
 import six
 import numbers
 
 from .aad_helper import _AadHelper
-from .kusto_exceptions import KustoServiceError
-from .version import VERSION
+from .exceptions import KustoServiceError
+from ._version import VERSION
 
 # Regex for TimeSpan
-TIMESPAN_PATTERN = re.compile(
+_TIMESPAN_PATTERN = re.compile(
     r"(-?)((?P<d>[0-9]*).)?(?P<h>[0-9]{2}):(?P<m>[0-9]{2}):(?P<s>[0-9]{2}(\.[0-9]+)?$)"
 )
 
 
-class KustoResult(dict):
-    """Simple wrapper around dictionary, to enable both index and key access to rows in result."""
+class WellKnownDataSet(Enum):
+    """Categorizes data tables according to the role they play in the data set that a Kusto query returns."""
 
-    def __init__(self, index2column_mapping, *args, **kwargs):
-        super(KustoResult, self).__init__(*args, **kwargs)
-        # TODO: this is not optimal, if client will not access all fields.
-        # In that case, we are having unnecessary perf hit to convert Timestamp,
-        # even if client don't use it.
-        # In this case, it would be better for KustoResult to extend list class. In this case,
-        # KustoResultIter.index2column_mapping should be reversed, e.g. column2index_mapping.
-        self.index2column_mapping = index2column_mapping
-
-    def __getitem__(self, key):
-        if isinstance(key, numbers.Number):
-            val = dict.__getitem__(self, self.index2column_mapping[key])
-        else:
-            val = dict.__getitem__(self, key)
-        return val
+    PrimaryResult = ("PrimaryResult",)
+    QueryCompletionInformation = ("QueryCompletionInformation",)
+    TableOfContents = ("TableOfContents",)
+    QueryProperties = ("QueryProperties",)
 
 
-class KustoResultIter(six.Iterator):
-    """Iterator over returned rows."""
+class _KustoResultRow(object):
+    """Iterator over a Kusto result row."""
 
-    def __init__(self, json_result):
-        self.json_result = json_result
-        self.index2column_mapping = []
-        self.index2type_mapping = []
-        for column in json_result["Columns"]:
-            self.index2column_mapping.append(column["ColumnName"])
-            self.index2type_mapping.append(
-                column["ColumnType"] if "ColumnType" in column else column["DataType"]
-            )
-        self.row_index = 0
-        self.rows_count = len(json_result["Rows"])
+    def __init__(self, columns_count, columns, row):
+        self._columns_count = columns_count
+        self._columns = columns
+        self._row = row
         # Here we keep converter functions for each type that we need to take special care
         # (e.g. convert)
         self.converters_lambda_mappings = {
@@ -63,6 +47,26 @@ class KustoResultIter(six.Iterator):
             "DateTime": self.to_datetime,
             "TimeSpan": self.to_timedelta,
         }
+
+    def __iter__(self):
+        for i in range(self._columns_count):
+            yield self[i]
+
+    def __getitem__(self, key):
+        if isinstance(key, numbers.Number):
+            column = self._columns[key]
+            value = self._row[key]
+        else:
+            column = next((column for column in self._columns if column.column_name == key), None)
+            if not column:
+                raise LookupError(key)
+            value = self._row[column.ordinal]
+        if column.column_type in self.converters_lambda_mappings:
+            return self.converters_lambda_mappings[column.column_type](value)
+        return value
+
+    def __len__(self):
+        return self._columns_count
 
     @staticmethod
     def to_datetime(value):
@@ -78,7 +82,7 @@ class KustoResultIter(six.Iterator):
             return None
         if isinstance(value, numbers.Number):
             return timedelta(microseconds=(float(value) / 10))
-        match = TIMESPAN_PATTERN.match(value)
+        match = _TIMESPAN_PATTERN.match(value)
         if match:
             if match.group(1) == "-":
                 factor = -1
@@ -93,83 +97,56 @@ class KustoResultIter(six.Iterator):
         else:
             raise ValueError("Timespan value '{}' cannot be decoded".format(value))
 
+
+class _KustoResultColumn(object):
+    def __init__(self, json_column, ordianl):
+        self.column_name = json_column["ColumnName"]
+        self.column_type = (
+            json_column["ColumnType"] if "ColumnType" in json_column else json_column["DataType"]
+        )
+        self.ordinal = ordianl
+
+
+class _KustoResultTable(object):
+    """Iterator over a Kusto result table."""
+
+    def __init__(self, json_table):
+        self.table_name = json_table["TableName"]
+        self.table_id = json_table["TableId"] if "TableId" in json_table else None
+        self.table_kind = (
+            WellKnownDataSet[json_table["TableKind"]] if "TableKind" in json_table else None
+        )
+        self.columns = []
+        ordinal = 0
+        for column in json_table["Columns"]:
+            self.columns.append(_KustoResultColumn(column, ordinal))
+            ordinal += 1
+        self.rows_count = len(json_table["Rows"])
+        self.columns_count = len(self.columns)
+        self._rows = json_table["Rows"]
+
     def __iter__(self):
-        return self
+        for row in self._rows:
+            yield _KustoResultRow(self.columns_count, self.columns, row)
 
-    def __next__(self):
-        if self.row_index >= self.rows_count:
-            raise StopIteration
-        row = self.json_result["Rows"][self.row_index]
-        result_dict = {}
-        for index, value in enumerate(row):
-            data_type = self.index2type_mapping[index]
-            if data_type in self.converters_lambda_mappings:
-                result_dict[self.index2column_mapping[index]] = self.converters_lambda_mappings[
-                    data_type
-                ](value)
-            else:
-                result_dict[self.index2column_mapping[index]] = value
-        self.row_index = self.row_index + 1
-        return KustoResult(self.index2column_mapping, result_dict)
+    def __getitem__(self, key):
+        return _KustoResultRow(self.columns_count, self.columns, self._rows[key])
 
-
-class KustoResponse(object):
-    """Wrapper for response."""
-
-    # TODO: add support to get additional information from response, like execution time
-
-    def __init__(self, json_response):
-        self.json_response = json_response
-
-    def get_raw_response(self):
-        """Gets the json response got from Kusto."""
-        return self.json_response
-
-    def get_table_count(self):
-        """Gets the tables Count."""
-        if isinstance(self.json_response, list):
-            return len(self.json_response)
-        return len(self.json_response["Tables"])
-
-    def has_exceptions(self):
-        """Checkes whether an exception was thrown."""
-        if isinstance(self.json_response, list):
-            return list(
-                filter(lambda x: x["FrameType"] == "DataSetCompletion", self.json_response)
-            )[0]["HasErrors"]
-        return "Exceptions" in self.json_response
-
-    def get_exceptions(self):
-        """ Gets the excpetions got from Kusto if exists. """
-        if self.has_exceptions():
-            if isinstance(self.json_response, list):
-                return list(
-                    filter(lambda x: x["FrameType"] == "DataSetCompletion", self.json_response)
-                )[0]["OneApiErrors"]
-            return self.json_response["Exceptions"]
-        return None
-
-    def iter_all(self, table_id=-1):
-        """ Returns iterator to get rows from response """
-        if table_id == -1:
-            table_id = self._get_default_table_id()
-        return KustoResultIter(self._get_table(table_id))
+    def __len__(self):
+        return self.rows_count
 
     def to_dataframe(self, errors="raise"):
         """Returns Pandas data frame."""
-        if not self.json_response:
+        if not self.columns or not self._rows:
             return pandas.DataFrame()
 
-        table = self._get_table(self._get_default_table_id())
-        rows_data = table["Rows"]
-        kusto_columns = table["Columns"]
+        frame = pandas.DataFrame(
+            self._rows, columns=[column.column_name for column in self.columns]
+        )
 
-        col_names = [col["ColumnName"] for col in kusto_columns]
-        frame = pandas.DataFrame(rows_data, columns=col_names)
-
-        for col in kusto_columns:
-            col_name = col["ColumnName"]
-            col_type = col["ColumnType"] if "ColumnType" in col else col["DataType"]
+        for column in self.columns:
+            col_name = column.column_name
+            col_type = column.column_type
             if col_type.lower() == "timespan":
                 frame[col_name] = pandas.to_timedelta(
                     frame[col_name].apply(
@@ -183,16 +160,6 @@ class KustoResponse(object):
                 frame[col_name] = frame[col_name].astype(pandas_type, errors=errors)
 
         return frame
-
-    def _get_default_table_id(self):
-        if isinstance(self.json_response, list):
-            return 2
-        return 0
-
-    def _get_table(self, table_id):
-        if isinstance(self.json_response, list):
-            return self.json_response[table_id]
-        return self.json_response["Tables"][table_id]
 
     _kusto_to_data_frame_data_types = {
         "bool": "bool",
@@ -221,6 +188,137 @@ class KustoResponse(object):
         "Guid": "object",
         "TimeSpan": "object",
     }
+
+
+@six.add_metaclass(ABCMeta)
+class _KustoResponseDataSet:
+    """Represents the parsed data set carried by the response to a Kusto request."""
+
+    def __init__(self, json_response):
+        self.tables = [_KustoResultTable(t) for t in json_response]
+        self.tables_count = len(self.tables)
+        self._tables_names = [t.table_name for t in self.tables]
+
+    @property
+    @abstractmethod
+    def _error_column(self):
+        raise NotImplementedError
+
+    @property
+    @abstractmethod
+    def _crid_column(self):
+        raise NotImplementedError
+
+    @property
+    @abstractmethod
+    def _status_column(self):
+        raise NotImplementedError
+
+    @property
+    def primary_results(self):
+        if self.tables_count == 1:
+            return self.tables[0]
+        primary = list(
+            filter(lambda x: x.table_kind == WellKnownDataSet.PrimaryResult, self.tables)
+        )
+        if len(primary) == 1:
+            return primary[0]
+        return primary
+
+    @property
+    def errors_count(self):
+        """Checks whether an exception was thrown."""
+        query_status_table = next(
+            (t for t in self.tables if t.table_kind == WellKnownDataSet.QueryCompletionInformation),
+            None,
+        )
+        if not query_status_table:
+            return 0
+        min_level = 4
+        errors = 0
+        for q in query_status_table:
+            if q[self._error_column] < 4:
+                if q[self._error_column] < min_level:
+                    min_level = q[self._error_column]
+                    errors = 1
+                elif q[self._error_column] == min_level:
+                    errors += 1
+
+        return errors
+
+    def get_exceptions(self):
+        """Gets the excpetions retrieved from Kusto if exists."""
+        query_status_table = next(
+            (t for t in self.tables if t.table_kind == WellKnownDataSet.QueryCompletionInformation),
+            None,
+        )
+        if not query_status_table:
+            return
+        result = []
+        for q in query_status_table:
+            if q[self._error_column] < 4:
+                result.append(
+                    "Please provide the following data ot Kusto: CRID='{0}' Description:'{1}'".format(
+                        q[self._crid_column], q[self._status_column]
+                    )
+                )
+        return result
+
+    def __iter__(self):
+        return iter(self.tables)
+
+    def __getitem__(self, key):
+        if isinstance(key, numbers.Number):
+            return self.tables[key]
+        try:
+            return self.tables[self._tables_names.index(key)]
+        except ValueError:
+            raise LookupError(key)
+
+    def __len__(self):
+        return self.tables_count
+
+    def to_dataframe(self):
+        return pandas.DataFrame(data=self.tables, columns=self._tables_names)
+
+
+class _KustoResponseDataSetV1(_KustoResponseDataSet):
+
+    _status_column = "StatusDescription"
+    _crid_column = "ClientActivityId"
+    _error_column = "Severity"
+    _tables_kinds = {
+        "QueryResult": WellKnownDataSet.PrimaryResult,
+        "@ExtendedProperties": WellKnownDataSet.QueryProperties,
+        "QueryStatus": WellKnownDataSet.QueryCompletionInformation,
+    }
+
+    def __init__(self, json_response):
+        super(_KustoResponseDataSetV1, self).__init__(json_response["Tables"])
+        if self.tables_count <= 2:
+            self.tables[0].table_kind = WellKnownDataSet.PrimaryResult
+            self.tables[0].table_id = 0
+
+            if self.tables_count == 2:
+                self.tables[1].table_kind = WellKnownDataSet.QueryProperties
+                self.tables[1].table_id = 1
+        else:
+            toc = self.tables[-1]
+            for i in range(self.tables_count - 1):
+                self.tables[i].table_name = toc[i]["Name"]
+                self.tables[i].table_id = toc[i]["Id"]
+                self.tables[i].table_kind = self._tables_kinds[toc[i]["Kind"]]
+
+
+class _KustoResponseDataSetV2(_KustoResponseDataSet):
+    _status_column = "Payload"
+    _error_column = "Level"
+    _crid_column = "ClientRequestId"
+
+    def __init__(self, json_response):
+        super(_KustoResponseDataSetV2, self).__init__(
+            [t for t in json_response if t["FrameType"] == "DataTable"]
+        )
 
 
 class KustoClient(object):
@@ -289,6 +387,8 @@ class KustoClient(object):
             In case your tenant is not microsoft please use this param.
         """
         self.kusto_cluster = kusto_cluster
+        self._mgmt_endpoint = "{0}/v1/rest/mgmt".format(self.kusto_cluster)
+        self._query_endpoint = "{0}/v2/rest/query".format(self.kusto_cluster)
         self._aad_helper = _AadHelper(
             kusto_cluster, client_id, client_secret, username, password, authority
         )
@@ -331,8 +431,9 @@ class KustoClient(object):
         timeout : float, optional
             Optional parameter. Network timeout in seconds. Default is no timeout.
         """
-        query_endpoint = "{0}/v2/rest/query".format(self.kusto_cluster)
-        return self._execute(kusto_database, query, query_endpoint, accept_partial_results, timeout)
+        return self._execute(
+            self._query_endpoint, kusto_database, query, accept_partial_results, timeout
+        )
 
     def execute_mgmt(self, kusto_database, query, accept_partial_results=False, timeout=None):
         """ Execute a management command
@@ -352,18 +453,20 @@ class KustoClient(object):
         timeout : float, optional
             Optional parameter. Network timeout in seconds. Default is no timeout.
         """
-        query_endpoint = "{0}/v1/rest/mgmt".format(self.kusto_cluster)
-        return self._execute(kusto_database, query, query_endpoint, accept_partial_results, timeout)
+        return self._execute(
+            self._mgmt_endpoint, kusto_database, query, accept_partial_results, timeout
+        )
 
     def _execute(
         self,
+        endpoint,
         kusto_database,
         kusto_query,
-        query_endpoint,
         accept_partial_results=False,
         timeout=None,
+        get_raw_response=False,
     ):
-        """ Executes given query against this client """
+        """Executes given query against this client"""
 
         request_payload = {"db": kusto_database, "csl": kusto_query}
 
@@ -379,12 +482,19 @@ class KustoClient(object):
         }
 
         response = requests.post(
-            query_endpoint, headers=request_headers, json=request_payload, timeout=timeout
+            endpoint, headers=request_headers, json=request_payload, timeout=timeout
         )
 
         if response.status_code == 200:
-            kusto_response = KustoResponse(response.json())
-            if kusto_response.has_exceptions() and not accept_partial_results:
+            if get_raw_response:
+                return response.json()
+
+            if endpoint.endswith("v2/rest/query"):
+                kusto_response = _KustoResponseDataSetV2(response.json())
+            else:
+                kusto_response = _KustoResponseDataSetV1(response.json())
+
+            if kusto_response.errors_count > 0 and not accept_partial_results:
                 raise KustoServiceError(kusto_response.get_exceptions(), response, kusto_response)
             return kusto_response
         else:

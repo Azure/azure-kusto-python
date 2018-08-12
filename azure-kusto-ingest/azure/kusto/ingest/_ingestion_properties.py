@@ -2,7 +2,7 @@
 
 from enum import Enum, IntEnum
 
-from .kusto_ingest_client_exceptions import KustoDuplicateMappingError
+from .exceptions import KustoDuplicateMappingError
 
 
 class DataFormat(Enum):
@@ -35,7 +35,7 @@ class ValidationImplications(IntEnum):
     BestEffort = 1
 
 
-class ValidationPolicy:
+class ValidationPolicy(object):
     """Validation policy to ingest command."""
 
     def __init__(
@@ -47,7 +47,7 @@ class ValidationPolicy:
         self.ValidationImplications = validationImplications
 
 
-class ReportLevel(Enum):
+class ReportLevel(IntEnum):
     """Report level to ingest command."""
 
     FailuresOnly = 0
@@ -55,7 +55,7 @@ class ReportLevel(Enum):
     FailuresAndSuccesses = 2
 
 
-class ReportMethod(Enum):
+class ReportMethod(IntEnum):
     """Report method to ingest command."""
 
     Queue = 0

@@ -8,7 +8,8 @@ import base64
 import re
 from six import text_type
 
-from azure.kusto.data import KustoClient, KustoServiceError
+from azure.kusto.data import KustoClient
+from azure.kusto.data.exceptions import KustoServiceError
 from azure.kusto.ingest import KustoIngestClient, IngestionProperties, DataFormat
 
 

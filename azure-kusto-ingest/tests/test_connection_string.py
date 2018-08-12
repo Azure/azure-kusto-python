@@ -1,7 +1,7 @@
 """Tests class _connection_string."""
 
 import unittest
-from azure.kusto.ingest.connection_string import _ConnectionString
+from azure.kusto.ingest._connection_string import _ConnectionString
 
 
 class ConnectionStringTests(unittest.TestCase):

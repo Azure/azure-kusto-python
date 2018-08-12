@@ -4,9 +4,9 @@ import unittest
 import re
 import json
 from uuid import UUID
-from azure.kusto.ingest.ingestion_blob_info import _IngestionBlobInfo
+from azure.kusto.ingest._ingestion_blob_info import _IngestionBlobInfo
+from azure.kusto.ingest.exceptions import KustoDuplicateMappingError
 from azure.kusto.ingest import (
-    KustoDuplicateMappingError,
     BlobDescriptor,
     IngestionProperties,
     DataFormat,
