@@ -26,10 +26,10 @@ _TIMESPAN_PATTERN = re.compile(
 class WellKnownDataSet(Enum):
     """Categorizes data tables according to the role they play in the data set that a Kusto query returns."""
 
-    PrimaryResult = ("PrimaryResult",)
-    QueryCompletionInformation = ("QueryCompletionInformation",)
-    TableOfContents = ("TableOfContents",)
-    QueryProperties = ("QueryProperties",)
+    PrimaryResult = "PrimaryResult"
+    QueryCompletionInformation = "QueryCompletionInformation"
+    TableOfContents = "TableOfContents"
+    QueryProperties = "QueryProperties"
 
 
 class _KustoResultRow(object):
@@ -289,7 +289,7 @@ class _KustoResponseDataSetV1(_KustoResponseDataSet):
     _error_column = "Severity"
     _tables_kinds = {
         "QueryResult": WellKnownDataSet.PrimaryResult,
-        "@ExtendedProperties": WellKnownDataSet.QueryProperties,
+        "QueryProperties": WellKnownDataSet.QueryProperties,
         "QueryStatus": WellKnownDataSet.QueryCompletionInformation,
     }
 
@@ -304,6 +304,8 @@ class _KustoResponseDataSetV1(_KustoResponseDataSet):
                 self.tables[1].table_id = 1
         else:
             toc = self.tables[-1]
+            toc.table_kind = WellKnownDataSet.TableOfContents
+            toc.table_id = self.tables_count - 1
             for i in range(self.tables_count - 1):
                 self.tables[i].table_name = toc[i]["Name"]
                 self.tables[i].table_id = toc[i]["Id"]

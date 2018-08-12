@@ -12,6 +12,7 @@ from pandas.util.testing import assert_frame_equal
 
 from azure.kusto.data import KustoClient
 from azure.kusto.data.exceptions import KustoServiceError
+from azure.kusto.data._kusto_client import WellKnownDataSet
 
 
 def mocked_aad_helper(*args, **kwargs):
@@ -47,8 +48,12 @@ def mocked_requests_post(*args, **kwargs):
         return MockResponse(json.loads(data), 200)
 
     elif args[0] == "https://somecluster.kusto.windows.net/v1/rest/mgmt":
+        if ".show version" == kwargs["json"]["csl"]:
+            file_name = "versionshowcommandresult.json"
+        else:
+            file_name = "adminthenquery.json"
         with open(
-            os.path.join(os.path.dirname(__file__), "input", "versionshowcommandresult.json"), "r"
+            os.path.join(os.path.dirname(__file__), "input", file_name), "r"
         ) as response_file:
             data = response_file.read()
         return MockResponse(json.loads(data), 200)
@@ -358,8 +363,7 @@ class KustoClientTests(unittest.TestCase):
     def test_partial_results(self, mock_post, mock_aad):
         """Tests partial results."""
         client = KustoClient("https://somecluster.kusto.windows.net")
-        query = """\
-set truncationmaxrecords = 1;
+        query = """set truncationmaxrecords = 1;
 range x from 1 to 2 step 1"""
         self.assertRaises(KustoServiceError, client.execute_query, "PythonTest", query)
         response = client.execute_query("PythonTest", query, accept_partial_results=True)
@@ -369,3 +373,19 @@ range x from 1 to 2 step 1"""
         results = list(response.primary_results)
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0]["x"], 1)
+
+    @patch("requests.post", side_effect=mocked_requests_post)
+    @patch("azure.kusto.data.aad_helper._AadHelper.acquire_token", side_effect=mocked_aad_helper)
+    def test_admin_then_query(self, mock_post, mock_aad):
+        """Tests partial results."""
+        client = KustoClient("https://somecluster.kusto.windows.net")
+        query = ".show tables | project DatabaseName, TableName"
+        response = client.execute_mgmt("PythonTest", query)
+        self.assertEqual(response.errors_count, 0)
+        self.assertEqual(len(response), 4)
+        results = list(response.primary_results)
+        self.assertEqual(len(results), 2)
+        self.assertEqual(response[0].table_kind, WellKnownDataSet.PrimaryResult)
+        self.assertEqual(response[1].table_kind, WellKnownDataSet.QueryProperties)
+        self.assertEqual(response[2].table_kind, WellKnownDataSet.QueryCompletionInformation)
+        self.assertEqual(response[3].table_kind, WellKnownDataSet.TableOfContents)
