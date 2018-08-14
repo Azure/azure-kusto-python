@@ -3,13 +3,10 @@
 import os
 import json
 import unittest
-from mock import patch
 import base64
-import re
+from mock import patch
 from six import text_type
 
-from azure.kusto.data import KustoClient
-from azure.kusto.data.exceptions import KustoServiceError
 from azure.kusto.ingest import KustoIngestClient, IngestionProperties, DataFormat
 
 
