@@ -95,7 +95,7 @@ class KustoIngestClientTests(unittest.TestCase):
     """Test class for KustoIngestClient."""
 
     @patch("requests.post", side_effect=mocked_requests_post)
-    @patch("azure.kusto.data.aad_helper._AadHelper.acquire_token", side_effect=mocked_aad_helper)
+    @patch("azure.kusto.data.security._AadHelper.acquire_token", side_effect=mocked_aad_helper)
     @patch(
         "azure.storage.blob.BlockBlobService.create_blob_from_stream",
         autospec=True,
