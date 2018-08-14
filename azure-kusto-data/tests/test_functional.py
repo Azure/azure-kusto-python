@@ -2,8 +2,8 @@
 
 import json
 import unittest
-from six import text_type
 from datetime import datetime, timedelta
+from six import text_type
 from dateutil.tz.tz import tzutc
 
 from azure.kusto.data._response import _KustoResponseDataSetV2
