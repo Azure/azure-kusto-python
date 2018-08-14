@@ -47,8 +47,8 @@ class _AadHelper(object):
             self._kusto_cluster, self._username, self._client_id
         )
         if token is not None:
-            expiration_date = dateutil.parser.parse(token["expiresOn"])
-            if expiration_date > (datetime.utcnow() + timedelta(minutes=5)):
+            expiration_date = dateutil.parser.parse(token[TokenResponseFields.EXPIRES_ON])
+            if expiration_date > datetime.now() + timedelta(minutes=1):
                 return _get_header(token)
             if TokenResponseFields.REFRESH_TOKEN in token:
                 token = self._adal_context.acquire_token_with_refresh_token(

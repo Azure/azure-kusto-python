@@ -208,7 +208,8 @@ class KustoClient(object):
             If this is True, results are returned to client, even if there are exceptions.
             If this is False, exception is raised. Default is False.
         :param float timeout: Optional parameter. Network timeout in seconds. Default is no timeout.
-        :param bool get_raw_response: Optional parameter. Whether to get a raw response, or a parsed one.
+        :param bool get_raw_response: Optional parameter.
+            Whether to get a raw response, or a parsed one.
         """
         if query.startswith("."):
             return self.execute_mgmt(
