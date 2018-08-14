@@ -3,13 +3,10 @@
 import os
 import json
 import unittest
-from mock import patch
 import base64
-import re
+from mock import patch
 from six import text_type
 
-from azure.kusto.data import KustoClient
-from azure.kusto.data.exceptions import KustoServiceError
 from azure.kusto.ingest import KustoIngestClient, IngestionProperties, DataFormat
 
 
@@ -98,7 +95,7 @@ class KustoIngestClientTests(unittest.TestCase):
     """Test class for KustoIngestClient."""
 
     @patch("requests.post", side_effect=mocked_requests_post)
-    @patch("azure.kusto.data.aad_helper._AadHelper.acquire_token", side_effect=mocked_aad_helper)
+    @patch("azure.kusto.data.security._AadHelper.acquire_token", side_effect=mocked_aad_helper)
     @patch(
         "azure.storage.blob.BlockBlobService.create_blob_from_stream",
         autospec=True,

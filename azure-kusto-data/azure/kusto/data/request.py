@@ -1,7 +1,7 @@
 import requests
 import uuid
 
-from .aad_helper import _AadHelper
+from .security import _AadHelper
 from .exceptions import KustoServiceError
 from ._response import _KustoResponseDataSetV1, _KustoResponseDataSetV2
 from ._version import VERSION
