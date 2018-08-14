@@ -19,6 +19,7 @@ class KustoConnectionStringBuilder(object):
     @unique
     class ValidKeywords(Enum):
         """Distinct set of values KustoConnectionStringBuilder can have."""
+
         data_source = "Data Source"
         aad_user_id = "AAD User ID"
         password = "Password"
