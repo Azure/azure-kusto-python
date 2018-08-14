@@ -213,8 +213,10 @@ class KustoClientTests(unittest.TestCase):
     def test_sanity_data_frame(self, mock_post, mock_aad):
         """Tests KustoResponse to pandas.DataFrame."""
         client = KustoClient("https://somecluster.kusto.windows.net")
-        data_frame = client.execute_query("PythonTest", "Deft").primary_results[0].to_dataframe(
-            errors="ignore"
+        data_frame = (
+            client.execute_query("PythonTest", "Deft")
+            .primary_results[0]
+            .to_dataframe(errors="ignore")
         )
         self.assertEqual(len(data_frame.columns), 19)
         expected_dict = {

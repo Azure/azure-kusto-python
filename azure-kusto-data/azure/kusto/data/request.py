@@ -168,7 +168,7 @@ class KustoConnectionStringBuilder(object):
 
 def _assert_value_is_valid(value):
     if not value or not value.strip():
-        raise ValueError('Should not be empty')
+        raise ValueError("Should not be empty")
 
 
 class KustoClient(object):

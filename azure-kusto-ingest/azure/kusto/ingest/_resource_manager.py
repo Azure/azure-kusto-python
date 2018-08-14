@@ -61,9 +61,11 @@ class _ResourceManager:
         return resource
 
     def _get_ingest_client_resources_from_service(self):
-        df = self._kusto_client.execute(
-            "NetDefaultDB", ".get ingestion resources"
-        ).primary_results[0].to_dataframe()
+        df = (
+            self._kusto_client.execute("NetDefaultDB", ".get ingestion resources")
+            .primary_results[0]
+            .to_dataframe()
+        )
 
         secured_ready_for_aggregation_queues = self._get_resource_by_name(
             df, "SecuredReadyForAggregationQueue"
