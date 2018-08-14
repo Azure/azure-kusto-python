@@ -3,19 +3,19 @@
 import os
 import json
 import unittest
-from six import text_type
 from datetime import datetime, timedelta
+from six import text_type
 from mock import patch
 from dateutil.tz.tz import tzutc
 from pandas import DataFrame, Series
 from pandas.util.testing import assert_frame_equal
 
-from azure.kusto.data import KustoClient
+from azure.kusto.data.request import KustoClient
 from azure.kusto.data.exceptions import KustoServiceError
 from azure.kusto.data._response import WellKnownDataSet
 
 
-def mocked_aad_helper(*args, **kwargs):
+def mocked_aad_helper():
     """Mock to replace _AadHelper._acquire_token"""
     return None
 
@@ -48,7 +48,7 @@ def mocked_requests_post(*args, **kwargs):
         return MockResponse(json.loads(data), 200)
 
     elif args[0] == "https://somecluster.kusto.windows.net/v1/rest/mgmt":
-        if ".show version" == kwargs["json"]["csl"]:
+        if kwargs["json"]["csl"] == ".show version":
             file_name = "versionshowcommandresult.json"
         else:
             file_name = "adminthenquery.json"
@@ -80,7 +80,7 @@ class KustoClientTests(unittest.TestCase):
     """Tests class for KustoClient."""
 
     @patch("requests.post", side_effect=mocked_requests_post)
-    @patch("azure.kusto.data.aad_helper._AadHelper.acquire_token", side_effect=mocked_aad_helper)
+    @patch("azure.kusto.data.security._AadHelper.acquire_token", side_effect=mocked_aad_helper)
     def test_sanity_query(self, mock_post, mock_aad):
         """Test query V2."""
         client = KustoClient("https://somecluster.kusto.windows.net")
@@ -188,7 +188,7 @@ class KustoClientTests(unittest.TestCase):
                 )
 
     @patch("requests.post", side_effect=mocked_requests_post)
-    @patch("azure.kusto.data.aad_helper._AadHelper.acquire_token", side_effect=mocked_aad_helper)
+    @patch("azure.kusto.data.security._AadHelper.acquire_token", side_effect=mocked_aad_helper)
     def test_sanity_control_command(self, mock_post, mock_aad):
         """Tests contol command."""
         client = KustoClient("https://somecluster.kusto.windows.net")
@@ -208,7 +208,7 @@ class KustoClientTests(unittest.TestCase):
         self.assertEqual(result["ProductVersion"], "KustoMain_2018.04.29.5")
 
     @patch("requests.post", side_effect=mocked_requests_post)
-    @patch("azure.kusto.data.aad_helper._AadHelper.acquire_token", side_effect=mocked_aad_helper)
+    @patch("azure.kusto.data.security._AadHelper.acquire_token", side_effect=mocked_aad_helper)
     def test_sanity_data_frame(self, mock_post, mock_aad):
         """Tests KustoResponse to pandas.DataFrame."""
         client = KustoClient("https://somecluster.kusto.windows.net")
@@ -359,7 +359,7 @@ class KustoClientTests(unittest.TestCase):
         assert_frame_equal(data_frame, expected_data_frame)
 
     @patch("requests.post", side_effect=mocked_requests_post)
-    @patch("azure.kusto.data.aad_helper._AadHelper.acquire_token", side_effect=mocked_aad_helper)
+    @patch("azure.kusto.data.security._AadHelper.acquire_token", side_effect=mocked_aad_helper)
     def test_partial_results(self, mock_post, mock_aad):
         """Tests partial results."""
         client = KustoClient("https://somecluster.kusto.windows.net")
@@ -375,7 +375,7 @@ range x from 1 to 2 step 1"""
         self.assertEqual(results[0]["x"], 1)
 
     @patch("requests.post", side_effect=mocked_requests_post)
-    @patch("azure.kusto.data.aad_helper._AadHelper.acquire_token", side_effect=mocked_aad_helper)
+    @patch("azure.kusto.data.security._AadHelper.acquire_token", side_effect=mocked_aad_helper)
     def test_admin_then_query(self, mock_post, mock_aad):
         """Tests partial results."""
         client = KustoClient("https://somecluster.kusto.windows.net")

@@ -4,7 +4,7 @@ import time
 import os
 from six import text_type
 
-from azure.kusto.data import KustoClient
+from azure.kusto.data.request import KustoClient
 from azure.kusto.ingest import (
     KustoIngestClient,
     IngestionProperties,

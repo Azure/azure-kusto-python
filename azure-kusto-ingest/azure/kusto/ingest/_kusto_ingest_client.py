@@ -7,96 +7,33 @@ from six import text_type
 
 from azure.storage.common import CloudStorageAccount
 
-from azure.kusto.data import KustoClient
+from azure.kusto.data.request import KustoClient
 from ._descriptors import BlobDescriptor, FileDescriptor
 from ._ingestion_blob_info import _IngestionBlobInfo
 from ._resource_manager import _ResourceManager
 
 
-class KustoIngestClient:
-    """
-    Kusto ingest client for Python.
-
+class KustoIngestClient(object):
+    """Kusto ingest client for Python.
     KustoIngestClient works with both 2.x and 3.x flavors of Python.
     All primitive types are supported.
-    KustoIngestClient takes care of ADAL authentication, and queueing ingest jobs.
-    When using KustoIngestClient, you can choose between three options for authenticating:
 
-    Option 1:
-    You'll need to have your own AAD application and know your
-    client credentials (client_id and client_secret).
-    >>> kusto_cluster = 'https://ingest-help.kusto.windows.net'
-    >>> kusto_ingest_client = KustoIngestClient(kusto_cluster,
-                                   client_id='your_app_id',
-                                   client_secret='your_app_secret')
-
-    Option 2:
-    You can use KustoClient's client id (set as a default in the constructor) 
-    and authenticate using your username and password.
-    >>> kusto_cluster = 'https://ingest-help.kusto.windows.net'
-    >>> kusto_ingest_client = KustoIngestClient(kusto_cluster,
-                                   username='your_username',
-                                   password='your_password')
-
-    Option 3:
-    You can use KustoClient's client id (set as a default in the constructor) 
-    and authenticate using your username and an AAD pop up.
-    >>> kusto_cluster = 'https://ingest-help.kusto.windows.net'
-    >>> kusto_ingest_client = KustoIngestClient(kusto_cluster)
+    Tests are run using pytest.
     """
 
-    def __init__(
-        self,
-        kusto_cluster,
-        client_id=None,
-        client_secret=None,
-        username=None,
-        password=None,
-        authority=None,
-    ):
+    def __init__(self, kcsb):
+        """Kusto Ingest Client constructor.
+        :param kcsb: The connection string to initialize KustoClient.
         """
-        Kusto Client constructor.
-        Parameters
-        ----------
-        kusto_cluster : str
-            Kusto cluster endpoint. Example: https://ingest-help.kusto.windows.net
-        client_id : str
-            The AAD application ID of the application making the request to Kusto
-        client_secret : str
-            The AAD application key of the application making the request to Kusto.
-            if this is given, then username/password should not be.
-        username : str
-            The username of the user making the request to Kusto.
-            if this is given, then password must follow and the client_secret should not be given.
-        password : str
-            The password matching the username of the user making the request to Kusto
-        version : 'v1', optional
-            REST API version, defaults to v1.
-        authority : 'microsoft.com', optional
-            In case your tenant is not microsoft please use this param.
-        """
-        kusto_client = KustoClient(
-            kusto_cluster,
-            client_id=client_id,
-            client_secret=client_secret,
-            username=username,
-            password=password,
-            authority=authority,
-        )
+        kusto_client = KustoClient(kcsb)
         self._resource_manager = _ResourceManager(kusto_client)
 
     def ingest_from_multiple_files(self, files, delete_sources_on_success, ingestion_properties):
-        """
-        Enqueuing an ingest command from local files.
-
-        Parameters
-        ----------
-        files : List of FileDescriptor or file paths.
-            The list of files to be ingested.
-        delete_sources_on_success : bool.
-            After a successful ingest, whether to delete the origin files.
-        ingestion_properties : kusto_ingest_client.ingestion_properties.IngestionProperties
-            The ingestion properties.
+        """Enqueuing an ingest command from local files.
+        :param files: List of FileDescriptor or file paths. The list of files to be ingested.
+        :param bool delete_sources_on_success: After a successful ingest,
+            whether to delete the origin files.
+        :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
         """
         blobs = list()
         file_descriptors = list()
@@ -135,18 +72,12 @@ class KustoIngestClient:
             descriptor.delete_files(True)
 
     def ingest_from_multiple_blobs(self, blobs, delete_sources_on_success, ingestion_properties):
-        """
-        Enqueuing an ingest command from azure blobs.
-
-        Parameters
-        ----------
-        blobs : List of BlobDescriptor.
-            The list of blobs to be ingested.
-            Please provide the raw blob size to each of the descriptors.
-        delete_sources_on_success : bool.
-            After a successful ingest, whether to delete the origin files.
-        ingestion_properties : kusto_ingest_client.ingestion_properties.IngestionProperties
-            The ingestion properties.
+        """Enqueuing an ingest command from azure blobs.
+        :param files: List of BlobDescriptor. The list of blobs to be ingested. Please provide the
+            raw blob size to each of the descriptors.
+        :param bool delete_sources_on_success: After a successful ingest,
+            whether to delete the origin files.
+        :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
         """
         for blob in blobs:
             queues = self._resource_manager.get_ingestion_queues()
