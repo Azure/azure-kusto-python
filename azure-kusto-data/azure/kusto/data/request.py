@@ -55,6 +55,7 @@ class KustoConnectionStringBuilder(object):
         For more information please look at:
         https://kusto.azurewebsites.net/docs/concepts/kusto_connection_strings.html
         """
+        _assert_value_is_valid(connection_string)
         self._internal_dict = {}
         if connection_string is not None and "=" not in connection_string.partition(";")[0]:
             connection_string = "Data Source=" + connection_string
@@ -79,9 +80,8 @@ class KustoConnectionStringBuilder(object):
         :param str user_id: AAD user ID.
         :param str password: Corresponding password of the AAD user.
         """
-        _ensure_value_is_valid(connection_string)
-        _ensure_value_is_valid(user_id)
-        _ensure_value_is_valid(password)
+        _assert_value_is_valid(user_id)
+        _assert_value_is_valid(password)
         kcsb = cls(connection_string)
         kcsb[kcsb.ValidKeywords.aad_user_id] = user_id
         kcsb[kcsb.ValidKeywords.password] = password
@@ -96,9 +96,8 @@ class KustoConnectionStringBuilder(object):
         :param str aad_app_id: AAD application ID.
         :param str app_key: Corresponding password of the AAD application.
         """
-        _ensure_value_is_valid(connection_string)
-        _ensure_value_is_valid(aad_app_id)
-        _ensure_value_is_valid(app_key)
+        _assert_value_is_valid(aad_app_id)
+        _assert_value_is_valid(app_key)
         kcsb = cls(connection_string)
         kcsb[kcsb.ValidKeywords.application_client_id] = aad_app_id
         kcsb[kcsb.ValidKeywords.application_key] = app_key
@@ -111,7 +110,6 @@ class KustoConnectionStringBuilder(object):
         :param str connection_string: Kusto connection string should by of the format:
         https://<clusterName>.kusto.windows.net
         """
-        _ensure_value_is_valid(connection_string)
         return cls(connection_string)
 
     @property
@@ -168,9 +166,9 @@ class KustoConnectionStringBuilder(object):
         self[self.ValidKeywords.authority_id] = value
 
 
-def _ensure_value_is_valid(value):
+def _assert_value_is_valid(value):
     if not value or not value.strip():
-        raise ValueError
+        raise ValueError('Should not be empty')
 
 
 class KustoClient(object):

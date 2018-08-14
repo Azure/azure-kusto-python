@@ -212,12 +212,11 @@ class _KustoResponseDataSet:
     def primary_results(self):
         """Returns primary results. If there is more than one returns a list."""
         if self.tables_count == 1:
-            return self.tables[0]
+            return self.tables
         primary = list(
             filter(lambda x: x.table_kind == WellKnownDataSet.PrimaryResult, self.tables)
         )
-        if len(primary) == 1:
-            return primary[0]
+
         return primary
 
     @property
@@ -253,7 +252,7 @@ class _KustoResponseDataSet:
         for row in query_status_table:
             if row[self._error_column] < 4:
                 result.append(
-                    "Please provide the following data ot Kusto: CRID='{0}' Description:'{1}'".format(
+                    "Please provide the following data to Kusto: CRID='{0}' Description:'{1}'".format(
                         row[self._crid_column], row[self._status_column]
                     )
                 )
