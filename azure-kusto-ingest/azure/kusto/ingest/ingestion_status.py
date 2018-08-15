@@ -1,7 +1,7 @@
 from enum import Enum, IntEnum
 from datetime import datetime
 
-from azure.storage.table import Entity
+from azure.cosmosdb.table.models import Entity
 
 
 class Status(Enum):

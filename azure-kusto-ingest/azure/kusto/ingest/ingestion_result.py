@@ -1,7 +1,7 @@
 from abc import ABCMeta, abstractmethod
 import six
 
-from azure.storage.table import TableService
+from azure.cosmosdb.table.tableservice import TableService
 
 from ._connection_string import _ConnectionString
 from .ingestion_status import IngestionStatus

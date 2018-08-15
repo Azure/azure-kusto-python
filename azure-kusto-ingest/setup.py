@@ -46,7 +46,7 @@ setup(
         "azure-storage-blob>=1.1.0",
         "azure-storage-common>=1.1.0",
         "azure-storage-queue>=1.1.0",
-        "azure-storage-table>=1.1.0",
+        "azure-cosmosdb-table>=1.1.0",
         "six>=1.10.0",
     ],
     cmdclass=cmdclass,

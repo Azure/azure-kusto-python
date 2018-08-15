@@ -6,7 +6,7 @@ import uuid
 from six import text_type
 
 from azure.storage.common import CloudStorageAccount
-from azure.storage.table import TableService
+from azure.cosmosdb.table.tableservice import TableService
 
 from azure.kusto.data.request import KustoClient
 from azure.kusto.data.exceptions import KustoClientError
