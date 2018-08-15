@@ -12,7 +12,7 @@ class KustoConnectionStringBuilderTests(unittest.TestCase):
         """Checks kcsb that is created with no credentials"""
         kcsbs = [
             KustoConnectionStringBuilder("localhost"),
-            KustoConnectionStringBuilder("Data Source=localhost"),
+            KustoConnectionStringBuilder("data Source=localhost"),
             KustoConnectionStringBuilder("Addr=localhost"),
             KustoConnectionStringBuilder("Addr = localhost"),
             KustoConnectionStringBuilder.with_aad_device_authentication("localhost"),
@@ -35,10 +35,10 @@ class KustoConnectionStringBuilderTests(unittest.TestCase):
         key = "key of application"
         kcsbs = [
             KustoConnectionStringBuilder(
-                "localhost;Application Client Id={0};Application Key={1}".format(uuid, key)
+                "localhost;Application client Id={0};application Key={1}".format(uuid, key)
             ),
             KustoConnectionStringBuilder(
-                "Data Source=localhost ; Application Client Id={0}; AppKey ={1}".format(uuid, key)
+                "Data Source=localhost ; Application Client Id={0}; Appkey ={1}".format(uuid, key)
             ),
             KustoConnectionStringBuilder(
                 " Addr = localhost ; AppClientId = {0} ; AppKey ={1}".format(uuid, key)
@@ -51,14 +51,14 @@ class KustoConnectionStringBuilderTests(unittest.TestCase):
             ),
         ]
 
-        kcsb1 = KustoConnectionStringBuilder("Server=localhost")
+        kcsb1 = KustoConnectionStringBuilder("server=localhost")
         kcsb1[KustoConnectionStringBuilder.ValidKeywords.application_client_id] = uuid
         kcsb1[KustoConnectionStringBuilder.ValidKeywords.application_key] = key
         kcsbs.append(kcsb1)
 
         kcsb2 = KustoConnectionStringBuilder("Server=localhost")
-        kcsb2["AppClientId"] = uuid
-        kcsb2["Application Key"] = key
+        kcsb2["AppclientId"] = uuid
+        kcsb2["Application key"] = key
         kcsbs.append(kcsb2)
 
         for kcsb in kcsbs:
@@ -78,16 +78,16 @@ class KustoConnectionStringBuilderTests(unittest.TestCase):
         password = "Pa$$w0rd"
         kcsbs = [
             KustoConnectionStringBuilder(
-                "localhost;AAD User ID={0};Password={1}".format(user, password)
+                "localhost;AAD User ID={0};password={1}".format(user, password)
             ),
             KustoConnectionStringBuilder(
-                "Data Source=localhost ; AAD User ID={0}; Password ={1}".format(user, password)
+                "Data Source=localhost ; AaD User ID={0}; Password ={1}".format(user, password)
             ),
             KustoConnectionStringBuilder(
                 " Addr = localhost ; AAD User ID = {0} ; Pwd ={1}".format(user, password)
             ),
             KustoConnectionStringBuilder(
-                "Network Address = localhost; AAD User ID = {0} ; Pwd = {1} ".format(user, password)
+                "Network Address = localhost; AAD User iD = {0} ; Pwd = {1} ".format(user, password)
             ),
             KustoConnectionStringBuilder.with_aad_user_password_authentication(
                 "localhost", user, password
@@ -99,7 +99,7 @@ class KustoConnectionStringBuilderTests(unittest.TestCase):
         kcsb1[KustoConnectionStringBuilder.ValidKeywords.password] = password
         kcsbs.append(kcsb1)
 
-        kcsb2 = KustoConnectionStringBuilder("Server=localhost")
+        kcsb2 = KustoConnectionStringBuilder("server=localhost")
         kcsb2["AAD User ID"] = user
         kcsb2["Password"] = password
         kcsbs.append(kcsb2)

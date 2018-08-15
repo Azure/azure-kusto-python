@@ -27,26 +27,23 @@ class KustoConnectionStringBuilder(object):
         application_key = "Application Key"
         authority_id = "Authority Id"
 
-    _Keywords = {
-        "Data Source": ValidKeywords.data_source,
-        "Addr": ValidKeywords.data_source,
-        "Address": ValidKeywords.data_source,
-        "Network Address": ValidKeywords.data_source,
-        "Server": ValidKeywords.data_source,
-        "AAD User ID": ValidKeywords.aad_user_id,
-        "Password": ValidKeywords.password,
-        "Pwd": ValidKeywords.password,
-        "Application Client Id": ValidKeywords.application_client_id,
-        "AppClientId": ValidKeywords.application_client_id,
-        "Application Key": ValidKeywords.application_key,
-        "AppKey": ValidKeywords.application_key,
-        "Authority Id": ValidKeywords.authority_id,
-        "AuthorityId": ValidKeywords.authority_id,
-        "Authority": ValidKeywords.authority_id,
-        "TenantId": ValidKeywords.authority_id,
-        "Tenant": ValidKeywords.authority_id,
-        "tid": ValidKeywords.authority_id,
-    }
+        @classmethod
+        def parse(cls, key):
+            """Create a valikd keyword."""
+            key = key.lower().strip()
+            if key in ["data source", "addr", "address", "network address", "server"]:
+                return cls.data_source
+            if key in ["aad user id"]:
+                return cls.aad_user_id
+            if key in ["password", "pwd"]:
+                return cls.password
+            if key in ["application client id", "appclientid"]:
+                return cls.application_client_id
+            if key in ["application key", "appkey"]:
+                return cls.application_key
+            if key in ["authority id", "authorityid", "authority", "tenantid", "tenant", "tid"]:
+                return cls.authority_id
+            raise KeyError(key)
 
     def __init__(self, connection_string):
         """Creates new KustoConnectionStringBuilder.
@@ -60,12 +57,12 @@ class KustoConnectionStringBuilder(object):
         if connection_string is not None and "=" not in connection_string.partition(";")[0]:
             connection_string = "Data Source=" + connection_string
         for kvp_string in connection_string.split(";"):
-            kvp = kvp_string.split("=")
-            self[kvp[0]] = kvp[1]
+            key, _, value = kvp_string.partition("=")
+            self[key] = value
 
     def __setitem__(self, key, value):
         try:
-            keyword = key if isinstance(key, self.ValidKeywords) else self._Keywords[key.strip()]
+            keyword = key if isinstance(key, self.ValidKeywords) else self.ValidKeywords.parse(key)
         except KeyError:
             raise KeyError("%s is not supported as an item in KustoConnectionStringBuilder" % key)
 
@@ -117,49 +114,37 @@ class KustoConnectionStringBuilder(object):
         """The URI specifying the Kusto service endpoint.
         For example, https://kuskus.kusto.windows.net or net.tcp://localhost
         """
-        if self.ValidKeywords.data_source in self._internal_dict:
-            return self._internal_dict[self.ValidKeywords.data_source]
-        return None
+        return self._internal_dict.get(self.ValidKeywords.data_source)
 
     @property
     def aad_user_id(self):
         """The username to use for AAD Federated AuthN."""
-        if self.ValidKeywords.aad_user_id in self._internal_dict:
-            return self._internal_dict[self.ValidKeywords.aad_user_id]
-        return None
+        return self._internal_dict.get(self.ValidKeywords.aad_user_id)
 
     @property
     def password(self):
         """The password to use for authentication when username/password authentication is used.
         Must be accompanied by UserID property
         """
-        if self.ValidKeywords.password in self._internal_dict:
-            return self._internal_dict[self.ValidKeywords.password]
-        return None
+        return self._internal_dict.get(self.ValidKeywords.password)
 
     @property
     def application_client_id(self):
         """The application client id to use for authentication when federated
         authentication is used.
         """
-        if self.ValidKeywords.application_client_id in self._internal_dict:
-            return self._internal_dict[self.ValidKeywords.application_client_id]
-        return None
+        return self._internal_dict.get(self.ValidKeywords.application_client_id)
 
     @property
     def application_key(self):
         """The application key to use for authentication when federated authentication is used"""
-        if self.ValidKeywords.application_key in self._internal_dict:
-            return self._internal_dict[self.ValidKeywords.application_key]
-        return None
+        return self._internal_dict.get(self.ValidKeywords.application_key)
 
     @property
     def authority_id(self):
         """The ID of the AAD tenant where the application is configured.
         (should be supplied only for non-Microsoft tenant)"""
-        if self.ValidKeywords.authority_id in self._internal_dict:
-            return self._internal_dict[self.ValidKeywords.authority_id]
-        return None
+        return self._internal_dict.get(self.ValidKeywords.authority_id)
 
     @authority_id.setter
     def authority_id(self, value):

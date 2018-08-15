@@ -22,7 +22,7 @@ KUSTO_DATABASE = "Samples"
 KUSTO_QUERY = "StormEvents | take 10"
 
 RESPONSE = KUSTO_CLIENT.execute(KUSTO_DATABASE, KUSTO_QUERY)
-for row in RESPONSE.primary_results:
+for row in RESPONSE.primary_results[0]:
     print(row[0], " ", row["EventType"])
 
 # Query is too big to be executed
@@ -57,4 +57,4 @@ let max_t = datetime(2016-09-03);
 service_traffic
 | make-series num=count() on TimeStamp in range(max_t-5d, max_t, 1h) by OsVer
 """
-DATA_FRAME = KUSTO_CLIENT.execute_query("ML", QUERY).primary_results.to_dataframe()
+DATA_FRAME = KUSTO_CLIENT.execute_query("ML", QUERY).primary_results[0].to_dataframe()

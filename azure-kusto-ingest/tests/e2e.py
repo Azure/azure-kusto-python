@@ -152,7 +152,7 @@ KUSTO_INGEST_CLIENT.ingest_from_multiple_files(
 
 time.sleep(60)
 RESPONSE = KUSTO_CLIENT.execute("PythonTest", "Deft | count")
-for row in RESPONSE.primary_results:
+for row in RESPONSE.primary_results[0]:
     if int(row["Count"]) == 20:
         print("Completed ingest from CSV mapping successfully.")
     else:
@@ -174,7 +174,7 @@ KUSTO_INGEST_CLIENT.ingest_from_multiple_files(
 )
 time.sleep(60)
 RESPONSE = KUSTO_CLIENT.execute("PythonTest", "Deft | count")
-for row in RESPONSE.primary_results:
+for row in RESPONSE.primary_results[0]:
     if int(row["Count"]) == 24:
         print("Completed ingest from json mapping successfully.")
     else:
@@ -204,7 +204,7 @@ KUSTO_INGEST_CLIENT.ingest_from_multiple_files(
 )
 time.sleep(60)
 RESPONSE = KUSTO_CLIENT.execute("PythonTest", "Deft | count")
-for row in RESPONSE.primary_results:
+for row in RESPONSE.primary_results[0]:
     if int(row["Count"]) == 28:
         print("Completed ingest from json mapping with full ingestion properties successfully.")
     else:
@@ -224,7 +224,7 @@ KUSTO_INGEST_CLIENT.ingest_from_multiple_files(
 )
 time.sleep(60)
 RESPONSE = KUSTO_CLIENT.execute("PythonTest", "Deft | count")
-for row in RESPONSE.primary_results:
+for row in RESPONSE.primary_results[0]:
     if int(row["Count"]) == 28:
         print("Completed ingest with existing ingest-by tag successfully.")
     else:
@@ -241,7 +241,7 @@ TSV_FILE_PATH = os.path.join(os.getcwd(), "azure-kusto-ingest", "tests", "input"
 KUSTO_INGEST_CLIENT.ingest_from_multiple_files([TSV_FILE_PATH], False, TSV_INGESTION_PROPERTIES)
 time.sleep(60)
 RESPONSE = KUSTO_CLIENT.execute("PythonTest", "Deft | count")
-for row in RESPONSE.primary_results:
+for row in RESPONSE.primary_results[0]:
     if int(row["Count"]) == 38:
         print("Completed ingest TSV from CSV mapping successfully.")
     else:
