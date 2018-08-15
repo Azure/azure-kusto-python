@@ -19,4 +19,6 @@ class _ConnectionString:
         return cls(match.group(1), match.group(2), match.group(3), match.group(4))
 
     def unparse(self):
-        return "https://{}.{}.core.windows.net/{}?{}".format(self.storage_account_name, self.object_type, self.object_name, self.sas)
+        return "https://{}.{}.core.windows.net/{}?{}".format(
+            self.storage_account_name, self.object_type, self.object_name, self.sas
+        )

@@ -135,11 +135,13 @@ class KustoIngestClient:
                 container_details.object_name, blob_name, sas_token=container_details.sas
             )
             blobs.append(BlobDescriptor(url, descriptor.size))
-        
-        ingestion_result = self.ingest_from_multiple_blobs(blobs, delete_sources_on_success, ingestion_properties)
+
+        ingestion_result = self.ingest_from_multiple_blobs(
+            blobs, delete_sources_on_success, ingestion_properties
+        )
         for descriptor in file_descriptors:
             descriptor.delete_files(True)
-        
+
         return ingestion_result
 
     def ingest_from_multiple_blobs(self, blobs, delete_sources_on_success, ingestion_properties):
@@ -158,12 +160,20 @@ class KustoIngestClient:
         """
         if not blobs:
             raise KustoClientError("No blobs were found to ingest")
-        
-        should_report_to_ingestions_status_table = ingestion_properties.report_level != ReportLevel.DoNotReport and ingestion_properties.report_method != ReportMethod.Queue
+
+        should_report_to_ingestions_status_table = (
+            ingestion_properties.report_level != ReportLevel.DoNotReport
+            and ingestion_properties.report_method != ReportMethod.Queue
+        )
         if should_report_to_ingestions_status_table:
-            ingestions_status_table = random.choice(self._resource_manager.get_ingestions_status_tables())
-            table_service = TableService(account_name=ingestions_status_table.storage_account_name, sas_token=ingestions_status_table.sas)
-        
+            ingestions_status_table = random.choice(
+                self._resource_manager.get_ingestions_status_tables()
+            )
+            table_service = TableService(
+                account_name=ingestions_status_table.storage_account_name,
+                sas_token=ingestions_status_table.sas,
+            )
+
         map_of_source_id_to_ingestion_status = {}
         map_of_source_id_to_ingestion_status_in_table = {}
 
@@ -173,18 +183,24 @@ class KustoIngestClient:
                 blob, ingestion_properties, delete_sources_on_success, authorization_context
             )
             ingestion_source_id = ingestion_blob_info.properties["Id"]
-            ingestion_status = IngestionStatus.create_ingestion_status(ingestion_source_id, blob, ingestion_properties)
-            
+            ingestion_status = IngestionStatus.create_ingestion_status(
+                ingestion_source_id, blob, ingestion_properties
+            )
+
             if should_report_to_ingestions_status_table:
                 ingestion_status_in_table = {
-                    "TableConnectionString" : ingestions_status_table.unparse(),
-                    "PartitionKey" : ingestion_source_id,
-                    "RowKey" : ingestion_source_id
+                    "TableConnectionString": ingestions_status_table.unparse(),
+                    "PartitionKey": ingestion_source_id,
+                    "RowKey": ingestion_source_id,
                 }
                 ingestion_blob_info.properties["IngestionStatusInTable"] = ingestion_status_in_table
-                
-                table_service.insert_entity(table_name=ingestions_status_table.object_name, entity=ingestion_status)
-                map_of_source_id_to_ingestion_status_in_table[ingestion_source_id] = ingestion_status_in_table
+
+                table_service.insert_entity(
+                    table_name=ingestions_status_table.object_name, entity=ingestion_status
+                )
+                map_of_source_id_to_ingestion_status_in_table[
+                    ingestion_source_id
+                ] = ingestion_status_in_table
             else:
                 ingestion_status.Status = Status.Queued.value
                 map_of_source_id_to_ingestion_status[ingestion_source_id] = ingestion_status
@@ -204,6 +220,8 @@ class KustoIngestClient:
             queue_service.put_message(queue_name=queue_details.object_name, content=encoded)
 
             if should_report_to_ingestions_status_table:
-                return TableReportKustoIngestionResult(map_of_source_id_to_ingestion_status_in_table)
+                return TableReportKustoIngestionResult(
+                    map_of_source_id_to_ingestion_status_in_table
+                )
             else:
                 return KustoIngestionResult(map_of_source_id_to_ingestion_status)

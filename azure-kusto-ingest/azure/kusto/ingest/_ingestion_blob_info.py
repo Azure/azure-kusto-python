@@ -9,7 +9,9 @@ from ._descriptors import BlobDescriptor
 
 
 class _IngestionBlobInfo:
-    def __init__(self, blob, ingestion_properties, delete_sources_on_success=True, authorization_context=None):
+    def __init__(
+        self, blob, ingestion_properties, delete_sources_on_success=True, authorization_context=None
+    ):
         self.properties = dict()
         self.properties["BlobPath"] = blob.path
         self.properties["RawDataSize"] = blob.size

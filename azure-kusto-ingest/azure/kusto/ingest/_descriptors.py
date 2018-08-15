@@ -12,6 +12,7 @@ import six
 @six.add_metaclass(ABCMeta)
 class SourceDescription(object):
     """"Abstract descriptor to ingest"""
+
     def __init__(self, source_id):
         self.source_id = source_id
 

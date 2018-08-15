@@ -13,9 +13,10 @@ class KustoDuplicateMappingError(KustoClientError):
         message = "Ingestion properties contains ingestion mapping and ingestion mapping reference."
         super(KustoDuplicateMappingError, self).__init__(message)
 
+
 class NonexistentSourceIdException(KustoClientError):
     """Error to be raised when a non existent source ID was provided to retrieve the status of an ingestion"""
-    
+
     def __init__(self):
         message = "Non existent source ID was provided to retrieve the status of an ingestion."
         super(NonexistentSourceIdException, self).__init__(message)
