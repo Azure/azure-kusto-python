@@ -5,12 +5,22 @@ from io import BytesIO
 import shutil
 from gzip import GzipFile
 import tempfile
+from abc import ABCMeta, abstractmethod
+import six
 
 
-class FileDescriptor(object):
+@six.add_metaclass(ABCMeta)
+class SourceDescription(object):
+    """"Abstract descriptor to ingest"""
+    def __init__(self, source_id):
+        self.source_id = source_id
+
+
+class FileDescriptor(SourceDescription):
     """A file to ingest."""
 
-    def __init__(self, path, size=0, deleteSourcesOnSuccess=False):
+    def __init__(self, path, size=0, deleteSourcesOnSuccess=False, source_id=None):
+        super(FileDescriptor, self).__init__(source_id)
         self.path = path
         self.size = size
         self.delete_sources_on_success = deleteSourcesOnSuccess
@@ -38,9 +48,10 @@ class FileDescriptor(object):
             os.remove(self.path)
 
 
-class BlobDescriptor(object):
+class BlobDescriptor(SourceDescription):
     """A blob to ingest."""
 
-    def __init__(self, path, size):
+    def __init__(self, path, size, source_id=None):
+        super(BlobDescriptor, self).__init__(source_id)
         self.path = path
         self.size = size

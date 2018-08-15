@@ -41,12 +41,12 @@ class IngestionBlobInfoTest(unittest.TestCase):
             dropByTags=["dropByTags"],
             flushImmediately=True,
             reportLevel=ReportLevel.DoNotReport,
-            reportMethod=ReportMethod.QueueAndTable,
+            reportMethod=ReportMethod.Queue,
             validationPolicy=validation_policy,
         )
         blob = BlobDescriptor("somepath", 10)
         blob_info = _IngestionBlobInfo(
-            blob, properties, deleteSourcesOnSuccess=True, authContext="authorizationContextText"
+            blob, properties, delete_sources_on_success=True, authorization_context="authorizationContextText"
         )
         self._verify_ingestion_blob_info_result(blob_info.to_json())
 
@@ -66,12 +66,12 @@ class IngestionBlobInfoTest(unittest.TestCase):
             dropByTags=["dropByTags"],
             flushImmediately=True,
             reportLevel=ReportLevel.DoNotReport,
-            reportMethod=ReportMethod.QueueAndTable,
+            reportMethod=ReportMethod.Queue,
             validationPolicy=validation_policy,
         )
         blob = BlobDescriptor("somepath", 10)
         blob_info = _IngestionBlobInfo(
-            blob, properties, deleteSourcesOnSuccess=True, authContext="authorizationContextText"
+            blob, properties, delete_sources_on_success=True, authorization_context="authorizationContextText"
         )
         self._verify_ingestion_blob_info_result(blob_info.to_json())
 
@@ -91,12 +91,12 @@ class IngestionBlobInfoTest(unittest.TestCase):
             dropByTags=["dropByTags"],
             flushImmediately=True,
             reportLevel=ReportLevel.DoNotReport,
-            reportMethod=ReportMethod.QueueAndTable,
+            reportMethod=ReportMethod.Queue,
             validationPolicy=validation_policy,
         )
         blob = BlobDescriptor("somepath", 10)
         blob_info = _IngestionBlobInfo(
-            blob, properties, deleteSourcesOnSuccess=True, authContext="authorizationContextText"
+            blob, properties, delete_sources_on_success=True, authorization_context="authorizationContextText"
         )
         self._verify_ingestion_blob_info_result(blob_info.to_json())
 
@@ -116,12 +116,12 @@ class IngestionBlobInfoTest(unittest.TestCase):
             dropByTags=["dropByTags"],
             flushImmediately=True,
             reportLevel=ReportLevel.DoNotReport,
-            reportMethod=ReportMethod.QueueAndTable,
+            reportMethod=ReportMethod.Queue,
             validationPolicy=validation_policy,
         )
         blob = BlobDescriptor("somepath", 10)
         blob_info = _IngestionBlobInfo(
-            blob, properties, deleteSourcesOnSuccess=True, authContext="authorizationContextText"
+            blob, properties, delete_sources_on_success=True, authorization_context="authorizationContextText"
         )
         self._verify_ingestion_blob_info_result(blob_info.to_json())
 
