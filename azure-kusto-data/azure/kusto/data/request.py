@@ -29,7 +29,7 @@ class KustoConnectionStringBuilder(object):
 
         @classmethod
         def parse(cls, key):
-            """Create a valikd keyword."""
+            """Create a valid keyword."""
             key = key.lower().strip()
             if key in ["data source", "addr", "address", "network address", "server"]:
                 return cls.data_source
