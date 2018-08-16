@@ -18,6 +18,7 @@ class AuthenticationMethod(Enum):
 
     aad_username_password = "aad_username_password"
     aad_application_key = "aad_application_key"
+    aad_application_certificate = "aad_application_certificate"
     aad_device_login = "aad_device_login"
 
 
@@ -29,15 +30,26 @@ class _AadHelper(object):
             "https://{0}/{1}".format(AADConstants.WORLD_WIDE_AUTHORITY, authority)
         )
         self._username = None
-        if kcsb.aad_user_id is not None and kcsb.password is not None:
+        if all([kcsb.aad_user_id, kcsb.password]):
             self._authentication_method = AuthenticationMethod.aad_username_password
             self._client_id = "db662dc1-0cfe-4e1c-a843-19a68e65be58"
             self._username = kcsb.aad_user_id
             self._password = kcsb.password
-        elif kcsb.application_client_id is not None and kcsb.application_key is not None:
+        elif all([kcsb.application_client_id, kcsb.application_key]):
             self._authentication_method = AuthenticationMethod.aad_application_key
             self._client_id = kcsb.application_client_id
             self._client_secret = kcsb.application_key
+        elif all(
+            [
+                kcsb.application_client_id,
+                kcsb.application_certificate,
+                kcsb.application_certificate_thumbprint,
+            ]
+        ):
+            self._authentication_method = AuthenticationMethod.aad_application_certificate
+            self._client_id = kcsb.application_client_id
+            self._certificate = kcsb.application_certificate
+            self._thumbprint = kcsb.application_certificate_thumbprint
         else:
             self._authentication_method = AuthenticationMethod.aad_device_login
             self._client_id = "db662dc1-0cfe-4e1c-a843-19a68e65be58"
@@ -72,6 +84,10 @@ class _AadHelper(object):
             webbrowser.open(code[OAuth2DeviceCodeResponseParameters.VERIFICATION_URL])
             token = self._adal_context.acquire_token_with_device_code(
                 self._kusto_cluster, code, self._client_id
+            )
+        elif self._authentication_method is AuthenticationMethod.aad_application_certificate:
+            token = self._adal_context.acquire_token_with_client_certificate(
+                self._kusto_cluster, self._client_id, self._certificate, self._thumbprint
             )
         else:
             raise KustoClientError(

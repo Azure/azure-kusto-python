@@ -25,6 +25,8 @@ class KustoConnectionStringBuilder(object):
         password = "Password"
         application_client_id = "Application Client Id"
         application_key = "Application Key"
+        application_certificate = "Application Certificate"
+        application_certificate_thumbprint = "Application Certificate Thumbprint"
         authority_id = "Authority Id"
 
         @classmethod
@@ -41,6 +43,10 @@ class KustoConnectionStringBuilder(object):
                 return cls.application_client_id
             if key in ["application key", "appkey"]:
                 return cls.application_key
+            if key in ["application certificate"]:
+                return cls.application_certificate
+            if key in ["application certificate thumbprint"]:
+                return cls.application_certificate_thumbprint
             if key in ["authority id", "authorityid", "authority", "tenantid", "tenant", "tid"]:
                 return cls.authority_id
             raise KeyError(key)
@@ -101,6 +107,27 @@ class KustoConnectionStringBuilder(object):
         return kcsb
 
     @classmethod
+    def with_aad_application_certificate_authentication(
+        cls, connection_string, aad_app_id, certificate, thumbprint
+    ):
+        """Creates a KustoConnection string builder that will authenticate with AAD application and
+        password.
+        :param str connection_string: Kusto connection string should by of the format:
+        https://<clusterName>.kusto.windows.net
+        :param str aad_app_id: AAD application ID.
+        :param str certificate: A PEM encoded certificate private key.
+        :param str thumbprint: hex encoded thumbprint of the certificate.
+        """
+        _assert_value_is_valid(aad_app_id)
+        _assert_value_is_valid(certificate)
+        _assert_value_is_valid(thumbprint)
+        kcsb = cls(connection_string)
+        kcsb[kcsb.ValidKeywords.application_client_id] = aad_app_id
+        kcsb[kcsb.ValidKeywords.application_certificate] = certificate
+        kcsb[kcsb.ValidKeywords.application_certificate_thumbprint] = thumbprint
+        return kcsb
+
+    @classmethod
     def with_aad_device_authentication(cls, connection_string):
         """Creates a KustoConnection string builder that will authenticate with AAD application and
         password.
@@ -139,6 +166,24 @@ class KustoConnectionStringBuilder(object):
     def application_key(self):
         """The application key to use for authentication when federated authentication is used"""
         return self._internal_dict.get(self.ValidKeywords.application_key)
+
+    @property
+    def application_certificate(self):
+        """A PEM encoded certificate private key."""
+        return self._internal_dict.get(self.ValidKeywords.application_certificate)
+
+    @application_certificate.setter
+    def application_certificate(self, value):
+        self[self.ValidKeywords.application_certificate] = value
+
+    @property
+    def application_certificate_thumbprint(self):
+        """hex encoded thumbprint of the certificate."""
+        return self._internal_dict.get(self.ValidKeywords.application_certificate_thumbprint)
+
+    @application_certificate_thumbprint.setter
+    def application_certificate_thumbprint(self, value):
+        self[self.ValidKeywords.application_certificate_thumbprint] = value
 
     @property
     def authority_id(self):
