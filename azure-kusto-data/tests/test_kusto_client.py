@@ -15,7 +15,7 @@ from azure.kusto.data.exceptions import KustoServiceError
 from azure.kusto.data._response import WellKnownDataSet
 
 
-def mocked_aad_helper(*args, **kwargs):
+def mocked_aad_helper():
     """Mock to replace _AadHelper._acquire_token"""
     return None
 
@@ -48,7 +48,7 @@ def mocked_requests_post(*args, **kwargs):
         return MockResponse(json.loads(data), 200)
 
     elif args[0] == "https://somecluster.kusto.windows.net/v1/rest/mgmt":
-        if ".show version" == kwargs["json"]["csl"]:
+        if kwargs["json"]["csl"] == ".show version":
             file_name = "versionshowcommandresult.json"
         else:
             file_name = "adminthenquery.json"
@@ -107,7 +107,7 @@ class KustoClientTests(unittest.TestCase):
             "xdynamicWithNulls": text_type(""),
         }
 
-        for row in response.primary_results:
+        for row in response.primary_results[0]:
             self.assertEqual(row["rownumber"], expected["rownumber"])
             self.assertEqual(row["rowguid"], expected["rowguid"])
             self.assertEqual(row["xdouble"], expected["xdouble"])
@@ -194,11 +194,12 @@ class KustoClientTests(unittest.TestCase):
         client = KustoClient("https://somecluster.kusto.windows.net")
         response = client.execute_mgmt("NetDefaultDB", ".show version")
         self.assertEqual(len(response), 1)
+        primary_table = response.primary_results[0]
         row_count = 0
-        for _ in response.primary_results:
+        for _ in primary_table:
             row_count += 1
         self.assertEqual(row_count, 1)
-        result = response.primary_results[0]
+        result = primary_table[0]
         self.assertEqual(result["BuildVersion"], "1.0.6693.14577")
         self.assertEqual(
             result["BuildTime"],
@@ -212,8 +213,10 @@ class KustoClientTests(unittest.TestCase):
     def test_sanity_data_frame(self, mock_post, mock_aad):
         """Tests KustoResponse to pandas.DataFrame."""
         client = KustoClient("https://somecluster.kusto.windows.net")
-        data_frame = client.execute_query("PythonTest", "Deft").primary_results.to_dataframe(
-            errors="ignore"
+        data_frame = (
+            client.execute_query("PythonTest", "Deft")
+            .primary_results[0]
+            .to_dataframe(errors="ignore")
         )
         self.assertEqual(len(data_frame.columns), 19)
         expected_dict = {
@@ -370,7 +373,7 @@ range x from 1 to 2 step 1"""
         self.assertEqual(response.errors_count, 1)
         self.assertIn("E_QUERY_RESULT_SET_TOO_LARGE", response.get_exceptions()[0])
         self.assertEqual(len(response), 3)
-        results = list(response.primary_results)
+        results = list(response.primary_results[0])
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0]["x"], 1)
 
@@ -383,7 +386,7 @@ range x from 1 to 2 step 1"""
         response = client.execute_mgmt("PythonTest", query)
         self.assertEqual(response.errors_count, 0)
         self.assertEqual(len(response), 4)
-        results = list(response.primary_results)
+        results = list(response.primary_results[0])
         self.assertEqual(len(results), 2)
         self.assertEqual(response[0].table_kind, WellKnownDataSet.PrimaryResult)
         self.assertEqual(response[1].table_kind, WellKnownDataSet.QueryProperties)

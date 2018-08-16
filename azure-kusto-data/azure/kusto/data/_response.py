@@ -5,11 +5,11 @@ import re
 
 from abc import ABCMeta, abstractmethod
 import json
-import dateutil.parser
 from enum import Enum
+import numbers
+import dateutil.parser
 import pandas
 import six
-import numbers
 
 # Regex for TimeSpan
 _TIMESPAN_PATTERN = re.compile(
@@ -210,13 +210,13 @@ class _KustoResponseDataSet:
 
     @property
     def primary_results(self):
+        """Returns primary results. If there is more than one returns a list."""
         if self.tables_count == 1:
-            return self.tables[0]
+            return self.tables
         primary = list(
             filter(lambda x: x.table_kind == WellKnownDataSet.PrimaryResult, self.tables)
         )
-        if len(primary) == 1:
-            return primary[0]
+
         return primary
 
     @property
@@ -230,12 +230,12 @@ class _KustoResponseDataSet:
             return 0
         min_level = 4
         errors = 0
-        for q in query_status_table:
-            if q[self._error_column] < 4:
-                if q[self._error_column] < min_level:
-                    min_level = q[self._error_column]
+        for row in query_status_table:
+            if row[self._error_column] < 4:
+                if row[self._error_column] < min_level:
+                    min_level = row[self._error_column]
                     errors = 1
-                elif q[self._error_column] == min_level:
+                elif row[self._error_column] == min_level:
                     errors += 1
 
         return errors
@@ -247,13 +247,13 @@ class _KustoResponseDataSet:
             None,
         )
         if not query_status_table:
-            return
+            return []
         result = []
-        for q in query_status_table:
-            if q[self._error_column] < 4:
+        for row in query_status_table:
+            if row[self._error_column] < 4:
                 result.append(
-                    "Please provide the following data ot Kusto: CRID='{0}' Description:'{1}'".format(
-                        q[self._crid_column], q[self._status_column]
+                    "Please provide the following data to Kusto: CRID='{0}' Description:'{1}'".format(
+                        row[self._crid_column], row[self._status_column]
                     )
                 )
         return result
@@ -271,9 +271,6 @@ class _KustoResponseDataSet:
 
     def __len__(self):
         return self.tables_count
-
-    def to_dataframe(self):
-        return pandas.DataFrame(data=self.tables, columns=self._tables_names)
 
 
 class _KustoResponseDataSetV1(_KustoResponseDataSet):

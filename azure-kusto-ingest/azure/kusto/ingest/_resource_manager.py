@@ -61,9 +61,11 @@ class _ResourceManager:
         return resource
 
     def _get_ingest_client_resources_from_service(self):
-        df = self._kusto_client.execute(
-            "NetDefaultDB", ".get ingestion resources"
-        ).primary_results.to_dataframe()
+        df = (
+            self._kusto_client.execute("NetDefaultDB", ".get ingestion resources")
+            .primary_results[0]
+            .to_dataframe()
+        )
 
         secured_ready_for_aggregation_queues = self._get_resource_by_name(
             df, "SecuredReadyForAggregationQueue"
@@ -93,7 +95,7 @@ class _ResourceManager:
     def _get_authorization_context_from_service(self):
         return self._kusto_client.execute(
             "NetDefaultDB", ".get kusto identity token"
-        ).primary_results[0]["AuthorizationContext"]
+        ).primary_results[0][0]["AuthorizationContext"]
 
     def get_ingestion_queues(self):
         self._refresh_ingest_client_resources()

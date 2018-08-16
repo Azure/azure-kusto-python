@@ -1,5 +1,8 @@
-import requests
+"""A module to make a Kusto request."""
+
 import uuid
+from enum import Enum, unique
+import requests
 
 from .security import _AadHelper
 from .exceptions import KustoServiceError
@@ -7,77 +10,170 @@ from ._response import _KustoResponseDataSetV1, _KustoResponseDataSetV2
 from ._version import VERSION
 
 
-class KustoClient(object):
+class KustoConnectionStringBuilder(object):
+    """Parses Kusto conenction strings.
+    For usages, check out the sample at:
+        https://github.com/Azure/azure-kusto-python/blob/master/azure-kusto-data/tests/sample.py
     """
-    Kusto client for Python.
 
+    @unique
+    class ValidKeywords(Enum):
+        """Distinct set of values KustoConnectionStringBuilder can have."""
+
+        data_source = "Data Source"
+        aad_user_id = "AAD User ID"
+        password = "Password"
+        application_client_id = "Application Client Id"
+        application_key = "Application Key"
+        authority_id = "Authority Id"
+
+        @classmethod
+        def parse(cls, key):
+            """Create a valid keyword."""
+            key = key.lower().strip()
+            if key in ["data source", "addr", "address", "network address", "server"]:
+                return cls.data_source
+            if key in ["aad user id"]:
+                return cls.aad_user_id
+            if key in ["password", "pwd"]:
+                return cls.password
+            if key in ["application client id", "appclientid"]:
+                return cls.application_client_id
+            if key in ["application key", "appkey"]:
+                return cls.application_key
+            if key in ["authority id", "authorityid", "authority", "tenantid", "tenant", "tid"]:
+                return cls.authority_id
+            raise KeyError(key)
+
+    def __init__(self, connection_string):
+        """Creates new KustoConnectionStringBuilder.
+        :param str connection_string: Kusto connection string should by of the format:
+        https://<clusterName>.kusto.windows.net;AAD User ID="user@microsoft.com";Password=P@ssWord
+        For more information please look at:
+        https://kusto.azurewebsites.net/docs/concepts/kusto_connection_strings.html
+        """
+        _assert_value_is_valid(connection_string)
+        self._internal_dict = {}
+        if connection_string is not None and "=" not in connection_string.partition(";")[0]:
+            connection_string = "Data Source=" + connection_string
+        for kvp_string in connection_string.split(";"):
+            key, _, value = kvp_string.partition("=")
+            self[key] = value
+
+    def __setitem__(self, key, value):
+        try:
+            keyword = key if isinstance(key, self.ValidKeywords) else self.ValidKeywords.parse(key)
+        except KeyError:
+            raise KeyError("%s is not supported as an item in KustoConnectionStringBuilder" % key)
+
+        self._internal_dict[keyword] = value.strip()
+
+    @classmethod
+    def with_aad_user_password_authentication(cls, connection_string, user_id, password):
+        """Creates a KustoConnection string builder that will authenticate with AAD user name and
+        password.
+        :param str connection_string: Kusto connection string should by of the format:
+        https://<clusterName>.kusto.windows.net
+        :param str user_id: AAD user ID.
+        :param str password: Corresponding password of the AAD user.
+        """
+        _assert_value_is_valid(user_id)
+        _assert_value_is_valid(password)
+        kcsb = cls(connection_string)
+        kcsb[kcsb.ValidKeywords.aad_user_id] = user_id
+        kcsb[kcsb.ValidKeywords.password] = password
+        return kcsb
+
+    @classmethod
+    def with_aad_application_key_authentication(cls, connection_string, aad_app_id, app_key):
+        """Creates a KustoConnection string builder that will authenticate with AAD application and
+        password.
+        :param str connection_string: Kusto connection string should by of the format:
+        https://<clusterName>.kusto.windows.net
+        :param str aad_app_id: AAD application ID.
+        :param str app_key: Corresponding password of the AAD application.
+        """
+        _assert_value_is_valid(aad_app_id)
+        _assert_value_is_valid(app_key)
+        kcsb = cls(connection_string)
+        kcsb[kcsb.ValidKeywords.application_client_id] = aad_app_id
+        kcsb[kcsb.ValidKeywords.application_key] = app_key
+        return kcsb
+
+    @classmethod
+    def with_aad_device_authentication(cls, connection_string):
+        """Creates a KustoConnection string builder that will authenticate with AAD application and
+        password.
+        :param str connection_string: Kusto connection string should by of the format:
+        https://<clusterName>.kusto.windows.net
+        """
+        return cls(connection_string)
+
+    @property
+    def data_source(self):
+        """The URI specifying the Kusto service endpoint.
+        For example, https://kuskus.kusto.windows.net or net.tcp://localhost
+        """
+        return self._internal_dict.get(self.ValidKeywords.data_source)
+
+    @property
+    def aad_user_id(self):
+        """The username to use for AAD Federated AuthN."""
+        return self._internal_dict.get(self.ValidKeywords.aad_user_id)
+
+    @property
+    def password(self):
+        """The password to use for authentication when username/password authentication is used.
+        Must be accompanied by UserID property
+        """
+        return self._internal_dict.get(self.ValidKeywords.password)
+
+    @property
+    def application_client_id(self):
+        """The application client id to use for authentication when federated
+        authentication is used.
+        """
+        return self._internal_dict.get(self.ValidKeywords.application_client_id)
+
+    @property
+    def application_key(self):
+        """The application key to use for authentication when federated authentication is used"""
+        return self._internal_dict.get(self.ValidKeywords.application_key)
+
+    @property
+    def authority_id(self):
+        """The ID of the AAD tenant where the application is configured.
+        (should be supplied only for non-Microsoft tenant)"""
+        return self._internal_dict.get(self.ValidKeywords.authority_id)
+
+    @authority_id.setter
+    def authority_id(self, value):
+        self[self.ValidKeywords.authority_id] = value
+
+
+def _assert_value_is_valid(value):
+    if not value or not value.strip():
+        raise ValueError("Should not be empty")
+
+
+class KustoClient(object):
+    """Kusto client for Python.
     KustoClient works with both 2.x and 3.x flavors of Python. All primitive types are supported.
     KustoClient takes care of ADAL authentication, parsing response and giving you typed result set.
 
-    Test are run using nose.
+    Tests are run using pytest.
+    """
 
-    Examples
-    --------
-    When using KustoClient, you can choose between three options for authenticating:
-
-    Option 1:
-    You'll need to have your own AAD application and know your client credentials (client_id and client_secret).
-    >>> kusto_cluster = 'https://help.kusto.windows.net'
-    >>> kusto_client = KustoClient(kusto_cluster, client_id='your_app_id', client_secret='your_app_secret')
-
-    Option 2:
-    You can use KustoClient's client id (set as a default in the constructor) and authenticate using your username and password.
-    >>> kusto_cluster = 'https://help.kusto.windows.net'
-    >>> kusto_client = KustoClient(kusto_cluster, username='your_username', password='your_password')
-
-    Option 3:
-    You can use KustoClient's client id (set as a default in the constructor) and authenticate using your username and an AAD pop up.
-    >>> kusto_cluster = 'https://help.kusto.windows.net'
-    >>> kusto_client = KustoClient(kusto_cluster)
-
-    After connecting, use the kusto_client instance to execute a management command or a query:
-    >>> kusto_database = 'Samples'
-    >>> response = kusto_client.execute_query(kusto_database, 'StormEvents | take 10')
-    You can access rows now by index or by key.
-    >>> for row in response.iter_all():
-    >>>    print(row[0])
-    >>>    print(row["ColumnName"])    """
-
-    def __init__(
-        self,
-        kusto_cluster,
-        client_id=None,
-        client_secret=None,
-        username=None,
-        password=None,
-        authority=None,
-    ):
+    def __init__(self, kcsb):
+        """Kusto Client constructor.
+        :param kcsb: The connection string to initialize KustoClient.
         """
-        Kusto Client constructor.
-
-        Parameters
-        ----------
-        kusto_cluster : str
-            Kusto cluster endpoint. Example: https://help.kusto.windows.net
-        client_id : str
-            The AAD application ID of the application making the request to Kusto
-        client_secret : str
-            The AAD application key of the application making the request to Kusto.
-            if this is given, then username/password should not be.
-        username : str
-            The username of the user making the request to Kusto.
-            if this is given, then password must follow and the client_secret should not be given.
-        password : str
-            The password matching the username of the user making the request to Kusto
-        authority : 'microsoft.com', optional
-            In case your tenant is not microsoft please use this param.
-        """
-        self.kusto_cluster = kusto_cluster
-        self._mgmt_endpoint = "{0}/v1/rest/mgmt".format(self.kusto_cluster)
-        self._query_endpoint = "{0}/v2/rest/query".format(self.kusto_cluster)
-        self._aad_helper = _AadHelper(
-            kusto_cluster, client_id, client_secret, username, password, authority
-        )
+        if not isinstance(kcsb, KustoConnectionStringBuilder):
+            kcsb = KustoConnectionStringBuilder(kcsb)
+        kusto_cluster = kcsb.data_source
+        self._mgmt_endpoint = "{0}/v1/rest/mgmt".format(kusto_cluster)
+        self._query_endpoint = "{0}/v2/rest/query".format(kusto_cluster)
+        self._aad_helper = _AadHelper(kcsb)
 
     def execute(
         self,
@@ -87,22 +183,16 @@ class KustoClient(object):
         timeout=None,
         get_raw_response=False,
     ):
-        """ Execute a simple query or management command
-
-        Parameters
-        ----------
-        kusto_database : str
-            Database against query will be executed.
-        query : str
-            Query to be executed
-        accept_partial_results : bool
-            Optional parameter. If query fails, but we receive some results, we consider results as partial.
+        """Executes a query or management command.
+        :param str kusto_database: Database against query will be executed.
+        :param str query: Query to be executed.
+        :param bool accept_partial_results: Optional parameter.
+            If query fails, but we receive some results, we consider results as partial.
             If this is True, results are returned to client, even if there are exceptions.
             If this is False, exception is raised. Default is False.
-        timeout : float, optional
-            Optional parameter. Network timeout in seconds. Default is no timeout.
-        get_raw_response : bool, optional
-            Optional parameter. Whether to get a raw response, or a parsed one.
+        :param float timeout: Optional parameter. Network timeout in seconds. Default is no timeout.
+        :param bool get_raw_response: Optional parameter.
+            Whether to get a raw response, or a parsed one.
         """
         if query.startswith("."):
             return self.execute_mgmt(
@@ -120,24 +210,16 @@ class KustoClient(object):
         timeout=None,
         get_raw_response=False,
     ):
-        """ Execute a simple query
-
-        Parameters
-        ----------
-        kusto_database : str
-            Database against query will be executed.
-        kusto_query : str
-            Query to be executed
-        query_endpoint : str
-            The query's endpoint
-        accept_partial_results : bool
-            Optional parameter. If query fails, but we receive some results, we consider results as partial.
+        """Executes a query.
+        :param str kusto_database: Database against query will be executed.
+        :param str query: Query to be executed.
+        :param bool accept_partial_results: Optional parameter.
+            If query fails, but we receive some results, we consider results as partial.
             If this is True, results are returned to client, even if there are exceptions.
             If this is False, exception is raised. Default is False.
-        timeout : float, optional
-            Optional parameter. Network timeout in seconds. Default is no timeout.
-        get_raw_response : bool, optional
-            Optional parameter. Whether to get a raw response, or a parsed one.
+        :param float timeout: Optional parameter. Network timeout in seconds. Default is no timeout.
+        :param bool get_raw_response: Optional parameter.
+            Whether to get a raw response, or a parsed one.
         """
         return self._execute(
             self._query_endpoint,
@@ -156,24 +238,16 @@ class KustoClient(object):
         timeout=None,
         get_raw_response=False,
     ):
-        """ Execute a management command
-
-        Parameters
-        ----------
-        kusto_database : str
-            Database against query will be executed.
-        kusto_query : str
-            Query to be executed
-        query_endpoint : str
-            The query's endpoint
-        accept_partial_results : bool
-            Optional parameter. If query fails, but we receive some results, we consider results as partial.
+        """Executes a management command.
+        :param str kusto_database: Database against query will be executed.
+        :param str query: Query to be executed.
+        :param bool accept_partial_results: Optional parameter.
+            If query fails, but we receive some results, we consider results as partial.
             If this is True, results are returned to client, even if there are exceptions.
             If this is False, exception is raised. Default is False.
-        timeout : float, optional
-            Optional parameter. Network timeout in seconds. Default is no timeout.
-        get_raw_response : bool, optional
-            Optional parameter. Whether to get a raw response, or a parsed one.
+        :param float timeout: Optional parameter. Network timeout in seconds. Default is no timeout.
+        :param bool get_raw_response: Optional parameter.
+            Whether to get a raw response, or a parsed one.
         """
         return self._execute(
             self._mgmt_endpoint,

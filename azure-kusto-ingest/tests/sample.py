@@ -1,3 +1,6 @@
+"""Sample how to use Kusto Ingest client"""
+
+from azure.kusto.data.request import KustoConnectionStringBuilder
 from azure.kusto.ingest import (
     KustoIngestClient,
     IngestionProperties,
@@ -6,29 +9,31 @@ from azure.kusto.ingest import (
     DataFormat,
 )
 
-ingestion_properties = IngestionProperties(
+INGESTION_PROPERTIES = IngestionProperties(
     database="database name", table="table name", dataFormat=DataFormat.csv
 )
 
-ingest_client = KustoIngestClient("https://ingest-<clustername>.kusto.windows.net")
-ingest_client = KustoIngestClient(
-    "https://ingest-<clustername>.kusto.windows.net", client_id="aad app id", client_secret="secret"
-)
+INGEST_CLIENT = KustoIngestClient("https://ingest-<clustername>.kusto.windows.net")
 
-file_descriptor = FileDescriptor(
+KCSB = KustoConnectionStringBuilder.with_aad_application_key_authentication(
+    "https://ingest-<clustername>.kusto.windows.net", "aad app id", "secret"
+)
+INGEST_CLIENT = KustoIngestClient(KCSB)
+
+FILE_DESCRIPTOR = FileDescriptor(
     "E:\\filePath.csv", 3333
 )  # 3333 is the raw size of the data in bytes.
-ingest_client.ingest_from_multiple_files(
-    [file_descriptor], delete_sources_on_success=True, ingestion_properties=ingestion_properties
+INGEST_CLIENT.ingest_from_multiple_files(
+    [FILE_DESCRIPTOR], delete_sources_on_success=True, ingestion_properties=INGESTION_PROPERTIES
 )
 
-ingest_client.ingest_from_multiple_files(
-    ["E:\\filePath.csv"], delete_sources_on_success=True, ingestion_properties=ingestion_properties
+INGEST_CLIENT.ingest_from_multiple_files(
+    ["E:\\filePath.csv"], delete_sources_on_success=True, ingestion_properties=INGESTION_PROPERTIES
 )
 
-blob_descriptor = BlobDescriptor(
+BLOB_DESCRIPTOR = BlobDescriptor(
     "https://path-to-blob.csv.gz?sas", 10
 )  # 10 is the raw size of the data in bytes.
-ingest_client.ingest_from_multiple_blobs(
-    [blob_descriptor], delete_sources_on_success=True, ingestion_properties=ingestion_properties
+INGEST_CLIENT.ingest_from_multiple_blobs(
+    [BLOB_DESCRIPTOR], delete_sources_on_success=True, ingestion_properties=INGESTION_PROPERTIES
 )

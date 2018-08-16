@@ -178,7 +178,7 @@ class FunctionalTests(unittest.TestCase):
         response = _KustoResponseDataSetV2(json.loads(RESPONSE_TEXT))
         # Test that basic iteration works
         self.assertEqual(len(response), 3)
-        self.assertEqual(len(list(response.primary_results)), 3)
+        self.assertEqual(len(list(response.primary_results[0])), 3)
         table = list(response.tables[0])
         self.assertEqual(1, len(table))
 
@@ -196,7 +196,8 @@ class FunctionalTests(unittest.TestCase):
         ]
 
         # Test access by index and by column name
-        for row in response.primary_results:
+        primary_table = response.primary_results[0]
+        for row in primary_table:
             self.assertEqual(row[0], row["Timestamp"])
             self.assertEqual(row[1], row["Name"])
             self.assertEqual(row[2], row["Altitude"])
@@ -212,8 +213,8 @@ class FunctionalTests(unittest.TestCase):
             self.assertEqual(type(row[4]), bool if row[4] is not None else type(None))
             self.assertEqual(type(row[5]), timedelta if row[5] is not None else type(None))
 
-        for i in range(0, len(response.primary_results)):
-            row = response.primary_results[i]
+        for i in range(0, len(primary_table)):
+            row = primary_table[i]
             expected_row = expected_table[i]
             for j in range(0, len(row)):
                 self.assertEqual(row[j], expected_row[j])
@@ -227,11 +228,11 @@ class FunctionalTests(unittest.TestCase):
     def test_column_dont_exist(self):
         """Tests accessing column that doesn't exists."""
         response = _KustoResponseDataSetV2(json.loads(RESPONSE_TEXT))
-        row = response.primary_results[0]
+        row = response.primary_results[0][0]
         self.assertRaises(IndexError, row.__getitem__, 10)
         self.assertRaises(LookupError, row.__getitem__, "NonexistentColumn")
 
     def test_iterating_after_end(self):
         """Tests StopIteration is raised when the response ends."""
         response = _KustoResponseDataSetV2(json.loads(RESPONSE_TEXT))
-        self.assertEqual(sum(1 for _ in response.primary_results), 3)
+        self.assertEqual(sum(1 for _ in response.primary_results[0]), 3)

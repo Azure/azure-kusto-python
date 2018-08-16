@@ -1,6 +1,6 @@
 ﻿"""A simple example how to use KustoClient."""
 
-from azure.kusto.data import KustoClient
+from azure.kusto.data.request import KustoClient, KustoConnectionStringBuilder
 from azure.kusto.data.exceptions import KustoServiceError
 
 # TODO: this should become functional test at some point.
@@ -10,18 +10,19 @@ KUSTO_CLUSTER = "https://help.kusto.windows.net"
 # In case you want to authenticate with AAD application.
 CLIENT_ID = "<insert here your AAD application id>"
 CLIENT_SECRET = "<insert here your AAD application key>"
-KUSTO_CLIENT = KustoClient(
-    kusto_cluster=KUSTO_CLUSTER, client_id=CLIENT_ID, client_secret=CLIENT_SECRET
+KCSB = KustoConnectionStringBuilder.with_aad_application_key_authentication(
+    KUSTO_CLUSTER, CLIENT_ID, CLIENT_SECRET
 )
+KUSTO_CLIENT = KustoClient(KCSB)
 
 # In case you want to authenticate with the logged in AAD user.
-KUSTO_CLIENT = KustoClient(kusto_cluster=KUSTO_CLUSTER)
+KUSTO_CLIENT = KustoClient(KUSTO_CLUSTER)
 
 KUSTO_DATABASE = "Samples"
 KUSTO_QUERY = "StormEvents | take 10"
 
 RESPONSE = KUSTO_CLIENT.execute(KUSTO_DATABASE, KUSTO_QUERY)
-for row in RESPONSE.primary_results:
+for row in RESPONSE.primary_results[0]:
     print(row[0], " ", row["EventType"])
 
 # Query is too big to be executed
@@ -56,4 +57,4 @@ let max_t = datetime(2016-09-03);
 service_traffic
 | make-series num=count() on TimeStamp in range(max_t-5d, max_t, 1h) by OsVer
 """
-DATA_FRAME = KUSTO_CLIENT.execute_query("ML", QUERY).to_dataframe()
+DATA_FRAME = KUSTO_CLIENT.execute_query("ML", QUERY).primary_results[0].to_dataframe()
