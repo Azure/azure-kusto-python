@@ -219,9 +219,9 @@ class KustoIngestClient:
             encoded = base64.b64encode(ingestion_blob_info_json.encode("utf-8")).decode("utf-8")
             queue_service.put_message(queue_name=queue_details.object_name, content=encoded)
 
-            if should_report_to_ingestions_status_table:
-                return TableReportKustoIngestionResult(
-                    map_of_source_id_to_ingestion_status_in_table
-                )
-            else:
-                return KustoIngestionResult(map_of_source_id_to_ingestion_status)
+        if should_report_to_ingestions_status_table:
+            return TableReportKustoIngestionResult(
+                map_of_source_id_to_ingestion_status_in_table
+            )
+        else:
+            return KustoIngestionResult(map_of_source_id_to_ingestion_status)
