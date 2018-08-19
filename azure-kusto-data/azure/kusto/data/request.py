@@ -111,7 +111,7 @@ class KustoConnectionStringBuilder(object):
         cls, connection_string, aad_app_id, certificate, thumbprint
     ):
         """Creates a KustoConnection string builder that will authenticate with AAD application and
-        password.
+        a certificate credentials.
         :param str connection_string: Kusto connection string should by of the format:
         https://<clusterName>.kusto.windows.net
         :param str aad_app_id: AAD application ID.
