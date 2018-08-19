@@ -13,6 +13,17 @@ CLIENT_SECRET = "<insert here your AAD application key>"
 KCSB = KustoConnectionStringBuilder.with_aad_application_key_authentication(
     KUSTO_CLUSTER, CLIENT_ID, CLIENT_SECRET
 )
+
+# In case you want to authenticate with AAD application certificate.
+FILENAME = "path to a PEM certificate"
+with open(FILENAME, "r") as pem_file:
+    PEM = pem_file.read()
+
+THUMBPRINT = "certificate's thumbprint"
+KCSB = KustoConnectionStringBuilder.with_aad_application_certificate_authentication(
+    KUSTO_CLUSTER, CLIENT_ID, PEM, THUMBPRINT
+)
+
 KUSTO_CLIENT = KustoClient(KCSB)
 
 # In case you want to authenticate with the logged in AAD user.
