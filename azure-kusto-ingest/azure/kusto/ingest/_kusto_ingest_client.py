@@ -37,16 +37,16 @@ class KustoIngestClient(object):
         blobs = []
 
         f = TemporaryFile("w+", delete=False)
-        df.to_csv(f, index=False, encoding='utf-8')            
+        df.to_csv(f, index=False, encoding='utf-8', header=False)
         f.flush()
         f.close()
-        
+
         original_file_size = os.path.getsize(f.name)
 
-        zipped_file = GzipFile(fileobj=f,filename='{}.gz'.format(f.name))
-        
+        zipped_file = GzipFile(fileobj=f, filename='{}.gz'.format(f.name))
+
         os.unlink(f.name)
-        
+
         blob_name = "{db}__{table}__{guid}__{file}".format(
             db=ingestion_properties.database,
             table=ingestion_properties.table,
@@ -66,7 +66,7 @@ class KustoIngestClient(object):
             blob_name=blob_name,
             file_path=zipped_file.name,
         )
-        
+
         os.unlink(zipped_file)
 
         url = blob_service.make_blob_url(
