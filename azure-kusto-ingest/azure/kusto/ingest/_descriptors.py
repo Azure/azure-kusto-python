@@ -10,10 +10,9 @@ import tempfile
 class FileDescriptor(object):
     """A file to ingest."""
 
-    def __init__(self, path, size=0, deleteSourcesOnSuccess=False):
+    def __init__(self, path, size=0):
         self.path = path
         self.size = size
-        self.delete_sources_on_success = deleteSourcesOnSuccess
         self.stream_name = os.path.basename(self.path)
         if self.path.endswith(".gz") or self.path.endswith(".zip"):
             self.zipped_stream = open(self.path, "rb")
@@ -34,8 +33,6 @@ class FileDescriptor(object):
         In case of success deletes the original file as well."""
         if self.zipped_stream is not None:
             self.zipped_stream.close()
-        if success and self.delete_sources_on_success:
-            os.remove(self.path)
 
 
 class BlobDescriptor(object):
