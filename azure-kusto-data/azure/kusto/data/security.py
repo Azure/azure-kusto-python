@@ -7,7 +7,7 @@ from six.moves.urllib.parse import urlparse
 import dateutil.parser
 
 from adal import AuthenticationContext
-from adal.constants import TokenResponseFields, OAuth2DeviceCodeResponseParameters, AADConstants
+from adal.constants import TokenResponseFields, OAuth2DeviceCodeResponseParameters
 
 from .exceptions import KustoClientError
 
@@ -24,10 +24,10 @@ class AuthenticationMethod(Enum):
 
 class _AadHelper(object):
     def __init__(self, kcsb):
-        authority = kcsb.authority_id or "microsoft.com"
+        authority = kcsb.authority_id or "common"
         self._kusto_cluster = "{0.scheme}://{0.hostname}".format(urlparse(kcsb.data_source))
         self._adal_context = AuthenticationContext(
-            "https://{0}/{1}".format(AADConstants.WORLD_WIDE_AUTHORITY, authority)
+            "https://login.microsoftonline.com/{0}".format(authority)
         )
         self._username = None
         if all([kcsb.aad_user_id, kcsb.password]):
