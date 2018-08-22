@@ -33,11 +33,8 @@ before_install:
 install:
   - pip install -U pip
   - pip install -r dev_requirements.txt
-  - pip install codecov
-  - pip install coverage
-  - pip install -r requirements.txt
-  - pip install -e azure-kusto-data
-  - pip install -e azure-kusto-ingest
+  - pip install codecov coverage
+  - pip install ./azure-kusto-data ./azure-kusto-ingest
   - pip install --force-reinstall azure-nspkg==1.0.0
 script:
   - pytest

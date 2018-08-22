@@ -91,11 +91,14 @@ class KustoIngestClient(object):
         """
         blobs = list()
         file_descriptors = list()
+        containers = self._resource_manager.get_containers()
+                
         for file in files:
             if isinstance(file, FileDescriptor):
                 descriptor = file
             else:
                 descriptor = FileDescriptor(file)
+
             file_descriptors.append(descriptor)
             blob_name = "{db}__{table}__{guid}__{file}".format(
                 db=ingestion_properties.database,
@@ -104,12 +107,11 @@ class KustoIngestClient(object):
                 file=descriptor.stream_name,
             )
 
-            containers = self._resource_manager.get_containers()
+            # TODO: maybe should only pick one for entire ingestion?
             container_details = random.choice(containers)
-            storage_client = CloudStorageAccount(
-                container_details.storage_account_name, sas_token=container_details.sas
-            )
-            blob_service = storage_client.create_block_blob_service()
+            storage_client = CloudStorageAccount(container_details.storage_account_name, sas_token=container_details.sas)
+            blob_service = storage_client.create_block_blob_service()    
+            
             blob_service.create_blob_from_stream(
                 container_name=container_details.object_name,
                 blob_name=blob_name,
@@ -135,12 +137,12 @@ class KustoIngestClient(object):
             raw blob size to each of the descriptors.
         :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
         """
+        queues = self._resource_manager.get_ingestion_queues()
+        
         for blob in blobs:
-            queues = self._resource_manager.get_ingestion_queues()
+            
             queue_details = random.choice(queues)
-            storage_client = CloudStorageAccount(
-                queue_details.storage_account_name, sas_token=queue_details.sas
-            )
+            storage_client = CloudStorageAccount(queue_details.storage_account_name, sas_token=queue_details.sas)
             queue_service = storage_client.create_queue_service()
             authorization_context = self._resource_manager.get_authorization_context()
             ingestion_blob_info = _IngestionBlobInfo(
@@ -152,6 +154,4 @@ class KustoIngestClient(object):
             encoded = base64.b64encode(ingestion_blob_info_json.encode("utf-8")).decode(
                 "utf-8"
             )
-            queue_service.put_message(
-                queue_name=queue_details.object_name, content=encoded
-            )
+            queue_service.put_message(queue_name=queue_details.object_name, content=encoded)

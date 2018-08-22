@@ -5,6 +5,7 @@ import base64
 from mock import patch
 from six import text_type
 import responses
+import io
 from azure.kusto.ingest import KustoIngestClient, IngestionProperties, DataFormat
 
 
@@ -18,8 +19,14 @@ BLOB_URL_REGEX = (
 
 
 def request_callback(request):
-    if ".get ingestion resources" in request.body["json"]["csl"]:
-        return {
+    body = json.loads(request.body)
+    response_status = 400
+    response_headers = []
+    response_body = {}
+
+    if ".get ingestion resources" in body["csl"]:
+        response_status = 200
+        response_body = {
             "Tables": [{
                 "TableName": "Table_0",
                 "Columns": [{
@@ -72,8 +79,10 @@ def request_callback(request):
                 ]
             }]
         }
-    if ".get kusto identity token" in request.body["json"]["csl"]:
-        return {
+
+    if ".get kusto identity token" in body["csl"]:
+        response_status = 200
+        response_body = {
             "Tables": [
                 {
                     "TableName": "Table_0",
@@ -85,6 +94,8 @@ def request_callback(request):
                 }
             ]
         }
+
+    return (response_status, response_headers, json.dumps(response_body))
 
 
 def mocked_create_blob_from_stream(self, *args, **kwargs):
@@ -128,12 +139,14 @@ def mocked_queue_put_message(self, *args, **kwargs):
 
 
 class KustoIngestClientTests(unittest.TestCase):
+    MOCKED_UUID_4 = '1111-111111-111111-1111'
 
     @responses.activate
-    @patch("azure.kusto.data.security._AadHelper.acquire_token", returns=None)
-    @patch("azure.storage.blob.BlockBlobService.create_blob_from_stream", autospec=True)
-    @patch("azure.storage.queue.QueueService.put_message", autospec=True)
-    def test_sanity_ingest_from_files(self, mock_aad, mock_block_blob, mock_queue):
+    @patch("azure.kusto.data.security._AadHelper.acquire_token", return_value=None)
+    @patch("azure.storage.blob.BlockBlobService.create_blob_from_stream")
+    @patch("azure.storage.queue.QueueService.put_message")
+    @patch("uuid.uuid4", return_value=MOCKED_UUID_4)
+    def test_sanity_ingest_from_files(self,  mock_uuid, mock_put_message_in_queue, mock_create_blob_from_stream, mock_aad):
         responses.add_callback(
             responses.POST,
             'https://ingest-somecluster.kusto.windows.net/v1/rest/mgmt',
@@ -144,8 +157,40 @@ class KustoIngestClientTests(unittest.TestCase):
         ingest_client = KustoIngestClient("https://ingest-somecluster.kusto.windows.net")
         ingestion_properties = IngestionProperties(database="database", table="table", dataFormat=DataFormat.csv)
 
-        file_path = os.path.join(os.getcwd(), "azure-kusto-ingest", "tests", "input", "dataset.csv")
+        # ensure test can work when executed from within directories
+        current_dir = os.getcwd()
+        path_parts = ["azure-kusto-ingest", "tests", "input", "dataset.csv"]
+        missing_path_parts = []
+        for path_part in path_parts:
+            if path_part not in current_dir:
+                missing_path_parts.append(path_part)
+
+        file_path = os.path.join(current_dir, *missing_path_parts)
 
         ingest_client.ingest_from_files([file_path], ingestion_properties=ingestion_properties)
 
-        print('hello')
+        # mock_put_message_in_queue
+        assert mock_put_message_in_queue.call_count == 1
+
+        put_message_in_queue_mock_kwargs = mock_put_message_in_queue.call_args_list[0][1]
+
+        assert put_message_in_queue_mock_kwargs['queue_name'] == 'readyforaggregation-secured'
+        queued_message = base64.b64decode(put_message_in_queue_mock_kwargs['content'].encode("utf-8")).decode("utf-8")
+        queued_message_json = json.loads(queued_message)
+        # mock_create_blob_from_stream
+        assert queued_message_json["BlobPath"] == 'https://storageaccount.blob.core.windows.net/tempstorage/database__table__1111-111111-111111-1111__dataset.csv.gz?sas'
+        assert queued_message_json["DatabaseName"] == "database"
+        assert queued_message_json["IgnoreSizeLimit"] == False
+        assert queued_message_json["AdditionalProperties"]['format'] == 'csv'
+        assert queued_message_json["FlushImmediately"] == False
+        assert queued_message_json["TableName"] == "table"
+        assert queued_message_json["RawDataSize"] == 1578
+        assert queued_message_json["RetainBlobOnSuccess"] == True
+
+
+        create_blob_from_stream_mock_kwargs = mock_create_blob_from_stream.call_args_list[0][1]
+
+        assert create_blob_from_stream_mock_kwargs['container_name'] == 'tempstorage'
+        assert type(create_blob_from_stream_mock_kwargs['stream']) == io.BytesIO
+        assert create_blob_from_stream_mock_kwargs['blob_name'] == 'database__table__1111-111111-111111-1111__dataset.csv.gz'
+
