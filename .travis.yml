@@ -1,17 +1,49 @@
+dist: trusty
+sudo: required
+cache: pip
 language: python
-python:
-  - "2.7"
-  - "3.4"
-  - "3.5"
-  - "3.6"
-install:
-  - pip install -r dev_requirements.txt
+matrix:
+  include:
+    - os: linux
+      python: "2.7"
+    - os: linux
+      python: "3.4"
+    - os: linux
+      python: "3.5"
+    - os: linux
+      python: "3.6"
+    - os: linux
+      python: "pypy3.5-5.8.0"
+    - os: osx
+      osx_image: xcode7.3
+      language: generic
+  allow_failures:
+    - os: osx
+    - python: "3.3"
+    - python: "pypy3.5-5.8.0"
+    - python: "nightly"
+  fast_finish: true
   - pip install --force-reinstall azure-nspkg==1.0.0
-before_script:
-  - if [[ "$TRAVIS_PYTHON_VERSION" == "3.6" ]]; then black . --line-length 100 --check; fi
+before_install:
+  - if [[ -n "$TRAVIS_TAG" && "$TRAVIS_PYTHON_VERSION" != "3.6" ]]; then travis_terminate 0; fi; # Deploy on 3.6
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew upgrade python; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then python3 -m venv venv; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then source venv/bin/activate; fi  
+install:
+  - pip install -U pip
+  - pip install -r dev_requirements.txt
+  - pip install codecov
+  - pip install coverage
+  - pip install -r requirements.txt
+  - pip install -e azure-kusto-data
+  - pip install -e azure-kusto-ingest
+  - pip install --force-reinstall azure-nspkg==1.0.0
 script:
-  - pytest azure-kusto-data
-  - pytest azure-kusto-ingest
+  - pytest
+after_success:
+  - coverage report
+  - codecov
 deploy:
   provider: pypi
   user: microsoftkusto

@@ -1,5 +1,3 @@
-"""Test class for FileDescriptor and BlobDescriptor."""
-
 import sys
 from os import path
 import unittest

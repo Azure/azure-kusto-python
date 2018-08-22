@@ -1,5 +1,3 @@
-"""Tests serialization of ingestion blob info. This serialization will be queued to the DM."""
-
 import unittest
 import re
 import json
@@ -46,7 +44,7 @@ class IngestionBlobInfoTest(unittest.TestCase):
         )
         blob = BlobDescriptor("somepath", 10)
         blob_info = _IngestionBlobInfo(
-            blob, properties, deleteSourcesOnSuccess=True, authContext="authorizationContextText"
+            blob, properties, auth_context="authorizationContextText"
         )
         self._verify_ingestion_blob_info_result(blob_info.to_json())
 
@@ -71,7 +69,7 @@ class IngestionBlobInfoTest(unittest.TestCase):
         )
         blob = BlobDescriptor("somepath", 10)
         blob_info = _IngestionBlobInfo(
-            blob, properties, deleteSourcesOnSuccess=True, authContext="authorizationContextText"
+            blob, properties, auth_context="authorizationContextText"
         )
         self._verify_ingestion_blob_info_result(blob_info.to_json())
 
@@ -96,7 +94,7 @@ class IngestionBlobInfoTest(unittest.TestCase):
         )
         blob = BlobDescriptor("somepath", 10)
         blob_info = _IngestionBlobInfo(
-            blob, properties, deleteSourcesOnSuccess=True, authContext="authorizationContextText"
+            blob, properties, auth_context="authorizationContextText"
         )
         self._verify_ingestion_blob_info_result(blob_info.to_json())
 
@@ -121,7 +119,7 @@ class IngestionBlobInfoTest(unittest.TestCase):
         )
         blob = BlobDescriptor("somepath", 10)
         blob_info = _IngestionBlobInfo(
-            blob, properties, deleteSourcesOnSuccess=True, authContext="authorizationContextText"
+            blob, properties, auth_context="authorizationContextText"
         )
         self._verify_ingestion_blob_info_result(blob_info.to_json())
 

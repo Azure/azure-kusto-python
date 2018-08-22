@@ -1,4 +1,4 @@
 -e azure-kusto-data
 -e azure-kusto-ingest
 pytest>=3.2.0
-black;python_version == '3.6'
+mock
