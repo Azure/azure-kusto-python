@@ -23,7 +23,6 @@ matrix:
     - python: "pypy3.5-5.8.0"
     - python: "nightly"
   fast_finish: true
-  - pip install --force-reinstall azure-nspkg==1.0.0
 before_install:
   - if [[ -n "$TRAVIS_TAG" && "$TRAVIS_PYTHON_VERSION" != "3.6" ]]; then travis_terminate 0; fi; # Deploy on 3.6
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update; fi
