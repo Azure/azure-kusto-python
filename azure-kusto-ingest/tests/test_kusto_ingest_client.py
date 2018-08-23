@@ -145,7 +145,7 @@ class KustoIngestClientTests(unittest.TestCase):
         assert queued_message_json["AdditionalProperties"]['format'] == 'csv'
         assert queued_message_json["FlushImmediately"] == False
         assert queued_message_json["TableName"] == "table"
-        assert queued_message_json["RawDataSize"] > 1500
+        assert queued_message_json["RawDataSize"] > 0
         assert queued_message_json["RetainBlobOnSuccess"] == True
 
         create_blob_from_stream_mock_kwargs = mock_create_blob_from_stream.call_args_list[0][1]
@@ -194,7 +194,7 @@ class KustoIngestClientTests(unittest.TestCase):
         assert queued_message_json["AdditionalProperties"]['format'] == 'csv'
         assert queued_message_json["FlushImmediately"] == False
         assert queued_message_json["TableName"] == "table"
-        assert queued_message_json["RawDataSize"] > 300
+        assert queued_message_json["RawDataSize"] > 0
         assert queued_message_json["RetainBlobOnSuccess"] == True
 
         create_blob_from_path_mock_kwargs = mock_create_blob_from_path.call_args_list[0][1]
