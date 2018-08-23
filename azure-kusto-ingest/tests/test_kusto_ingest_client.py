@@ -97,47 +97,6 @@ def request_callback(request):
 
     return (response_status, response_headers, json.dumps(response_body))
 
-
-def mocked_create_blob_from_stream(self, *args, **kwargs):
-    """Mock to replace BlockBlobService.create_blob_from_stream"""
-
-    pass
-    # tc = unittest.TestCase("__init__")
-
-    # tc.assertEqual(self.account_name, "storageaccount")
-    # tc.assertEqual(self.sas_token, "sas")
-    # tc.assertEqual(kwargs["container_name"], "tempstorage")
-    # tc.assertIsNotNone(kwargs["blob_name"])
-    # tc.assertRegexpMatches(kwargs["blob_name"], BLOB_NAME_REGEX)
-    # tc.assertIsNotNone(kwargs["stream"])
-
-
-def mocked_queue_put_message(self, *args, **kwargs):
-    """Mock to replace QueueService.put_message"""
-
-    pass
-    # tc = unittest.TestCase("__init__")
-
-    # tc.assertEqual(self.account_name, "storageaccount")
-    # tc.assertEqual(self.sas_token, "sas")
-    # tc.assertEqual(kwargs["queue_name"], "readyforaggregation-secured")
-    # tc.assertIsNotNone(kwargs["content"])
-
-    # encoded = kwargs["content"]
-    # ingestion_blob_info_json = base64.b64decode(encoded.encode("utf-8")).decode("utf-8")
-
-    # result = json.loads(ingestion_blob_info_json)
-    # tc.assertIsNotNone(result)
-    # tc.assertIsInstance(result, dict)
-    # tc.assertRegexpMatches(result["BlobPath"], BLOB_URL_REGEX)
-    # tc.assertEquals(result["DatabaseName"], "database")
-    # tc.assertEquals(result["TableName"], "table")
-    # tc.assertGreater(result["RawDataSize"], 0)
-    # tc.assertEquals(
-    #     result["AdditionalProperties"]["authorizationContext"], "authorization_context"
-    # )
-
-
 class KustoIngestClientTests(unittest.TestCase):
     MOCKED_UUID_4 = '1111-111111-111111-1111'
     MOCKED_PID = 64
