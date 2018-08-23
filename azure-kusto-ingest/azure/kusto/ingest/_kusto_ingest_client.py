@@ -54,14 +54,10 @@ class KustoIngestClient(object):
         )
         blob_service = storage_client.create_block_blob_service()
 
-        def prog_cb(current, total):
-            print(current,total)    
-
-        result = blob_service.create_blob_from_path(
+        blob_service.create_blob_from_path(
             container_name=container_details.object_name,
             blob_name=blob_name,
-            file_path=temp_file_path,
-            progress_callback=prog_cb
+            file_path=temp_file_path            
         )                
 
         url = blob_service.make_blob_url(
