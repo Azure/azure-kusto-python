@@ -9,52 +9,54 @@ from ._descriptors import BlobDescriptor
 
 
 class _IngestionBlobInfo:
-    def __init__(self, blob, ingestionProperties, deleteSourcesOnSuccess=True, authContext=None):
+    def __init__(
+        self, blob, ingestion_properties, delete_sources_on_success=True, authorization_context=None
+    ):
         self.properties = dict()
         self.properties["BlobPath"] = blob.path
         self.properties["RawDataSize"] = blob.size
-        self.properties["DatabaseName"] = ingestionProperties.database
-        self.properties["TableName"] = ingestionProperties.table
-        self.properties["RetainBlobOnSuccess"] = not deleteSourcesOnSuccess
-        self.properties["FlushImmediately"] = ingestionProperties.flush_immediately
+        self.properties["DatabaseName"] = ingestion_properties.database
+        self.properties["TableName"] = ingestion_properties.table
+        self.properties["RetainBlobOnSuccess"] = not delete_sources_on_success
+        self.properties["FlushImmediately"] = ingestion_properties.flush_immediately
         self.properties["IgnoreSizeLimit"] = False
-        self.properties["ReportLevel"] = ingestionProperties.report_level.value
-        self.properties["ReportMethod"] = ingestionProperties.report_method.value
+        self.properties["ReportLevel"] = ingestion_properties.report_level.value
+        self.properties["ReportMethod"] = ingestion_properties.report_method.value
         self.properties["SourceMessageCreationTime"] = datetime.utcnow().isoformat()
         self.properties["Id"] = text_type(uuid.uuid4())
-        # TODO: Add support for ingestion statuses
-        # self.properties["IngestionStatusInTable"] = None
+        self.properties["IngestionStatusInTable"] = None
+        # TODO: add support for "BlobPathEncrypted"
         # self.properties["BlobPathEncrypted"] = None
-        additional_properties = ingestionProperties.additional_properties or {}
-        additional_properties["authorizationContext"] = authContext
+        additional_properties = ingestion_properties.additional_properties or {}
+        additional_properties["authorizationContext"] = authorization_context
 
         tags = []
-        if ingestionProperties.additional_tags:
-            tags.extend(ingestionProperties.additional_tags)
-        if ingestionProperties.drop_by_tags:
-            tags.extend(["drop-by:" + drop for drop in ingestionProperties.drop_by_tags])
-        if ingestionProperties.ingest_by_tags:
-            tags.extend(["ingest-by:" + ingest for ingest in ingestionProperties.ingest_by_tags])
+        if ingestion_properties.additional_tags:
+            tags.extend(ingestion_properties.additional_tags)
+        if ingestion_properties.drop_by_tags:
+            tags.extend(["drop-by:" + drop for drop in ingestion_properties.drop_by_tags])
+        if ingestion_properties.ingest_by_tags:
+            tags.extend(["ingest-by:" + ingest for ingest in ingestion_properties.ingest_by_tags])
         if tags:
             additional_properties["tags"] = _convert_list_to_json(tags)
-        if ingestionProperties.ingest_if_not_exists:
+        if ingestion_properties.ingest_if_not_exists:
             additional_properties["ingestIfNotExists"] = _convert_list_to_json(
-                ingestionProperties.ingest_if_not_exists
+                ingestion_properties.ingest_if_not_exists
             )
-        if ingestionProperties.mapping:
-            json_string = _convert_dict_to_json(ingestionProperties.mapping)
+        if ingestion_properties.mapping:
+            json_string = _convert_dict_to_json(ingestion_properties.mapping)
             additional_properties[
-                ingestionProperties.get_mapping_format() + "Mapping"
+                ingestion_properties.get_mapping_format() + "Mapping"
             ] = json_string
-        if ingestionProperties.mapping_reference:
-            key = ingestionProperties.get_mapping_format() + "MappingReference"
-            additional_properties[key] = ingestionProperties.mapping_reference
-        if ingestionProperties.validation_policy:
+        if ingestion_properties.mapping_reference:
+            key = ingestion_properties.get_mapping_format() + "MappingReference"
+            additional_properties[key] = ingestion_properties.mapping_reference
+        if ingestion_properties.validation_policy:
             additional_properties["ValidationPolicy"] = _convert_dict_to_json(
-                ingestionProperties.validation_policy
+                ingestion_properties.validation_policy
             )
-        if ingestionProperties.format:
-            additional_properties["format"] = ingestionProperties.format.name
+        if ingestion_properties.format:
+            additional_properties["format"] = ingestion_properties.format.name
 
         if additional_properties:
             self.properties["AdditionalProperties"] = additional_properties
