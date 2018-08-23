@@ -19,7 +19,7 @@ BLOB_URL_REGEX = (
 
 
 def request_callback(request):
-    body = json.loads(request.body)
+    body = json.loads(request.body.decode()) if type(request.body) == bytes else json.loads(request.body)
     response_status = 400
     response_headers = []
     response_body = {}
