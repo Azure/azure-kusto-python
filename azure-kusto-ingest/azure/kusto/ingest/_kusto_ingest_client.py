@@ -29,9 +29,7 @@ class KustoIngestClient(object):
         """
         kusto_client = KustoClient(kcsb)
         self._resource_manager = _ResourceManager(kusto_client)
-
-    # TODO: not sure we want to implement this.
-    # maybe just publish this snippet as a recipe for working with dataframes?
+    
     def ingest_from_dataframe(self, df, ingestion_properties):
         blobs = []
 
