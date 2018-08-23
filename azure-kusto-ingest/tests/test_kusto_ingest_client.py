@@ -140,6 +140,8 @@ def mocked_queue_put_message(self, *args, **kwargs):
 
 class KustoIngestClientTests(unittest.TestCase):
     MOCKED_UUID_4 = '1111-111111-111111-1111'
+    MOCKED_PID = 64
+    MOCKED_TIME = 100
 
     @responses.activate
     @patch("azure.kusto.data.security._AadHelper.acquire_token", return_value=None)
@@ -187,10 +189,57 @@ class KustoIngestClientTests(unittest.TestCase):
         assert queued_message_json["RawDataSize"] == 1578
         assert queued_message_json["RetainBlobOnSuccess"] == True
 
-
         create_blob_from_stream_mock_kwargs = mock_create_blob_from_stream.call_args_list[0][1]
 
         assert create_blob_from_stream_mock_kwargs['container_name'] == 'tempstorage'
         assert type(create_blob_from_stream_mock_kwargs['stream']) == io.BytesIO
         assert create_blob_from_stream_mock_kwargs['blob_name'] == 'database__table__1111-111111-111111-1111__dataset.csv.gz'
 
+    @responses.activate
+    @patch("azure.kusto.data.security._AadHelper.acquire_token", return_value=None)
+    @patch("azure.storage.blob.BlockBlobService.create_blob_from_path")
+    @patch("azure.storage.queue.QueueService.put_message")
+    @patch("uuid.uuid4", return_value=MOCKED_UUID_4)
+    @patch("time.time", return_value=MOCKED_TIME)
+    @patch("os.getpid", return_value=MOCKED_PID)
+    def test_simple_ingest_from_dataframes(self,  mock_pid, mock_time, mock_uuid, mock_put_message_in_queue, mock_create_blob_from_path, mock_aad):
+        responses.add_callback(
+            responses.POST,
+            'https://ingest-somecluster.kusto.windows.net/v1/rest/mgmt',
+            callback=request_callback,
+            content_type='application/json'
+        )
+
+        ingest_client = KustoIngestClient("https://ingest-somecluster.kusto.windows.net")
+        ingestion_properties = IngestionProperties(database="database", table="table", dataFormat=DataFormat.csv)
+
+        from pandas import DataFrame
+        fields = ['id', 'name', 'value']
+        rows = [[1, 'abc', 15.3], [2, 'cde', 99.9]]
+        df = DataFrame(data=rows, columns=fields)
+
+        ingest_client.ingest_from_dataframe(df, ingestion_properties=ingestion_properties)
+
+        # mock_put_message_in_queue
+        assert mock_put_message_in_queue.call_count == 1
+
+        put_message_in_queue_mock_kwargs = mock_put_message_in_queue.call_args_list[0][1]
+
+        assert put_message_in_queue_mock_kwargs['queue_name'] == 'readyforaggregation-secured'
+        queued_message = base64.b64decode(put_message_in_queue_mock_kwargs['content'].encode("utf-8")).decode("utf-8")
+        queued_message_json = json.loads(queued_message)
+        # mock_create_blob_from_stream
+        assert queued_message_json["BlobPath"] == 'https://storageaccount.blob.core.windows.net/tempstorage/database__table__1111-111111-111111-1111__df_100_64.csv.gz?sas'
+        assert queued_message_json["DatabaseName"] == "database"
+        assert queued_message_json["IgnoreSizeLimit"] == False
+        assert queued_message_json["AdditionalProperties"]['format'] == 'csv'
+        assert queued_message_json["FlushImmediately"] == False
+        assert queued_message_json["TableName"] == "table"
+        assert queued_message_json["RawDataSize"] == 320
+        assert queued_message_json["RetainBlobOnSuccess"] == True
+
+        create_blob_from_path_mock_kwargs = mock_create_blob_from_path.call_args_list[0][1]
+        import tempfile
+        assert create_blob_from_path_mock_kwargs['container_name'] == 'tempstorage'
+        assert create_blob_from_path_mock_kwargs['file_path'] == os.path.join(tempfile.gettempdir(),'df_100_64.csv.gz')
+        assert create_blob_from_path_mock_kwargs['blob_name'] == 'database__table__1111-111111-111111-1111__df_100_64.csv.gz'

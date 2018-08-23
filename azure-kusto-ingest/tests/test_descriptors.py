@@ -17,7 +17,7 @@ class DescriptorsTest(unittest.TestCase):
             self.assertTrue(descriptor.zipped_stream.readable(), True)
         self.assertEquals(descriptor.zipped_stream.tell(), 0)
         self.assertEqual(descriptor.zipped_stream.closed, False)
-        descriptor.delete_files(True)
+        descriptor.delete_files()
         self.assertEqual(descriptor.zipped_stream.closed, True)
 
     def test_unzipped_file_without_size(self):
@@ -30,7 +30,7 @@ class DescriptorsTest(unittest.TestCase):
             self.assertTrue(descriptor.zipped_stream.readable(), True)
         self.assertEquals(descriptor.zipped_stream.tell(), 0)
         self.assertEqual(descriptor.zipped_stream.closed, False)
-        descriptor.delete_files(True)
+        descriptor.delete_files()
         self.assertEqual(descriptor.zipped_stream.closed, True)
 
     def test_zipped_file_with_size(self):
@@ -43,7 +43,7 @@ class DescriptorsTest(unittest.TestCase):
             self.assertTrue(descriptor.zipped_stream.readable(), True)
         self.assertEquals(descriptor.zipped_stream.tell(), 0)
         self.assertEqual(descriptor.zipped_stream.closed, False)
-        descriptor.delete_files(True)
+        descriptor.delete_files()
         self.assertEqual(descriptor.zipped_stream.closed, True)
 
     def test_zipped_file_without_size(self):
@@ -56,5 +56,5 @@ class DescriptorsTest(unittest.TestCase):
             self.assertTrue(descriptor.zipped_stream.readable(), True)
         self.assertEquals(descriptor.zipped_stream.tell(), 0)
         self.assertEqual(descriptor.zipped_stream.closed, False)
-        descriptor.delete_files(True)
+        descriptor.delete_files()
         self.assertEqual(descriptor.zipped_stream.closed, True)

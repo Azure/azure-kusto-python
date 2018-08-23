@@ -4,6 +4,8 @@ import base64
 import random
 import uuid
 import os
+import time
+import tempfile
 
 from azure.storage.common import CloudStorageAccount
 
@@ -31,27 +33,20 @@ class KustoIngestClient(object):
     # TODO: not sure we want to implement this.
     # maybe just publish this snippet as a recipe for working with dataframes?
     def ingest_from_dataframe(self, df, ingestion_properties):
-        from tempfile import TemporaryFile
-        from gzip import GzipFile
-
         blobs = []
 
-        f = TemporaryFile("w+", delete=False)
-        df.to_csv(f, index=False, encoding='utf-8', header=False)
-        f.flush()
-        f.close()
+        file_name = 'df_{timestamp}_{pid}.csv.gz'.format(timestamp=int(time.time()), pid=os.getpid())
+        temp_file_path = os.path.join(tempfile.gettempdir(), file_name)
 
-        original_file_size = os.path.getsize(f.name)
+        df.to_csv(temp_file_path, index=False, encoding='utf-8', header=False, compression='gzip')
 
-        zipped_file = GzipFile(fileobj=f, filename='{}.gz'.format(f.name))
-
-        os.unlink(f.name)
+        fd = FileDescriptor(temp_file_path)
 
         blob_name = "{db}__{table}__{guid}__{file}".format(
             db=ingestion_properties.database,
             table=ingestion_properties.table,
             guid=uuid.uuid4(),
-            file=f.name,
+            file=file_name,
         )
 
         containers = self._resource_manager.get_containers()
@@ -61,13 +56,15 @@ class KustoIngestClient(object):
         )
         blob_service = storage_client.create_block_blob_service()
 
-        blob_service.create_blob_from_path(
+        def prog_cb(current, total):
+            print(current,total)    
+
+        result = blob_service.create_blob_from_path(
             container_name=container_details.object_name,
             blob_name=blob_name,
-            file_path=zipped_file.name,
-        )
-
-        os.unlink(zipped_file)
+            file_path=temp_file_path,
+            progress_callback=prog_cb
+        )                
 
         url = blob_service.make_blob_url(
             container_details.object_name,
@@ -75,12 +72,15 @@ class KustoIngestClient(object):
             sas_token=container_details.sas,
         )
 
-        blobs.append(BlobDescriptor(url, original_file_size))
+        blobs.append(BlobDescriptor(url, fd.size))
 
         self.ingest_from_blobs(
             blobs,
-            ingestion_properties=ingestion_properties,
+            ingestion_properties=ingestion_properties
         )
+
+        fd.delete_files()
+        os.unlink(temp_file_path)
 
     def ingest_from_files(
         self, files, ingestion_properties
@@ -92,7 +92,7 @@ class KustoIngestClient(object):
         blobs = list()
         file_descriptors = list()
         containers = self._resource_manager.get_containers()
-                
+
         for file in files:
             if isinstance(file, FileDescriptor):
                 descriptor = file
@@ -109,9 +109,10 @@ class KustoIngestClient(object):
 
             # TODO: maybe should only pick one for entire ingestion?
             container_details = random.choice(containers)
-            storage_client = CloudStorageAccount(container_details.storage_account_name, sas_token=container_details.sas)
-            blob_service = storage_client.create_block_blob_service()    
-            
+            storage_client = CloudStorageAccount(
+                container_details.storage_account_name, sas_token=container_details.sas)
+            blob_service = storage_client.create_block_blob_service()
+
             blob_service.create_blob_from_stream(
                 container_name=container_details.object_name,
                 blob_name=blob_name,
@@ -138,9 +139,9 @@ class KustoIngestClient(object):
         :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
         """
         queues = self._resource_manager.get_ingestion_queues()
-        
+
         for blob in blobs:
-            
+
             queue_details = random.choice(queues)
             storage_client = CloudStorageAccount(queue_details.storage_account_name, sas_token=queue_details.sas)
             queue_service = storage_client.create_queue_service()
