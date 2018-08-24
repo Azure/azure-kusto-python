@@ -4,6 +4,7 @@ import os
 from io import BytesIO
 import shutil
 from gzip import GzipFile
+import requests
 import tempfile
 
 
@@ -41,6 +42,10 @@ class FileDescriptor(object):
 class BlobDescriptor(object):
     """A blob to ingest."""
 
-    def __init__(self, path, size):
+    def __init__(self, path, size=0):
         self.path = path
         self.size = size
+        if self.size <= 0:
+            blob_size = requests.head(path).headers.get('Content-Length')
+            if blob_size:
+                self.size = int(blob_size)
