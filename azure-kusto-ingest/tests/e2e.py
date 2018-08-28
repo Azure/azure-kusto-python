@@ -146,9 +146,8 @@ CSV_FILE_PATH = os.path.join(os.getcwd(), "azure-kusto-ingest", "tests", "input"
 ZIPPED_CSV_FILE_PATH = os.path.join(
     os.getcwd(), "azure-kusto-ingest", "tests", "input", "dataset.csv.gz"
 )
-KUSTO_INGEST_CLIENT.ingest_from_files(
-    [CSV_FILE_PATH, ZIPPED_CSV_FILE_PATH], CSV_INGESTION_PROPERTIES
-)
+for f in [CSV_FILE_PATH, ZIPPED_CSV_FILE_PATH]:
+    KUSTO_INGEST_CLIENT.ingest_from_file(f, CSV_INGESTION_PROPERTIES)
 
 time.sleep(60)
 RESPONSE = KUSTO_CLIENT.execute("PythonTest", "Deft | count")
@@ -169,9 +168,10 @@ JSON_FILE_PATH = os.path.join(os.getcwd(), "azure-kusto-ingest", "tests", "input
 ZIPPED_JSON_FILE_PATH = os.path.join(
     os.getcwd(), "azure-kusto-ingest", "tests", "input", "dataset.jsonz.gz"
 )
-KUSTO_INGEST_CLIENT.ingest_from_files(
-    [JSON_FILE_PATH, ZIPPED_JSON_FILE_PATH], JSON_INGESTION_PROPERTIES
-)
+
+for f in [JSON_FILE_PATH, ZIPPED_JSON_FILE_PATH]:
+    KUSTO_INGEST_CLIENT.ingest_from_file(f , JSON_INGESTION_PROPERTIES)
+
 time.sleep(60)
 RESPONSE = KUSTO_CLIENT.execute("PythonTest", "Deft | count")
 for row in RESPONSE.primary_results[0]:
@@ -199,9 +199,9 @@ JSON_INGESTION_PROPERTIES = IngestionProperties(
     reportMethod=ReportMethod.QueueAndTable,
     validationPolicy=VALIDATION_POLICY,
 )
-KUSTO_INGEST_CLIENT.ingest_from_files(
-    [JSON_FILE_PATH, ZIPPED_JSON_FILE_PATH], JSON_INGESTION_PROPERTIES
-)
+for f in [JSON_FILE_PATH, ZIPPED_JSON_FILE_PATH]:
+    KUSTO_INGEST_CLIENT.ingest_from_file(f, JSON_INGESTION_PROPERTIES)
+
 time.sleep(60)
 RESPONSE = KUSTO_CLIENT.execute("PythonTest", "Deft | count")
 for row in RESPONSE.primary_results[0]:
@@ -219,9 +219,9 @@ JSON_INGESTION_PROPERTIES = IngestionProperties(
     ingestIfNotExists=["ingestByTag"],
     dropByTags=["drop", "drop-by"],
 )
-KUSTO_INGEST_CLIENT.ingest_from_files(
-    [JSON_FILE_PATH, ZIPPED_JSON_FILE_PATH], JSON_INGESTION_PROPERTIES
-)
+for f in [JSON_FILE_PATH, ZIPPED_JSON_FILE_PATH]:
+    KUSTO_INGEST_CLIENT.ingest_from_file(f, JSON_INGESTION_PROPERTIES)
+
 time.sleep(60)
 RESPONSE = KUSTO_CLIENT.execute("PythonTest", "Deft | count")
 for row in RESPONSE.primary_results[0]:
@@ -238,7 +238,7 @@ TSV_INGESTION_PROPERTIES = IngestionProperties(
     mapping=Helpers.create_deft_table_csv_mappings(),
 )
 TSV_FILE_PATH = os.path.join(os.getcwd(), "azure-kusto-ingest", "tests", "input", "dataset.tsv")
-KUSTO_INGEST_CLIENT.ingest_from_files([TSV_FILE_PATH], TSV_INGESTION_PROPERTIES)
+KUSTO_INGEST_CLIENT.ingest_from_file(TSV_FILE_PATH, TSV_INGESTION_PROPERTIES)
 time.sleep(60)
 RESPONSE = KUSTO_CLIENT.execute("PythonTest", "Deft | count")
 for row in RESPONSE.primary_results[0]:

@@ -23,17 +23,12 @@ INGEST_CLIENT = KustoIngestClient(KCSB)
 FILE_DESCRIPTOR = FileDescriptor(
     "E:\\filePath.csv", 3333
 )  # 3333 is the raw size of the data in bytes.
-INGEST_CLIENT.ingest_from_files(
-    [FILE_DESCRIPTOR], ingestion_properties=INGESTION_PROPERTIES
+INGEST_CLIENT.ingest_from_file(FILE_DESCRIPTOR, ingestion_properties=INGESTION_PROPERTIES
 )
 
-INGEST_CLIENT.ingest_from_files(
-    ["E:\\filePath.csv"], ingestion_properties=INGESTION_PROPERTIES
-)
+INGEST_CLIENT.ingest_from_file("E:\\filePath.csv", ingestion_properties=INGESTION_PROPERTIES)
 
 BLOB_DESCRIPTOR = BlobDescriptor(
     "https://path-to-blob.csv.gz?sas", 10
 )  # 10 is the raw size of the data in bytes.
-INGEST_CLIENT.ingest_from_blobs(
-    [BLOB_DESCRIPTOR], ingestion_properties=INGESTION_PROPERTIES
-)
+INGEST_CLIENT.ingest_from_blob(BLOB_DESCRIPTOR, ingestion_properties=INGESTION_PROPERTIES)

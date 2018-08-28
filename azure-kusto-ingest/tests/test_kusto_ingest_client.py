@@ -107,7 +107,7 @@ class KustoIngestClientTests(unittest.TestCase):
     @patch("azure.storage.blob.BlockBlobService.create_blob_from_stream")
     @patch("azure.storage.queue.QueueService.put_message")
     @patch("uuid.uuid4", return_value=MOCKED_UUID_4)
-    def test_sanity_ingest_from_files(self,  mock_uuid, mock_put_message_in_queue, mock_create_blob_from_stream, mock_aad):
+    def test_sanity_ingest_from_file(self,  mock_uuid, mock_put_message_in_queue, mock_create_blob_from_stream, mock_aad):
         responses.add_callback(
             responses.POST,
             'https://ingest-somecluster.kusto.windows.net/v1/rest/mgmt',
@@ -128,7 +128,7 @@ class KustoIngestClientTests(unittest.TestCase):
 
         file_path = os.path.join(current_dir, *missing_path_parts)
 
-        ingest_client.ingest_from_files([file_path], ingestion_properties=ingestion_properties)
+        ingest_client.ingest_from_file(file_path, ingestion_properties=ingestion_properties)
 
         # mock_put_message_in_queue
         assert mock_put_message_in_queue.call_count == 1
@@ -161,7 +161,7 @@ class KustoIngestClientTests(unittest.TestCase):
     @patch("uuid.uuid4", return_value=MOCKED_UUID_4)
     @patch("time.time", return_value=MOCKED_TIME)
     @patch("os.getpid", return_value=MOCKED_PID)
-    def test_simple_ingest_from_dataframes(self,  mock_pid, mock_time, mock_uuid, mock_put_message_in_queue, mock_create_blob_from_path, mock_aad):
+    def test_simple_ingest_from_dataframe(self,  mock_pid, mock_time, mock_uuid, mock_put_message_in_queue, mock_create_blob_from_path, mock_aad):
         responses.add_callback(
             responses.POST,
             'https://ingest-somecluster.kusto.windows.net/v1/rest/mgmt',
