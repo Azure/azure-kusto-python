@@ -19,7 +19,7 @@ class FileDescriptor(object):
         if self.path.endswith(".gz") or self.path.endswith(".zip"):
             self.zipped_stream = open(self.path, "rb")
             if self.size <= 0:
-                # todo: this can be improved by reading last 4 bytes
+                # TODO: this can be improved by reading last 4 bytes
                 self.size = int(os.path.getsize(self.path)) * 5
         else:
             self.size = int(os.path.getsize(self.path))
