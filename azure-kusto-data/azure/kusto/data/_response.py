@@ -12,9 +12,7 @@ import pandas
 import six
 
 # Regex for TimeSpan
-_TIMESPAN_PATTERN = re.compile(
-    r"(-?)((?P<d>[0-9]*).)?(?P<h>[0-9]{2}):(?P<m>[0-9]{2}):(?P<s>[0-9]{2}(\.[0-9]+)?$)"
-)
+_TIMESPAN_PATTERN = re.compile(r"(-?)((?P<d>[0-9]*).)?(?P<h>[0-9]{2}):(?P<m>[0-9]{2}):(?P<s>[0-9]{2}(\.[0-9]+)?$)")
 
 
 class WellKnownDataSet(Enum):
@@ -95,9 +93,7 @@ class _KustoResultRow(object):
 class _KustoResultColumn(object):
     def __init__(self, json_column, ordianl):
         self.column_name = json_column["ColumnName"]
-        self.column_type = (
-            json_column["ColumnType"] if "ColumnType" in json_column else json_column["DataType"]
-        )
+        self.column_type = json_column["ColumnType"] if "ColumnType" in json_column else json_column["DataType"]
         self.ordinal = ordianl
 
 
@@ -107,9 +103,7 @@ class _KustoResultTable(object):
     def __init__(self, json_table):
         self.table_name = json_table["TableName"]
         self.table_id = json_table["TableId"] if "TableId" in json_table else None
-        self.table_kind = (
-            WellKnownDataSet[json_table["TableKind"]] if "TableKind" in json_table else None
-        )
+        self.table_kind = WellKnownDataSet[json_table["TableKind"]] if "TableKind" in json_table else None
         self.columns = []
         ordinal = 0
         for column in json_table["Columns"]:
@@ -134,18 +128,14 @@ class _KustoResultTable(object):
         if not self.columns or not self._rows:
             return pandas.DataFrame()
 
-        frame = pandas.DataFrame(
-            self._rows, columns=[column.column_name for column in self.columns]
-        )
+        frame = pandas.DataFrame(self._rows, columns=[column.column_name for column in self.columns])
 
         for column in self.columns:
             col_name = column.column_name
             col_type = column.column_type
             if col_type.lower() == "timespan":
                 frame[col_name] = pandas.to_timedelta(
-                    frame[col_name].apply(
-                        lambda t: t.replace(".", " days ") if t and "." in t.split(":")[0] else t
-                    )
+                    frame[col_name].apply(lambda t: t.replace(".", " days ") if t and "." in t.split(":")[0] else t)
                 )
             elif col_type.lower() == "dynamic":
                 frame[col_name] = frame[col_name].apply(lambda x: json.loads(x) if x else None)
@@ -213,9 +203,7 @@ class _KustoResponseDataSet:
         """Returns primary results. If there is more than one returns a list."""
         if self.tables_count == 1:
             return self.tables
-        primary = list(
-            filter(lambda x: x.table_kind == WellKnownDataSet.PrimaryResult, self.tables)
-        )
+        primary = list(filter(lambda x: x.table_kind == WellKnownDataSet.PrimaryResult, self.tables))
 
         return primary
 
@@ -223,8 +211,7 @@ class _KustoResponseDataSet:
     def errors_count(self):
         """Checks whether an exception was thrown."""
         query_status_table = next(
-            (t for t in self.tables if t.table_kind == WellKnownDataSet.QueryCompletionInformation),
-            None,
+            (t for t in self.tables if t.table_kind == WellKnownDataSet.QueryCompletionInformation), None
         )
         if not query_status_table:
             return 0
@@ -243,8 +230,7 @@ class _KustoResponseDataSet:
     def get_exceptions(self):
         """Gets the excpetions retrieved from Kusto if exists."""
         query_status_table = next(
-            (t for t in self.tables if t.table_kind == WellKnownDataSet.QueryCompletionInformation),
-            None,
+            (t for t in self.tables if t.table_kind == WellKnownDataSet.QueryCompletionInformation), None
         )
         if not query_status_table:
             return []
@@ -309,6 +295,4 @@ class _KustoResponseDataSetV2(_KustoResponseDataSet):
     _crid_column = "ClientRequestId"
 
     def __init__(self, json_response):
-        super(_KustoResponseDataSetV2, self).__init__(
-            [t for t in json_response if t["FrameType"] == "DataTable"]
-        )
+        super(_KustoResponseDataSetV2, self).__init__([t for t in json_response if t["FrameType"] == "DataTable"])
