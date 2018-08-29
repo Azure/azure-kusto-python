@@ -15,13 +15,14 @@ matrix:
   fast_finish: true
 before_install:
   - if [[ -n "$TRAVIS_TAG" && "$TRAVIS_PYTHON_VERSION" != "3.6" ]]; then travis_terminate 0; fi; # Deploy on 3.6  
-  - if [[ "$TRAVIS_PYTHON_VERSION" == "3.6" ]]; then black . --line-length 120 --check; fi
 install:
   - pip install -U pip
   - pip install -r dev_requirements.txt
   - pip install codecov coverage
   - pip install ./azure-kusto-data ./azure-kusto-ingest
   - pip install --force-reinstall azure-nspkg==1.0.0
+before_script:
+  - if [[ "$TRAVIS_PYTHON_VERSION" == "3.6" ]]; then black . --line-length 120 --check; fi
 script:
   - pytest
 after_success:
