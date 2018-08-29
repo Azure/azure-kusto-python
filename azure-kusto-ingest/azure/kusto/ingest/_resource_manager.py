@@ -52,11 +52,7 @@ class _ResourceManager(object):
             self._ingest_client_resources_last_update = datetime.utcnow()
 
     def _get_resource_by_name(self, df, resource_name):
-        resource = (
-            df[df["ResourceTypeName"] == resource_name]
-            .StorageRoot.map(_ConnectionString.parse)
-            .tolist()
-        )
+        resource = df[df["ResourceTypeName"] == resource_name].StorageRoot.map(_ConnectionString.parse).tolist()
         return resource
 
     def _get_ingest_client_resources_from_service(self):
@@ -86,9 +82,9 @@ class _ResourceManager(object):
             self._authorization_context_last_update = datetime.utcnow()
 
     def _get_authorization_context_from_service(self):
-        return self._kusto_client.execute(
-            "NetDefaultDB", ".get kusto identity token"
-        ).primary_results[0][0]["AuthorizationContext"]
+        return self._kusto_client.execute("NetDefaultDB", ".get kusto identity token").primary_results[0][0][
+            "AuthorizationContext"
+        ]
 
     def get_ingestion_queues(self):
         self._refresh_ingest_client_resources()

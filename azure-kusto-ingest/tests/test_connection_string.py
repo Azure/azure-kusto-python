@@ -13,9 +13,7 @@ class ConnectionStringTests(unittest.TestCase):
         container_name = "containername"
         container_sas = "somesas"
 
-        uri = "https://{}.blob.core.windows.net/{}?{}".format(
-            storage_name, container_name, container_sas
-        )
+        uri = "https://{}.blob.core.windows.net/{}?{}".format(storage_name, container_name, container_sas)
         connection_string = _ConnectionString.parse(uri)
         self.assertEqual(connection_string.storage_account_name, storage_name)
         self.assertEqual(connection_string.object_type, "blob")

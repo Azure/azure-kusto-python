@@ -18,9 +18,7 @@ class azure_bdist_wheel(bdist_wheel):
 
     description = "Create an Azure wheel distribution"
 
-    user_options = bdist_wheel.user_options + [
-        ("azure-namespace-package=", None, "Name of the deepest nspkg used")
-    ]
+    user_options = bdist_wheel.user_options + [("azure-namespace-package=", None, "Name of the deepest nspkg used")]
 
     def initialize_options(self):
         bdist_wheel.initialize_options(self)
@@ -48,9 +46,7 @@ class azure_bdist_wheel(bdist_wheel):
                 logger.info("manually remove {} while building the wheel".format(init_file))
                 os.remove(init_file)
             else:
-                raise ValueError(
-                    "Unable to find {}. Are you sure of your namespace package?".format(init_file)
-                )
+                raise ValueError("Unable to find {}. Are you sure of your namespace package?".format(init_file))
         bdist_wheel.write_record(self, bdist_dir, distinfo_dir)
 
 

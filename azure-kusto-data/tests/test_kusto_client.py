@@ -41,9 +41,7 @@ def mocked_requests_post(*args, **kwargs):
             file_name = "querypartialresults.json"
         elif "Deft" in kwargs["json"]["csl"]:
             file_name = "deft.json"
-        with open(
-            os.path.join(os.path.dirname(__file__), "input", file_name), "r"
-        ) as response_file:
+        with open(os.path.join(os.path.dirname(__file__), "input", file_name), "r") as response_file:
             data = response_file.read()
         return MockResponse(json.loads(data), 200)
 
@@ -52,9 +50,7 @@ def mocked_requests_post(*args, **kwargs):
             file_name = "versionshowcommandresult.json"
         else:
             file_name = "adminthenquery.json"
-        with open(
-            os.path.join(os.path.dirname(__file__), "input", file_name), "r"
-        ) as response_file:
+        with open(os.path.join(os.path.dirname(__file__), "input", file_name), "r") as response_file:
             data = response_file.read()
         return MockResponse(json.loads(data), 200)
 
@@ -148,18 +144,10 @@ class KustoClientTests(unittest.TestCase):
             self.assertEqual(type(row["xtextWithNulls"]), type(expected["xtextWithNulls"]))
             self.assertEqual(type(row["xdynamicWithNulls"]), type(expected["xdynamicWithNulls"]))
 
-            expected["rownumber"] = (
-                0 if expected["rownumber"] is None else expected["rownumber"] + 1
-            )
-            expected["rowguid"] = text_type(
-                "0000000{0}-0000-0000-0001-020304050607".format(expected["rownumber"])
-            )
-            expected["xdouble"] = round(
-                float(0) if expected["xdouble"] is None else expected["xdouble"] + 1.0001, 4
-            )
-            expected["xfloat"] = round(
-                float(0) if expected["xfloat"] is None else expected["xfloat"] + 1.01, 2
-            )
+            expected["rownumber"] = 0 if expected["rownumber"] is None else expected["rownumber"] + 1
+            expected["rowguid"] = text_type("0000000{0}-0000-0000-0001-020304050607".format(expected["rownumber"]))
+            expected["xdouble"] = round(float(0) if expected["xdouble"] is None else expected["xdouble"] + 1.0001, 4)
+            expected["xfloat"] = round(float(0) if expected["xfloat"] is None else expected["xfloat"] + 1.01, 2)
             expected["xbool"] = False if expected["xbool"] is None else not expected["xbool"]
             expected["xint16"] = 0 if expected["xint16"] is None else expected["xint16"] + 1
             expected["xint32"] = 0 if expected["xint32"] is None else expected["xint32"] + 1
@@ -168,9 +156,7 @@ class KustoClientTests(unittest.TestCase):
             expected["xuint16"] = 0 if expected["xuint16"] is None else expected["xuint16"] + 1
             expected["xuint32"] = 0 if expected["xuint32"] is None else expected["xuint32"] + 1
             expected["xuint64"] = 0 if expected["xuint64"] is None else expected["xuint64"] + 1
-            expected["xdate"] = expected["xdate"] or datetime(
-                2013, 1, 1, 1, 1, 1, 0, tzinfo=tzutc()
-            )
+            expected["xdate"] = expected["xdate"] or datetime(2013, 1, 1, 1, 1, 1, 0, tzinfo=tzutc())
             expected["xdate"] = expected["xdate"].replace(year=expected["xdate"].year + 1)
             expected["xsmalltext"] = DIGIT_WORDS[int(expected["xint16"])]
             expected["xtext"] = DIGIT_WORDS[int(expected["xint16"])]
@@ -183,9 +169,7 @@ class KustoClientTests(unittest.TestCase):
                 * (-1) ** (expected["rownumber"] + 1)
             )
             if expected["xint16"] > 0:
-                expected["xdynamicWithNulls"] = text_type(
-                    '{{"rowId":{0},"arr":[0,{0}]}}'.format(expected["xint16"])
-                )
+                expected["xdynamicWithNulls"] = text_type('{{"rowId":{0},"arr":[0,{0}]}}'.format(expected["xint16"]))
 
     @patch("requests.post", side_effect=mocked_requests_post)
     @patch("azure.kusto.data.security._AadHelper.acquire_token", side_effect=mocked_aad_helper)
@@ -202,8 +186,7 @@ class KustoClientTests(unittest.TestCase):
         result = primary_table[0]
         self.assertEqual(result["BuildVersion"], "1.0.6693.14577")
         self.assertEqual(
-            result["BuildTime"],
-            datetime(year=2018, month=4, day=29, hour=8, minute=5, second=54, tzinfo=tzutc()),
+            result["BuildTime"], datetime(year=2018, month=4, day=29, hour=8, minute=5, second=54, tzinfo=tzutc())
         )
         self.assertEqual(result["ServiceType"], "Engine")
         self.assertEqual(result["ProductVersion"], "KustoMain_2018.04.29.5")
@@ -213,11 +196,7 @@ class KustoClientTests(unittest.TestCase):
     def test_sanity_data_frame(self, mock_post, mock_aad):
         """Tests KustoResponse to pandas.DataFrame."""
         client = KustoClient("https://somecluster.kusto.windows.net")
-        data_frame = (
-            client.execute_query("PythonTest", "Deft")
-            .primary_results[0]
-            .to_dataframe(errors="ignore")
-        )
+        data_frame = client.execute_query("PythonTest", "Deft").primary_results[0].to_dataframe(errors="ignore")
         self.assertEqual(len(data_frame.columns), 19)
         expected_dict = {
             "rownumber": Series([None, 0., 1., 2., 3., 4., 5., 6., 7., 8., 9.]),
@@ -237,13 +216,9 @@ class KustoClientTests(unittest.TestCase):
                 ],
                 dtype=object,
             ),
-            "xdouble": Series(
-                [None, 0., 1.0001, 2.0002, 3.0003, 4.0004, 5.0005, 6.0006, 7.0007, 8.0008, 9.0009]
-            ),
+            "xdouble": Series([None, 0., 1.0001, 2.0002, 3.0003, 4.0004, 5.0005, 6.0006, 7.0007, 8.0008, 9.0009]),
             "xfloat": Series([None, 0., 1.01, 2.02, 3.03, 4.04, 5.05, 6.06, 7.07, 8.08, 9.09]),
-            "xbool": Series(
-                [None, False, True, False, True, False, True, False, True, False, True], dtype=bool
-            ),
+            "xbool": Series([None, False, True, False, True, False, True, False, True, False, True], dtype=bool),
             "xint16": Series([None, 0., 1., 2., 3., 4., 5., 6., 7., 8., 9.]),
             "xint32": Series([None, 0., 1., 2., 3., 4., 5., 6., 7., 8., 9.]),
             "xint64": Series([None, 0., 1., 2., 3., 4., 5., 6., 7., 8., 9.]),
@@ -268,40 +243,12 @@ class KustoClientTests(unittest.TestCase):
                 dtype="datetime64[ns]",
             ),
             "xsmalltext": Series(
-                [
-                    "",
-                    "Zero",
-                    "One",
-                    "Two",
-                    "Three",
-                    "Four",
-                    "Five",
-                    "Six",
-                    "Seven",
-                    "Eight",
-                    "Nine",
-                ],
-                dtype=object,
+                ["", "Zero", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine"], dtype=object
             ),
             "xtext": Series(
-                [
-                    "",
-                    "Zero",
-                    "One",
-                    "Two",
-                    "Three",
-                    "Four",
-                    "Five",
-                    "Six",
-                    "Seven",
-                    "Eight",
-                    "Nine",
-                ],
-                dtype=object,
+                ["", "Zero", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine"], dtype=object
             ),
-            "xnumberAsText": Series(
-                ["", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9"], dtype=object
-            ),
+            "xnumberAsText": Series(["", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9"], dtype=object),
             "xtime": Series(
                 [
                     "NaT",

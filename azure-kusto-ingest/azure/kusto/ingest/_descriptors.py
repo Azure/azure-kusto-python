@@ -24,8 +24,10 @@ class FileDescriptor(object):
         else:
             self.size = int(os.path.getsize(self.path))
             self.stream_name += ".gz"
-            self.zipped_stream = BytesIO()            
-            with open(self.path, "rb") as f_in, GzipFile(filename="data", fileobj=self.zipped_stream, mode="wb") as f_out:
+            self.zipped_stream = BytesIO()
+            with open(self.path, "rb") as f_in, GzipFile(
+                filename="data", fileobj=self.zipped_stream, mode="wb"
+            ) as f_out:
                 shutil.copyfileobj(f_in, f_out)
             self.zipped_stream.seek(0)
 

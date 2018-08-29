@@ -44,88 +44,38 @@ class Helpers:
         mappings.append(CsvColumnMapping(columnName="xdate", cslDataType="datetime", ordinal=12))
         mappings.append(CsvColumnMapping(columnName="xsmalltext", cslDataType="string", ordinal=13))
         mappings.append(CsvColumnMapping(columnName="xtext", cslDataType="string", ordinal=14))
-        mappings.append(
-            CsvColumnMapping(columnName="xnumberAsText", cslDataType="string", ordinal=15)
-        )
+        mappings.append(CsvColumnMapping(columnName="xnumberAsText", cslDataType="string", ordinal=15))
         mappings.append(CsvColumnMapping(columnName="xtime", cslDataType="timespan", ordinal=16))
-        mappings.append(
-            CsvColumnMapping(columnName="xtextWithNulls", cslDataType="string", ordinal=17)
-        )
-        mappings.append(
-            CsvColumnMapping(columnName="xdynamicWithNulls", cslDataType="dynamic", ordinal=18)
-        )
+        mappings.append(CsvColumnMapping(columnName="xtextWithNulls", cslDataType="string", ordinal=17))
+        mappings.append(CsvColumnMapping(columnName="xdynamicWithNulls", cslDataType="dynamic", ordinal=18))
         return mappings
 
     @staticmethod
     def create_deft_table_json_mappings():
         """A method to define json mappings to deft table."""
         mappings = list()
+        mappings.append(JsonColumnMapping(columnName="rownumber", jsonPath="$.rownumber", cslDataType="int"))
+        mappings.append(JsonColumnMapping(columnName="rowguid", jsonPath="$.rowguid", cslDataType="string"))
+        mappings.append(JsonColumnMapping(columnName="xdouble", jsonPath="$.xdouble", cslDataType="real"))
+        mappings.append(JsonColumnMapping(columnName="xfloat", jsonPath="$.xfloat", cslDataType="real"))
+        mappings.append(JsonColumnMapping(columnName="xbool", jsonPath="$.xbool", cslDataType="bool"))
+        mappings.append(JsonColumnMapping(columnName="xint16", jsonPath="$.xint16", cslDataType="int"))
+        mappings.append(JsonColumnMapping(columnName="xint32", jsonPath="$.xint32", cslDataType="int"))
+        mappings.append(JsonColumnMapping(columnName="xint64", jsonPath="$.xint64", cslDataType="long"))
+        mappings.append(JsonColumnMapping(columnName="xuint8", jsonPath="$.xuint8", cslDataType="long"))
+        mappings.append(JsonColumnMapping(columnName="xuint16", jsonPath="$.xuint16", cslDataType="long"))
+        mappings.append(JsonColumnMapping(columnName="xuint32", jsonPath="$.xuint32", cslDataType="long"))
+        mappings.append(JsonColumnMapping(columnName="xuint64", jsonPath="$.xuint64", cslDataType="long"))
+        mappings.append(JsonColumnMapping(columnName="xdate", jsonPath="$.xdate", cslDataType="datetime"))
+        mappings.append(JsonColumnMapping(columnName="xsmalltext", jsonPath="$.xsmalltext", cslDataType="string"))
+        mappings.append(JsonColumnMapping(columnName="xtext", jsonPath="$.xtext", cslDataType="string"))
+        mappings.append(JsonColumnMapping(columnName="xnumberAsText", jsonPath="$.xnumberAsText", cslDataType="string"))
+        mappings.append(JsonColumnMapping(columnName="xtime", jsonPath="$.xtime", cslDataType="timespan"))
         mappings.append(
-            JsonColumnMapping(columnName="rownumber", jsonPath="$.rownumber", cslDataType="int")
+            JsonColumnMapping(columnName="xtextWithNulls", jsonPath="$.xtextWithNulls", cslDataType="string")
         )
         mappings.append(
-            JsonColumnMapping(columnName="rowguid", jsonPath="$.rowguid", cslDataType="string")
-        )
-        mappings.append(
-            JsonColumnMapping(columnName="xdouble", jsonPath="$.xdouble", cslDataType="real")
-        )
-        mappings.append(
-            JsonColumnMapping(columnName="xfloat", jsonPath="$.xfloat", cslDataType="real")
-        )
-        mappings.append(
-            JsonColumnMapping(columnName="xbool", jsonPath="$.xbool", cslDataType="bool")
-        )
-        mappings.append(
-            JsonColumnMapping(columnName="xint16", jsonPath="$.xint16", cslDataType="int")
-        )
-        mappings.append(
-            JsonColumnMapping(columnName="xint32", jsonPath="$.xint32", cslDataType="int")
-        )
-        mappings.append(
-            JsonColumnMapping(columnName="xint64", jsonPath="$.xint64", cslDataType="long")
-        )
-        mappings.append(
-            JsonColumnMapping(columnName="xuint8", jsonPath="$.xuint8", cslDataType="long")
-        )
-        mappings.append(
-            JsonColumnMapping(columnName="xuint16", jsonPath="$.xuint16", cslDataType="long")
-        )
-        mappings.append(
-            JsonColumnMapping(columnName="xuint32", jsonPath="$.xuint32", cslDataType="long")
-        )
-        mappings.append(
-            JsonColumnMapping(columnName="xuint64", jsonPath="$.xuint64", cslDataType="long")
-        )
-        mappings.append(
-            JsonColumnMapping(columnName="xdate", jsonPath="$.xdate", cslDataType="datetime")
-        )
-        mappings.append(
-            JsonColumnMapping(
-                columnName="xsmalltext", jsonPath="$.xsmalltext", cslDataType="string"
-            )
-        )
-        mappings.append(
-            JsonColumnMapping(columnName="xtext", jsonPath="$.xtext", cslDataType="string")
-        )
-        mappings.append(
-            JsonColumnMapping(
-                columnName="xnumberAsText", jsonPath="$.xnumberAsText", cslDataType="string"
-            )
-        )
-        mappings.append(
-            JsonColumnMapping(columnName="xtime", jsonPath="$.xtime", cslDataType="timespan")
-        )
-        mappings.append(
-            JsonColumnMapping(
-                columnName="xtextWithNulls", jsonPath="$.xtextWithNulls", cslDataType="string"
-            )
-        )
-        mappings.append(
-            JsonColumnMapping(
-                columnName="xdynamicWithNulls",
-                jsonPath="$.xdynamicWithNulls",
-                cslDataType="dynamic",
-            )
+            JsonColumnMapping(columnName="xdynamicWithNulls", jsonPath="$.xdynamicWithNulls", cslDataType="dynamic")
         )
         return mappings
 
@@ -137,15 +87,10 @@ KUSTO_CLIENT.execute("PythonTest", ".drop table Deft ifexists")
 
 # Sanity test - ingest from csv to a non-existing table
 CSV_INGESTION_PROPERTIES = IngestionProperties(
-    "PythonTest",
-    "Deft",
-    dataFormat=DataFormat.csv,
-    mapping=Helpers.create_deft_table_csv_mappings(),
+    "PythonTest", "Deft", dataFormat=DataFormat.csv, mapping=Helpers.create_deft_table_csv_mappings()
 )
 CSV_FILE_PATH = os.path.join(os.getcwd(), "azure-kusto-ingest", "tests", "input", "dataset.csv")
-ZIPPED_CSV_FILE_PATH = os.path.join(
-    os.getcwd(), "azure-kusto-ingest", "tests", "input", "dataset.csv.gz"
-)
+ZIPPED_CSV_FILE_PATH = os.path.join(os.getcwd(), "azure-kusto-ingest", "tests", "input", "dataset.csv.gz")
 for f in [CSV_FILE_PATH, ZIPPED_CSV_FILE_PATH]:
     KUSTO_INGEST_CLIENT.ingest_from_file(f, CSV_INGESTION_PROPERTIES)
 
@@ -159,18 +104,13 @@ for row in RESPONSE.primary_results[0]:
 
 # Sanity test - ingest from json to an existing table
 JSON_INGESTION_PROPERTIES = IngestionProperties(
-    "PythonTest",
-    "Deft",
-    dataFormat=DataFormat.json,
-    mapping=Helpers.create_deft_table_json_mappings(),
+    "PythonTest", "Deft", dataFormat=DataFormat.json, mapping=Helpers.create_deft_table_json_mappings()
 )
 JSON_FILE_PATH = os.path.join(os.getcwd(), "azure-kusto-ingest", "tests", "input", "dataset.json")
-ZIPPED_JSON_FILE_PATH = os.path.join(
-    os.getcwd(), "azure-kusto-ingest", "tests", "input", "dataset.jsonz.gz"
-)
+ZIPPED_JSON_FILE_PATH = os.path.join(os.getcwd(), "azure-kusto-ingest", "tests", "input", "dataset.jsonz.gz")
 
 for f in [JSON_FILE_PATH, ZIPPED_JSON_FILE_PATH]:
-    KUSTO_INGEST_CLIENT.ingest_from_file(f , JSON_INGESTION_PROPERTIES)
+    KUSTO_INGEST_CLIENT.ingest_from_file(f, JSON_INGESTION_PROPERTIES)
 
 time.sleep(60)
 RESPONSE = KUSTO_CLIENT.execute("PythonTest", "Deft | count")
@@ -232,10 +172,7 @@ for row in RESPONSE.primary_results[0]:
 
 # Test ingest with TSV format and csvMapping
 TSV_INGESTION_PROPERTIES = IngestionProperties(
-    "PythonTest",
-    "Deft",
-    dataFormat=DataFormat.tsv,
-    mapping=Helpers.create_deft_table_csv_mappings(),
+    "PythonTest", "Deft", dataFormat=DataFormat.tsv, mapping=Helpers.create_deft_table_csv_mappings()
 )
 TSV_FILE_PATH = os.path.join(os.getcwd(), "azure-kusto-ingest", "tests", "input", "dataset.tsv")
 KUSTO_INGEST_CLIENT.ingest_from_file(TSV_FILE_PATH, TSV_INGESTION_PROPERTIES)

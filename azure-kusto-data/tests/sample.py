@@ -10,9 +10,7 @@ KUSTO_CLUSTER = "https://help.kusto.windows.net"
 # In case you want to authenticate with AAD application.
 CLIENT_ID = "<insert here your AAD application id>"
 CLIENT_SECRET = "<insert here your AAD application key>"
-KCSB = KustoConnectionStringBuilder.with_aad_application_key_authentication(
-    KUSTO_CLUSTER, CLIENT_ID, CLIENT_SECRET
-)
+KCSB = KustoConnectionStringBuilder.with_aad_application_key_authentication(KUSTO_CLUSTER, CLIENT_ID, CLIENT_SECRET)
 
 # In case you want to authenticate with AAD application certificate.
 FILENAME = "path to a PEM certificate"

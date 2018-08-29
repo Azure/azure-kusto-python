@@ -34,21 +34,15 @@ class KustoConnectionStringBuilderTests(unittest.TestCase):
         uuid = str(uuid4())
         key = "key of application"
         kcsbs = [
-            KustoConnectionStringBuilder(
-                "localhost;Application client Id={0};application Key={1}".format(uuid, key)
-            ),
+            KustoConnectionStringBuilder("localhost;Application client Id={0};application Key={1}".format(uuid, key)),
             KustoConnectionStringBuilder(
                 "Data Source=localhost ; Application Client Id={0}; Appkey ={1}".format(uuid, key)
             ),
-            KustoConnectionStringBuilder(
-                " Addr = localhost ; AppClientId = {0} ; AppKey ={1}".format(uuid, key)
-            ),
+            KustoConnectionStringBuilder(" Addr = localhost ; AppClientId = {0} ; AppKey ={1}".format(uuid, key)),
             KustoConnectionStringBuilder(
                 "Network Address = localhost; AppClientId = {0} ; AppKey ={1}".format(uuid, key)
             ),
-            KustoConnectionStringBuilder.with_aad_application_key_authentication(
-                "localhost", uuid, key
-            ),
+            KustoConnectionStringBuilder.with_aad_application_key_authentication("localhost", uuid, key),
         ]
 
         kcsb1 = KustoConnectionStringBuilder("server=localhost")
@@ -77,21 +71,15 @@ class KustoConnectionStringBuilderTests(unittest.TestCase):
         user = "test"
         password = "Pa$$w0rd"
         kcsbs = [
-            KustoConnectionStringBuilder(
-                "localhost;AAD User ID={0};password={1}".format(user, password)
-            ),
+            KustoConnectionStringBuilder("localhost;AAD User ID={0};password={1}".format(user, password)),
             KustoConnectionStringBuilder(
                 "Data Source=localhost ; AaD User ID={0}; Password ={1}".format(user, password)
             ),
-            KustoConnectionStringBuilder(
-                " Addr = localhost ; AAD User ID = {0} ; Pwd ={1}".format(user, password)
-            ),
+            KustoConnectionStringBuilder(" Addr = localhost ; AAD User ID = {0} ; Pwd ={1}".format(user, password)),
             KustoConnectionStringBuilder(
                 "Network Address = localhost; AAD User iD = {0} ; Pwd = {1} ".format(user, password)
             ),
-            KustoConnectionStringBuilder.with_aad_user_password_authentication(
-                "localhost", user, password
-            ),
+            KustoConnectionStringBuilder.with_aad_user_password_authentication("localhost", user, password),
         ]
 
         kcsb1 = KustoConnectionStringBuilder("Server=localhost")

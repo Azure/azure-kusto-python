@@ -43,16 +43,12 @@ class _IngestionBlobInfo:
             )
         if ingestion_properties.mapping:
             json_string = _convert_dict_to_json(ingestion_properties.mapping)
-            additional_properties[
-                ingestion_properties.get_mapping_format() + "Mapping"
-            ] = json_string
+            additional_properties[ingestion_properties.get_mapping_format() + "Mapping"] = json_string
         if ingestion_properties.mapping_reference:
             key = ingestion_properties.get_mapping_format() + "MappingReference"
             additional_properties[key] = ingestion_properties.mapping_reference
         if ingestion_properties.validation_policy:
-            additional_properties["ValidationPolicy"] = _convert_dict_to_json(
-                ingestion_properties.validation_policy
-            )
+            additional_properties["ValidationPolicy"] = _convert_dict_to_json(ingestion_properties.validation_policy)
         if ingestion_properties.format:
             additional_properties["format"] = ingestion_properties.format.name
 

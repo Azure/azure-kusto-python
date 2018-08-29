@@ -107,9 +107,7 @@ class KustoConnectionStringBuilder(object):
         return kcsb
 
     @classmethod
-    def with_aad_application_certificate_authentication(
-        cls, connection_string, aad_app_id, certificate, thumbprint
-    ):
+    def with_aad_application_certificate_authentication(cls, connection_string, aad_app_id, certificate, thumbprint):
         """Creates a KustoConnection string builder that will authenticate with AAD application and
         a certificate credentials.
         :param str connection_string: Kusto connection string should by of the format:
@@ -220,14 +218,7 @@ class KustoClient(object):
         self._query_endpoint = "{0}/v2/rest/query".format(kusto_cluster)
         self._aad_helper = _AadHelper(kcsb)
 
-    def execute(
-        self,
-        kusto_database,
-        query,
-        accept_partial_results=False,
-        timeout=None,
-        get_raw_response=False,
-    ):
+    def execute(self, kusto_database, query, accept_partial_results=False, timeout=None, get_raw_response=False):
         """Executes a query or management command.
         :param str kusto_database: Database against query will be executed.
         :param str query: Query to be executed.
@@ -240,21 +231,10 @@ class KustoClient(object):
             Whether to get a raw response, or a parsed one.
         """
         if query.startswith("."):
-            return self.execute_mgmt(
-                kusto_database, query, accept_partial_results, timeout, get_raw_response
-            )
-        return self.execute_query(
-            kusto_database, query, accept_partial_results, timeout, get_raw_response
-        )
+            return self.execute_mgmt(kusto_database, query, accept_partial_results, timeout, get_raw_response)
+        return self.execute_query(kusto_database, query, accept_partial_results, timeout, get_raw_response)
 
-    def execute_query(
-        self,
-        kusto_database,
-        query,
-        accept_partial_results=False,
-        timeout=None,
-        get_raw_response=False,
-    ):
+    def execute_query(self, kusto_database, query, accept_partial_results=False, timeout=None, get_raw_response=False):
         """Executes a query.
         :param str kusto_database: Database against query will be executed.
         :param str query: Query to be executed.
@@ -267,22 +247,10 @@ class KustoClient(object):
             Whether to get a raw response, or a parsed one.
         """
         return self._execute(
-            self._query_endpoint,
-            kusto_database,
-            query,
-            accept_partial_results,
-            timeout,
-            get_raw_response,
+            self._query_endpoint, kusto_database, query, accept_partial_results, timeout, get_raw_response
         )
 
-    def execute_mgmt(
-        self,
-        kusto_database,
-        query,
-        accept_partial_results=False,
-        timeout=None,
-        get_raw_response=False,
-    ):
+    def execute_mgmt(self, kusto_database, query, accept_partial_results=False, timeout=None, get_raw_response=False):
         """Executes a management command.
         :param str kusto_database: Database against query will be executed.
         :param str query: Query to be executed.
@@ -295,22 +263,11 @@ class KustoClient(object):
             Whether to get a raw response, or a parsed one.
         """
         return self._execute(
-            self._mgmt_endpoint,
-            kusto_database,
-            query,
-            accept_partial_results,
-            timeout,
-            get_raw_response,
+            self._mgmt_endpoint, kusto_database, query, accept_partial_results, timeout, get_raw_response
         )
 
     def _execute(
-        self,
-        endpoint,
-        kusto_database,
-        kusto_query,
-        accept_partial_results=False,
-        timeout=None,
-        get_raw_response=False,
+        self, endpoint, kusto_database, kusto_query, accept_partial_results=False, timeout=None, get_raw_response=False
     ):
         """Executes given query against this client"""
 
@@ -327,9 +284,7 @@ class KustoClient(object):
             "x-ms-client-request-id": "KPC.execute;" + str(uuid.uuid4()),
         }
 
-        response = requests.post(
-            endpoint, headers=request_headers, json=request_payload, timeout=timeout
-        )
+        response = requests.post(endpoint, headers=request_headers, json=request_payload, timeout=timeout)
 
         if response.status_code == 200:
             if get_raw_response:
