@@ -1,18 +1,15 @@
 """This module constains all classes to get Kusto responses. Including error handling."""
+import json
 
 from datetime import timedelta
-import re
-
 from abc import ABCMeta, abstractmethod
-import json
-from enum import Enum
-import numbers
-import dateutil.parser
-import pandas
+
 import six
 
-# Regex for TimeSpan
-_TIMESPAN_PATTERN = re.compile(r"(-?)((?P<d>[0-9]*).)?(?P<h>[0-9]{2}):(?P<m>[0-9]{2}):(?P<s>[0-9]{2}(\.[0-9]+)?$)")
+from enum import Enum
+import dateutil.parser
+
+from . import converters
 
 
 class WellKnownDataSet(Enum):
@@ -24,111 +21,133 @@ class WellKnownDataSet(Enum):
     QueryProperties = "QueryProperties"
 
 
-class _KustoResultRow(object):
+class KustoResultRow(object):
     """Iterator over a Kusto result row."""
 
-    def __init__(self, columns_count, columns, row):
-        self._columns_count = columns_count
-        self._columns = columns
-        self._row = row
+    def __init__(self, columns, row):
+        self.columns = columns
+        self.row = row
+
         # Here we keep converter functions for each type that we need to take special care
         # (e.g. convert)
-        self.converters_lambda_mappings = {
-            "datetime": self.to_datetime,
-            "timespan": self.to_timedelta,
-            "DateTime": self.to_datetime,
-            "TimeSpan": self.to_timedelta,
+        self.convertion_funcs = {
+            "datetime": converters.to_datetime,
+            "timespan": converters.to_timedelta,
+            "DateTime": converters.to_datetime,
+            "TimeSpan": converters.to_timedelta,
         }
 
+    @property
+    def columns_count(self):
+        return len(self.columns)
+
     def __iter__(self):
-        for i in range(self._columns_count):
+        for i in range(self.columns_count):
             yield self[i]
 
     def __getitem__(self, key):
-        if isinstance(key, numbers.Number):
-            column = self._columns[key]
-            value = self._row[key]
+        if type(key) == int:
+            column = self.columns[key]
+            value = self.row[key]
         else:
-            column = next((column for column in self._columns if column.column_name == key), None)
+            column = next((column for column in self.columns if column.column_name == key), None)
             if not column:
                 raise LookupError(key)
-            value = self._row[column.ordinal]
-        if column.column_type in self.converters_lambda_mappings:
-            return self.converters_lambda_mappings[column.column_type](value)
+            value = self.row[column.ordinal]
+        if column.column_type in self.convertion_funcs:
+            return self.convertion_funcs[column.column_type](value)
         return value
 
     def __len__(self):
-        return self._columns_count
+        return self.columns_count
 
-    @staticmethod
-    def to_datetime(value):
-        """Converts a string to a datetime."""
-        if value is None:
-            return None
-        return dateutil.parser.parse(value)
-
-    @staticmethod
-    def to_timedelta(value):
-        """Converts a string to a timedelta."""
-        if value is None:
-            return None
-        if isinstance(value, numbers.Number):
-            return timedelta(microseconds=(float(value) / 10))
-        match = _TIMESPAN_PATTERN.match(value)
-        if match:
-            if match.group(1) == "-":
-                factor = -1
-            else:
-                factor = 1
-            return factor * timedelta(
-                days=int(match.group("d") or 0),
-                hours=int(match.group("h")),
-                minutes=int(match.group("m")),
-                seconds=float(match.group("s")),
-            )
-        else:
-            raise ValueError("Timespan value '{}' cannot be decoded".format(value))
+    def __repr__(self):
+        return "KustoResultRow({},{})".format(self.columns, self.row)
 
 
-class _KustoResultColumn(object):
+class KustoResultColumn(object):
     def __init__(self, json_column, ordianl):
         self.column_name = json_column["ColumnName"]
-        self.column_type = json_column["ColumnType"] if "ColumnType" in json_column else json_column["DataType"]
+        self.column_type = json_column.get("ColumnType", json_column["DataType"])
         self.ordinal = ordianl
 
+    def __repr__(self):
+        return "KustoResultColumn({},{})".format(
+            json.dumps({"ColumnName": self.column_name, "ColumnType": self.column_type}), self.ordinal
+        )
 
-class _KustoResultTable(object):
+
+class KustoResultTable(object):
     """Iterator over a Kusto result table."""
 
     def __init__(self, json_table):
-        self.table_name = json_table["TableName"]
-        self.table_id = json_table["TableId"] if "TableId" in json_table else None
+        self.table_name = json_table.get("TableName")
+        self.table_id = json_table.get("TableId")
         self.table_kind = WellKnownDataSet[json_table["TableKind"]] if "TableKind" in json_table else None
-        self.columns = []
-        ordinal = 0
-        for column in json_table["Columns"]:
-            self.columns.append(_KustoResultColumn(column, ordinal))
-            ordinal += 1
-        self.rows_count = len(json_table["Rows"])
-        self.columns_count = len(self.columns)
-        self._rows = json_table["Rows"]
+        self.columns = [KustoResultColumn(column, index) for index, column in enumerate(json_table["Columns"])]
 
-    def __iter__(self):
-        for row in self._rows:
-            yield _KustoResultRow(self.columns_count, self.columns, row)
+        self.rows = json_table["Rows"]
 
-    def __getitem__(self, key):
-        return _KustoResultRow(self.columns_count, self.columns, self._rows[key])
+    @property
+    def rows_count(self):
+        return len(self.rows)
+
+    @property
+    def columns_count(self):
+        return len(self.columns)
 
     def __len__(self):
         return self.rows_count
 
+    def __iter__(self):
+        for row in self.rows:
+            yield KustoResultRow(self.columns, row)
+
+    def __getitem__(self, key):
+        return KustoResultRow(self.columns, self.rows[key])
+
+    def __str__(self):
+        return "<{table_name} : rows [{rows_count}], cols [{cols_count}]>".format(
+            self.table_name, self.rows_count, self.columns_count
+        )
+
+    # TODO: not sure why this is here...
     def to_dataframe(self, errors="raise"):
+        import pandas
+
+        kusto_to_dataframe_data_types = {
+            "bool": "bool",
+            "uint8": "int64",
+            "int16": "int64",
+            "uint16": "int64",
+            "int": "int64",
+            "uint": "int64",
+            "long": "int64",
+            "ulong": "int64",
+            "float": "float64",
+            "real": "float64",
+            "decimal": "float64",
+            "string": "object",
+            "datetime": "datetime64[ns]",
+            "guid": "object",
+            "timespan": "timedelta64[ns]",
+            "dynamic": "object",
+            # Support V1
+            "DateTime": "datetime64[ns]",
+            "Int32": "int32",
+            "Int64": "int64",
+            "Double": "float64",
+            "String": "object",
+            "SByte": "object",
+            "Guid": "object",
+            "TimeSpan": "object",
+        }
+
         """Returns Pandas data frame."""
-        if not self.columns or not self._rows:
+        if not self.columns or not self.rows:
             return pandas.DataFrame()
 
-        frame = pandas.DataFrame(self._rows, columns=[column.column_name for column in self.columns])
+        frame = pandas.DataFrame(self.rows, columns=[column.column_name for column in self.columns])
 
         for column in self.columns:
             col_name = column.column_name
@@ -139,49 +158,21 @@ class _KustoResultTable(object):
                 )
             elif col_type.lower() == "dynamic":
                 frame[col_name] = frame[col_name].apply(lambda x: json.loads(x) if x else None)
-            elif col_type in self._kusto_to_data_frame_data_types:
-                pandas_type = self._kusto_to_data_frame_data_types[col_type]
+            elif col_type in kusto_to_dataframe_data_types:
+                pandas_type = kusto_to_dataframe_data_types[col_type]
                 frame[col_name] = frame[col_name].astype(pandas_type, errors=errors)
 
         return frame
 
-    _kusto_to_data_frame_data_types = {
-        "bool": "bool",
-        "uint8": "int64",
-        "int16": "int64",
-        "uint16": "int64",
-        "int": "int64",
-        "uint": "int64",
-        "long": "int64",
-        "ulong": "int64",
-        "float": "float64",
-        "real": "float64",
-        "decimal": "float64",
-        "string": "object",
-        "datetime": "datetime64[ns]",
-        "guid": "object",
-        "timespan": "timedelta64[ns]",
-        "dynamic": "object",
-        # Support V1
-        "DateTime": "datetime64[ns]",
-        "Int32": "int32",
-        "Int64": "int64",
-        "Double": "float64",
-        "String": "object",
-        "SByte": "object",
-        "Guid": "object",
-        "TimeSpan": "object",
-    }
-
 
 @six.add_metaclass(ABCMeta)
-class _KustoResponseDataSet:
+class KustoResponseDataSet:
     """Represents the parsed data set carried by the response to a Kusto request."""
 
     def __init__(self, json_response):
-        self.tables = [_KustoResultTable(t) for t in json_response]
+        self.tables = [KustoResultTable(t) for t in json_response]
         self.tables_count = len(self.tables)
-        self._tables_names = [t.table_name for t in self.tables]
+        self.tables_names = [t.table_name for t in self.tables]
 
     @property
     @abstractmethod
@@ -228,7 +219,7 @@ class _KustoResponseDataSet:
         return errors
 
     def get_exceptions(self):
-        """Gets the excpetions retrieved from Kusto if exists."""
+        """Gets the exceptions retrieved from Kusto if exists."""
         query_status_table = next(
             (t for t in self.tables if t.table_kind == WellKnownDataSet.QueryCompletionInformation), None
         )
@@ -248,10 +239,10 @@ class _KustoResponseDataSet:
         return iter(self.tables)
 
     def __getitem__(self, key):
-        if isinstance(key, numbers.Number):
+        if type(key) == int():
             return self.tables[key]
         try:
-            return self.tables[self._tables_names.index(key)]
+            return self.tables[self.tables_names.index(key)]
         except ValueError:
             raise LookupError(key)
 
@@ -259,7 +250,7 @@ class _KustoResponseDataSet:
         return self.tables_count
 
 
-class _KustoResponseDataSetV1(_KustoResponseDataSet):
+class KustoResponseDataSetV1(KustoResponseDataSet):
 
     _status_column = "StatusDescription"
     _crid_column = "ClientActivityId"
@@ -271,7 +262,7 @@ class _KustoResponseDataSetV1(_KustoResponseDataSet):
     }
 
     def __init__(self, json_response):
-        super(_KustoResponseDataSetV1, self).__init__(json_response["Tables"])
+        super(KustoResponseDataSetV1, self).__init__(json_response["Tables"])
         if self.tables_count <= 2:
             self.tables[0].table_kind = WellKnownDataSet.PrimaryResult
             self.tables[0].table_id = 0
@@ -289,10 +280,10 @@ class _KustoResponseDataSetV1(_KustoResponseDataSet):
                 self.tables[i].table_kind = self._tables_kinds[toc[i]["Kind"]]
 
 
-class _KustoResponseDataSetV2(_KustoResponseDataSet):
+class KustoResponseDataSetV2(KustoResponseDataSet):
     _status_column = "Payload"
     _error_column = "Level"
     _crid_column = "ClientRequestId"
 
     def __init__(self, json_response):
-        super(_KustoResponseDataSetV2, self).__init__([t for t in json_response if t["FrameType"] == "DataTable"])
+        super(KustoResponseDataSetV2, self).__init__([t for t in json_response if t["FrameType"] == "DataTable"])
