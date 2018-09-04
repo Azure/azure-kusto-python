@@ -13,7 +13,7 @@ from pandas.util.testing import assert_frame_equal
 from azure.kusto.data.request import KustoClient
 from azure.kusto.data.exceptions import KustoServiceError
 from azure.kusto.data.response import WellKnownDataSet
-
+from azure.kusto.data.helpers import dataframe_from_result_table
 
 def mocked_aad_helper():
     """Mock to replace _AadHelper._acquire_token"""
@@ -196,7 +196,9 @@ class KustoClientTests(unittest.TestCase):
     def test_sanity_data_frame(self, mock_post, mock_aad):
         """Tests KustoResponse to pandas.DataFrame."""
         client = KustoClient("https://somecluster.kusto.windows.net")
-        data_frame = client.execute_query("PythonTest", "Deft").primary_results[0].to_dataframe(errors="ignore")
+        data_frame = dataframe_from_result_table(
+            client.execute_query("PythonTest", "Deft").primary_results[0], raise_errors=False
+        )
         self.assertEqual(len(data_frame.columns), 19)
         expected_dict = {
             "rownumber": Series([None, 0., 1., 2., 3., 4., 5., 6., 7., 8., 9.]),

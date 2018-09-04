@@ -1,8 +1,8 @@
 """This module is serve as a cache to all resources needed by the kusto ingest client."""
 
 from datetime import datetime, timedelta
-
 from ._connection_string import _ConnectionString
+from azure.kusto.data.helpers import dataframe_from_result_table
 
 
 class _IngestClientResources(object):
@@ -56,7 +56,7 @@ class _ResourceManager(object):
         return resource
 
     def _get_ingest_client_resources_from_service(self):
-        df = self._kusto_client.execute("NetDefaultDB", ".get ingestion resources").primary_results[0].to_dataframe()
+        df = dataframe_from_result_table(self._kusto_client.execute("NetDefaultDB", ".get ingestion resources").primary_results[0])
 
         secured_ready_for_aggregation_queues = self._get_resource_by_name(df, "SecuredReadyForAggregationQueue")
         failed_ingestions_queues = self._get_resource_by_name(df, "FailedIngestionsQueue")
