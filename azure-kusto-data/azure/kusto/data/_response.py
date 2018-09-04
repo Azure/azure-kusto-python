@@ -68,7 +68,8 @@ class KustoResultRow(object):
 class KustoResultColumn(object):
     def __init__(self, json_column, ordianl):
         self.column_name = json_column["ColumnName"]
-        self.column_type = json_column.get("ColumnType", json_column["DataType"])
+        column_type = json_column.get("ColumnType")
+        self.column_type = column_type or json_column["DataType"]
         self.ordinal = ordianl
 
     def __repr__(self):
@@ -239,7 +240,7 @@ class KustoResponseDataSet:
         return iter(self.tables)
 
     def __getitem__(self, key):
-        if type(key) == int():
+        if type(key) == int:
             return self.tables[key]
         try:
             return self.tables[self.tables_names.index(key)]
