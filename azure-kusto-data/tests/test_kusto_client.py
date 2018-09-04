@@ -3,17 +3,24 @@
 import os
 import json
 import unittest
+import pytest
 from datetime import datetime, timedelta
 from six import text_type
 from mock import patch
 from dateutil.tz.tz import tzutc
-from pandas import DataFrame, Series
-from pandas.util.testing import assert_frame_equal
 
 from azure.kusto.data.request import KustoClient
 from azure.kusto.data.exceptions import KustoServiceError
 from azure.kusto.data.response import WellKnownDataSet
 from azure.kusto.data.helpers import dataframe_from_result_table
+
+pandas_installed = False
+try:
+    import pandas
+
+    pandas_installed = True
+except:
+    pass
 
 def mocked_aad_helper():
     """Mock to replace _AadHelper._acquire_token"""
@@ -191,10 +198,16 @@ class KustoClientTests(unittest.TestCase):
         self.assertEqual(result["ServiceType"], "Engine")
         self.assertEqual(result["ProductVersion"], "KustoMain_2018.04.29.5")
 
+    @pytest.mark.skipif(not pandas_installed, reason="requires pandas")
     @patch("requests.post", side_effect=mocked_requests_post)
     @patch("azure.kusto.data.security._AadHelper.acquire_token", side_effect=mocked_aad_helper)
     def test_sanity_data_frame(self, mock_post, mock_aad):
-        """Tests KustoResponse to pandas.DataFrame."""
+        """Tests KustoResponse to pandas.DataFrame."""        
+
+        from pandas import DataFrame, Series
+        from pandas.util.testing import assert_frame_equal
+
+
         client = KustoClient("https://somecluster.kusto.windows.net")
         data_frame = dataframe_from_result_table(
             client.execute_query("PythonTest", "Deft").primary_results[0], raise_errors=False

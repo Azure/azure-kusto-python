@@ -33,7 +33,7 @@ class KustoIngestClient(object):
     def ingest_from_dataframe(self, df, ingestion_properties):
         from pandas import DataFrame
 
-        if isinstance(df, DataFrame):
+        if not isinstance(df, DataFrame):
             raise ValueError("Expected DataFrame instance, found {}".format(type(df)))
 
         file_name = "df_{timestamp}_{pid}.csv.gz".format(timestamp=int(time.time()), pid=os.getpid())
