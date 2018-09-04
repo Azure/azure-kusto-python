@@ -10,7 +10,7 @@ import tempfile
 from azure.storage.common import CloudStorageAccount
 
 from azure.kusto.data.request import KustoClient
-from ._descriptors import BlobDescriptor, FileDescriptor
+from .descriptors import BlobDescriptor, FileDescriptor
 from ._ingestion_blob_info import _IngestionBlobInfo
 from ._resource_manager import _ResourceManager
 
@@ -31,6 +31,11 @@ class KustoIngestClient(object):
         self._resource_manager = _ResourceManager(kusto_client)
 
     def ingest_from_dataframe(self, df, ingestion_properties):
+        from pandas import DataFrame
+
+        if isinstance(df, DataFrame):
+            raise ValueError("Expected DataFrame instance, found {}".format(type(df)))
+
         file_name = "df_{timestamp}_{pid}.csv.gz".format(timestamp=int(time.time()), pid=os.getpid())
         temp_file_path = os.path.join(tempfile.gettempdir(), file_name)
 

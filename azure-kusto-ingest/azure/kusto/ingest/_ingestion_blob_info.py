@@ -5,7 +5,7 @@ import uuid
 from datetime import datetime
 from six import text_type
 
-from ._descriptors import BlobDescriptor
+from .descriptors import BlobDescriptor
 
 
 class _IngestionBlobInfo:

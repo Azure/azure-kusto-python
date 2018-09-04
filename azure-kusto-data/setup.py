@@ -60,8 +60,7 @@ setup(
         "six>=1.10.0",
     ],
     extras_require={
-        "pandas": ["pandas>=0.15.0"],
-        "tests": ["mock>=2.0.0"]
+        "pandas": ["pandas>=0.15.0"]
     },
     cmdclass=cmdclass,
 )
