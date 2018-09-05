@@ -51,7 +51,9 @@ class _ResourceManager(object):
             self._ingest_client_resources_last_update = datetime.utcnow()
 
     def _get_resource_by_name(self, table, resource_name):
-        return [_ConnectionString.parse(row["StorageRoot"]) for row in table if row["ResourceTypeName"] == resource_name]
+        return [
+            _ConnectionString.parse(row["StorageRoot"]) for row in table if row["ResourceTypeName"] == resource_name
+        ]
 
     def _get_ingest_client_resources_from_service(self):
         table = self._kusto_client.execute("NetDefaultDB", ".get ingestion resources").primary_results[0]

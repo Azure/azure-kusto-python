@@ -6,7 +6,7 @@ import requests
 
 from .security import _AadHelper
 from .exceptions import KustoServiceError
-from .response import KustoResponseDataSetV1, KustoResponseDataSetV2
+from ._response import KustoResponseDataSetV1, KustoResponseDataSetV2
 from ._version import VERSION
 
 

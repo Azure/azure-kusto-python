@@ -11,7 +11,7 @@ from dateutil.tz.tz import tzutc
 
 from azure.kusto.data.request import KustoClient
 from azure.kusto.data.exceptions import KustoServiceError
-from azure.kusto.data.response import WellKnownDataSet
+from azure.kusto.data._response import WellKnownDataSet
 from azure.kusto.data.helpers import dataframe_from_result_table
 
 pandas_installed = False
@@ -21,6 +21,7 @@ try:
     pandas_installed = True
 except:
     pass
+
 
 def mocked_aad_helper():
     """Mock to replace _AadHelper._acquire_token"""
@@ -202,11 +203,10 @@ class KustoClientTests(unittest.TestCase):
     @patch("requests.post", side_effect=mocked_requests_post)
     @patch("azure.kusto.data.security._AadHelper.acquire_token", side_effect=mocked_aad_helper)
     def test_sanity_data_frame(self, mock_post, mock_aad):
-        """Tests KustoResponse to pandas.DataFrame."""        
+        """Tests KustoResponse to pandas.DataFrame."""
 
         from pandas import DataFrame, Series
         from pandas.util.testing import assert_frame_equal
-
 
         client = KustoClient("https://somecluster.kusto.windows.net")
         data_frame = dataframe_from_result_table(

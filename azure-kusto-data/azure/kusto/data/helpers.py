@@ -1,7 +1,7 @@
 # TODO: not sure why this is here...
 def dataframe_from_result_table(table, raise_errors=True):
     import pandas
-    import json 
+    import json
 
     kusto_to_dataframe_data_types = {
         "bool": "bool",
@@ -48,6 +48,6 @@ def dataframe_from_result_table(table, raise_errors=True):
             frame[col_name] = frame[col_name].apply(lambda x: json.loads(x) if x else None)
         elif col_type in kusto_to_dataframe_data_types:
             pandas_type = kusto_to_dataframe_data_types[col_type]
-            frame[col_name] = frame[col_name].astype(pandas_type, errors='raise' if raise_errors else 'ignore')
+            frame[col_name] = frame[col_name].astype(pandas_type, errors="raise" if raise_errors else "ignore")
 
     return frame

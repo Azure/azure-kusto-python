@@ -1,6 +1,6 @@
 import json
 from enum import Enum
-from . import converters
+from . import _converters
 
 
 class WellKnownDataSet(Enum):
@@ -22,10 +22,10 @@ class KustoResultRow(object):
         # Here we keep converter functions for each type that we need to take special care
         # (e.g. convert)
         self.convertion_funcs = {
-            "datetime": converters.to_datetime,
-            "timespan": converters.to_timedelta,
-            "DateTime": converters.to_datetime,
-            "TimeSpan": converters.to_timedelta,
+            "datetime": _converters.to_datetime,
+            "timespan": _converters.to_timedelta,
+            "DateTime": _converters.to_datetime,
+            "TimeSpan": _converters.to_timedelta,
         }
 
     @property

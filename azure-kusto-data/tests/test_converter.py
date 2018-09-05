@@ -2,11 +2,11 @@
 
 import unittest
 from datetime import timedelta
-from azure.kusto.data.converters import to_datetime, to_timedelta
+from azure.kusto.data._converters import to_datetime, to_timedelta
 
 
 class ConverterTests(unittest.TestCase):
-    """These are unit tests that should test custom converters used in."""
+    """These are unit tests that should test custom _converters used in."""
 
     def test_to_timestamp(self):
         """Happy path to test converter from TimeSpan to timedelta."""

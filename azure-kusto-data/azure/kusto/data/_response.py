@@ -8,7 +8,7 @@ import six
 
 import dateutil.parser
 
-from .models import KustoResultColumn, KustoResultRow, KustoResultTable, WellKnownDataSet
+from ._models import KustoResultColumn, KustoResultRow, KustoResultTable, WellKnownDataSet
 
 
 @six.add_metaclass(ABCMeta)
