@@ -1,4 +1,4 @@
-"""E2E tests for kusto_ingest_client."""
+"""E2E tests for ingest_client."""
 
 import time
 import os
@@ -17,6 +17,8 @@ from azure.kusto.ingest import (
     ReportLevel,
     ReportMethod,
 )
+
+# TODO: change this file to use pytes as runner
 
 
 class Helpers:
@@ -80,106 +82,105 @@ class Helpers:
         return mappings
 
 
-KUSTO_CLIENT = KustoClient("https://toshetah.kusto.windows.net")
-KUSTO_INGEST_CLIENT = KustoIngestClient("https://ingest-toshetah.kusto.windows.net")
+client = KustoClient("https://toshetah.kusto.windows.net")
+ingest_client = KustoIngestClient("https://ingest-toshetah.kusto.windows.net")
 
-KUSTO_CLIENT.execute("PythonTest", ".drop table Deft ifexists")
+client.execute("PythonTest", ".drop table Deft ifexists")
 
-# Sanity test - ingest from csv to a non-existing table
-CSV_INGESTION_PROPERTIES = IngestionProperties(
-    "PythonTest", "Deft", dataFormat=DataFormat.csv, mapping=Helpers.create_deft_table_csv_mappings()
-)
-CSV_FILE_PATH = os.path.join(os.getcwd(), "azure-kusto-ingest", "tests", "input", "dataset.csv")
-ZIPPED_CSV_FILE_PATH = os.path.join(os.getcwd(), "azure-kusto-ingest", "tests", "input", "dataset.csv.gz")
-for f in [CSV_FILE_PATH, ZIPPED_CSV_FILE_PATH]:
-    KUSTO_INGEST_CLIENT.ingest_from_file(f, CSV_INGESTION_PROPERTIES)
 
-time.sleep(60)
-RESPONSE = KUSTO_CLIENT.execute("PythonTest", "Deft | count")
-for row in RESPONSE.primary_results[0]:
-    if int(row["Count"]) == 20:
-        print("Completed ingest from CSV mapping successfully.")
-    else:
-        print("Deft | count = " + text_type(row["Count"]))
+def test_csv_ingest_non_existing_table():
+    csv_ingest_props = IngestionProperties(
+        "PythonTest", "Deft", dataFormat=DataFormat.csv, mapping=Helpers.create_deft_table_csv_mappings()
+    )
+    csv_file_path = os.path.join(os.getcwd(), "azure-kusto-ingest", "tests", "input", "dataset.csv")
+    zipped_csv_file_path = os.path.join(os.getcwd(), "azure-kusto-ingest", "tests", "input", "dataset.csv.gz")
+    for f in [csv_file_path, zipped_csv_file_path]:
+        ingest_client.ingest_from_file(f, csv_ingest_props)
 
-# Sanity test - ingest from json to an existing table
-JSON_INGESTION_PROPERTIES = IngestionProperties(
-    "PythonTest", "Deft", dataFormat=DataFormat.json, mapping=Helpers.create_deft_table_json_mappings()
-)
-JSON_FILE_PATH = os.path.join(os.getcwd(), "azure-kusto-ingest", "tests", "input", "dataset.json")
-ZIPPED_JSON_FILE_PATH = os.path.join(os.getcwd(), "azure-kusto-ingest", "tests", "input", "dataset.jsonz.gz")
+    time.sleep(60)
+    response = client.execute("PythonTest", "Deft | count")
+    for row in response.primary_results[0]:
+        assert int(row["Count"]) == 20, "Deft | count = " + text_type(row["Count"])
+    print("Completed ingest from CSV mapping successfully.")
 
-for f in [JSON_FILE_PATH, ZIPPED_JSON_FILE_PATH]:
-    KUSTO_INGEST_CLIENT.ingest_from_file(f, JSON_INGESTION_PROPERTIES)
 
-time.sleep(60)
-RESPONSE = KUSTO_CLIENT.execute("PythonTest", "Deft | count")
-for row in RESPONSE.primary_results[0]:
-    if int(row["Count"]) == 24:
-        print("Completed ingest from json mapping successfully.")
-    else:
-        print("Deft | count = " + text_type(row["Count"]))
+json_file_path = os.path.join(os.getcwd(), "azure-kusto-ingest", "tests", "input", "dataset.json")
+zipped_json_file_path = os.path.join(os.getcwd(), "azure-kusto-ingest", "tests", "input", "dataset.jsonz.gz")
 
-# Test ingest with complicated ingestion properties
-VALIDATION_POLICY = ValidationPolicy(
-    validationOptions=ValidationOptions.ValidateCsvInputConstantColumns,
-    validationImplications=ValidationImplications.Fail,
-)
-JSON_INGESTION_PROPERTIES = IngestionProperties(
-    "PythonTest",
-    "Deft",
-    dataFormat=DataFormat.json,
-    mapping=Helpers.create_deft_table_json_mappings(),
-    additionalTags=["a", "b"],
-    ingestIfNotExists=["aaaa", "bbbb"],
-    ingestByTags=["ingestByTag"],
-    dropByTags=["drop", "drop-by"],
-    flushImmediately=False,
-    reportLevel=ReportLevel.FailuresAndSuccesses,
-    reportMethod=ReportMethod.QueueAndTable,
-    validationPolicy=VALIDATION_POLICY,
-)
-for f in [JSON_FILE_PATH, ZIPPED_JSON_FILE_PATH]:
-    KUSTO_INGEST_CLIENT.ingest_from_file(f, JSON_INGESTION_PROPERTIES)
 
-time.sleep(60)
-RESPONSE = KUSTO_CLIENT.execute("PythonTest", "Deft | count")
-for row in RESPONSE.primary_results[0]:
-    if int(row["Count"]) == 28:
-        print("Completed ingest from json mapping with full ingestion properties successfully.")
-    else:
-        print("Deft | count = " + str(row["Count"]))
+def test_json_ingest_exisiting_table():
 
-# Test ingest with existed ingest-by tag
-JSON_INGESTION_PROPERTIES = IngestionProperties(
-    "PythonTest",
-    "Deft",
-    dataFormat=DataFormat.json,
-    mapping=Helpers.create_deft_table_json_mappings(),
-    ingestIfNotExists=["ingestByTag"],
-    dropByTags=["drop", "drop-by"],
-)
-for f in [JSON_FILE_PATH, ZIPPED_JSON_FILE_PATH]:
-    KUSTO_INGEST_CLIENT.ingest_from_file(f, JSON_INGESTION_PROPERTIES)
+    json_ingestion_props = IngestionProperties(
+        "PythonTest", "Deft", dataFormat=DataFormat.json, mapping=Helpers.create_deft_table_json_mappings()
+    )
 
-time.sleep(60)
-RESPONSE = KUSTO_CLIENT.execute("PythonTest", "Deft | count")
-for row in RESPONSE.primary_results[0]:
-    if int(row["Count"]) == 28:
-        print("Completed ingest with existing ingest-by tag successfully.")
-    else:
-        print("Deft | count = " + text_type(row["Count"]))
+    for f in [json_file_path, zipped_json_file_path]:
+        ingest_client.ingest_from_file(f, json_ingestion_props)
 
-# Test ingest with TSV format and csvMapping
-TSV_INGESTION_PROPERTIES = IngestionProperties(
-    "PythonTest", "Deft", dataFormat=DataFormat.tsv, mapping=Helpers.create_deft_table_csv_mappings()
-)
-TSV_FILE_PATH = os.path.join(os.getcwd(), "azure-kusto-ingest", "tests", "input", "dataset.tsv")
-KUSTO_INGEST_CLIENT.ingest_from_file(TSV_FILE_PATH, TSV_INGESTION_PROPERTIES)
-time.sleep(60)
-RESPONSE = KUSTO_CLIENT.execute("PythonTest", "Deft | count")
-for row in RESPONSE.primary_results[0]:
-    if int(row["Count"]) == 38:
-        print("Completed ingest TSV from CSV mapping successfully.")
-    else:
-        print("Deft | count = " + text_type(row["Count"]))
+    time.sleep(60)
+    response = client.execute("PythonTest", "Deft | count")
+    for row in response.primary_results[0]:
+        assert int(row["Count"]) == 24, "Deft | count = " + text_type(row["Count"])
+    print("Completed ingest from json mapping successfully.")
+
+
+def test_ingest_complicated_props():
+    # Test ingest with complicated ingestion properties
+    validation_policy = ValidationPolicy(
+        validationOptions=ValidationOptions.ValidateCsvInputConstantColumns,
+        validationImplications=ValidationImplications.Fail,
+    )
+    json_ingestion_props = IngestionProperties(
+        "PythonTest",
+        "Deft",
+        dataFormat=DataFormat.json,
+        mapping=Helpers.create_deft_table_json_mappings(),
+        additionalTags=["a", "b"],
+        ingestIfNotExists=["aaaa", "bbbb"],
+        ingestByTags=["ingestByTag"],
+        dropByTags=["drop", "drop-by"],
+        flushImmediately=False,
+        reportLevel=ReportLevel.FailuresAndSuccesses,
+        reportMethod=ReportMethod.Queue,
+        validationPolicy=validation_policy,
+    )
+    for f in [json_file_path, zipped_json_file_path]:
+        ingest_client.ingest_from_file(f, json_ingestion_props)
+
+    time.sleep(60)
+    response = client.execute("PythonTest", "Deft | count")
+    for row in response.primary_results[0]:
+        assert int(row["Count"]) == 28, "Deft | count = " + str(row["Count"])
+    print("Completed ingest from json mapping with full ingestion properties successfully.")
+
+
+def test_json_ingestion_ingest_by_tag():
+    json_ingestion_props = IngestionProperties(
+        "PythonTest",
+        "Deft",
+        dataFormat=DataFormat.json,
+        mapping=Helpers.create_deft_table_json_mappings(),
+        ingestIfNotExists=["ingestByTag"],
+        dropByTags=["drop", "drop-by"],
+    )
+    for f in [json_file_path, zipped_json_file_path]:
+        ingest_client.ingest_from_file(f, json_ingestion_props)
+
+    time.sleep(60)
+    response = client.execute("PythonTest", "Deft | count")
+    for row in response.primary_results[0]:
+        assert int(row["Count"]) == 28, "Deft | count = " + text_type(row["Count"])
+    print("Completed ingest with existing ingest-by tag successfully.")
+
+
+def test_tsv_ingestion_csv_mapping():
+    tsv_ingestion_props = IngestionProperties(
+        "PythonTest", "Deft", dataFormat=DataFormat.tsv, mapping=Helpers.create_deft_table_csv_mappings()
+    )
+    tsv_file_path = os.path.join(os.getcwd(), "azure-kusto-ingest", "tests", "input", "dataset.tsv")
+    ingest_client.ingest_from_file(tsv_file_path, tsv_ingestion_props)
+    time.sleep(60)
+    response = client.execute("PythonTest", "Deft | count")
+    for row in response.primary_results[0]:
+        assert int(row["Count"]) == 38, print("Deft | count = " + text_type(row["Count"]))
+    print("Completed ingest TSV from CSV mapping successfully.")

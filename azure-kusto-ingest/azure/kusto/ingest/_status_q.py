@@ -32,7 +32,7 @@ class StatusQueue(object):
     def is_empty(self):
         """Checks if Status queue has any messages        
         """
-        return self.peek(1, raw=True)
+        return not self.peek(1, raw=True)
 
     def decode_content(self, content):
         return base64.b64decode(content)
