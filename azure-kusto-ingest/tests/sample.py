@@ -42,15 +42,14 @@ while True:
     success_messages = qs.success.pop(10)
     failure_messages = qs.failure.pop(10)
 
-
     pprint.pprint("SUCCESS : {}".format(success_messages))
     pprint.pprint("FAILURE : {}".format(failure_messages))
 
     # you can of course separate them and dump them into a file for follow up investigations
-    with open('successes.log','w+') as sf:
+    with open("successes.log", "w+") as sf:
         for sm in success_messages:
             sf.write(str(sm))
 
-    with open('failures.log','w+') as ff:
+    with open("failures.log", "w+") as ff:
         for fm in failure_messages:
             ff.write(str(fm))

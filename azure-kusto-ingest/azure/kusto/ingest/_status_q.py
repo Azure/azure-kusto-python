@@ -14,6 +14,7 @@ class QueueDetails(object):
 class StatusQueue(object):
     """StatusQueue is a class to simplify access to Kusto status queues (backed by azure storage queues).
     """
+
     def __init__(self, get_queues_func, message_cls):
         self.get_queues_func = get_queues_func
         self.message_cls = message_cls
@@ -42,7 +43,6 @@ class StatusQueue(object):
         :param m: original message m.
         """
         return self.message_cls(self.decode_content(m.content))
-
 
     # TODO: current implemtation takes a union top n /  len(queues), which is not ideal,
     # becuase the user is not supposed to know that there can be multiple underlying queues

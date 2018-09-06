@@ -63,4 +63,3 @@ class KustoIngestStatusQueues(object):
         self.failure = StatusQueue(
             kusto_ingest_client._resource_manager.get_failed_ingestions_queues, message_cls=FailureMessage
         )
-
