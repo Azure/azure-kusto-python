@@ -4,25 +4,24 @@ Microsoft Azure Kusto Library for Python
 Overview
 --------
 
-```python
+.. code-block:: python
 
-from azure.kusto.data.request import KustoClient, KustoConnectionStringBuilder
+    from azure.kusto.data.request import KustoClient, KustoConnectionStringBuilder
 
-cluster = "<insert here your cluster name>"
-client_id = "<insert here your AAD application id>"
-client_secret = "<insert here your AAD application key>"
+    cluster = "<insert here your cluster name>"
+    client_id = "<insert here your AAD application id>"
+    client_secret = "<insert here your AAD application key>"
 
-kcsb = KustoConnectionStringBuilder.with_aad_application_key_authentication(KUSTO_CLUSTER, CLIENT_ID, CLIENT_SECRET)
-client = KustoClient(kcsb)
+    kcsb = KustoConnectionStringBuilder.with_aad_application_key_authentication(KUSTO_CLUSTER, CLIENT_ID, CLIENT_SECRET)
+    client = KustoClient(kcsb)
 
-db = "Samples"
-query = "StormEvents | take 10"
+    db = "Samples"
+    query = "StormEvents | take 10"
 
-response = client.execute(db, query)
-for row in response.primary_results[0]:
-    print(row[0], " ", row["EventType"])
-    
-```
+    response = client.execute(db, query)
+    for row in response.primary_results[0]:
+        print(row[0], " ", row["EventType"])
+
 
 
 *Kusto Python Client* Library provides the capability to query Kusto clusters using Python. It is Python 2.x/3.x compatible and supports
