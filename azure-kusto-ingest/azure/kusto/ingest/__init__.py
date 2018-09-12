@@ -1,4 +1,5 @@
 from .kusto_ingest_client import KustoIngestClient
+from ._status import KustoIngestStatusQueues
 from ._descriptors import BlobDescriptor, FileDescriptor
 from ._ingestion_properties import (
     DataFormat,

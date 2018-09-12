@@ -59,8 +59,6 @@ class ReportMethod(IntEnum):
     """Report method to ingest command."""
 
     Queue = 0
-    Table = 1
-    QueueAndTable = 2
 
 
 class ColumnMapping:
