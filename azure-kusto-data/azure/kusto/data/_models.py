@@ -105,11 +105,7 @@ class KustoResultTable(object):
         return KustoResultRow(self.columns, self.rows[key])
 
     def to_dict(self):
-        return {
-            "name": self.table_name, 
-            "kind": self.table_kind,
-            "data": [r.to_dict() for r in self]
-        }
+        return {"name": self.table_name, "kind": self.table_kind, "data": [r.to_dict() for r in self]}
 
     def __str__(self):
         return json.dumps(self.to_dict())
