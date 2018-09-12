@@ -85,7 +85,7 @@ class KustoResponseDataSet:
         return iter(self.tables)
 
     def __getitem__(self, key):
-        if type(key) == int:
+        if isinstance(key, six.integer_types):
             return self.tables[key]
         try:
             return self.tables[self.tables_names.index(key)]
