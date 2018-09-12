@@ -53,6 +53,12 @@ class KustoResultRow(object):
     def __len__(self):
         return self.columns_count
 
+    def to_dict(self):
+        return {c.column_name: self.row[c.ordinal] for c in self.columns}
+
+    def __str__(self):
+        return self.row
+
     def __repr__(self):
         return "KustoResultRow({},{})".format(self.columns, self.row)
 
@@ -60,8 +66,7 @@ class KustoResultRow(object):
 class KustoResultColumn(object):
     def __init__(self, json_column, ordianl):
         self.column_name = json_column["ColumnName"]
-        column_type = json_column.get("ColumnType")
-        self.column_type = column_type or json_column["DataType"]
+        self.column_type = json_column.get("ColumnType") or json_column["DataType"]
         self.ordinal = ordianl
 
     def __repr__(self):
@@ -99,7 +104,12 @@ class KustoResultTable(object):
     def __getitem__(self, key):
         return KustoResultRow(self.columns, self.rows[key])
 
+    def to_dict(self):
+        return {
+            "name": self.table_name, 
+            "kind": self.table_kind,
+            "data": [r.to_dict() for r in self]
+        }
+
     def __str__(self):
-        return "<{table_name} : rows [{rows_count}], cols [{cols_count}]>".format(
-            self.table_name, self.rows_count, self.columns_count
-        )
+        return json.dumps(self.to_dict())
