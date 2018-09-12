@@ -1,4 +1,3 @@
-# TODO: not sure why this is here...
 def dataframe_from_result_table(table, raise_errors=True):
     import pandas
     import json

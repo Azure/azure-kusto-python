@@ -1,6 +1,7 @@
 import dateutil
 from datetime import timedelta
 import re
+import six
 
 # Regex for TimeSpan
 _TIMESPAN_PATTERN = re.compile(r"(-?)((?P<d>[0-9]*).)?(?P<h>[0-9]{2}):(?P<m>[0-9]{2}):(?P<s>[0-9]{2}(\.[0-9]+)?$)")
@@ -17,7 +18,7 @@ def to_timedelta(value):
     """Converts a string to a timedelta."""
     if value is None:
         return None
-    if type(value) in [int, float]:
+    if isinstance(value, (six.integer_types, float)):
         return timedelta(microseconds=(float(value) / 10))
     match = _TIMESPAN_PATTERN.match(value)
     if match:

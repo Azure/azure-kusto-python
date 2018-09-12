@@ -1,4 +1,5 @@
 import json
+import six
 from enum import Enum
 from . import _converters
 
@@ -37,7 +38,7 @@ class KustoResultRow(object):
             yield self[i]
 
     def __getitem__(self, key):
-        if type(key) == int:
+        if isinstance(key, six.integer_types):
             column = self.columns[key]
             value = self.row[key]
         else:
