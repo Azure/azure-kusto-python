@@ -75,7 +75,7 @@ class KustoConnectionStringBuilder(object):
         self._internal_dict[keyword] = value.strip()
 
     @classmethod
-    def with_aad_user_password_authentication(cls, connection_string, user_id, password):
+    def with_aad_user_password_authentication(cls, connection_string, user_id, password, authority_id="common"):
         """Creates a KustoConnection string builder that will authenticate with AAD user name and
         password.
         :param str connection_string: Kusto connection string should by of the format:
@@ -88,10 +88,12 @@ class KustoConnectionStringBuilder(object):
         kcsb = cls(connection_string)
         kcsb[kcsb.ValidKeywords.aad_user_id] = user_id
         kcsb[kcsb.ValidKeywords.password] = password
+        kcsb[kcsb.ValidKeywords.authority_id] = authority_id
+
         return kcsb
 
     @classmethod
-    def with_aad_application_key_authentication(cls, connection_string, aad_app_id, app_key):
+    def with_aad_application_key_authentication(cls, connection_string, aad_app_id, app_key, authority_id="common"):
         """Creates a KustoConnection string builder that will authenticate with AAD application and
         password.
         :param str connection_string: Kusto connection string should by of the format:
@@ -104,10 +106,14 @@ class KustoConnectionStringBuilder(object):
         kcsb = cls(connection_string)
         kcsb[kcsb.ValidKeywords.application_client_id] = aad_app_id
         kcsb[kcsb.ValidKeywords.application_key] = app_key
+        kcsb[kcsb.ValidKeywords.authority_id] = authority_id
+
         return kcsb
 
     @classmethod
-    def with_aad_application_certificate_authentication(cls, connection_string, aad_app_id, certificate, thumbprint):
+    def with_aad_application_certificate_authentication(
+        cls, connection_string, aad_app_id, certificate, thumbprint, authority_id="common"
+    ):
         """Creates a KustoConnection string builder that will authenticate with AAD application and
         a certificate credentials.
         :param str connection_string: Kusto connection string should by of the format:
@@ -123,16 +129,21 @@ class KustoConnectionStringBuilder(object):
         kcsb[kcsb.ValidKeywords.application_client_id] = aad_app_id
         kcsb[kcsb.ValidKeywords.application_certificate] = certificate
         kcsb[kcsb.ValidKeywords.application_certificate_thumbprint] = thumbprint
+        kcsb[kcsb.ValidKeywords.authority_id] = authority_id
+
         return kcsb
 
     @classmethod
-    def with_aad_device_authentication(cls, connection_string):
+    def with_aad_device_authentication(cls, connection_string, authority_id="common"):
         """Creates a KustoConnection string builder that will authenticate with AAD application and
         password.
         :param str connection_string: Kusto connection string should by of the format:
         https://<clusterName>.kusto.windows.net
         """
-        return cls(connection_string)
+        kcsb = cls(connection_string)
+        kcsb[kcsb.ValidKeywords.authority_id] = authority_id
+
+        return kcsb
 
     @property
     def data_source(self):
