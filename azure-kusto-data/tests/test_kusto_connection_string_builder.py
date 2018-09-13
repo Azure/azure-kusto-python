@@ -101,9 +101,9 @@ class KustoConnectionStringBuilderTests(unittest.TestCase):
         authority_id = "13456"
 
         kcsb = KustoConnectionStringBuilder.with_aad_user_password_authentication(
-                "localhost", user, password, authority_id
-            )
-    
+            "localhost", user, password, authority_id
+        )
+
         self.assertEqual(kcsb.data_source, "localhost")
         self.assertEqual(kcsb.aad_user_id, user)
         self.assertEqual(kcsb.password, password)
