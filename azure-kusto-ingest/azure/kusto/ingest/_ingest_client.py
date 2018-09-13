@@ -1,5 +1,3 @@
-"""Kusto ingest client for Python."""
-
 import base64
 import random
 import uuid
@@ -27,8 +25,7 @@ class KustoIngestClient(object):
         """Kusto Ingest Client constructor.
         :param kcsb: The connection string to initialize KustoClient.
         """
-        kusto_client = KustoClient(kcsb)
-        self._resource_manager = _ResourceManager(kusto_client)
+        self._resource_manager = _ResourceManager(KustoClient(kcsb))
 
     def ingest_from_dataframe(self, df, ingestion_properties):
         from pandas import DataFrame
