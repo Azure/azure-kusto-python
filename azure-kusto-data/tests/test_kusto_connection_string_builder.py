@@ -19,15 +19,12 @@ class KustoConnectionStringBuilderTests(unittest.TestCase):
         ]
 
         for kcsb in kcsbs:
-            self._validate_kcsb_without_credentials(kcsb, "localhost")
-
-    def _validate_kcsb_without_credentials(self, kcsb, data_source):
-        self.assertEqual(kcsb.data_source, data_source)
-        self.assertIsNone(kcsb.aad_user_id)
-        self.assertIsNone(kcsb.password)
-        self.assertIsNone(kcsb.application_client_id)
-        self.assertIsNone(kcsb.application_key)
-        self.assertIsNone(kcsb.authority_id)
+            self.assertEqual(kcsb.data_source, "localhost")
+            self.assertIsNone(kcsb.aad_user_id)
+            self.assertIsNone(kcsb.password)
+            self.assertIsNone(kcsb.application_client_id)
+            self.assertIsNone(kcsb.application_key)
+            self.assertEqual(kcsb.authority_id, "common")
 
     def test_aad_app(self):
         """Checks kcsb that is created with AAD application credentials."""
@@ -56,15 +53,12 @@ class KustoConnectionStringBuilderTests(unittest.TestCase):
         kcsbs.append(kcsb2)
 
         for kcsb in kcsbs:
-            self._validate_kcsb_with_aad_app(kcsb, "localhost", uuid, key)
-
-    def _validate_kcsb_with_aad_app(self, kcsb, data_source, app_id, key):
-        self.assertEqual(kcsb.data_source, data_source)
-        self.assertIsNone(kcsb.aad_user_id)
-        self.assertIsNone(kcsb.password)
-        self.assertEqual(kcsb.application_client_id, app_id)
-        self.assertEqual(kcsb.application_key, key)
-        self.assertIsNone(kcsb.authority_id)
+            self.assertEqual(kcsb.data_source, "localhost")
+            self.assertIsNone(kcsb.aad_user_id)
+            self.assertIsNone(kcsb.password)
+            self.assertEqual(kcsb.application_client_id, uuid)
+            self.assertEqual(kcsb.application_key, key)
+            self.assertEqual(kcsb.authority_id, "common")
 
     def test_aad_user(self):
         """Checks kcsb that is created with AAD user credentials."""
@@ -93,12 +87,26 @@ class KustoConnectionStringBuilderTests(unittest.TestCase):
         kcsbs.append(kcsb2)
 
         for kcsb in kcsbs:
-            self._validate_kcsb_with_aad_user(kcsb, "localhost", user, password)
+            self.assertEqual(kcsb.data_source, "localhost")
+            self.assertEqual(kcsb.aad_user_id, user)
+            self.assertEqual(kcsb.password, password)
+            self.assertIsNone(kcsb.application_client_id)
+            self.assertIsNone(kcsb.application_key)
+            self.assertEqual(kcsb.authority_id, "common")
 
-    def _validate_kcsb_with_aad_user(self, kcsb, data_source, user_id, password):
-        self.assertEqual(kcsb.data_source, data_source)
-        self.assertEqual(kcsb.aad_user_id, user_id)
+    def test_aad_user_with_authority(self):
+        """Checks kcsb that is created with AAD user credentials."""
+        user = "test2"
+        password = "Pa$$w0rd2"
+        authority_id = "13456"
+
+        kcsb = KustoConnectionStringBuilder.with_aad_user_password_authentication(
+            "localhost", user, password, authority_id
+        )
+
+        self.assertEqual(kcsb.data_source, "localhost")
+        self.assertEqual(kcsb.aad_user_id, user)
         self.assertEqual(kcsb.password, password)
         self.assertIsNone(kcsb.application_client_id)
         self.assertIsNone(kcsb.application_key)
-        self.assertIsNone(kcsb.authority_id)
+        self.assertEqual(kcsb.authority_id, authority_id)
