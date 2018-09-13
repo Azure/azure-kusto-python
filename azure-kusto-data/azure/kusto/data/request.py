@@ -63,7 +63,7 @@ class KustoConnectionStringBuilder(object):
         if connection_string is not None and "=" not in connection_string.partition(";")[0]:
             connection_string = "Data Source=" + connection_string
 
-        self[self.ValidKeywords.authority_id.value] = "common"
+        self[self.ValidKeywords.authority_id] = "common"
 
         for kvp_string in connection_string.split(";"):
             key, _, value = kvp_string.partition("=")
