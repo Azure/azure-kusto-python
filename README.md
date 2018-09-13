@@ -1,15 +1,16 @@
 # Microsoft Azure Kusto Library for Python
 [![](https://travis-ci.org/Azure/azure-kusto-python.svg?branch=master)](https://travis-ci.org/Azure/azure-kusto-python)
 
-*azure-kusto-data* Package provides the capability to query Kusto clusters with Python.<br>
-*azure-kusto-ingest* Package allows sending data to Kusto service - i.e. ingest data. 
+[*azure-kusto-data*]("https://github.com/Azure/azure-kusto-python/tree/master/azure-kusto-data") Package provides the capability to query Kusto clusters with Python.<br>
+[*azure-kusto-ingest*]("https://github.com/Azure/azure-kusto-python/tree/master/azure-kusto-ingest") Package allows sending data to Kusto service - i.e. ingest data. 
+
 
 ## Install
 ### Option 1: Via PyPi
 To install via the Python Package Index (PyPI), type:
 
-* pip install azure-kusto-data
-* pip install azure-kusto-ingest
+* `pip install azure-kusto-data`
+* `pip install azure-kusto-ingest`
 
 ### Option 2: Source Via Git
 To get the source code of the SDK via git just type:
@@ -24,6 +25,11 @@ python setup.py install
 
 ### Option 3: Source Zip
 Download a zip of the code via GitHub or PyPi. Then follow the same instructions in option 2.
+
+### Optionals:
+* [_Pandas_](http://pandas.pydata.org/) - Package provides extra functionality for use with pandas. Since these are optional dependencies, install with pandas:
+    * `pip install azure-kusto-data[pandas]`
+    * `pip install azure-kusto-ingest[pandas]`
 
 ## Minimum Requirements
 * Python 2.7, 3.4, 3.5, or 3.6.

@@ -1,3 +1,4 @@
+import pytest
 import os
 import unittest
 import json
@@ -7,6 +8,15 @@ from six import text_type
 import responses
 import io
 from azure.kusto.ingest import KustoIngestClient, IngestionProperties, DataFormat
+
+
+pandas_installed = False
+try:
+    import pandas
+
+    pandas_installed = True
+except:
+    pass
 
 
 UUID_REGEX = "[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}"
@@ -150,6 +160,7 @@ class KustoIngestClientTests(unittest.TestCase):
         )
 
     @responses.activate
+    @pytest.mark.skipif(not pandas_installed, reason="requires pandas")
     @patch("azure.kusto.data.security._AadHelper.acquire_token", return_value=None)
     @patch("azure.storage.blob.BlockBlobService.create_blob_from_path")
     @patch("azure.storage.queue.QueueService.put_message")

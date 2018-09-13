@@ -1,7 +1,6 @@
 """This module is serve as a cache to all resources needed by the kusto ingest client."""
 
 from datetime import datetime, timedelta
-
 from ._connection_string import _ConnectionString
 
 
@@ -51,18 +50,19 @@ class _ResourceManager(object):
             self._ingest_client_resources = self._get_ingest_client_resources_from_service()
             self._ingest_client_resources_last_update = datetime.utcnow()
 
-    def _get_resource_by_name(self, df, resource_name):
-        resource = df[df["ResourceTypeName"] == resource_name].StorageRoot.map(_ConnectionString.parse).tolist()
-        return resource
+    def _get_resource_by_name(self, table, resource_name):
+        return [
+            _ConnectionString.parse(row["StorageRoot"]) for row in table if row["ResourceTypeName"] == resource_name
+        ]
 
     def _get_ingest_client_resources_from_service(self):
-        df = self._kusto_client.execute("NetDefaultDB", ".get ingestion resources").primary_results[0].to_dataframe()
+        table = self._kusto_client.execute("NetDefaultDB", ".get ingestion resources").primary_results[0]
 
-        secured_ready_for_aggregation_queues = self._get_resource_by_name(df, "SecuredReadyForAggregationQueue")
-        failed_ingestions_queues = self._get_resource_by_name(df, "FailedIngestionsQueue")
-        successful_ingestions_queues = self._get_resource_by_name(df, "SuccessfulIngestionsQueue")
-        containers = self._get_resource_by_name(df, "TempStorage")
-        status_tables = self._get_resource_by_name(df, "IngestionsStatusTable")
+        secured_ready_for_aggregation_queues = self._get_resource_by_name(table, "SecuredReadyForAggregationQueue")
+        failed_ingestions_queues = self._get_resource_by_name(table, "FailedIngestionsQueue")
+        successful_ingestions_queues = self._get_resource_by_name(table, "SuccessfulIngestionsQueue")
+        containers = self._get_resource_by_name(table, "TempStorage")
+        status_tables = self._get_resource_by_name(table, "IngestionsStatusTable")
 
         return _IngestClientResources(
             secured_ready_for_aggregation_queues,

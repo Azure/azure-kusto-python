@@ -2,6 +2,7 @@
 
 from azure.kusto.data.request import KustoClient, KustoConnectionStringBuilder
 from azure.kusto.data.exceptions import KustoServiceError
+from azure.kusto.data.helpers import dataframe_from_result_table
 
 # TODO: this should become functional test at some point.
 
@@ -66,4 +67,4 @@ let max_t = datetime(2016-09-03);
 service_traffic
 | make-series num=count() on TimeStamp in range(max_t-5d, max_t, 1h) by OsVer
 """
-DATA_FRAME = KUSTO_CLIENT.execute_query("ML", QUERY).primary_results[0].to_dataframe()
+DATA_FRAME = dataframe_from_result_table(KUSTO_CLIENT.execute_query("ML", QUERY).primary_results[0])

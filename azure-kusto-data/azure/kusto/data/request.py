@@ -6,7 +6,7 @@ import requests
 
 from .security import _AadHelper
 from .exceptions import KustoServiceError
-from ._response import _KustoResponseDataSetV1, _KustoResponseDataSetV2
+from ._response import KustoResponseDataSetV1, KustoResponseDataSetV2
 from ._version import VERSION
 
 
@@ -291,9 +291,9 @@ class KustoClient(object):
                 return response.json()
 
             if endpoint.endswith("v2/rest/query"):
-                kusto_response = _KustoResponseDataSetV2(response.json())
+                kusto_response = KustoResponseDataSetV2(response.json())
             else:
-                kusto_response = _KustoResponseDataSetV1(response.json())
+                kusto_response = KustoResponseDataSetV1(response.json())
 
             if kusto_response.errors_count > 0 and not accept_partial_results:
                 raise KustoServiceError(kusto_response.get_exceptions(), response, kusto_response)

@@ -1,4 +1,4 @@
-"""All exceptions can be raised by kusto_ingest_client."""
+"""All exceptions can be raised by KustoIngestClient."""
 
 from azure.kusto.data.exceptions import KustoClientError
 

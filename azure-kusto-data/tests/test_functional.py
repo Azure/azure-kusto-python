@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from six import text_type
 from dateutil.tz.tz import tzutc
 
-from azure.kusto.data._response import _KustoResponseDataSetV2
+from azure.kusto.data._response import KustoResponseDataSetV2
 
 # Sample response against all tests should be run
 RESPONSE_TEXT = """
@@ -175,7 +175,7 @@ class FunctionalTests(unittest.TestCase):
 
     def test_valid_response(self):
         """Tests on happy path, validating response and iterations over it."""
-        response = _KustoResponseDataSetV2(json.loads(RESPONSE_TEXT))
+        response = KustoResponseDataSetV2(json.loads(RESPONSE_TEXT))
         # Test that basic iteration works
         self.assertEqual(len(response), 3)
         self.assertEqual(len(list(response.primary_results[0])), 3)
@@ -221,18 +221,18 @@ class FunctionalTests(unittest.TestCase):
 
     def test_invalid_table(self):
         """Tests calling of table with index that doesn't exists."""
-        response = _KustoResponseDataSetV2(json.loads(RESPONSE_TEXT))
+        response = KustoResponseDataSetV2(json.loads(RESPONSE_TEXT))
         self.assertRaises(IndexError, response.__getitem__, 7)
         self.assertRaises(IndexError, response.__getitem__, -6)
 
     def test_column_dont_exist(self):
         """Tests accessing column that doesn't exists."""
-        response = _KustoResponseDataSetV2(json.loads(RESPONSE_TEXT))
+        response = KustoResponseDataSetV2(json.loads(RESPONSE_TEXT))
         row = response.primary_results[0][0]
         self.assertRaises(IndexError, row.__getitem__, 10)
         self.assertRaises(LookupError, row.__getitem__, "NonexistentColumn")
 
     def test_iterating_after_end(self):
         """Tests StopIteration is raised when the response ends."""
-        response = _KustoResponseDataSetV2(json.loads(RESPONSE_TEXT))
+        response = KustoResponseDataSetV2(json.loads(RESPONSE_TEXT))
         self.assertEqual(sum(1 for _ in response.primary_results[0]), 3)
