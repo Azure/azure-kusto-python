@@ -1,21 +1,72 @@
-"""Sample how to use Kusto Ingest client"""
+"""Samples on how to use Kusto Ingest client. Just Replace variables and run!"""
 
 from azure.kusto.data.request import KustoConnectionStringBuilder
 from azure.kusto.ingest import KustoIngestClient, IngestionProperties, FileDescriptor, BlobDescriptor, DataFormat
 
-INGESTION_PROPERTIES = IngestionProperties(database="database name", table="table name", dataFormat=DataFormat.csv)
+ingestion_props = IngestionProperties(database="{database_name}", table="{table_name}", dataFormat=DataFormat.csv)
+client = KustoIngestClient("https://ingest-{cluster_name}.kusto.windows.net")
 
-INGEST_CLIENT = KustoIngestClient("https://ingest-<clustername>.kusto.windows.net")
+# there are more options for authenticating - see azure-kusto-data samples
 
-KCSB = KustoConnectionStringBuilder.with_aad_application_key_authentication(
-    "https://ingest-<clustername>.kusto.windows.net", "aad app id", "secret"
-)
-INGEST_CLIENT = KustoIngestClient(KCSB)
+##################################################################
+##                        INGESTION                             ##
+##################################################################
 
-FILE_DESCRIPTOR = FileDescriptor("E:\\filePath.csv", 3333)  # 3333 is the raw size of the data in bytes.
-INGEST_CLIENT.ingest_from_file(FILE_DESCRIPTOR, ingestion_properties=INGESTION_PROPERTIES)
 
-INGEST_CLIENT.ingest_from_file("E:\\filePath.csv", ingestion_properties=INGESTION_PROPERTIES)
+# ingest from file
+file_descriptor = FileDescriptor("{filename}.csv", 3333)  # 3333 is the raw size of the data in bytes.
+client.ingest_from_file(file_descriptor, ingestion_properties=ingestion_props)
+client.ingest_from_file("{filename}.csv", ingestion_properties=ingestion_props)
 
-BLOB_DESCRIPTOR = BlobDescriptor("https://path-to-blob.csv.gz?sas", 10)  # 10 is the raw size of the data in bytes.
-INGEST_CLIENT.ingest_from_blob(BLOB_DESCRIPTOR, ingestion_properties=INGESTION_PROPERTIES)
+
+# ingest from blob
+blob_descriptor = BlobDescriptor("https://{path_to_blob}.csv.gz?sas", 10)  # 10 is the raw size of the data in bytes.
+client.ingest_from_blob(blob_descriptor, ingestion_properties=ingestion_props)
+
+# ingest from dataframe
+import pandas
+
+fields = ["id", "name", "value"]
+rows = [[1, "abc", 15.3], [2, "cde", 99.9]]
+
+df = pandas.DataFrame(data=rows, columns=fields)
+
+client.ingest_from_dataframe(df, ingestion_properties=ingestion_props)
+
+##################################################################
+##                        INGESTION STATUS                      ##
+##################################################################
+
+# if status updates are required, something like this can be done
+import pprint
+import time
+from azure.kusto.ingest.status import KustoIngestStatusQueues
+
+qs = KustoIngestStatusQueues(client)
+
+MAX_BACKOFF = 180
+
+backoff = 1
+while True:
+    if qs.success.is_empty() and qs.failure.is_empty():
+        time.sleep(backoff)
+        backoff = min(backoff * 2, MAX_BACKOFF)
+        print("No new messages. backing off for {} seconds".format(backoff))
+        continue
+
+    backoff = 1
+
+    success_messages = qs.success.pop(10)
+    failure_messages = qs.failure.pop(10)
+
+    pprint.pprint("SUCCESS : {}".format(success_messages))
+    pprint.pprint("FAILURE : {}".format(failure_messages))
+
+    # you can of course separate them and dump them into a file for follow up investigations
+    with open("successes.log", "w+") as sf:
+        for sm in success_messages:
+            sf.write(str(sm))
+
+    with open("failures.log", "w+") as ff:
+        for fm in failure_messages:
+            ff.write(str(fm))

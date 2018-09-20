@@ -22,9 +22,6 @@ class _IngestionBlobInfo:
         self.properties["ReportMethod"] = ingestion_properties.report_method.value
         self.properties["SourceMessageCreationTime"] = datetime.utcnow().isoformat()
         self.properties["Id"] = text_type(uuid.uuid4())
-        # TODO: Add support for ingestion statuses
-        # self.properties["IngestionStatusInTable"] = None
-        # self.properties["BlobPathEncrypted"] = None
         additional_properties = ingestion_properties.additional_properties or {}
         additional_properties["authorizationContext"] = auth_context
 
