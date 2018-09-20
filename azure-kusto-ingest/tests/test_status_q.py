@@ -100,7 +100,7 @@ class StatusQTests(unittest.TestCase):
                         "ShouldRetry": False,
                     }
 
-                m.content = base64.b64encode(json.dumps(content).encode("utf-8")).decode("utf-8")
+                m.content = str(base64.b64encode(json.dumps(content).encode("utf-8")).decode("utf-8"))
                 m.pop_receipt = None
                 m.time_next_visible = None
 
@@ -188,7 +188,7 @@ class StatusQTests(unittest.TestCase):
                         "ShouldRetry": False,
                     }
 
-                m.content = base64.b64encode(json.dumps(content).encode("utf-8")).decode("utf-8")
+                m.content = str(base64.b64encode(json.dumps(content).encode("utf-8")).decode("utf-8"))
                 m.pop_receipt = None
                 m.time_next_visible = None
 
