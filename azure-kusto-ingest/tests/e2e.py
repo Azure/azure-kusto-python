@@ -1,5 +1,5 @@
 """E2E tests for ingest_client."""
-
+import pytest
 import time
 import os
 from six import text_type
@@ -89,6 +89,7 @@ ingest_status_q = KustoIngestStatusQueues(ingest_client)
 client.execute("PythonTest", ".drop table Deft ifexists")
 
 
+@pytest.mark.run(order=1)
 def test_csv_ingest_non_existing_table():
     csv_ingest_props = IngestionProperties(
         "PythonTest",
@@ -129,6 +130,7 @@ json_file_path = os.path.join(os.getcwd(), "azure-kusto-ingest", "tests", "input
 zipped_json_file_path = os.path.join(os.getcwd(), "azure-kusto-ingest", "tests", "input", "dataset.jsonz.gz")
 
 
+@pytest.mark.run(order=2)
 def test_json_ingest_exisiting_table():
     json_ingestion_props = IngestionProperties(
         "PythonTest",
@@ -164,6 +166,7 @@ def test_json_ingest_exisiting_table():
         assert int(row["Count"]) == 24, "Deft | count = " + text_type(row["Count"])
 
 
+@pytest.mark.run(order=3)
 def test_ingest_complicated_props():
     # Test ingest with complicated ingestion properties
     validation_policy = ValidationPolicy(
@@ -210,6 +213,7 @@ def test_ingest_complicated_props():
         assert int(row["Count"]) == 28, "Deft | count = " + str(row["Count"])
 
 
+@pytest.mark.run(order=4)
 def test_json_ingestion_ingest_by_tag():
     json_ingestion_props = IngestionProperties(
         "PythonTest",
@@ -246,9 +250,14 @@ def test_json_ingestion_ingest_by_tag():
         assert int(row["Count"]) == 28, "Deft | count = " + text_type(row["Count"])
 
 
+@pytest.mark.run(order=5)
 def test_tsv_ingestion_csv_mapping():
     tsv_ingestion_props = IngestionProperties(
-        "PythonTest", "Deft", dataFormat=DataFormat.tsv, mapping=Helpers.create_deft_table_csv_mappings()
+        "PythonTest",
+        "Deft",
+        dataFormat=DataFormat.tsv,
+        mapping=Helpers.create_deft_table_csv_mappings(),
+        reportLevel=ReportLevel.FailuresAndSuccesses,
     )
     tsv_file_path = os.path.join(os.getcwd(), "azure-kusto-ingest", "tests", "input", "dataset.tsv")
 

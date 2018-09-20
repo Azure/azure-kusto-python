@@ -36,7 +36,7 @@ class StatusQueue(object):
         return not self.peek(1, raw=True)
 
     def decode_content(self, content):
-        return base64.b64decode(content)
+        return base64.b64decode(content).decode("utf-8")
 
     def deserialize_message(self, m):
         """Deserialize a message and return at as `message_cls`

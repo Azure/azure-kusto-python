@@ -18,10 +18,10 @@ class StatusMessage(object):
 
     _raw = None
 
-    def __init__(self, str):
-        self._raw = str
+    def __init__(self, s):
+        self._raw = s
 
-        o = json.loads(str)
+        o = json.loads(s)
         for key, value in six.iteritems(o):
             if hasattr(self, key):
                 try:

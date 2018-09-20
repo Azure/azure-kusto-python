@@ -1,9 +1,23 @@
 """Samples on how to use Kusto Ingest client. Just Replace variables and run!"""
 
 from azure.kusto.data.request import KustoConnectionStringBuilder
-from azure.kusto.ingest import KustoIngestClient, IngestionProperties, FileDescriptor, BlobDescriptor, DataFormat
+from azure.kusto.ingest import (
+    KustoIngestClient,
+    IngestionProperties,
+    FileDescriptor,
+    BlobDescriptor,
+    DataFormat,
+    ReportLevel,
+)
 
-ingestion_props = IngestionProperties(database="{database_name}", table="{table_name}", dataFormat=DataFormat.csv)
+# there are a lot of useful properties, make sure to go over docs and check them out
+ingestion_props = IngestionProperties(
+    database="{database_name}",
+    table="{table_name}",
+    dataFormat=DataFormat.csv,
+    # incase status update for success are also required
+    # reportLevel=ReportLevel.FailuresAndSuccesses,
+)
 client = KustoIngestClient("https://ingest-{cluster_name}.kusto.windows.net")
 
 # there are more options for authenticating - see azure-kusto-data samples
@@ -48,6 +62,10 @@ MAX_BACKOFF = 180
 
 backoff = 1
 while True:
+    ################### NOTICE ####################
+    # in order to get success status updates,
+    # make sure ingestion properties set the
+    # reportLevel=ReportLevel.FailuresAndSuccesses.
     if qs.success.is_empty() and qs.failure.is_empty():
         time.sleep(backoff)
         backoff = min(backoff * 2, MAX_BACKOFF)
