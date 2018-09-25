@@ -1,3 +1,5 @@
+"""Convertion utils"""
+
 import dateutil
 from datetime import timedelta
 import re

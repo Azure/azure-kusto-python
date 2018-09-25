@@ -1,7 +1,27 @@
 """This module is serve as a cache to all resources needed by the kusto ingest client."""
 
 from datetime import datetime, timedelta
-from ._connection_string import _ConnectionString
+import re
+
+_URI_FORMAT = re.compile("https://(\\w+).(queue|blob|table).core.windows.net/([\\w,-]+)\\?(.*)")
+
+
+class _ResourceUri:
+    def __init__(self, storage_account_name, object_type, object_name, sas):
+        self.storage_account_name = storage_account_name
+        self.object_type = object_type
+        self.object_name = object_name
+        self.sas = sas
+
+    @classmethod
+    def parse(cls, uri):
+        """Parses uri into a ResourceUri object"""
+        match = _URI_FORMAT.search(uri)
+        return cls(match.group(1), match.group(2), match.group(3), match.group(4))
+
+    def to_string(self):
+        """Stringify the resource uri instance"""
+        return "https://{0.storage_account_name}.{0.object_type}.core.windows.net/{0.object_name}?{0.sas}".format(self)
 
 
 class _IngestClientResources(object):
@@ -51,9 +71,7 @@ class _ResourceManager(object):
             self._ingest_client_resources_last_update = datetime.utcnow()
 
     def _get_resource_by_name(self, table, resource_name):
-        return [
-            _ConnectionString.parse(row["StorageRoot"]) for row in table if row["ResourceTypeName"] == resource_name
-        ]
+        return [_ResourceUri.parse(row["StorageRoot"]) for row in table if row["ResourceTypeName"] == resource_name]
 
     def _get_ingest_client_resources_from_service(self):
         table = self._kusto_client.execute("NetDefaultDB", ".get ingestion resources").primary_results[0]

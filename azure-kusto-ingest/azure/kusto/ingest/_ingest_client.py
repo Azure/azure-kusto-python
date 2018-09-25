@@ -1,4 +1,4 @@
-"""Kusto ingest client for Python."""
+"""Kusto Ingest Client"""
 
 import base64
 import random
@@ -27,10 +27,15 @@ class KustoIngestClient(object):
         """Kusto Ingest Client constructor.
         :param kcsb: The connection string to initialize KustoClient.
         """
-        kusto_client = KustoClient(kcsb)
-        self._resource_manager = _ResourceManager(kusto_client)
+        self._resource_manager = _ResourceManager(KustoClient(kcsb))
 
     def ingest_from_dataframe(self, df, ingestion_properties):
+        """Enqueuing an ingest command from local files.
+        :param pandas.DataFrame df: input dataframe to ingest.
+        :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
+        
+        """
+
         from pandas import DataFrame
 
         if not isinstance(df, DataFrame):
@@ -67,6 +72,7 @@ class KustoIngestClient(object):
         """Enqueuing an ingest command from local files.
         :param files: List of FileDescriptor or file paths. The list of files to be ingested.
         :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
+       
         """
         file_descriptors = list()
         containers = self._resource_manager.get_containers()

@@ -39,7 +39,7 @@ class IngestionBlobInfoTest(unittest.TestCase):
             dropByTags=["dropByTags"],
             flushImmediately=True,
             reportLevel=ReportLevel.DoNotReport,
-            reportMethod=ReportMethod.QueueAndTable,
+            reportMethod=ReportMethod.Queue,
             validationPolicy=validation_policy,
         )
         blob = BlobDescriptor("somepath", 10)
@@ -62,7 +62,7 @@ class IngestionBlobInfoTest(unittest.TestCase):
             dropByTags=["dropByTags"],
             flushImmediately=True,
             reportLevel=ReportLevel.DoNotReport,
-            reportMethod=ReportMethod.QueueAndTable,
+            reportMethod=ReportMethod.Queue,
             validationPolicy=validation_policy,
         )
         blob = BlobDescriptor("somepath", 10)
@@ -85,7 +85,7 @@ class IngestionBlobInfoTest(unittest.TestCase):
             dropByTags=["dropByTags"],
             flushImmediately=True,
             reportLevel=ReportLevel.DoNotReport,
-            reportMethod=ReportMethod.QueueAndTable,
+            reportMethod=ReportMethod.Queue,
             validationPolicy=validation_policy,
         )
         blob = BlobDescriptor("somepath", 10)
@@ -108,7 +108,7 @@ class IngestionBlobInfoTest(unittest.TestCase):
             dropByTags=["dropByTags"],
             flushImmediately=True,
             reportLevel=ReportLevel.DoNotReport,
-            reportMethod=ReportMethod.QueueAndTable,
+            reportMethod=ReportMethod.Queue,
             validationPolicy=validation_policy,
         )
         blob = BlobDescriptor("somepath", 10)

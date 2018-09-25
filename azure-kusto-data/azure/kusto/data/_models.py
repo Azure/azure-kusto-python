@@ -1,3 +1,5 @@
+"""Kusto Data Models"""
+
 import json
 import six
 from enum import Enum

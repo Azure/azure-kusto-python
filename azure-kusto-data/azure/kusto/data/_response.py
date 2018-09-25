@@ -1,12 +1,11 @@
 """This module constains all classes to get Kusto responses. Including error handling."""
+
 import json
 
 from datetime import timedelta
 from abc import ABCMeta, abstractmethod
 
 import six
-
-import dateutil.parser
 
 from ._models import KustoResultColumn, KustoResultRow, KustoResultTable, WellKnownDataSet
 
