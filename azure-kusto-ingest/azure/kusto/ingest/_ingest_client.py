@@ -1,3 +1,5 @@
+"""Kusto Ingest Client"""
+
 import base64
 import random
 import uuid

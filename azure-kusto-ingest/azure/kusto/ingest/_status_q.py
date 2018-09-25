@@ -1,5 +1,6 @@
-from azure.storage.common import CloudStorageAccount
+"""Status Queue logic to wrap over Azure Storage Queues"""
 import base64
+from azure.storage.common import CloudStorageAccount
 
 
 class QueueDetails(object):
@@ -44,8 +45,8 @@ class StatusQueue(object):
         """
         return self.message_cls(self.decode_content(m.content))
 
-    # TODO: current implemtation takes a union top n /  len(queues), which is not ideal,
-    # becuase the user is not supposed to know that there can be multiple underlying queues
+    # TODO: current implementation takes a union top n /  len(queues), which is not ideal,
+    # because the user is not supposed to know that there can be multiple underlying queues
     def peek(self, n=1, raw=False):
         """Peek at status queue
         :param int n: number of messages to return as part of peek.
@@ -68,8 +69,8 @@ class StatusQueue(object):
         # because we ask for n / len(qs) + 1, we might get more message then requests
         return result[:n]
 
-    # TODO: current implemtation takes a union top n /  len(queues), which is not ideal,
-    # becuase the user is not supposed to know that there can be multiple underlying queues
+    # TODO: current implementation takes a union top n /  len(queues), which is not ideal,
+    # because the user is not supposed to know that there can be multiple underlying queues
     def pop(self, n=1, raw=False, delete=True):
         """Pop status queue
         :param int n: number of messages to return as part of peek.
