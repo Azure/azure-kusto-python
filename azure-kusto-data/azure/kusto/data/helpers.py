@@ -1,5 +1,6 @@
 """Kusto helper functions"""
 
+
 def dataframe_from_result_table(table, raise_errors=True):
     import pandas
     import json

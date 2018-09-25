@@ -128,15 +128,16 @@ class StatusQTests(unittest.TestCase):
 
             assert len(peek_failure_actual) == 6
 
-            assert mocked_q_peek_messages.call_count == 3
-            assert mocked_q_peek_messages.call_args_list[0][0][0] == fake_success_queue.object_name
-            assert mocked_q_peek_messages.call_args_list[0][1]["num_messages"] == 2
+            actual = {}
 
-            assert mocked_q_peek_messages.call_args_list[1][0][0] == fake_failed_queue1.object_name
-            assert mocked_q_peek_messages.call_args_list[1][1]["num_messages"] == 4
+            assert len(mocked_q_peek_messages.call_args_list) == 3
 
-            assert mocked_q_peek_messages.call_args_list[2][0][0] == fake_failed_queue2.object_name
-            assert mocked_q_peek_messages.call_args_list[2][1]["num_messages"] == 4
+            for call_args in mocked_q_peek_messages.call_args_list:
+                actual[call_args[0][0]] = actual.get(call_args[0][0], 0) + call_args[1]["num_messages"]
+
+            assert actual[fake_failed_queue2.object_name] == 4
+            assert actual[fake_failed_queue1.object_name] == 4
+            assert actual[fake_success_queue.object_name] == 2
 
     @mock.patch("azure.storage.queue.QueueService.get_messages")
     @mock.patch("azure.storage.queue.QueueService.delete_message")
@@ -223,8 +224,94 @@ class StatusQTests(unittest.TestCase):
             assert mocked_q_get_messages.call_args_list[0][0][0] == fake_success_queue.object_name
             assert mocked_q_get_messages.call_args_list[0][1]["num_messages"] == 2
 
-            assert mocked_q_get_messages.call_args_list[1][0][0] == fake_failed_queue1.object_name
-            assert mocked_q_get_messages.call_args_list[1][1]["num_messages"] == 4
+            actual = {
+                mocked_q_get_messages.call_args_list[1][0][0]: mocked_q_get_messages.call_args_list[1][1][
+                    "num_messages"
+                ],
+                mocked_q_get_messages.call_args_list[2][0][0]: mocked_q_get_messages.call_args_list[2][1][
+                    "num_messages"
+                ],
+            }
 
-            assert mocked_q_get_messages.call_args_list[2][0][0] == fake_failed_queue2.object_name
-            assert mocked_q_get_messages.call_args_list[2][1]["num_messages"] == 4
+            assert actual[fake_failed_queue2.object_name] == 4
+            assert actual[fake_failed_queue1.object_name] == 4
+
+    @mock.patch("azure.storage.queue.QueueService.get_messages")
+    @mock.patch("azure.storage.queue.QueueService.delete_message")
+    def test_pop_unbalanced_queues(self, mocked_q_del_messages, mocked_q_get_messages):
+        client = KustoIngestClient("some-cluster")
+        with mock.patch.object(
+            client._resource_manager, "get_successful_ingestions_queues"
+        ) as mocked_get_success_qs, mock.patch.object(
+            client._resource_manager, "get_failed_ingestions_queues"
+        ) as mocked_get_failed_qs:
+
+            fake_failed_queue1 = _ResourceUri("mocked_storage_account_f1", "queue", "mocked_qf_1_name", "mocked_sas")
+            fake_failed_queue2 = _ResourceUri("mocked_storage_account_f2", "queue", "mocked_qf_2_name", "mocked_sas")
+
+            mocked_get_failed_qs.return_value = [fake_failed_queue1, fake_failed_queue2]
+
+            def mock_message(success):
+                m = QueueMessage()
+                m.id = uuid4()
+                m.insertion_time = time.time()
+                m.expiration_time = None
+                m.dequeue_count = None
+
+                if success:
+                    content = {
+                        "OperationId": str(m.id),
+                        "Database": "db1",
+                        "Table": "table1",
+                        "IngestionSourceId": str(m.id),
+                        "IngestionSourcePath": "blob/path",
+                        "RootActivityId": "1",
+                        "SucceededOn": time.time(),
+                    }
+                else:
+                    content = {
+                        "OperationId": str(m.id),
+                        "Database": "db1",
+                        "Table": "table1",
+                        "IngestionSourceId": str(m.id),
+                        "IngestionSourcePath": "blob/path",
+                        "RootActivityId": "1",
+                        "FailedOn": time.time(),
+                        "Details": "",
+                        "ErrorCode": "1",
+                        "FailureStatus": "",
+                        "OriginatesFromUpdatePolicy": "",
+                        "ShouldRetry": False,
+                    }
+
+                m.content = str(base64.b64encode(json.dumps(content).encode("utf-8")).decode("utf-8"))
+                m.pop_receipt = None
+                m.time_next_visible = None
+
+                return m
+
+            mocked_q_get_messages.side_effect = (
+                lambda queue_name, num_messages=1: [mock_message(success=True) for i in range(0, num_messages)]
+                if queue_name == fake_failed_queue1.object_name
+                else []
+            )
+
+            mocked_q_del_messages.return_value = None
+
+            qs = KustoIngestStatusQueues(client)
+
+            get_failure_actual = qs.failure.pop(6)
+
+            assert len(get_failure_actual) == 6
+
+            for m in get_failure_actual:
+                assert isinstance(m, FailureMessage) == True
+
+            assert mocked_q_get_messages.call_count == 3
+
+            actual = {}
+
+            for call_args in mocked_q_get_messages.call_args_list:
+                actual[call_args[0][0]] = actual.get(call_args[0][0], 0) + call_args[1]["num_messages"]
+
+            assert actual[fake_failed_queue2.object_name] + actual[fake_failed_queue1.object_name] == (4 + 4 + 6)
