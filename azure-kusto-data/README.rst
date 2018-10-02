@@ -11,8 +11,10 @@ Overview
     cluster = "<insert here your cluster name>"
     client_id = "<insert here your AAD application id>"
     client_secret = "<insert here your AAD application key>"
+    # https://docs.microsoft.com/en-us/onedrive/find-your-office-365-tenant-id
+    tenant_id ="<insert you tenant id>"
 
-    kcsb = KustoConnectionStringBuilder.with_aad_application_key_authentication(KUSTO_CLUSTER, CLIENT_ID, CLIENT_SECRET)
+    kcsb = KustoConnectionStringBuilder.with_aad_application_key_authentication(cluster, client_id, client_secret, tenant_id)
     client = KustoClient(kcsb)
 
     db = "Samples"
