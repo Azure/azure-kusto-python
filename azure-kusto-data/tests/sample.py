@@ -56,7 +56,7 @@ with open("results.json", "w+") as f:
 
 # we also support dataframes:
 
-dataframe = dataframe_from_result_table(response)
+dataframe = dataframe_from_result_table(response.primary_results[0])
 
 print(dataframe)
 
