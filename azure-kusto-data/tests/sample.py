@@ -52,10 +52,9 @@ for row in response.primary_results[0]:
 
 # tables are serializeable, so:
 with open("results.json", "w+") as f:
-    response.primary_results[0].to_json()
+    f.write(str(response.primary_results[0]))
 
 # we also support dataframes:
-
 dataframe = dataframe_from_result_table(response.primary_results[0])
 
 print(dataframe)
