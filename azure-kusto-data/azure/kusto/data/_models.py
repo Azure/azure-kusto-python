@@ -110,4 +110,7 @@ class KustoResultTable(object):
         return {"name": self.table_name, "kind": self.table_kind, "data": [r.to_dict() for r in self]}
 
     def __str__(self):
-        return json.dumps(self.to_dict())
+        d = self.to_dict()
+        # enum is not serializable, using value instead
+        d["kind"] = d["kind"].value
+        return json.dumps(d)
