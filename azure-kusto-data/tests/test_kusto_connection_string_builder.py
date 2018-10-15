@@ -31,25 +31,41 @@ class KustoConnectionStringBuilderTests(unittest.TestCase):
         uuid = str(uuid4())
         key = "key of application"
         kcsbs = [
-            KustoConnectionStringBuilder("localhost;Application client Id={0};application Key={1}".format(uuid, key)),
             KustoConnectionStringBuilder(
-                "Data Source=localhost ; Application Client Id={0}; Appkey ={1}".format(uuid, key)
+                "localhost;Application client Id={0};application Key={1};Authority Id={2}".format(
+                    uuid, key, "microsoft.com"
+                )
             ),
-            KustoConnectionStringBuilder(" Addr = localhost ; AppClientId = {0} ; AppKey ={1}".format(uuid, key)),
             KustoConnectionStringBuilder(
-                "Network Address = localhost; AppClientId = {0} ; AppKey ={1}".format(uuid, key)
+                "Data Source=localhost ; Application Client Id={0}; Appkey ={1};Authority Id= {2}".format(
+                    uuid, key, "microsoft.com"
+                )
             ),
-            KustoConnectionStringBuilder.with_aad_application_key_authentication("localhost", uuid, key),
+            KustoConnectionStringBuilder(
+                " Addr = localhost ; AppClientId = {0} ; AppKey ={1}; Authority Id={2}".format(
+                    uuid, key, "microsoft.com"
+                )
+            ),
+            KustoConnectionStringBuilder(
+                "Network Address = localhost; AppClientId = {0} ; AppKey ={1};AuthorityId={2}".format(
+                    uuid, key, "microsoft.com"
+                )
+            ),
+            KustoConnectionStringBuilder.with_aad_application_key_authentication(
+                "localhost", uuid, key, "microsoft.com"
+            ),
         ]
 
         kcsb1 = KustoConnectionStringBuilder("server=localhost")
         kcsb1[KustoConnectionStringBuilder.ValidKeywords.application_client_id] = uuid
         kcsb1[KustoConnectionStringBuilder.ValidKeywords.application_key] = key
+        kcsb1[KustoConnectionStringBuilder.ValidKeywords.authority_id] = "microsoft.com"
         kcsbs.append(kcsb1)
 
         kcsb2 = KustoConnectionStringBuilder("Server=localhost")
         kcsb2["AppclientId"] = uuid
         kcsb2["Application key"] = key
+        kcsb2["Authority Id"] = "microsoft.com"
         kcsbs.append(kcsb2)
 
         for kcsb in kcsbs:
@@ -58,7 +74,7 @@ class KustoConnectionStringBuilderTests(unittest.TestCase):
             self.assertIsNone(kcsb.password)
             self.assertEqual(kcsb.application_client_id, uuid)
             self.assertEqual(kcsb.application_key, key)
-            self.assertEqual(kcsb.authority_id, "common")
+            self.assertEqual(kcsb.authority_id, "microsoft.com")
 
     def test_aad_user(self):
         """Checks kcsb that is created with AAD user credentials."""
