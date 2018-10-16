@@ -56,6 +56,12 @@ class KustoConnectionStringBuilderTests(unittest.TestCase):
             ),
         ]
 
+        try:
+            KustoConnectionStringBuilder.with_aad_application_key_authentication("localhost", uuid, key, None)
+        except Exception as e:
+            # make sure error is raised when authoriy_id i none
+            assert isinstance(e, ValueError) == True
+
         kcsb1 = KustoConnectionStringBuilder("server=localhost")
         kcsb1[KustoConnectionStringBuilder.ValidKeywords.application_client_id] = uuid
         kcsb1[KustoConnectionStringBuilder.ValidKeywords.application_key] = key
