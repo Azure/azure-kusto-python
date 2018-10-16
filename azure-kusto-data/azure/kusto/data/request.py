@@ -96,16 +96,16 @@ class KustoConnectionStringBuilder(object):
         return kcsb
 
     @classmethod
-    def with_aad_application_key_authentication(cls, connection_string, aad_app_id, app_key, authority_id="common"):
-        """Creates a KustoConnection string builder that will authenticate with AAD application and
-        password.
+    def with_aad_application_key_authentication(cls, connection_string, aad_app_id, app_key, authority_id):
+        """Creates a KustoConnection string builder that will authenticate with AAD application and key.
         :param str connection_string: Kusto connection string should by of the format: https://<clusterName>.kusto.windows.net
         :param str aad_app_id: AAD application ID.
-        :param str app_key: Corresponding password of the AAD application.
-        :param str authority_id: optional param. defaults to "common"
+        :param str app_key: Corresponding key of the AAD application.
+        :param str authority_id: Authority id (aka Tenant id) must be provided
         """
         _assert_value_is_valid(aad_app_id)
         _assert_value_is_valid(app_key)
+        _assert_value_is_valid(authority_id)
         kcsb = cls(connection_string)
         kcsb[kcsb.ValidKeywords.application_client_id] = aad_app_id
         kcsb[kcsb.ValidKeywords.application_key] = app_key
@@ -115,7 +115,7 @@ class KustoConnectionStringBuilder(object):
 
     @classmethod
     def with_aad_application_certificate_authentication(
-        cls, connection_string, aad_app_id, certificate, thumbprint, authority_id="common"
+        cls, connection_string, aad_app_id, certificate, thumbprint, authority_id
     ):
         """Creates a KustoConnection string builder that will authenticate with AAD application and
         a certificate credentials.
@@ -124,11 +124,12 @@ class KustoConnectionStringBuilder(object):
         :param str aad_app_id: AAD application ID.
         :param str certificate: A PEM encoded certificate private key.
         :param str thumbprint: hex encoded thumbprint of the certificate.
-        :param str authority_id: optional param. defaults to "common"
+        :param str authority_id: Authority id (aka Tenant id) must be provided
         """
         _assert_value_is_valid(aad_app_id)
         _assert_value_is_valid(certificate)
         _assert_value_is_valid(thumbprint)
+        _assert_value_is_valid(authority_id)
         kcsb = cls(connection_string)
         kcsb[kcsb.ValidKeywords.application_client_id] = aad_app_id
         kcsb[kcsb.ValidKeywords.application_certificate] = certificate

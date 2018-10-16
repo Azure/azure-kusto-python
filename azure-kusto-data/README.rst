@@ -11,8 +11,9 @@ Overview
     cluster = "<insert here your cluster name>"
     client_id = "<insert here your AAD application id>"
     client_secret = "<insert here your AAD application key>"
+    authority_id = "<insert here your AAD tenet id>"
 
-    kcsb = KustoConnectionStringBuilder.with_aad_application_key_authentication(KUSTO_CLUSTER, CLIENT_ID, CLIENT_SECRET)
+    kcsb = KustoConnectionStringBuilder.with_aad_application_key_authentication(cluster, client_id, client_secret, authority_id)
     client = KustoClient(kcsb)
 
     db = "Samples"

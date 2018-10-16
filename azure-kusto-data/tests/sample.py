@@ -14,10 +14,12 @@ cluster = "https://help.kusto.windows.net"
 client_id = "<insert here your AAD application id>"
 client_secret = "<insert here your AAD application key>"
 
-kcsb = KustoConnectionStringBuilder.with_aad_application_key_authentication(cluster, client_id, client_secret)
-# NOTE: it is possible to pass in an authority_id to all auth methods as well (defaults to common):
 # read more at https://docs.microsoft.com/en-us/onedrive/find-your-office-365-tenant-id
-# kcsb = KustoConnectionStringBuilder.with_aad_application_key_authentication(cluster, client_id, client_secret, authority_id)
+authority_id = "<insert here your tenant id>"
+
+kcsb = KustoConnectionStringBuilder.with_aad_application_key_authentication(
+    cluster, client_id, client_secret, authority_id
+)
 
 # In case you want to authenticate with AAD application certificate.
 filename = "path to a PEM certificate"
@@ -25,7 +27,9 @@ with open(filename, "r") as pem_file:
     PEM = pem_file.read()
 
 thumbprint = "certificate's thumbprint"
-kcsb = KustoConnectionStringBuilder.with_aad_application_certificate_authentication(cluster, client_id, PEM, thumbprint)
+kcsb = KustoConnectionStringBuilder.with_aad_application_certificate_authentication(
+    cluster, client_id, PEM, thumbprint, authority_id
+)
 
 client = KustoClient(kcsb)
 
