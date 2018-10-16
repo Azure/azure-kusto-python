@@ -15,7 +15,7 @@ client_id = "<insert here your AAD application id>"
 client_secret = "<insert here your AAD application key>"
 
 # read more at https://docs.microsoft.com/en-us/onedrive/find-your-office-365-tenant-id
-authority_id = "<insert here your tenet id>"
+authority_id = "<insert here your tenant id>"
 
 kcsb = KustoConnectionStringBuilder.with_aad_application_key_authentication(
     cluster, client_id, client_secret, authority_id
