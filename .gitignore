@@ -301,3 +301,6 @@ build/
 
 # VS code files
 .vscode*
+
+#mypy files
+.mypy*
