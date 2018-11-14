@@ -49,6 +49,7 @@ client.ingest_from_dataframe(df, ingestion_properties=ingestion_props)
 
 # ingest a whole folder.
 import os
+
 path = "folder/path"
 [client.ingest_from_file(f, ingestion_properties=ingestion_props) for f in os.listdir(path)]
 
