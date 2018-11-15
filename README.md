@@ -2,8 +2,11 @@
 [![](https://travis-ci.org/Azure/azure-kusto-python.svg?branch=master)](https://travis-ci.org/Azure/azure-kusto-python)
 
 [*azure-kusto-data*]("https://github.com/Azure/azure-kusto-python/tree/master/azure-kusto-data") Package provides the capability to query Kusto clusters with Python.<br>
-[*azure-kusto-ingest*]("https://github.com/Azure/azure-kusto-python/tree/master/azure-kusto-ingest") Package allows sending data to Kusto service - i.e. ingest data. 
-
+[![PyPI version](https://badge.fury.io/py/azure-kusto-data.svg)](https://badge.fury.io/py/azure-kusto-data)
+[![Downloads](https://pepy.tech/badge/azure-kusto-data)](https://pepy.tech/project/azure-kusto-data)<br>
+[*azure-kusto-ingest*]("https://github.com/Azure/azure-kusto-python/tree/master/azure-kusto-ingest") Package allows sending data to Kusto service - i.e. ingest data.<br>
+[![PyPI version](https://badge.fury.io/py/azure-kusto-ingest.svg)](https://badge.fury.io/py/azure-kusto-ingest)
+[![Downloads](https://pepy.tech/badge/azure-kusto-ingest)](https://pepy.tech/project/azure-kusto-ingest)<br>
 
 ## Install
 ### Option 1: Via PyPi

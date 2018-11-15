@@ -15,7 +15,7 @@ class DescriptorsTest(unittest.TestCase):
         self.assertTrue(descriptor.stream_name.endswith(".csv.gz"))
         if sys.version_info[0] >= 3:
             self.assertTrue(descriptor.zipped_stream.readable(), True)
-        self.assertEquals(descriptor.zipped_stream.tell(), 0)
+        self.assertEqual(descriptor.zipped_stream.tell(), 0)
         self.assertEqual(descriptor.zipped_stream.closed, False)
         descriptor.delete_files()
         self.assertEqual(descriptor.zipped_stream.closed, True)
@@ -28,7 +28,7 @@ class DescriptorsTest(unittest.TestCase):
         self.assertTrue(descriptor.stream_name.endswith(".csv.gz"))
         if sys.version_info[0] >= 3:
             self.assertTrue(descriptor.zipped_stream.readable(), True)
-        self.assertEquals(descriptor.zipped_stream.tell(), 0)
+        self.assertEqual(descriptor.zipped_stream.tell(), 0)
         self.assertEqual(descriptor.zipped_stream.closed, False)
         descriptor.delete_files()
         self.assertEqual(descriptor.zipped_stream.closed, True)
@@ -41,7 +41,7 @@ class DescriptorsTest(unittest.TestCase):
         self.assertTrue(descriptor.stream_name.endswith(".csv.gz"))
         if sys.version_info[0] >= 3:
             self.assertTrue(descriptor.zipped_stream.readable(), True)
-        self.assertEquals(descriptor.zipped_stream.tell(), 0)
+        self.assertEqual(descriptor.zipped_stream.tell(), 0)
         self.assertEqual(descriptor.zipped_stream.closed, False)
         descriptor.delete_files()
         self.assertEqual(descriptor.zipped_stream.closed, True)
@@ -54,7 +54,7 @@ class DescriptorsTest(unittest.TestCase):
         self.assertTrue(descriptor.stream_name.endswith(".csv.gz"))
         if sys.version_info[0] >= 3:
             self.assertTrue(descriptor.zipped_stream.readable(), True)
-        self.assertEquals(descriptor.zipped_stream.tell(), 0)
+        self.assertEqual(descriptor.zipped_stream.tell(), 0)
         self.assertEqual(descriptor.zipped_stream.closed, False)
         descriptor.delete_files()
         self.assertEqual(descriptor.zipped_stream.closed, True)

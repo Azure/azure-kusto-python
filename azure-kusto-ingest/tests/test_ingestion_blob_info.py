@@ -2,6 +2,7 @@ import unittest
 import re
 import json
 from uuid import UUID
+from six import assertRegex
 from azure.kusto.ingest._ingestion_blob_info import _IngestionBlobInfo
 from azure.kusto.ingest.exceptions import KustoDuplicateMappingError
 from azure.kusto.ingest import (
@@ -126,9 +127,9 @@ class IngestionBlobInfoTest(unittest.TestCase):
         result = json.loads(ingestion_blob_info)
         self.assertIsNotNone(result)
         self.assertIsInstance(result, dict)
-        self.assertEquals(result["BlobPath"], "somepath")
-        self.assertEquals(result["DatabaseName"], "database")
-        self.assertEquals(result["TableName"], "table")
+        self.assertEqual(result["BlobPath"], "somepath")
+        self.assertEqual(result["DatabaseName"], "database")
+        self.assertEqual(result["TableName"], "table")
         self.assertIsInstance(result["RawDataSize"], int)
         self.assertIsInstance(result["IgnoreSizeLimit"], bool)
         self.assertIsInstance(result["FlushImmediately"], bool)
@@ -136,9 +137,9 @@ class IngestionBlobInfoTest(unittest.TestCase):
         self.assertIsInstance(result["ReportMethod"], int)
         self.assertIsInstance(result["ReportLevel"], int)
         self.assertIsInstance(UUID(result["Id"]), UUID)
-        self.assertRegexpMatches(result["SourceMessageCreationTime"], TIMESTAMP_REGEX)
-        self.assertEquals(result["AdditionalProperties"]["authorizationContext"], "authorizationContextText")
-        self.assertEquals(result["AdditionalProperties"]["ingestIfNotExists"], '["ingestIfNotExistTags"]')
+        assertRegex(self, result["SourceMessageCreationTime"], TIMESTAMP_REGEX)
+        self.assertEqual(result["AdditionalProperties"]["authorizationContext"], "authorizationContextText")
+        self.assertEqual(result["AdditionalProperties"]["ingestIfNotExists"], '["ingestIfNotExistTags"]')
         self.assertIn(
             result["AdditionalProperties"]["ValidationPolicy"],
             (
@@ -146,6 +147,6 @@ class IngestionBlobInfoTest(unittest.TestCase):
                 '{"ValidationImplications":ValidationImplications.BestEffort,"ValidationOptions":ValidationOptions.ValidateCsvInputConstantColumns}',
             ),
         )
-        self.assertEquals(
+        self.assertEqual(
             result["AdditionalProperties"]["tags"], '["tag","drop-by:dropByTags","ingest-by:ingestByTags"]'
         )
