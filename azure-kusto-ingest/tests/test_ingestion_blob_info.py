@@ -2,6 +2,7 @@ import unittest
 import re
 import json
 from uuid import UUID
+from six import assertRegex
 from azure.kusto.ingest._ingestion_blob_info import _IngestionBlobInfo
 from azure.kusto.ingest.exceptions import KustoDuplicateMappingError
 from azure.kusto.ingest import (
@@ -136,7 +137,7 @@ class IngestionBlobInfoTest(unittest.TestCase):
         self.assertIsInstance(result["ReportMethod"], int)
         self.assertIsInstance(result["ReportLevel"], int)
         self.assertIsInstance(UUID(result["Id"]), UUID)
-        self.assertRegex(result["SourceMessageCreationTime"], TIMESTAMP_REGEX)
+        assertRegex(self, result["SourceMessageCreationTime"], TIMESTAMP_REGEX)
         self.assertEqual(result["AdditionalProperties"]["authorizationContext"], "authorizationContextText")
         self.assertEqual(result["AdditionalProperties"]["ingestIfNotExists"], '["ingestIfNotExistTags"]')
         self.assertIn(
