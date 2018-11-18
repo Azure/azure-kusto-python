@@ -21,6 +21,7 @@ class KustoConnectionStringBuilder(object):
         """Distinct set of values KustoConnectionStringBuilder can have."""
 
         data_source = "Data Source"
+        aad_federated_security = "AAD Federated Security"
         aad_user_id = "AAD User ID"
         password = "Password"
         application_client_id = "Application Client Id"
@@ -49,6 +50,8 @@ class KustoConnectionStringBuilder(object):
                 return cls.application_certificate_thumbprint
             if key in ["authority id", "authorityid", "authority", "tenantid", "tenant", "tid"]:
                 return cls.authority_id
+            if key in ["aad federated security", "federated security", "federated", "fed", "aadfed"]:
+                return cls.aad_federated_security
             raise KeyError(key)
 
     def __init__(self, connection_string):
@@ -75,7 +78,7 @@ class KustoConnectionStringBuilder(object):
         except KeyError:
             raise KeyError("%s is not supported as an item in KustoConnectionStringBuilder" % key)
 
-        self._internal_dict[keyword] = value.strip()
+        self._internal_dict[keyword] = value if keyword is self.ValidKeywords.aad_federated_security else value.strip()
 
     @classmethod
     def with_aad_user_password_authentication(cls, connection_string, user_id, password, authority_id="common"):
@@ -89,6 +92,7 @@ class KustoConnectionStringBuilder(object):
         _assert_value_is_valid(user_id)
         _assert_value_is_valid(password)
         kcsb = cls(connection_string)
+        kcsb[kcsb.ValidKeywords.aad_federated_security] = True
         kcsb[kcsb.ValidKeywords.aad_user_id] = user_id
         kcsb[kcsb.ValidKeywords.password] = password
         kcsb[kcsb.ValidKeywords.authority_id] = authority_id
@@ -107,6 +111,7 @@ class KustoConnectionStringBuilder(object):
         _assert_value_is_valid(app_key)
         _assert_value_is_valid(authority_id)
         kcsb = cls(connection_string)
+        kcsb[kcsb.ValidKeywords.aad_federated_security] = True
         kcsb[kcsb.ValidKeywords.application_client_id] = aad_app_id
         kcsb[kcsb.ValidKeywords.application_key] = app_key
         kcsb[kcsb.ValidKeywords.authority_id] = authority_id
@@ -131,6 +136,7 @@ class KustoConnectionStringBuilder(object):
         _assert_value_is_valid(thumbprint)
         _assert_value_is_valid(authority_id)
         kcsb = cls(connection_string)
+        kcsb[kcsb.ValidKeywords.aad_federated_security] = True
         kcsb[kcsb.ValidKeywords.application_client_id] = aad_app_id
         kcsb[kcsb.ValidKeywords.application_certificate] = certificate
         kcsb[kcsb.ValidKeywords.application_certificate_thumbprint] = thumbprint
@@ -146,6 +152,7 @@ class KustoConnectionStringBuilder(object):
         :param str authority_id: optional param. defaults to "common"
         """
         kcsb = cls(connection_string)
+        kcsb[kcsb.ValidKeywords.aad_federated_security] = True
         kcsb[kcsb.ValidKeywords.authority_id] = authority_id
 
         return kcsb
@@ -209,6 +216,11 @@ class KustoConnectionStringBuilder(object):
     def authority_id(self, value):
         self[self.ValidKeywords.authority_id] = value
 
+    @property
+    def aad_federated_security(self):
+        """A bool to decide whether to use AAD authentication."""
+        return self._internal_dict.get(self.ValidKeywords.aad_federated_security)
+
 
 def _assert_value_is_valid(value):
     if not value or not value.strip():
@@ -232,7 +244,7 @@ class KustoClient(object):
         kusto_cluster = kcsb.data_source
         self._mgmt_endpoint = "{0}/v1/rest/mgmt".format(kusto_cluster)
         self._query_endpoint = "{0}/v2/rest/query".format(kusto_cluster)
-        self._aad_helper = _AadHelper(kcsb)
+        self._aad_helper = _AadHelper(kcsb) if kcsb.aad_federated_security else None
 
     def execute(self, kusto_database, query, accept_partial_results=False, timeout=None, get_raw_response=False):
         """Executes a query or management command.
@@ -289,16 +301,16 @@ class KustoClient(object):
 
         request_payload = {"db": kusto_database, "csl": kusto_query}
 
-        access_token = self._aad_helper.acquire_token()
         request_headers = {
-            "Authorization": access_token,
             "Accept": "application/json",
             "Accept-Encoding": "gzip,deflate",
             "Content-Type": "application/json; charset=utf-8",
-            "Fed": "True",
             "x-ms-client-version": "Kusto.Python.Client:" + VERSION,
             "x-ms-client-request-id": "KPC.execute;" + str(uuid.uuid4()),
         }
+
+        if self._aad_helper:
+            request_headers["Authorization"] = self._aad_helper.acquire_token()
 
         response = requests.post(endpoint, headers=request_headers, json=request_payload, timeout=timeout)
 
