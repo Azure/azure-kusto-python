@@ -46,7 +46,7 @@ class _AadHelper(object):
             self._authentication_method = AuthenticationMethod.aad_device_login
             self._client_id = "db662dc1-0cfe-4e1c-a843-19a68e65be58"
 
-    def acquire_token(self):
+    def acquire_authorization_header(self):
         """Acquire tokens from AAD."""
         token = self._adal_context.acquire_token(self._kusto_cluster, self._username, self._client_id)
         if token is not None:

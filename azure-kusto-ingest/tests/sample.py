@@ -18,7 +18,9 @@ ingestion_props = IngestionProperties(
     # incase status update for success are also required
     # reportLevel=ReportLevel.FailuresAndSuccesses,
 )
-client = KustoIngestClient("https://ingest-{cluster_name}.kusto.windows.net")
+client = KustoIngestClient(
+    KustoConnectionStringBuilder.with_aad_device_authentication("https://ingest-{cluster_name}.kusto.windows.net")
+)
 
 # there are more options for authenticating - see azure-kusto-data samples
 
