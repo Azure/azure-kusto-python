@@ -100,7 +100,7 @@ class KustoIngestClientTests(unittest.TestCase):
     MOCKED_TIME = 100
 
     @responses.activate
-    @patch("azure.kusto.data.security._AadHelper.acquire_token", return_value=None)
+    @patch("azure.kusto.data.security._AadHelper.acquire_authorization_header", return_value=None)
     @patch("azure.storage.blob.BlockBlobService.create_blob_from_stream")
     @patch("azure.storage.queue.QueueService.put_message")
     @patch("uuid.uuid4", return_value=MOCKED_UUID_4)
@@ -161,14 +161,13 @@ class KustoIngestClientTests(unittest.TestCase):
 
     @responses.activate
     @pytest.mark.skipif(not pandas_installed, reason="requires pandas")
-    @patch("azure.kusto.data.security._AadHelper.acquire_token", return_value=None)
     @patch("azure.storage.blob.BlockBlobService.create_blob_from_path")
     @patch("azure.storage.queue.QueueService.put_message")
     @patch("uuid.uuid4", return_value=MOCKED_UUID_4)
     @patch("time.time", return_value=MOCKED_TIME)
     @patch("os.getpid", return_value=MOCKED_PID)
     def test_simple_ingest_from_dataframe(
-        self, mock_pid, mock_time, mock_uuid, mock_put_message_in_queue, mock_create_blob_from_path, mock_aad
+        self, mock_pid, mock_time, mock_uuid, mock_put_message_in_queue, mock_create_blob_from_path
     ):
         responses.add_callback(
             responses.POST,

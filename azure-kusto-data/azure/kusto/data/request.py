@@ -218,7 +218,7 @@ class KustoConnectionStringBuilder(object):
 
     @property
     def aad_federated_security(self):
-        """A bool to decide whether to use AAD authentication."""
+        """A Boolean value that instructs the client to perform AAD federated authentication."""
         return self._internal_dict.get(self.ValidKeywords.aad_federated_security)
 
 
@@ -244,7 +244,7 @@ class KustoClient(object):
         kusto_cluster = kcsb.data_source
         self._mgmt_endpoint = "{0}/v1/rest/mgmt".format(kusto_cluster)
         self._query_endpoint = "{0}/v2/rest/query".format(kusto_cluster)
-        self._aad_helper = _AadHelper(kcsb) if kcsb.aad_federated_security else None
+        self._auth_provider = _AadHelper(kcsb) if kcsb.aad_federated_security else None
 
     def execute(self, kusto_database, query, accept_partial_results=False, timeout=None, get_raw_response=False):
         """Executes a query or management command.
@@ -309,8 +309,8 @@ class KustoClient(object):
             "x-ms-client-request-id": "KPC.execute;" + str(uuid.uuid4()),
         }
 
-        if self._aad_helper:
-            request_headers["Authorization"] = self._aad_helper.acquire_token()
+        if self._auth_provider:
+            request_headers["Authorization"] = self._auth_provider.acquire_authorization_header()
 
         response = requests.post(endpoint, headers=request_headers, json=request_payload, timeout=timeout)
 

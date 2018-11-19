@@ -4,7 +4,7 @@ import time
 import os
 from six import text_type
 
-from azure.kusto.data.request import KustoClient
+from azure.kusto.data.request import KustoClient, KustoConnectionStringBuilder
 from azure.kusto.ingest.status import KustoIngestStatusQueues
 from azure.kusto.ingest import (
     KustoIngestClient,
@@ -19,7 +19,7 @@ from azure.kusto.ingest import (
     ReportMethod,
 )
 
-# TODO: change this file to use pytes as runner
+# TODO: change this file to use pytest as runner
 
 
 class Helpers:
@@ -83,8 +83,10 @@ class Helpers:
         return mappings
 
 
-client = KustoClient("https://toshetah.kusto.windows.net")
-ingest_client = KustoIngestClient("https://ingest-toshetah.kusto.windows.net")
+engine_kcsb = KustoConnectionStringBuilder.with_aad_device_authentication("https://toshetah.kusto.windows.net")
+dm_kcsb = KustoConnectionStringBuilder.with_aad_device_authentication("https://ingest-toshetah.kusto.windows.net")
+client = KustoClient(engine_kcsb)
+ingest_client = KustoIngestClient(dm_kcsb)
 ingest_status_q = KustoIngestStatusQueues(ingest_client)
 client.execute("PythonTest", ".drop table Deft ifexists")
 

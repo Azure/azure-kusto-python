@@ -40,7 +40,7 @@ kcsb = KustoConnectionStringBuilder.with_aad_device_authentication(cluster)
 # The authentication method will be taken from the chosen KustoConnectionStringBuilder.
 client = KustoClient(kcsb)
 
-# In case you do not want authentication. For instance if you run Kusto locally.
+# In case you want anonymous authentication. For instance if you run Kusto locally.
 client = KustoClient(cluster)
 
 ######################################################

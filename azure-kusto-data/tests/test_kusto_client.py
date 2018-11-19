@@ -3,8 +3,8 @@
 import os
 import json
 import unittest
-import pytest
 from datetime import datetime, timedelta
+import pytest
 from six import text_type
 from mock import patch
 from dateutil.tz.tz import tzutc
@@ -24,7 +24,7 @@ except:
 
 
 def mocked_aad_helper():
-    """Mock to replace _AadHelper._acquire_token"""
+    """Mock to replace _AadHelper.acquire_authorization_header"""
     return None
 
 
@@ -84,7 +84,7 @@ class KustoClientTests(unittest.TestCase):
     """Tests class for KustoClient."""
 
     @patch("requests.post", side_effect=mocked_requests_post)
-    @patch("azure.kusto.data.security._AadHelper.acquire_token", side_effect=mocked_aad_helper)
+    @patch("azure.kusto.data.security._AadHelper.acquire_authorization_header", side_effect=mocked_aad_helper)
     def test_sanity_query(self, mock_post, mock_aad):
         """Test query V2."""
         client = KustoClient("https://somecluster.kusto.windows.net")
@@ -180,7 +180,7 @@ class KustoClientTests(unittest.TestCase):
                 expected["xdynamicWithNulls"] = text_type('{{"rowId":{0},"arr":[0,{0}]}}'.format(expected["xint16"]))
 
     @patch("requests.post", side_effect=mocked_requests_post)
-    @patch("azure.kusto.data.security._AadHelper.acquire_token", side_effect=mocked_aad_helper)
+    @patch("azure.kusto.data.security._AadHelper.acquire_authorization_header", side_effect=mocked_aad_helper)
     def test_sanity_control_command(self, mock_post, mock_aad):
         """Tests contol command."""
         client = KustoClient("https://somecluster.kusto.windows.net")
@@ -201,8 +201,7 @@ class KustoClientTests(unittest.TestCase):
 
     @pytest.mark.skipif(not pandas_installed, reason="requires pandas")
     @patch("requests.post", side_effect=mocked_requests_post)
-    @patch("azure.kusto.data.security._AadHelper.acquire_token", side_effect=mocked_aad_helper)
-    def test_sanity_data_frame(self, mock_post, mock_aad):
+    def test_sanity_data_frame(self, mock_post):
         """Tests KustoResponse to pandas.DataFrame."""
 
         from pandas import DataFrame, Series
@@ -324,8 +323,7 @@ class KustoClientTests(unittest.TestCase):
         assert_frame_equal(data_frame, expected_data_frame)
 
     @patch("requests.post", side_effect=mocked_requests_post)
-    @patch("azure.kusto.data.security._AadHelper.acquire_token", side_effect=mocked_aad_helper)
-    def test_partial_results(self, mock_post, mock_aad):
+    def test_partial_results(self, mock_post):
         """Tests partial results."""
         client = KustoClient("https://somecluster.kusto.windows.net")
         query = """set truncationmaxrecords = 1;
@@ -340,8 +338,7 @@ range x from 1 to 2 step 1"""
         self.assertEqual(results[0]["x"], 1)
 
     @patch("requests.post", side_effect=mocked_requests_post)
-    @patch("azure.kusto.data.security._AadHelper.acquire_token", side_effect=mocked_aad_helper)
-    def test_admin_then_query(self, mock_post, mock_aad):
+    def test_admin_then_query(self, mock_post):
         """Tests partial results."""
         client = KustoClient("https://somecluster.kusto.windows.net")
         query = ".show tables | project DatabaseName, TableName"
