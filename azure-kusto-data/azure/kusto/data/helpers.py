@@ -4,6 +4,7 @@
 def dataframe_from_result_table(table, raise_errors=True):
     import pandas
     import json
+    from six import text_type
 
     kusto_to_dataframe_data_types = {
         "bool": "bool",
@@ -47,7 +48,9 @@ def dataframe_from_result_table(table, raise_errors=True):
                 frame[col_name].apply(lambda t: t.replace(".", " days ") if t and "." in t.split(":")[0] else t)
             )
         elif col_type.lower() == "dynamic":
-            frame[col_name] = frame[col_name].apply(lambda x: json.loads(x) if x and isinstance(x, str) else x if x else None)
+            frame[col_name] = frame[col_name].apply(
+                lambda x: json.loads(x) if x and isinstance(x, text_type) else x if x else None
+            )
         elif col_type in kusto_to_dataframe_data_types:
             pandas_type = kusto_to_dataframe_data_types[col_type]
             frame[col_name] = frame[col_name].astype(pandas_type, errors="raise" if raise_errors else "ignore")
