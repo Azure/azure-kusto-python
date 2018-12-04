@@ -6,10 +6,10 @@ import webbrowser
 from six.moves.urllib.parse import urlparse
 import dateutil.parser
 
-from adal import AuthenticationContext
+from adal import AuthenticationContext, AdalError
 from adal.constants import TokenResponseFields, OAuth2DeviceCodeResponseParameters
 
-from .exceptions import KustoClientError
+from .exceptions import KustoClientError, KustoAuthenticationError
 
 
 @unique
@@ -48,6 +48,26 @@ class _AadHelper(object):
 
     def acquire_authorization_header(self):
         """Acquire tokens from AAD."""
+        try:
+            return self._acquire_authorization_header()
+        except AdalError as error:
+            if self._authentication_method is AuthenticationMethod.aad_username_password:
+                kwargs = {"username": self._username, "client_id": self._client_id}
+            elif self._authentication_method is AuthenticationMethod.aad_application_key:
+                kwargs = {"client_id": self._client_id}
+            elif self._authentication_method is AuthenticationMethod.aad_device_login:
+                kwargs = {"client_id": self._client_id}
+            elif self._authentication_method is AuthenticationMethod.aad_application_certificate:
+                kwargs = {"client_id": self._client_id, "thumbprint": self._thumbprint}
+            else:
+                raise error
+
+            kwargs["resource"] = self._kusto_cluster
+            kwargs["authority"] = self._adal_context.authority.url
+
+            raise KustoAuthenticationError(self._authentication_method.value, error, **kwargs)
+
+    def _acquire_authorization_header(self):
         token = self._adal_context.acquire_token(self._kusto_cluster, self._username, self._client_id)
         if token is not None:
             expiration_date = dateutil.parser.parse(token[TokenResponseFields.EXPIRES_ON])
