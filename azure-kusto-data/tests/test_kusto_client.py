@@ -23,11 +23,6 @@ except:
     pass
 
 
-def mocked_aad_helper():
-    """Mock to replace _AadHelper.acquire_authorization_header"""
-    return None
-
-
 def mocked_requests_post(*args, **kwargs):
     """Mock to replace requests.post"""
 
@@ -84,8 +79,7 @@ class KustoClientTests(unittest.TestCase):
     """Tests class for KustoClient."""
 
     @patch("requests.post", side_effect=mocked_requests_post)
-    @patch("azure.kusto.data.security._AadHelper.acquire_authorization_header", side_effect=mocked_aad_helper)
-    def test_sanity_query(self, mock_post, mock_aad):
+    def test_sanity_query(self, mock_post):
         """Test query V2."""
         client = KustoClient("https://somecluster.kusto.windows.net")
         response = client.execute_query("PythonTest", "Deft")
@@ -180,8 +174,7 @@ class KustoClientTests(unittest.TestCase):
                 expected["xdynamicWithNulls"] = text_type('{{"rowId":{0},"arr":[0,{0}]}}'.format(expected["xint16"]))
 
     @patch("requests.post", side_effect=mocked_requests_post)
-    @patch("azure.kusto.data.security._AadHelper.acquire_authorization_header", side_effect=mocked_aad_helper)
-    def test_sanity_control_command(self, mock_post, mock_aad):
+    def test_sanity_control_command(self, mock_post):
         """Tests contol command."""
         client = KustoClient("https://somecluster.kusto.windows.net")
         response = client.execute_mgmt("NetDefaultDB", ".show version")
