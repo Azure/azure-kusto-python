@@ -41,18 +41,18 @@ class KustoClientError(KustoError):
 class KustoAuthenticationError(KustoClientError):
     """Raised when authentication fails."""
 
-    def __init__(self, authentication_method, adal_exception, **kwargs):
+    def __init__(self, authentication_method, exception, **kwargs):
         super(KustoAuthenticationError, self).__init__()
         self.authentication_method = authentication_method
         self.authority = kwargs["authority"]
         self.kusto_cluster = kwargs["resource"]
-        self.adal_exception = adal_exception
+        self.exception = exception
         self.kwargs = kwargs
 
     def __str__(self):
         return repr(self)
 
     def __repr__(self):
-        return "KustoAuthenticationError('{}', AdalError('{}'), '{}')".format(
-            self.authentication_method, self.adal_exception, self.kwargs
+        return "KustoAuthenticationError('{}', '{}', '{}')".format(
+            self.authentication_method, repr(self.exception), self.kwargs
         )
