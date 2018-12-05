@@ -167,7 +167,7 @@ class KustoClientTests(unittest.TestCase):
             expected["xtime"] = (
                 timedelta()
                 if expected["xtime"] is None
-                else (abs(expected["xtime"]) + timedelta(seconds=1, microseconds=microseconds))
+                else (abs(expected["xtime"]) + timedelta(days=1, seconds=1, microseconds=microseconds))
                 * (-1) ** (expected["rownumber"] + 1)
             )
             if expected["xint16"] > 0:
@@ -260,15 +260,15 @@ class KustoClientTests(unittest.TestCase):
                 [
                     "NaT",
                     0,
-                    "00:00:01.0010001",
-                    "-00:00:02.0020002",
-                    "00:00:03.0030003",
-                    "-00:00:04.0040004",
-                    "00:00:05.0050005",
-                    "-00:00:06.0060006",
-                    "00:00:07.0070007",
-                    "-00:00:08.0080008",
-                    "00:00:09.0090009",
+                    "1 days 00:00:01.0010001",
+                    "-2 days 00:00:02.0020002",
+                    "3 days 00:00:03.0030003",
+                    "-4 days 00:00:04.0040004",
+                    "5 days 00:00:05.0050005",
+                    "-6 days 00:00:06.0060006",
+                    "7 days 00:00:07.0070007",
+                    "-8 days 00:00:08.0080008",
+                    "9 days 00:00:09.0090009",
                 ],
                 dtype="timedelta64[ns]",
             ),

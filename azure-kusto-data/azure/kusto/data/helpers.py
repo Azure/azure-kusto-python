@@ -45,7 +45,7 @@ def dataframe_from_result_table(table, raise_errors=True):
         col_type = column.column_type
         if col_type.lower() == "timespan":
             frame[col_name] = pandas.to_timedelta(
-                frame[col_name].apply(lambda t: t.replace(".", " days ") if t and "." in t.split(":")[0] else t)
+                frame[col_name].apply(lambda t: t.replace(".", " days ", 1) if t and "." in t.split(":")[0] else t)
             )
         elif col_type.lower() == "dynamic":
             frame[col_name] = frame[col_name].apply(
