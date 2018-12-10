@@ -1,6 +1,8 @@
 """A module to make a Kusto request."""
 
 import uuid
+import json
+from datetime import timedelta
 from enum import Enum, unique
 import requests
 
@@ -244,62 +246,51 @@ class KustoClient(object):
         kusto_cluster = kcsb.data_source
         self._mgmt_endpoint = "{0}/v1/rest/mgmt".format(kusto_cluster)
         self._query_endpoint = "{0}/v2/rest/query".format(kusto_cluster)
+
+        self._mgmt_default_timeout = timedelta(hours=1, seconds=30)
+        self._query_default_timeout = timedelta(minutes=4, seconds=30)
+
         self._auth_provider = _AadHelper(kcsb) if kcsb.aad_federated_security else None
 
-    def execute(self, kusto_database, query, accept_partial_results=False, timeout=None, get_raw_response=False):
+    def execute(self, database, query, properties=None, get_raw_response=False):
         """Executes a query or management command.
-        :param str kusto_database: Database against query will be executed.
+        :param str database: Database against query will be executed.
         :param str query: Query to be executed.
-        :param bool accept_partial_results: Optional parameter.
-            If query fails, but we receive some results, we consider results as partial.
-            If this is True, results are returned to client, even if there are exceptions.
-            If this is False, exception is raised. Default is False.
-        :param float timeout: Optional parameter. Network timeout in seconds. Default is no timeout.
-        :param bool get_raw_response: Optional parameter.
-            Whether to get a raw response, or a parsed one.
+        :param azure.kusto.data.request.ClientRequestProperties properties: Optional additional properties.
+        :param bool get_raw_response: Optional parameter. Whether to get a raw response, or a parsed one.
         """
         if query.startswith("."):
-            return self.execute_mgmt(kusto_database, query, accept_partial_results, timeout, get_raw_response)
-        return self.execute_query(kusto_database, query, accept_partial_results, timeout, get_raw_response)
+            return self.execute_mgmt(database, query, properties, get_raw_response)
+        return self.execute_query(database, query, properties, get_raw_response)
 
-    def execute_query(self, kusto_database, query, accept_partial_results=False, timeout=None, get_raw_response=False):
+    def execute_query(self, database, query, properties=None, get_raw_response=False):
         """Executes a query.
-        :param str kusto_database: Database against query will be executed.
+        :param str database: Database against query will be executed.
         :param str query: Query to be executed.
-        :param bool accept_partial_results: Optional parameter.
-            If query fails, but we receive some results, we consider results as partial.
-            If this is True, results are returned to client, even if there are exceptions.
-            If this is False, exception is raised. Default is False.
-        :param float timeout: Optional parameter. Network timeout in seconds. Default is no timeout.
-        :param bool get_raw_response: Optional parameter.
-            Whether to get a raw response, or a parsed one.
+        :param azure.kusto.data.request.ClientRequestProperties properties: Optional additional properties.
+        :param bool get_raw_response: Optional parameter. Whether to get a raw response, or a parsed one.
         """
         return self._execute(
-            self._query_endpoint, kusto_database, query, accept_partial_results, timeout, get_raw_response
+            self._query_endpoint, database, query, self._query_default_timeout, properties, get_raw_response
         )
 
-    def execute_mgmt(self, kusto_database, query, accept_partial_results=False, timeout=None, get_raw_response=False):
+    def execute_mgmt(self, database, query, properties=None, get_raw_response=False):
         """Executes a management command.
-        :param str kusto_database: Database against query will be executed.
+        :param str database: Database against query will be executed.
         :param str query: Query to be executed.
-        :param bool accept_partial_results: Optional parameter.
-            If query fails, but we receive some results, we consider results as partial.
-            If this is True, results are returned to client, even if there are exceptions.
-            If this is False, exception is raised. Default is False.
-        :param float timeout: Optional parameter. Network timeout in seconds. Default is no timeout.
-        :param bool get_raw_response: Optional parameter.
-            Whether to get a raw response, or a parsed one.
+        :param azure.kusto.data.request.ClientRequestProperties properties: Optional additional properties.
+        :param bool get_raw_response: Optional parameter. Whether to get a raw response, or a parsed one.
         """
         return self._execute(
-            self._mgmt_endpoint, kusto_database, query, accept_partial_results, timeout, get_raw_response
+            self._mgmt_endpoint, database, query, self._mgmt_default_timeout, properties, get_raw_response
         )
 
-    def _execute(
-        self, endpoint, kusto_database, kusto_query, accept_partial_results=False, timeout=None, get_raw_response=False
-    ):
+    def _execute(self, endpoint, database, query, default_timeout, properties=None, get_raw_response=False):
         """Executes given query against this client"""
 
-        request_payload = {"db": kusto_database, "csl": kusto_query}
+        request_payload = {"db": database, "csl": query}
+        if properties:
+            request_payload["properties"] = properties.to_json()
 
         request_headers = {
             "Accept": "application/json",
@@ -312,6 +303,7 @@ class KustoClient(object):
         if self._auth_provider:
             request_headers["Authorization"] = self._auth_provider.acquire_authorization_header()
 
+        timeout = self._get_timeout(properties, default_timeout)
         response = requests.post(endpoint, headers=request_headers, json=request_payload, timeout=timeout)
 
         if response.status_code == 200:
@@ -319,12 +311,47 @@ class KustoClient(object):
                 return response.json()
 
             if endpoint.endswith("v2/rest/query"):
-                kusto_response = KustoResponseDataSetV2(response.json())
+                return KustoResponseDataSetV2(response.json())
             else:
-                kusto_response = KustoResponseDataSetV1(response.json())
-
-            if kusto_response.errors_count > 0 and not accept_partial_results:
-                raise KustoServiceError(kusto_response.get_exceptions(), response, kusto_response)
-            return kusto_response
+                return KustoResponseDataSetV1(response.json())
         else:
             raise KustoServiceError([response.json()], response)
+
+    def _get_timeout(self, properties, default):
+        if properties:
+            if properties.has_option(ClientRequestProperties.OptionServerTimeout):
+                return properties.get_option_value_or_default(ClientRequestProperties.OptionServerTimeout, default)
+            return None
+        return default
+
+
+class ClientRequestProperties(object):
+    """This class is a POD used by client making requests to describe specific needs from the service executing the requests.
+    For more information please look at: https://docs.microsoft.com/en-us/azure/kusto/api/netfx/request-properties
+    Not all of the documented options are implemented. You are welcome to open an issue in case you need one of them.
+    """
+
+    OptionDeferPartialQueryFailures = "deferpartialqueryfailures"  # TODO: Rename: results_defer_partial_query_failures
+    OptionServerTimeout = "servertimeout"  # TODO: Rename: request_timeout
+
+    def __init__(self):
+        self.options = {}
+
+    def set_option(self, name, value):
+        """Sets an option's value"""
+        _assert_value_is_valid(name)
+        self.options[name] = value
+
+    def has_option(self, name):
+        """Checks if an option is specified."""
+        return name in self.options
+
+    def get_option_value_or_default(self, name, default_value):
+        """Gets an option's value."""
+        if self.has_option(name):
+            return self.options.get(name)
+        return default_value
+
+    def to_json(self):
+        """Safe serialization to a JSON string."""
+        return json.dumps({"Options": self.options})
