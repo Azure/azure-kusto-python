@@ -247,8 +247,8 @@ class KustoClient(object):
         self._mgmt_endpoint = "{0}/v1/rest/mgmt".format(kusto_cluster)
         self._query_endpoint = "{0}/v2/rest/query".format(kusto_cluster)
 
-        self._mgmt_default_timeout = timedelta(hours=1, seconds=30)
-        self._query_default_timeout = timedelta(minutes=4, seconds=30)
+        self._mgmt_default_timeout = timedelta(hours=1, seconds=30).seconds
+        self._query_default_timeout = timedelta(minutes=4, seconds=30).seconds
 
         self._auth_provider = _AadHelper(kcsb) if kcsb.aad_federated_security else None
 

@@ -1,6 +1,6 @@
 ﻿"""A simple example how to use KustoClient."""
 
-from azure.kusto.data.request import KustoClient, KustoConnectionStringBuilder
+from azure.kusto.data.request import KustoClient, KustoConnectionStringBuilder, ClientRequestProperties
 from azure.kusto.data.exceptions import KustoServiceError
 from azure.kusto.data.helpers import dataframe_from_result_table
 
@@ -37,11 +37,11 @@ kcsb = KustoConnectionStringBuilder.with_aad_application_certificate_authenticat
 kcsb = KustoConnectionStringBuilder.with_aad_device_authentication(cluster)
 
 
-# The authentication method will be taken from the chosen KustoConnectionStringBuilder.
-client = KustoClient(kcsb)
-
 # In case you want anonymous authentication. For instance if you run Kusto locally.
 client = KustoClient(cluster)
+
+# The authentication method will be taken from the chosen KustoConnectionStringBuilder.
+client = KustoClient(kcsb)
 
 ######################################################
 ##                       QUERY                      ##
@@ -85,7 +85,9 @@ except KustoServiceError as error:
     print("2. Has partial results:", error.has_partial_results())
     print("2. Result size:", len(error.get_partial_results()))
 
-response = client.execute(db, query, accept_partial_results=True)
+properties = ClientRequestProperties()
+properties.set_option(properties.OptionDeferPartialQueryFailures, True)
+response = client.execute(db, query, properties=properties)
 print("3. Response error count: ", response.errors_count)
 print("3. Exceptions:", response.get_exceptions())
 print("3. Result size:", len(response.primary_results))
