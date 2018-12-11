@@ -1,0 +1,94 @@
+[{
+	"FrameType": "DataSetHeader",
+	"IsProgressive": false,
+	"Version": "v2.0"
+},
+{
+	"FrameType": "DataTable",
+	"TableId": 0,
+	"TableKind": "QueryProperties",
+	"TableName": "@ExtendedProperties",
+	"Columns": [{
+		"ColumnName": "TableId",
+		"ColumnType": "int"
+	},
+	{
+		"ColumnName": "Key",
+		"ColumnType": "string"
+	},
+	{
+		"ColumnName": "Value",
+		"ColumnType": "dynamic"
+	}],
+	"Rows": [[1,
+	"Visualization",
+	"{\"Visualization\":null,\"Title\":null,\"XColumn\":null,\"Series\":null,\"YColumns\":null,\"AnomalyColumns\":null,\"XTitle\":null,\"YTitle\":null,\"XAxis\":null,\"YAxis\":null,\"Legend\":null,\"YSplit\":null,\"Accumulate\":false,\"IsQuerySorted\":false,\"Kind\":null}"]]
+},
+{
+	"FrameType": "DataTable",
+	"TableId": 1,
+	"TableKind": "PrimaryResult",
+	"TableName": "PrimaryResult",
+	"Columns": [{
+		"ColumnName": "x",
+		"ColumnType": "long"
+	}],
+	"Rows": [[1],
+	[2],
+	[3],
+	[4],
+	[5],
+	{
+		"OneApiErrors": [{
+			"error": {
+				"code": "LimitsExceeded",
+				"message": "Request is invalid and cannot be executed.",
+				"@type": "Kusto.Data.Exceptions.KustoServicePartialQueryFailureLimitsExceededException",
+				"@message": "Query execution has exceeded the allowed limits (80DA0003): .",
+				"@context": {
+					"timestamp": "2018-12-10T15:10:48.8352222Z",
+					"machineName": "RD0003FFBEDEB9",
+					"processName": "Kusto.Azure.Svc",
+					"processId": 4328,
+					"threadId": 7284,
+					"appDomainName": "RdRuntime",
+					"clientRequestd": "KPC.execute;d3a43e37-0d7f-47a9-b6cd-a889b2aee3d3",
+					"activityId": "a57ec272-8846-49e6-b458-460b841ed47d",
+					"subActivityId": "a57ec272-8846-49e6-b458-460b841ed47d",
+					"activityType": "PO-OWIN-CallContext",
+					"parentActivityId": "a57ec272-8846-49e6-b458-460b841ed47d",
+					"activityStack": "(Activity stack: CRID=KPC.execute;d3a43e37-0d7f-47a9-b6cd-a889b2aee3d3 ARID=a57ec272-8846-49e6-b458-460b841ed47d > PO-OWIN-CallContext/a57ec272-8846-49e6-b458-460b841ed47d)"
+				},
+				"@permanent": false
+			}
+		}]
+	}]
+},
+{
+	"FrameType": "DataSetCompletion",
+	"HasErrors": true,
+	"Cancelled": false,
+	"OneApiErrors": [{
+		"error": {
+			"code": "LimitsExceeded",
+			"message": "Request is invalid and cannot be executed.",
+			"@type": "Kusto.Data.Exceptions.KustoServicePartialQueryFailureLimitsExceededException",
+			"@message": "Query execution has exceeded the allowed limits (80DA0003): .",
+			"@context": {
+				"timestamp": "2018-12-10T15:10:48.8352222Z",
+				"machineName": "RD0003FFBEDEB9",
+				"processName": "Kusto.Azure.Svc",
+				"processId": 4328,
+				"threadId": 7284,
+				"appDomainName": "RdRuntime",
+				"clientRequestd": "KPC.execute;d3a43e37-0d7f-47a9-b6cd-a889b2aee3d3",
+				"activityId": "a57ec272-8846-49e6-b458-460b841ed47d",
+				"subActivityId": "a57ec272-8846-49e6-b458-460b841ed47d",
+				"activityType": "PO-OWIN-CallContext",
+				"parentActivityId": "a57ec272-8846-49e6-b458-460b841ed47d",
+				"activityStack": "(Activity stack: CRID=KPC.execute;d3a43e37-0d7f-47a9-b6cd-a889b2aee3d3 ARID=a57ec272-8846-49e6-b458-460b841ed47d > PO-OWIN-CallContext/a57ec272-8846-49e6-b458-460b841ed47d)"
+			},
+			"@permanent": false
+		}
+	}]
+}]

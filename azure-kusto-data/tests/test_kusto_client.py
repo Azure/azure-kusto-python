@@ -9,7 +9,7 @@ from six import text_type
 from mock import patch
 from dateutil.tz.tz import tzutc
 
-from azure.kusto.data.request import KustoClient
+from azure.kusto.data.request import KustoClient, ClientRequestProperties
 from azure.kusto.data.exceptions import KustoServiceError
 from azure.kusto.data._response import WellKnownDataSet
 from azure.kusto.data.helpers import dataframe_from_result_table
@@ -41,7 +41,10 @@ def mocked_requests_post(*args, **kwargs):
 
     if args[0] == "https://somecluster.kusto.windows.net/v2/rest/query":
         if "truncationmaxrecords" in kwargs["json"]["csl"]:
-            file_name = "querypartialresults.json"
+            if json.loads(kwargs["json"]["properties"])["Options"]["deferpartialqueryfailures"]:
+                file_name = "query_partial_results_defer_is_true.json"
+            else:
+                file_name = "query_partial_results_defer_is_false.json"
         elif "Deft" in kwargs["json"]["csl"]:
             file_name = "deft.json"
         with open(os.path.join(os.path.dirname(__file__), "input", file_name), "r") as response_file:
@@ -319,20 +322,23 @@ class KustoClientTests(unittest.TestCase):
     def test_partial_results(self, mock_post):
         """Tests partial results."""
         client = KustoClient("https://somecluster.kusto.windows.net")
-        query = """set truncationmaxrecords = 1;
-range x from 1 to 2 step 1"""
-        self.assertRaises(KustoServiceError, client.execute_query, "PythonTest", query)
-        response = client.execute_query("PythonTest", query, accept_partial_results=True)
+        query = """set truncationmaxrecords = 5;
+range x from 1 to 10 step 1"""
+        properties = ClientRequestProperties()
+        properties.set_option(ClientRequestProperties.OptionDeferPartialQueryFailures, False)
+        self.assertRaises(KustoServiceError, client.execute_query, "PythonTest", query, properties)
+        properties.set_option(ClientRequestProperties.OptionDeferPartialQueryFailures, True)
+        response = client.execute_query("PythonTest", query, properties)
         self.assertEqual(response.errors_count, 1)
         self.assertIn("E_QUERY_RESULT_SET_TOO_LARGE", response.get_exceptions()[0])
         self.assertEqual(len(response), 3)
         results = list(response.primary_results[0])
-        self.assertEqual(len(results), 1)
+        self.assertEqual(len(results), 5)
         self.assertEqual(results[0]["x"], 1)
 
     @patch("requests.post", side_effect=mocked_requests_post)
     def test_admin_then_query(self, mock_post):
-        """Tests partial results."""
+        """Tests admin then query."""
         client = KustoClient("https://somecluster.kusto.windows.net")
         query = ".show tables | project DatabaseName, TableName"
         response = client.execute_mgmt("PythonTest", query)
