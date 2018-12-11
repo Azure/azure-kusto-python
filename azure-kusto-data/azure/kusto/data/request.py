@@ -296,7 +296,8 @@ class KustoClient(object):
             "Accept-Encoding": "gzip,deflate",
             "Content-Type": "application/json; charset=utf-8",
             "x-ms-client-version": "Kusto.Python.Client:" + VERSION,
-            "x-ms-client-request-id": "KPC.execute;" + str(uuid.uuid4()),
+            "x-ms-client-request-id": "KPC.execute" + (".raw" if get_raw_response else "") + ";" + str(uuid.uuid4()),
+            # That is a temporary client request id to understand the usage of the raw response by customers. In case it is not used it will be removed.
         }
 
         if self._auth_provider:
