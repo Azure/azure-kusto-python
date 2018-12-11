@@ -318,7 +318,7 @@ class KustoClient(object):
 
     def _get_timeout(self, properties, default):
         if properties:
-            return properties.get_option_value_or_default(ClientRequestProperties.OptionServerTimeout, default)
+            return properties.get_option(ClientRequestProperties.OptionServerTimeout, default)
         return default
 
 
@@ -343,7 +343,7 @@ class ClientRequestProperties(object):
         """Checks if an option is specified."""
         return name in self._options
 
-    def get_option_value_or_default(self, name, default_value):
+    def get_option(self, name, default_value):
         """Gets an option's value."""
         return self._options.get(name, default_value)
 
