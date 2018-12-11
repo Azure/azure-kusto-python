@@ -237,6 +237,9 @@ class KustoClient(object):
     Tests are run using pytest.
     """
 
+    _mgmt_default_timeout = timedelta(hours=1, seconds=30).seconds
+    _query_default_timeout = timedelta(minutes=4, seconds=30).seconds
+
     def __init__(self, kcsb):
         """Kusto Client constructor.
         :param kcsb: The connection string to initialize KustoClient.
@@ -246,10 +249,6 @@ class KustoClient(object):
         kusto_cluster = kcsb.data_source
         self._mgmt_endpoint = "{0}/v1/rest/mgmt".format(kusto_cluster)
         self._query_endpoint = "{0}/v2/rest/query".format(kusto_cluster)
-
-        self._mgmt_default_timeout = timedelta(hours=1, seconds=30).seconds
-        self._query_default_timeout = timedelta(minutes=4, seconds=30).seconds
-
         self._auth_provider = _AadHelper(kcsb) if kcsb.aad_federated_security else None
 
     def execute(self, database, query, properties=None, get_raw_response=False):
@@ -271,7 +270,7 @@ class KustoClient(object):
         :param bool get_raw_response: Optional parameter. Whether to get a raw response, or a parsed one.
         """
         return self._execute(
-            self._query_endpoint, database, query, self._query_default_timeout, properties, get_raw_response
+            self._query_endpoint, database, query, KustoClient._query_default_timeout, properties, get_raw_response
         )
 
     def execute_mgmt(self, database, query, properties=None, get_raw_response=False):
@@ -282,7 +281,7 @@ class KustoClient(object):
         :param bool get_raw_response: Optional parameter. Whether to get a raw response, or a parsed one.
         """
         return self._execute(
-            self._mgmt_endpoint, database, query, self._mgmt_default_timeout, properties, get_raw_response
+            self._mgmt_endpoint, database, query, KustoClient._mgmt_default_timeout, properties, get_raw_response
         )
 
     def _execute(self, endpoint, database, query, default_timeout, properties=None, get_raw_response=False):
@@ -319,9 +318,7 @@ class KustoClient(object):
 
     def _get_timeout(self, properties, default):
         if properties:
-            if properties.has_option(ClientRequestProperties.OptionServerTimeout):
-                return properties.get_option_value_or_default(ClientRequestProperties.OptionServerTimeout, default)
-            return None
+            return properties.get_option_value_or_default(ClientRequestProperties.OptionServerTimeout, default)
         return default
 
 
@@ -335,23 +332,21 @@ class ClientRequestProperties(object):
     OptionServerTimeout = "servertimeout"  # TODO: Rename: request_timeout
 
     def __init__(self):
-        self.options = {}
+        self._options = {}
 
     def set_option(self, name, value):
         """Sets an option's value"""
         _assert_value_is_valid(name)
-        self.options[name] = value
+        self._options[name] = value
 
     def has_option(self, name):
         """Checks if an option is specified."""
-        return name in self.options
+        return name in self._options
 
     def get_option_value_or_default(self, name, default_value):
         """Gets an option's value."""
-        if self.has_option(name):
-            return self.options.get(name)
-        return default_value
+        return self._options.get(name, default_value)
 
     def to_json(self):
         """Safe serialization to a JSON string."""
-        return json.dumps({"Options": self.options})
+        return json.dumps({"Options": self._options})
