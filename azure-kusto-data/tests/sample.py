@@ -31,6 +31,11 @@ kcsb = KustoConnectionStringBuilder.with_aad_application_certificate_authenticat
     cluster, client_id, PEM, thumbprint, authority_id
 )
 
+#In case you want to authenticate with AAD username and password
+username = "<username>"
+password = "<password>"
+kcsb = KustoConnectionStringBuilder.with_aad_user_password_authentication(cluster, username, password, authority_id)
+
 # In case you want to authenticate with AAD device code.
 # Please note that if you choose this option, you'll need to autenticate for every new instance that is initialized.
 # It is highly recommended to create one instance and use it for all of your queries.
