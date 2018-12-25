@@ -10,6 +10,51 @@ from azure.kusto.ingest import (
     ReportLevel,
 )
 
+##################################################################
+##                              AUTH                            ##
+##################################################################
+cluster = "https://ingest-{cluster_name}.kusto.windows.net"
+
+# In case you want to authenticate with AAD application.
+client_id = "<insert here your AAD application id>"
+client_secret = "<insert here your AAD application key>"
+
+# read more at https://docs.microsoft.com/en-us/onedrive/find-your-office-365-tenant-id
+authority_id = "<insert here your tenant id>"
+
+kcsb = KustoConnectionStringBuilder.with_aad_application_key_authentication(
+    cluster, client_id, client_secret, authority_id
+)
+
+# In case you want to authenticate with AAD application certificate.
+filename = "path to a PEM certificate"
+with open(filename, "r") as pem_file:
+    PEM = pem_file.read()
+
+thumbprint = "certificate's thumbprint"
+kcsb = KustoConnectionStringBuilder.with_aad_application_certificate_authentication(
+    cluster, client_id, PEM, thumbprint, authority_id
+)
+
+# In case you want to authenticate with AAD username and password
+username = "<username>"
+password = "<password>"
+kcsb = KustoConnectionStringBuilder.with_aad_user_password_authentication(cluster, username, password, authority_id)
+
+# In case you want to authenticate with AAD device code.
+# Please note that if you choose this option, you'll need to autenticate for every new instance that is initialized.
+# It is highly recommended to create one instance and use it for all of your queries.
+kcsb = KustoConnectionStringBuilder.with_aad_device_authentication(cluster)
+
+# The authentication method will be taken from the chosen KustoConnectionStringBuilder.
+client = KustoIngestClient(kcsb)
+
+# there are more options for authenticating - see azure-kusto-data samples
+
+##################################################################
+##                        INGESTION                             ##
+##################################################################
+
 # there are a lot of useful properties, make sure to go over docs and check them out
 ingestion_props = IngestionProperties(
     database="{database_name}",
@@ -18,16 +63,6 @@ ingestion_props = IngestionProperties(
     # incase status update for success are also required
     # reportLevel=ReportLevel.FailuresAndSuccesses,
 )
-client = KustoIngestClient(
-    KustoConnectionStringBuilder.with_aad_device_authentication("https://ingest-{cluster_name}.kusto.windows.net")
-)
-
-# there are more options for authenticating - see azure-kusto-data samples
-
-##################################################################
-##                        INGESTION                             ##
-##################################################################
-
 
 # ingest from file
 file_descriptor = FileDescriptor("{filename}.csv", 3333)  # 3333 is the raw size of the data in bytes.
