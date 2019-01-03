@@ -267,9 +267,7 @@ class KustoClient(object):
         :param str query: Query to be executed.
         :param azure.kusto.data.request.ClientRequestProperties properties: Optional additional properties.
         """
-        return self._execute(
-            self._query_endpoint, database, query, KustoClient._query_default_timeout, properties
-        )
+        return self._execute(self._query_endpoint, database, query, KustoClient._query_default_timeout, properties)
 
     def execute_mgmt(self, database, query, properties=None):
         """Executes a management command.
@@ -277,9 +275,7 @@ class KustoClient(object):
         :param str query: Query to be executed.
         :param azure.kusto.data.request.ClientRequestProperties properties: Optional additional properties.
         """
-        return self._execute(
-            self._mgmt_endpoint, database, query, KustoClient._mgmt_default_timeout, properties
-        )
+        return self._execute(self._mgmt_endpoint, database, query, KustoClient._mgmt_default_timeout, properties)
 
     def _execute(self, endpoint, database, query, default_timeout, properties=None):
         """Executes given query against this client"""
@@ -306,7 +302,7 @@ class KustoClient(object):
             if endpoint.endswith("v2/rest/query"):
                 return KustoResponseDataSetV2(response.json())
             return KustoResponseDataSetV1(response.json())
-        
+
         raise KustoServiceError([response.json()], response)
 
     def _get_timeout(self, properties, default):
