@@ -251,40 +251,37 @@ class KustoClient(object):
         self._query_endpoint = "{0}/v2/rest/query".format(kusto_cluster)
         self._auth_provider = _AadHelper(kcsb) if kcsb.aad_federated_security else None
 
-    def execute(self, database, query, properties=None, get_raw_response=False):
+    def execute(self, database, query, properties=None):
         """Executes a query or management command.
         :param str database: Database against query will be executed.
         :param str query: Query to be executed.
         :param azure.kusto.data.request.ClientRequestProperties properties: Optional additional properties.
-        :param bool get_raw_response: Optional parameter. Whether to get a raw response, or a parsed one.
         """
         if query.startswith("."):
-            return self.execute_mgmt(database, query, properties, get_raw_response)
-        return self.execute_query(database, query, properties, get_raw_response)
+            return self.execute_mgmt(database, query, properties)
+        return self.execute_query(database, query, properties)
 
-    def execute_query(self, database, query, properties=None, get_raw_response=False):
+    def execute_query(self, database, query, properties=None):
         """Executes a query.
         :param str database: Database against query will be executed.
         :param str query: Query to be executed.
         :param azure.kusto.data.request.ClientRequestProperties properties: Optional additional properties.
-        :param bool get_raw_response: Optional parameter. Whether to get a raw response, or a parsed one.
         """
         return self._execute(
-            self._query_endpoint, database, query, KustoClient._query_default_timeout, properties, get_raw_response
+            self._query_endpoint, database, query, KustoClient._query_default_timeout, properties
         )
 
-    def execute_mgmt(self, database, query, properties=None, get_raw_response=False):
+    def execute_mgmt(self, database, query, properties=None):
         """Executes a management command.
         :param str database: Database against query will be executed.
         :param str query: Query to be executed.
         :param azure.kusto.data.request.ClientRequestProperties properties: Optional additional properties.
-        :param bool get_raw_response: Optional parameter. Whether to get a raw response, or a parsed one.
         """
         return self._execute(
-            self._mgmt_endpoint, database, query, KustoClient._mgmt_default_timeout, properties, get_raw_response
+            self._mgmt_endpoint, database, query, KustoClient._mgmt_default_timeout, properties
         )
 
-    def _execute(self, endpoint, database, query, default_timeout, properties=None, get_raw_response=False):
+    def _execute(self, endpoint, database, query, default_timeout, properties=None):
         """Executes given query against this client"""
 
         request_payload = {"db": database, "csl": query}
@@ -296,8 +293,7 @@ class KustoClient(object):
             "Accept-Encoding": "gzip,deflate",
             "Content-Type": "application/json; charset=utf-8",
             "x-ms-client-version": "Kusto.Python.Client:" + VERSION,
-            "x-ms-client-request-id": "KPC.execute" + (".raw" if get_raw_response else "") + ";" + str(uuid.uuid4()),
-            # That is a temporary client request id to understand the usage of the raw response by customers. In case it is not used it will be removed.
+            "x-ms-client-request-id": "KPC.execute;" + str(uuid.uuid4()),
         }
 
         if self._auth_provider:
@@ -307,15 +303,11 @@ class KustoClient(object):
         response = requests.post(endpoint, headers=request_headers, json=request_payload, timeout=timeout)
 
         if response.status_code == 200:
-            if get_raw_response:
-                return response.json()
-
             if endpoint.endswith("v2/rest/query"):
                 return KustoResponseDataSetV2(response.json())
-            else:
-                return KustoResponseDataSetV1(response.json())
-        else:
-            raise KustoServiceError([response.json()], response)
+            return KustoResponseDataSetV1(response.json())
+        
+        raise KustoServiceError([response.json()], response)
 
     def _get_timeout(self, properties, default):
         if properties:
