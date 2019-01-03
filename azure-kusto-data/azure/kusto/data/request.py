@@ -243,6 +243,7 @@ class KustoClient(object):
     def __init__(self, kcsb):
         """Kusto Client constructor.
         :param kcsb: The connection string to initialize KustoClient.
+        :type kcsb: azure.kusto.data.request.KustoConnectionStringBuilder or str
         """
         if not isinstance(kcsb, KustoConnectionStringBuilder):
             kcsb = KustoConnectionStringBuilder(kcsb)
@@ -256,6 +257,8 @@ class KustoClient(object):
         :param str database: Database against query will be executed.
         :param str query: Query to be executed.
         :param azure.kusto.data.request.ClientRequestProperties properties: Optional additional properties.
+        :return: Kusto response data set.
+        :rtype: azure.kusto.data._response.KustoResponseDataSet
         """
         if query.startswith("."):
             return self.execute_mgmt(database, query, properties)
@@ -266,6 +269,8 @@ class KustoClient(object):
         :param str database: Database against query will be executed.
         :param str query: Query to be executed.
         :param azure.kusto.data.request.ClientRequestProperties properties: Optional additional properties.
+        :return: Kusto response data set.
+        :rtype: azure.kusto.data._response.KustoResponseDataSet
         """
         return self._execute(self._query_endpoint, database, query, KustoClient._query_default_timeout, properties)
 
@@ -274,6 +279,8 @@ class KustoClient(object):
         :param str database: Database against query will be executed.
         :param str query: Query to be executed.
         :param azure.kusto.data.request.ClientRequestProperties properties: Optional additional properties.
+        :return: Kusto response data set.
+        :rtype: azure.kusto.data._response.KustoResponseDataSet
         """
         return self._execute(self._mgmt_endpoint, database, query, KustoClient._mgmt_default_timeout, properties)
 
