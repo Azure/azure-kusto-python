@@ -259,18 +259,17 @@ class KustoClientTests(unittest.TestCase):
                 ["", "Zero", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine"], dtype=object
             ),
             "xnumberAsText": Series(["", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9"], dtype=object),
-            "xtime": Series(
-                [
+            "xtime": Series([
                     "NaT",
                     0,
                     "1 days 00:00:01.0010001",
-                    "-2 days 00:00:02.0020002",
+                    "-3 days 23:59:57.998000",
                     "3 days 00:00:03.0030003",
-                    "-4 days 00:00:04.0040004",
+                    "-5 days 23:59:55.996000",
                     "5 days 00:00:05.0050005",
-                    "-6 days 00:00:06.0060006",
+                    "-7 days 23:59:53.993999",
                     "7 days 00:00:07.0070007",
-                    "-8 days 00:00:08.0080008",
+                    "-9 days 23:59:51.991999",
                     "9 days 00:00:09.0090009",
                 ],
                 dtype="timedelta64[ns]",
