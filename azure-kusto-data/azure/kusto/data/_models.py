@@ -1,10 +1,12 @@
 """Kusto Data Models"""
 
 import json
-import six
+from datetime import datetime, timedelta
 from enum import Enum
+import six
 from . import _converters
 from .exceptions import KustoServiceError
+from decimal import Decimal
 
 
 class WellKnownDataSet(Enum):
@@ -19,22 +21,59 @@ class WellKnownDataSet(Enum):
 class KustoResultRow(object):
     """Iterator over a Kusto result row."""
 
-    def __init__(self, columns, row):
-        self.columns = columns
-        self.row = row
+    convertion_funcs = {
+        "datetime": _converters.to_datetime,
+        "timespan": _converters.to_timedelta,
+        "decimal": Decimal,
+        "DateTime": _converters.to_datetime,
+        "TimeSpan": _converters.to_timedelta,
+        "Decimal": Decimal,
+        "dynamic": json.loads,
+    }
 
-        # Here we keep converter functions for each type that we need to take special care
-        # (e.g. convert)
-        self.convertion_funcs = {
-            "datetime": _converters.to_datetime,
-            "timespan": _converters.to_timedelta,
-            "DateTime": _converters.to_datetime,
-            "TimeSpan": _converters.to_timedelta,
-        }
+    def __init__(self, columns, row):
+        self._value_by_name = {}
+        self._value_by_index = []
+        self._seventh_digit = {}
+        for i, value in enumerate(row):
+            column = columns[i]
+            if column.column_type in KustoResultRow.convertion_funcs:
+                if not value and column.column_type == "dynamic":
+                    typed_value = json.loads("null")
+                else:
+                    typed_value = KustoResultRow.convertion_funcs[column.column_type](value)
+                    if isinstance(typed_value, (datetime, timedelta)) and not isinstance(value, six.integer_types):
+                        try:
+                            char = value.split(":")[2].split(".")[1][6]
+                            if char and char.isdigit():
+                                tick = int(char)
+                                if isinstance(typed_value, datetime):
+                                    if tick < 5:
+                                        self._seventh_digit[column.column_name] = -tick
+                                    else:
+                                        self._seventh_digit[column.column_name] = tick - 10
+                                else:
+                                    if typed_value < timedelta(0) and tick < 5:
+                                        self._seventh_digit[column.column_name] = -tick
+                                    elif typed_value > timedelta(0) and tick >= 5:
+                                        self._seventh_digit[column.column_name] = tick - 10
+                                    elif typed_value > timedelta(0) and tick < 5:
+                                        self._seventh_digit[column.column_name] = tick
+                                    else:
+                                        self._seventh_digit[column.column_name] = 10 - tick
+
+
+                        except IndexError:
+                            pass
+            else:
+                typed_value = value
+
+            self._value_by_index.append(typed_value)
+            self._value_by_name[column.column_name] = typed_value
 
     @property
     def columns_count(self):
-        return len(self.columns)
+        return len(self._value_by_name)
 
     def __iter__(self):
         for i in range(self.columns_count):
@@ -42,28 +81,23 @@ class KustoResultRow(object):
 
     def __getitem__(self, key):
         if isinstance(key, six.integer_types):
-            column = self.columns[key]
-            value = self.row[key]
-        else:
-            column = next((column for column in self.columns if column.column_name == key), None)
-            if not column:
-                raise LookupError(key)
-            value = self.row[column.ordinal]
-        if column.column_type in self.convertion_funcs:
-            return self.convertion_funcs[column.column_type](value)
-        return value
+            return self._value_by_index[key]
+        return self._value_by_name[key]
 
     def __len__(self):
         return self.columns_count
 
     def to_dict(self):
-        return {c.column_name: self.row[c.ordinal] for c in self.columns}
+        return self._value_by_name
+
+    def to_list(self):
+        return self._value_by_index
 
     def __str__(self):
-        return self.row
+        return ", ".join(self._value_by_index)
 
     def __repr__(self):
-        return "KustoResultRow({},{})".format(self.columns, self.row)
+        return "KustoResultRow({})".format(", ".join(self._value_by_name))
 
 
 class KustoResultColumn(object):
@@ -90,7 +124,8 @@ class KustoResultTable(object):
         errors = [row for row in json_table["Rows"] if isinstance(row, dict)]
         if errors:
             raise KustoServiceError(errors[0]["OneApiErrors"][0]["error"]["@message"], json_table)
-        self.rows = json_table["Rows"]
+
+        self.rows = [KustoResultRow(self.columns, row) for row in json_table["Rows"]]
 
     @property
     def rows_count(self):
@@ -105,10 +140,10 @@ class KustoResultTable(object):
 
     def __iter__(self):
         for row in self.rows:
-            yield KustoResultRow(self.columns, row)
+            yield row
 
     def __getitem__(self, key):
-        return KustoResultRow(self.columns, self.rows[key])
+        return self.rows[key]
 
     def to_dict(self):
         return {"name": self.table_name, "kind": self.table_kind, "data": [r.to_dict() for r in self]}

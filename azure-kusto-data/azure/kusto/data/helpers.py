@@ -49,23 +49,17 @@ def dataframe_from_result_table(table, raise_errors=True):
         "TimeSpan": "object",
     }
 
-    """Returns Pandas data frame."""
     if not table.columns or not table.rows:
         return pandas.DataFrame()
 
-    frame = pandas.DataFrame(table.rows, columns=[column.column_name for column in table.columns])
+    frame = pandas.DataFrame.from_records([row.to_list() for row in table.rows], columns=[col.column_name for col in table.columns])
+    bool_columns = [col.column_name for col in table.columns if col.column_type == "bool"]
+    for col in bool_columns:
+        frame[col] = frame[col].astype(bool)
 
-    for column in table.columns:
-        col_name = column.column_name
-        col_type = column.column_type
-        if col_type.lower() == "timespan":
-            frame[col_name] = [pandas.to_timedelta(t) if t is not None else "nan" for t in frame[col_name]]
-        elif col_type.lower() == "dynamic":
-            frame[col_name] = frame[col_name].apply(
-                lambda x: json.loads(x) if x and isinstance(x, text_type) else x if x else None
-            )
-        elif col_type in kusto_to_dataframe_data_types:
-            pandas_type = kusto_to_dataframe_data_types[col_type]
-            frame[col_name] = frame[col_name].astype(pandas_type, errors="raise" if raise_errors else "ignore")
+    for i in range(len(table.rows)):
+        seventh = table.rows[i]._seventh_digit
+        for name in seventh.keys():
+            frame.loc[:, (name)].iloc[i] += pandas.Timedelta(seventh[name] * 100, unit="ns")
 
     return frame
