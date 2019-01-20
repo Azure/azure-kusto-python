@@ -3,13 +3,18 @@
 import pandas
 from pandas import Series
 
+
 def _timespan_column_parser(timespan):
     """Converts kusto timespan into pandas timedelta"""
     factor = 1
     if timespan and timespan.startswith("-"):
         factor = -1
         timespan = timespan[1:]
-    return pandas.Timedelta(timespan.replace(".", " days ", 1) if timespan and "." in timespan.split(":")[0] else timespan) * factor
+    return (
+        pandas.Timedelta(timespan.replace(".", " days ", 1) if timespan and "." in timespan.split(":")[0] else timespan)
+        * factor
+    )
+
 
 def dataframe_from_result_table(table, raise_errors=True):
     """Converts Kusto tables into pandas DataFrame.
@@ -52,7 +57,9 @@ def dataframe_from_result_table(table, raise_errors=True):
     if not table.columns or not table.rows:
         return pandas.DataFrame()
 
-    frame = pandas.DataFrame.from_records([row.to_list() for row in table.rows], columns=[col.column_name for col in table.columns])
+    frame = pandas.DataFrame.from_records(
+        [row.to_list() for row in table.rows], columns=[col.column_name for col in table.columns]
+    )
     bool_columns = [col.column_name for col in table.columns if col.column_type == "bool"]
     for col in bool_columns:
         frame[col] = frame[col].astype(bool)
@@ -60,6 +67,6 @@ def dataframe_from_result_table(table, raise_errors=True):
     for i in range(len(table.rows)):
         seventh = table.rows[i]._seventh_digit
         for name in seventh.keys():
-            frame.loc[:, (name)].iloc[i] += pandas.Timedelta(seventh[name] * 100, unit="ns")
+            frame.loc[i, name] += pandas.Timedelta(seventh[name] * 100, unit="ns")
 
     return frame

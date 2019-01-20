@@ -174,7 +174,7 @@ class KustoClientTests(unittest.TestCase):
                 * (-1) ** (expected["rownumber"] + 1)
             )
             if expected["xint16"] > 0:
-                expected["xdynamicWithNulls"] = {"rowId":expected["xint16"], "arr":[0, expected["xint16"]]}
+                expected["xdynamicWithNulls"] = {"rowId": expected["xint16"], "arr": [0, expected["xint16"]]}
 
     @patch("requests.post", side_effect=mocked_requests_post)
     def test_sanity_control_command(self, mock_post):
@@ -259,19 +259,20 @@ class KustoClientTests(unittest.TestCase):
                 ["", "Zero", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine"], dtype=object
             ),
             "xnumberAsText": Series(["", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9"], dtype=object),
-            "xtime": Series([
-                "NaT",
-                0,
-                "1 days 00:00:01.0010001",
-                "-3 days 23:59:57.9979998",
-                "3 days 00:00:03.0030003",
-                "-5 days 23:59:55.9959996",
-                "5 days 00:00:05.0050005",
-                "-7 days 23:59:53.9939994",
-                "7 days 00:00:07.0070007",
-                "-9 days 23:59:51.9919992",
-                "9 days 00:00:09.0090009",
-            ],
+            "xtime": Series(
+                [
+                    "NaT",
+                    0,
+                    "1 days 00:00:01.0010001",
+                    "-3 days 23:59:57.9979998",
+                    "3 days 00:00:03.0030003",
+                    "-5 days 23:59:55.9959996",
+                    "5 days 00:00:05.0050005",
+                    "-7 days 23:59:53.9939994",
+                    "7 days 00:00:07.0070007",
+                    "-9 days 23:59:51.9919992",
+                    "9 days 00:00:09.0090009",
+                ],
                 dtype="timedelta64[ns]",
             ),
             "xtextWithNulls": Series(["", "", "", "", "", "", "", "", "", "", ""], dtype=object),

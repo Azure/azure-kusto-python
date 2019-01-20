@@ -62,7 +62,6 @@ class KustoResultRow(object):
                                     else:
                                         self._seventh_digit[column.column_name] = 10 - tick
 
-
                         except IndexError:
                             pass
             else:
