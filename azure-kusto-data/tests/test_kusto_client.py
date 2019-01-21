@@ -204,9 +204,7 @@ class KustoClientTests(unittest.TestCase):
         from pandas.util.testing import assert_frame_equal
 
         client = KustoClient("https://somecluster.kusto.windows.net")
-        data_frame = dataframe_from_result_table(
-            client.execute_query("PythonTest", "Deft").primary_results[0], raise_errors=False
-        )
+        data_frame = dataframe_from_result_table(client.execute_query("PythonTest", "Deft").primary_results[0])
         self.assertEqual(len(data_frame.columns), 19)
         expected_dict = {
             "rownumber": Series([None, 0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0]),
@@ -239,16 +237,16 @@ class KustoClientTests(unittest.TestCase):
             "xdate": Series(
                 [
                     "NaT",
-                    "2014-01-01T01:01:01.000000000Z",
-                    "2015-01-01T01:01:01.000000000Z",
-                    "2016-01-01T01:01:01.000000000Z",
-                    "2017-01-01T01:01:01.000000000Z",
-                    "2018-01-01T01:01:01.000000000Z",
-                    "2019-01-01T01:01:01.000000000Z",
-                    "2020-01-01T01:01:01.000000000Z",
-                    "2021-01-01T01:01:01.000000000Z",
-                    "2022-01-01T01:01:01.000000000Z",
-                    "2023-01-01T01:01:01.000000000Z",
+                    "2014-01-01T01:01:01.0000000Z",
+                    "2015-01-01T01:01:01.0000001Z",
+                    "2016-01-01T01:01:01.0000002Z",
+                    "2017-01-01T01:01:01.0000003Z",
+                    "2018-01-01T01:01:01.0000004Z",
+                    "2019-01-01T01:01:01.0000005Z",
+                    "2020-01-01T01:01:01.0000006Z",
+                    "2021-01-01T01:01:01.0000007Z",
+                    "2022-01-01T01:01:01.0000008Z",
+                    "2023-01-01T01:01:01.0000009Z",
                 ],
                 dtype="datetime64[ns, UTC]",
             ),

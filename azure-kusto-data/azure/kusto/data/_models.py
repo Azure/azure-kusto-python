@@ -45,13 +45,10 @@ class KustoResultRow(object):
                     if isinstance(typed_value, (datetime, timedelta)) and not isinstance(value, six.integer_types):
                         try:
                             char = value.split(":")[2].split(".")[1][6]
-                            if char and char.isdigit():
+                            if char and char.isdigit() and int(char) is not 0:
                                 tick = int(char)
                                 if isinstance(typed_value, datetime):
-                                    if tick < 5:
-                                        self._seventh_digit[column.column_name] = -tick
-                                    else:
-                                        self._seventh_digit[column.column_name] = tick - 10
+                                    self._seventh_digit[column.column_name] = tick
                                 else:
                                     if typed_value < timedelta(0) and tick < 5:
                                         self._seventh_digit[column.column_name] = -tick
