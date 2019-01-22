@@ -166,11 +166,10 @@ class KustoClientTests(unittest.TestCase):
             expected["xsmalltext"] = DIGIT_WORDS[int(expected["xint16"])]
             expected["xtext"] = DIGIT_WORDS[int(expected["xint16"])]
             expected["xnumberAsText"] = text_type(expected["xint16"])
-            microseconds = 1001 if expected["rownumber"] == 5 else 1000
             expected["xtime"] = (
                 timedelta()
                 if expected["xtime"] is None
-                else (abs(expected["xtime"]) + timedelta(days=1, seconds=1, microseconds=microseconds))
+                else (abs(expected["xtime"]) + timedelta(days=1, seconds=1, microseconds=1000))
                 * (-1) ** (expected["rownumber"] + 1)
             )
             if expected["xint16"] > 0:

@@ -36,7 +36,7 @@ class KustoResultRow(object):
             column = columns[i]
             lower_column_type = column.column_type.lower()
             if lower_column_type == "dynamic" and not value:
-                typed_value = json.loads("null") 
+                typed_value = json.loads("null")
                 # TODO: After Yifats change this if should be removed.
                 # The servers should not return empty string anymore as a valid json.
             elif lower_column_type in ["datetime", "timespan"]:
@@ -53,7 +53,9 @@ class KustoResultRow(object):
                                 if lower_column_type == "datetime":
                                     self._seventh_digit[column.column_name] = tick
                                 else:
-                                    self._seventh_digit[column.column_name] = tick if abs(typed_value) == typed_value else -tick
+                                    self._seventh_digit[column.column_name] = (
+                                        tick if abs(typed_value) == typed_value else -tick
+                                    )
                         else:
                             typed_value = KustoResultRow.convertion_funcs[lower_column_type](value)
                     except (IndexError, AttributeError):
