@@ -91,6 +91,7 @@ class KustoClientTests(unittest.TestCase):
         logger = logging.getLogger(__name__)
         
         logger.error(dateutil.parser.parse("2014-01-01T01:01:01.0000000Z"))
+        logger.error(dateutil.parser.parse("2014-01-01T01:01:01.0000000Z").tzinfo)
         logger.error(Series(dateutil.parser.parse("2014-01-01T01:01:01.0000000Z")))
 
     @patch("requests.post", side_effect=mocked_requests_post)
