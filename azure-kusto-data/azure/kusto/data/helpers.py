@@ -6,7 +6,6 @@ import pandas
 def dataframe_from_result_table(table):
     """Converts Kusto tables into pandas DataFrame.
     :param azure.kusto.data._models.KustoResultTable table: Table recieved from the response.
-    :param bool raise_errors: Will raise errors if set to true, and swallow otherwise.
     :return: pandas DataFrame.
     :rtype: pandas.DataFrame
     """
