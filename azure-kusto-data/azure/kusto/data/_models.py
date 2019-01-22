@@ -53,7 +53,7 @@ class KustoResultRow(object):
                         # If you are here to read this, you probably hit some datetime/timedelta inconsistencies.
                         # Azure-Data-Explorer(Kusto) supports 7 decimal digits, while the corresponding python types supports only 6.
                         # What we do here, is remove the 7th digit, if exists, and create a datetime/timedelta
-                        # from the remaining. The reason we are keeping the 7th digit, is to allow users getting
+                        # from whats left. The reason we are keeping the 7th digit, is to allow users to work with
                         # this percision in case they want it. One example one might want this percision, is when
                         # working with pandas. In that case, use azure.kusto.data.helpers.dataframe_from_result_table
                         # which take into account the 7th digit.
