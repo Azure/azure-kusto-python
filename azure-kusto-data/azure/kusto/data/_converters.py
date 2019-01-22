@@ -1,8 +1,8 @@
 """Convertion utils"""
 
-import dateutil
 from datetime import timedelta
 import re
+from dateutil import parser
 import six
 
 # Regex for TimeSpan
@@ -13,7 +13,10 @@ def to_datetime(value):
     """Converts a string to a datetime."""
     if value is None:
         return None
-    return dateutil.parser.parse(value)
+
+    if isinstance(value, six.integer_types):
+        return parser.parse(value)
+    return parser.isoparse(value)
 
 
 def to_timedelta(value):

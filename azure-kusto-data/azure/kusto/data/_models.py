@@ -3,10 +3,10 @@
 import json
 from datetime import datetime, timedelta
 from enum import Enum
+from decimal import Decimal
 import six
 from . import _converters
 from .exceptions import KustoServiceError
-from decimal import Decimal
 
 
 class WellKnownDataSet(Enum):
@@ -25,9 +25,6 @@ class KustoResultRow(object):
         "datetime": _converters.to_datetime,
         "timespan": _converters.to_timedelta,
         "decimal": Decimal,
-        "DateTime": _converters.to_datetime,
-        "TimeSpan": _converters.to_timedelta,
-        "Decimal": Decimal,
         "dynamic": json.loads,
     }
 
@@ -37,30 +34,32 @@ class KustoResultRow(object):
         self._seventh_digit = {}
         for i, value in enumerate(row):
             column = columns[i]
-            if column.column_type in KustoResultRow.convertion_funcs:
-                if not value and column.column_type == "dynamic":
-                    typed_value = json.loads("null")
+            lower_column_type = column.column_type.lower()
+            if lower_column_type == "dynamic" and not value:
+                typed_value = json.loads("null") 
+                # TODO: After Yifats change this if should be removed.
+                # The servers should not return empty string anymore as a valid json.
+            elif lower_column_type in ["datetime", "timespan"]:
+                if value is None:
+                    typed_value = None
                 else:
-                    typed_value = KustoResultRow.convertion_funcs[column.column_type](value)
-                    if isinstance(typed_value, (datetime, timedelta)) and not isinstance(value, six.integer_types):
-                        try:
-                            char = value.split(":")[2].split(".")[1][6]
-                            if char and char.isdigit() and int(char) is not 0:
-                                tick = int(char)
-                                if isinstance(typed_value, datetime):
+                    try:
+                        char = value.split(":")[2].split(".")[1][6]
+                        if char.isdigit():
+                            tick = int(char)
+                            last = value[-1] if value[-1].isalpha() else ""
+                            typed_value = KustoResultRow.convertion_funcs[lower_column_type](value[:-2] + last)
+                            if tick:
+                                if lower_column_type == "datetime":
                                     self._seventh_digit[column.column_name] = tick
                                 else:
-                                    if typed_value < timedelta(0) and tick < 5:
-                                        self._seventh_digit[column.column_name] = -tick
-                                    elif typed_value > timedelta(0) and tick >= 5:
-                                        self._seventh_digit[column.column_name] = tick - 10
-                                    elif typed_value > timedelta(0) and tick < 5:
-                                        self._seventh_digit[column.column_name] = tick
-                                    else:
-                                        self._seventh_digit[column.column_name] = 10 - tick
-
-                        except IndexError:
-                            pass
+                                    self._seventh_digit[column.column_name] = tick if abs(typed_value) == typed_value else -tick
+                        else:
+                            typed_value = KustoResultRow.convertion_funcs[lower_column_type](value)
+                    except (IndexError, AttributeError):
+                        typed_value = KustoResultRow.convertion_funcs[lower_column_type](value)
+            elif lower_column_type in KustoResultRow.convertion_funcs:
+                typed_value = KustoResultRow.convertion_funcs[lower_column_type](value)
             else:
                 typed_value = value
 
