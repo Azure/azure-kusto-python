@@ -81,7 +81,7 @@ DIGIT_WORDS = [
 class KustoClientTests(unittest.TestCase):
     """Tests class for KustoClient."""
 
-    def test_travis(self, mock_post):
+    def test_travis(self):
         """Tests travis"""
         import dateutil
         from pandas import Series
