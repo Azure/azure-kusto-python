@@ -81,6 +81,13 @@ DIGIT_WORDS = [
 class KustoClientTests(unittest.TestCase):
     """Tests class for KustoClient."""
 
+    def test_travis(self, mock_post):
+        """Tests travis"""
+        import dateutil
+        from pandas import Series
+        print(dateutil.parser.parse("2014-01-01T01:01:01.0000000Z"))
+        print(Series(dateutil.parser.parse("2014-01-01T01:01:01.0000000Z")))
+
     @patch("requests.post", side_effect=mocked_requests_post)
     def test_sanity_query(self, mock_post):
         """Test query V2."""
