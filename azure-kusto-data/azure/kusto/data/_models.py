@@ -34,7 +34,13 @@ class KustoResultRow(object):
         self._seventh_digit = {}
         for i, value in enumerate(row):
             column = columns[i]
-            lower_column_type = column.column_type.lower()
+            try:
+                lower_column_type = column.column_type.lower()
+            except (IndexError, AttributeError):
+                self._value_by_index.append(value)
+                self._value_by_name[columns[i]] = value
+                continue
+
             if lower_column_type == "dynamic" and not value:
                 typed_value = json.loads("null")
                 # TODO: After Yifats change this if should be removed.
@@ -45,7 +51,7 @@ class KustoResultRow(object):
                 else:
                     try:
                         # If you are here to read this, you probably hit some datetime/timedelta inconsistencies.
-                        # Azure-Data-Explorer(Kusto) supports 7 decimal digits, while the python types supports only 6.
+                        # Azure-Data-Explorer(Kusto) supports 7 decimal digits, while the corresponding python types supports only 6.
                         # What we do here, is removing the 7th digit, if exists, and creatign datetime/timedelta
                         # from the remaining. The reason we are keeping the 7th digit, is to allow users getting
                         # this percision in case they want it. One example one might want this percision, is when
@@ -101,7 +107,8 @@ class KustoResultRow(object):
         return ", ".join(self._value_by_index)
 
     def __repr__(self):
-        return "KustoResultRow({})".format(", ".join(self._value_by_name))
+        values = [repr(val) for val in self._value_by_name.values()]
+        return "KustoResultRow(['{}'], [{}])".format("', '".join(self._value_by_name), ", ".join(values))
 
 
 class KustoResultColumn(object):
