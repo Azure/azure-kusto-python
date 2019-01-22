@@ -36,7 +36,7 @@ class KustoResultRow(object):
             column = columns[i]
             try:
                 lower_column_type = column.column_type.lower()
-            except (IndexError, AttributeError):
+            except AttributeError:
                 self._value_by_index.append(value)
                 self._value_by_name[columns[i]] = value
                 continue
@@ -104,7 +104,7 @@ class KustoResultRow(object):
         return self._value_by_index
 
     def __str__(self):
-        return ", ".join(self._value_by_index)
+        return "['{}']".format("', '".join([str(val) for val in self._value_by_index]))
 
     def __repr__(self):
         values = [repr(val) for val in self._value_by_name.values()]
