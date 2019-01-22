@@ -56,7 +56,7 @@ class KustoResultRow(object):
                         # from whats left. The reason we are keeping the 7th digit, is to allow users to work with
                         # this precision in case they want it. One example why one might want this precision, is when
                         # working with pandas. In that case, use azure.kusto.data.helpers.dataframe_from_result_table
-                        # which take into account the 7th digit.
+                        # which takes into account the 7th digit.
                         char = value.split(":")[2].split(".")[1][6]
                         if char.isdigit():
                             tick = int(char)
