@@ -4,14 +4,6 @@ import re
 from os import path
 from setuptools import setup, find_packages
 
-try:
-    from azure_bdist_wheel import cmdclass
-except ImportError:
-    from distutils import log as logger
-
-    logger.warn("Wheel is not available, disabling bdist_wheel hook")
-    cmdclass = {}
-
 PACKAGE_NAME = "azure-kusto-ingest"
 
 # a-b-c => a/b/c
@@ -21,6 +13,10 @@ namespace_name = PACKAGE_NAME.replace("-", ".")
 
 with open(path.join(package_folder_path, "_version.py"), "r") as fd:
     VERSION = re.search(r'^VERSION\s*=\s*[\'"]([^\'"]*)[\'"]', fd.read(), re.MULTILINE).group(1)
+
+if not VERSION:
+    raise RuntimeError('Cannot find version information')
+
 
 setup(
     name=PACKAGE_NAME,
@@ -40,7 +36,7 @@ setup(
         "Programming Language :: Python :: 3.6",
         "License :: OSI Approved :: MIT License",
     ],
-    packages=find_packages(),
+    packages=find_packages(exclude=['azure', 'tests']),
     install_requires=[
         "azure-kusto-data>={}".format(VERSION),
         "azure-storage-blob>=1.1.0",
@@ -48,6 +44,5 @@ setup(
         "azure-storage-queue>=1.1.0",
         "six>=1.10.0",
     ],
-    extras_require={"pandas": ["pandas>=0.15.0"]},
-    cmdclass=cmdclass,
+    extras_require={"pandas": ["pandas>=0.15.0"], ":python_version<'3.0'": ["azure-nspkg"]},
 )

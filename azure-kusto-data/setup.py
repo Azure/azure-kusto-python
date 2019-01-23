@@ -9,14 +9,6 @@ from os import path
 # Always prefer setuptools over distutils
 from setuptools import setup, find_packages
 
-try:
-    from azure_bdist_wheel import cmdclass
-except ImportError:
-    from distutils import log as logger
-
-    logger.warn("Wheel is not available, disabling bdist_wheel hook")
-    cmdclass = {}
-
 PACKAGE_NAME = "azure-kusto-data"
 
 # a-b-c => a/b/c
@@ -27,9 +19,9 @@ namespace_name = PACKAGE_NAME.replace("-", ".")
 with open(path.join(package_folder_path, "_version.py"), "r") as fd:
     VERSION = re.search(r'^VERSION\s*=\s*[\'"]([^\'"]*)[\'"]', fd.read(), re.MULTILINE).group(1)
 
-CURRENT_PATH = path.abspath(path.dirname(__file__))
-with codecs.open(path.join(CURRENT_PATH, "README.rst"), encoding="utf-8") as f:
-    LONG_DESCRIPTION = f.read()
+if not VERSION:
+    raise RuntimeError('Cannot find version information')
+
 
 setup(
     name=PACKAGE_NAME,
@@ -51,8 +43,7 @@ setup(
         "License :: OSI Approved :: MIT License",
     ],
     keywords="kusto wrapper client library",
-    packages=find_packages(),
-    install_requires=["adal>=1.0.0", "azure-nspkg>=2.0.0", "python-dateutil>=2.7.0", "requests>=2.13.0", "six>=1.10.0"],
-    extras_require={"pandas": ["pandas>=0.15.0"]},
-    cmdclass=cmdclass,
+    packages=find_packages(exclude=['azure', 'tests']),
+    install_requires=["adal>=1.0.0", "python-dateutil>=2.7.0", "requests>=2.13.0", "six>=1.10.0"],
+    extras_require={"pandas": ["pandas>=0.15.0"], ":python_version<'3.0'": ["azure-nspkg"]},
 )
