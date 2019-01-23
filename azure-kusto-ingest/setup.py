@@ -15,7 +15,7 @@ with open(path.join(package_folder_path, "_version.py"), "r") as fd:
     VERSION = re.search(r'^VERSION\s*=\s*[\'"]([^\'"]*)[\'"]', fd.read(), re.MULTILINE).group(1)
 
 if not VERSION:
-    raise RuntimeError('Cannot find version information')
+    raise RuntimeError("Cannot find version information")
 
 
 setup(
@@ -36,7 +36,7 @@ setup(
         "Programming Language :: Python :: 3.6",
         "License :: OSI Approved :: MIT License",
     ],
-    packages=find_packages(exclude=['azure', 'tests']),
+    packages=find_packages(exclude=["azure", "tests"]),
     install_requires=[
         "azure-kusto-data>={}".format(VERSION),
         "azure-storage-blob>=1.1.0",

@@ -20,7 +20,7 @@ with open(path.join(package_folder_path, "_version.py"), "r") as fd:
     VERSION = re.search(r'^VERSION\s*=\s*[\'"]([^\'"]*)[\'"]', fd.read(), re.MULTILINE).group(1)
 
 if not VERSION:
-    raise RuntimeError('Cannot find version information')
+    raise RuntimeError("Cannot find version information")
 
 
 setup(
@@ -43,7 +43,7 @@ setup(
         "License :: OSI Approved :: MIT License",
     ],
     keywords="kusto wrapper client library",
-    packages=find_packages(exclude=['azure', 'tests']),
+    packages=find_packages(exclude=["azure", "tests"]),
     install_requires=["adal>=1.0.0", "python-dateutil>=2.7.0", "requests>=2.13.0", "six>=1.10.0"],
     extras_require={"pandas": ["pandas>=0.15.0"], ":python_version<'3.0'": ["azure-nspkg"]},
 )
