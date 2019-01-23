@@ -105,7 +105,7 @@ class KustoClientTests(unittest.TestCase):
             "xnumberAsText": text_type(""),
             "xtime": None,
             "xtextWithNulls": text_type(""),
-            "xdynamicWithNulls": text_type(""),
+            "xdynamicWithNulls": None,
         }
 
         for row in response.primary_results[0]:
@@ -166,15 +166,14 @@ class KustoClientTests(unittest.TestCase):
             expected["xsmalltext"] = DIGIT_WORDS[int(expected["xint16"])]
             expected["xtext"] = DIGIT_WORDS[int(expected["xint16"])]
             expected["xnumberAsText"] = text_type(expected["xint16"])
-            microseconds = 1001 if expected["rownumber"] == 5 else 1000
             expected["xtime"] = (
                 timedelta()
                 if expected["xtime"] is None
-                else (abs(expected["xtime"]) + timedelta(days=1, seconds=1, microseconds=microseconds))
+                else (abs(expected["xtime"]) + timedelta(days=1, seconds=1, microseconds=1000))
                 * (-1) ** (expected["rownumber"] + 1)
             )
             if expected["xint16"] > 0:
-                expected["xdynamicWithNulls"] = text_type('{{"rowId":{0},"arr":[0,{0}]}}'.format(expected["xint16"]))
+                expected["xdynamicWithNulls"] = {"rowId": expected["xint16"], "arr": [0, expected["xint16"]]}
 
     @patch("requests.post", side_effect=mocked_requests_post)
     def test_sanity_control_command(self, mock_post):
@@ -204,9 +203,7 @@ class KustoClientTests(unittest.TestCase):
         from pandas.util.testing import assert_frame_equal
 
         client = KustoClient("https://somecluster.kusto.windows.net")
-        data_frame = dataframe_from_result_table(
-            client.execute_query("PythonTest", "Deft").primary_results[0], raise_errors=False
-        )
+        data_frame = dataframe_from_result_table(client.execute_query("PythonTest", "Deft").primary_results[0])
         self.assertEqual(len(data_frame.columns), 19)
         expected_dict = {
             "rownumber": Series([None, 0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0]),
@@ -239,18 +236,18 @@ class KustoClientTests(unittest.TestCase):
             "xdate": Series(
                 [
                     "NaT",
-                    "2014-01-01T01:01:01.000000000",
-                    "2015-01-01T01:01:01.000000000",
-                    "2016-01-01T01:01:01.000000000",
-                    "2017-01-01T01:01:01.000000000",
-                    "2018-01-01T01:01:01.000000000",
-                    "2019-01-01T01:01:01.000000000",
-                    "2020-01-01T01:01:01.000000000",
-                    "2021-01-01T01:01:01.000000000",
-                    "2022-01-01T01:01:01.000000000",
-                    "2023-01-01T01:01:01.000000000",
+                    "2014-01-01T01:01:01.0000000Z",
+                    "2015-01-01T01:01:01.0000001Z",
+                    "2016-01-01T01:01:01.0000002Z",
+                    "2017-01-01T01:01:01.0000003Z",
+                    "2018-01-01T01:01:01.0000004Z",
+                    "2019-01-01T01:01:01.0000005Z",
+                    "2020-01-01T01:01:01.0000006Z",
+                    "2021-01-01T01:01:01.0000007Z",
+                    "2022-01-01T01:01:01.0000008Z",
+                    "2023-01-01T01:01:01.0000009Z",
                 ],
-                dtype="datetime64[ns]",
+                dtype="datetime64[ns, UTC]",
             ),
             "xsmalltext": Series(
                 ["", "Zero", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine"], dtype=object
@@ -264,13 +261,13 @@ class KustoClientTests(unittest.TestCase):
                     "NaT",
                     0,
                     "1 days 00:00:01.0010001",
-                    "-2 days 00:00:02.0020002",
+                    "-3 days 23:59:57.9979998",
                     "3 days 00:00:03.0030003",
-                    "-4 days 00:00:04.0040004",
+                    "-5 days 23:59:55.9959996",
                     "5 days 00:00:05.0050005",
-                    "-6 days 00:00:06.0060006",
+                    "-7 days 23:59:53.9939994",
                     "7 days 00:00:07.0070007",
-                    "-8 days 00:00:08.0080008",
+                    "-9 days 23:59:51.9919992",
                     "9 days 00:00:09.0090009",
                 ],
                 dtype="timedelta64[ns]",
