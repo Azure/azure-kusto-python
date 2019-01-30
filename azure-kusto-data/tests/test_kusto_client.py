@@ -246,7 +246,7 @@ class KustoClientTests(unittest.TestCase):
                     pandas.to_datetime("2021-01-01T01:01:01.0000007Z").tz_convert(UTC),
                     pandas.to_datetime("2022-01-01T01:01:01.0000008Z").tz_convert(UTC),
                     pandas.to_datetime("2023-01-01T01:01:01.0000009Z").tz_convert(UTC),
-                ],
+                ]
             ),
             "xsmalltext": Series(
                 ["", "Zero", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine"], dtype=object
