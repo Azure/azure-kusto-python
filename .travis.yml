@@ -20,7 +20,7 @@ install:
   - pip install -r dev_requirements.txt
   - pip install codecov coverage
   - pip install ./azure-kusto-data ./azure-kusto-ingest
-  - pip install --force-reinstall azure-nspkg==1.0.0
+  - pip freeze
 before_script:
   - if [[ "$TRAVIS_PYTHON_VERSION" == "3.6" ]]; then black . --line-length 120 --check; fi
 script:

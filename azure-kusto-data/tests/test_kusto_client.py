@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 import pytest
 from six import text_type
 from mock import patch
-from dateutil.tz.tz import tzutc
+from dateutil.tz import UTC
 
 from azure.kusto.data.request import KustoClient, ClientRequestProperties
 from azure.kusto.data.exceptions import KustoServiceError
@@ -161,7 +161,7 @@ class KustoClientTests(unittest.TestCase):
             expected["xuint16"] = 0 if expected["xuint16"] is None else expected["xuint16"] + 1
             expected["xuint32"] = 0 if expected["xuint32"] is None else expected["xuint32"] + 1
             expected["xuint64"] = 0 if expected["xuint64"] is None else expected["xuint64"] + 1
-            expected["xdate"] = expected["xdate"] or datetime(2013, 1, 1, 1, 1, 1, 0, tzinfo=tzutc())
+            expected["xdate"] = expected["xdate"] or datetime(2013, 1, 1, 1, 1, 1, 0, tzinfo=UTC)
             expected["xdate"] = expected["xdate"].replace(year=expected["xdate"].year + 1)
             expected["xsmalltext"] = DIGIT_WORDS[int(expected["xint16"])]
             expected["xtext"] = DIGIT_WORDS[int(expected["xint16"])]
@@ -189,7 +189,7 @@ class KustoClientTests(unittest.TestCase):
         result = primary_table[0]
         self.assertEqual(result["BuildVersion"], "1.0.6693.14577")
         self.assertEqual(
-            result["BuildTime"], datetime(year=2018, month=4, day=29, hour=8, minute=5, second=54, tzinfo=tzutc())
+            result["BuildTime"], datetime(year=2018, month=4, day=29, hour=8, minute=5, second=54, tzinfo=UTC)
         )
         self.assertEqual(result["ServiceType"], "Engine")
         self.assertEqual(result["ProductVersion"], "KustoMain_2018.04.29.5")
@@ -235,19 +235,18 @@ class KustoClientTests(unittest.TestCase):
             "xuint64": Series([None, 0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0]),
             "xdate": Series(
                 [
-                    "NaT",
-                    "2014-01-01T01:01:01.0000000Z",
-                    "2015-01-01T01:01:01.0000001Z",
-                    "2016-01-01T01:01:01.0000002Z",
-                    "2017-01-01T01:01:01.0000003Z",
-                    "2018-01-01T01:01:01.0000004Z",
-                    "2019-01-01T01:01:01.0000005Z",
-                    "2020-01-01T01:01:01.0000006Z",
-                    "2021-01-01T01:01:01.0000007Z",
-                    "2022-01-01T01:01:01.0000008Z",
-                    "2023-01-01T01:01:01.0000009Z",
+                    pandas.to_datetime(None),
+                    pandas.to_datetime("2014-01-01T01:01:01.0000000Z").tz_convert(UTC),
+                    pandas.to_datetime("2015-01-01T01:01:01.0000001Z").tz_convert(UTC),
+                    pandas.to_datetime("2016-01-01T01:01:01.0000002Z").tz_convert(UTC),
+                    pandas.to_datetime("2017-01-01T01:01:01.0000003Z").tz_convert(UTC),
+                    pandas.to_datetime("2018-01-01T01:01:01.0000004Z").tz_convert(UTC),
+                    pandas.to_datetime("2019-01-01T01:01:01.0000005Z").tz_convert(UTC),
+                    pandas.to_datetime("2020-01-01T01:01:01.0000006Z").tz_convert(UTC),
+                    pandas.to_datetime("2021-01-01T01:01:01.0000007Z").tz_convert(UTC),
+                    pandas.to_datetime("2022-01-01T01:01:01.0000008Z").tz_convert(UTC),
+                    pandas.to_datetime("2023-01-01T01:01:01.0000009Z").tz_convert(UTC),
                 ],
-                dtype="datetime64[ns, UTC]",
             ),
             "xsmalltext": Series(
                 ["", "Zero", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine"], dtype=object

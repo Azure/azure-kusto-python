@@ -45,5 +45,5 @@ setup(
     keywords="kusto wrapper client library",
     packages=find_packages(exclude=["azure", "tests"]),
     install_requires=["adal>=1.0.0", "python-dateutil>=2.7.0", "requests>=2.13.0", "six>=1.10.0"],
-    extras_require={"pandas": ["pandas>=0.15.0"], ":python_version<'3.0'": ["azure-nspkg"]},
+    extras_require={"pandas": ["pandas>=0.24.0"], ":python_version<'3.0'": ["azure-nspkg"]},
 )
