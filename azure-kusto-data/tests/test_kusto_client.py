@@ -29,7 +29,7 @@ def mocked_poolmgr_request(*args, **kwargs):
     class MockResponse:
         """Mock class for KustoResponse."""
 
-        def __init__(self, json_data, status_code):
+        def __init__(self, data, status_code):
             self.data = data
             self.status = status_code
             self.headers = None
