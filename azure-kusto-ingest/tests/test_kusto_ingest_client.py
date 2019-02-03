@@ -26,9 +26,9 @@ BLOB_URL_REGEX = (
 
 
 def mocked_poolmgr_request(*args, **kwargs):
-
     class MockResponse:
         """Mock class for KustoResponse."""
+
         def __init__(self, data, status_code, headers):
             self.data = data
             self.status = status_code
@@ -159,7 +159,6 @@ class KustoIngestClientTests(unittest.TestCase):
             create_blob_from_stream_mock_kwargs["blob_name"]
             == "database__table__1111-111111-111111-1111__dataset.csv.gz"
         )
-
 
     @pytest.mark.skipif(not pandas_installed, reason="requires pandas")
     @patch("azure.storage.blob.BlockBlobService.create_blob_from_path")

@@ -254,8 +254,9 @@ class KustoClient(object):
         kusto_cluster = kcsb.data_source
 
         # Create a pool manager
-        self._pool_mgr = urllib3.PoolManager(num_pools=1, maxsize=max_pool_size,
-                                             cert_reqs='CERT_REQUIRED', ca_certs=certifi.where())
+        self._pool_mgr = urllib3.PoolManager(
+            num_pools=1, maxsize=max_pool_size, cert_reqs="CERT_REQUIRED", ca_certs=certifi.where()
+        )
 
         self._mgmt_endpoint = "{0}/v1/rest/mgmt".format(kusto_cluster)
         self._query_endpoint = "{0}/v2/rest/query".format(kusto_cluster)
@@ -312,8 +313,9 @@ class KustoClient(object):
             request_headers["Authorization"] = self._auth_provider.acquire_authorization_header()
 
         timeout = self._get_timeout(properties, default_timeout)
-        response = self._pool_mgr.request("POST", endpoint, headers=request_headers,
-                                          body=json.dumps(request_payload), timeout=timeout)
+        response = self._pool_mgr.request(
+            "POST", endpoint, headers=request_headers, body=json.dumps(request_payload), timeout=timeout
+        )
 
         if response.status == 200:
             if endpoint.endswith("v2/rest/query"):
