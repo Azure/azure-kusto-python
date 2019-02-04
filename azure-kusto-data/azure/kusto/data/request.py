@@ -242,12 +242,13 @@ class KustoClient(object):
     _mgmt_default_timeout = timedelta(hours=1, seconds=30).seconds
     _query_default_timeout = timedelta(minutes=4, seconds=30).seconds
 
-    def __init__(self, kcsb, max_pool_size=100):
+    # The maximum amount of connections to be able to operate in parallel
+    _max_pool_size = 100
+
+    def __init__(self, kcsb):
         """Kusto Client constructor.
         :param kcsb: The connection string to initialize KustoClient.
         :type kcsb: azure.kusto.data.request.KustoConnectionStringBuilder or str
-        :param max_pool_size: The maximum amount of connections to open parallely
-        :type: int
         """
         if not isinstance(kcsb, KustoConnectionStringBuilder):
             kcsb = KustoConnectionStringBuilder(kcsb)
@@ -255,7 +256,7 @@ class KustoClient(object):
 
         # Create a pool manager
         self._pool_mgr = urllib3.PoolManager(
-            num_pools=1, maxsize=max_pool_size, cert_reqs="CERT_REQUIRED", ca_certs=certifi.where()
+            num_pools=1, maxsize=self._max_pool_size, cert_reqs="CERT_REQUIRED", ca_certs=certifi.where()
         )
 
         self._mgmt_endpoint = "{0}/v1/rest/mgmt".format(kusto_cluster)
