@@ -5,7 +5,6 @@ import json
 import base64
 from mock import patch
 from six import text_type
-import responses
 import io
 from azure.kusto.ingest import KustoIngestClient, IngestionProperties, DataFormat
 
@@ -26,8 +25,17 @@ BLOB_URL_REGEX = (
 )
 
 
-def request_callback(request):
-    body = json.loads(request.body.decode()) if type(request.body) == bytes else json.loads(request.body)
+def mocked_poolmgr_request(*args, **kwargs):
+    class MockResponse:
+        """Mock class for KustoResponse."""
+
+        def __init__(self, data, status_code, headers):
+            self.data = data
+            self.status = status_code
+            self.headers = headers
+            self.headers = None
+
+    body = json.loads(kwargs["body"].decode()) if type(kwargs["body"]) == bytes else json.loads(kwargs["body"])
     response_status = 400
     response_headers = []
     response_body = {}
@@ -91,7 +99,7 @@ def request_callback(request):
             ]
         }
 
-    return (response_status, response_headers, json.dumps(response_body))
+    return MockResponse(json.dumps(response_body), response_status, response_headers)
 
 
 class KustoIngestClientTests(unittest.TestCase):
@@ -99,21 +107,14 @@ class KustoIngestClientTests(unittest.TestCase):
     MOCKED_PID = 64
     MOCKED_TIME = 100
 
-    @responses.activate
     @patch("azure.kusto.data.security._AadHelper.acquire_authorization_header", return_value=None)
     @patch("azure.storage.blob.BlockBlobService.create_blob_from_stream")
     @patch("azure.storage.queue.QueueService.put_message")
+    @patch("urllib3.PoolManager.request", side_effect=mocked_poolmgr_request)
     @patch("uuid.uuid4", return_value=MOCKED_UUID_4)
     def test_sanity_ingest_from_file(
-        self, mock_uuid, mock_put_message_in_queue, mock_create_blob_from_stream, mock_aad
+        self, mock_uuid, mock_request, mock_put_message_in_queue, mock_create_blob_from_stream, mock_aad
     ):
-        responses.add_callback(
-            responses.POST,
-            "https://ingest-somecluster.kusto.windows.net/v1/rest/mgmt",
-            callback=request_callback,
-            content_type="application/json",
-        )
-
         ingest_client = KustoIngestClient("https://ingest-somecluster.kusto.windows.net")
         ingestion_properties = IngestionProperties(database="database", table="table", dataFormat=DataFormat.csv)
 
@@ -159,23 +160,16 @@ class KustoIngestClientTests(unittest.TestCase):
             == "database__table__1111-111111-111111-1111__dataset.csv.gz"
         )
 
-    @responses.activate
     @pytest.mark.skipif(not pandas_installed, reason="requires pandas")
     @patch("azure.storage.blob.BlockBlobService.create_blob_from_path")
     @patch("azure.storage.queue.QueueService.put_message")
+    @patch("urllib3.PoolManager.request", side_effect=mocked_poolmgr_request)
     @patch("uuid.uuid4", return_value=MOCKED_UUID_4)
     @patch("time.time", return_value=MOCKED_TIME)
     @patch("os.getpid", return_value=MOCKED_PID)
     def test_simple_ingest_from_dataframe(
-        self, mock_pid, mock_time, mock_uuid, mock_put_message_in_queue, mock_create_blob_from_path
+        self, mock_pid, mock_time, mock_uuid, mock_request, mock_put_message_in_queue, mock_create_blob_from_path
     ):
-        responses.add_callback(
-            responses.POST,
-            "https://ingest-somecluster.kusto.windows.net/v1/rest/mgmt",
-            callback=request_callback,
-            content_type="application/json",
-        )
-
         ingest_client = KustoIngestClient("https://ingest-somecluster.kusto.windows.net")
         ingestion_properties = IngestionProperties(database="database", table="table", dataFormat=DataFormat.csv)
 

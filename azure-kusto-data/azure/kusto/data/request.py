@@ -2,9 +2,11 @@
 
 import uuid
 import json
+import urllib3
+import certifi
+
 from datetime import timedelta
 from enum import Enum, unique
-import requests
 
 from .security import _AadHelper
 from .exceptions import KustoServiceError
@@ -240,6 +242,9 @@ class KustoClient(object):
     _mgmt_default_timeout = timedelta(hours=1, seconds=30).seconds
     _query_default_timeout = timedelta(minutes=4, seconds=30).seconds
 
+    # The maximum amount of connections to be able to operate in parallel
+    _max_pool_size = 100
+
     def __init__(self, kcsb):
         """Kusto Client constructor.
         :param kcsb: The connection string to initialize KustoClient.
@@ -248,6 +253,12 @@ class KustoClient(object):
         if not isinstance(kcsb, KustoConnectionStringBuilder):
             kcsb = KustoConnectionStringBuilder(kcsb)
         kusto_cluster = kcsb.data_source
+
+        # Create a pool manager
+        self._pool_mgr = urllib3.PoolManager(
+            num_pools=1, maxsize=self._max_pool_size, cert_reqs="CERT_REQUIRED", ca_certs=certifi.where()
+        )
+
         self._mgmt_endpoint = "{0}/v1/rest/mgmt".format(kusto_cluster)
         self._query_endpoint = "{0}/v2/rest/query".format(kusto_cluster)
         self._auth_provider = _AadHelper(kcsb) if kcsb.aad_federated_security else None
@@ -303,14 +314,16 @@ class KustoClient(object):
             request_headers["Authorization"] = self._auth_provider.acquire_authorization_header()
 
         timeout = self._get_timeout(properties, default_timeout)
-        response = requests.post(endpoint, headers=request_headers, json=request_payload, timeout=timeout)
+        response = self._pool_mgr.request(
+            "POST", endpoint, headers=request_headers, body=json.dumps(request_payload), timeout=timeout
+        )
 
-        if response.status_code == 200:
+        if response.status == 200:
             if endpoint.endswith("v2/rest/query"):
-                return KustoResponseDataSetV2(response.json())
-            return KustoResponseDataSetV1(response.json())
+                return KustoResponseDataSetV2(json.loads(response.data))
+            return KustoResponseDataSetV1(json.loads(response.data))
 
-        raise KustoServiceError([response.json()], response)
+        raise KustoServiceError([json.loads(response.data)], response)
 
     def _get_timeout(self, properties, default):
         if properties:
