@@ -48,6 +48,8 @@ class KustoResultRow(object):
                 # There is current work being done to stay with the last, as this is the official representation for
                 # empty json. Once this work is done this if should be removed.
                 # The servers should not return empty string anymore as a valid json.
+            if lower_column_type == "dynamic" and isinstance(value, dict):
+                type_value = value
             elif lower_column_type in ["datetime", "timespan"]:
                 if value is None:
                     typed_value = None
