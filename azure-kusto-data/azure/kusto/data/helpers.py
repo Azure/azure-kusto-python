@@ -1,6 +1,7 @@
 """Kusto helper functions"""
 
 import pandas
+from ._models import KustoResultTable
 
 
 def dataframe_from_result_table(table):
@@ -9,6 +10,12 @@ def dataframe_from_result_table(table):
     :return: pandas DataFrame.
     :rtype: pandas.DataFrame
     """
+    if not table:
+        raise ValueError()
+
+    print("table is not none")
+    if not isinstance(table, KustoResultTable):
+        raise TypeError("Expected KustoResultTable got {}".format(type(table).__name__))
 
     if not table.columns or not table.rows:
         return pandas.DataFrame()
