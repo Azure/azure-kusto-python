@@ -13,7 +13,6 @@ def dataframe_from_result_table(table):
     if not table:
         raise ValueError()
 
-    print("table is not none")
     if not isinstance(table, KustoResultTable):
         raise TypeError("Expected KustoResultTable got {}".format(type(table).__name__))
 
