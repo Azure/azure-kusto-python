@@ -1,7 +1,7 @@
 """A module to make a Kusto request."""
 
 import uuid
-import json
+import simplejson as json
 import urllib3
 import certifi
 

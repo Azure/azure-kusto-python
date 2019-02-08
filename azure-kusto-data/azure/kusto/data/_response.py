@@ -1,6 +1,6 @@
 """This module constains all classes to get Kusto responses. Including error handling."""
 
-import json
+import simplejson as json
 
 from datetime import timedelta
 from abc import ABCMeta, abstractmethod

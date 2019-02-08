@@ -1,6 +1,6 @@
 """Kusto Data Models"""
 
-import json
+import simplejson as json
 from datetime import datetime, timedelta
 from enum import Enum
 from decimal import Decimal
