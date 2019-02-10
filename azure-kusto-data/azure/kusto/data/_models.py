@@ -25,7 +25,6 @@ class KustoResultRow(object):
         "datetime": _converters.to_datetime,
         "timespan": _converters.to_timedelta,
         "decimal": Decimal,
-        "dynamic": json.loads,
     }
 
     def __init__(self, columns, row):
