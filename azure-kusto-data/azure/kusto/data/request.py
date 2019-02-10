@@ -328,9 +328,6 @@ class KustoClient(object):
 
         raise KustoServiceError([data], response)
 
-    def _json(request):
-
-
     def _get_timeout(self, properties, default):
         if properties:
             return properties.get_option(ClientRequestProperties.OptionServerTimeout, default)
