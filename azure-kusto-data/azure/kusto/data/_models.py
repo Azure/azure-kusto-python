@@ -36,14 +36,7 @@ class KustoResultRow(object):
                 self._value_by_name[columns[i]] = value
                 continue
 
-            if lower_column_type == "dynamic" and not value:
-                typed_value = json.loads("null")
-                # TODO: Remove this if clause.
-                # Today there are two types of responses to jull json onject: empty string, or null.
-                # There is current work being done to stay with the last, as this is the official representation for
-                # empty json. Once this work is done this if should be removed.
-                # The servers should not return empty string anymore as a valid json.
-            elif lower_column_type in ["datetime", "timespan"]:
+            if lower_column_type in ["datetime", "timespan"]:
                 if value is None:
                     typed_value = None
                 else:

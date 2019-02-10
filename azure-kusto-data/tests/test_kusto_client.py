@@ -104,7 +104,7 @@ class KustoClientTests(unittest.TestCase):
             "xnumberAsText": text_type(""),
             "xtime": None,
             "xtextWithNulls": text_type(""),
-            "xdynamicWithNulls": None,
+            "xdynamicWithNulls": text_type(""),
         }
 
         for row in response.primary_results[0]:
@@ -273,8 +273,8 @@ class KustoClientTests(unittest.TestCase):
             "xtextWithNulls": Series(["", "", "", "", "", "", "", "", "", "", ""], dtype=object),
             "xdynamicWithNulls": Series(
                 [
-                    None,
-                    None,
+                    text_type(""),
+                    text_type(""),
                     {"rowId": 1, "arr": [0, 1]},
                     {"rowId": 2, "arr": [0, 2]},
                     {"rowId": 3, "arr": [0, 3]},
