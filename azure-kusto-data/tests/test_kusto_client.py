@@ -104,7 +104,7 @@ class KustoClientTests(unittest.TestCase):
             "xnumberAsText": text_type(""),
             "xtime": None,
             "xtextWithNulls": text_type(""),
-            "xdynamicWithNulls": None,
+            "xdynamicWithNulls": text_type(""),
         }
 
         for row in response.primary_results[0]:
@@ -355,15 +355,15 @@ range x from 1 to 10 step 1"""
         self.assertIsInstance(row[0], int)
         self.assertEqual(row[0], 123)
 
-        self.assertIsInstance(row[1], str)
+        self.assertIsInstance(row[1], text_type)
         self.assertEqual(row[1], "123")
 
-        self.assertIsInstance(row[2], str)
+        self.assertIsInstance(row[2], text_type)
         self.assertEqual(row[2], "test bad json")
 
         self.assertEqual(row[3], None)
 
-        self.assertIsInstance(row[4], str)
+        self.assertIsInstance(row[4], text_type)
         self.assertEqual(row[4], '{"rowId":2,"arr":[0,2]}')
 
         self.assertIsInstance(row[5], dict)
