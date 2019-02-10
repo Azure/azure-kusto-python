@@ -43,5 +43,5 @@ setup(
         "azure-storage-queue>=1.1.0",
         "six>=1.10.0",
     ],
-    extras_require={"pandas": ["pandas>=0.24.0"], ":python_version<'3.0'": ["azure-nspkg"]},
+    extras_require={"pandas": ["pandas==0.24.1"], ":python_version<'3.0'": ["azure-nspkg"]},
 )

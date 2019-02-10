@@ -318,12 +318,14 @@ class KustoClient(object):
             "POST", endpoint, headers=request_headers, body=json.dumps(request_payload), timeout=timeout
         )
 
+        data = json.loads(response.data.decode("UTF-8"))
+
         if response.status == 200:
             if endpoint.endswith("v2/rest/query"):
-                return KustoResponseDataSetV2(json.loads(response.data))
-            return KustoResponseDataSetV1(json.loads(response.data))
+                return KustoResponseDataSetV2(data)
+            return KustoResponseDataSetV1(data)
 
-        raise KustoServiceError([json.loads(response.data)], response)
+        raise KustoServiceError([data], response)
 
     def _get_timeout(self, properties, default):
         if properties:

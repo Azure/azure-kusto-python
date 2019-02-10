@@ -99,7 +99,7 @@ def mocked_poolmgr_request(*args, **kwargs):
             ]
         }
 
-    return MockResponse(json.dumps(response_body), response_status, response_headers)
+    return MockResponse(json.dumps(response_body).encode("UTF-8"), response_status, response_headers)
 
 
 class KustoIngestClientTests(unittest.TestCase):
