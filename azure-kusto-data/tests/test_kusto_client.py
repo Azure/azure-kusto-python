@@ -104,7 +104,7 @@ class KustoClientTests(unittest.TestCase):
             "xnumberAsText": text_type(""),
             "xtime": None,
             "xtextWithNulls": text_type(""),
-            "xdynamicWithNulls": text_type(""),
+            "xdynamicWithNulls": None,
         }
 
         for row in response.primary_results[0]:
