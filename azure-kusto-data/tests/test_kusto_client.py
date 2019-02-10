@@ -354,17 +354,17 @@ range x from 1 to 10 step 1"""
         row = client.execute_query("PythonTest", query).primary_results[0].rows[0]
         self.assertIsInstance(row[0], int)
         self.assertEqual(row[0], 123)
-        
+
         self.assertIsInstance(row[1], str)
         self.assertEqual(row[1], "123")
-        
+
         self.assertIsInstance(row[2], str)
         self.assertEqual(row[2], "test bad json")
 
         self.assertEqual(row[3], None)
 
         self.assertIsInstance(row[4], str)
-        self.assertEqual(row[4], "{\"rowId\":2,\"arr\":[0,2]}")
+        self.assertEqual(row[4], '{"rowId":2,"arr":[0,2]}')
 
         self.assertIsInstance(row[5], dict)
-        self.assertEqual(row[5], {"rowId":2,"arr":[0,2]})
+        self.assertEqual(row[5], {"rowId": 2, "arr": [0, 2]})
