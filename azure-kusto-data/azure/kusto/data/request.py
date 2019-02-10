@@ -318,7 +318,7 @@ class KustoClient(object):
             "POST", endpoint, headers=request_headers, body=json.dumps(request_payload), timeout=timeout
         )
 
-        data = json.loads(response.data.decode('UTF-8')) if response.data and len(response.data) > 0 else {}
+        data = json.loads(response.data.decode("UTF-8")) if response.data and len(response.data) > 0 else {}
 
         if response.status == 200:
             if endpoint.endswith("v2/rest/query"):
