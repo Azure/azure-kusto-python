@@ -12,7 +12,6 @@ from .security import _AadHelper
 from .exceptions import KustoServiceError
 from ._response import KustoResponseDataSetV1, KustoResponseDataSetV2
 from ._version import VERSION
-from ._utils import guess_json_utf
 
 
 class KustoConnectionStringBuilder(object):
@@ -319,7 +318,7 @@ class KustoClient(object):
             "POST", endpoint, headers=request_headers, body=json.dumps(request_payload), timeout=timeout
         )
 
-        data = response.data.decode(guess_json_utf(response.data)) if response.data and len(response.data) > 3 else ''
+        data = json.loads(response.data.decode('UTF-8')) if response.data and len(response.data) > 0 else {}
 
         if response.status == 200:
             if endpoint.endswith("v2/rest/query"):
