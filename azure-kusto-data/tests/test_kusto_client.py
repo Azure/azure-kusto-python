@@ -44,6 +44,8 @@ def mocked_poolmgr_request(*args, **kwargs):
                 file_name = "query_partial_results_defer_is_false.json"
         elif "Deft" in body_json["csl"]:
             file_name = "deft.json"
+        elif "print dynamic" in body_json["csl"]:
+            file_name = "dynamic.json"
         with open(os.path.join(os.path.dirname(__file__), "input", file_name), "r") as response_file:
             data = response_file.read()
         return MockResponse(data.encode("UTF-8"), 200)
@@ -343,3 +345,26 @@ range x from 1 to 10 step 1"""
         self.assertEqual(response[1].table_kind, WellKnownDataSet.QueryProperties)
         self.assertEqual(response[2].table_kind, WellKnownDataSet.QueryCompletionInformation)
         self.assertEqual(response[3].table_kind, WellKnownDataSet.TableOfContents)
+
+    @patch("urllib3.PoolManager.request", side_effect=mocked_poolmgr_request)
+    def test_dynamic(self, mock_post):
+        """Tests dynamic responses."""
+        client = KustoClient("https://somecluster.kusto.windows.net")
+        query = """print dynamic(123), dynamic("123"), dynamic("test bad json"), dynamic(null), dynamic('{"rowId":2,"arr":[0,2]}'), dynamic({"rowId":2,"arr":[0,2]})"""
+        row = client.execute_query("PythonTest", query).primary_results[0].rows[0]
+        self.assertIsInstance(row[0], int)
+        self.assertEqual(row[0], 123)
+
+        self.assertIsInstance(row[1], text_type)
+        self.assertEqual(row[1], "123")
+
+        self.assertIsInstance(row[2], text_type)
+        self.assertEqual(row[2], "test bad json")
+
+        self.assertEqual(row[3], None)
+
+        self.assertIsInstance(row[4], text_type)
+        self.assertEqual(row[4], '{"rowId":2,"arr":[0,2]}')
+
+        self.assertIsInstance(row[5], dict)
+        self.assertEqual(row[5], {"rowId": 2, "arr": [0, 2]})

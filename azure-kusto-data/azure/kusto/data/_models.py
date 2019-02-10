@@ -21,12 +21,7 @@ class WellKnownDataSet(Enum):
 class KustoResultRow(object):
     """Iterator over a Kusto result row."""
 
-    convertion_funcs = {
-        "datetime": _converters.to_datetime,
-        "timespan": _converters.to_timedelta,
-        "decimal": Decimal,
-        "dynamic": json.loads,
-    }
+    convertion_funcs = {"datetime": _converters.to_datetime, "timespan": _converters.to_timedelta, "decimal": Decimal}
 
     def __init__(self, columns, row):
         self._value_by_name = {}
