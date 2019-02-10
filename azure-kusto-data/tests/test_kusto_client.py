@@ -46,7 +46,7 @@ def mocked_poolmgr_request(*args, **kwargs):
             file_name = "deft.json"
         with open(os.path.join(os.path.dirname(__file__), "input", file_name), "r") as response_file:
             data = response_file.read()
-        return MockResponse(data, 200)
+        return MockResponse(data.encode("UTF-8"), 200)
 
     elif args[1] == "https://somecluster.kusto.windows.net/v1/rest/mgmt":
         if body_json["csl"] == ".show version":
@@ -55,7 +55,7 @@ def mocked_poolmgr_request(*args, **kwargs):
             file_name = "adminthenquery.json"
         with open(os.path.join(os.path.dirname(__file__), "input", file_name), "r") as response_file:
             data = response_file.read()
-        return MockResponse(data, 200)
+        return MockResponse(data.encode("UTF-8"), 200)
 
     return MockResponse(None, 404)
 
