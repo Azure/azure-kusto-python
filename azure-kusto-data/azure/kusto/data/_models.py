@@ -137,6 +137,10 @@ class KustoResultTable(object):
     def columns_count(self):
         return len(self.columns)
 
+    def to_dict(self):
+        """Converts the table to a dict."""
+        return {"name": self.table_name, "kind": self.table_kind, "data": [r.to_dict() for r in self]}
+
     def __len__(self):
         return self.rows_count
 
@@ -147,11 +151,13 @@ class KustoResultTable(object):
     def __getitem__(self, key):
         return self.rows[key]
 
-    def to_dict(self):
-        return {"name": self.table_name, "kind": self.table_kind, "data": [r.to_dict() for r in self]}
-
     def __str__(self):
         d = self.to_dict()
         # enum is not serializable, using value instead
         d["kind"] = d["kind"].value
         return json.dumps(d)
+
+    def __bool__(self):
+        return any(self.columns)
+
+    __nonzero__ = __bool__

@@ -1,0 +1,120 @@
+[{
+	"FrameType": "DataSetHeader",
+	"IsProgressive": false,
+	"Version": "v2.0"
+},
+{
+	"FrameType": "DataTable",
+	"TableId": 0,
+	"TableKind": "QueryProperties",
+	"TableName": "@ExtendedProperties",
+	"Columns": [{
+		"ColumnName": "TableId",
+		"ColumnType": "int"
+	},
+	{
+		"ColumnName": "Key",
+		"ColumnType": "string"
+	},
+	{
+		"ColumnName": "Value",
+		"ColumnType": "dynamic"
+	}],
+	"Rows": [[1,
+	"Visualization",
+	"{\"Visualization\":null,\"Title\":null,\"XColumn\":null,\"Series\":null,\"YColumns\":null,\"AnomalyColumns\":null,\"XTitle\":null,\"YTitle\":null,\"XAxis\":null,\"YAxis\":null,\"Legend\":null,\"YSplit\":null,\"Accumulate\":false,\"IsQuerySorted\":false,\"Kind\":null,\"Ymin\":\"NaN\",\"Ymax\":\"NaN\"}"]]
+},
+{
+	"FrameType": "DataTable",
+	"TableId": 1,
+	"TableKind": "PrimaryResult",
+	"TableName": "PrimaryResult",
+	"Columns": [{
+		"ColumnName": "print_0",
+		"ColumnType": "string"
+	}],
+	"Rows": []
+},
+{
+	"FrameType": "DataTable",
+	"TableId": 2,
+	"TableKind": "QueryCompletionInformation",
+	"TableName": "QueryCompletionInformation",
+	"Columns": [{
+		"ColumnName": "Timestamp",
+		"ColumnType": "datetime"
+	},
+	{
+		"ColumnName": "ClientRequestId",
+		"ColumnType": "string"
+	},
+	{
+		"ColumnName": "ActivityId",
+		"ColumnType": "guid"
+	},
+	{
+		"ColumnName": "SubActivityId",
+		"ColumnType": "guid"
+	},
+	{
+		"ColumnName": "ParentActivityId",
+		"ColumnType": "guid"
+	},
+	{
+		"ColumnName": "Level",
+		"ColumnType": "int"
+	},
+	{
+		"ColumnName": "LevelName",
+		"ColumnType": "string"
+	},
+	{
+		"ColumnName": "StatusCode",
+		"ColumnType": "int"
+	},
+	{
+		"ColumnName": "StatusCodeName",
+		"ColumnType": "string"
+	},
+	{
+		"ColumnName": "EventType",
+		"ColumnType": "int"
+	},
+	{
+		"ColumnName": "EventTypeName",
+		"ColumnType": "string"
+	},
+	{
+		"ColumnName": "Payload",
+		"ColumnType": "string"
+	}],
+	"Rows": [["2019-02-12T10:23:02.0413963Z",
+	"KPC.execute;57050c90-8a7d-4b29-b8d0-a40688a8185c",
+	"dfbaa865-e29d-46e0-af17-be22c6c113ac",
+	"e2bf7a6c-adf1-48da-b117-667a92874d38",
+	"81409d63-718b-4d06-9711-7eab476b7ceb",
+	4,
+	"Info",
+	0,
+	"S_OK (0)",
+	4,
+	"QueryInfo",
+	"{\"Count\":1,\"Text\":\"Querycompletedsuccessfully\"}"],
+	["2019-02-12T10:23:02.0413963Z",
+	"KPC.execute;57050c90-8a7d-4b29-b8d0-a40688a8185c",
+	"dfbaa865-e29d-46e0-af17-be22c6c113ac",
+	"e2bf7a6c-adf1-48da-b117-667a92874d38",
+	"81409d63-718b-4d06-9711-7eab476b7ceb",
+	6,
+	"Stats",
+	0,
+	"S_OK (0)",
+	0,
+	"QueryResourceConsumption",
+	"{\"ExecutionTime\":0.0156475,\"resource_usage\":{\"cache\":{\"memory\":{\"hits\":0,\"misses\":0,\"total\":0},\"disk\":{\"hits\":0,\"misses\":0,\"total\":0},\"shards\":{\"hitbytes\":0,\"missbytes\":0,\"bypassbytes\":0}},\"cpu\":{\"user\":\"00: 00: 00\",\"kernel\":\"00: 00: 00\",\"totalcpu\":\"00: 00: 00\"},\"memory\":{\"peak_per_node\":0}},\"input_dataset_statistics\":{\"extents\":{\"total\":0,\"scanned\":0},\"rows\":{\"total\":0,\"scanned\":0},\"rowstores\":{\"scanned_rows\":0,\"scanned_values_size\":0}},\"dataset_statistics\":[{\"table_row_count\":0,\"table_size\":0}]}"]]
+},
+{
+	"FrameType": "DataSetCompletion",
+	"HasErrors": false,
+	"Cancelled": false
+}]

@@ -46,6 +46,8 @@ def mocked_poolmgr_request(*args, **kwargs):
             file_name = "deft.json"
         elif "print dynamic" in body_json["csl"]:
             file_name = "dynamic.json"
+        elif "take 0" in body_json["csl"]:
+            file_name = "zero_results.json"
         with open(os.path.join(os.path.dirname(__file__), "input", file_name), "r") as response_file:
             data = response_file.read()
         return MockResponse(data.encode("UTF-8"), 200)
@@ -368,3 +370,11 @@ range x from 1 to 10 step 1"""
 
         self.assertIsInstance(row[5], dict)
         self.assertEqual(row[5], {"rowId": 2, "arr": [0, 2]})
+
+    @patch("urllib3.PoolManager.request", side_effect=mocked_poolmgr_request)
+    def test_empty_result(self, mock_post):
+        """Tests dynamic responses."""
+        client = KustoClient("https://somecluster.kusto.windows.net")
+        query = """print 'a' | take 0"""
+        response = client.execute_query("PythonTest", query)
+        self.assertTrue(response.primary_results[0])
