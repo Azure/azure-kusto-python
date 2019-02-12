@@ -16,9 +16,6 @@ def dataframe_from_result_table(table):
     if not isinstance(table, KustoResultTable):
         raise TypeError("Expected KustoResultTable got {}".format(type(table).__name__))
 
-    if not table.columns or not table.rows:
-        return pandas.DataFrame()
-
     frame = pandas.DataFrame.from_records(
         [row.to_list() for row in table.rows], columns=[col.column_name for col in table.columns]
     )
