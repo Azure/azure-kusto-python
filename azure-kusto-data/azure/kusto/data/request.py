@@ -257,8 +257,8 @@ class KustoClient(object):
 
         # Create a session object for connection pooling
         self._session = requests.Session()
-        self._session.mount('http://', HTTPAdapter(pool_maxsize=self._max_pool_size))
-        self._session.mount('https://', HTTPAdapter(pool_maxsize=self._max_pool_size))
+        self._session.mount("http://", HTTPAdapter(pool_maxsize=self._max_pool_size))
+        self._session.mount("https://", HTTPAdapter(pool_maxsize=self._max_pool_size))
 
         self._mgmt_endpoint = "{0}/v1/rest/mgmt".format(kusto_cluster)
         self._query_endpoint = "{0}/v2/rest/query".format(kusto_cluster)
