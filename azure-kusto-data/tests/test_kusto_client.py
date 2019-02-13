@@ -23,43 +23,47 @@ except:
     pass
 
 
-def mocked_poolmgr_request(*args, **kwargs):
-    """Mock to replace urllib3.PoolManager.request"""
+def mocked_requests_post(*args, **kwargs):
+    """Mock to replace requests.Session.post"""
 
     class MockResponse:
         """Mock class for KustoResponse."""
 
-        def __init__(self, data, status_code):
-            self.data = data
-            self.status = status_code
+        def __init__(self, json_data, status_code):
+            self.json_data = json_data
+            self.text = text_type(json_data)
+            self.status_code = status_code
             self.headers = None
 
-    body_json = json.loads(kwargs["body"])
+        def json(self):
+            """Get json data from response."""
+            return self.json_data
 
-    if args[1] == "https://somecluster.kusto.windows.net/v2/rest/query":
-        if "truncationmaxrecords" in body_json["csl"]:
-            if json.loads(body_json["properties"])["Options"]["deferpartialqueryfailures"]:
+    if args[0] == "https://somecluster.kusto.windows.net/v2/rest/query":
+        if "truncationmaxrecords" in kwargs["json"]["csl"]:
+            if json.loads(kwargs["json"]["properties"])["Options"]["deferpartialqueryfailures"]:
                 file_name = "query_partial_results_defer_is_true.json"
             else:
                 file_name = "query_partial_results_defer_is_false.json"
-        elif "Deft" in body_json["csl"]:
+        elif "Deft" in kwargs["json"]["csl"]:
             file_name = "deft.json"
-        elif "print dynamic" in body_json["csl"]:
+        elif "print dynamic" in kwargs["json"]["csl"]:
             file_name = "dynamic.json"
-        elif "take 0" in body_json["csl"]:
+        elif "take 0" in kwargs["json"]["csl"]:
             file_name = "zero_results.json"
+
         with open(os.path.join(os.path.dirname(__file__), "input", file_name), "r") as response_file:
             data = response_file.read()
-        return MockResponse(data.encode("UTF-8"), 200)
+        return MockResponse(json.loads(data), 200)
 
-    elif args[1] == "https://somecluster.kusto.windows.net/v1/rest/mgmt":
-        if body_json["csl"] == ".show version":
+    elif args[0] == "https://somecluster.kusto.windows.net/v1/rest/mgmt":
+        if kwargs["json"]["csl"] == ".show version":
             file_name = "versionshowcommandresult.json"
         else:
             file_name = "adminthenquery.json"
         with open(os.path.join(os.path.dirname(__file__), "input", file_name), "r") as response_file:
             data = response_file.read()
-        return MockResponse(data.encode("UTF-8"), 200)
+        return MockResponse(json.loads(data), 200)
 
     return MockResponse(None, 404)
 
@@ -82,7 +86,7 @@ DIGIT_WORDS = [
 class KustoClientTests(unittest.TestCase):
     """Tests class for KustoClient."""
 
-    @patch("urllib3.PoolManager.request", side_effect=mocked_poolmgr_request)
+    @patch("requests.Session.post", side_effect=mocked_requests_post)
     def test_sanity_query(self, mock_post):
         """Test query V2."""
         client = KustoClient("https://somecluster.kusto.windows.net")
@@ -176,7 +180,7 @@ class KustoClientTests(unittest.TestCase):
             if expected["xint16"] > 0:
                 expected["xdynamicWithNulls"] = {"rowId": expected["xint16"], "arr": [0, expected["xint16"]]}
 
-    @patch("urllib3.PoolManager.request", side_effect=mocked_poolmgr_request)
+    @patch("requests.Session.post", side_effect=mocked_requests_post)
     def test_sanity_control_command(self, mock_post):
         """Tests contol command."""
         client = KustoClient("https://somecluster.kusto.windows.net")
@@ -196,7 +200,7 @@ class KustoClientTests(unittest.TestCase):
         self.assertEqual(result["ProductVersion"], "KustoMain_2018.04.29.5")
 
     @pytest.mark.skipif(not pandas_installed, reason="requires pandas")
-    @patch("urllib3.PoolManager.request", side_effect=mocked_poolmgr_request)
+    @patch("requests.Session.post", side_effect=mocked_requests_post)
     def test_sanity_data_frame(self, mock_post):
         """Tests KustoResponse to pandas.DataFrame."""
 
@@ -315,7 +319,7 @@ class KustoClientTests(unittest.TestCase):
         expected_data_frame = DataFrame(expected_dict, columns=columns, copy=True)
         assert_frame_equal(data_frame, expected_data_frame)
 
-    @patch("urllib3.PoolManager.request", side_effect=mocked_poolmgr_request)
+    @patch("requests.Session.post", side_effect=mocked_requests_post)
     def test_partial_results(self, mock_post):
         """Tests partial results."""
         client = KustoClient("https://somecluster.kusto.windows.net")
@@ -333,7 +337,7 @@ range x from 1 to 10 step 1"""
         self.assertEqual(len(results), 5)
         self.assertEqual(results[0]["x"], 1)
 
-    @patch("urllib3.PoolManager.request", side_effect=mocked_poolmgr_request)
+    @patch("requests.Session.post", side_effect=mocked_requests_post)
     def test_admin_then_query(self, mock_post):
         """Tests admin then query."""
         client = KustoClient("https://somecluster.kusto.windows.net")
@@ -348,7 +352,7 @@ range x from 1 to 10 step 1"""
         self.assertEqual(response[2].table_kind, WellKnownDataSet.QueryCompletionInformation)
         self.assertEqual(response[3].table_kind, WellKnownDataSet.TableOfContents)
 
-    @patch("urllib3.PoolManager.request", side_effect=mocked_poolmgr_request)
+    @patch("requests.Session.post", side_effect=mocked_requests_post)
     def test_dynamic(self, mock_post):
         """Tests dynamic responses."""
         client = KustoClient("https://somecluster.kusto.windows.net")
@@ -371,7 +375,7 @@ range x from 1 to 10 step 1"""
         self.assertIsInstance(row[5], dict)
         self.assertEqual(row[5], {"rowId": 2, "arr": [0, 2]})
 
-    @patch("urllib3.PoolManager.request", side_effect=mocked_poolmgr_request)
+    @patch("requests.Session.post", side_effect=mocked_requests_post)
     def test_empty_result(self, mock_post):
         """Tests dynamic responses."""
         client = KustoClient("https://somecluster.kusto.windows.net")
