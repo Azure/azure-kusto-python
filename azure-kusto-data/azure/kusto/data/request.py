@@ -2,8 +2,9 @@
 
 import uuid
 import json
-import urllib3
-import certifi
+import requests
+
+from requests.adapters import HTTPAdapter
 
 from datetime import timedelta
 from enum import Enum, unique
@@ -254,10 +255,10 @@ class KustoClient(object):
             kcsb = KustoConnectionStringBuilder(kcsb)
         kusto_cluster = kcsb.data_source
 
-        # Create a pool manager
-        self._pool_mgr = urllib3.PoolManager(
-            num_pools=1, maxsize=self._max_pool_size, cert_reqs="CERT_REQUIRED", ca_certs=certifi.where()
-        )
+        # Create a session object for connection pooling
+        self._session = requests.Session()
+        self._session.mount("http://", HTTPAdapter(pool_maxsize=self._max_pool_size))
+        self._session.mount("https://", HTTPAdapter(pool_maxsize=self._max_pool_size))
 
         self._mgmt_endpoint = "{0}/v1/rest/mgmt".format(kusto_cluster)
         self._query_endpoint = "{0}/v2/rest/query".format(kusto_cluster)
@@ -314,18 +315,14 @@ class KustoClient(object):
             request_headers["Authorization"] = self._auth_provider.acquire_authorization_header()
 
         timeout = self._get_timeout(properties, default_timeout)
-        response = self._pool_mgr.request(
-            "POST", endpoint, headers=request_headers, body=json.dumps(request_payload), timeout=timeout
-        )
+        response = self._session.post(endpoint, headers=request_headers, json=request_payload, timeout=timeout)
 
-        data = json.loads(response.data.decode("UTF-8"))
-
-        if response.status == 200:
+        if response.status_code == 200:
             if endpoint.endswith("v2/rest/query"):
-                return KustoResponseDataSetV2(data)
-            return KustoResponseDataSetV1(data)
+                return KustoResponseDataSetV2(response.json())
+            return KustoResponseDataSetV1(response.json())
 
-        raise KustoServiceError([data], response)
+        raise KustoServiceError([response.json()], response)
 
     def _get_timeout(self, properties, default):
         if properties:
