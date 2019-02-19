@@ -220,7 +220,7 @@ def test_ingest_complicated_props():
         if success_message[0].IngestionSourceId in source_ids:
             assert success_message[0].Database == db_name
             assert success_message[0].Table == table_name
-        
+
             successes += 1
 
     assert successes == 2
