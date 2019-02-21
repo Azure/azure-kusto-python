@@ -5,20 +5,42 @@ from io import BytesIO
 import shutil
 from gzip import GzipFile
 import tempfile
+import uuid
+
+
+def assert_uuid4(maybe_uuid, error_message):
+    # none is valid value for our purposes
+    if maybe_uuid is None:
+        return
+
+    maybe_uuid = uuid.UUID("{}".format(maybe_uuid)) if maybe_uuid is not None else None
+    if maybe_uuid and maybe_uuid.version != 4:
+        raise ValueError(error_message)
 
 
 class FileDescriptor(object):
-    """A file to ingest."""
+    """FileDescriptor is used to describe a file that will be used as an ingestion source."""
 
     # TODO: this should be changed. holding zipped data in memory isn't efficient
     # also, init should be a lean method, not potentially reading and writing files
-    def __init__(self, path, size=0):
+    def __init__(self, path, size=0, source_id=None):
+        """
+        :param path: file path.
+        :type path: str.
+        :param size: estimated size of file if known. if None or 0 will try to guess.
+        :type size: int.
+        :param source_id uuid: a v4 uuid to serve as the sources id.
+        :type source_id: str (of a uuid4) or uuid4.
+        """
         self.path = path
         self.size = size
+
+        assert_uuid4(source_id, "source_id must be a valid uuid4")
+        self.source_id = source_id
         self.stream_name = os.path.basename(self.path)
         if self.path.endswith(".gz") or self.path.endswith(".zip"):
             self.zipped_stream = open(self.path, "rb")
-            if self.size <= 0:
+            if not self.size or self.size <= 0:
                 # TODO: this can be improved by reading last 4 bytes
                 self.size = int(os.path.getsize(self.path)) * 5
         else:
@@ -39,8 +61,18 @@ class FileDescriptor(object):
 
 
 class BlobDescriptor(object):
-    """A blob to ingest."""
+    """FileDescriptor is used to describe a file that will be used as an ingestion source"""
 
-    def __init__(self, path, size):
+    def __init__(self, path, size, source_id=None):
+        """
+        :param path: blob uri.
+        :type path: str.
+        :param size: estimated size of file if known.
+        :type size: int.
+        :param source_id uuid: a v4 uuid to serve as the sources id.
+        :type source_id: str (of a uuid4) or uuid4.
+        """
         self.path = path
         self.size = size
+        assert_uuid4(source_id, "source_id must be a valid uuid4")
+        self.source_id = source_id

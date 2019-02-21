@@ -2,6 +2,7 @@
 import pytest
 import time
 import os
+import uuid
 from six import text_type
 
 from azure.kusto.data.request import KustoClient, KustoConnectionStringBuilder
@@ -17,6 +18,7 @@ from azure.kusto.ingest import (
     ValidationImplications,
     ReportLevel,
     ReportMethod,
+    FileDescriptor,
 )
 
 # TODO: change this file to use pytest as runner
@@ -83,19 +85,29 @@ class Helpers:
         return mappings
 
 
-engine_kcsb = KustoConnectionStringBuilder.with_aad_device_authentication("https://toshetah.kusto.windows.net")
-dm_kcsb = KustoConnectionStringBuilder.with_aad_device_authentication("https://ingest-toshetah.kusto.windows.net")
+cluster = "Dadubovs1.westus"  # "toshetah"
+db_name = "TestingDatabase"  # "PythonTest"
+table_name = "Deft"
+
+
+engine_kcsb = KustoConnectionStringBuilder.with_aad_device_authentication(
+    "https://{}.kusto.windows.net".format(cluster)
+)
+dm_kcsb = KustoConnectionStringBuilder.with_aad_device_authentication(
+    "https://ingest-{}.kusto.windows.net".format(cluster)
+)
 client = KustoClient(engine_kcsb)
 ingest_client = KustoIngestClient(dm_kcsb)
 ingest_status_q = KustoIngestStatusQueues(ingest_client)
-client.execute("PythonTest", ".drop table Deft ifexists")
+
+client.execute(db_name, ".drop table {} ifexists".format(table_name))
 
 
 @pytest.mark.run(order=1)
 def test_csv_ingest_non_existing_table():
     csv_ingest_props = IngestionProperties(
-        "PythonTest",
-        "Deft",
+        db_name,
+        table_name,
         dataFormat=DataFormat.csv,
         mapping=Helpers.create_deft_table_csv_mappings(),
         reportLevel=ReportLevel.FailuresAndSuccesses,
@@ -115,17 +127,17 @@ def test_csv_ingest_non_existing_table():
 
         success_message = ingest_status_q.success.pop()
 
-        assert success_message[0].Database == "PythonTest"
-        assert success_message[0].Table == "Deft"
+        assert success_message[0].Database == db_name
+        assert success_message[0].Table == table_name
 
         successes += 1
 
     assert successes == 2
     # TODO: status queues only mark ingestion was successful, but takes time for data to become available
     time.sleep(20)
-    response = client.execute("PythonTest", "Deft | count")
+    response = client.execute(db_name, "{} | count".format(table_name))
     for row in response.primary_results[0]:
-        assert int(row["Count"]) == 20, "Deft | count = " + text_type(row["Count"])
+        assert int(row["Count"]) == 20, "{0} | count = {1}".format(table_name, text_type(row["Count"]))
 
 
 json_file_path = os.path.join(os.getcwd(), "azure-kusto-ingest", "tests", "input", "dataset.json")
@@ -133,10 +145,10 @@ zipped_json_file_path = os.path.join(os.getcwd(), "azure-kusto-ingest", "tests",
 
 
 @pytest.mark.run(order=2)
-def test_json_ingest_exisiting_table():
+def test_json_ingest_existing_table():
     json_ingestion_props = IngestionProperties(
-        "PythonTest",
-        "Deft",
+        db_name,
+        table_name,
         dataFormat=DataFormat.json,
         mapping=Helpers.create_deft_table_json_mappings(),
         reportLevel=ReportLevel.FailuresAndSuccesses,
@@ -155,17 +167,17 @@ def test_json_ingest_exisiting_table():
 
         success_message = ingest_status_q.success.pop()
 
-        assert success_message[0].Database == "PythonTest"
-        assert success_message[0].Table == "Deft"
+        assert success_message[0].Database == db_name
+        assert success_message[0].Table == table_name
 
         successes += 1
 
     assert successes == 2
     # TODO: status queues only mark ingestion was successful, but takes time for data to become available
     time.sleep(20)
-    response = client.execute("PythonTest", "Deft | count")
+    response = client.execute(db_name, "{} | count".format(table_name))
     for row in response.primary_results[0]:
-        assert int(row["Count"]) == 24, "Deft | count = " + text_type(row["Count"])
+        assert int(row["Count"]) == 24, "{0} | count = {1}".format(table_name, text_type(row["Count"]))
 
 
 @pytest.mark.run(order=3)
@@ -176,8 +188,8 @@ def test_ingest_complicated_props():
         validationImplications=ValidationImplications.Fail,
     )
     json_ingestion_props = IngestionProperties(
-        "PythonTest",
-        "Deft",
+        db_name,
+        table_name,
         dataFormat=DataFormat.json,
         mapping=Helpers.create_deft_table_json_mappings(),
         additionalTags=["a", "b"],
@@ -190,8 +202,12 @@ def test_ingest_complicated_props():
         validationPolicy=validation_policy,
     )
 
-    for f in [json_file_path, zipped_json_file_path]:
-        ingest_client.ingest_from_file(f, json_ingestion_props)
+    file_paths = [json_file_path, zipped_json_file_path]
+    fds = [FileDescriptor(fp, 0, uuid.uuid4()) for fp in file_paths]
+    source_ids = ["{}".format(fd.source_id) for fd in fds]
+
+    for fd in fds:
+        ingest_client.ingest_from_file(fd, json_ingestion_props)
 
     successes = 0
     timeout = 60
@@ -201,25 +217,25 @@ def test_ingest_complicated_props():
             timeout -= 1
 
         success_message = ingest_status_q.success.pop()
+        if success_message[0].IngestionSourceId in source_ids:
+            assert success_message[0].Database == db_name
+            assert success_message[0].Table == table_name
 
-        assert success_message[0].Database == "PythonTest"
-        assert success_message[0].Table == "Deft"
-
-        successes += 1
+            successes += 1
 
     assert successes == 2
     # TODO: status queues only mark ingestion was successful, but takes time for data to become available
     time.sleep(20)
-    response = client.execute("PythonTest", "Deft | count")
+    response = client.execute(db_name, "{} | count".format(table_name))
     for row in response.primary_results[0]:
-        assert int(row["Count"]) == 28, "Deft | count = " + str(row["Count"])
+        assert int(row["Count"]) == 28, "{0} | count = {1}".format(table_name, text_type(row["Count"]))
 
 
 @pytest.mark.run(order=4)
 def test_json_ingestion_ingest_by_tag():
     json_ingestion_props = IngestionProperties(
-        "PythonTest",
-        "Deft",
+        db_name,
+        table_name,
         dataFormat=DataFormat.json,
         mapping=Helpers.create_deft_table_json_mappings(),
         ingestIfNotExists=["ingestByTag"],
@@ -239,24 +255,24 @@ def test_json_ingestion_ingest_by_tag():
 
         success_message = ingest_status_q.success.pop()
 
-        assert success_message[0].Database == "PythonTest"
-        assert success_message[0].Table == "Deft"
+        assert success_message[0].Database == db_name
+        assert success_message[0].Table == table_name
 
         successes += 1
 
     assert successes == 2
     # TODO: status queues only mark ingestion was successful, but takes time for data to become available
     time.sleep(20)
-    response = client.execute("PythonTest", "Deft | count")
+    response = client.execute(db_name, "{} | count".format(table_name))
     for row in response.primary_results[0]:
-        assert int(row["Count"]) == 28, "Deft | count = " + text_type(row["Count"])
+        assert int(row["Count"]) == 28, "{0} | count = {1}".format(table_name, text_type(row["Count"]))
 
 
 @pytest.mark.run(order=5)
 def test_tsv_ingestion_csv_mapping():
     tsv_ingestion_props = IngestionProperties(
-        "PythonTest",
-        "Deft",
+        db_name,
+        table_name,
         dataFormat=DataFormat.tsv,
         mapping=Helpers.create_deft_table_csv_mappings(),
         reportLevel=ReportLevel.FailuresAndSuccesses,
@@ -274,14 +290,14 @@ def test_tsv_ingestion_csv_mapping():
 
         success_message = ingest_status_q.success.pop()
 
-        assert success_message[0].Table == "Deft"
-        assert success_message[0].Database == "PythonTest"
+        assert success_message[0].Table == table_name
+        assert success_message[0].Database == db_name
 
         successes += 1
 
     assert successes == 1
     # TODO: status queues only mark ingestion was successful, but takes time for data to become available
     time.sleep(20)
-    response = client.execute("PythonTest", "Deft | count")
+    response = client.execute(db_name, "{} | count".format(table_name))
     for row in response.primary_results[0]:
-        assert int(row["Count"]) == 38, print("Deft | count = " + text_type(row["Count"]))
+        assert int(row["Count"]) == 38, "{0} | count = {1}".format(table_name, text_type(row["Count"]))

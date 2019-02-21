@@ -9,10 +9,10 @@ from ._descriptors import BlobDescriptor
 
 
 class _IngestionBlobInfo:
-    def __init__(self, blob, ingestion_properties, auth_context=None):
+    def __init__(self, blob_descriptor, ingestion_properties, auth_context=None):
         self.properties = dict()
-        self.properties["BlobPath"] = blob.path
-        self.properties["RawDataSize"] = blob.size
+        self.properties["BlobPath"] = blob_descriptor.path
+        self.properties["RawDataSize"] = blob_descriptor.size
         self.properties["DatabaseName"] = ingestion_properties.database
         self.properties["TableName"] = ingestion_properties.table
         self.properties["RetainBlobOnSuccess"] = True
@@ -21,7 +21,12 @@ class _IngestionBlobInfo:
         self.properties["ReportLevel"] = ingestion_properties.report_level.value
         self.properties["ReportMethod"] = ingestion_properties.report_method.value
         self.properties["SourceMessageCreationTime"] = datetime.utcnow().isoformat()
-        self.properties["Id"] = text_type(uuid.uuid4())
+        self.properties["Id"] = (
+            text_type(blob_descriptor.source_id)
+            if hasattr(blob_descriptor, "source_id") and blob_descriptor.source_id is not None
+            else text_type(uuid.uuid4())
+        )
+
         additional_properties = ingestion_properties.additional_properties or {}
         additional_properties["authorizationContext"] = auth_context
 
