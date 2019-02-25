@@ -27,6 +27,7 @@ setup(
     author="Microsoft Corporation",
     author_email="kustalk@microsoft.com",
     url="https://github.com/Azure/azure-kusto-python",
+    namespace_packages=["azure"],
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Programming Language :: Python",

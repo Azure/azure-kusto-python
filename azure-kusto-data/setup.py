@@ -41,6 +41,7 @@ setup(
         "Programming Language :: Python :: 3.6",
         "License :: OSI Approved :: MIT License",
     ],
+    namespace_packages=["azure"],
     keywords="kusto wrapper client library",
     packages=find_packages(exclude=["azure", "tests"]),
     install_requires=["adal>=1.0.0", "python-dateutil>=2.7.0", "requests>=2.13.0", "six>=1.10.0"],
