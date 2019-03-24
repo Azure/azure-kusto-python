@@ -125,7 +125,7 @@ class KustoConnectionStringBuilder(object):
 
     @classmethod
     def with_aad_application_certificate_authentication(
-            cls, connection_string, aad_app_id, certificate, thumbprint, authority_id
+        cls, connection_string, aad_app_id, certificate, thumbprint, authority_id
     ):
         """Creates a KustoConnection string builder that will authenticate with AAD application and
         a certificate credentials.
