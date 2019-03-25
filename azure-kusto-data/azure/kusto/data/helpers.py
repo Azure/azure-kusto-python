@@ -4,7 +4,7 @@ import pandas
 from ._models import KustoResultTable
 
 
-def dataframe_from_result_table(table):
+def dataframe_from_result_table(table, highprecisiondates=True):
     """Converts Kusto tables into pandas DataFrame.
     :param azure.kusto.data._models.KustoResultTable table: Table recieved from the response.
     :return: pandas DataFrame.
@@ -23,9 +23,10 @@ def dataframe_from_result_table(table):
     for col in bool_columns:
         frame[col] = frame[col].astype(bool)
 
-    for i in range(len(table.rows)):
-        seventh = table.rows[i]._seventh_digit
-        for name in seventh.keys():
-            frame.loc[i, name] += pandas.Timedelta(seventh[name] * 100, unit="ns")
+    if highprecisiondates:
+        for i in range(len(table.rows)):
+            seventh = table.rows[i]._seventh_digit
+            for name in seventh.keys():
+                frame.loc[i, name] += pandas.Timedelta(seventh[name] * 100, unit="ns")
 
     return frame
