@@ -6,7 +6,7 @@ from ._models import KustoResultTable
 
 def dataframe_from_result_table(table):
     """Converts Kusto tables into pandas DataFrame.
-    :param azure.kusto.data._models.KustoResultTable table: Table recieved from the response.
+    :param azure.kusto.data._models.KustoResultTable table: Table received from the response.     
     :return: pandas DataFrame.
     :rtype: pandas.DataFrame
     """
@@ -16,16 +16,18 @@ def dataframe_from_result_table(table):
     if not isinstance(table, KustoResultTable):
         raise TypeError("Expected KustoResultTable got {}".format(type(table).__name__))
 
-    frame = pandas.DataFrame.from_records(
-        [row.to_list() for row in table.rows], columns=[col.column_name for col in table.columns]
-    )
-    bool_columns = [col.column_name for col in table.columns if col.column_type == "bool"]
-    for col in bool_columns:
-        frame[col] = frame[col].astype(bool)
+    columns = [col.column_name for col in table.columns]
+    frame = pandas.DataFrame(table._rows, columns=columns)
 
-    for i in range(len(table.rows)):
-        seventh = table.rows[i]._seventh_digit
-        for name in seventh.keys():
-            frame.loc[i, name] += pandas.Timedelta(seventh[name] * 100, unit="ns")
+    # fix types
+    for col in table.columns:
+        if col.column_type == "bool":
+            frame[col.column_name] = frame[col.column_name].astype(bool)
+        elif col.column_type == "datetime":
+            # as string first because can be None due to previous conversions
+            frame[col.column_name] = pandas.to_datetime(frame[col.column_name])
+        elif col.column_type == "timespan":
+            # as string first because can be None due to previous conversions
+            frame[col.column_name] = pandas.to_timedelta(frame[col.column_name])
 
     return frame

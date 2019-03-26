@@ -9,6 +9,14 @@ from . import _converters
 from .exceptions import KustoServiceError
 
 
+pandas_exist = True
+
+try:
+    import pandas
+except:
+    pandas_exist = False
+
+
 class WellKnownDataSet(Enum):
     """Categorizes data tables according to the role they play in the data set that a Kusto query returns."""
 
@@ -26,6 +34,7 @@ class KustoResultRow(object):
     def __init__(self, columns, row):
         self._value_by_name = {}
         self._value_by_index = []
+        self._hidden_values = []
         self._seventh_digit = {}
         for i, value in enumerate(row):
             column = columns[i]
@@ -39,6 +48,8 @@ class KustoResultRow(object):
             if lower_column_type in ["datetime", "timespan"]:
                 if value is None:
                     typed_value = None
+                    if pandas_exist:
+                        self._hidden_values.append(None)
                 else:
                     try:
                         # If you are here to read this, you probably hit some datetime/timedelta inconsistencies.
@@ -52,7 +63,10 @@ class KustoResultRow(object):
                         if char.isdigit():
                             tick = int(char)
                             last = value[-1] if value[-1].isalpha() else ""
-                            typed_value = KustoResultRow.convertion_funcs[lower_column_type](value[:-2] + last)
+                            lookback = 2 if last else 1
+                            if pandas_exist:
+                                self._hidden_values.append(value[:-lookback] + char + "00" + last)
+                            typed_value = KustoResultRow.convertion_funcs[lower_column_type](value[:-lookback] + last)
                             if tick:
                                 if lower_column_type == "datetime":
                                     self._seventh_digit[column.column_name] = tick
@@ -62,12 +76,21 @@ class KustoResultRow(object):
                                     )
                         else:
                             typed_value = KustoResultRow.convertion_funcs[lower_column_type](value)
+                            if pandas_exist:
+                                self._hidden_values.append(value)
                     except (IndexError, AttributeError):
                         typed_value = KustoResultRow.convertion_funcs[lower_column_type](value)
+                        if pandas_exist:
+                            self._hidden_values.append(value)
+
             elif lower_column_type in KustoResultRow.convertion_funcs:
                 typed_value = KustoResultRow.convertion_funcs[lower_column_type](value)
+                if pandas_exist:
+                    self._hidden_values.append(value)
             else:
                 typed_value = value
+                if pandas_exist:
+                    self._hidden_values.append(value)
 
             self._value_by_index.append(typed_value)
             self._value_by_name[column.column_name] = typed_value
@@ -128,6 +151,11 @@ class KustoResultTable(object):
             raise KustoServiceError(errors[0]["OneApiErrors"][0]["error"]["@message"], json_table)
 
         self.rows = [KustoResultRow(self.columns, row) for row in json_table["Rows"]]
+
+    @property
+    def _rows(self):
+        for row in self.rows:
+            yield row._hidden_values
 
     @property
     def rows_count(self):
