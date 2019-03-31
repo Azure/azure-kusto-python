@@ -9,13 +9,35 @@ from . import _converters
 from .exceptions import KustoServiceError
 
 
-pandas_exist = True
+keep_high_precision_values = True
 
 try:
     import pandas
 except:
-    pandas_exist = False
+    keep_high_precision_values = False
 
+
+def _get_precise_repr(t, raw_value, typed_value, **kwargs):
+    if t == "datetime":
+        lookback = kwargs.get('lookback')
+        seventh_char = kwargs.get('seventh_char')
+        last = kwargs.get('last')
+
+        if seventh_char and seventh_char.isdigit():
+            return raw_value[:-lookback] + seventh_char + "00" + last
+        else:
+            return raw_value
+    elif t == "timespan":
+        seconds_fractions_part = kwargs.get('seconds_fractions_part')
+        if seconds_fractions_part:
+            whole_part = int(typed_value.total_seconds())
+            fractions = str(whole_part) + '.' + seconds_fractions_part
+            total_seconds = float(fractions)
+            return total_seconds
+        else:
+            return typed_value.total_seconds()
+    else:
+        raise ValueError("Unknown type {t}".format(t))
 
 class WellKnownDataSet(Enum):
     """Categorizes data tables according to the role they play in the data set that a Kusto query returns."""
@@ -39,18 +61,25 @@ class KustoResultRow(object):
         for i, value in enumerate(row):
             column = columns[i]
             try:
-                lower_column_type = column.column_type.lower()
+                column_type = column.column_type.lower()
             except AttributeError:
                 self._value_by_index.append(value)
                 self._value_by_name[columns[i]] = value
+                if keep_high_precision_values:
+                    self._hidden_values.append(value)
                 continue
 
-            if lower_column_type in ["datetime", "timespan"]:
+            if column_type in ["datetime", "timespan"]:
                 if value is None:
                     typed_value = None
-                    if pandas_exist:
+                    if keep_high_precision_values:
                         self._hidden_values.append(None)
                 else:
+                    seconds_fractions_part = None
+                    seventh_char = None
+                    last = value[-1] if type(value) is str and value[-1].isalpha() else ""
+                    lookback = None
+
                     try:
                         # If you are here to read this, you probably hit some datetime/timedelta inconsistencies.
                         # Azure-Data-Explorer(Kusto) supports 7 decimal digits, while the corresponding python types supports only 6.
@@ -59,37 +88,47 @@ class KustoResultRow(object):
                         # this precision in case they want it. One example why one might want this precision, is when
                         # working with pandas. In that case, use azure.kusto.data.helpers.dataframe_from_result_table
                         # which takes into account the 7th digit.
-                        char = value.split(":")[2].split(".")[1][6]
-                        if char.isdigit():
-                            tick = int(char)
-                            last = value[-1] if value[-1].isalpha() else ""
+                        seconds_part = value.split(":")[2]
+                        seconds_fractions_part = seconds_part.split(".")[1]
+                        seventh_char = seconds_fractions_part[6]
+
+                        if seventh_char.isdigit():
+                            tick = int(seventh_char)
+                            
                             lookback = 2 if last else 1
-                            if pandas_exist:
-                                self._hidden_values.append(value[:-lookback] + char + "00" + last)
-                            typed_value = KustoResultRow.convertion_funcs[lower_column_type](value[:-lookback] + last)
+                            
+                            typed_value = KustoResultRow.convertion_funcs[column_type](value[:-lookback] + last)
+                            # this is a special case where plain python will lose precision, so we keep the precise value hidden 
+                            # when transforming to pandas, we can use the hidden value to covert to precise types
                             if tick:
-                                if lower_column_type == "datetime":
+                                if column_type == "datetime":
                                     self._seventh_digit[column.column_name] = tick
-                                else:
+                                elif column_type == "timespan":
                                     self._seventh_digit[column.column_name] = (
                                         tick if abs(typed_value) == typed_value else -tick
-                                    )
+                                    )                                                                        
+                                else:
+                                    raise TypeError("Unexpected type {}".format(column_type))
                         else:
-                            typed_value = KustoResultRow.convertion_funcs[lower_column_type](value)
-                            if pandas_exist:
-                                self._hidden_values.append(value)
+                            typed_value = KustoResultRow.convertion_funcs[column_type](value)
+                        
                     except (IndexError, AttributeError):
-                        typed_value = KustoResultRow.convertion_funcs[lower_column_type](value)
-                        if pandas_exist:
-                            self._hidden_values.append(value)
-
-            elif lower_column_type in KustoResultRow.convertion_funcs:
-                typed_value = KustoResultRow.convertion_funcs[lower_column_type](value)
-                if pandas_exist:
+                        typed_value = KustoResultRow.convertion_funcs[column_type](value)
+                    
+                    if keep_high_precision_values:
+                        self._hidden_values.append(_get_precise_repr(
+                            column_type, value, typed_value, 
+                            seconds_fractions_part = seconds_fractions_part,
+                            last= last, 
+                            lookback = lookback, 
+                            seventh_char=seventh_char))
+            elif column_type in KustoResultRow.convertion_funcs:
+                typed_value = KustoResultRow.convertion_funcs[column_type](value)
+                if keep_high_precision_values:
                     self._hidden_values.append(value)
             else:
                 typed_value = value
-                if pandas_exist:
+                if keep_high_precision_values:
                     self._hidden_values.append(value)
 
             self._value_by_index.append(typed_value)
