@@ -28,6 +28,6 @@ def dataframe_from_result_table(table):
             frame[col.column_name] = pandas.to_datetime(frame[col.column_name], utc=True)
         elif col.column_type == "timespan":
             # as string first because can be None due to previous conversions
-            frame[col.column_name] = pandas.to_timedelta(frame[col.column_name], unit='s')
+            frame[col.column_name] = pandas.to_timedelta(frame[col.column_name], unit="s")
 
     return frame
