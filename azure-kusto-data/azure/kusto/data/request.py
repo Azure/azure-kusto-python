@@ -341,7 +341,6 @@ class KustoClient(object):
 
         assert isinstance(database, str), "Expected str instance, found {}".format(type(database))
         assert isinstance(table, str), "Expected str instance, found {}".format(type(table))
-        assert isinstance(stream, io.IOBase), "Expected IOBase instance, found {}".format(type(stream))
         assert isinstance(stream_format, str), "Expected str instance, found {}".format(type(stream_format))
 
         request_params = {
