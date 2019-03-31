@@ -90,7 +90,8 @@ class KustoConnectionStringBuilder(object):
     def with_aad_user_password_authentication(cls, connection_string, user_id, password, authority_id="common"):
         """Creates a KustoConnection string builder that will authenticate with AAD user name and
         password.
-        :param str connection_string: Kusto connection string should by of the format: https://<clusterName>.kusto.windows.net
+        :param str connection_string: Kusto connection string should by of the format:
+                https://<clusterName>.kusto.windows.net
         :param str user_id: AAD user ID.
         :param str password: Corresponding password of the AAD user.
         :param str authority_id: optional param. defaults to "common"
@@ -108,7 +109,8 @@ class KustoConnectionStringBuilder(object):
     @classmethod
     def with_aad_application_key_authentication(cls, connection_string, aad_app_id, app_key, authority_id):
         """Creates a KustoConnection string builder that will authenticate with AAD application and key.
-        :param str connection_string: Kusto connection string should by of the format: https://<clusterName>.kusto.windows.net
+        :param str connection_string: Kusto connection string should by of the format:
+                https://<clusterName>.kusto.windows.net
         :param str aad_app_id: AAD application ID.
         :param str app_key: Corresponding key of the AAD application.
         :param str authority_id: Authority id (aka Tenant id) must be provided
@@ -154,7 +156,8 @@ class KustoConnectionStringBuilder(object):
     def with_aad_device_authentication(cls, connection_string, authority_id="common"):
         """Creates a KustoConnection string builder that will authenticate with AAD application and
         password.
-        :param str connection_string: Kusto connection string should by of the format: https://<clusterName>.kusto.windows.net
+        :param str connection_string: Kusto connection string should by of the format:
+                https://<clusterName>.kusto.windows.net
         :param str authority_id: optional param. defaults to "common"
         """
         kcsb = cls(connection_string)
@@ -389,7 +392,8 @@ class KustoClient(object):
 
 
 class ClientRequestProperties(object):
-    """This class is a POD used by client making requests to describe specific needs from the service executing the requests.
+    """This class is a POD used by client making requests to describe specific needs from the service executing
+    the requests.
     For more information please look at: https://docs.microsoft.com/en-us/azure/kusto/api/netfx/request-properties
     Not all of the documented options are implemented. You are welcome to open an issue in case you need one of them.
     """

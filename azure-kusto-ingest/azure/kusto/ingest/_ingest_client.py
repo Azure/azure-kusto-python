@@ -110,7 +110,8 @@ class KustoIngestClient(object):
 
     def ingest_from_blob(self, blob_descriptor, ingestion_properties):
         """Enqueuing an ingest command from azure blobs.
-        :param azure.kusto.ingest.BlobDescriptor blob_descriptor: An object that contains a description of the blob to be ingested.
+        :param azure.kusto.ingest.BlobDescriptor blob_descriptor: An object that contains a description of the blob to
+               be ingested.
         :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
         """
         queues = self._resource_manager.get_ingestion_queues()
@@ -140,8 +141,8 @@ class KustoIngestClient(object):
             raise ValueError("Expected BytesIO or StringIO instance, found {}".format(type(stream)))
 
         if self._use_streaming_ingest and stream_size < self._streaming_ingestion_size_limit:
-            if (ingestion_properties.format == DataFormat.json or ingestion_properties.format == DataFormat.singlejson or
-               ingestion_properties.format == DataFormat.avro) and ingestion_properties.mapping_reference is None:
+            if (ingestion_properties.format == DataFormat.json or ingestion_properties.format == DataFormat.singlejson
+               or ingestion_properties.format == DataFormat.avro) and ingestion_properties.mapping_reference is None:
                 raise MissingMappingReference
 
             self._kusto_client.execute_streaming_ingest(ingestion_properties.database, ingestion_properties.table,
