@@ -4,7 +4,6 @@ import unittest
 import json
 import base64
 from mock import patch
-from six import text_type
 import responses
 import io
 from azure.kusto.ingest import KustoIngestClient, IngestionProperties, DataFormat
@@ -91,7 +90,30 @@ def request_callback(request):
             ]
         }
 
-    return (response_status, response_headers, json.dumps(response_body))
+    return response_status, response_headers, json.dumps(response_body)
+
+
+def request_callback_streaming(request):
+    response_status = 200
+    response_headers = []
+    response_body = {
+        "Tables": [
+            {
+                "TableName": "Table_0",
+                "Columns": [
+                    {'ColumnName': 'ConsumedRecordsCount', 'DataType': 'Int64'},
+                    {'ColumnName': 'UpdatePolicyStatus', 'DataType': 'String'},
+                    {'ColumnName': 'UpdatePolicyFailureCode', 'DataType': 'String'},
+                    {'ColumnName': 'UpdatePolicyFailureReason', 'DataType': 'String'}
+                ],
+                'Rows': [
+                    [0, 'Inactive', 'Unknown', None]
+                ]
+            }
+        ]
+    }
+
+    return response_status, response_headers, json.dumps(response_body)
 
 
 class KustoIngestClientTests(unittest.TestCase):
@@ -161,13 +183,13 @@ class KustoIngestClientTests(unittest.TestCase):
 
     @responses.activate
     @pytest.mark.skipif(not pandas_installed, reason="requires pandas")
-    @patch("azure.storage.blob.BlockBlobService.create_blob_from_path")
+    @patch("azure.storage.blob.BlockBlobService.create_blob_from_stream")
     @patch("azure.storage.queue.QueueService.put_message")
     @patch("uuid.uuid4", return_value=MOCKED_UUID_4)
     @patch("time.time", return_value=MOCKED_TIME)
     @patch("os.getpid", return_value=MOCKED_PID)
     def test_simple_ingest_from_dataframe(
-        self, mock_pid, mock_time, mock_uuid, mock_put_message_in_queue, mock_create_blob_from_path
+        self, mock_pid, mock_time, mock_uuid, mock_put_message_in_queue, mock_create_blob_from_stream
     ):
         responses.add_callback(
             responses.POST,
@@ -208,12 +230,126 @@ class KustoIngestClientTests(unittest.TestCase):
         assert queued_message_json["RawDataSize"] > 0
         assert queued_message_json["RetainBlobOnSuccess"] == True
 
-        create_blob_from_path_mock_kwargs = mock_create_blob_from_path.call_args_list[0][1]
-        import tempfile
+        create_blob_from_stream_mock_kwargs = mock_create_blob_from_stream.call_args_list[0][1]
 
-        assert create_blob_from_path_mock_kwargs["container_name"] == "tempstorage"
-        assert create_blob_from_path_mock_kwargs["file_path"] == os.path.join(tempfile.gettempdir(), "df_100_64.csv.gz")
+        assert create_blob_from_stream_mock_kwargs["container_name"] == "tempstorage"
         assert (
-            create_blob_from_path_mock_kwargs["blob_name"]
+            create_blob_from_stream_mock_kwargs["blob_name"]
             == "database__table__1111-111111-111111-1111__df_100_64.csv.gz"
         )
+
+    @responses.activate
+    def test_streaming_ingest_from_file(self):
+        responses.add_callback(
+            responses.POST,
+            "https://somecluster.kusto.windows.net/v1/rest/ingest/database/table",
+            callback=request_callback_streaming
+        )
+
+        ingest_client = KustoIngestClient("https://ingest-somecluster.kusto.windows.net", use_streaming_ingest=True)
+        ingestion_properties = IngestionProperties(database="database", table="table", dataFormat=DataFormat.csv)
+
+        # ensure test can work when executed from within directories
+        current_dir = os.getcwd()
+        path_parts = ["azure-kusto-ingest", "tests", "input", "dataset.csv"]
+        missing_path_parts = []
+        for path_part in path_parts:
+            if path_part not in current_dir:
+                missing_path_parts.append(path_part)
+
+        file_path = os.path.join(current_dir, *missing_path_parts)
+
+        ingest_client.ingest_from_file(file_path, ingestion_properties=ingestion_properties)
+
+        path_parts = ["azure-kusto-ingest", "tests", "input", "dataset.csv.gz"]
+        missing_path_parts = []
+        for path_part in path_parts:
+            if path_part not in current_dir:
+                missing_path_parts.append(path_part)
+
+        file_path = os.path.join(current_dir, *missing_path_parts)
+
+        ingest_client.ingest_from_file(file_path, ingestion_properties=ingestion_properties)
+
+        ingestion_properties = IngestionProperties(database="database", table="table", dataFormat=DataFormat.json,
+                                                   mappingReference="JsonMapping")
+
+        path_parts = ["azure-kusto-ingest", "tests", "input", "dataset.json"]
+        missing_path_parts = []
+        for path_part in path_parts:
+            if path_part not in current_dir:
+                missing_path_parts.append(path_part)
+
+        file_path = os.path.join(current_dir, *missing_path_parts)
+
+        ingest_client.ingest_from_file(file_path, ingestion_properties=ingestion_properties)
+
+        path_parts = ["azure-kusto-ingest", "tests", "input", "dataset.jsonz.gz"]
+        missing_path_parts = []
+        for path_part in path_parts:
+            if path_part not in current_dir:
+                missing_path_parts.append(path_part)
+
+        file_path = os.path.join(current_dir, *missing_path_parts)
+
+        ingest_client.ingest_from_file(file_path, ingestion_properties=ingestion_properties)
+
+        ingestion_properties = IngestionProperties(database="database", table="table", dataFormat=DataFormat.tsv)
+
+        path_parts = ["azure-kusto-ingest", "tests", "input", "dataset.tsv"]
+        missing_path_parts = []
+        for path_part in path_parts:
+            if path_part not in current_dir:
+                missing_path_parts.append(path_part)
+
+        file_path = os.path.join(current_dir, *missing_path_parts)
+
+        ingest_client.ingest_from_file(file_path, ingestion_properties=ingestion_properties)
+
+    @responses.activate
+    def test_streaming_ingest_from_dataframe(self):
+        responses.add_callback(
+            responses.POST,
+            "https://somecluster.kusto.windows.net/v1/rest/ingest/database/table",
+            callback=request_callback_streaming
+        )
+
+        ingest_client = KustoIngestClient("https://ingest-somecluster.kusto.windows.net", use_streaming_ingest=True)
+        ingestion_properties = IngestionProperties(database="database", table="table", dataFormat=DataFormat.csv)
+
+        from pandas import DataFrame
+
+        fields = ["id", "name", "value"]
+        rows = [[1, "abc", 15.3], [2, "cde", 99.9]]
+        df = DataFrame(data=rows, columns=fields)
+
+        ingest_client.ingest_from_dataframe(df, ingestion_properties)
+
+    @responses.activate
+    def test_streaming_ingest_from_stream(self):
+        responses.add_callback(
+            responses.POST,
+            "https://somecluster.kusto.windows.net/v1/rest/ingest/database/table",
+            callback=request_callback_streaming
+        )
+
+        ingest_client = KustoIngestClient("https://ingest-somecluster.kusto.windows.net", use_streaming_ingest=True)
+        ingestion_properties = IngestionProperties(database="database", table="table", dataFormat=DataFormat.csv)
+
+        byte_sequence = b'56,56,56'
+        bytes_stream = io.BytesIO(byte_sequence)
+        ingest_client.ingest_from_stream(bytes_stream, ingestion_properties=ingestion_properties)
+
+        str_sequence = '57,57,57'
+        str_stream = io.StringIO(str_sequence)
+        ingest_client.ingest_from_stream(str_stream, ingestion_properties=ingestion_properties)
+
+        byte_sequence = b'{"Name":"Ben","Age":"56","Weight":"75"}'
+        bytes_stream = io.BytesIO(byte_sequence)
+        ingestion_properties.format = DataFormat.json
+        ingestion_properties.mapping_reference = "JsonMapping"
+        ingest_client.ingest_from_stream(bytes_stream, ingestion_properties=ingestion_properties)
+
+        str_sequence = '{"Name":"Ben","Age":"56","Weight":"75"}'
+        str_stream = io.StringIO(str_sequence)
+        ingest_client.ingest_from_stream(str_stream, ingestion_properties=ingestion_properties)

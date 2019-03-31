@@ -3,6 +3,7 @@
 import uuid
 import json
 import requests
+import io
 
 from requests.adapters import HTTPAdapter
 
@@ -262,6 +263,7 @@ class KustoClient(object):
 
         self._mgmt_endpoint = "{0}/v1/rest/mgmt".format(kusto_cluster)
         self._query_endpoint = "{0}/v2/rest/query".format(kusto_cluster)
+        self._streaming_ingest_endpoint = "{0}/v1/rest/ingest/".format(kusto_cluster).replace("ingest-", "")
         self._auth_provider = _AadHelper(kcsb) if kcsb.aad_federated_security else None
 
     def execute(self, database, query, properties=None):
@@ -323,6 +325,63 @@ class KustoClient(object):
             return KustoResponseDataSetV1(response.json())
 
         raise KustoServiceError([response.json()], response)
+
+    def execute_streaming_ingest(self, database, table, stream, stream_format, mapping_name=None, accept=None,
+                                 accept_encoding=None, connection=None, content_length=None, content_encoding=None,
+                                 expect=None):
+        """Executes streaming ingest against this client.
+        :param str database: Target database.
+        :param str table: Target table.
+        :param stream: File-like object contains the data to ingest.
+        :param DataFormat stream_format: Format of the data in the stream.
+        :param str mapping_name: Pre-defined mapping of the table. Required when stream_format is json/avro.
+        Other optional params: optional request headers as documented at:
+            https://kusto.azurewebsites.net/docs/api/rest/streaming-ingest.html
+        """
+
+        assert isinstance(database, str), "Expected str instance, found {}".format(type(database))
+        assert isinstance(table, str), "Expected str instance, found {}".format(type(table))
+        assert isinstance(stream, io.IOBase), "Expected IOBase instance, found {}".format(type(stream))
+        assert isinstance(stream_format, str), "Expected str instance, found {}".format(type(stream_format))
+
+        request_params = {
+            "streamFormat": stream_format
+        }
+
+        if stream_format == "json" or stream_format == "singlejson" or stream_format == "avro":
+            request_params["mappingName"] = mapping_name
+
+        headers = {
+            "Accept": accept,
+            "Accept-Encoding": accept_encoding or "gzip,deflate",
+            "Connection": connection or "Keep-Alive",
+            "Content-Length": str(content_length),
+            "Content-Encoding": content_encoding,
+            "Expect": expect,
+            "x-ms-client-version": "Kusto.Python.Client:" + VERSION,
+            "x-ms-client-request-id": "KPC.execute;" + str(uuid.uuid4()),
+        }
+
+        # Remove headers that are None
+        request_headers = {k: v for k, v in headers.items() if v is not None}
+
+        if self._auth_provider:
+            request_headers["Authorization"] = self._auth_provider.acquire_authorization_header()
+
+        request_headers["Host"] = self._streaming_ingest_endpoint.split('/')[2]
+
+        request_payload = stream
+
+        endpoint = self._streaming_ingest_endpoint + database + "/" + table
+
+        timeout = KustoClient._query_default_timeout
+        response = self._session.post(endpoint, params=request_params, headers=request_headers, data=request_payload,
+                                      timeout=timeout)
+
+        if response.status_code == 200:
+            return KustoResponseDataSetV1(response.json())
+
+        raise KustoServiceError([response.content], response)
 
     def _get_timeout(self, properties, default):
         if properties:
