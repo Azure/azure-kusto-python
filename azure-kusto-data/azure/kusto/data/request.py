@@ -329,9 +329,20 @@ class KustoClient(object):
 
         raise KustoServiceError([response.json()], response)
 
-    def execute_streaming_ingest(self, database, table, stream, stream_format, mapping_name=None, accept=None,
-                                 accept_encoding=None, connection=None, content_length=None, content_encoding=None,
-                                 expect=None):
+    def execute_streaming_ingest(
+        self,
+        database,
+        table,
+        stream,
+        stream_format,
+        mapping_name=None,
+        accept=None,
+        accept_encoding=None,
+        connection=None,
+        content_length=None,
+        content_encoding=None,
+        expect=None,
+    ):
         """Executes streaming ingest against this client.
         :param str database: Target database.
         :param str table: Target table.
@@ -346,9 +357,7 @@ class KustoClient(object):
         assert isinstance(table, str), "Expected str instance, found {}".format(type(table))
         assert isinstance(stream_format, str), "Expected str instance, found {}".format(type(stream_format))
 
-        request_params = {
-            "streamFormat": stream_format
-        }
+        request_params = {"streamFormat": stream_format}
 
         if stream_format == "json" or stream_format == "singlejson" or stream_format == "avro":
             request_params["mappingName"] = mapping_name
@@ -370,15 +379,16 @@ class KustoClient(object):
         if self._auth_provider:
             request_headers["Authorization"] = self._auth_provider.acquire_authorization_header()
 
-        request_headers["Host"] = self._streaming_ingest_endpoint.split('/')[2]
+        request_headers["Host"] = self._streaming_ingest_endpoint.split("/")[2]
 
         request_payload = stream
 
         endpoint = self._streaming_ingest_endpoint + database + "/" + table
 
         timeout = KustoClient._query_default_timeout
-        response = self._session.post(endpoint, params=request_params, headers=request_headers, data=request_payload,
-                                      timeout=timeout)
+        response = self._session.post(
+            endpoint, params=request_params, headers=request_headers, data=request_payload, timeout=timeout
+        )
 
         if response.status_code == 200:
             return KustoResponseDataSetV1(response.json())

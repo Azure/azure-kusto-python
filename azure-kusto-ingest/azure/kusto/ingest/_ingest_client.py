@@ -76,35 +76,45 @@ class KustoIngestClient(object):
             descriptor = FileDescriptor(file_descriptor)
 
         if self._use_streaming_ingest and descriptor.size < self._streaming_ingestion_size_limit:
-            if (ingestion_properties.format == DataFormat.json or ingestion_properties.format == DataFormat.singlejson
-               or ingestion_properties.format == DataFormat.avro) and ingestion_properties.mapping_reference is None:
+            if (
+                ingestion_properties.format == DataFormat.json
+                or ingestion_properties.format == DataFormat.singlejson
+                or ingestion_properties.format == DataFormat.avro
+            ) and ingestion_properties.mapping_reference is None:
                 raise MissingMappingReference
 
-            self._kusto_client.execute_streaming_ingest(ingestion_properties.database,
-                                                        ingestion_properties.table,
-                                                        descriptor.zipped_stream, ingestion_properties.format.name,
-                                                        mapping_name=ingestion_properties.mapping_reference,
-                                                        content_length=str(descriptor.size),
-                                                        content_encoding="gzip")
+            self._kusto_client.execute_streaming_ingest(
+                ingestion_properties.database,
+                ingestion_properties.table,
+                descriptor.zipped_stream,
+                ingestion_properties.format.name,
+                mapping_name=ingestion_properties.mapping_reference,
+                content_length=str(descriptor.size),
+                content_encoding="gzip",
+            )
         else:
             blob_name = "{db}__{table}__{guid}__{file}".format(
                 db=ingestion_properties.database,
                 table=ingestion_properties.table,
                 guid=uuid.uuid4(),
-                file=descriptor.stream_name)
+                file=descriptor.stream_name,
+            )
 
             containers = self._resource_manager.get_containers()
             container_details = random.choice(containers)
-            storage_client = CloudStorageAccount(container_details.storage_account_name,
-                                                 sas_token=container_details.sas)
+            storage_client = CloudStorageAccount(
+                container_details.storage_account_name, sas_token=container_details.sas
+            )
             blob_service = storage_client.create_block_blob_service()
 
-            blob_service.create_blob_from_stream(container_name=container_details.object_name, blob_name=blob_name,
-                                                 stream=descriptor.zipped_stream)
+            blob_service.create_blob_from_stream(
+                container_name=container_details.object_name, blob_name=blob_name, stream=descriptor.zipped_stream
+            )
             url = blob_service.make_blob_url(container_details.object_name, blob_name, sas_token=container_details.sas)
 
-            self.ingest_from_blob(BlobDescriptor(url, descriptor.size, descriptor.source_id),
-                                  ingestion_properties=ingestion_properties)
+            self.ingest_from_blob(
+                BlobDescriptor(url, descriptor.size, descriptor.source_id), ingestion_properties=ingestion_properties
+            )
 
         descriptor.delete_files()
 
@@ -141,35 +151,42 @@ class KustoIngestClient(object):
             raise ValueError("Expected BytesIO or StringIO instance, found {}".format(type(stream)))
 
         if self._use_streaming_ingest and stream_size < self._streaming_ingestion_size_limit:
-            if (ingestion_properties.format == DataFormat.json or ingestion_properties.format == DataFormat.singlejson
-               or ingestion_properties.format == DataFormat.avro) and ingestion_properties.mapping_reference is None:
+            if (
+                ingestion_properties.format == DataFormat.json
+                or ingestion_properties.format == DataFormat.singlejson
+                or ingestion_properties.format == DataFormat.avro
+            ) and ingestion_properties.mapping_reference is None:
                 raise MissingMappingReference
 
-            self._kusto_client.execute_streaming_ingest(ingestion_properties.database, ingestion_properties.table,
-                                                        stream, ingestion_properties.format.name,
-                                                        mapping_name=ingestion_properties.mapping_reference,
-                                                        content_length=stream_size)
+            self._kusto_client.execute_streaming_ingest(
+                ingestion_properties.database,
+                ingestion_properties.table,
+                stream,
+                ingestion_properties.format.name,
+                mapping_name=ingestion_properties.mapping_reference,
+                content_length=stream_size,
+            )
         else:
             blob_name = "{db}__{table}__{guid}__{file}".format(
-                db=ingestion_properties.database,
-                table=ingestion_properties.table,
-                guid=uuid.uuid4(),
-                file="stream",
+                db=ingestion_properties.database, table=ingestion_properties.table, guid=uuid.uuid4(), file="stream"
             )
 
             containers = self._resource_manager.get_containers()
             container_details = random.choice(containers)
-            storage_client = CloudStorageAccount(container_details.storage_account_name,
-                                                 sas_token=container_details.sas)
+            storage_client = CloudStorageAccount(
+                container_details.storage_account_name, sas_token=container_details.sas
+            )
             blob_service = storage_client.create_block_blob_service()
 
             # As of azure.storage.blob bug, create_blob_from_stream method fails when provided with text streams
             if isinstance(stream, io.BytesIO):
-                blob_service.create_blob_from_stream(container_name=container_details.object_name, blob_name=blob_name,
-                                                     stream=stream)
+                blob_service.create_blob_from_stream(
+                    container_name=container_details.object_name, blob_name=blob_name, stream=stream
+                )
             else:
-                blob_service.create_blob_from_text(container_name=container_details.object_name, blob_name=blob_name,
-                                                   text=stream.getvalue())
+                blob_service.create_blob_from_text(
+                    container_name=container_details.object_name, blob_name=blob_name, text=stream.getvalue()
+                )
 
             url = blob_service.make_blob_url(container_details.object_name, blob_name, sas_token=container_details.sas)
 

@@ -101,14 +101,12 @@ def request_callback_streaming(request):
             {
                 "TableName": "Table_0",
                 "Columns": [
-                    {'ColumnName': 'ConsumedRecordsCount', 'DataType': 'Int64'},
-                    {'ColumnName': 'UpdatePolicyStatus', 'DataType': 'String'},
-                    {'ColumnName': 'UpdatePolicyFailureCode', 'DataType': 'String'},
-                    {'ColumnName': 'UpdatePolicyFailureReason', 'DataType': 'String'}
+                    {"ColumnName": "ConsumedRecordsCount", "DataType": "Int64"},
+                    {"ColumnName": "UpdatePolicyStatus", "DataType": "String"},
+                    {"ColumnName": "UpdatePolicyFailureCode", "DataType": "String"},
+                    {"ColumnName": "UpdatePolicyFailureReason", "DataType": "String"},
                 ],
-                'Rows': [
-                    [0, 'Inactive', 'Unknown', None]
-                ]
+                "Rows": [[0, "Inactive", "Unknown", None]],
             }
         ]
     }
@@ -163,7 +161,7 @@ class KustoIngestClientTests(unittest.TestCase):
         assert (
             queued_message_json["BlobPath"]
             == "https://storageaccount.blob.core.windows.net/tempstorage/database__table__1111-111111-111111-1111__"
-               "dataset.csv.gz?sas"
+            "dataset.csv.gz?sas"
         )
         assert queued_message_json["DatabaseName"] == "database"
         assert queued_message_json["IgnoreSizeLimit"] == False
@@ -245,7 +243,7 @@ class KustoIngestClientTests(unittest.TestCase):
         responses.add_callback(
             responses.POST,
             "https://somecluster.kusto.windows.net/v1/rest/ingest/database/table",
-            callback=request_callback_streaming
+            callback=request_callback_streaming,
         )
 
         ingest_client = KustoIngestClient("https://ingest-somecluster.kusto.windows.net", use_streaming_ingest=True)
@@ -273,8 +271,9 @@ class KustoIngestClientTests(unittest.TestCase):
 
         ingest_client.ingest_from_file(file_path, ingestion_properties=ingestion_properties)
 
-        ingestion_properties = IngestionProperties(database="database", table="table", dataFormat=DataFormat.json,
-                                                   mappingReference="JsonMapping")
+        ingestion_properties = IngestionProperties(
+            database="database", table="table", dataFormat=DataFormat.json, mappingReference="JsonMapping"
+        )
 
         path_parts = ["azure-kusto-ingest", "tests", "input", "dataset.json"]
         missing_path_parts = []
@@ -313,7 +312,7 @@ class KustoIngestClientTests(unittest.TestCase):
         responses.add_callback(
             responses.POST,
             "https://somecluster.kusto.windows.net/v1/rest/ingest/database/table",
-            callback=request_callback_streaming
+            callback=request_callback_streaming,
         )
 
         ingest_client = KustoIngestClient("https://ingest-somecluster.kusto.windows.net", use_streaming_ingest=True)
@@ -332,17 +331,17 @@ class KustoIngestClientTests(unittest.TestCase):
         responses.add_callback(
             responses.POST,
             "https://somecluster.kusto.windows.net/v1/rest/ingest/database/table",
-            callback=request_callback_streaming
+            callback=request_callback_streaming,
         )
 
         ingest_client = KustoIngestClient("https://ingest-somecluster.kusto.windows.net", use_streaming_ingest=True)
         ingestion_properties = IngestionProperties(database="database", table="table", dataFormat=DataFormat.csv)
 
-        byte_sequence = b'56,56,56'
+        byte_sequence = b"56,56,56"
         bytes_stream = io.BytesIO(byte_sequence)
         ingest_client.ingest_from_stream(bytes_stream, ingestion_properties=ingestion_properties)
 
-        str_sequence = u'57,57,57'
+        str_sequence = u"57,57,57"
         str_stream = io.StringIO(str_sequence)
         ingest_client.ingest_from_stream(str_stream, ingestion_properties=ingestion_properties)
 
