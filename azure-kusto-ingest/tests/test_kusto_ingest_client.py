@@ -162,8 +162,8 @@ class KustoIngestClientTests(unittest.TestCase):
         # mock_create_blob_from_stream
         assert (
             queued_message_json["BlobPath"]
-            == "https://storageaccount.blob.core.windows.net/tempstorage/database__table__1111-111111-111111-1111__ \
-               dataset.csv.gz?sas"
+            == "https://storageaccount.blob.core.windows.net/tempstorage/database__table__1111-111111-111111-1111__"
+               "dataset.csv.gz?sas"
         )
         assert queued_message_json["DatabaseName"] == "database"
         assert queued_message_json["IgnoreSizeLimit"] == False
@@ -221,8 +221,8 @@ class KustoIngestClientTests(unittest.TestCase):
         # mock_create_blob_from_stream
         assert (
             queued_message_json["BlobPath"]
-            == "https://storageaccount.blob.core.windows.net/tempstorage/database__table__1111-111111-111111-1111__ \
-            df_100_64.csv.gz?sas"
+            == "https://storageaccount.blob.core.windows.net/tempstorage/database__table__1111-111111-111111-1111__"
+            "df_100_64.csv.gz?sas"
         )
         assert queued_message_json["DatabaseName"] == "database"
         assert queued_message_json["IgnoreSizeLimit"] == False
