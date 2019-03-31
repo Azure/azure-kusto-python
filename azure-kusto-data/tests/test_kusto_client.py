@@ -241,16 +241,16 @@ class KustoClientTests(unittest.TestCase):
             "xdate": Series(
                 [
                     pandas.to_datetime(None),
-                    pandas.to_datetime("2014-01-01T01:01:01.0000000Z").tz_convert("UTC"),
-                    pandas.to_datetime("2015-01-01T01:01:01.0000001Z").tz_convert("UTC"),
-                    pandas.to_datetime("2016-01-01T01:01:01.0000002Z").tz_convert("UTC"),
-                    pandas.to_datetime("2017-01-01T01:01:01.0000003Z").tz_convert("UTC"),
-                    pandas.to_datetime("2018-01-01T01:01:01.0000004Z").tz_convert("UTC"),
-                    pandas.to_datetime("2019-01-01T01:01:01.0000005Z").tz_convert("UTC"),
-                    pandas.to_datetime("2020-01-01T01:01:01.0000006Z").tz_convert("UTC"),
-                    pandas.to_datetime("2021-01-01T01:01:01.0000007Z").tz_convert("UTC"),
-                    pandas.to_datetime("2022-01-01T01:01:01.0000008Z").tz_convert("UTC"),
-                    pandas.to_datetime("2023-01-01T01:01:01.0000009Z").tz_convert("UTC"),
+                    pandas.to_datetime("2014-01-01T01:01:01.0000000Z", utc=True).tz_convert(UTC),
+                    pandas.to_datetime("2015-01-01T01:01:01.0000001Z", utc=True).tz_convert(UTC),
+                    pandas.to_datetime("2016-01-01T01:01:01.0000002Z", utc=True).tz_convert(UTC),
+                    pandas.to_datetime("2017-01-01T01:01:01.0000003Z", utc=True).tz_convert(UTC),
+                    pandas.to_datetime("2018-01-01T01:01:01.0000004Z", utc=True).tz_convert(UTC),
+                    pandas.to_datetime("2019-01-01T01:01:01.0000005Z", utc=True).tz_convert(UTC),
+                    pandas.to_datetime("2020-01-01T01:01:01.0000006Z", utc=True).tz_convert(UTC),
+                    pandas.to_datetime("2021-01-01T01:01:01.0000007Z", utc=True).tz_convert(UTC),
+                    pandas.to_datetime("2022-01-01T01:01:01.0000008Z", utc=True).tz_convert(UTC),
+                    pandas.to_datetime("2023-01-01T01:01:01.0000009Z", utc=True).tz_convert(UTC),
                 ]
             ),
             "xsmalltext": Series(
