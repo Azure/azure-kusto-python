@@ -340,7 +340,7 @@ class KustoIngestClientTests(unittest.TestCase):
         bytes_stream = io.BytesIO(byte_sequence)
         ingest_client.ingest_from_stream(bytes_stream, ingestion_properties=ingestion_properties)
 
-        str_sequence = '57,57,57'
+        str_sequence = u'57,57,57'
         str_stream = io.StringIO(str_sequence)
         ingest_client.ingest_from_stream(str_stream, ingestion_properties=ingestion_properties)
 
@@ -350,6 +350,6 @@ class KustoIngestClientTests(unittest.TestCase):
         ingestion_properties.mapping_reference = "JsonMapping"
         ingest_client.ingest_from_stream(bytes_stream, ingestion_properties=ingestion_properties)
 
-        str_sequence = '{"Name":"Ben","Age":"56","Weight":"75"}'
+        str_sequence = u'{"Name":"Ben","Age":"56","Weight":"75"}'
         str_stream = io.StringIO(str_sequence)
         ingest_client.ingest_from_stream(str_stream, ingestion_properties=ingestion_properties)
