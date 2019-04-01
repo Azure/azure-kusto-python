@@ -249,6 +249,7 @@ class KustoClient(object):
 
     # The maximum amount of connections to be able to operate in parallel
     _max_pool_size = 100
+    _mapping_required_formats = ["json", "singlejson", "avro"]
 
     def __init__(self, kcsb):
         """Kusto Client constructor.
@@ -266,7 +267,7 @@ class KustoClient(object):
 
         self._mgmt_endpoint = "{0}/v1/rest/mgmt".format(kusto_cluster)
         self._query_endpoint = "{0}/v2/rest/query".format(kusto_cluster)
-        self._streaming_ingest_endpoint = "{0}/v1/rest/ingest/".format(kusto_cluster).replace("ingest-", "")
+        self._streaming_ingest_endpoint = "{0}/v1/rest/ingest/".format(kusto_cluster.replace("ingest-", ""))
         self._auth_provider = _AadHelper(kcsb) if kcsb.aad_federated_security else None
 
     def execute(self, database, query, properties=None):
@@ -337,8 +338,8 @@ class KustoClient(object):
         stream_format,
         mapping_name=None,
         accept=None,
-        accept_encoding=None,
-        connection=None,
+        accept_encoding="gzip,deflate",
+        connection="Keep-Alive",
         content_length=None,
         content_encoding=None,
         expect=None,
@@ -353,41 +354,36 @@ class KustoClient(object):
             https://kusto.azurewebsites.net/docs/api/rest/streaming-ingest.html
         """
 
-        assert isinstance(database, str), "Expected str instance, found {}".format(type(database))
-        assert isinstance(table, str), "Expected str instance, found {}".format(type(table))
-        assert isinstance(stream_format, str), "Expected str instance, found {}".format(type(stream_format))
-
         request_params = {"streamFormat": stream_format}
 
-        if stream_format == "json" or stream_format == "singlejson" or stream_format == "avro":
+        if stream_format in self._mapping_required_formats:
             request_params["mappingName"] = mapping_name
 
-        headers = {
-            "Accept": accept,
-            "Accept-Encoding": accept_encoding or "gzip,deflate",
-            "Connection": connection or "Keep-Alive",
-            "Content-Length": str(content_length),
-            "Content-Encoding": content_encoding,
-            "Expect": expect,
+        request_headers = {
+            "Accept-Encoding": accept_encoding,
+            "Connection": connection,
             "x-ms-client-version": "Kusto.Python.Client:" + VERSION,
             "x-ms-client-request-id": "KPC.execute;" + str(uuid.uuid4()),
+            "Host": self._streaming_ingest_endpoint.split("/")[2],
         }
 
-        # Remove headers that are None
-        request_headers = {k: v for k, v in headers.items() if v is not None}
-
+        if accept is not None:
+            request_headers["Accept"] = accept
+        if content_encoding is not None:
+            request_headers["Content-Encoding"] = content_encoding
+        if expect is not None:
+            request_headers["Expect"] = expect
+        if content_length is not None:
+            request_headers["Content-Length "] = str(content_length)
         if self._auth_provider:
             request_headers["Authorization"] = self._auth_provider.acquire_authorization_header()
 
-        request_headers["Host"] = self._streaming_ingest_endpoint.split("/")[2]
-
-        request_payload = stream
-
-        endpoint = self._streaming_ingest_endpoint + database + "/" + table
-
-        timeout = KustoClient._query_default_timeout
         response = self._session.post(
-            endpoint, params=request_params, headers=request_headers, data=request_payload, timeout=timeout
+            self._streaming_ingest_endpoint + database + "/" + table,
+            params=request_params,
+            headers=request_headers,
+            data=stream,
+            timeout=KustoClient._query_default_timeout,
         )
 
         if response.status_code == 200:

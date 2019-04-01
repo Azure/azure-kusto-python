@@ -76,3 +76,22 @@ class BlobDescriptor(object):
         self.size = size
         assert_uuid4(source_id, "source_id must be a valid uuid4")
         self.source_id = source_id
+
+
+class StreamDescriptor(object):
+    """StreamDescriptor is used to describe a stream that will be used as ingestion source"""
+
+    def __init__(self, stream, size, source_id=None):
+        """
+        :param stream: in-memory stream object.
+        :type stream: io.StringIO or io.BytesIO
+        :param size: size of the provided stream.
+        :type: size: int
+        :param source_id:
+        :param source_id: a v4 uuid to serve as the sources id.
+        :type source_id: str (of a uuid4) or uuid4.
+        """
+        self.stream = stream
+        self.size = size
+        assert_uuid4(source_id, "source_id must be a valid uuid4")
+        self.source_id = source_id

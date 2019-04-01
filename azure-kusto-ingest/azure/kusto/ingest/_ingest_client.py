@@ -11,10 +11,10 @@ import io
 from azure.storage.common import CloudStorageAccount
 
 from azure.kusto.data.request import KustoClient
-from ._descriptors import BlobDescriptor, FileDescriptor
+from ._descriptors import BlobDescriptor, FileDescriptor, StreamDescriptor
 from ._ingestion_blob_info import _IngestionBlobInfo
 from ._resource_manager import _ResourceManager
-from .exceptions import MissingMappingReference
+from .exceptions import MissingMappingReferenceError
 from ._ingestion_properties import DataFormat
 
 _1KB = 1024
@@ -28,6 +28,8 @@ class KustoIngestClient(object):
 
     Tests are run using pytest.
     """
+
+    _mapping_required_formats = [DataFormat.json, DataFormat.singlejson, DataFormat.avro]
 
     def __init__(self, kcsb, use_streaming_ingest=False):
         """Kusto Ingest Client constructor.
@@ -77,11 +79,10 @@ class KustoIngestClient(object):
 
         if self._use_streaming_ingest and descriptor.size < self._streaming_ingestion_size_limit:
             if (
-                ingestion_properties.format == DataFormat.json
-                or ingestion_properties.format == DataFormat.singlejson
-                or ingestion_properties.format == DataFormat.avro
-            ) and ingestion_properties.mapping_reference is None:
-                raise MissingMappingReference
+                ingestion_properties.format in self._mapping_required_formats
+                and ingestion_properties.mapping_reference is None
+            ):
+                raise MissingMappingReferenceError()
 
             self._kusto_client.execute_streaming_ingest(
                 ingestion_properties.database,
@@ -137,34 +138,33 @@ class KustoIngestClient(object):
         encoded = base64.b64encode(ingestion_blob_info_json.encode("utf-8")).decode("utf-8")
         queue_service.put_message(queue_name=queue_details.object_name, content=encoded)
 
-    def ingest_from_stream(self, stream, ingestion_properties):
+    def ingest_from_stream(self, stream_descriptor, ingestion_properties):
         """Ingest from in-memroy streams.
-        :param BytesIO or StringIO stream: in-memory stream.
+        :param azure.kusto.ingest.StreamDescriptor stream_descriptor: An object that contains a description of the stream to
+               be ingested.
         :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
         """
 
-        if isinstance(stream, io.BytesIO) or isinstance(stream, io.StringIO):
-            stream.seek(0, io.SEEK_END)
-            stream_size = stream.tell()
-            stream.seek(0, io.SEEK_SET)
-        else:
-            raise ValueError("Expected BytesIO or StringIO instance, found {}".format(type(stream)))
+        if not isinstance(stream_descriptor, StreamDescriptor):
+            stream_descriptor.seek(0, io.SEEK_END)
+            stream_size = stream_descriptor.tell()
+            stream_descriptor.seek(0, io.SEEK_SET)
+            stream_descriptor = StreamDescriptor(stream_descriptor, stream_size)
 
-        if self._use_streaming_ingest and stream_size < self._streaming_ingestion_size_limit:
+        if self._use_streaming_ingest and stream_descriptor.size < self._streaming_ingestion_size_limit:
             if (
-                ingestion_properties.format == DataFormat.json
-                or ingestion_properties.format == DataFormat.singlejson
-                or ingestion_properties.format == DataFormat.avro
-            ) and ingestion_properties.mapping_reference is None:
-                raise MissingMappingReference
+                ingestion_properties.format in self._mapping_required_formats
+                and ingestion_properties.mapping_reference is None
+            ):
+                raise MissingMappingReferenceError()
 
             self._kusto_client.execute_streaming_ingest(
                 ingestion_properties.database,
                 ingestion_properties.table,
-                stream,
+                stream_descriptor.stream,
                 ingestion_properties.format.name,
                 mapping_name=ingestion_properties.mapping_reference,
-                content_length=stream_size,
+                content_length=stream_descriptor.size,
             )
         else:
             blob_name = "{db}__{table}__{guid}__{file}".format(
@@ -178,16 +178,19 @@ class KustoIngestClient(object):
             )
             blob_service = storage_client.create_block_blob_service()
 
-            # As of azure.storage.blob bug, create_blob_from_stream method fails when provided with text streams
-            if isinstance(stream, io.BytesIO):
+            # As of azure.storage.blob bug, create_blob_from_stream method fails when provided with text streams:
+            # https://github.com/Azure/azure-storage-python/issues/546
+            if isinstance(stream_descriptor.stream, io.BytesIO):
                 blob_service.create_blob_from_stream(
-                    container_name=container_details.object_name, blob_name=blob_name, stream=stream
+                    container_name=container_details.object_name, blob_name=blob_name, stream=stream_descriptor.stream
                 )
             else:
                 blob_service.create_blob_from_text(
-                    container_name=container_details.object_name, blob_name=blob_name, text=stream.getvalue()
+                    container_name=container_details.object_name,
+                    blob_name=blob_name,
+                    text=stream_descriptor.stream.getvalue(),
                 )
 
             url = blob_service.make_blob_url(container_details.object_name, blob_name, sas_token=container_details.sas)
 
-            self.ingest_from_blob(BlobDescriptor(url, stream_size), ingestion_properties)
+            self.ingest_from_blob(BlobDescriptor(url, stream_descriptor.size), ingestion_properties)

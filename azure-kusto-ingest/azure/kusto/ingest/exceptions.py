@@ -14,7 +14,7 @@ class KustoDuplicateMappingError(KustoClientError):
         super(KustoDuplicateMappingError, self).__init__(message)
 
 
-class MissingMappingReference(KustoClientError):
+class MissingMappingReferenceError(KustoClientError):
     """
     Error to be raised when ingestion properties has data format of Json, SingleJson, MultiJson or Avro
     but ingestion mappings reference was not defined.
@@ -22,4 +22,4 @@ class MissingMappingReference(KustoClientError):
 
     def __init__(self):
         message = "When stream format is json, mapping name must be provided."
-        super(MissingMappingReference, self).__init__(message)
+        super(MissingMappingReferenceError, self).__init__(message)
