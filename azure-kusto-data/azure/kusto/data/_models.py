@@ -25,17 +25,18 @@ def _get_precise_repr(t, raw_value, typed_value, **kwargs):
 
         if seventh_char and seventh_char.isdigit():
             return raw_value[:-lookback] + seventh_char + "00" + last
-        else:
-            return raw_value
+
+        return raw_value
     elif t == "timespan":
         seconds_fractions_part = kwargs.get("seconds_fractions_part")
         if seconds_fractions_part:
             whole_part = int(typed_value.total_seconds())
             fractions = str(whole_part) + "." + seconds_fractions_part
             total_seconds = float(fractions)
+
             return total_seconds
-        else:
-            return typed_value.total_seconds()
+
+        return typed_value.total_seconds()
     else:
         raise ValueError("Unknown type {t}".format(t))
 
@@ -75,10 +76,11 @@ class KustoResultRow(object):
                     typed_value = None
                     if keep_high_precision_values:
                         self._hidden_values.append(None)
+
                 else:
                     seconds_fractions_part = None
                     seventh_char = None
-                    last = value[-1] if type(value) is str and value[-1].isalpha() else ""
+                    last = value[-1] if isinstance(value, six.string_types) and value[-1].isalpha() else ""
                     lookback = None
 
                     try:
@@ -95,12 +97,9 @@ class KustoResultRow(object):
 
                         if seventh_char.isdigit():
                             tick = int(seventh_char)
-
-                            lookback = 2 if last else 1
-
+                            lookback = 2 if last else 1                            
                             typed_value = KustoResultRow.convertion_funcs[column_type](value[:-lookback] + last)
-                            # this is a special case where plain python will lose precision, so we keep the precise value hidden
-                            # when transforming to pandas, we can use the hidden value to covert to precise types
+
                             if tick:
                                 if column_type == "datetime":
                                     self._seventh_digit[column.column_name] = tick
@@ -112,10 +111,11 @@ class KustoResultRow(object):
                                     raise TypeError("Unexpected type {}".format(column_type))
                         else:
                             typed_value = KustoResultRow.convertion_funcs[column_type](value)
-
                     except (IndexError, AttributeError):
                         typed_value = KustoResultRow.convertion_funcs[column_type](value)
 
+                    # this is a special case where plain python will lose precision, so we keep the precise value hidden
+                    # when transforming to pandas, we can use the hidden value to convert to precise pandas/numpy types
                     if keep_high_precision_values:
                         self._hidden_values.append(
                             _get_precise_repr(

@@ -126,7 +126,7 @@ class KustoClientTests(unittest.TestCase):
             self.assertEqual(row["xuint16"], expected["xuint16"])
             self.assertEqual(row["xuint32"], expected["xuint32"])
             self.assertEqual(row["xuint64"], expected["xuint64"])
-            self.assertEqual(row["xdate"], expected["xdate"], '{} not equal to {}'.format(row["xdate"], expected["xdate"]))
+            self.assertEqual(row["xdate"], expected["xdate"]))
             self.assertEqual(row["xsmalltext"], expected["xsmalltext"])
             self.assertEqual(row["xtext"], expected["xtext"])
             self.assertEqual(row["xnumberAsText"], expected["xnumberAsText"])

@@ -3,6 +3,7 @@
 from datetime import timedelta
 import re
 from dateutil import parser
+from dateutil.tz import UTC
 import six
 
 # Regex for TimeSpan
@@ -15,8 +16,14 @@ def to_datetime(value):
         return None
 
     if isinstance(value, six.integer_types):
-        return parser.parse(value)
-    return parser.isoparse(value)
+        parsed = parser.parse(value)
+
+    parsed = parser.isoparse(value)
+
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=UTC)
+
+    return parsed
 
 
 def to_timedelta(value):
