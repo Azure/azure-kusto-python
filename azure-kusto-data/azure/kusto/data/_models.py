@@ -97,7 +97,7 @@ class KustoResultRow(object):
 
                         if seventh_char.isdigit():
                             tick = int(seventh_char)
-                            lookback = 2 if last else 1                            
+                            lookback = 2 if last else 1
                             typed_value = KustoResultRow.convertion_funcs[column_type](value[:-lookback] + last)
 
                             if tick:
