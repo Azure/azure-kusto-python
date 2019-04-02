@@ -114,6 +114,17 @@ class KustoResultColumn(object):
         )
 
 
+import collections
+
+
+class KustoRowsCollection(collections.defaultdict):
+    def __init__(self, func):
+        self.func = func
+
+    def __missing__(self, key):
+        return self.func(key)
+
+
 class KustoResultTable(object):
     """Iterator over a Kusto result table."""
 
@@ -123,15 +134,16 @@ class KustoResultTable(object):
         self.table_kind = WellKnownDataSet[json_table["TableKind"]] if "TableKind" in json_table else None
         self.columns = [KustoResultColumn(column, index) for index, column in enumerate(json_table["Columns"])]
 
-        errors = [row for row in json_table["Rows"] if isinstance(row, dict)]
+        self._rows = json_table["Rows"]
+        errors = [row for row in self._rows if isinstance(row, dict)]
         if errors:
             raise KustoServiceError(errors[0]["OneApiErrors"][0]["error"]["@message"], json_table)
 
-        self.rows = [KustoResultRow(self.columns, row) for row in json_table["Rows"]]
+        self.rows = KustoRowsCollection(lambda key: self.__getitem__(key))
 
     @property
     def rows_count(self):
-        return len(self.rows)
+        return len(self._rows)
 
     @property
     def columns_count(self):
@@ -141,15 +153,20 @@ class KustoResultTable(object):
         """Converts the table to a dict."""
         return {"name": self.table_name, "kind": self.table_kind, "data": [r.to_dict() for r in self]}
 
+    def to_dataframe(self):
+        from .helpers import dataframe_from_result_table
+
+        return dataframe_from_result_table(self)
+
     def __len__(self):
-        return self.rows_count
+        return len(self._rows)
 
     def __iter__(self):
-        for row in self.rows:
-            yield row
+        for row in self._rows:
+            yield KustoResultRow(self.columns, row)
 
     def __getitem__(self, key):
-        return self.rows[key]
+        return KustoResultRow(self.columns, self._rows[key])
 
     def __str__(self):
         d = self.to_dict()

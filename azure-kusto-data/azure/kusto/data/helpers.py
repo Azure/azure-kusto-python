@@ -2,6 +2,16 @@
 
 import pandas
 from ._models import KustoResultTable
+from dateutil.tz import UTC
+
+
+def timespan_column_parser(data):
+    factor = 1
+    if data and data.startswith("-"):
+        factor = -1
+        data = data[1:]
+
+    return pandas.Timedelta(data.replace(".", " days ", 1) if data and "." in data.split(":")[0] else data) * factor
 
 
 def dataframe_from_result_table(table):
@@ -16,16 +26,15 @@ def dataframe_from_result_table(table):
     if not isinstance(table, KustoResultTable):
         raise TypeError("Expected KustoResultTable got {}".format(type(table).__name__))
 
-    frame = pandas.DataFrame.from_records(
-        [row.to_list() for row in table.rows], columns=[col.column_name for col in table.columns]
-    )
-    bool_columns = [col.column_name for col in table.columns if col.column_type == "bool"]
-    for col in bool_columns:
-        frame[col] = frame[col].astype(bool)
+    frame = pandas.DataFrame(table._rows, columns=[col.column_name for col in table.columns])
 
-    for i in range(len(table.rows)):
-        seventh = table.rows[i]._seventh_digit
-        for name in seventh.keys():
-            frame.loc[i, name] += pandas.Timedelta(seventh[name] * 100, unit="ns")
+    for col in table.columns:
+        if col.column_type == "bool":
+            # TODO: this may be wrong
+            frame[col.column_name] = frame[col.column_name].astype(bool)
+        if col.column_type == "datetime":
+            frame[col.column_name] = pandas.to_datetime(frame[col.column_name], utc=True).dt.tz_convert(UTC)
+        if col.column_type == "timespan":
+            frame[col.column_name] = frame[col.column_name].apply(timespan_column_parser)
 
     return frame
