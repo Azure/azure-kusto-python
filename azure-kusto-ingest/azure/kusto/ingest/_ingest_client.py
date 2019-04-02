@@ -31,14 +31,14 @@ class KustoIngestClient(object):
 
     _mapping_required_formats = [DataFormat.json, DataFormat.singlejson, DataFormat.avro]
 
-    def __init__(self, kcsb, use_streaming_ingest=False):
+    def __init__(self, kcsb, prefer_streaming_ingest=False):
         """Kusto Ingest Client constructor.
         :param KustoConnectionStringBuilder kcsb: The connection string to initialize KustoClient.
         :param boolean use_streaming_ingest: indicates whether to use queued ingest or streaming ingest if possible.
         """
         self._kusto_client = KustoClient(kcsb)
         self._resource_manager = _ResourceManager(self._kusto_client)
-        self._use_streaming_ingest = use_streaming_ingest
+        self._prefer_streaming_ingest = prefer_streaming_ingest
         self._streaming_ingestion_size_limit = 4 * _1MB
 
     def ingest_from_dataframe(self, df, ingestion_properties):
@@ -77,7 +77,7 @@ class KustoIngestClient(object):
         else:
             descriptor = FileDescriptor(file_descriptor)
 
-        if self._use_streaming_ingest and descriptor.size < self._streaming_ingestion_size_limit:
+        if self._prefer_streaming_ingest and descriptor.size < self._streaming_ingestion_size_limit:
             if (
                 ingestion_properties.format in self._mapping_required_formats
                 and ingestion_properties.mapping_reference is None
@@ -146,12 +146,9 @@ class KustoIngestClient(object):
         """
 
         if not isinstance(stream_descriptor, StreamDescriptor):
-            stream_descriptor.seek(0, io.SEEK_END)
-            stream_size = stream_descriptor.tell()
-            stream_descriptor.seek(0, io.SEEK_SET)
-            stream_descriptor = StreamDescriptor(stream_descriptor, stream_size)
+            stream_descriptor = StreamDescriptor(stream_descriptor)
 
-        if self._use_streaming_ingest and stream_descriptor.size < self._streaming_ingestion_size_limit:
+        if self._prefer_streaming_ingest and stream_descriptor.size < self._streaming_ingestion_size_limit:
             if (
                 ingestion_properties.format in self._mapping_required_formats
                 and ingestion_properties.mapping_reference is None

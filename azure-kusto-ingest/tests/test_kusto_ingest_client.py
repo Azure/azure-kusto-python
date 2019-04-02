@@ -246,7 +246,7 @@ class KustoIngestClientTests(unittest.TestCase):
             callback=request_callback_streaming,
         )
 
-        ingest_client = KustoIngestClient("https://ingest-somecluster.kusto.windows.net", use_streaming_ingest=True)
+        ingest_client = KustoIngestClient("https://ingest-somecluster.kusto.windows.net", prefer_streaming_ingest=True)
         ingestion_properties = IngestionProperties(database="database", table="table", dataFormat=DataFormat.csv)
 
         # ensure test can work when executed from within directories
@@ -315,7 +315,7 @@ class KustoIngestClientTests(unittest.TestCase):
             callback=request_callback_streaming,
         )
 
-        ingest_client = KustoIngestClient("https://ingest-somecluster.kusto.windows.net", use_streaming_ingest=True)
+        ingest_client = KustoIngestClient("https://ingest-somecluster.kusto.windows.net", prefer_streaming_ingest=True)
         ingestion_properties = IngestionProperties(database="database", table="table", dataFormat=DataFormat.csv)
 
         from pandas import DataFrame
@@ -334,7 +334,7 @@ class KustoIngestClientTests(unittest.TestCase):
             callback=request_callback_streaming,
         )
 
-        ingest_client = KustoIngestClient("https://ingest-somecluster.kusto.windows.net", use_streaming_ingest=True)
+        ingest_client = KustoIngestClient("https://ingest-somecluster.kusto.windows.net", prefer_streaming_ingest=True)
         ingestion_properties = IngestionProperties(database="database", table="table", dataFormat=DataFormat.csv)
 
         byte_sequence = b"56,56,56"
