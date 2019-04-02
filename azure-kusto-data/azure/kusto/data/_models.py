@@ -117,12 +117,20 @@ class KustoResultColumn(object):
 import collections
 
 
-class KustoRowsCollection(collections.defaultdict):
-    def __init__(self, func):
+class _KustoRowsCollection(collections.defaultdict):
+    def __init__(self, func, size):
         self.func = func
+        self.size = size
 
     def __missing__(self, key):
         return self.func(key)
+
+    def __len__(self):
+        return self.size
+
+    def __iter__(self):
+        for i in range(self.size):
+            yield self[i]
 
 
 class KustoResultTable(object):
@@ -139,7 +147,7 @@ class KustoResultTable(object):
         if errors:
             raise KustoServiceError(errors[0]["OneApiErrors"][0]["error"]["@message"], json_table)
 
-        self.rows = KustoRowsCollection(lambda key: self.__getitem__(key))
+        self.rows = _KustoRowsCollection(lambda key: self.__row_at(key), size=len(self._rows))
 
     @property
     def rows_count(self):
@@ -162,11 +170,14 @@ class KustoResultTable(object):
         return len(self._rows)
 
     def __iter__(self):
-        for row in self._rows:
-            yield KustoResultRow(self.columns, row)
+        for i in range(len(self._rows)):
+            yield self.rows[i]
+
+    def __row_at(self, key):
+        return KustoResultRow(self.columns, self._rows[key])
 
     def __getitem__(self, key):
-        return KustoResultRow(self.columns, self._rows[key])
+        return self.rows[key]
 
     def __str__(self):
         d = self.to_dict()
