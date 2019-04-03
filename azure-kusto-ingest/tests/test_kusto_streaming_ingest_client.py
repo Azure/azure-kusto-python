@@ -45,7 +45,7 @@ def request_callback(request):
     return response_status, response_headers, json.dumps(response_body)
 
 
-class KustoIngestClientTests(unittest.TestCase):
+class KustoStreamingIngestClientTests(unittest.TestCase):
     @responses.activate
     def test_streaming_ingest_from_file(self):
         responses.add_callback(
