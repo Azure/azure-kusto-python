@@ -358,8 +358,8 @@ class KustoClient(object):
         request_headers = {
             "Accept-Encoding": accept_encoding,
             "Connection": connection,
-            "x-ms-client-version": "Kusto.Python.Client:" + VERSION,
-            "x-ms-client-request-id": "KPC.execute;" + str(uuid.uuid4()),
+            "x-ms-client-version": "Kusto.Python.StreamingClient:" + VERSION,
+            "x-ms-client-request-id": "KPSC.execute;" + str(uuid.uuid4()),
             "Host": self._streaming_ingest_endpoint.split("/")[2],
         }
 

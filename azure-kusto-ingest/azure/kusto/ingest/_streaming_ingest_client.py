@@ -22,6 +22,7 @@ class KustoStreamingIngestClient(object):
     """
 
     _mapping_required_formats = [DataFormat.json, DataFormat.singlejson, DataFormat.avro]
+    _streaming_ingestion_size_limit = 4 * _1MB
 
     def __init__(self, kcsb):
         """Kusto Streaming Ingest Client constructor.
@@ -29,7 +30,6 @@ class KustoStreamingIngestClient(object):
         """
         self._kusto_client = KustoClient(kcsb)
         self._resource_manager = _ResourceManager(self._kusto_client)
-        self._streaming_ingestion_size_limit = 4 * _1MB
 
     def ingest_from_dataframe(self, df, ingestion_properties):
         """Ingest from pandas DataFrame.
