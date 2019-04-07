@@ -8,6 +8,7 @@ from ._descriptors import FileDescriptor, StreamDescriptor
 from ._resource_manager import _ResourceManager
 from .exceptions import KustoMissingMappingReferenceError, KustoStreamMaxSizeExceededError
 from ._ingestion_properties import DataFormat
+from io import TextIOWrapper
 
 _1KB = 1024
 _1MB = _1KB * _1KB
@@ -78,6 +79,10 @@ class KustoStreamingIngestClient(object):
 
         if not isinstance(stream_descriptor, StreamDescriptor):
             stream_descriptor = StreamDescriptor(stream_descriptor)
+
+        if isinstance(stream_descriptor.stream, TextIOWrapper):
+            # TODO - add support of TextIoWrapper type
+            raise NotImplementedError()
 
         self._ingest(stream_descriptor.stream, stream_descriptor.size, ingestion_properties)
 
