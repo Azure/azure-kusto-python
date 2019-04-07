@@ -87,7 +87,6 @@ class StreamDescriptor(object):
         :type stream: io.BaseIO
         :param size: size of the provided stream.
         :type: size: int
-        :param source_id:
         :param source_id: a v4 uuid to serve as the sources id.
         :type source_id: str (of a uuid4) or uuid4.
         """
