@@ -81,10 +81,11 @@ class KustoStreamingIngestClient(object):
             stream_descriptor = StreamDescriptor(stream_descriptor)
 
         if isinstance(stream_descriptor.stream, TextIOWrapper):
-            # TODO - add support of TextIoWrapper type
-            raise NotImplementedError()
+            stream = stream_descriptor.stream.buffer
+        else:
+            stream = stream_descriptor.stream
 
-        self._ingest(stream_descriptor.stream, stream_descriptor.size, ingestion_properties)
+        self._ingest(stream, stream_descriptor.size, ingestion_properties)
 
     def _ingest(self, stream, size, ingestion_properties, content_encoding=None):
         if size >= self._streaming_ingestion_size_limit:
