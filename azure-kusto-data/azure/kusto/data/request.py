@@ -327,27 +327,16 @@ class KustoClient(object):
         raise KustoServiceError([response.json()], response)
 
     def execute_streaming_ingest(
-        self,
-        database,
-        table,
-        stream,
-        stream_format,
-        mapping_name=None,
-        accept=None,
-        accept_encoding="gzip,deflate",
-        connection="Keep-Alive",
-        content_length=None,
-        content_encoding=None,
-        expect=None,
+        self, database, table, stream, client_request_properties, stream_format, compress_stream, mapping_name=None
     ):
         """Executes streaming ingest against this client.
         :param str database: Target database.
         :param str table: Target table.
         :param io.BaseIO stream: stream object which contains the data to ingest.
+        :param ClientRequestProperties client_request_properties: additional request properties.
         :param DataFormat stream_format: Format of the data in the stream.
+        :param boolean compress_stream: Indicates whether the provided stream is compressed.
         :param str mapping_name: Pre-defined mapping of the table. Required when stream_format is json/avro.
-        Other optional params: optional request headers as documented at:
-            https://kusto.azurewebsites.net/docs/api/rest/streaming-ingest.html
         """
 
         request_params = {"streamFormat": stream_format}
@@ -356,23 +345,22 @@ class KustoClient(object):
             request_params["mappingName"] = mapping_name
 
         request_headers = {
-            "Accept-Encoding": accept_encoding,
-            "Connection": connection,
+            "Accept": "application/json",
+            "Accept-Encoding": "gzip,deflate",
             "x-ms-client-version": "Kusto.Python.StreamingClient:" + VERSION,
             "x-ms-client-request-id": "KPSC.execute;" + str(uuid.uuid4()),
-            "Host": self._streaming_ingest_endpoint.split("/")[2],
         }
 
-        if accept is not None:
-            request_headers["Accept"] = accept
-        if content_encoding is not None:
-            request_headers["Content-Encoding"] = content_encoding
-        if expect is not None:
-            request_headers["Expect"] = expect
-        if content_length is not None:
-            request_headers["Content-Length"] = str(content_length)
         if self._auth_provider:
             request_headers["Authorization"] = self._auth_provider.acquire_authorization_header()
+        if client_request_properties.has_option("Connection"):
+            request_headers["Connection"] = client_request_properties.get_option("Connection", "Keep-Alive")
+        if client_request_properties.has_option("Content_Length"):
+            request_headers["Content-Length"] = client_request_properties.get_option("Content_Length", "0")
+        if compress_stream:
+            request_headers["Content-Encoding"] = "gzip"
+        if client_request_properties.has_option("Expect"):
+            request_headers["Expect"] = client_request_properties.get_option("Expect", 0)
 
         response = self._session.post(
             self._streaming_ingest_endpoint + database + "/" + table,

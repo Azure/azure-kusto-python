@@ -3,7 +3,7 @@ import os
 import time
 import tempfile
 
-from azure.kusto.data.request import KustoClient
+from azure.kusto.data.request import KustoClient, ClientRequestProperties
 from ._descriptors import FileDescriptor, StreamDescriptor
 from ._resource_manager import _ResourceManager
 from .exceptions import KustoMissingMappingReferenceError, KustoStreamMaxSizeExceededError
@@ -50,7 +50,7 @@ class KustoStreamingIngestClient(object):
         fd = FileDescriptor(temp_file_path)
 
         ingestion_properties.format = DataFormat.csv
-        self._ingest(fd.zipped_stream, fd.size, ingestion_properties, content_encoding="gzip")
+        self._ingest(fd.zipped_stream, fd.size, ingestion_properties, True)
 
         fd.delete_files()
         os.unlink(temp_file_path)
@@ -66,7 +66,7 @@ class KustoStreamingIngestClient(object):
         else:
             descriptor = FileDescriptor(file_descriptor)
 
-        self._ingest(descriptor.zipped_stream, descriptor.size, ingestion_properties, content_encoding="gzip")
+        self._ingest(descriptor.zipped_stream, descriptor.size, ingestion_properties, True)
 
         descriptor.delete_files()
 
@@ -85,9 +85,9 @@ class KustoStreamingIngestClient(object):
         else:
             stream = stream_descriptor.stream
 
-        self._ingest(stream, stream_descriptor.size, ingestion_properties)
+        self._ingest(stream, stream_descriptor.size, ingestion_properties, False)
 
-    def _ingest(self, stream, size, ingestion_properties, content_encoding=None):
+    def _ingest(self, stream, size, ingestion_properties, compress_stream):
         if size >= self._streaming_ingestion_size_limit:
             raise KustoStreamMaxSizeExceededError()
 
@@ -97,12 +97,16 @@ class KustoStreamingIngestClient(object):
         ):
             raise KustoMissingMappingReferenceError()
 
+        client_request_properties = ClientRequestProperties()
+        client_request_properties.set_option("content_length", str(size))
+        client_request_properties.set_option("Connection", "Keep-Alive")
+
         self._kusto_client.execute_streaming_ingest(
             ingestion_properties.database,
             ingestion_properties.table,
             stream,
+            client_request_properties,
             ingestion_properties.format.name,
+            compress_stream,
             mapping_name=ingestion_properties.mapping_reference,
-            content_length=size,
-            content_encoding=content_encoding,
         )
