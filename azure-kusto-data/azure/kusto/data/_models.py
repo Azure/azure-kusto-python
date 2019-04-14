@@ -9,12 +9,13 @@ from . import _converters
 from .exceptions import KustoServiceError
 
 
-keep_high_precision_values = True
+has_pandas = True
 
 try:
     import pandas
+    from .helpers import to_pandas_datetime, to_pandas_timedelta
 except:
-    keep_high_precision_values = False
+    has_pandas = False
 
 
 class WellKnownDataSet(Enum):
@@ -43,14 +44,14 @@ class KustoResultRow(object):
             except AttributeError:
                 self._value_by_index.append(value)
                 self._value_by_name[columns[i]] = value
-                if keep_high_precision_values:
+                if has_pandas:
                     self._hidden_values.append(value)
                 continue
 
             if column_type in ["datetime", "timespan"]:
                 if value is None:
                     typed_value = None
-                    if keep_high_precision_values:
+                    if has_pandas:
                         self._hidden_values.append(None)
                 else:
                     # If you are here to read this, you probably hit some datetime/timedelta inconsistencies.
@@ -61,15 +62,18 @@ class KustoResultRow(object):
 
                     # this is a special case where plain python will lose precision, so we keep the precise value hidden
                     # when transforming to pandas, we can use the hidden value to convert to precise pandas/numpy types
-                    if keep_high_precision_values:
-                        self._hidden_values.append(_converters.to_high_precision_type(column_type, value, typed_value))
+                    if has_pandas:
+                        if column_type == "datetime":
+                            self._hidden_values.append(to_pandas_datetime(value))
+                        if column_type == "timespan":
+                            self._hidden_values.append(to_pandas_timedelta(value, typed_value))
             elif column_type in KustoResultRow.convertion_funcs:
                 typed_value = KustoResultRow.convertion_funcs[column_type](value)
-                if keep_high_precision_values:
+                if has_pandas:
                     self._hidden_values.append(value)
             else:
                 typed_value = value
-                if keep_high_precision_values:
+                if has_pandas:
                     self._hidden_values.append(value)
 
             self._value_by_index.append(typed_value)
