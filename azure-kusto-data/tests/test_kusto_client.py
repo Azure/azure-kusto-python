@@ -171,18 +171,19 @@ class KustoClientTests(unittest.TestCase):
             expected["xsmalltext"] = DIGIT_WORDS[int(expected["xint16"])]
             expected["xtext"] = DIGIT_WORDS[int(expected["xint16"])]
             expected["xnumberAsText"] = text_type(expected["xint16"])
-            
+
             next_time = (
                 timedelta()
                 if expected["xtime"] is None
-                else (abs(expected["xtime"]) + timedelta(days=1, seconds=1, microseconds=1000)) * (-1) ** (expected["rownumber"] + 1)
+                else (abs(expected["xtime"]) + timedelta(days=1, seconds=1, microseconds=1000))
+                * (-1) ** (expected["rownumber"] + 1)
             )
 
-            # hacky tests - because time here is relative to previous row, after we pass a time where we have > 500 nanoseconds, 
+            # hacky tests - because time here is relative to previous row, after we pass a time where we have > 500 nanoseconds,
             # another microseconds digit is needed
             if expected["rownumber"] + 1 == 6:
-                next_time += timedelta(microseconds=1)    
-            expected["xtime"] = next_time 
+                next_time += timedelta(microseconds=1)
+            expected["xtime"] = next_time
             if expected["xint16"] > 0:
                 expected["xdynamicWithNulls"] = {"rowId": expected["xint16"], "arr": [0, expected["xint16"]]}
 

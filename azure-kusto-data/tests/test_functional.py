@@ -213,7 +213,7 @@ class FunctionalTests(unittest.TestCase):
             self.assertEqual(type(row[4]), bool if row[4] is not None else type(None))
             self.assertEqual(type(row[5]), timedelta if row[5] is not None else type(None))
 
-        for row_index, row in enumerate(primary_table):            
+        for row_index, row in enumerate(primary_table):
             expected_row = expected_table[row_index]
             for col_index, value in enumerate(row):
                 self.assertEqual(value, expected_row[col_index])

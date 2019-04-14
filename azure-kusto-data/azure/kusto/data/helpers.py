@@ -23,6 +23,6 @@ def dataframe_from_result_table(table):
     # fix types
     for col in table.columns:
         if col.column_type == "bool":
-            frame[col.column_name] = frame[col.column_name].astype(bool)        
+            frame[col.column_name] = frame[col.column_name].astype(bool)
 
     return frame
