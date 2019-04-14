@@ -23,12 +23,6 @@ def dataframe_from_result_table(table):
     # fix types
     for col in table.columns:
         if col.column_type == "bool":
-            frame[col.column_name] = frame[col.column_name].astype(bool)
-        elif col.column_type == "datetime":
-            # as string first because can be None due to previous conversions
-            frame[col.column_name] = pandas.to_datetime(frame[col.column_name], utc=True).dt.tz_convert(UTC)
-        elif col.column_type == "timespan":
-            # as string first because can be None due to previous conversions
-            frame[col.column_name] = pandas.to_timedelta(frame[col.column_name], unit="s")
+            frame[col.column_name] = frame[col.column_name].astype(bool)        
 
     return frame

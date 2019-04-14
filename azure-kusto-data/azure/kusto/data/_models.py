@@ -17,30 +17,6 @@ except:
     keep_high_precision_values = False
 
 
-def _get_precise_repr(t, raw_value, typed_value, **kwargs):
-    if t == "datetime":
-        lookback = kwargs.get("lookback")
-        seventh_char = kwargs.get("seventh_char")
-        last = kwargs.get("last")
-
-        if seventh_char and seventh_char.isdigit():
-            return raw_value[:-lookback] + seventh_char + "00" + last
-
-        return raw_value
-    elif t == "timespan":
-        seconds_fractions_part = kwargs.get("seconds_fractions_part")
-        if seconds_fractions_part:
-            whole_part = int(typed_value.total_seconds())
-            fractions = str(whole_part) + "." + seconds_fractions_part
-            total_seconds = float(fractions)
-
-            return total_seconds
-
-        return typed_value.total_seconds()
-    else:
-        raise ValueError("Unknown type {t}".format(t))
-
-
 class WellKnownDataSet(Enum):
     """Categorizes data tables according to the role they play in the data set that a Kusto query returns."""
 
@@ -59,7 +35,7 @@ class KustoResultRow(object):
         self._value_by_name = {}
         self._value_by_index = []
         self._hidden_values = []
-        self._seventh_digit = {}
+
         for i, value in enumerate(row):
             column = columns[i]
             try:
@@ -76,58 +52,17 @@ class KustoResultRow(object):
                     typed_value = None
                     if keep_high_precision_values:
                         self._hidden_values.append(None)
-
-                else:
-                    seconds_fractions_part = None
-                    seventh_char = None
-                    last = value[-1] if isinstance(value, six.string_types) and value[-1].isalpha() else ""
-                    lookback = None
-
-                    try:
-                        # If you are here to read this, you probably hit some datetime/timedelta inconsistencies.
-                        # Azure-Data-Explorer(Kusto) supports 7 decimal digits, while the corresponding python types supports only 6.
-                        # What we do here, is remove the 7th digit, if exists, and create a datetime/timedelta
-                        # from whats left. The reason we are keeping the 7th digit, is to allow users to work with
-                        # this precision in case they want it. One example why one might want this precision, is when
-                        # working with pandas. In that case, use azure.kusto.data.helpers.dataframe_from_result_table
-                        # which takes into account the 7th digit.
-                        seconds_part = value.split(":")[2]
-                        seconds_fractions_part = seconds_part.split(".")[1]
-                        seventh_char = seconds_fractions_part[6]
-
-                        if seventh_char.isdigit():
-                            tick = int(seventh_char)
-                            lookback = 2 if last else 1
-                            typed_value = KustoResultRow.convertion_funcs[column_type](value[:-lookback] + last)
-
-                            if tick:
-                                if column_type == "datetime":
-                                    self._seventh_digit[column.column_name] = tick
-                                elif column_type == "timespan":
-                                    self._seventh_digit[column.column_name] = (
-                                        tick if abs(typed_value) == typed_value else -tick
-                                    )
-                                else:
-                                    raise TypeError("Unexpected type {}".format(column_type))
-                        else:
-                            typed_value = KustoResultRow.convertion_funcs[column_type](value)
-                    except (IndexError, AttributeError):
-                        typed_value = KustoResultRow.convertion_funcs[column_type](value)
+                else:                    
+                    # If you are here to read this, you probably hit some datetime/timedelta inconsistencies.
+                    # Azure-Data-Explorer(Kusto) supports 7 decimal digits, while the corresponding python types supports only 6.
+                    # One example why one might want this precision, is when working with pandas. 
+                    # In that case, use azure.kusto.data.helpers.dataframe_from_result_table which takes into account the original value.                    
+                    typed_value = KustoResultRow.convertion_funcs[column_type](value)
 
                     # this is a special case where plain python will lose precision, so we keep the precise value hidden
                     # when transforming to pandas, we can use the hidden value to convert to precise pandas/numpy types
                     if keep_high_precision_values:
-                        self._hidden_values.append(
-                            _get_precise_repr(
-                                column_type,
-                                value,
-                                typed_value,
-                                seconds_fractions_part=seconds_fractions_part,
-                                last=last,
-                                lookback=lookback,
-                                seventh_char=seventh_char,
-                            )
-                        )
+                        self._hidden_values.append(_converters.to_high_precision_type(column_type,value, typed_value))
             elif column_type in KustoResultRow.convertion_funcs:
                 typed_value = KustoResultRow.convertion_funcs[column_type](value)
                 if keep_high_precision_values:
