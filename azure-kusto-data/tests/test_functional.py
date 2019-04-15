@@ -213,11 +213,10 @@ class FunctionalTests(unittest.TestCase):
             self.assertEqual(type(row[4]), bool if row[4] is not None else type(None))
             self.assertEqual(type(row[5]), timedelta if row[5] is not None else type(None))
 
-        for i in range(0, len(primary_table)):
-            row = primary_table[i]
-            expected_row = expected_table[i]
-            for j in range(0, len(row)):
-                self.assertEqual(row[j], expected_row[j])
+        for row_index, row in enumerate(primary_table):
+            expected_row = expected_table[row_index]
+            for col_index, value in enumerate(row):
+                self.assertEqual(value, expected_row[col_index])
 
     def test_invalid_table(self):
         """Tests calling of table with index that doesn't exists."""
@@ -236,3 +235,10 @@ class FunctionalTests(unittest.TestCase):
         """Tests StopIteration is raised when the response ends."""
         response = KustoResponseDataSetV2(json.loads(RESPONSE_TEXT))
         self.assertEqual(sum(1 for _ in response.primary_results[0]), 3)
+
+    def test_row_equality(self):
+        """Tests the rows are idempotent."""
+        response = KustoResponseDataSetV2(json.loads(RESPONSE_TEXT))
+        table = response.primary_results[0]
+        for row_index, row in enumerate(table):
+            self.assertEqual(table[row_index], row)
