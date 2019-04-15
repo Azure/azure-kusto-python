@@ -35,7 +35,7 @@ def dataframe_from_result_table(table):
     from dateutil.tz import UTC
 
     """Converts Kusto tables into pandas DataFrame.
-    :param azure.kusto.data._models.KustoResultTable table: Table received from the response.     
+    :param azure.kusto.data._models.KustoResultTable table: Table received from the response.
     :return: pandas DataFrame.
     :rtype: pandas.DataFrame
     """

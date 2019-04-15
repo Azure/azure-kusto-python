@@ -3,7 +3,6 @@
 from datetime import timedelta
 import re
 from dateutil import parser
-from dateutil.tz import UTC
 import six
 
 # Regex for TimeSpan

@@ -9,13 +9,13 @@ from . import _converters
 from .exceptions import KustoServiceError
 
 
-has_pandas = True
+HAS_PANDAS = True
 
 try:
     import pandas
     from .helpers import to_pandas_datetime, to_pandas_timedelta
-except:
-    has_pandas = False
+except ImportError:
+    HAS_PANDAS = False
 
 
 class WellKnownDataSet(Enum):
@@ -44,14 +44,14 @@ class KustoResultRow(object):
             except AttributeError:
                 self._value_by_index.append(value)
                 self._value_by_name[columns[i]] = value
-                if has_pandas:
+                if HAS_PANDAS:
                     self._hidden_values.append(value)
                 continue
 
             if column_type in ["datetime", "timespan"]:
                 if value is None:
                     typed_value = None
-                    if has_pandas:
+                    if HAS_PANDAS:
                         self._hidden_values.append(None)
                 else:
                     # If you are here to read this, you probably hit some datetime/timedelta inconsistencies.
@@ -62,18 +62,18 @@ class KustoResultRow(object):
 
                     # this is a special case where plain python will lose precision, so we keep the precise value hidden
                     # when transforming to pandas, we can use the hidden value to convert to precise pandas/numpy types
-                    if has_pandas:
+                    if HAS_PANDAS:
                         if column_type == "datetime":
                             self._hidden_values.append(to_pandas_datetime(value))
                         if column_type == "timespan":
                             self._hidden_values.append(to_pandas_timedelta(value, typed_value))
             elif column_type in KustoResultRow.convertion_funcs:
                 typed_value = KustoResultRow.convertion_funcs[column_type](value)
-                if has_pandas:
+                if HAS_PANDAS:
                     self._hidden_values.append(value)
             else:
                 typed_value = value
-                if has_pandas:
+                if HAS_PANDAS:
                     self._hidden_values.append(value)
 
             self._value_by_index.append(typed_value)
