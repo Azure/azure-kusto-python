@@ -16,7 +16,6 @@ def to_datetime(value):
 
     if isinstance(value, six.integer_types):
         return parser.parse(value)
-
     return parser.isoparse(value)
 
 
