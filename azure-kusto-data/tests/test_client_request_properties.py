@@ -4,8 +4,10 @@ import unittest
 from datetime import timedelta
 from azure.kusto.data.request import ClientRequestProperties
 
+
 class ClientRequestPropertiesTests(unittest.TestCase):
     """ClientRequestProperties Tests"""
+
     def test_properties(self):
         """positive tests"""
         defer = False
