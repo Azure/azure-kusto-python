@@ -240,8 +240,8 @@ class KustoClient(object):
     Tests are run using pytest.
     """
 
-    _mgmt_default_timeout = timedelta(hours=1, seconds=30).seconds
-    _query_default_timeout = timedelta(minutes=4, seconds=30).seconds
+    _mgmt_default_timeout = timedelta(hours=1, seconds=30)
+    _query_default_timeout = timedelta(minutes=4, seconds=30)
 
     # The maximum amount of connections to be able to operate in parallel
     _max_pool_size = 100
@@ -317,7 +317,7 @@ class KustoClient(object):
             request_headers["Authorization"] = self._auth_provider.acquire_authorization_header()
 
         timeout = self._get_timeout(properties, default_timeout)
-        response = self._session.post(endpoint, headers=request_headers, json=request_payload, timeout=timeout)
+        response = self._session.post(endpoint, headers=request_headers, json=request_payload, timeout=timeout.seconds)
 
         if response.status_code == 200:
             if endpoint.endswith("v2/rest/query"):
@@ -420,4 +420,4 @@ class ClientRequestProperties(object):
 
     def to_json(self):
         """Safe serialization to a JSON string."""
-        return json.dumps({"Options": self._options})
+        return json.dumps({"Options": self._options}, default=str)
