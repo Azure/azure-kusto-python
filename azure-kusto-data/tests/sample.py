@@ -89,7 +89,7 @@ except KustoServiceError as error:
 
 properties = ClientRequestProperties()
 properties.set_option(properties.OptionDeferPartialQueryFailures, True)
-properties.set_option(properties.OptionServerTimeout, timedelta(seconds=8*60))
+properties.set_option(properties.OptionServerTimeout, timedelta(seconds=8 * 60))
 response = client.execute(db, query, properties=properties)
 print("3. Response error count: ", response.errors_count)
 print("3. Exceptions:", response.get_exceptions())
