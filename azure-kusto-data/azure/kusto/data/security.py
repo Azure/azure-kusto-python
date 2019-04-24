@@ -24,6 +24,9 @@ class AuthenticationMethod(Enum):
 
 class _AadHelper(object):
     def __init__(self, kcsb):
+        if kcsb.user_token or kcsb.application_token:
+            self._token = kcsb.user_token or kcsb.application_token
+
         authority = kcsb.authority_id or "common"
         self._kusto_cluster = "{0.scheme}://{0.hostname}".format(urlparse(kcsb.data_source))
         self._adal_context = AuthenticationContext("https://login.microsoftonline.com/{0}".format(authority))
@@ -48,6 +51,9 @@ class _AadHelper(object):
 
     def acquire_authorization_header(self):
         """Acquire tokens from AAD."""
+        if self._token:
+            return self._token
+
         try:
             return self._acquire_authorization_header()
         except AdalError as error:

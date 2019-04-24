@@ -2,12 +2,12 @@
 
 import uuid
 import json
-import requests
-
-from requests.adapters import HTTPAdapter
-
 from datetime import timedelta
 from enum import Enum, unique
+
+import requests
+from requests.adapters import HTTPAdapter
+
 
 from .security import _AadHelper
 from .exceptions import KustoServiceError
@@ -34,6 +34,8 @@ class KustoConnectionStringBuilder(object):
         application_certificate = "Application Certificate"
         application_certificate_thumbprint = "Application Certificate Thumbprint"
         authority_id = "Authority Id"
+        application_token = "Application Token"
+        user_token = "User Token"
 
         @classmethod
         def parse(cls, key):
@@ -57,6 +59,10 @@ class KustoConnectionStringBuilder(object):
                 return cls.authority_id
             if key in ["aad federated security", "federated security", "federated", "fed", "aadfed"]:
                 return cls.aad_federated_security
+            if key in ["application token", "apptoken"]:
+                return cls.application_token
+            if key in ["user token", "usertoken", "usrtoken"]:
+                return cls.user_token
             raise KeyError(key)
 
     def __init__(self, connection_string):
@@ -105,6 +111,23 @@ class KustoConnectionStringBuilder(object):
         return kcsb
 
     @classmethod
+    def with_aad_user_token_authentication(
+        cls, connection_string, user_token
+    ):
+        """Creates a KustoConnection string builder that will authenticate with AAD application and
+        a certificate credentials.
+        :param str connection_string: Kusto connection string should by of the format:
+        https://<clusterName>.kusto.windows.net
+        :param str user_token: AAD user token.
+        """
+        _assert_value_is_valid(user_token)
+        kcsb = cls(connection_string)
+        kcsb[kcsb.ValidKeywords.aad_federated_security] = True
+        kcsb[kcsb.ValidKeywords.user_token] = user_token
+
+        return kcsb
+
+    @classmethod
     def with_aad_application_key_authentication(cls, connection_string, aad_app_id, app_key, authority_id):
         """Creates a KustoConnection string builder that will authenticate with AAD application and key.
         :param str connection_string: Kusto connection string should by of the format: https://<clusterName>.kusto.windows.net
@@ -146,6 +169,23 @@ class KustoConnectionStringBuilder(object):
         kcsb[kcsb.ValidKeywords.application_certificate] = certificate
         kcsb[kcsb.ValidKeywords.application_certificate_thumbprint] = thumbprint
         kcsb[kcsb.ValidKeywords.authority_id] = authority_id
+
+        return kcsb
+
+    @classmethod
+    def with_aad_application_token_authentication(
+        cls, connection_string, application_token
+    ):
+        """Creates a KustoConnection string builder that will authenticate with AAD application and
+        a certificate credentials.
+        :param str connection_string: Kusto connection string should by of the format:
+        https://<clusterName>.kusto.windows.net
+        :param str application_token: AAD application token.
+        """
+        _assert_value_is_valid(application_token)
+        kcsb = cls(connection_string)
+        kcsb[kcsb.ValidKeywords.aad_federated_security] = True
+        kcsb[kcsb.ValidKeywords.application_token] = application_token
 
         return kcsb
 
@@ -226,6 +266,18 @@ class KustoConnectionStringBuilder(object):
         """A Boolean value that instructs the client to perform AAD federated authentication."""
         return self._internal_dict.get(self.ValidKeywords.aad_federated_security)
 
+    @property
+    def user_token(self):
+        """User token."""
+        return self._internal_dict.get(self.ValidKeywords.user_token)
+
+    @property
+    def application_token(self):
+        """Application token."""
+        return self._internal_dict.get(self.ValidKeywords.application_token)
+
+    def __str__(self):
+        return super().__str__()
 
 def _assert_value_is_valid(value):
     if not value or not value.strip():
