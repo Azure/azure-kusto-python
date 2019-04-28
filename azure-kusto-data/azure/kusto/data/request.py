@@ -59,6 +59,27 @@ class KustoConnectionStringBuilder(object):
                 return cls.aad_federated_security
             raise KeyError(key)
 
+        def is_secret(self):
+            """States for each property if it contains secret"""
+            return self in [self.password, self.application_key, self.application_certificate]
+
+        def is_str_type(self):
+            """States whether a word is of type str or not."""
+            return self in [
+                self.aad_user_id,
+                self.application_certificate,
+                self.application_certificate_thumbprint,
+                self.application_client_id,
+                self.data_source,
+                self.password,
+                self.application_key,
+                self.authority_id,
+            ]
+
+        def is_bool_type(self):
+            """States whether a word is of type bool or not."""
+            return self in [self.aad_federated_security]
+
     def __init__(self, connection_string):
         """Creates new KustoConnectionStringBuilder.
         :param str connection_string: Kusto connection string should by of the format:
@@ -75,7 +96,16 @@ class KustoConnectionStringBuilder(object):
 
         for kvp_string in connection_string.split(";"):
             key, _, value = kvp_string.partition("=")
-            self[key] = value
+            keyword = self.ValidKeywords.parse(key)
+            if keyword.is_str_type():
+                self[keyword] = value.strip()
+            if keyword.is_bool_type():
+                if value.strip() in ["True", "true"]:
+                    self[keyword] = True
+                elif value.strip() in ["False", "false"]:
+                    self[keyword] = False
+                else:
+                    raise KeyError("Expected aad federated security to be bool. Recieved %s" % value)
 
     def __setitem__(self, key, value):
         try:
@@ -83,7 +113,18 @@ class KustoConnectionStringBuilder(object):
         except KeyError:
             raise KeyError("%s is not supported as an item in KustoConnectionStringBuilder" % key)
 
-        self._internal_dict[keyword] = value if keyword is self.ValidKeywords.aad_federated_security else value.strip()
+        if keyword.is_str_type():
+            self._internal_dict[keyword] = value.strip()
+        elif keyword.is_bool_type():
+            if not isinstance(value, bool):
+                raise TypeError("Expected %s to be bool" % key)
+            self._internal_dict[keyword] = value
+        else:
+            raise KeyError("KustoConnectionStringBuilder supports only bools and strings.")
+
+    @classmethod
+    def __deepcopy__(cls, kcsb):
+        return cls(repr(kcsb))
 
     @classmethod
     def with_aad_user_password_authentication(cls, connection_string, user_id, password, authority_id="common"):
@@ -225,6 +266,23 @@ class KustoConnectionStringBuilder(object):
     def aad_federated_security(self):
         """A Boolean value that instructs the client to perform AAD federated authentication."""
         return self._internal_dict.get(self.ValidKeywords.aad_federated_security)
+
+    def __str__(self):
+        dict_copy = self._internal_dict.copy()
+        for key in dict_copy:
+            if key.is_secret():
+                dict_copy[key] = "****"
+        return self._build_connection_string(dict_copy)
+
+    def __repr__(self):
+        return self._build_connection_string(self._internal_dict)
+
+    def _build_connection_string(self, kcsb_in_dict):
+        result = ""
+        for word in self.ValidKeywords:
+            if kcsb_in_dict.__contains__(word):
+                result += "{0}={1};".format(word.value, kcsb_in_dict[word])
+        return result[:-1]
 
 
 def _assert_value_is_valid(value):
