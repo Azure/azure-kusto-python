@@ -70,15 +70,15 @@ class KustoConnectionStringBuilder(object):
         def is_str_type(self):
             """States whether a word is of type str or not."""
             return self in [
-                    self.aad_user_id,
-                    self.application_certificate,
-                    self.application_certificate_thumbprint,
-                    self.application_client_id,
-                    self.data_source,
-                    self.password,
-                    self.application_key,
-                    self.authority_id,
-                ]
+                self.aad_user_id,
+                self.application_certificate,
+                self.application_certificate_thumbprint,
+                self.application_client_id,
+                self.data_source,
+                self.password,
+                self.application_key,
+                self.authority_id,
+            ]
 
         def is_bool_type(self):
             """States whether a word is of type bool or not."""
@@ -281,7 +281,7 @@ class KustoConnectionStringBuilder(object):
         return self._build_connection_string(self._internal_dict)
 
     def _build_connection_string(self, kcsb_as_dict):
-                return ";".join(
+        return ";".join(
             ["{0}={1}".format(word.value, kcsb_as_dict[word]) for word in self.ValidKeywords if word in kcsb_as_dict]
         )
 
