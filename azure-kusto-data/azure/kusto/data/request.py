@@ -4,12 +4,9 @@ import uuid
 import json
 from datetime import timedelta
 from enum import Enum, unique
-import requests
-import six
 
 import requests
 from requests.adapters import HTTPAdapter
-
 
 from .security import _AadHelper
 from .exceptions import KustoServiceError
@@ -40,7 +37,7 @@ class KustoConnectionStringBuilder(object):
         user_token = "User Token"
 
         # This ordering is needed only for python 2.7 . Once it gets to end of life we can omit the ordering as it is applied by default in python 3.4 and above.
-        __order__ = "data_source, aad_federated_security, aad_user_id, password, application_client_id, application_key, application_certificate, application_certificate_thumbprint, authority_id"
+        __order__ = "data_source, aad_federated_security, aad_user_id, password, application_client_id, application_key, application_certificate, application_certificate_thumbprint, authority_id, application_token, user_token"
 
         @classmethod
         def parse(cls, key):
@@ -72,7 +69,13 @@ class KustoConnectionStringBuilder(object):
 
         def is_secret(self):
             """States for each property if it contains secret"""
-            return self in [self.password, self.application_key, self.application_certificate]
+            return self in [
+                self.password,
+                self.application_key,
+                self.application_certificate,
+                self.application_token,
+                self.user_token,
+            ]
 
         def is_str_type(self):
             """States whether a word is of type str or not."""
@@ -85,6 +88,8 @@ class KustoConnectionStringBuilder(object):
                 self.password,
                 self.application_key,
                 self.authority_id,
+                self.application_token,
+                self.user_token,
             ]
 
         def is_bool_type(self):
@@ -156,9 +161,7 @@ class KustoConnectionStringBuilder(object):
         return kcsb
 
     @classmethod
-    def with_aad_user_token_authentication(
-        cls, connection_string, user_token
-    ):
+    def with_aad_user_token_authentication(cls, connection_string, user_token):
         """Creates a KustoConnection string builder that will authenticate with AAD application and
         a certificate credentials.
         :param str connection_string: Kusto connection string should by of the format:
@@ -218,9 +221,7 @@ class KustoConnectionStringBuilder(object):
         return kcsb
 
     @classmethod
-    def with_aad_application_token_authentication(
-        cls, connection_string, application_token
-    ):
+    def with_aad_application_token_authentication(cls, connection_string, application_token):
         """Creates a KustoConnection string builder that will authenticate with AAD application and
         a certificate credentials.
         :param str connection_string: Kusto connection string should by of the format:

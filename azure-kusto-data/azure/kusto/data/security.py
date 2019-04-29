@@ -20,12 +20,15 @@ class AuthenticationMethod(Enum):
     aad_application_key = "aad_application_key"
     aad_application_certificate = "aad_application_certificate"
     aad_device_login = "aad_device_login"
+    aad_token = "aad_token"
 
 
 class _AadHelper(object):
     def __init__(self, kcsb):
-        if kcsb.user_token or kcsb.application_token:
+        if any([kcsb.user_token, kcsb.application_token]):
             self._token = kcsb.user_token or kcsb.application_token
+            self._authentication_method = AuthenticationMethod.aad_token
+            return
 
         authority = kcsb.authority_id or "common"
         self._kusto_cluster = "{0.scheme}://{0.hostname}".format(urlparse(kcsb.data_source))
@@ -51,9 +54,6 @@ class _AadHelper(object):
 
     def acquire_authorization_header(self):
         """Acquire tokens from AAD."""
-        if self._token:
-            return self._token
-
         try:
             return self._acquire_authorization_header()
         except AdalError as error:
@@ -74,17 +74,20 @@ class _AadHelper(object):
             raise KustoAuthenticationError(self._authentication_method.value, error, **kwargs)
 
     def _acquire_authorization_header(self):
+        if self._authentication_method is AuthenticationMethod.aad_token:
+            return _get_header("Bearer", self._token)
+
         token = self._adal_context.acquire_token(self._kusto_cluster, self._username, self._client_id)
         if token is not None:
             expiration_date = dateutil.parser.parse(token[TokenResponseFields.EXPIRES_ON])
             if expiration_date > datetime.now() + timedelta(minutes=1):
-                return _get_header(token)
+                return _get_header_from_dict(token)
             if TokenResponseFields.REFRESH_TOKEN in token:
                 token = self._adal_context.acquire_token_with_refresh_token(
                     token[TokenResponseFields.REFRESH_TOKEN], self._client_id, self._kusto_cluster
                 )
                 if token is not None:
-                    return _get_header(token)
+                    return _get_header_from_dict(token)
 
         if self._authentication_method is AuthenticationMethod.aad_username_password:
             token = self._adal_context.acquire_token_with_username_password(
@@ -108,8 +111,12 @@ class _AadHelper(object):
                 "Please choose authentication method from azure.kusto.data.security.AuthenticationMethod"
             )
 
-        return _get_header(token)
+        return _get_header_from_dict(token)
 
 
-def _get_header(token):
-    return "{0} {1}".format(token[TokenResponseFields.TOKEN_TYPE], token[TokenResponseFields.ACCESS_TOKEN])
+def _get_header_from_dict(token):
+    return _get_header(token[TokenResponseFields.TOKEN_TYPE], token[TokenResponseFields.ACCESS_TOKEN])
+
+
+def _get_header(token_type, access_token):
+    return "{0} {1}".format(token_type, access_token)
