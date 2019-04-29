@@ -3,6 +3,7 @@
 import uuid
 import json
 import requests
+import six
 
 from requests.adapters import HTTPAdapter
 
@@ -34,6 +35,9 @@ class KustoConnectionStringBuilder(object):
         application_certificate = "Application Certificate"
         application_certificate_thumbprint = "Application Certificate Thumbprint"
         authority_id = "Authority Id"
+
+        # This ordering is needed only for python 2.7 . Once it gets to end of life we can omit the ordering as it is applied by default in python 3.4 and above.
+        __order__ = "data_source, aad_federated_security, aad_user_id, password, application_client_id, application_key, application_certificate, application_certificate_thumbprint, authority_id"
 
         @classmethod
         def parse(cls, key):
@@ -121,10 +125,6 @@ class KustoConnectionStringBuilder(object):
             self._internal_dict[keyword] = value
         else:
             raise KeyError("KustoConnectionStringBuilder supports only bools and strings.")
-
-    @classmethod
-    def __deepcopy__(cls, kcsb):
-        return cls(repr(kcsb))
 
     @classmethod
     def with_aad_user_password_authentication(cls, connection_string, user_id, password, authority_id="common"):
