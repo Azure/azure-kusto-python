@@ -4,6 +4,8 @@ import uuid
 import json
 from datetime import timedelta
 from enum import Enum, unique
+import requests
+import six
 
 import requests
 from requests.adapters import HTTPAdapter
@@ -37,6 +39,9 @@ class KustoConnectionStringBuilder(object):
         application_token = "Application Token"
         user_token = "User Token"
 
+        # This ordering is needed only for python 2.7 . Once it gets to end of life we can omit the ordering as it is applied by default in python 3.4 and above.
+        __order__ = "data_source, aad_federated_security, aad_user_id, password, application_client_id, application_key, application_certificate, application_certificate_thumbprint, authority_id"
+
         @classmethod
         def parse(cls, key):
             """Create a valid keyword."""
@@ -65,6 +70,27 @@ class KustoConnectionStringBuilder(object):
                 return cls.user_token
             raise KeyError(key)
 
+        def is_secret(self):
+            """States for each property if it contains secret"""
+            return self in [self.password, self.application_key, self.application_certificate]
+
+        def is_str_type(self):
+            """States whether a word is of type str or not."""
+            return self in [
+                self.aad_user_id,
+                self.application_certificate,
+                self.application_certificate_thumbprint,
+                self.application_client_id,
+                self.data_source,
+                self.password,
+                self.application_key,
+                self.authority_id,
+            ]
+
+        def is_bool_type(self):
+            """States whether a word is of type bool or not."""
+            return self in [self.aad_federated_security]
+
     def __init__(self, connection_string):
         """Creates new KustoConnectionStringBuilder.
         :param str connection_string: Kusto connection string should by of the format:
@@ -81,7 +107,16 @@ class KustoConnectionStringBuilder(object):
 
         for kvp_string in connection_string.split(";"):
             key, _, value = kvp_string.partition("=")
-            self[key] = value
+            keyword = self.ValidKeywords.parse(key)
+            if keyword.is_str_type():
+                self[keyword] = value.strip()
+            if keyword.is_bool_type():
+                if value.strip() in ["True", "true"]:
+                    self[keyword] = True
+                elif value.strip() in ["False", "false"]:
+                    self[keyword] = False
+                else:
+                    raise KeyError("Expected aad federated security to be bool. Recieved %s" % value)
 
     def __setitem__(self, key, value):
         try:
@@ -89,7 +124,17 @@ class KustoConnectionStringBuilder(object):
         except KeyError:
             raise KeyError("%s is not supported as an item in KustoConnectionStringBuilder" % key)
 
-        self._internal_dict[keyword] = value if keyword is self.ValidKeywords.aad_federated_security else value.strip()
+        if value is None:
+            raise TypeError("Value cannot be None.")
+
+        if keyword.is_str_type():
+            self._internal_dict[keyword] = value.strip()
+        elif keyword.is_bool_type():
+            if not isinstance(value, bool):
+                raise TypeError("Expected %s to be bool" % key)
+            self._internal_dict[keyword] = value
+        else:
+            raise KeyError("KustoConnectionStringBuilder supports only bools and strings.")
 
     @classmethod
     def with_aad_user_password_authentication(cls, connection_string, user_id, password, authority_id="common"):
@@ -277,7 +322,20 @@ class KustoConnectionStringBuilder(object):
         return self._internal_dict.get(self.ValidKeywords.application_token)
 
     def __str__(self):
-        return super().__str__()
+        dict_copy = self._internal_dict.copy()
+        for key in dict_copy:
+            if key.is_secret():
+                dict_copy[key] = "****"
+        return self._build_connection_string(dict_copy)
+
+    def __repr__(self):
+        return self._build_connection_string(self._internal_dict)
+
+    def _build_connection_string(self, kcsb_as_dict):
+        return ";".join(
+            ["{0}={1}".format(word.value, kcsb_as_dict[word]) for word in self.ValidKeywords if word in kcsb_as_dict]
+        )
+
 
 def _assert_value_is_valid(value):
     if not value or not value.strip():
