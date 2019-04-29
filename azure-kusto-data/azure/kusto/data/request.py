@@ -67,25 +67,22 @@ class KustoConnectionStringBuilder(object):
             """States for each property if it contains secret"""
             return self in [self.password, self.application_key, self.application_certificate]
 
-        _bool_props = [aad_federated_security]
-        _str_props = [
-            aad_user_id,
-            application_certificate,
-            application_certificate_thumbprint,
-            application_client_id,
-            data_source,
-            password,
-            application_key,
-            authority_id,
-        ]
-
         def is_str_type(self):
             """States whether a word is of type str or not."""
-            return self in self._str_props
+            return self in [
+                    self.aad_user_id,
+                    self.application_certificate,
+                    self.application_certificate_thumbprint,
+                    self.application_client_id,
+                    self.data_source,
+                    self.password,
+                    self.application_key,
+                    self.authority_id,
+                ]
 
         def is_bool_type(self):
             """States whether a word is of type bool or not."""
-            return self in self._bool_props
+            return self in [self.aad_federated_security]
 
     def __init__(self, connection_string):
         """Creates new KustoConnectionStringBuilder.
@@ -284,7 +281,7 @@ class KustoConnectionStringBuilder(object):
         return self._build_connection_string(self._internal_dict)
 
     def _build_connection_string(self, kcsb_as_dict):
-        return ";".join(
+                return ";".join(
             ["{0}={1}".format(word.value, kcsb_as_dict[word]) for word in self.ValidKeywords if word in kcsb_as_dict]
         )
 

@@ -97,7 +97,7 @@ class KustoConnectionStringBuilderTests(unittest.TestCase):
             self.assertEqual(
                 str(kcsb),
                 "Data Source=localhost;AAD Federated Security=True;Application Client Id={0};Application Key={1};Authority Id={2}".format(
-                    uuid, self.passwords_replacement, "microsoft.com"
+                    uuid, self.PASSWORDS_REPLACEMENT, "microsoft.com"
                 ),
             )
 
@@ -154,7 +154,7 @@ class KustoConnectionStringBuilderTests(unittest.TestCase):
             self.assertEqual(
                 str(kcsb),
                 "Data Source=localhost;AAD Federated Security=True;AAD User ID={0};Password={1};Authority Id=common".format(
-                    user, self.passwords_replacement
+                    user, self.PASSWORDS_REPLACEMENT
                 ),
             )
 
@@ -184,7 +184,7 @@ class KustoConnectionStringBuilderTests(unittest.TestCase):
         self.assertEqual(
             str(kcsb),
             "Data Source=localhost;AAD Federated Security=True;AAD User ID={0};Password={1};Authority Id=13456".format(
-                user, self.passwords_replacement
+                user, self.PASSWORDS_REPLACEMENT
             ),
         )
 
