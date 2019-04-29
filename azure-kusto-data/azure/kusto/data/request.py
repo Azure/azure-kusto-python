@@ -277,7 +277,7 @@ class KustoConnectionStringBuilder(object):
     def __repr__(self):
         return self._build_connection_string(self._internal_dict)
 
-    def _build_connection_string(self, kcsb_in_dict):
+    def _build_connection_string(self, kcsb_as_dict):
         result = ""
         for word in self.ValidKeywords:
             if kcsb_in_dict.__contains__(word):
