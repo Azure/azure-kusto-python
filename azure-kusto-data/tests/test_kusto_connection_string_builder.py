@@ -8,7 +8,7 @@ from azure.kusto.data.request import KustoConnectionStringBuilder
 class KustoConnectionStringBuilderTests(unittest.TestCase):
     """Tests class for KustoConnectionStringBuilder."""
 
-    passwords_replacement = "****"
+    PASSWORDS_REPLACEMENT = "****"
 
     def test_no_credentials(self):
         """Checks kcsb that is created with no credentials"""

@@ -67,22 +67,25 @@ class KustoConnectionStringBuilder(object):
             """States for each property if it contains secret"""
             return self in [self.password, self.application_key, self.application_certificate]
 
+        _bool_props = [aad_federated_security]
+        _str_props = [
+            aad_user_id,
+            application_certificate,
+            application_certificate_thumbprint,
+            application_client_id,
+            data_source,
+            password,
+            application_key,
+            authority_id,
+        ]
+
         def is_str_type(self):
             """States whether a word is of type str or not."""
-            return self in [
-                self.aad_user_id,
-                self.application_certificate,
-                self.application_certificate_thumbprint,
-                self.application_client_id,
-                self.data_source,
-                self.password,
-                self.application_key,
-                self.authority_id,
-            ]
+            return self in self._str_props
 
         def is_bool_type(self):
             """States whether a word is of type bool or not."""
-            return self in [self.aad_federated_security]
+            return self in self._bool_props
 
     def __init__(self, connection_string):
         """Creates new KustoConnectionStringBuilder.
@@ -116,6 +119,9 @@ class KustoConnectionStringBuilder(object):
             keyword = key if isinstance(key, self.ValidKeywords) else self.ValidKeywords.parse(key)
         except KeyError:
             raise KeyError("%s is not supported as an item in KustoConnectionStringBuilder" % key)
+
+        if value is None:
+            raise TypeError("Value cannot be None.")
 
         if keyword.is_str_type():
             self._internal_dict[keyword] = value.strip()
@@ -278,11 +284,9 @@ class KustoConnectionStringBuilder(object):
         return self._build_connection_string(self._internal_dict)
 
     def _build_connection_string(self, kcsb_as_dict):
-        result = ""
-        for word in self.ValidKeywords:
-            if kcsb_in_dict.__contains__(word):
-                result += "{0}={1};".format(word.value, kcsb_in_dict[word])
-        return result[:-1]
+        return ";".join(
+            ["{0}={1}".format(word.value, kcsb_as_dict[word]) for word in self.ValidKeywords if word in kcsb_as_dict]
+        )
 
 
 def _assert_value_is_valid(value):
