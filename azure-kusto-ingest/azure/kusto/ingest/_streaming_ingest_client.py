@@ -50,7 +50,10 @@ class KustoStreamingIngestClient(object):
         fd = FileDescriptor(temp_file_path)
 
         ingestion_properties.format = DataFormat.csv
-        self._ingest(fd.zipped_stream, fd.size, ingestion_properties, True)
+
+        stream_descriptor = StreamDescriptor(fd.zipped_stream, fd.size, fd.source_id)
+
+        self.ingest_from_stream(stream_descriptor, ingestion_properties)
 
         fd.delete_files()
         os.unlink(temp_file_path)
@@ -66,7 +69,9 @@ class KustoStreamingIngestClient(object):
         else:
             descriptor = FileDescriptor(file_descriptor)
 
-        self._ingest(descriptor.zipped_stream, descriptor.size, ingestion_properties, True)
+        stream_descriptor = StreamDescriptor(descriptor.zipped_stream, descriptor.size, descriptor.source_id)
+
+        self.ingest_from_stream(stream_descriptor, ingestion_properties)
 
         descriptor.delete_files()
 
@@ -85,10 +90,7 @@ class KustoStreamingIngestClient(object):
         else:
             stream = stream_descriptor.stream
 
-        self._ingest(stream, stream_descriptor.size, ingestion_properties, False)
-
-    def _ingest(self, stream, size, ingestion_properties, compress_stream):
-        if size >= self._streaming_ingestion_size_limit:
+        if stream_descriptor.size >= self._streaming_ingestion_size_limit:
             raise KustoStreamMaxSizeExceededError()
 
         if (
@@ -98,8 +100,9 @@ class KustoStreamingIngestClient(object):
             raise KustoMissingMappingReferenceError()
 
         client_request_properties = ClientRequestProperties()
-        client_request_properties.set_option("content_length", str(size))
-        client_request_properties.set_option("Connection", "Keep-Alive")
+        client_request_properties.set_option("content_length", str(stream_descriptor.size))
+        if not stream_descriptor.source_id:
+            client_request_properties.set_option("x-ms-client-request-id", str(stream_descriptor.source_id))
 
         self._kusto_client.execute_streaming_ingest(
             ingestion_properties.database,
@@ -107,6 +110,5 @@ class KustoStreamingIngestClient(object):
             stream,
             client_request_properties,
             ingestion_properties.format.name,
-            compress_stream,
-            mapping_name=ingestion_properties.mapping_reference,
+            ingestion_properties.mapping_reference
         )

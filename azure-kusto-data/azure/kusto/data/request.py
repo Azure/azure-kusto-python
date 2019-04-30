@@ -242,10 +242,10 @@ class KustoClient(object):
 
     _mgmt_default_timeout = timedelta(hours=1, seconds=30).seconds
     _query_default_timeout = timedelta(minutes=4, seconds=30).seconds
+    _streaming_ingest_default_timeout = timedelta(minutes=10).seconds
 
     # The maximum amount of connections to be able to operate in parallel
     _max_pool_size = 100
-    _mapping_required_formats = ["json", "singlejson", "avro"]
 
     def __init__(self, kcsb):
         """Kusto Client constructor.
@@ -260,11 +260,17 @@ class KustoClient(object):
         self._session = requests.Session()
         self._session.mount("http://", HTTPAdapter(pool_maxsize=self._max_pool_size))
         self._session.mount("https://", HTTPAdapter(pool_maxsize=self._max_pool_size))
-
         self._mgmt_endpoint = "{0}/v1/rest/mgmt".format(kusto_cluster)
         self._query_endpoint = "{0}/v2/rest/query".format(kusto_cluster)
         self._streaming_ingest_endpoint = "{0}/v1/rest/ingest/".format(kusto_cluster)
         self._auth_provider = _AadHelper(kcsb) if kcsb.aad_federated_security else None
+        self._request_headers = {
+            "Accept": "application/json",
+            "Accept-Encoding": "gzip,deflate",
+            "x-ms-client-version": "Kusto.Python.Client:" + VERSION,
+        }
+        if self._auth_provider:
+            self._request_headers["Authorization"] = self._auth_provider.acquire_authorization_header()
 
     def execute(self, database, query, properties=None):
         """Executes a query or management command.
@@ -305,29 +311,15 @@ class KustoClient(object):
         if properties:
             request_payload["properties"] = properties.to_json()
 
-        request_headers = {
-            "Accept": "application/json",
-            "Accept-Encoding": "gzip,deflate",
-            "Content-Type": "application/json; charset=utf-8",
-            "x-ms-client-version": "Kusto.Python.Client:" + VERSION,
-            "x-ms-client-request-id": "KPC.execute;" + str(uuid.uuid4()),
-        }
-
-        if self._auth_provider:
-            request_headers["Authorization"] = self._auth_provider.acquire_authorization_header()
+        request_headers = self._request_headers
+        request_headers["Content-Type"] = "application/json; charset=utf-8",
+        request_headers["x-ms-client-request-id"] = "KPC.execute;" + str(uuid.uuid4())
 
         timeout = self._get_timeout(properties, default_timeout)
-        response = self._session.post(endpoint, headers=request_headers, json=request_payload, timeout=timeout)
-
-        if response.status_code == 200:
-            if endpoint.endswith("v2/rest/query"):
-                return KustoResponseDataSetV2(response.json())
-            return KustoResponseDataSetV1(response.json())
-
-        raise KustoServiceError([response.json()], response)
+        return self._post(endpoint, headers=request_headers, json=request_payload, timeout=timeout)
 
     def execute_streaming_ingest(
-        self, database, table, stream, client_request_properties, stream_format, compress_stream, mapping_name=None
+        self, database, table, stream, client_request_properties, stream_format, mapping_name=None
     ):
         """Executes streaming ingest against this client.
         :param str database: Target database.
@@ -335,50 +327,42 @@ class KustoClient(object):
         :param io.BaseIO stream: stream object which contains the data to ingest.
         :param ClientRequestProperties client_request_properties: additional request properties.
         :param DataFormat stream_format: Format of the data in the stream.
-        :param boolean compress_stream: Indicates whether the provided stream is compressed.
         :param str mapping_name: Pre-defined mapping of the table. Required when stream_format is json/avro.
         """
 
         request_params = {"streamFormat": stream_format}
 
-        if stream_format in self._mapping_required_formats and mapping_name is not None:
+        if mapping_name is not None:
             request_params["mappingName"] = mapping_name
 
-        request_headers = {
-            "Accept": "application/json",
-            "Accept-Encoding": "gzip,deflate",
-            "x-ms-client-version": "Kusto.Python.StreamingClient:" + VERSION,
-            "x-ms-client-request-id": "KPSC.execute;" + str(uuid.uuid4()),
-        }
+        request_headers = self._request_headers
+        request_headers["x-ms-client-request-id"] = "KPSC.execute;" + str(uuid.uuid4())
+        request_headers["Connection"] = "Keep-Alive"
+        if client_request_properties:
+            request_headers.update(json.loads(client_request_properties.to_json()))
 
-        if self._auth_provider:
-            request_headers["Authorization"] = self._auth_provider.acquire_authorization_header()
-        if client_request_properties.has_option("Connection"):
-            request_headers["Connection"] = client_request_properties.get_option("Connection", "Keep-Alive")
-        if client_request_properties.has_option("Content_Length"):
-            request_headers["Content-Length"] = client_request_properties.get_option("Content_Length", "0")
-        if compress_stream:
-            request_headers["Content-Encoding"] = "gzip"
-        if client_request_properties.has_option("Expect"):
-            request_headers["Expect"] = client_request_properties.get_option("Expect", 0)
-
-        response = self._session.post(
+        return self._post(
             self._streaming_ingest_endpoint + database + "/" + table,
             params=request_params,
             headers=request_headers,
             data=stream,
-            timeout=KustoClient._query_default_timeout,
+            timeout=self._get_timeout(client_request_properties, self._streaming_ingest_default_timeout),
         )
-
-        if response.status_code == 200:
-            return KustoResponseDataSetV1(response.json())
-
-        raise KustoServiceError([response.content], response)
 
     def _get_timeout(self, properties, default):
         if properties:
             return properties.get_option(ClientRequestProperties.OptionServerTimeout, default)
         return default
+
+    def _post(self, url, **kwargs):
+        response = self._session.post(url, kwargs)
+
+        if response.status_code == 200:
+            if url.endswith("v2/rest/query"):
+                return KustoResponseDataSetV2(response.json())
+            return KustoResponseDataSetV1(response.json())
+
+        raise KustoServiceError([response.json()], response)
 
 
 class ClientRequestProperties(object):
