@@ -171,12 +171,19 @@ class KustoClientTests(unittest.TestCase):
             expected["xsmalltext"] = DIGIT_WORDS[int(expected["xint16"])]
             expected["xtext"] = DIGIT_WORDS[int(expected["xint16"])]
             expected["xnumberAsText"] = text_type(expected["xint16"])
-            expected["xtime"] = (
+
+            next_time = (
                 timedelta()
                 if expected["xtime"] is None
                 else (abs(expected["xtime"]) + timedelta(days=1, seconds=1, microseconds=1000))
                 * (-1) ** (expected["rownumber"] + 1)
             )
+
+            # hacky tests - because time here is relative to previous row, after we pass a time where we have > 500 nanoseconds,
+            # another microseconds digit is needed
+            if expected["rownumber"] + 1 == 6:
+                next_time += timedelta(microseconds=1)
+            expected["xtime"] = next_time
             if expected["xint16"] > 0:
                 expected["xdynamicWithNulls"] = {"rowId": expected["xint16"], "arr": [0, expected["xint16"]]}
 
@@ -241,16 +248,16 @@ class KustoClientTests(unittest.TestCase):
             "xdate": Series(
                 [
                     pandas.to_datetime(None),
-                    pandas.to_datetime("2014-01-01T01:01:01.0000000Z").tz_convert(UTC),
-                    pandas.to_datetime("2015-01-01T01:01:01.0000001Z").tz_convert(UTC),
-                    pandas.to_datetime("2016-01-01T01:01:01.0000002Z").tz_convert(UTC),
-                    pandas.to_datetime("2017-01-01T01:01:01.0000003Z").tz_convert(UTC),
-                    pandas.to_datetime("2018-01-01T01:01:01.0000004Z").tz_convert(UTC),
-                    pandas.to_datetime("2019-01-01T01:01:01.0000005Z").tz_convert(UTC),
-                    pandas.to_datetime("2020-01-01T01:01:01.0000006Z").tz_convert(UTC),
-                    pandas.to_datetime("2021-01-01T01:01:01.0000007Z").tz_convert(UTC),
-                    pandas.to_datetime("2022-01-01T01:01:01.0000008Z").tz_convert(UTC),
-                    pandas.to_datetime("2023-01-01T01:01:01.0000009Z").tz_convert(UTC),
+                    pandas.to_datetime("2014-01-01T01:01:01.0000000Z"),
+                    pandas.to_datetime("2015-01-01T01:01:01.0000001Z"),
+                    pandas.to_datetime("2016-01-01T01:01:01.0000002Z"),
+                    pandas.to_datetime("2017-01-01T01:01:01.0000003Z"),
+                    pandas.to_datetime("2018-01-01T01:01:01.0000004Z"),
+                    pandas.to_datetime("2019-01-01T01:01:01.0000005Z"),
+                    pandas.to_datetime("2020-01-01T01:01:01.0000006Z"),
+                    pandas.to_datetime("2021-01-01T01:01:01.0000007Z"),
+                    pandas.to_datetime("2022-01-01T01:01:01.0000008Z"),
+                    pandas.to_datetime("2023-01-01T01:01:01.0000009Z"),
                 ]
             ),
             "xsmalltext": Series(

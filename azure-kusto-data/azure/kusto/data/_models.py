@@ -9,6 +9,15 @@ from . import _converters
 from .exceptions import KustoServiceError
 
 
+HAS_PANDAS = True
+
+try:
+    import pandas
+    from .helpers import to_pandas_datetime, to_pandas_timedelta
+except ImportError:
+    HAS_PANDAS = False
+
+
 class WellKnownDataSet(Enum):
     """Categorizes data tables according to the role they play in the data set that a Kusto query returns."""
 
@@ -26,48 +35,46 @@ class KustoResultRow(object):
     def __init__(self, columns, row):
         self._value_by_name = {}
         self._value_by_index = []
-        self._seventh_digit = {}
+        self._hidden_values = []
+
         for i, value in enumerate(row):
             column = columns[i]
             try:
-                lower_column_type = column.column_type.lower()
+                column_type = column.column_type.lower()
             except AttributeError:
                 self._value_by_index.append(value)
                 self._value_by_name[columns[i]] = value
+                if HAS_PANDAS:
+                    self._hidden_values.append(value)
                 continue
 
-            if lower_column_type in ["datetime", "timespan"]:
+            if column_type in ["datetime", "timespan"]:
                 if value is None:
                     typed_value = None
+                    if HAS_PANDAS:
+                        self._hidden_values.append(None)
                 else:
-                    try:
-                        # If you are here to read this, you probably hit some datetime/timedelta inconsistencies.
-                        # Azure-Data-Explorer(Kusto) supports 7 decimal digits, while the corresponding python types supports only 6.
-                        # What we do here, is remove the 7th digit, if exists, and create a datetime/timedelta
-                        # from whats left. The reason we are keeping the 7th digit, is to allow users to work with
-                        # this precision in case they want it. One example why one might want this precision, is when
-                        # working with pandas. In that case, use azure.kusto.data.helpers.dataframe_from_result_table
-                        # which takes into account the 7th digit.
-                        char = value.split(":")[2].split(".")[1][6]
-                        if char.isdigit():
-                            tick = int(char)
-                            last = value[-1] if value[-1].isalpha() else ""
-                            typed_value = KustoResultRow.convertion_funcs[lower_column_type](value[:-2] + last)
-                            if tick:
-                                if lower_column_type == "datetime":
-                                    self._seventh_digit[column.column_name] = tick
-                                else:
-                                    self._seventh_digit[column.column_name] = (
-                                        tick if abs(typed_value) == typed_value else -tick
-                                    )
-                        else:
-                            typed_value = KustoResultRow.convertion_funcs[lower_column_type](value)
-                    except (IndexError, AttributeError):
-                        typed_value = KustoResultRow.convertion_funcs[lower_column_type](value)
-            elif lower_column_type in KustoResultRow.convertion_funcs:
-                typed_value = KustoResultRow.convertion_funcs[lower_column_type](value)
+                    # If you are here to read this, you probably hit some datetime/timedelta inconsistencies.
+                    # Azure-Data-Explorer(Kusto) supports 7 decimal digits, while the corresponding python types supports only 6.
+                    # One example why one might want this precision, is when working with pandas.
+                    # In that case, use azure.kusto.data.helpers.dataframe_from_result_table which takes into account the original value.
+                    typed_value = KustoResultRow.convertion_funcs[column_type](value)
+
+                    # this is a special case where plain python will lose precision, so we keep the precise value hidden
+                    # when transforming to pandas, we can use the hidden value to convert to precise pandas/numpy types
+                    if HAS_PANDAS:
+                        if column_type == "datetime":
+                            self._hidden_values.append(to_pandas_datetime(value))
+                        if column_type == "timespan":
+                            self._hidden_values.append(to_pandas_timedelta(value, typed_value))
+            elif column_type in KustoResultRow.convertion_funcs:
+                typed_value = KustoResultRow.convertion_funcs[column_type](value)
+                if HAS_PANDAS:
+                    self._hidden_values.append(value)
             else:
                 typed_value = value
+                if HAS_PANDAS:
+                    self._hidden_values.append(value)
 
             self._value_by_index.append(typed_value)
             self._value_by_name[column.column_name] = typed_value
@@ -128,6 +135,11 @@ class KustoResultTable(object):
             raise KustoServiceError(errors[0]["OneApiErrors"][0]["error"]["@message"], json_table)
 
         self.rows = [KustoResultRow(self.columns, row) for row in json_table["Rows"]]
+
+    @property
+    def _rows(self):
+        for row in self.rows:
+            yield row._hidden_values
 
     @property
     def rows_count(self):
