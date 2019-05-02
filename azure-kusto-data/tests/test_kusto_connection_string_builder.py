@@ -200,3 +200,50 @@ class KustoConnectionStringBuilderTests(unittest.TestCase):
         self.assertEqual(kcsb.authority_id, "common")
         self.assertEqual(repr(kcsb), "Data Source=localhost;AAD Federated Security=True;Authority Id=common")
         self.assertEqual(str(kcsb), "Data Source=localhost;AAD Federated Security=True;Authority Id=common")
+
+    def test_aad_app_token(self):
+        """Checks kcsb that is created with AAD user token."""
+        token = "The app hardest token ever"
+        kcsb = KustoConnectionStringBuilder.with_aad_application_token_authentication(
+            "localhost", application_token=token
+        )
+        self.assertEqual(kcsb.data_source, "localhost")
+        self.assertEqual(kcsb.application_token, token)
+        self.assertTrue(kcsb.aad_federated_security)
+        self.assertIsNone(kcsb.aad_user_id)
+        self.assertIsNone(kcsb.password)
+        self.assertIsNone(kcsb.application_client_id)
+        self.assertIsNone(kcsb.application_key)
+        self.assertIsNone(kcsb.user_token)
+        self.assertEqual(kcsb.authority_id, "common")
+        self.assertEqual(
+            repr(kcsb),
+            "Data Source=localhost;AAD Federated Security=True;Authority Id=common;Application Token=%s" % token,
+        )
+        self.assertEqual(
+            str(kcsb),
+            "Data Source=localhost;AAD Federated Security=True;Authority Id=common;Application Token=%s"
+            % self.PASSWORDS_REPLACEMENT,
+        )
+
+    def test_aad_user_token(self):
+        """Checks kcsb that is created with AAD user token."""
+        token = "The user hardest token ever"
+        kcsb = KustoConnectionStringBuilder.with_aad_user_token_authentication("localhost", user_token=token)
+        self.assertEqual(kcsb.data_source, "localhost")
+        self.assertEqual(kcsb.user_token, token)
+        self.assertTrue(kcsb.aad_federated_security)
+        self.assertIsNone(kcsb.aad_user_id)
+        self.assertIsNone(kcsb.password)
+        self.assertIsNone(kcsb.application_client_id)
+        self.assertIsNone(kcsb.application_key)
+        self.assertIsNone(kcsb.application_token)
+        self.assertEqual(kcsb.authority_id, "common")
+        self.assertEqual(
+            repr(kcsb), "Data Source=localhost;AAD Federated Security=True;Authority Id=common;User Token=%s" % token
+        )
+        self.assertEqual(
+            str(kcsb),
+            "Data Source=localhost;AAD Federated Security=True;Authority Id=common;User Token=%s"
+            % self.PASSWORDS_REPLACEMENT,
+        )
