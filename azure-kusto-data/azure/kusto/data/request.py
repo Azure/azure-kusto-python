@@ -2,9 +2,6 @@
 
 import uuid
 import json
-import requests
-
-from requests.adapters import HTTPAdapter
 
 from datetime import timedelta
 from enum import Enum, unique
