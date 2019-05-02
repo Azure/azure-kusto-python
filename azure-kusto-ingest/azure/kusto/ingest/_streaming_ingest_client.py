@@ -5,7 +5,6 @@ import tempfile
 
 from azure.kusto.data.request import KustoClient, ClientRequestProperties
 from ._descriptors import FileDescriptor, StreamDescriptor
-from ._resource_manager import _ResourceManager
 from .exceptions import KustoMissingMappingReferenceError, KustoStreamMaxSizeExceededError
 from ._ingestion_properties import DataFormat
 from io import TextIOWrapper
@@ -29,7 +28,6 @@ class KustoStreamingIngestClient(object):
         :param KustoConnectionStringBuilder kcsb: The connection string to initialize KustoClient.
         """
         self._kusto_client = KustoClient(kcsb)
-        self._resource_manager = _ResourceManager(self._kusto_client)
 
     def ingest_from_dataframe(self, df, ingestion_properties):
         """Ingest from pandas DataFrame.
@@ -51,7 +49,7 @@ class KustoStreamingIngestClient(object):
 
         ingestion_properties.format = DataFormat.csv
 
-        stream_descriptor = StreamDescriptor(fd.zipped_stream, fd.size, fd.source_id)
+        stream_descriptor = StreamDescriptor(fd.zipped_stream, fd.size, fd.source_id, True)
 
         self.ingest_from_stream(stream_descriptor, ingestion_properties)
 
@@ -69,7 +67,7 @@ class KustoStreamingIngestClient(object):
         else:
             descriptor = FileDescriptor(file_descriptor)
 
-        stream_descriptor = StreamDescriptor(descriptor.zipped_stream, descriptor.size, descriptor.source_id)
+        stream_descriptor = StreamDescriptor(descriptor.zipped_stream, descriptor.size, descriptor.source_id, True)
 
         self.ingest_from_stream(stream_descriptor, ingestion_properties)
 
@@ -101,8 +99,11 @@ class KustoStreamingIngestClient(object):
 
         client_request_properties = ClientRequestProperties()
         client_request_properties.set_option("content_length", str(stream_descriptor.size))
-        if not stream_descriptor.source_id:
+        client_request_properties.set_option("Connection", "Keep-Alive")
+        if stream_descriptor.source_id:
             client_request_properties.set_option("x-ms-client-request-id", str(stream_descriptor.source_id))
+        if stream_descriptor.is_zipped_stream:
+            client_request_properties.set_option("Content-Encoding", "gzip")
 
         self._kusto_client.execute_streaming_ingest(
             ingestion_properties.database,
@@ -110,5 +111,5 @@ class KustoStreamingIngestClient(object):
             stream,
             client_request_properties,
             ingestion_properties.format.name,
-            ingestion_properties.mapping_reference
+            ingestion_properties.mapping_reference,
         )

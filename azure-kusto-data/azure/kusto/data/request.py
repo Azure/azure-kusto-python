@@ -3,12 +3,12 @@
 import uuid
 import json
 import requests
-import six
 
 from requests.adapters import HTTPAdapter
 
 from datetime import timedelta
 from enum import Enum, unique
+from copy import deepcopy
 
 from .security import _AadHelper
 from .exceptions import KustoServiceError
@@ -299,9 +299,9 @@ class KustoClient(object):
     Tests are run using pytest.
     """
 
-    _mgmt_default_timeout = timedelta(hours=1, seconds=30).seconds
-    _query_default_timeout = timedelta(minutes=4, seconds=30).seconds
-    _streaming_ingest_default_timeout = timedelta(minutes=10).seconds
+    _mgmt_default_timeout = timedelta(hours=1, seconds=30)
+    _query_default_timeout = timedelta(minutes=4, seconds=30)
+    _streaming_ingest_default_timeout = timedelta(minutes=10)
 
     # The maximum amount of connections to be able to operate in parallel
     _max_pool_size = 100
@@ -370,13 +370,13 @@ class KustoClient(object):
         if properties:
             request_payload["properties"] = properties.to_json()
 
-        request_headers = self._request_headers
-        request_headers["Content-Type"] = "application/json; charset=utf-8",
+        request_headers = deepcopy(self._request_headers)
+        request_headers["Content-Type"] = "application/json; charset=utf-8"
         request_headers["x-ms-client-request-id"] = "KPC.execute;" + str(uuid.uuid4())
 
         timeout = self._get_timeout(properties, default_timeout)
 
-        return self._post(endpoint, headers=request_headers, json=request_payload, timeout=timeout)
+        return self._post(endpoint, headers=request_headers, json=request_payload, timeout=timeout.seconds)
 
     def execute_streaming_ingest(
         self, database, table, stream, client_request_properties, stream_format, mapping_name=None
@@ -395,19 +395,15 @@ class KustoClient(object):
         if mapping_name is not None:
             request_params["mappingName"] = mapping_name
 
-        request_headers = self._request_headers
-        request_headers["x-ms-client-request-id"] = "KPSC.execute;" + str(uuid.uuid4())
-        request_headers["Connection"] = "Keep-Alive"
+        request_headers = deepcopy(self._request_headers)
+        request_headers["x-ms-client-request-id"] = "KPC.execute_streaming_ingest;" + str(uuid.uuid4())
         if client_request_properties:
-            request_headers.update(json.loads(client_request_properties.to_json()))
+            request_headers.update(json.loads(client_request_properties.to_json())["Options"])
 
-        return self._post(
-            self._streaming_ingest_endpoint + database + "/" + table,
-            params=request_params,
-            headers=request_headers,
-            data=stream,
-            timeout=self._get_timeout(client_request_properties, self._streaming_ingest_default_timeout),
-        )
+        timeout = self._get_timeout(client_request_properties, self._streaming_ingest_default_timeout)
+        endpoint = self._streaming_ingest_endpoint + database + "/" + table
+
+        self._post(endpoint, params=request_params, headers=request_headers, data=stream, timeout=timeout.seconds)
 
     def _get_timeout(self, properties, default):
         if properties:
@@ -415,7 +411,7 @@ class KustoClient(object):
         return default
 
     def _post(self, url, **kwargs):
-        response = self._session.post(url, kwargs)
+        response = self._session.post(url, **kwargs)
 
         if response.status_code == 200:
             if url.endswith("v2/rest/query"):
