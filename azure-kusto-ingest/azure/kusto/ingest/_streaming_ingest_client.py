@@ -99,7 +99,6 @@ class KustoStreamingIngestClient(object):
 
         client_request_properties = ClientRequestProperties()
         client_request_properties.set_option("content_length", str(stream_descriptor.size))
-        client_request_properties.set_option("Connection", "Keep-Alive")
         if stream_descriptor.source_id:
             client_request_properties.set_option("x-ms-client-request-id", str(stream_descriptor.source_id))
         if stream_descriptor.is_zipped_stream:
@@ -109,7 +108,7 @@ class KustoStreamingIngestClient(object):
             ingestion_properties.database,
             ingestion_properties.table,
             stream,
-            client_request_properties,
             ingestion_properties.format.name,
+            client_request_properties,
             ingestion_properties.mapping_reference,
         )
