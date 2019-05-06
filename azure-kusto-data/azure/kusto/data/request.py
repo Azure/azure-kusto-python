@@ -403,7 +403,9 @@ class KustoClient(object):
         :return: Kusto response data set.
         :rtype: azure.kusto.data._response.KustoResponseDataSet
         """
-        return self._execute(self._query_endpoint, database, query, None, KustoClient._query_default_timeout, properties)
+        return self._execute(
+            self._query_endpoint, database, query, None, KustoClient._query_default_timeout, properties
+        )
 
     def execute_mgmt(self, database, query, properties=None):
         """Executes a management command.
@@ -415,9 +417,7 @@ class KustoClient(object):
         """
         return self._execute(self._mgmt_endpoint, database, query, None, KustoClient._mgmt_default_timeout, properties)
 
-    def execute_streaming_ingest(
-            self, database, table, stream, stream_format, properties=None, mapping_name=None
-    ):
+    def execute_streaming_ingest(self, database, table, stream, stream_format, properties=None, mapping_name=None):
         """Executes streaming ingest against this client.
         :param str database: Target database.
         :param str table: Target table.
