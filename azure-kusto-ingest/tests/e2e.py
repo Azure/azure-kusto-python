@@ -105,7 +105,7 @@ client = KustoClient(engine_kcsb)
 ingest_client = KustoIngestClient(dm_kcsb)
 ingest_status_q = KustoIngestStatusQueues(ingest_client)
 
-streaming_ingest_client = KustoStreamingIngestClient(kcsb)
+streaming_ingest_client = KustoStreamingIngestClient(engine_kcsb)
 
 client.execute(db_name, ".drop table {} ifexists".format(table_name))
 

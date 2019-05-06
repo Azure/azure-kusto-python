@@ -439,6 +439,8 @@ class KustoClient(object):
             payload = {"db": database, "csl": query}
             if properties:
                 payload["properties"] = properties.to_json()
+            payload = json.dumps(payload).encode("utf-8")
+
             request_headers["Content-Type"] = "application/json; charset=utf-8"
             request_headers["x-ms-client-request-id"] = "KPC.execute;" + str(uuid.uuid4())
         else:
