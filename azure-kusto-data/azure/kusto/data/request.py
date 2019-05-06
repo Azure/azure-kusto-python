@@ -435,11 +435,11 @@ class KustoClient(object):
     def _execute(self, endpoint, database, query, payload, timeout, properties=None):
         """Executes given query against this client"""
         request_headers = copy(self._request_headers)
+        json_payload = None
         if not payload:
-            payload = {"db": database, "csl": query}
+            json_payload = {"db": database, "csl": query}
             if properties:
-                payload["properties"] = properties.to_json()
-            payload = json.dumps(payload).encode("utf-8")
+                json_payload["properties"] = properties.to_json()
 
             request_headers["Content-Type"] = "application/json; charset=utf-8"
             request_headers["x-ms-client-request-id"] = "KPC.execute;" + str(uuid.uuid4())
@@ -453,7 +453,9 @@ class KustoClient(object):
 
         timeout = self._get_timeout(properties, timeout)
 
-        response = self._session.post(endpoint, headers=request_headers, data=payload, timeout=timeout.seconds)
+        response = self._session.post(
+            endpoint, headers=request_headers, data=payload, json=json_payload, timeout=timeout.seconds
+        )
 
         if response.status_code == 200:
             if endpoint.endswith("v2/rest/query"):

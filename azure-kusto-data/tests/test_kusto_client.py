@@ -40,16 +40,16 @@ def mocked_requests_post(*args, **kwargs):
             return self.json_data
 
     if args[0] == "https://somecluster.kusto.windows.net/v2/rest/query":
-        if "truncationmaxrecords" in kwargs["data"]["csl"]:
-            if json.loads(kwargs["data"]["properties"])["Options"]["deferpartialqueryfailures"]:
+        if "truncationmaxrecords" in kwargs["json"]["csl"]:
+            if json.loads(kwargs["json"]["properties"])["Options"]["deferpartialqueryfailures"]:
                 file_name = "query_partial_results_defer_is_true.json"
             else:
                 file_name = "query_partial_results_defer_is_false.json"
-        elif "Deft" in kwargs["data"]["csl"]:
+        elif "Deft" in kwargs["json"]["csl"]:
             file_name = "deft.json"
-        elif "print dynamic" in kwargs["data"]["csl"]:
+        elif "print dynamic" in kwargs["json"]["csl"]:
             file_name = "dynamic.json"
-        elif "take 0" in kwargs["data"]["csl"]:
+        elif "take 0" in kwargs["json"]["csl"]:
             file_name = "zero_results.json"
 
         with open(os.path.join(os.path.dirname(__file__), "input", file_name), "r") as response_file:
@@ -57,7 +57,7 @@ def mocked_requests_post(*args, **kwargs):
         return MockResponse(json.loads(data), 200)
 
     elif args[0] == "https://somecluster.kusto.windows.net/v1/rest/mgmt":
-        if kwargs["data"]["csl"] == ".show version":
+        if kwargs["json"]["csl"] == ".show version":
             file_name = "versionshowcommandresult.json"
         else:
             file_name = "adminthenquery.json"
