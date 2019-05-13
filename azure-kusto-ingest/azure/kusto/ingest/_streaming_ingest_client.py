@@ -3,9 +3,8 @@ import os
 import time
 import tempfile
 
-from azure.kusto.data.request import KustoClient
+from azure.kusto.data.request import KustoClient, ClientRequestProperties
 from ._descriptors import FileDescriptor, StreamDescriptor
-from ._resource_manager import _ResourceManager
 from .exceptions import KustoMissingMappingReferenceError, KustoStreamMaxSizeExceededError
 from ._ingestion_properties import DataFormat
 from io import TextIOWrapper
@@ -29,7 +28,6 @@ class KustoStreamingIngestClient(object):
         :param KustoConnectionStringBuilder kcsb: The connection string to initialize KustoClient.
         """
         self._kusto_client = KustoClient(kcsb)
-        self._resource_manager = _ResourceManager(self._kusto_client)
 
     def ingest_from_dataframe(self, df, ingestion_properties):
         """Ingest from pandas DataFrame.
@@ -50,7 +48,10 @@ class KustoStreamingIngestClient(object):
         fd = FileDescriptor(temp_file_path)
 
         ingestion_properties.format = DataFormat.csv
-        self._ingest(fd.zipped_stream, fd.size, ingestion_properties, content_encoding="gzip")
+
+        stream_descriptor = StreamDescriptor(fd.zipped_stream, fd.size, fd.source_id, True)
+
+        self.ingest_from_stream(stream_descriptor, ingestion_properties)
 
         fd.delete_files()
         os.unlink(temp_file_path)
@@ -66,7 +67,9 @@ class KustoStreamingIngestClient(object):
         else:
             descriptor = FileDescriptor(file_descriptor)
 
-        self._ingest(descriptor.zipped_stream, descriptor.size, ingestion_properties, content_encoding="gzip")
+        stream_descriptor = StreamDescriptor(descriptor.zipped_stream, descriptor.size, descriptor.source_id, True)
+
+        self.ingest_from_stream(stream_descriptor, ingestion_properties)
 
         descriptor.delete_files()
 
@@ -85,10 +88,7 @@ class KustoStreamingIngestClient(object):
         else:
             stream = stream_descriptor.stream
 
-        self._ingest(stream, stream_descriptor.size, ingestion_properties)
-
-    def _ingest(self, stream, size, ingestion_properties, content_encoding=None):
-        if size >= self._streaming_ingestion_size_limit:
+        if stream_descriptor.size >= self._streaming_ingestion_size_limit:
             raise KustoStreamMaxSizeExceededError()
 
         if (
@@ -97,12 +97,18 @@ class KustoStreamingIngestClient(object):
         ):
             raise KustoMissingMappingReferenceError()
 
+        client_request_properties = ClientRequestProperties()
+        client_request_properties.set_option("content_length", str(stream_descriptor.size))
+        if stream_descriptor.source_id:
+            client_request_properties.set_option("x-ms-client-request-id", str(stream_descriptor.source_id))
+        if stream_descriptor.is_zipped_stream:
+            client_request_properties.set_option("Content-Encoding", "gzip")
+
         self._kusto_client.execute_streaming_ingest(
             ingestion_properties.database,
             ingestion_properties.table,
             stream,
             ingestion_properties.format.name,
-            mapping_name=ingestion_properties.mapping_reference,
-            content_length=size,
-            content_encoding=content_encoding,
+            client_request_properties,
+            ingestion_properties.mapping_reference,
         )
