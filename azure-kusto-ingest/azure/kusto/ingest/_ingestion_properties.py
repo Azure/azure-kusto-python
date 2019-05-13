@@ -74,6 +74,9 @@ class CsvColumnMapping(ColumnMapping):
         self.Name = columnName
         self.DataType = cslDataType
         self.Ordinal = ordinal
+    
+    def __str__(self):
+        return 'target: {0.Name} ,source: {0.Ordinal}, datatype: {0.DataType}'.format(self)
 
 
 class JsonColumnMapping(ColumnMapping):
@@ -83,7 +86,9 @@ class JsonColumnMapping(ColumnMapping):
         self.column = columnName
         self.path = jsonPath
         self.datatype = cslDataType
-
+    
+    def __str__(self):
+        return 'target: {0.column} ,source: {0.path}, datatype: {0.datatype}'.format(self)
 
 class IngestionProperties:
     """Class to represent ingestion properties."""
