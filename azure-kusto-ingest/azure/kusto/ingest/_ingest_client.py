@@ -85,7 +85,7 @@ class KustoIngestClient(object):
         blob_name = "{db}__{table}__{guid}__{file}".format(
             db=ingestion_properties.database,
             table=ingestion_properties.table,
-            guid=uuid.uuid4(),
+            guid=descriptor.source_id or uuid.uuid4(),
             file=descriptor.stream_name,
         )
 
