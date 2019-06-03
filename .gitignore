@@ -291,7 +291,7 @@ __pycache__/
 RECORD.txt
 build/
 *.egg-info/
-
+*.egg
 # Wheel files
 *.whl
 *.tar.gz

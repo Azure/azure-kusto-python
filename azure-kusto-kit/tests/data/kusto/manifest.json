@@ -1,0 +1,67 @@
+{
+  "databases": [
+    {
+      "name": "imdb",
+      "tables": [
+        {
+          "name": "aka_name",
+          "columns": [
+            {
+              "name": "id",
+              "data_type": "str"
+            }
+          ]
+        },
+        {
+          "name": "aka_title",
+          "columns": [
+            {
+              "name": "id",
+              "data_type": "str"
+            },
+            {
+              "name": "title",
+              "data_type": "str"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "mappings": [
+    {
+      "name": "aka_name_from_csv",
+      "columns": [
+        {
+          "source": {
+            "index": 0,
+            "data_type": "str"
+          },
+          "target": {
+            "index": 0,
+            "data_type": "str"
+          }
+        }
+      ]
+    }
+  ],
+  "operations": [
+    {
+      "database": "imdb",
+      "sources": [
+        {
+          "files": [
+            "aka_name.csv"
+          ],
+          "mapping": "aka_name_from_csv",
+          "options": {
+            "headers": false
+          }
+        }
+      ],
+      "target": [
+        "aka_name"
+      ]
+    }
+  ]
+}

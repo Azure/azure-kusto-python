@@ -1,0 +1,1 @@
+SUPPORTED = ['.csv']

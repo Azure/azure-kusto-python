@@ -1,0 +1,27 @@
+{
+  "name": "imdb",
+  "tables": [
+    {
+      "name": "aka_name",
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "str"
+        }
+      ]
+    },
+    {
+      "name": "aka_title",
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "str"
+        },
+        {
+          "name": "title",
+          "data_type": "str"
+        }
+      ]
+    }
+  ]
+}
