@@ -9,6 +9,9 @@ from azure.kusto.data.helpers import dataframe_from_result_table
 ######################################################
 ##                        AUTH                      ##
 ######################################################
+
+# Note that the 'help' cluster only allows interactive
+# access by AAD users (and *not* AAD applications)
 cluster = "https://help.kusto.windows.net"
 
 # In case you want to authenticate with AAD application.
