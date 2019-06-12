@@ -18,6 +18,7 @@ class DataFormat(Enum):
     singlejson = "singlejson"
     avro = "avro"
     parquet = "parquet"
+    multijson = "multijson"
 
 
 class ValidationOptions(IntEnum):
@@ -130,7 +131,9 @@ class IngestionProperties:
 
     def get_mapping_format(self):
         """Dictating the corresponding mapping to the format."""
-        if self.format == DataFormat.json or self.format == DataFormat.avro:
-            return self.format.name
+        if self.format in [DataFormat.json, DataFormat.singlejson, DataFormat.multijson]:
+            return DataFormat.json.name
+        elif self.format == DataFormat.avro:
+            return DataFormat.avro.name
         else:
             return DataFormat.csv.name
