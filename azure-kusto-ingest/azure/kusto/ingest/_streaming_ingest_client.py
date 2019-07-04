@@ -9,7 +9,7 @@ from ._descriptors import FileDescriptor, StreamDescriptor
 from .exceptions import KustoMissingMappingReferenceError
 from ._ingestion_properties import DataFormat
 from io import TextIOWrapper, BytesIO
-from six import string_types
+from six import string_types, PY2
 
 
 class KustoStreamingIngestClient(object):
@@ -97,7 +97,8 @@ class KustoStreamingIngestClient(object):
             buffer = stream.read()
             with GzipFile(filename="data", fileobj=zipped_stream, mode="wb") as f_out:
                 if isinstance(buffer, string_types):
-                    f_out.write(bytes(buffer, "utf-8"))
+				    data = bytes(buffer) if PY2 else bytes(data, 'utf8')
+                    f_out.write(data)
                 else:
                     f_out.write(buffer)
             zipped_stream.seek(0)
