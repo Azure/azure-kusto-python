@@ -94,9 +94,7 @@ class KustoStreamingIngestClient(object):
         if not stream_descriptor.is_compressed:
             zipped_stream = BytesIO()
             buffer = stream.read()
-            with GzipFile(
-                filename="data", fileobj=zipped_stream, mode="wb"
-            ) as f_out:
+            with GzipFile(filename="data", fileobj=zipped_stream, mode="wb") as f_out:
                 if isinstance(buffer, str):
                     f_out.write(bytes(buffer, "utf-8"))
                 else:
