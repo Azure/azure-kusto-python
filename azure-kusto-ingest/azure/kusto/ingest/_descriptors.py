@@ -81,22 +81,16 @@ class BlobDescriptor(object):
 class StreamDescriptor(object):
     """StreamDescriptor is used to describe a stream that will be used as ingestion source"""
 
-    def __init__(self, stream, size=None, source_id=None, is_zipped_stream=False):
+    def __init__(self, stream, source_id=None, is_compressed=False):
         """
         :param stream: in-memory stream object.
         :type stream: io.BaseIO
-        :param size: size of the provided stream.
-        :type: size: int
         :param source_id: a v4 uuid to serve as the sources id.
         :type source_id: str (of a uuid4) or uuid4.
+        :param is_compressed: specify if the provided stream is compressed
+        :type is_compressed: boolean
         """
         self.stream = stream
-        if size is None:
-            stream.seek(0, SEEK_END)
-            size = stream.tell()
-            stream.seek(0, SEEK_SET)
-
-        self.size = size
         assert_uuid4(source_id, "source_id must be a valid uuid4")
         self.source_id = source_id
-        self.is_zipped_stream = is_zipped_stream
+        self.is_compressed = is_compressed
