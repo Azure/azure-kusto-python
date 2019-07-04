@@ -9,6 +9,7 @@ from ._descriptors import FileDescriptor, StreamDescriptor
 from .exceptions import KustoMissingMappingReferenceError
 from ._ingestion_properties import DataFormat
 from io import TextIOWrapper, BytesIO
+from six import string_types
 
 
 class KustoStreamingIngestClient(object):
@@ -95,7 +96,7 @@ class KustoStreamingIngestClient(object):
             zipped_stream = BytesIO()
             buffer = stream.read()
             with GzipFile(filename="data", fileobj=zipped_stream, mode="wb") as f_out:
-                if isinstance(buffer, basestring):
+                if isinstance(buffer, string_types):
                     f_out.write(bytes(buffer, "utf-8"))
                 else:
                     f_out.write(buffer)
