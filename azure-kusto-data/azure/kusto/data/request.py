@@ -482,6 +482,20 @@ class ClientRequestProperties(object):
 
     def __init__(self):
         self._options = {}
+        self._parameters = {}
+
+    def set_parameter(self, name, value):
+        """Sets a parameter's value"""
+        _assert_value_is_valid(name)
+        self._parameters[name] = value
+
+    def has_parameter(self, name):
+        """Checks if a parameter is specified."""
+        return name in self._parameters
+
+    def get_parameter(self, name, default_value):
+        """Gets a parameter's value."""
+        return self._parameters.get(name, default_value)
 
     def set_option(self, name, value):
         """Sets an option's value"""
@@ -498,4 +512,4 @@ class ClientRequestProperties(object):
 
     def to_json(self):
         """Safe serialization to a JSON string."""
-        return json.dumps({"Options": self._options}, default=str)
+        return json.dumps({"Options": self._options, "Parameters": self._parameters}, default=str)
