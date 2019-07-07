@@ -109,6 +109,5 @@ class KustoStreamingIngestClient(object):
             ingestion_properties.table,
             stream,
             ingestion_properties.format.name,
-            None,
-            ingestion_properties.mapping_reference,
+            mapping_name=ingestion_properties.mapping_reference,
         )
