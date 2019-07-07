@@ -513,4 +513,3 @@ class ClientRequestProperties(object):
     def to_json(self):
         """Safe serialization to a JSON string."""
         return json.dumps({"Options": self._options, "Parameters": self._parameters}, default=str)
-
