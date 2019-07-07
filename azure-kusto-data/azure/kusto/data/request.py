@@ -445,6 +445,7 @@ class KustoClient(object):
             request_headers["x-ms-client-request-id"] = "KPC.execute;" + str(uuid.uuid4())
         else:
             request_headers["x-ms-client-request-id"] = "KPC.execute_streaming_ingest;" + str(uuid.uuid4())
+            request_headers["Content-Encoding"] = "gzip"
             if properties:
                 request_headers.update(json.loads(properties.to_json())["Options"])
 

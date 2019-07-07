@@ -14,16 +14,6 @@ class KustoDuplicateMappingError(KustoClientError):
         super(KustoDuplicateMappingError, self).__init__(message)
 
 
-class KustoStreamMaxSizeExceededError(KustoClientError):
-    """
-    Error to be raised when stream is too big for streaming ingest
-    """
-
-    def __init__(self):
-        message = "The provided stream exceeded the maximum allowed size for streaming ingest"
-        super(KustoStreamMaxSizeExceededError, self).__init__(message)
-
-
 class KustoMissingMappingReferenceError(KustoClientError):
     """
     Error to be raised when ingestion properties has data format of Json, SingleJson, MultiJson or Avro

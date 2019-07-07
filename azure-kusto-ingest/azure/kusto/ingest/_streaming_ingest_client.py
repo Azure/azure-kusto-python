@@ -2,15 +2,14 @@
 import os
 import time
 import tempfile
+from gzip import GzipFile
 
 from azure.kusto.data.request import KustoClient, ClientRequestProperties
 from ._descriptors import FileDescriptor, StreamDescriptor
-from .exceptions import KustoMissingMappingReferenceError, KustoStreamMaxSizeExceededError
+from .exceptions import KustoMissingMappingReferenceError
 from ._ingestion_properties import DataFormat
-from io import TextIOWrapper
-
-_1KB = 1024
-_1MB = _1KB * _1KB
+from io import TextIOWrapper, BytesIO
+from six import string_types, PY2
 
 
 class KustoStreamingIngestClient(object):
@@ -21,7 +20,6 @@ class KustoStreamingIngestClient(object):
     """
 
     _mapping_required_formats = [DataFormat.json, DataFormat.singlejson, DataFormat.avro]
-    _streaming_ingestion_size_limit = 4 * _1MB
 
     def __init__(self, kcsb):
         """Kusto Streaming Ingest Client constructor.
@@ -49,7 +47,7 @@ class KustoStreamingIngestClient(object):
 
         ingestion_properties.format = DataFormat.csv
 
-        stream_descriptor = StreamDescriptor(fd.zipped_stream, fd.size, fd.source_id, True)
+        stream_descriptor = StreamDescriptor(fd.zipped_stream, fd.source_id, True)
 
         self.ingest_from_stream(stream_descriptor, ingestion_properties)
 
@@ -67,7 +65,7 @@ class KustoStreamingIngestClient(object):
         else:
             descriptor = FileDescriptor(file_descriptor)
 
-        stream_descriptor = StreamDescriptor(descriptor.zipped_stream, descriptor.size, descriptor.source_id, True)
+        stream_descriptor = StreamDescriptor(descriptor.zipped_stream, descriptor.source_id, True)
 
         self.ingest_from_stream(stream_descriptor, ingestion_properties)
 
@@ -88,27 +86,28 @@ class KustoStreamingIngestClient(object):
         else:
             stream = stream_descriptor.stream
 
-        if stream_descriptor.size >= self._streaming_ingestion_size_limit:
-            raise KustoStreamMaxSizeExceededError()
-
         if (
             ingestion_properties.format in self._mapping_required_formats
             and ingestion_properties.mapping_reference is None
         ):
             raise KustoMissingMappingReferenceError()
 
-        client_request_properties = ClientRequestProperties()
-        client_request_properties.set_option("content_length", str(stream_descriptor.size))
-        if stream_descriptor.source_id:
-            client_request_properties.set_option("x-ms-client-request-id", str(stream_descriptor.source_id))
-        if stream_descriptor.is_zipped_stream:
-            client_request_properties.set_option("Content-Encoding", "gzip")
+        if not stream_descriptor.is_compressed:
+            zipped_stream = BytesIO()
+            buffer = stream.read()
+            with GzipFile(filename="data", fileobj=zipped_stream, mode="wb") as f_out:
+                if isinstance(buffer, string_types):
+                    data = bytes(buffer) if PY2 else bytes(buffer, "utf-8")
+                    f_out.write(data)
+                else:
+                    f_out.write(buffer)
+            zipped_stream.seek(0)
+            stream = zipped_stream
 
         self._kusto_client.execute_streaming_ingest(
             ingestion_properties.database,
             ingestion_properties.table,
             stream,
             ingestion_properties.format.name,
-            client_request_properties,
-            ingestion_properties.mapping_reference,
+            mapping_name=ingestion_properties.mapping_reference,
         )

@@ -14,6 +14,6 @@ from ._ingestion_properties import (
     JsonColumnMapping,
     IngestionProperties,
 )
-from .exceptions import KustoStreamMaxSizeExceededError, KustoMissingMappingReferenceError
+from .exceptions import KustoMissingMappingReferenceError
 
 from ._version import VERSION as __version__

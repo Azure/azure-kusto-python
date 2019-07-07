@@ -1,11 +1,10 @@
-import pytest
 import os
 import unittest
 import json
 import responses
 import io
 from azure.kusto.ingest import KustoStreamingIngestClient, IngestionProperties, DataFormat
-from azure.kusto.ingest.exceptions import KustoMissingMappingReferenceError, KustoStreamMaxSizeExceededError
+from azure.kusto.ingest.exceptions import KustoMissingMappingReferenceError
 
 
 pandas_installed = False
