@@ -2,12 +2,13 @@
 
 import uuid
 import json
-import requests
-
-from requests.adapters import HTTPAdapter
 
 from datetime import timedelta
 from enum import Enum, unique
+from copy import copy
+
+import requests
+from requests.adapters import HTTPAdapter
 
 from .security import _AadHelper
 from .exceptions import KustoServiceError
@@ -34,6 +35,11 @@ class KustoConnectionStringBuilder(object):
         application_certificate = "Application Certificate"
         application_certificate_thumbprint = "Application Certificate Thumbprint"
         authority_id = "Authority Id"
+        application_token = "Application Token"
+        user_token = "User Token"
+
+        # This ordering is needed only for python 2.7 . Once it gets to end of life we can omit the ordering as it is applied by default in python 3.4 and above.
+        __order__ = "data_source, aad_federated_security, aad_user_id, password, application_client_id, application_key, application_certificate, application_certificate_thumbprint, authority_id, application_token, user_token"
 
         @classmethod
         def parse(cls, key):
@@ -57,7 +63,40 @@ class KustoConnectionStringBuilder(object):
                 return cls.authority_id
             if key in ["aad federated security", "federated security", "federated", "fed", "aadfed"]:
                 return cls.aad_federated_security
+            if key in ["application token", "apptoken"]:
+                return cls.application_token
+            if key in ["user token", "usertoken", "usrtoken"]:
+                return cls.user_token
             raise KeyError(key)
+
+        def is_secret(self):
+            """States for each property if it contains secret"""
+            return self in [
+                self.password,
+                self.application_key,
+                self.application_certificate,
+                self.application_token,
+                self.user_token,
+            ]
+
+        def is_str_type(self):
+            """States whether a word is of type str or not."""
+            return self in [
+                self.aad_user_id,
+                self.application_certificate,
+                self.application_certificate_thumbprint,
+                self.application_client_id,
+                self.data_source,
+                self.password,
+                self.application_key,
+                self.authority_id,
+                self.application_token,
+                self.user_token,
+            ]
+
+        def is_bool_type(self):
+            """States whether a word is of type bool or not."""
+            return self in [self.aad_federated_security]
 
     def __init__(self, connection_string):
         """Creates new KustoConnectionStringBuilder.
@@ -75,7 +114,16 @@ class KustoConnectionStringBuilder(object):
 
         for kvp_string in connection_string.split(";"):
             key, _, value = kvp_string.partition("=")
-            self[key] = value
+            keyword = self.ValidKeywords.parse(key)
+            if keyword.is_str_type():
+                self[keyword] = value.strip()
+            if keyword.is_bool_type():
+                if value.strip() in ["True", "true"]:
+                    self[keyword] = True
+                elif value.strip() in ["False", "false"]:
+                    self[keyword] = False
+                else:
+                    raise KeyError("Expected aad federated security to be bool. Recieved %s" % value)
 
     def __setitem__(self, key, value):
         try:
@@ -83,7 +131,17 @@ class KustoConnectionStringBuilder(object):
         except KeyError:
             raise KeyError("%s is not supported as an item in KustoConnectionStringBuilder" % key)
 
-        self._internal_dict[keyword] = value if keyword is self.ValidKeywords.aad_federated_security else value.strip()
+        if value is None:
+            raise TypeError("Value cannot be None.")
+
+        if keyword.is_str_type():
+            self._internal_dict[keyword] = value.strip()
+        elif keyword.is_bool_type():
+            if not isinstance(value, bool):
+                raise TypeError("Expected %s to be bool" % key)
+            self._internal_dict[keyword] = value
+        else:
+            raise KeyError("KustoConnectionStringBuilder supports only bools and strings.")
 
     @classmethod
     def with_aad_user_password_authentication(cls, connection_string, user_id, password, authority_id="common"):
@@ -101,6 +159,21 @@ class KustoConnectionStringBuilder(object):
         kcsb[kcsb.ValidKeywords.aad_user_id] = user_id
         kcsb[kcsb.ValidKeywords.password] = password
         kcsb[kcsb.ValidKeywords.authority_id] = authority_id
+
+        return kcsb
+
+    @classmethod
+    def with_aad_user_token_authentication(cls, connection_string, user_token):
+        """Creates a KustoConnection string builder that will authenticate with AAD application and
+        a certificate credentials.
+        :param str connection_string: Kusto connection string should by of the format:
+        https://<clusterName>.kusto.windows.net
+        :param str user_token: AAD user token.
+        """
+        _assert_value_is_valid(user_token)
+        kcsb = cls(connection_string)
+        kcsb[kcsb.ValidKeywords.aad_federated_security] = True
+        kcsb[kcsb.ValidKeywords.user_token] = user_token
 
         return kcsb
 
@@ -146,6 +219,21 @@ class KustoConnectionStringBuilder(object):
         kcsb[kcsb.ValidKeywords.application_certificate] = certificate
         kcsb[kcsb.ValidKeywords.application_certificate_thumbprint] = thumbprint
         kcsb[kcsb.ValidKeywords.authority_id] = authority_id
+
+        return kcsb
+
+    @classmethod
+    def with_aad_application_token_authentication(cls, connection_string, application_token):
+        """Creates a KustoConnection string builder that will authenticate with AAD application and
+        a certificate credentials.
+        :param str connection_string: Kusto connection string should by of the format:
+        https://<clusterName>.kusto.windows.net
+        :param str application_token: AAD application token.
+        """
+        _assert_value_is_valid(application_token)
+        kcsb = cls(connection_string)
+        kcsb[kcsb.ValidKeywords.aad_federated_security] = True
+        kcsb[kcsb.ValidKeywords.application_token] = application_token
 
         return kcsb
 
@@ -226,6 +314,31 @@ class KustoConnectionStringBuilder(object):
         """A Boolean value that instructs the client to perform AAD federated authentication."""
         return self._internal_dict.get(self.ValidKeywords.aad_federated_security)
 
+    @property
+    def user_token(self):
+        """User token."""
+        return self._internal_dict.get(self.ValidKeywords.user_token)
+
+    @property
+    def application_token(self):
+        """Application token."""
+        return self._internal_dict.get(self.ValidKeywords.application_token)
+
+    def __str__(self):
+        dict_copy = self._internal_dict.copy()
+        for key in dict_copy:
+            if key.is_secret():
+                dict_copy[key] = "****"
+        return self._build_connection_string(dict_copy)
+
+    def __repr__(self):
+        return self._build_connection_string(self._internal_dict)
+
+    def _build_connection_string(self, kcsb_as_dict):
+        return ";".join(
+            ["{0}={1}".format(word.value, kcsb_as_dict[word]) for word in self.ValidKeywords if word in kcsb_as_dict]
+        )
+
 
 def _assert_value_is_valid(value):
     if not value or not value.strip():
@@ -240,8 +353,9 @@ class KustoClient(object):
     Tests are run using pytest.
     """
 
-    _mgmt_default_timeout = timedelta(hours=1, seconds=30).seconds
-    _query_default_timeout = timedelta(minutes=4, seconds=30).seconds
+    _mgmt_default_timeout = timedelta(hours=1, seconds=30)
+    _query_default_timeout = timedelta(minutes=4, seconds=30)
+    _streaming_ingest_default_timeout = timedelta(minutes=10)
 
     # The maximum amount of connections to be able to operate in parallel
     _max_pool_size = 100
@@ -259,10 +373,15 @@ class KustoClient(object):
         self._session = requests.Session()
         self._session.mount("http://", HTTPAdapter(pool_maxsize=self._max_pool_size))
         self._session.mount("https://", HTTPAdapter(pool_maxsize=self._max_pool_size))
-
         self._mgmt_endpoint = "{0}/v1/rest/mgmt".format(kusto_cluster)
         self._query_endpoint = "{0}/v2/rest/query".format(kusto_cluster)
+        self._streaming_ingest_endpoint = "{0}/v1/rest/ingest/".format(kusto_cluster)
         self._auth_provider = _AadHelper(kcsb) if kcsb.aad_federated_security else None
+        self._request_headers = {
+            "Accept": "application/json",
+            "Accept-Encoding": "gzip,deflate",
+            "x-ms-client-version": "Kusto.Python.Client:" + VERSION,
+        }
 
     def execute(self, database, query, properties=None):
         """Executes a query or management command.
@@ -284,7 +403,9 @@ class KustoClient(object):
         :return: Kusto response data set.
         :rtype: azure.kusto.data._response.KustoResponseDataSet
         """
-        return self._execute(self._query_endpoint, database, query, KustoClient._query_default_timeout, properties)
+        return self._execute(
+            self._query_endpoint, database, query, None, KustoClient._query_default_timeout, properties
+        )
 
     def execute_mgmt(self, database, query, properties=None):
         """Executes a management command.
@@ -294,28 +415,48 @@ class KustoClient(object):
         :return: Kusto response data set.
         :rtype: azure.kusto.data._response.KustoResponseDataSet
         """
-        return self._execute(self._mgmt_endpoint, database, query, KustoClient._mgmt_default_timeout, properties)
+        return self._execute(self._mgmt_endpoint, database, query, None, KustoClient._mgmt_default_timeout, properties)
 
-    def _execute(self, endpoint, database, query, default_timeout, properties=None):
+    def execute_streaming_ingest(self, database, table, stream, stream_format, properties=None, mapping_name=None):
+        """Executes streaming ingest against this client.
+        :param str database: Target database.
+        :param str table: Target table.
+        :param io.BaseIO stream: stream object which contains the data to ingest.
+        :param DataFormat stream_format: Format of the data in the stream.
+        :param ClientRequestProperties properties: additional request properties.
+        :param str mapping_name: Pre-defined mapping of the table. Required when stream_format is json/avro.
+        """
+        endpoint = self._streaming_ingest_endpoint + database + "/" + table + "?streamFormat=" + stream_format
+        if mapping_name is not None:
+            endpoint = endpoint + "&mappingName=" + mapping_name
+
+        self._execute(endpoint, database, None, stream, KustoClient._streaming_ingest_default_timeout, properties)
+
+    def _execute(self, endpoint, database, query, payload, timeout, properties=None):
         """Executes given query against this client"""
+        request_headers = copy(self._request_headers)
+        json_payload = None
+        if not payload:
+            json_payload = {"db": database, "csl": query}
+            if properties:
+                json_payload["properties"] = properties.to_json()
 
-        request_payload = {"db": database, "csl": query}
-        if properties:
-            request_payload["properties"] = properties.to_json()
-
-        request_headers = {
-            "Accept": "application/json",
-            "Accept-Encoding": "gzip,deflate",
-            "Content-Type": "application/json; charset=utf-8",
-            "x-ms-client-version": "Kusto.Python.Client:" + VERSION,
-            "x-ms-client-request-id": "KPC.execute;" + str(uuid.uuid4()),
-        }
+            request_headers["Content-Type"] = "application/json; charset=utf-8"
+            request_headers["x-ms-client-request-id"] = "KPC.execute;" + str(uuid.uuid4())
+        else:
+            request_headers["x-ms-client-request-id"] = "KPC.execute_streaming_ingest;" + str(uuid.uuid4())
+            request_headers["Content-Encoding"] = "gzip"
+            if properties:
+                request_headers.update(json.loads(properties.to_json())["Options"])
 
         if self._auth_provider:
             request_headers["Authorization"] = self._auth_provider.acquire_authorization_header()
 
-        timeout = self._get_timeout(properties, default_timeout)
-        response = self._session.post(endpoint, headers=request_headers, json=request_payload, timeout=timeout)
+        timeout = self._get_timeout(properties, timeout)
+
+        response = self._session.post(
+            endpoint, headers=request_headers, data=payload, json=json_payload, timeout=timeout.seconds
+        )
 
         if response.status_code == 200:
             if endpoint.endswith("v2/rest/query"):
@@ -371,4 +512,5 @@ class ClientRequestProperties(object):
 
     def to_json(self):
         """Safe serialization to a JSON string."""
-         return json.dumps({"Options": self._options, "Parameters": self._parameters}, default=str)
+        return json.dumps({"Options": self._options, "Parameters": self._parameters}, default=str)
+

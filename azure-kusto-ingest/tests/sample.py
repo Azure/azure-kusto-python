@@ -6,8 +6,10 @@ from azure.kusto.ingest import (
     IngestionProperties,
     FileDescriptor,
     BlobDescriptor,
+    StreamDescriptor,
     DataFormat,
     ReportLevel,
+    KustoStreamingIngestClient,
 )
 
 ##################################################################
@@ -131,3 +133,41 @@ while True:
     with open("failures.log", "w+") as ff:
         for fm in failure_messages:
             ff.write(str(fm))
+
+##################################################################
+##                        STREAMING INGEST                      ##
+##################################################################
+
+# Authenticate against this cluster endpoint as shows in the Auth section
+cluster = "https://{cluster_name}.kusto.windows.net"
+
+client = KustoStreamingIngestClient(kcsb)
+
+ingestion_props = IngestionProperties(database="{database_name}", table="{table_name}", dataFormat=DataFormat.csv)
+
+# ingest from file
+file_descriptor = FileDescriptor("{filename}.csv", 3333)  # 3333 is the raw size of the data in bytes.
+client.ingest_from_file(file_descriptor, ingestion_properties=ingestion_props)
+client.ingest_from_file("{filename}.csv", ingestion_properties=ingestion_props)
+
+# ingest from dataframe
+import pandas
+
+fields = ["id", "name", "value"]
+rows = [[1, "abc", 15.3], [2, "cde", 99.9]]
+
+df = pandas.DataFrame(data=rows, columns=fields)
+
+client.ingest_from_dataframe(df, ingestion_properties=ingestion_props)
+
+# ingest from stream
+byte_sequence = b"56,56,56"
+bytes_stream = io.BytesIO(byte_sequence)
+client.ingest_from_stream(bytes_stream, ingestion_properties=ingestion_properties)
+
+stream_descriptor = StreamDescriptor(bytes_stream)
+client.ingest_from_stream(stream_descriptor, ingestion_properties=ingestion_properties)
+
+str_sequence = u"57,57,57"
+str_stream = io.StringIO(str_sequence)
+client.ingest_from_stream(str_stream, ingestion_properties=ingestion_properties)

@@ -1,5 +1,6 @@
 ﻿"""A simple example how to use KustoClient."""
 
+from datetime import timedelta
 from azure.kusto.data.request import KustoClient, KustoConnectionStringBuilder, ClientRequestProperties
 from azure.kusto.data.exceptions import KustoServiceError
 from azure.kusto.data.helpers import dataframe_from_result_table
@@ -8,6 +9,9 @@ from azure.kusto.data.helpers import dataframe_from_result_table
 ######################################################
 ##                        AUTH                      ##
 ######################################################
+
+# Note that the 'help' cluster only allows interactive
+# access by AAD users (and *not* AAD applications)
 cluster = "https://help.kusto.windows.net"
 
 # In case you want to authenticate with AAD application.
@@ -88,6 +92,7 @@ except KustoServiceError as error:
 
 properties = ClientRequestProperties()
 properties.set_option(properties.OptionDeferPartialQueryFailures, True)
+properties.set_option(properties.OptionServerTimeout, timedelta(seconds=8 * 60))
 response = client.execute(db, query, properties=properties)
 print("3. Response error count: ", response.errors_count)
 print("3. Exceptions:", response.get_exceptions())

@@ -1,7 +1,7 @@
 """Descriptors the ingest command should work with."""
 
 import os
-from io import BytesIO
+from io import BytesIO, SEEK_SET, SEEK_END
 import shutil
 from gzip import GzipFile
 import tempfile
@@ -76,3 +76,21 @@ class BlobDescriptor(object):
         self.size = size
         assert_uuid4(source_id, "source_id must be a valid uuid4")
         self.source_id = source_id
+
+
+class StreamDescriptor(object):
+    """StreamDescriptor is used to describe a stream that will be used as ingestion source"""
+
+    def __init__(self, stream, source_id=None, is_compressed=False):
+        """
+        :param stream: in-memory stream object.
+        :type stream: io.BaseIO
+        :param source_id: a v4 uuid to serve as the sources id.
+        :type source_id: str (of a uuid4) or uuid4.
+        :param is_compressed: specify if the provided stream is compressed
+        :type is_compressed: boolean
+        """
+        self.stream = stream
+        assert_uuid4(source_id, "source_id must be a valid uuid4")
+        self.source_id = source_id
+        self.is_compressed = is_compressed

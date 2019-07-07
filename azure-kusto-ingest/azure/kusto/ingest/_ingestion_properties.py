@@ -18,6 +18,7 @@ class DataFormat(Enum):
     singlejson = "singlejson"
     avro = "avro"
     parquet = "parquet"
+    multijson = "multijson"
 
 
 class ValidationOptions(IntEnum):
@@ -75,6 +76,9 @@ class CsvColumnMapping(ColumnMapping):
         self.DataType = cslDataType
         self.Ordinal = ordinal
 
+    def __str__(self):
+        return "target: {0.Name} ,source: {0.Ordinal}, datatype: {0.DataType}".format(self)
+
 
 class JsonColumnMapping(ColumnMapping):
     """ Class to represent a json column mapping """
@@ -83,6 +87,9 @@ class JsonColumnMapping(ColumnMapping):
         self.column = columnName
         self.path = jsonPath
         self.datatype = cslDataType
+
+    def __str__(self):
+        return "target: {0.column} ,source: {0.path}, datatype: {0.datatype}".format(self)
 
 
 class IngestionProperties:
@@ -124,7 +131,9 @@ class IngestionProperties:
 
     def get_mapping_format(self):
         """Dictating the corresponding mapping to the format."""
-        if self.format == DataFormat.json or self.format == DataFormat.avro:
-            return self.format.name
+        if self.format in [DataFormat.json, DataFormat.singlejson, DataFormat.multijson]:
+            return DataFormat.json.name
+        elif self.format == DataFormat.avro:
+            return DataFormat.avro.name
         else:
             return DataFormat.csv.name
