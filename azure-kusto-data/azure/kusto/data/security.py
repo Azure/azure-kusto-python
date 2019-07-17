@@ -55,22 +55,25 @@ class _AadHelper(object):
 
     def __getstate__(self):
         """we cannot serialize the AuthenticationContext"""
+        state = dict(self.__dict__)
         ctx = self._adal_context
-        state = self.__dict__
-        del state['_adal_context']
-        state['adal_authority_url'] = ctx.authority.url
-        state['adal_token_cache'] = ctx.cache.serialize()
+        if ctx:
+            del state['_adal_context']
+            state['adal_authority_url'] = ctx.authority.url
+            state['adal_token_cache'] = ctx.cache.serialize()
         return state
 
     def __setstate__(self, state):
         """reconstruct the AuthenticationContext"""
-        ctx = AuthenticationContext(
-            authority=state['adal_authority_url'],
-            cache = TokenCache(state['adal_token_cache']))
-        del state['adal_authority_url']
-        del state['adal_token_cache']
+        authority_url = state.get('adal_authority_url')
+        if authority_url:
+            del state['adal_authority_url']
+        token_cache_string = state.get('adal_token_cache')
+        if token_cache_string:
+            del state['adal_token_cache']
+        if authority_url and token_cache_string:
+            state['_adal_context'] = AuthenticationContext(authority_url, cache=TokenCache(token_cache_string))
         self.__dict__ = state
-        self._adal_context = ctx
 
     def acquire_authorization_header(self):
         """Acquire tokens from AAD."""
