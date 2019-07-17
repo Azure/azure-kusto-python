@@ -1,6 +1,7 @@
 """Tests for KustoClient."""
 
 import os
+import sys
 import json
 import unittest
 from datetime import datetime, timedelta
@@ -389,3 +390,21 @@ range x from 1 to 10 step 1"""
         query = """print 'a' | take 0"""
         response = client.execute_query("PythonTest", query)
         self.assertTrue(response.primary_results[0])
+
+    @pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
+    def test_running_in_parallel(self):
+        """authenticated clients should be able to do things in parallel"""
+        from multiprocessing import Pool
+        cluster = "https://somecluster.kusto.windows.net"
+        client = KustoClient(cluster)
+        inputs = [client for i in range(5)]
+        with Pool(2) as p:
+            responses = p.map(getendpoint, inputs)
+        self.assertEqual(len(inputs), len(responses), "we should end up with the same number of responses")
+        for r in responses:
+            self.assertTrue(r.startswith(cluster), r + " does not start with " + cluster)
+
+
+def getendpoint(_client):
+    """static method for mapping"""
+    return _client._query_endpoint

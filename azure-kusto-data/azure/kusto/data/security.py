@@ -8,13 +8,14 @@ import dateutil.parser
 
 from adal import AuthenticationContext, AdalError
 from adal.constants import TokenResponseFields, OAuth2DeviceCodeResponseParameters
+from adal.token_cache import TokenCache
 
 from .exceptions import KustoClientError, KustoAuthenticationError
 
 
 @unique
 class AuthenticationMethod(Enum):
-    """Enum represnting all authentication methods available in Kusto with Python."""
+    """Enum representing all authentication methods available in Kusto with Python."""
 
     aad_username_password = "aad_username_password"
     aad_application_key = "aad_application_key"
@@ -51,6 +52,25 @@ class _AadHelper(object):
         else:
             self._authentication_method = AuthenticationMethod.aad_device_login
             self._client_id = "db662dc1-0cfe-4e1c-a843-19a68e65be58"
+
+    def __getstate__(self):
+        """we cannot serialize the AuthenticationContext"""
+        ctx = self._adal_context
+        state = self.__dict__
+        del state['_adal_context']
+        state['adal_authority_url'] = ctx.authority.url
+        state['adal_token_cache'] = ctx.cache.serialize()
+        return state
+
+    def __setstate__(self, state):
+        """reconstruct the AuthenticationContext"""
+        ctx = AuthenticationContext(
+            authority=state['adal_authority_url'],
+            cache = TokenCache(state['adal_token_cache']))
+        del state['adal_authority_url']
+        del state['adal_token_cache']
+        self.__dict__ = state
+        self._adal_context = ctx
 
     def acquire_authorization_header(self):
         """Acquire tokens from AAD."""
