@@ -110,10 +110,10 @@ class KustoResultRow(object):
 
 
 class KustoResultColumn(object):
-    def __init__(self, json_column, ordianl):
+    def __init__(self, json_column, ordinal):
         self.column_name = json_column["ColumnName"]
         self.column_type = json_column.get("ColumnType") or json_column["DataType"]
-        self.ordinal = ordianl
+        self.ordinal = ordinal
 
     def __repr__(self):
         return "KustoResultColumn({},{})".format(
