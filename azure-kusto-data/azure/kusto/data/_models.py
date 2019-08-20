@@ -48,7 +48,7 @@ class KustoResultRow(object):
                     self._hidden_values.append(value)
                 continue
 
-            if column_type in ["datetime", "timespan"]:
+            if column_type in ["datetime", "timespan", "decimal"]:
                 if value is None:
                     typed_value = None
                     if HAS_PANDAS:
@@ -67,10 +67,8 @@ class KustoResultRow(object):
                             self._hidden_values.append(to_pandas_datetime(value))
                         if column_type == "timespan":
                             self._hidden_values.append(to_pandas_timedelta(value, typed_value))
-            elif column_type in KustoResultRow.convertion_funcs:
-                typed_value = KustoResultRow.convertion_funcs[column_type](value)
-                if HAS_PANDAS:
-                    self._hidden_values.append(value)
+                        if column_type == "decimal":
+                            self._hidden_values.append(value)
             else:
                 typed_value = value
                 if HAS_PANDAS:
