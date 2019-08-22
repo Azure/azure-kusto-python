@@ -3,6 +3,7 @@
 from datetime import timedelta
 import re
 from dateutil import parser
+from decimal import Decimal
 import six
 
 # Regex for TimeSpan
@@ -39,3 +40,8 @@ def to_timedelta(value):
         )
     else:
         raise ValueError("Timespan value '{}' cannot be decoded".format(value))
+
+
+def to_decimal(value):
+    """Converts a string to decimal."""
+    return None if value is None else Decimal(value)
