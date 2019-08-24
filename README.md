@@ -8,7 +8,7 @@
 [![PyPI version](https://badge.fury.io/py/azure-kusto-ingest.svg)](https://badge.fury.io/py/azure-kusto-ingest)
 [![Downloads](https://pepy.tech/badge/azure-kusto-ingest)](https://pepy.tech/project/azure-kusto-ingest)<br>
 
-**A new addition to the famility (still in alpha):**
+**A new addition to the family (still in alpha):**
 
 https://github.com/Azure/azure-kusto-ingestion-tools/tree/master/kit
 

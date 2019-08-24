@@ -12,9 +12,6 @@ _TIMESPAN_PATTERN = re.compile(r"(-?)((?P<d>[0-9]*).)?(?P<h>[0-9]{2}):(?P<m>[0-9
 
 def to_datetime(value):
     """Converts a string to a datetime."""
-    if value is None:
-        return None
-
     if isinstance(value, six.integer_types):
         return parser.parse(value)
     return parser.isoparse(value)
@@ -22,8 +19,6 @@ def to_datetime(value):
 
 def to_timedelta(value):
     """Converts a string to a timedelta."""
-    if value is None:
-        return None
     if isinstance(value, (six.integer_types, float)):
         return timedelta(microseconds=(float(value) / 10))
     match = _TIMESPAN_PATTERN.match(value)
@@ -40,8 +35,3 @@ def to_timedelta(value):
         )
     else:
         raise ValueError("Timespan value '{}' cannot be decoded".format(value))
-
-
-def to_decimal(value):
-    """Converts a string to decimal."""
-    return None if value is None else Decimal(value)
