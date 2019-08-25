@@ -51,6 +51,8 @@ def mocked_requests_post(*args, **kwargs):
             file_name = "dynamic.json"
         elif "take 0" in kwargs["json"]["csl"]:
             file_name = "zero_results.json"
+        elif "PrimaryResultName" in kwargs["json"]["csl"]:
+            file_name = "null_values.json"
 
         with open(os.path.join(os.path.dirname(__file__), "input", file_name), "r") as response_file:
             data = response_file.read()
@@ -389,3 +391,10 @@ range x from 1 to 10 step 1"""
         query = """print 'a' | take 0"""
         response = client.execute_query("PythonTest", query)
         self.assertTrue(response.primary_results[0])
+
+    @patch("requests.Session.post", side_effect=mocked_requests_post)
+    def test_null_values_in_data(self, mock_post):
+        """Tests response with null values in non nullable column types"""
+        client = KustoClient("https://somecluster.kusto.windows.net")
+        query = "PrimaryResultName"
+        response = client.execute_query("PythonTest", query)

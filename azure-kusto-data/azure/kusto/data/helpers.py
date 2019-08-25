@@ -2,7 +2,7 @@
 import six
 
 
-def to_pandas_datetime(raw_value):
+def to_pandas_datetime(raw_value, *args):
     import pandas as pd
 
     return pd.to_datetime(raw_value)
