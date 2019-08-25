@@ -65,8 +65,8 @@ class KustoResultRow(object):
                     else value
                 )
 
-                # this is a special case where plain python will lose precision, so we keep the precise value hidden
-                # when transforming to pandas, we can use the hidden value to convert to precise pandas/numpy types
+                # This is a special case where plain python will lose precision, so we keep the precise value hidden.
+                # When transforming to pandas, we can use the hidden value to convert to precise pandas/numpy types
                 if HAS_PANDAS:
                     self._hidden_values.append(
                         KustoResultRow.pandas_funcs[column_type](value, typed_value)
