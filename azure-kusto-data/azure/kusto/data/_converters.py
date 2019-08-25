@@ -11,6 +11,7 @@ _TIMESPAN_PATTERN = re.compile(r"(-?)((?P<d>[0-9]*).)?(?P<h>[0-9]{2}):(?P<m>[0-9
 
 
 def to_datetime(value):
+    # @Daniel
     """Converts a string to a datetime."""
     if isinstance(value, six.integer_types):
         return parser.parse(value)

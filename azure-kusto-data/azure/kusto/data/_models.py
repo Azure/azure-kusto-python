@@ -30,11 +30,9 @@ class WellKnownDataSet(Enum):
 class KustoResultRow(object):
     """Iterator over a Kusto result row."""
 
-    convertion_funcs = {
-        "datetime": _converters.to_datetime,
-        "timespan": _converters.to_timedelta,
-        "decimal": Decimal
-    }
+    convertion_funcs = {"datetime": _converters.to_datetime, "timespan": _converters.to_timedelta, "decimal": Decimal}
+
+    pandas_funcs = {"datetime": to_pandas_datetime, "timespan": to_pandas_timedelta}
 
     def __init__(self, columns, row):
         self._value_by_name = {}
@@ -61,18 +59,20 @@ class KustoResultRow(object):
                 # Azure-Data-Explorer(Kusto) supports 7 decimal digits, while the corresponding python types supports only 6.
                 # One example why one might want this precision, is when working with pandas.
                 # In that case, use azure.kusto.data.helpers.dataframe_from_result_table which takes into account the original value.
-                typed_value = KustoResultRow.convertion_funcs[column_type](value) if column_type in KustoResultRow.convertion_funcs else value
+                typed_value = (
+                    KustoResultRow.convertion_funcs[column_type](value)
+                    if column_type in KustoResultRow.convertion_funcs
+                    else value
+                )
 
                 # this is a special case where plain python will lose precision, so we keep the precise value hidden
                 # when transforming to pandas, we can use the hidden value to convert to precise pandas/numpy types
                 if HAS_PANDAS:
-                    if column_type == "datetime":
-                        self._hidden_values.append(to_pandas_datetime(value))
-                    elif column_type == "timespan":
-                        self._hidden_values.append(to_pandas_timedelta(value, typed_value))
-                    # Add column_types here as you add pandas conversion functions
-                    else:
-                        self._hidden_values.append(value)
+                    self._hidden_values.append(
+                        KustoResultRow.pandas_funcs[column_type](value, typed_value)
+                        if column_type in KustoResultRow.pandas_funcs
+                        else value
+                    )
 
             self._value_by_index.append(typed_value)
             self._value_by_name[column.column_name] = typed_value

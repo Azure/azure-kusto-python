@@ -10,8 +10,7 @@ class ConverterTests(unittest.TestCase):
 
     def test_to_timestamp(self):
         """Happy path to test converter from TimeSpan to timedelta."""
-        # Test None
-        self.assertIsNone(to_timedelta(None))
+        # @Daniel
         # Test hours, minutes and seconds
         self.assertEqual(to_timedelta("00:00:00"), timedelta(seconds=0))
         self.assertEqual(to_timedelta("00:00:03"), timedelta(seconds=3))
@@ -49,7 +48,7 @@ class ConverterTests(unittest.TestCase):
 
     def test_to_datetime(self):
         """ Tests datetime read by KustoResultIter """
-        self.assertIsNone(to_datetime(None))
+        # @Daniel
         self.assertIsNotNone(to_datetime("2016-06-07T16:00:00Z"))
 
     def test_to_datetime_fail(self):

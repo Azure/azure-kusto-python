@@ -393,11 +393,8 @@ range x from 1 to 10 step 1"""
         self.assertTrue(response.primary_results[0])
 
     @patch("requests.Session.post", side_effect=mocked_requests_post)
-    def test_null_values(self, mock_post):
+    def test_null_values_in_data(self, mock_post):
         """Tests response with null values in non nullable column types"""
         client = KustoClient("https://somecluster.kusto.windows.net")
         query = "PrimaryResultName"
-        try:
-            response = client.execute_query("PythonTest", query)
-        except TypeError:
-            self.fail("Exception thrown due to a null value")
+        response = client.execute_query("PythonTest", query)
