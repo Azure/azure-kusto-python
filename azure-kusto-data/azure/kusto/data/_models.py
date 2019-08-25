@@ -50,29 +50,24 @@ class KustoResultRow(object):
                     self._hidden_values.append(value)
                 continue
 
-            if value is None:
-                typed_value = None
-                if HAS_PANDAS:
-                    self._hidden_values.append(None)
-            else:
-                # If you are here to read this, you probably hit some datetime/timedelta inconsistencies.
-                # Azure-Data-Explorer(Kusto) supports 7 decimal digits, while the corresponding python types supports only 6.
-                # One example why one might want this precision, is when working with pandas.
-                # In that case, use azure.kusto.data.helpers.dataframe_from_result_table which takes into account the original value.
-                typed_value = (
-                    KustoResultRow.convertion_funcs[column_type](value)
-                    if column_type in KustoResultRow.convertion_funcs
+            # If you are here to read this, you probably hit some datetime/timedelta inconsistencies.
+            # Azure-Data-Explorer(Kusto) supports 7 decimal digits, while the corresponding python types supports only 6.
+            # One example why one might want this precision, is when working with pandas.
+            # In that case, use azure.kusto.data.helpers.dataframe_from_result_table which takes into account the original value.
+            typed_value = (
+                KustoResultRow.convertion_funcs[column_type](value)
+                if value is not None and column_type in KustoResultRow.convertion_funcs
+                else value
+            )
+
+            # This is a special case where plain python will lose precision, so we keep the precise value hidden.
+            # When transforming to pandas, we can use the hidden value to convert to precise pandas/numpy types
+            if HAS_PANDAS:
+                self._hidden_values.append(
+                    KustoResultRow.pandas_funcs[column_type](value, typed_value)
+                    if value is not None and column_type in KustoResultRow.pandas_funcs
                     else value
                 )
-
-                # This is a special case where plain python will lose precision, so we keep the precise value hidden.
-                # When transforming to pandas, we can use the hidden value to convert to precise pandas/numpy types
-                if HAS_PANDAS:
-                    self._hidden_values.append(
-                        KustoResultRow.pandas_funcs[column_type](value, typed_value)
-                        if column_type in KustoResultRow.pandas_funcs
-                        else value
-                    )
 
             self._value_by_index.append(typed_value)
             self._value_by_name[column.column_name] = typed_value
