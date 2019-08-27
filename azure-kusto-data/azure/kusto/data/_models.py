@@ -32,7 +32,8 @@ class KustoResultRow(object):
 
     convertion_funcs = {"datetime": _converters.to_datetime, "timespan": _converters.to_timedelta, "decimal": Decimal}
 
-    pandas_funcs = {"datetime": to_pandas_datetime, "timespan": to_pandas_timedelta}
+    if HAS_PANDAS:
+        pandas_funcs = {"datetime": to_pandas_datetime, "timespan": to_pandas_timedelta}
 
     def __init__(self, columns, row):
         self._value_by_name = {}
