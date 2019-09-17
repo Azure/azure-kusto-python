@@ -4,6 +4,7 @@ import base64
 import random
 import uuid
 import os
+import time
 import tempfile
 
 from azure.storage.common import CloudStorageAccount
@@ -40,7 +41,9 @@ class KustoIngestClient(object):
         if not isinstance(df, DataFrame):
             raise ValueError("Expected DataFrame instance, found {}".format(type(df)))
 
-        file_name = "df_{guid}_{pid}.csv.gz".format(guid=uuid.uuid4(), pid=os.getpid())
+        file_name = "df_{guid}_{timestamp}_{pid}.csv.gz".format(
+            guid=uuid.uuid4(), timestamp=int(time.time()), pid=os.getpid()
+        )
         temp_file_path = os.path.join(tempfile.gettempdir(), file_name)
 
         df.to_csv(temp_file_path, index=False, encoding="utf-8", header=False, compression="gzip")

@@ -97,6 +97,7 @@ def request_callback(request):
 class KustoIngestClientTests(unittest.TestCase):
     MOCKED_UUID_4 = "1111-111111-111111-1111"
     MOCKED_PID = 64
+    MOCKED_TIME = 100
 
     @responses.activate
     @patch("azure.kusto.data.security._AadHelper.acquire_authorization_header", return_value=None)
@@ -164,9 +165,10 @@ class KustoIngestClientTests(unittest.TestCase):
     @patch("azure.storage.blob.BlockBlobService.create_blob_from_path")
     @patch("azure.storage.queue.QueueService.put_message")
     @patch("uuid.uuid4", return_value=MOCKED_UUID_4)
+    @patch("time.time", return_value=MOCKED_TIME)
     @patch("os.getpid", return_value=MOCKED_PID)
     def test_simple_ingest_from_dataframe(
-        self, mock_pid, mock_uuid, mock_put_message_in_queue, mock_create_blob_from_path
+        self, mock_pid, mock_time, mock_uuid, mock_put_message_in_queue, mock_create_blob_from_path
     ):
         responses.add_callback(
             responses.POST,
@@ -196,7 +198,7 @@ class KustoIngestClientTests(unittest.TestCase):
         queued_message_json = json.loads(queued_message)
         expected_url = (
             "https://storageaccount.blob.core.windows.net/tempstorage/"
-            "database__table__1111-111111-111111-1111__df_1111-111111-111111-1111_64.csv.gz?sas"
+            "database__table__1111-111111-111111-1111__df_1111-111111-111111-1111_100_64.csv.gz?sas"
         )
         # mock_create_blob_from_stream
         assert queued_message_json["BlobPath"] == expected_url
@@ -213,9 +215,9 @@ class KustoIngestClientTests(unittest.TestCase):
 
         assert create_blob_from_path_mock_kwargs["container_name"] == "tempstorage"
         assert create_blob_from_path_mock_kwargs["file_path"] == os.path.join(
-            tempfile.gettempdir(), "df_1111-111111-111111-1111_64.csv.gz"
+            tempfile.gettempdir(), "df_1111-111111-111111-1111_100_64.csv.gz"
         )
         assert (
             create_blob_from_path_mock_kwargs["blob_name"]
-            == "database__table__1111-111111-111111-1111__df_1111-111111-111111-1111_64.csv.gz"
+            == "database__table__1111-111111-111111-1111__df_1111-111111-111111-1111_100_64.csv.gz"
         )
