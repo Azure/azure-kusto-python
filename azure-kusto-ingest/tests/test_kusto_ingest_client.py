@@ -23,7 +23,7 @@ UUID_REGEX = "[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12
 BLOB_NAME_REGEX = "database__table__" + UUID_REGEX + "__dataset.csv.gz"
 BLOB_URL_REGEX = (
     "https://storageaccount.blob.core.windows.net/tempstorage/database__table__" + UUID_REGEX +
-	"__dataset.csv.gz[?]sas"
+    "__dataset.csv.gz[?]sas"
 )
 
 
@@ -65,7 +65,7 @@ def request_callback(request):
                             "https://storageaccount.queue.core.windows.net/readyforaggregation-secured?sas",
                         ],
                         ["FailedIngestionsQueue",
-						 "https://storageaccount.queue.core.windows.net/failedingestions?sas"],
+                         "https://storageaccount.queue.core.windows.net/failedingestions?sas"],
                         [
                             "SuccessfulIngestionsQueue",
                             "https://storageaccount.queue.core.windows.net/successfulingestions?sas",
@@ -76,7 +76,7 @@ def request_callback(request):
                         ["TempStorage", "https://storageaccount.blob.core.windows.net/tempstorage?sas"],
                         ["TempStorage", "https://storageaccount.blob.core.windows.net/tempstorage?sas"],
                         ["IngestionsStatusTable",
-						 "https://storageaccount.table.core.windows.net/ingestionsstatus?sas"],
+                         "https://storageaccount.table.core.windows.net/ingestionsstatus?sas"],
                     ],
                 }
             ]
@@ -140,7 +140,7 @@ class KustoIngestClientTests(unittest.TestCase):
         queued_message = base64.b64decode(put_message_in_queue_mock_kwargs["content"].encode("utf-8")).decode("utf-8")
         queued_message_json = json.loads(queued_message)
         expected_url = ("https://storageaccount.blob.core.windows.net/tempstorage/"
-					   "database__table__1111-111111-111111-1111__dataset.csv.gz?sas")
+                        "database__table__1111-111111-111111-1111__dataset.csv.gz?sas")
         # mock_create_blob_from_stream
         assert (
             queued_message_json["BlobPath"]
@@ -199,7 +199,7 @@ class KustoIngestClientTests(unittest.TestCase):
         queued_message = base64.b64decode(put_message_in_queue_mock_kwargs["content"].encode("utf-8")).decode("utf-8")
         queued_message_json = json.loads(queued_message)
         expected_url = ("https://storageaccount.blob.core.windows.net/tempstorage/"
-			            "database__table__1111-111111-111111-1111__df_1111-111111-111111-1111_64.csv.gz?sas")
+                        "database__table__1111-111111-111111-1111__df_1111-111111-111111-1111_64.csv.gz?sas")
         # mock_create_blob_from_stream
         assert (
             queued_message_json["BlobPath"]
