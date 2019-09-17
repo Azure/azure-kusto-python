@@ -22,8 +22,7 @@ except:
 UUID_REGEX = "[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}"
 BLOB_NAME_REGEX = "database__table__" + UUID_REGEX + "__dataset.csv.gz"
 BLOB_URL_REGEX = (
-    "https://storageaccount.blob.core.windows.net/tempstorage/database__table__" + UUID_REGEX +
-    "__dataset.csv.gz[?]sas"
+    "https://storageaccount.blob.core.windows.net/tempstorage/database__table__" + UUID_REGEX + "__dataset.csv.gz[?]sas"
 )
 
 
@@ -64,8 +63,7 @@ def request_callback(request):
                             "SecuredReadyForAggregationQueue",
                             "https://storageaccount.queue.core.windows.net/readyforaggregation-secured?sas",
                         ],
-                        ["FailedIngestionsQueue",
-                         "https://storageaccount.queue.core.windows.net/failedingestions?sas"],
+                        ["FailedIngestionsQueue", "https://storageaccount.queue.core.windows.net/failedingestions?sas"],
                         [
                             "SuccessfulIngestionsQueue",
                             "https://storageaccount.queue.core.windows.net/successfulingestions?sas",
@@ -75,8 +73,7 @@ def request_callback(request):
                         ["TempStorage", "https://storageaccount.blob.core.windows.net/tempstorage?sas"],
                         ["TempStorage", "https://storageaccount.blob.core.windows.net/tempstorage?sas"],
                         ["TempStorage", "https://storageaccount.blob.core.windows.net/tempstorage?sas"],
-                        ["IngestionsStatusTable",
-                         "https://storageaccount.table.core.windows.net/ingestionsstatus?sas"],
+                        ["IngestionsStatusTable", "https://storageaccount.table.core.windows.net/ingestionsstatus?sas"],
                     ],
                 }
             ]
@@ -139,13 +136,12 @@ class KustoIngestClientTests(unittest.TestCase):
         assert put_message_in_queue_mock_kwargs["queue_name"] == "readyforaggregation-secured"
         queued_message = base64.b64decode(put_message_in_queue_mock_kwargs["content"].encode("utf-8")).decode("utf-8")
         queued_message_json = json.loads(queued_message)
-        expected_url = ("https://storageaccount.blob.core.windows.net/tempstorage/"
-                        "database__table__1111-111111-111111-1111__dataset.csv.gz?sas")
-        # mock_create_blob_from_stream
-        assert (
-            queued_message_json["BlobPath"]
-            == expected_url
+        expected_url = (
+            "https://storageaccount.blob.core.windows.net/tempstorage/"
+            "database__table__1111-111111-111111-1111__dataset.csv.gz?sas"
         )
+        # mock_create_blob_from_stream
+        assert queued_message_json["BlobPath"] == expected_url
         assert queued_message_json["DatabaseName"] == "database"
         assert queued_message_json["IgnoreSizeLimit"] == False
         assert queued_message_json["AdditionalProperties"]["format"] == "csv"
@@ -198,13 +194,12 @@ class KustoIngestClientTests(unittest.TestCase):
         assert put_message_in_queue_mock_kwargs["queue_name"] == "readyforaggregation-secured"
         queued_message = base64.b64decode(put_message_in_queue_mock_kwargs["content"].encode("utf-8")).decode("utf-8")
         queued_message_json = json.loads(queued_message)
-        expected_url = ("https://storageaccount.blob.core.windows.net/tempstorage/"
-                        "database__table__1111-111111-111111-1111__df_1111-111111-111111-1111_64.csv.gz?sas")
-        # mock_create_blob_from_stream
-        assert (
-            queued_message_json["BlobPath"]
-            == expected_url
+        expected_url = (
+            "https://storageaccount.blob.core.windows.net/tempstorage/"
+            "database__table__1111-111111-111111-1111__df_1111-111111-111111-1111_64.csv.gz?sas"
         )
+        # mock_create_blob_from_stream
+        assert queued_message_json["BlobPath"] == expected_url
         assert queued_message_json["DatabaseName"] == "database"
         assert queued_message_json["IgnoreSizeLimit"] == False
         assert queued_message_json["AdditionalProperties"]["format"] == "csv"
@@ -217,9 +212,8 @@ class KustoIngestClientTests(unittest.TestCase):
         import tempfile
 
         assert create_blob_from_path_mock_kwargs["container_name"] == "tempstorage"
-        assert (
-            create_blob_from_path_mock_kwargs["file_path"]
-            == os.path.join(tempfile.gettempdir(), "df_1111-111111-111111-1111_64.csv.gz")
+        assert create_blob_from_path_mock_kwargs["file_path"] == os.path.join(
+            tempfile.gettempdir(), "df_1111-111111-111111-1111_64.csv.gz"
         )
         assert (
             create_blob_from_path_mock_kwargs["blob_name"]
