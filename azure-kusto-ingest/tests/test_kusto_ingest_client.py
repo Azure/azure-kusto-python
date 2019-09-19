@@ -198,7 +198,7 @@ class KustoIngestClientTests(unittest.TestCase):
         queued_message_json = json.loads(queued_message)
         expected_url = (
             "https://storageaccount.blob.core.windows.net/tempstorage/"
-            "database__table__1111-111111-111111-1111__df_1111-111111-111111-1111_100_64.csv.gz?sas"
+            f"database__table__1111-111111-111111-1111__df_{id(df)}_100_64.csv.gz?sas"
         )
         # mock_create_blob_from_stream
         assert queued_message_json["BlobPath"] == expected_url
@@ -215,9 +215,9 @@ class KustoIngestClientTests(unittest.TestCase):
 
         assert create_blob_from_path_mock_kwargs["container_name"] == "tempstorage"
         assert create_blob_from_path_mock_kwargs["file_path"] == os.path.join(
-            tempfile.gettempdir(), "df_1111-111111-111111-1111_100_64.csv.gz"
+            tempfile.gettempdir(), f"df_{id(df)}_100_64.csv.gz"
         )
         assert (
             create_blob_from_path_mock_kwargs["blob_name"]
-            == "database__table__1111-111111-111111-1111__df_1111-111111-111111-1111_100_64.csv.gz"
+            == f"database__table__1111-111111-111111-1111__df_{id(df)}_100_64.csv.gz"
         )
