@@ -122,6 +122,16 @@ class IngestionBlobInfoTest(unittest.TestCase):
             IngestionProperties(
                 database="database", table="table", mapping="mapping", mappingReference="mappingReference"
             )
+        with self.assertRaises(KustoDuplicateMappingError):
+            IngestionProperties(
+                database="database", table="table", mapping="mapping",
+                ingestionMappingReference="ingestionMappingReference"
+            )
+        with self.assertRaises(KustoDuplicateMappingError):
+            IngestionProperties(
+                database="database", table="table", mappingReference="mapping",
+                ingestionMappingReference="ingestionMappingReference"
+            )
 
     def _verify_ingestion_blob_info_result(self, ingestion_blob_info):
         result = json.loads(ingestion_blob_info)

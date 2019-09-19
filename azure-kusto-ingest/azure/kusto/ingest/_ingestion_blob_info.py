@@ -49,6 +49,10 @@ class _IngestionBlobInfo:
         if ingestion_properties.mapping_reference:
             key = ingestion_properties.get_mapping_format() + "MappingReference"
             additional_properties[key] = ingestion_properties.mapping_reference
+        if ingestion_properties.ingestionMappingType:
+            additional_properties["ingestionMappingType"] = ingestion_properties.ingestionMappingType.name
+        if ingestion_properties.ingestionMappingReference:
+            additional_properties["ingestionMappingReference"] = ingestion_properties.ingestionMappingReference
         if ingestion_properties.validation_policy:
             additional_properties["ValidationPolicy"] = _convert_dict_to_json(ingestion_properties.validation_policy)
         if ingestion_properties.format:

@@ -13,6 +13,7 @@ from ._ingestion_properties import (
     CsvColumnMapping,
     JsonColumnMapping,
     IngestionProperties,
+    IngestionMappingType
 )
 from .exceptions import KustoMissingMappingReferenceError
 

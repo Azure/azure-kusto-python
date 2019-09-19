@@ -391,6 +391,7 @@ class KustoClient(object):
         :return: Kusto response data set.
         :rtype: azure.kusto.data._response.KustoResponseDataSet
         """
+        query = query.strip()
         if query.startswith("."):
             return self.execute_mgmt(database, query, properties)
         return self.execute_query(database, query, properties)

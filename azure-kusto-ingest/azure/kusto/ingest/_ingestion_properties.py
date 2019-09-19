@@ -21,6 +21,20 @@ class DataFormat(Enum):
     multijson = "multijson"
 
 
+class IngestionMappingType(Enum):
+    Csv = "Csv"
+    Tsv = "Tsv"
+    Scsv = "Scsv"
+    Sohsv = "Sohsv"
+    Psv = "Psv"
+    Txt = "Txt"
+    Json = "Json"
+    Singlejson = "Singlejson"
+    Avro = "Avro"
+    Parquet = "Parquet"
+    Multijson = "Multijson"
+
+
 class ValidationOptions(IntEnum):
     """Validation options to ingest command."""
 
@@ -102,6 +116,8 @@ class IngestionProperties:
         dataFormat=DataFormat.csv,
         mapping=None,
         mappingReference=None,
+        ingestionMappingType=None,
+        ingestionMappingReference=None,
         additionalTags=None,
         ingestIfNotExists=None,
         ingestByTags=None,
@@ -112,13 +128,16 @@ class IngestionProperties:
         validationPolicy=None,
         additionalProperties=None,
     ):
-        if mapping is not None and mappingReference is not None:
+        if (mapping is not None and (mappingReference is not None or ingestionMappingReference is not None)) or \
+                (mappingReference is not None and ingestionMappingReference is not None):
             raise KustoDuplicateMappingError()
         self.database = database
         self.table = table
         self.format = dataFormat
         self.mapping = mapping
         self.mapping_reference = mappingReference
+        self.ingestionMappingType = ingestionMappingType
+        self.ingestionMappingReference = ingestionMappingReference
         self.additional_tags = additionalTags
         self.ingest_if_not_exists = ingestIfNotExists
         self.ingest_by_tags = ingestByTags
@@ -135,5 +154,7 @@ class IngestionProperties:
             return DataFormat.json.name
         elif self.format == DataFormat.avro:
             return DataFormat.avro.name
+        elif self.format == DataFormat.parquet:
+            return DataFormat.parquet.name
         else:
             return DataFormat.csv.name

@@ -9,6 +9,7 @@ from azure.kusto.ingest import (
     StreamDescriptor,
     DataFormat,
     ReportLevel,
+    IngestionMappingType,
     KustoStreamingIngestClient,
 )
 
@@ -62,8 +63,12 @@ ingestion_props = IngestionProperties(
     database="{database_name}",
     table="{table_name}",
     dataFormat=DataFormat.csv,
-    # incase status update for success are also required
+    # in case status update for success are also required
     # reportLevel=ReportLevel.FailuresAndSuccesses,
+
+    #in case a mapping is required
+    # ingestionMappingReference="{json_mapping_that_already_exists_on_table}"
+    # ingestionMappingType=IngestionMappingType.Json
 )
 
 # ingest from file
