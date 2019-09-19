@@ -128,8 +128,9 @@ class IngestionProperties:
         validationPolicy=None,
         additionalProperties=None,
     ):
-        if (mapping is not None and (mappingReference is not None or ingestionMappingReference is not None)) or \
-                (mappingReference is not None and ingestionMappingReference is not None):
+        if (mapping is not None and (mappingReference is not None or ingestionMappingReference is not None)) or (
+            mappingReference is not None and ingestionMappingReference is not None
+        ):
             raise KustoDuplicateMappingError()
         self.database = database
         self.table = table

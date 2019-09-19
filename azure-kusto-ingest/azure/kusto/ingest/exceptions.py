@@ -10,8 +10,10 @@ class KustoDuplicateMappingError(KustoClientError):
     """
 
     def __init__(self):
-        message = "Ingestion properties contain more than one mapping " \
-                  "(i.e. both a mapping and a mapping reference or two references)."
+        message = (
+            "Ingestion properties contain more than one mapping "
+            "(i.e. both a mapping and a mapping reference or two references)."
+        )
         super(KustoDuplicateMappingError, self).__init__(message)
 
 

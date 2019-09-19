@@ -124,13 +124,17 @@ class IngestionBlobInfoTest(unittest.TestCase):
             )
         with self.assertRaises(KustoDuplicateMappingError):
             IngestionProperties(
-                database="database", table="table", mapping="mapping",
-                ingestionMappingReference="ingestionMappingReference"
+                database="database",
+                table="table",
+                mapping="mapping",
+                ingestionMappingReference="ingestionMappingReference",
             )
         with self.assertRaises(KustoDuplicateMappingError):
             IngestionProperties(
-                database="database", table="table", mappingReference="mapping",
-                ingestionMappingReference="ingestionMappingReference"
+                database="database",
+                table="table",
+                mappingReference="mapping",
+                ingestionMappingReference="ingestionMappingReference",
             )
 
     def _verify_ingestion_blob_info_result(self, ingestion_blob_info):
