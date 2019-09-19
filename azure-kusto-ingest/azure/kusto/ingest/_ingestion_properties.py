@@ -1,6 +1,7 @@
 """This file has all classes to define ingestion properties."""
 
 from enum import Enum, IntEnum
+import warnings
 
 from .exceptions import KustoDuplicateMappingError
 
@@ -26,7 +27,6 @@ class IngestionMappingType(Enum):
     Json = "Json"
     Avro = "Avro"
     Parquet = "Parquet"
-    SStream = "SStream"
 
 
 class ValidationOptions(IntEnum):
@@ -122,7 +122,15 @@ class IngestionProperties:
         validationPolicy=None,
         additionalProperties=None,
     ):
-        if mapping is not None and (mappingReference is not None or ingestionMappingReference is not None):
+        if mappingReference is not None:
+            warnings.warn(
+                "mappingReference will be deprecated in the following versions."
+                " Please use ingestionMappingReference instead",
+                PendingDeprecationWarning
+            )
+        if (mapping is not None and (mappingReference is not None or ingestionMappingReference is not None)) or (
+            mappingReference is not None and ingestionMappingReference is not None
+        ):
             raise KustoDuplicateMappingError()
         self.database = database
         self.table = table
@@ -140,14 +148,3 @@ class IngestionProperties:
         self.report_method = reportMethod
         self.validation_policy = validationPolicy
         self.additional_properties = additionalProperties
-
-    def get_mapping_format(self):
-        """Dictating the corresponding mapping to the format."""
-        if self.format in [DataFormat.json, DataFormat.singlejson, DataFormat.multijson]:
-            return DataFormat.json.name
-        elif self.format == DataFormat.avro:
-            return DataFormat.avro.name
-        elif self.format == DataFormat.parquet:
-            return DataFormat.parquet.name
-        else:
-            return DataFormat.csv.name
