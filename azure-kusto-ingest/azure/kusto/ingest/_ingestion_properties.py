@@ -23,16 +23,10 @@ class DataFormat(Enum):
 
 class IngestionMappingType(Enum):
     Csv = "Csv"
-    Tsv = "Tsv"
-    Scsv = "Scsv"
-    Sohsv = "Sohsv"
-    Psv = "Psv"
-    Txt = "Txt"
     Json = "Json"
-    Singlejson = "Singlejson"
     Avro = "Avro"
     Parquet = "Parquet"
-    Multijson = "Multijson"
+    SStream = "SStream"
 
 
 class ValidationOptions(IntEnum):
@@ -128,9 +122,7 @@ class IngestionProperties:
         validationPolicy=None,
         additionalProperties=None,
     ):
-        if (mapping is not None and (mappingReference is not None or ingestionMappingReference is not None)) or (
-            mappingReference is not None and ingestionMappingReference is not None
-        ):
+        if mapping is not None and (mappingReference is not None or ingestionMappingReference is not None):
             raise KustoDuplicateMappingError()
         self.database = database
         self.table = table
