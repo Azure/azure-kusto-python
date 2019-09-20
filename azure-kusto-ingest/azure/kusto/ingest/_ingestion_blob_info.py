@@ -47,10 +47,7 @@ class _IngestionBlobInfo:
             json_string = _convert_dict_to_json(ingestion_properties.mapping)
             additional_properties[ingestion_properties.get_mapping_format() + "Mapping"] = json_string
 
-        # mapping_reference will be deprecated in the following versions
-        if ingestion_properties.mapping_reference:
-            additional_properties["ingestionMappingReference"] = ingestion_properties.mapping_reference
-        elif ingestion_properties.ingestion_mapping_reference:
+        if ingestion_properties.ingestion_mapping_reference:
             additional_properties["ingestionMappingReference"] = ingestion_properties.ingestion_mapping_reference
         if ingestion_properties.ingestion_mapping_type:
             additional_properties["ingestionMappingType"] = ingestion_properties.ingestion_mapping_type.name

@@ -122,6 +122,7 @@ class IngestionProperties:
         validationPolicy=None,
         additionalProperties=None,
     ):
+        # mapping_reference will be deprecated in the following versions
         if mappingReference is not None:
             warnings.warn(
                 "mappingReference will be deprecated in the following versions."
@@ -136,9 +137,10 @@ class IngestionProperties:
         self.table = table
         self.format = dataFormat
         self.mapping = mapping
-        self.mapping_reference = mappingReference
         self.ingestion_mapping_type = ingestionMappingType
-        self.ingestion_mapping_reference = ingestionMappingReference
+        self.ingestion_mapping_reference = (
+            ingestionMappingReference if ingestionMappingReference is not None else mappingReference
+        )
         self.additional_tags = additionalTags
         self.ingest_if_not_exists = ingestIfNotExists
         self.ingest_by_tags = ingestByTags

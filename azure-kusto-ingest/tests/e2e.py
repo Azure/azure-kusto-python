@@ -415,7 +415,7 @@ def test_streaming_ingest_from_io_streams():
     bytes_stream = io.BytesIO(byte_sequence)
     ingestion_properties.format = DataFormat.JSON
 
-    ingestion_properties.mapping_reference = "JsonMapping"
+    ingestion_properties.ingestion_mapping_reference = "JsonMapping"
     ingest_client.ingest_from_stream(bytes_stream, ingestion_properties=ingestion_properties)
 
     str_sequence = u'{"rownumber": 0, "rowguid": "00000000-0000-0000-0001-020304050607", "xdouble": 0.0, "xfloat": 0.0, "xbool": 0, "xint16": 0, "xint32": 0, "xint64": 0, "xunit8": 0, "xuint16": 0, "xunit32": 0, "xunit64": 0, "xdate": "2014-01-01T01:01:01Z", "xsmalltext": "Zero", "xtext": "Zero", "xnumberAsText": "0", "xtime": "00:00:00", "xtextWithNulls": null, "xdynamicWithNulls": ""}'

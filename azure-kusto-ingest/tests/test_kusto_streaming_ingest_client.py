@@ -160,7 +160,7 @@ class KustoStreamingIngestClientTests(unittest.TestCase):
         except KustoMissingMappingReferenceError:
             pass
 
-        ingestion_properties.mapping_reference = "JsonMapping"
+        ingestion_properties.ingestion_mapping_reference = "JsonMapping"
         ingest_client.ingest_from_stream(bytes_stream, ingestion_properties=ingestion_properties)
 
         str_sequence = u'{"Name":"Ben","Age":"56","Weight":"75"}'
