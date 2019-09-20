@@ -9,24 +9,24 @@ from .exceptions import KustoDuplicateMappingError
 class DataFormat(Enum):
     """All data formats supported by Kusto."""
 
-    csv = "csv"
-    tsv = "tsv"
-    scsv = "scsv"
-    sohsv = "sohsv"
-    psv = "psv"
-    txt = "txt"
-    json = "json"
-    singlejson = "singlejson"
-    avro = "avro"
-    parquet = "parquet"
-    multijson = "multijson"
+    CSV = "csv"
+    TSV = "tsv"
+    SCSV = "scsv"
+    SOHSV = "sohsv"
+    PSV = "psv"
+    TXT = "txt"
+    JSON = "json"
+    SINGLEJSON = "singlejson"
+    AVRO = "avro"
+    PARQUET = "parquet"
+    MULTIJSON = "multijson"
 
 
 class IngestionMappingType(Enum):
-    Csv = "Csv"
-    Json = "Json"
-    Avro = "Avro"
-    Parquet = "Parquet"
+    CSV = "Csv"
+    JSON = "Json"
+    AVRO = "Avro"
+    PARQUET = "Parquet"
 
 
 class ValidationOptions(IntEnum):
@@ -107,7 +107,7 @@ class IngestionProperties:
         self,
         database,
         table,
-        dataFormat=DataFormat.csv,
+        dataFormat=DataFormat.CSV,
         mapping=None,
         mappingReference=None,
         ingestionMappingType=None,
@@ -137,8 +137,8 @@ class IngestionProperties:
         self.format = dataFormat
         self.mapping = mapping
         self.mapping_reference = mappingReference
-        self.ingestionMappingType = ingestionMappingType
-        self.ingestionMappingReference = ingestionMappingReference
+        self.ingestion_mapping_type = ingestionMappingType
+        self.ingestion_mapping_reference = ingestionMappingReference
         self.additional_tags = additionalTags
         self.ingest_if_not_exists = ingestIfNotExists
         self.ingest_by_tags = ingestByTags
@@ -151,11 +151,9 @@ class IngestionProperties:
 
     def get_mapping_format(self):
         """Dictating the corresponding mapping to the format."""
-        if self.format in [DataFormat.json, DataFormat.singlejson, DataFormat.multijson]:
-            return DataFormat.json.name
-        elif self.format == DataFormat.avro:
-            return DataFormat.avro.name
-        elif self.format == DataFormat.parquet:
-            return DataFormat.parquet.name
+        if self.format in [DataFormat.JSON, DataFormat.SINGLEJSON, DataFormat.MULTIJSON]:
+            return DataFormat.JSON.name
+        elif self.format == DataFormat.AVRO:
+            return DataFormat.AVRO.name
         else:
-            return DataFormat.csv.name
+            return DataFormat.CSV.name

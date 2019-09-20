@@ -62,7 +62,7 @@ client = KustoIngestClient(kcsb)
 ingestion_props = IngestionProperties(
     database="{database_name}",
     table="{table_name}",
-    dataFormat=DataFormat.csv,
+    dataFormat=DataFormat.CSV,
     # in case status update for success are also required
     # reportLevel=ReportLevel.FailuresAndSuccesses,
     # in case a mapping is required
@@ -147,7 +147,7 @@ cluster = "https://{cluster_name}.kusto.windows.net"
 
 client = KustoStreamingIngestClient(kcsb)
 
-ingestion_props = IngestionProperties(database="{database_name}", table="{table_name}", dataFormat=DataFormat.csv)
+ingestion_props = IngestionProperties(database="{database_name}", table="{table_name}", dataFormat=DataFormat.CSV)
 
 # ingest from file
 file_descriptor = FileDescriptor("{filename}.csv", 3333)  # 3333 is the raw size of the data in bytes.

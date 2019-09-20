@@ -32,7 +32,7 @@ class IngestionBlobInfoTest(unittest.TestCase):
         properties = IngestionProperties(
             database="database",
             table="table",
-            dataFormat=DataFormat.csv,
+            dataFormat=DataFormat.CSV,
             mapping=[CsvColumnMapping("ColumnName", "cslDataType", 1)],
             additionalTags=["tag"],
             ingestIfNotExists=["ingestIfNotExistTags"],
@@ -55,7 +55,7 @@ class IngestionBlobInfoTest(unittest.TestCase):
         properties = IngestionProperties(
             database="database",
             table="table",
-            dataFormat=DataFormat.csv,
+            dataFormat=DataFormat.CSV,
             mappingReference="csvMappingReference",
             additionalTags=["tag"],
             ingestIfNotExists=["ingestIfNotExistTags"],
@@ -78,7 +78,7 @@ class IngestionBlobInfoTest(unittest.TestCase):
         properties = IngestionProperties(
             database="database",
             table="table",
-            dataFormat=DataFormat.json,
+            dataFormat=DataFormat.JSON,
             mapping=[JsonColumnMapping("ColumnName", "jsonpath", "datatype")],
             additionalTags=["tag"],
             ingestIfNotExists=["ingestIfNotExistTags"],
@@ -101,7 +101,7 @@ class IngestionBlobInfoTest(unittest.TestCase):
         properties = IngestionProperties(
             database="database",
             table="table",
-            dataFormat=DataFormat.json,
+            dataFormat=DataFormat.JSON,
             mappingReference="jsonMappingReference",
             additionalTags=["tag"],
             ingestIfNotExists=["ingestIfNotExistTags"],

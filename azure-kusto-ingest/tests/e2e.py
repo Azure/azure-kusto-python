@@ -115,7 +115,7 @@ def test_csv_ingest_non_existing_table():
     csv_ingest_props = IngestionProperties(
         db_name,
         table_name,
-        dataFormat=DataFormat.csv,
+        dataFormat=DataFormat.CSV,
         mapping=Helpers.create_deft_table_csv_mappings(),
         reportLevel=ReportLevel.FailuresAndSuccesses,
     )
@@ -156,7 +156,7 @@ def test_json_ingest_existing_table():
     json_ingestion_props = IngestionProperties(
         db_name,
         table_name,
-        dataFormat=DataFormat.json,
+        dataFormat=DataFormat.JSON,
         mapping=Helpers.create_deft_table_json_mappings(),
         reportLevel=ReportLevel.FailuresAndSuccesses,
     )
@@ -197,7 +197,7 @@ def test_ingest_complicated_props():
     json_ingestion_props = IngestionProperties(
         db_name,
         table_name,
-        dataFormat=DataFormat.json,
+        dataFormat=DataFormat.JSON,
         mapping=Helpers.create_deft_table_json_mappings(),
         additionalTags=["a", "b"],
         ingestIfNotExists=["aaaa", "bbbb"],
@@ -243,7 +243,7 @@ def test_json_ingestion_ingest_by_tag():
     json_ingestion_props = IngestionProperties(
         db_name,
         table_name,
-        dataFormat=DataFormat.json,
+        dataFormat=DataFormat.JSON,
         mapping=Helpers.create_deft_table_json_mappings(),
         ingestIfNotExists=["ingestByTag"],
         reportLevel=ReportLevel.FailuresAndSuccesses,
@@ -280,7 +280,7 @@ def test_tsv_ingestion_csv_mapping():
     tsv_ingestion_props = IngestionProperties(
         db_name,
         table_name,
-        dataFormat=DataFormat.tsv,
+        dataFormat=DataFormat.TSV,
         mapping=Helpers.create_deft_table_csv_mappings(),
         reportLevel=ReportLevel.FailuresAndSuccesses,
     )
@@ -321,7 +321,7 @@ def test_streaming_ingest_from_opened_file():
 
     file_path = os.path.join(current_dir, *missing_path_parts)
     stream = open(file_path, "r")
-    ingestion_properties = IngestionProperties(database=db_name, table=table_name, dataFormat=DataFormat.csv)
+    ingestion_properties = IngestionProperties(database=db_name, table=table_name, dataFormat=DataFormat.CSV)
     ingest_client.ingest_from_stream(stream, ingestion_properties=ingestion_properties)
 
 
@@ -336,7 +336,7 @@ def test_streaming_ingest_form_csv_file():
 
     file_path = os.path.join(current_dir, *missing_path_parts)
 
-    ingestion_properties = IngestionProperties(database=db_name, table=table_name, dataFormat=DataFormat.csv)
+    ingestion_properties = IngestionProperties(database=db_name, table=table_name, dataFormat=DataFormat.CSV)
     ingest_client.ingest_from_file(file_path, ingestion_properties=ingestion_properties)
 
     path_parts = ["azure-kusto-ingest", "tests", "input", "dataset.csv.gz"]
@@ -352,7 +352,7 @@ def test_streaming_ingest_form_csv_file():
 
 @pytest.mark.run(order=8)
 def test_streaming_ingest_from_json_no_mapping():
-    ingestion_properties = IngestionProperties(database=db_name, table=table_name, dataFormat=DataFormat.json)
+    ingestion_properties = IngestionProperties(database=db_name, table=table_name, dataFormat=DataFormat.JSON)
     try:
         current_dir = os.getcwd()
         path_parts = ["azure-kusto-ingest", "tests", "input", "dataset.json"]
@@ -385,7 +385,7 @@ def test_streaming_ingest_from_json_file():
 
     file_path = os.path.join(current_dir, *missing_path_parts)
     ingestion_properties = IngestionProperties(
-        database=db_name, table=table_name, dataFormat=DataFormat.json, mappingReference="JsonMapping"
+        database=db_name, table=table_name, dataFormat=DataFormat.JSON, mappingReference="JsonMapping"
     )
     ingest_client.ingest_from_file(file_path, ingestion_properties=ingestion_properties)
 
@@ -402,7 +402,7 @@ def test_streaming_ingest_from_json_file():
 
 @pytest.mark.run(order=10)
 def test_streaming_ingest_from_io_streams():
-    ingestion_properties = IngestionProperties(database=db_name, table=table_name, dataFormat=DataFormat.csv)
+    ingestion_properties = IngestionProperties(database=db_name, table=table_name, dataFormat=DataFormat.CSV)
     byte_sequence = b'0,00000000-0000-0000-0001-020304050607,0,0,0,0,0,0,0,0,0,0,2014-01-01T01:01:01.0000000Z,Zero,"Zero",0,00:00:00,,null'
     bytes_stream = io.BytesIO(byte_sequence)
     ingest_client.ingest_from_stream(bytes_stream, ingestion_properties=ingestion_properties)
@@ -413,7 +413,7 @@ def test_streaming_ingest_from_io_streams():
 
     byte_sequence = b'{"rownumber": 0, "rowguid": "00000000-0000-0000-0001-020304050607", "xdouble": 0.0, "xfloat": 0.0, "xbool": 0, "xint16": 0, "xint32": 0, "xint64": 0, "xunit8": 0, "xuint16": 0, "xunit32": 0, "xunit64": 0, "xdate": "2014-01-01T01:01:01Z", "xsmalltext": "Zero", "xtext": "Zero", "xnumberAsText": "0", "xtime": "00:00:00", "xtextWithNulls": null, "xdynamicWithNulls": ""}'
     bytes_stream = io.BytesIO(byte_sequence)
-    ingestion_properties.format = DataFormat.json
+    ingestion_properties.format = DataFormat.JSON
 
     ingestion_properties.mapping_reference = "JsonMapping"
     ingest_client.ingest_from_stream(bytes_stream, ingestion_properties=ingestion_properties)
@@ -483,5 +483,5 @@ def test_streaming_ingest_from_dataframe():
         ]
     ]
     df = DataFrame(data=rows, columns=fields)
-    ingestion_properties = IngestionProperties(database=db_name, table=table_name, dataFormat=DataFormat.csv)
+    ingestion_properties = IngestionProperties(database=db_name, table=table_name, dataFormat=DataFormat.CSV)
     ingest_client.ingest_from_dataframe(df, ingestion_properties)

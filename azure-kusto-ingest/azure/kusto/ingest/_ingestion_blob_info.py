@@ -50,10 +50,10 @@ class _IngestionBlobInfo:
         # mapping_reference will be deprecated in the following versions
         if ingestion_properties.mapping_reference:
             additional_properties["ingestionMappingReference"] = ingestion_properties.mapping_reference
-        elif ingestion_properties.ingestionMappingReference:
-            additional_properties["ingestionMappingReference"] = ingestion_properties.ingestionMappingReference
-        if ingestion_properties.ingestionMappingType:
-            additional_properties["ingestionMappingType"] = ingestion_properties.ingestionMappingType.name
+        elif ingestion_properties.ingestion_mapping_reference:
+            additional_properties["ingestionMappingReference"] = ingestion_properties.ingestion_mapping_reference
+        if ingestion_properties.ingestion_mapping_type:
+            additional_properties["ingestionMappingType"] = ingestion_properties.ingestion_mapping_type.name
         if ingestion_properties.validation_policy:
             additional_properties["ValidationPolicy"] = _convert_dict_to_json(ingestion_properties.validation_policy)
         if ingestion_properties.format:

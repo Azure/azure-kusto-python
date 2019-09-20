@@ -115,7 +115,7 @@ class KustoIngestClientTests(unittest.TestCase):
         )
 
         ingest_client = KustoIngestClient("https://ingest-somecluster.kusto.windows.net")
-        ingestion_properties = IngestionProperties(database="database", table="table", dataFormat=DataFormat.csv)
+        ingestion_properties = IngestionProperties(database="database", table="table", dataFormat=DataFormat.CSV)
 
         # ensure test can work when executed from within directories
         current_dir = os.getcwd()
@@ -144,7 +144,7 @@ class KustoIngestClientTests(unittest.TestCase):
         )
         assert queued_message_json["DatabaseName"] == "database"
         assert queued_message_json["IgnoreSizeLimit"] == False
-        assert queued_message_json["AdditionalProperties"]["format"] == "csv"
+        assert queued_message_json["AdditionalProperties"]["format"] == "CSV"
         assert queued_message_json["FlushImmediately"] == False
         assert queued_message_json["TableName"] == "table"
         assert queued_message_json["RawDataSize"] > 0
@@ -177,7 +177,7 @@ class KustoIngestClientTests(unittest.TestCase):
         )
 
         ingest_client = KustoIngestClient("https://ingest-somecluster.kusto.windows.net")
-        ingestion_properties = IngestionProperties(database="database", table="table", dataFormat=DataFormat.csv)
+        ingestion_properties = IngestionProperties(database="database", table="table", dataFormat=DataFormat.CSV)
 
         from pandas import DataFrame
 
@@ -202,7 +202,7 @@ class KustoIngestClientTests(unittest.TestCase):
         )
         assert queued_message_json["DatabaseName"] == "database"
         assert queued_message_json["IgnoreSizeLimit"] == False
-        assert queued_message_json["AdditionalProperties"]["format"] == "csv"
+        assert queued_message_json["AdditionalProperties"]["format"] == "CSV"
         assert queued_message_json["FlushImmediately"] == False
         assert queued_message_json["TableName"] == "table"
         assert queued_message_json["RawDataSize"] > 0
