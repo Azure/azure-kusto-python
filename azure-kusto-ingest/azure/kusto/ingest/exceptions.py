@@ -3,18 +3,35 @@
 from azure.kusto.data.exceptions import KustoClientError
 
 
-class KustoDuplicateMappingError(KustoClientError):
+class KustoMappingAndMappingReferenceError(KustoClientError):
     """
-    Error to be raised when ingestion properties has both
-    ingestion mappings and ingestion mapping reference.
+    Error to be raised when ingestion properties include both
+    a mapping and a mapping reference
     """
 
     def __init__(self):
-        message = (
-            "Ingestion properties contain more than one mapping "
-            "(i.e. both a mapping and a mapping reference or two references)."
-        )
+        message = "Ingestion properties contain both an explicit mapping and a mapping reference."
+        super(KustoMappingAndMappingReferenceError, self).__init__(message)
+
+
+class KustoDuplicateMappingError(KustoClientError):
+    """
+    Error to be raised when ingestion properties include two explicit mappings.
+    """
+
+    def __init__(self):
+        message = "Ingestion properties contain two explicit mappings."
         super(KustoDuplicateMappingError, self).__init__(message)
+
+
+class KustoDuplicateMappingReferenceError(KustoClientError):
+    """
+    Error to be raised when ingestion properties include two mapping references.
+    """
+
+    def __init__(self):
+        message = "Ingestion properties contain two mapping references."
+        super(KustoDuplicateMappingReferenceError, self).__init__(message)
 
 
 class KustoMissingMappingReferenceError(KustoClientError):

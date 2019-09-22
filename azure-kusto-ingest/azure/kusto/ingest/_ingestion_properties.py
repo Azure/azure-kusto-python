@@ -3,7 +3,11 @@
 from enum import Enum, IntEnum
 import warnings
 
-from .exceptions import KustoDuplicateMappingError
+from .exceptions import (
+    KustoDuplicateMappingError,
+    KustoDuplicateMappingReferenceError,
+    KustoMappingAndMappingReferenceError
+)
 
 
 class DataFormat(Enum):
@@ -109,6 +113,7 @@ class IngestionProperties:
         table,
         dataFormat=DataFormat.CSV,
         mapping=None,
+        ingestionMapping=None,
         mappingReference=None,
         ingestionMappingType=None,
         ingestionMappingReference=None,
@@ -122,21 +127,40 @@ class IngestionProperties:
         validationPolicy=None,
         additionalProperties=None,
     ):
-        # mapping_reference will be deprecated in the following versions
+        # mapping_reference will be deprecated in the next major version
         if mappingReference is not None:
             warnings.warn(
-                "mappingReference will be deprecated in the following versions."
-                " Please use ingestionMappingReference instead",
+                """
+                mappingReference will be deprecated in the next major version.
+                Please use ingestionMappingReference instead
+                """,
                 PendingDeprecationWarning,
             )
-        if (mapping is not None and (mappingReference is not None or ingestionMappingReference is not None)) or (
-            mappingReference is not None and ingestionMappingReference is not None
-        ):
+
+        # mapping will be deprecated in the next major version
+        if mapping is not None:
+            warnings.warn(
+                """
+                mapping will be deprecated in the next major version.
+                Please use ingestionMapping instead
+                """,
+                PendingDeprecationWarning,
+            )
+
+        if mapping is not None and ingestionMapping is not None:
             raise KustoDuplicateMappingError()
+
+        mapping_exists = mapping is not None or ingestionMapping is not None
+        if mapping_exists and (mappingReference is not None or ingestionMappingReference is not None):
+            raise KustoMappingAndMappingReferenceError()
+
+        if mappingReference is not None and ingestionMappingReference is not None:
+            raise KustoDuplicateMappingReferenceError()
+
         self.database = database
         self.table = table
         self.format = dataFormat
-        self.mapping = mapping
+        self.ingestion_mapping = ingestionMapping if ingestionMapping is not None else mapping
         self.ingestion_mapping_type = ingestionMappingType
         self.ingestion_mapping_reference = (
             ingestionMappingReference if ingestionMappingReference is not None else mappingReference
@@ -150,12 +174,3 @@ class IngestionProperties:
         self.report_method = reportMethod
         self.validation_policy = validationPolicy
         self.additional_properties = additionalProperties
-
-    def get_mapping_format(self):
-        """Dictating the corresponding mapping to the format."""
-        if self.format in [DataFormat.JSON, DataFormat.SINGLEJSON, DataFormat.MULTIJSON]:
-            return DataFormat.JSON.name
-        elif self.format == DataFormat.AVRO:
-            return DataFormat.AVRO.name
-        else:
-            return DataFormat.CSV.name

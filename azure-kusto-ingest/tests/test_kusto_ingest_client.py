@@ -145,7 +145,7 @@ class KustoIngestClientTests(unittest.TestCase):
         assert queued_message_json["BlobPath"] == expected_url
         assert queued_message_json["DatabaseName"] == "database"
         assert queued_message_json["IgnoreSizeLimit"] == False
-        assert queued_message_json["AdditionalProperties"]["format"] == "CSV"
+        assert queued_message_json["AdditionalProperties"]["format"] == "csv"
         assert queued_message_json["FlushImmediately"] == False
         assert queued_message_json["TableName"] == "table"
         assert queued_message_json["RawDataSize"] > 0
@@ -204,7 +204,7 @@ class KustoIngestClientTests(unittest.TestCase):
         assert queued_message_json["BlobPath"] == expected_url
         assert queued_message_json["DatabaseName"] == "database"
         assert queued_message_json["IgnoreSizeLimit"] == False
-        assert queued_message_json["AdditionalProperties"]["format"] == "CSV"
+        assert queued_message_json["AdditionalProperties"]["format"] == "csv"
         assert queued_message_json["FlushImmediately"] == False
         assert queued_message_json["TableName"] == "table"
         assert queued_message_json["RawDataSize"] > 0
