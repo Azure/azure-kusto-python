@@ -6,7 +6,7 @@ import warnings
 from .exceptions import (
     KustoDuplicateMappingError,
     KustoDuplicateMappingReferenceError,
-    KustoMappingAndMappingReferenceError
+    KustoMappingAndMappingReferenceError,
 )
 
 

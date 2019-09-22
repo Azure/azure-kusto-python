@@ -7,7 +7,7 @@ from azure.kusto.ingest._ingestion_blob_info import _IngestionBlobInfo
 from azure.kusto.ingest.exceptions import (
     KustoDuplicateMappingError,
     KustoDuplicateMappingReferenceError,
-    KustoMappingAndMappingReferenceError
+    KustoMappingAndMappingReferenceError,
 )
 from azure.kusto.ingest import (
     BlobDescriptor,
@@ -124,10 +124,7 @@ class IngestionBlobInfoTest(unittest.TestCase):
         """Tests invalid ingestion properties."""
         with self.assertRaises(KustoDuplicateMappingError):
             IngestionProperties(
-                database="database",
-                table="table",
-                mapping="mapping",
-                ingestionMapping="ingestionMapping"
+                database="database", table="table", mapping="mapping", ingestionMapping="ingestionMapping"
             )
 
         with self.assertRaises(KustoMappingAndMappingReferenceError):
@@ -147,10 +144,7 @@ class IngestionBlobInfoTest(unittest.TestCase):
             )
         with self.assertRaises(KustoMappingAndMappingReferenceError):
             IngestionProperties(
-                database="database",
-                table="table",
-                mapping="mapping",
-                mappingReference="mappingReference",
+                database="database", table="table", mapping="mapping", mappingReference="mappingReference"
             )
         with self.assertRaises(KustoMappingAndMappingReferenceError):
             IngestionProperties(
