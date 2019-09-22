@@ -115,7 +115,7 @@ class KustoIngestClientTests(unittest.TestCase):
         )
 
         ingest_client = KustoIngestClient("https://ingest-somecluster.kusto.windows.net")
-        ingestion_properties = IngestionProperties(database="database", table="table", dataFormat=DataFormat.csv)
+        ingestion_properties = IngestionProperties(database="database", table="table", dataFormat=DataFormat.CSV)
 
         # ensure test can work when executed from within directories
         current_dir = os.getcwd()
@@ -178,7 +178,7 @@ class KustoIngestClientTests(unittest.TestCase):
         )
 
         ingest_client = KustoIngestClient("https://ingest-somecluster.kusto.windows.net")
-        ingestion_properties = IngestionProperties(database="database", table="table", dataFormat=DataFormat.csv)
+        ingestion_properties = IngestionProperties(database="database", table="table", dataFormat=DataFormat.CSV)
 
         from pandas import DataFrame
 

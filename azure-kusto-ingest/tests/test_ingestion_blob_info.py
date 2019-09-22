@@ -4,7 +4,11 @@ import json
 from uuid import UUID
 from six import assertRegex
 from azure.kusto.ingest._ingestion_blob_info import _IngestionBlobInfo
-from azure.kusto.ingest.exceptions import KustoDuplicateMappingError
+from azure.kusto.ingest.exceptions import (
+    KustoDuplicateMappingError,
+    KustoDuplicateMappingReferenceError,
+    KustoMappingAndMappingReferenceError,
+)
 from azure.kusto.ingest import (
     BlobDescriptor,
     IngestionProperties,
@@ -32,8 +36,8 @@ class IngestionBlobInfoTest(unittest.TestCase):
         properties = IngestionProperties(
             database="database",
             table="table",
-            dataFormat=DataFormat.csv,
-            mapping=[CsvColumnMapping("ColumnName", "cslDataType", 1)],
+            dataFormat=DataFormat.CSV,
+            ingestionMapping=[CsvColumnMapping("ColumnName", "cslDataType", 1)],
             additionalTags=["tag"],
             ingestIfNotExists=["ingestIfNotExistTags"],
             ingestByTags=["ingestByTags"],
@@ -55,7 +59,7 @@ class IngestionBlobInfoTest(unittest.TestCase):
         properties = IngestionProperties(
             database="database",
             table="table",
-            dataFormat=DataFormat.csv,
+            dataFormat=DataFormat.CSV,
             mappingReference="csvMappingReference",
             additionalTags=["tag"],
             ingestIfNotExists=["ingestIfNotExistTags"],
@@ -78,8 +82,8 @@ class IngestionBlobInfoTest(unittest.TestCase):
         properties = IngestionProperties(
             database="database",
             table="table",
-            dataFormat=DataFormat.json,
-            mapping=[JsonColumnMapping("ColumnName", "jsonpath", "datatype")],
+            dataFormat=DataFormat.JSON,
+            ingestionMapping=[JsonColumnMapping("ColumnName", "jsonpath", "datatype")],
             additionalTags=["tag"],
             ingestIfNotExists=["ingestIfNotExistTags"],
             ingestByTags=["ingestByTags"],
@@ -101,7 +105,7 @@ class IngestionBlobInfoTest(unittest.TestCase):
         properties = IngestionProperties(
             database="database",
             table="table",
-            dataFormat=DataFormat.json,
+            dataFormat=DataFormat.JSON,
             mappingReference="jsonMappingReference",
             additionalTags=["tag"],
             ingestIfNotExists=["ingestIfNotExistTags"],
@@ -120,7 +124,41 @@ class IngestionBlobInfoTest(unittest.TestCase):
         """Tests invalid ingestion properties."""
         with self.assertRaises(KustoDuplicateMappingError):
             IngestionProperties(
+                database="database", table="table", mapping="mapping", ingestionMapping="ingestionMapping"
+            )
+
+        with self.assertRaises(KustoMappingAndMappingReferenceError):
+            IngestionProperties(
+                database="database",
+                table="table",
+                mapping="mapping",
+                ingestionMappingReference="ingestionMappingReference",
+            )
+
+        with self.assertRaises(KustoMappingAndMappingReferenceError):
+            IngestionProperties(
+                database="database",
+                table="table",
+                ingestionMapping="ingestionMapping",
+                ingestionMappingReference="ingestionMappingReference",
+            )
+        with self.assertRaises(KustoMappingAndMappingReferenceError):
+            IngestionProperties(
                 database="database", table="table", mapping="mapping", mappingReference="mappingReference"
+            )
+        with self.assertRaises(KustoMappingAndMappingReferenceError):
+            IngestionProperties(
+                database="database",
+                table="table",
+                ingestionMapping="ingestionMapping",
+                mappingReference="mappingReference",
+            )
+        with self.assertRaises(KustoDuplicateMappingReferenceError):
+            IngestionProperties(
+                database="database",
+                table="table",
+                mappingReference="mappingReference",
+                ingestionMappingReference="ingestionMappingReference",
             )
 
     def _verify_ingestion_blob_info_result(self, ingestion_blob_info):

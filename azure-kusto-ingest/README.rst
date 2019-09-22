@@ -6,7 +6,7 @@ Microsoft Azure Kusto Ingest Library for Python
     from azure.kusto.data.request import KustoConnectionStringBuilder
     from azure.kusto.ingest import KustoIngestClient, IngestionProperties, FileDescriptor, BlobDescriptor, DataFormat
 
-    ingestion_props = IngestionProperties(database="{database_name}", table="{table_name}", dataFormat=DataFormat.csv)
+    ingestion_props = IngestionProperties(database="{database_name}", table="{table_name}", dataFormat=DataFormat.CSV)
     client = KustoIngestClient("https://ingest-{cluster_name}.kusto.windows.net")
 
     file_descriptor = FileDescriptor("{filename}.csv", 3333)  # 3333 is the raw size of the data in bytes.

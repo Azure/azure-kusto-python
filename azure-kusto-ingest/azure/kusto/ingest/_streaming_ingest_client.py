@@ -19,7 +19,7 @@ class KustoStreamingIngestClient(object):
     Tests are run using pytest.
     """
 
-    _mapping_required_formats = [DataFormat.json, DataFormat.singlejson, DataFormat.avro]
+    _mapping_required_formats = {DataFormat.JSON, DataFormat.SINGLEJSON, DataFormat.AVRO}
 
     def __init__(self, kcsb):
         """Kusto Streaming Ingest Client constructor.
@@ -45,7 +45,7 @@ class KustoStreamingIngestClient(object):
 
         fd = FileDescriptor(temp_file_path)
 
-        ingestion_properties.format = DataFormat.csv
+        ingestion_properties.format = DataFormat.CSV
 
         stream_descriptor = StreamDescriptor(fd.zipped_stream, fd.source_id, True)
 
@@ -88,7 +88,7 @@ class KustoStreamingIngestClient(object):
 
         if (
             ingestion_properties.format in self._mapping_required_formats
-            and ingestion_properties.mapping_reference is None
+            and ingestion_properties.ingestion_mapping_reference is None
         ):
             raise KustoMissingMappingReferenceError()
 
@@ -109,5 +109,5 @@ class KustoStreamingIngestClient(object):
             ingestion_properties.table,
             stream,
             ingestion_properties.format.name,
-            mapping_name=ingestion_properties.mapping_reference,
+            mapping_name=ingestion_properties.ingestion_mapping_reference,
         )

@@ -9,6 +9,7 @@ from azure.kusto.ingest import (
     StreamDescriptor,
     DataFormat,
     ReportLevel,
+    IngestionMappingType,
     KustoStreamingIngestClient,
 )
 
@@ -61,9 +62,12 @@ client = KustoIngestClient(kcsb)
 ingestion_props = IngestionProperties(
     database="{database_name}",
     table="{table_name}",
-    dataFormat=DataFormat.csv,
-    # incase status update for success are also required
+    dataFormat=DataFormat.CSV,
+    # in case status update for success are also required
     # reportLevel=ReportLevel.FailuresAndSuccesses,
+    # in case a mapping is required
+    # ingestionMappingReference="{json_mapping_that_already_exists_on_table}"
+    # ingestionMappingType=IngestionMappingType.Json
 )
 
 # ingest from file
@@ -143,7 +147,7 @@ cluster = "https://{cluster_name}.kusto.windows.net"
 
 client = KustoStreamingIngestClient(kcsb)
 
-ingestion_props = IngestionProperties(database="{database_name}", table="{table_name}", dataFormat=DataFormat.csv)
+ingestion_props = IngestionProperties(database="{database_name}", table="{table_name}", dataFormat=DataFormat.CSV)
 
 # ingest from file
 file_descriptor = FileDescriptor("{filename}.csv", 3333)  # 3333 is the raw size of the data in bytes.

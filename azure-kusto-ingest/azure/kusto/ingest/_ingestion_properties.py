@@ -1,24 +1,36 @@
 """This file has all classes to define ingestion properties."""
 
 from enum import Enum, IntEnum
+import warnings
 
-from .exceptions import KustoDuplicateMappingError
+from .exceptions import (
+    KustoDuplicateMappingError,
+    KustoDuplicateMappingReferenceError,
+    KustoMappingAndMappingReferenceError,
+)
 
 
 class DataFormat(Enum):
     """All data formats supported by Kusto."""
 
-    csv = "csv"
-    tsv = "tsv"
-    scsv = "scsv"
-    sohsv = "sohsv"
-    psv = "psv"
-    txt = "txt"
-    json = "json"
-    singlejson = "singlejson"
-    avro = "avro"
-    parquet = "parquet"
-    multijson = "multijson"
+    CSV = "csv"
+    TSV = "tsv"
+    SCSV = "scsv"
+    SOHSV = "sohsv"
+    PSV = "psv"
+    TXT = "txt"
+    JSON = "json"
+    SINGLEJSON = "singlejson"
+    AVRO = "avro"
+    PARQUET = "parquet"
+    MULTIJSON = "multijson"
+
+
+class IngestionMappingType(Enum):
+    CSV = "Csv"
+    JSON = "Json"
+    AVRO = "Avro"
+    PARQUET = "Parquet"
 
 
 class ValidationOptions(IntEnum):
@@ -99,9 +111,12 @@ class IngestionProperties:
         self,
         database,
         table,
-        dataFormat=DataFormat.csv,
+        dataFormat=DataFormat.CSV,
         mapping=None,
+        ingestionMapping=None,
         mappingReference=None,
+        ingestionMappingType=None,
+        ingestionMappingReference=None,
         additionalTags=None,
         ingestIfNotExists=None,
         ingestByTags=None,
@@ -112,13 +127,44 @@ class IngestionProperties:
         validationPolicy=None,
         additionalProperties=None,
     ):
-        if mapping is not None and mappingReference is not None:
+        # mapping_reference will be deprecated in the next major version
+        if mappingReference is not None:
+            warnings.warn(
+                """
+                mappingReference will be deprecated in the next major version.
+                Please use ingestionMappingReference instead
+                """,
+                PendingDeprecationWarning,
+            )
+
+        # mapping will be deprecated in the next major version
+        if mapping is not None:
+            warnings.warn(
+                """
+                mapping will be deprecated in the next major version.
+                Please use ingestionMapping instead
+                """,
+                PendingDeprecationWarning,
+            )
+
+        if mapping is not None and ingestionMapping is not None:
             raise KustoDuplicateMappingError()
+
+        mapping_exists = mapping is not None or ingestionMapping is not None
+        if mapping_exists and (mappingReference is not None or ingestionMappingReference is not None):
+            raise KustoMappingAndMappingReferenceError()
+
+        if mappingReference is not None and ingestionMappingReference is not None:
+            raise KustoDuplicateMappingReferenceError()
+
         self.database = database
         self.table = table
         self.format = dataFormat
-        self.mapping = mapping
-        self.mapping_reference = mappingReference
+        self.ingestion_mapping = ingestionMapping if ingestionMapping is not None else mapping
+        self.ingestion_mapping_type = ingestionMappingType
+        self.ingestion_mapping_reference = (
+            ingestionMappingReference if ingestionMappingReference is not None else mappingReference
+        )
         self.additional_tags = additionalTags
         self.ingest_if_not_exists = ingestIfNotExists
         self.ingest_by_tags = ingestByTags
@@ -128,12 +174,3 @@ class IngestionProperties:
         self.report_method = reportMethod
         self.validation_policy = validationPolicy
         self.additional_properties = additionalProperties
-
-    def get_mapping_format(self):
-        """Dictating the corresponding mapping to the format."""
-        if self.format in [DataFormat.json, DataFormat.singlejson, DataFormat.multijson]:
-            return DataFormat.json.name
-        elif self.format == DataFormat.avro:
-            return DataFormat.avro.name
-        else:
-            return DataFormat.csv.name

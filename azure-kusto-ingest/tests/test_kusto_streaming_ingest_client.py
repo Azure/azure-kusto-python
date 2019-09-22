@@ -54,7 +54,7 @@ class KustoStreamingIngestClientTests(unittest.TestCase):
         )
 
         ingest_client = KustoStreamingIngestClient("https://somecluster.kusto.windows.net")
-        ingestion_properties = IngestionProperties(database="database", table="table", dataFormat=DataFormat.csv)
+        ingestion_properties = IngestionProperties(database="database", table="table", dataFormat=DataFormat.CSV)
 
         # ensure test can work when executed from within directories
         current_dir = os.getcwd()
@@ -79,7 +79,7 @@ class KustoStreamingIngestClientTests(unittest.TestCase):
         ingest_client.ingest_from_file(file_path, ingestion_properties=ingestion_properties)
 
         ingestion_properties = IngestionProperties(
-            database="database", table="table", dataFormat=DataFormat.json, mappingReference="JsonMapping"
+            database="database", table="table", dataFormat=DataFormat.JSON, mappingReference="JsonMapping"
         )
 
         path_parts = ["azure-kusto-ingest", "tests", "input", "dataset.json"]
@@ -102,7 +102,7 @@ class KustoStreamingIngestClientTests(unittest.TestCase):
 
         ingest_client.ingest_from_file(file_path, ingestion_properties=ingestion_properties)
 
-        ingestion_properties = IngestionProperties(database="database", table="table", dataFormat=DataFormat.tsv)
+        ingestion_properties = IngestionProperties(database="database", table="table", dataFormat=DataFormat.TSV)
 
         path_parts = ["azure-kusto-ingest", "tests", "input", "dataset.tsv"]
         missing_path_parts = []
@@ -123,7 +123,7 @@ class KustoStreamingIngestClientTests(unittest.TestCase):
         )
 
         ingest_client = KustoStreamingIngestClient("https://somecluster.kusto.windows.net")
-        ingestion_properties = IngestionProperties(database="database", table="table", dataFormat=DataFormat.csv)
+        ingestion_properties = IngestionProperties(database="database", table="table", dataFormat=DataFormat.CSV)
 
         from pandas import DataFrame
 
@@ -142,7 +142,7 @@ class KustoStreamingIngestClientTests(unittest.TestCase):
         )
 
         ingest_client = KustoStreamingIngestClient("https://somecluster.kusto.windows.net")
-        ingestion_properties = IngestionProperties(database="database", table="table", dataFormat=DataFormat.csv)
+        ingestion_properties = IngestionProperties(database="database", table="table", dataFormat=DataFormat.CSV)
 
         byte_sequence = b"56,56,56"
         bytes_stream = io.BytesIO(byte_sequence)
@@ -154,13 +154,13 @@ class KustoStreamingIngestClientTests(unittest.TestCase):
 
         byte_sequence = b'{"Name":"Ben","Age":"56","Weight":"75"}'
         bytes_stream = io.BytesIO(byte_sequence)
-        ingestion_properties.format = DataFormat.json
+        ingestion_properties.format = DataFormat.JSON
         try:
             ingest_client.ingest_from_stream(bytes_stream, ingestion_properties=ingestion_properties)
         except KustoMissingMappingReferenceError:
             pass
 
-        ingestion_properties.mapping_reference = "JsonMapping"
+        ingestion_properties.ingestion_mapping_reference = "JsonMapping"
         ingest_client.ingest_from_stream(bytes_stream, ingestion_properties=ingestion_properties)
 
         str_sequence = u'{"Name":"Ben","Age":"56","Weight":"75"}'
