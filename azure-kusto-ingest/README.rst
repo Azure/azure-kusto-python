@@ -9,11 +9,11 @@ Microsoft Azure Kusto Ingest Library for Python
     ingestion_props = IngestionProperties(database="{database_name}", table="{table_name}", dataFormat=DataFormat.CSV)
     client = KustoIngestClient("https://ingest-{cluster_name}.kusto.windows.net")
 
-    file_descriptor = FileDescriptor("{filename}.csv", 3333)  # 3333 is the raw size of the data in bytes.
+    file_descriptor = FileDescriptor("{filename}.csv", 15360)  # in this example, the raw (uncompressed) size of the data is 15MB (15360 bytes)
     client.ingest_from_file(file_descriptor, ingestion_properties=ingestion_props)
     client.ingest_from_file("{filename}.csv", ingestion_properties=ingestion_props)
 
-    blob_descriptor = BlobDescriptor("https://{path_to_blob}.csv.gz?sas", 10)  # 10 is the raw size of the data in bytes.
+    blob_descriptor = BlobDescriptor("https://{path_to_blob}.csv.gz?sas", 51200)  # in this example, the raw (uncompressed) size of the data is 50MB (52100 bytes)
     client.ingest_from_blob(blob_descriptor, ingestion_properties=ingestion_props)
     
 
