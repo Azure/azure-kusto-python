@@ -468,7 +468,7 @@ class KustoClient(object):
 
     def _get_timeout(self, properties, default):
         if properties:
-            return properties.get_option(ClientRequestProperties.OptionServerTimeout, default)
+            return properties.get_option(ClientRequestProperties.request_timeout, default)
         return default
 
 
@@ -478,8 +478,9 @@ class ClientRequestProperties(object):
     Not all of the documented options are implemented. You are welcome to open an issue in case you need one of them.
     """
 
-    OptionDeferPartialQueryFailures = "deferpartialqueryfailures"  # TODO: Rename: results_defer_partial_query_failures
-    OptionServerTimeout = "servertimeout"  # TODO: Rename: request_timeout
+    results_defer_partial_query_failures = "deferpartialqueryfailures"
+    request_timeout = "servertimeout"
+    client_request_id = None
 
     def __init__(self):
         self._options = {}

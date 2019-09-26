@@ -14,10 +14,10 @@ class ClientRequestPropertiesTests(unittest.TestCase):
         timeout = timedelta(seconds=10)
 
         crp = ClientRequestProperties()
-        crp.set_option(ClientRequestProperties.OptionDeferPartialQueryFailures, defer)
-        crp.set_option(ClientRequestProperties.OptionServerTimeout, timeout)
+        crp.set_option(ClientRequestProperties.results_defer_partial_query_failures, defer)
+        crp.set_option(ClientRequestProperties.request_timeout, timeout)
 
         result = crp.to_json()
 
-        assert '"{0}": false'.format(crp.OptionDeferPartialQueryFailures) in result
-        assert '"{0}": "0:00:10"'.format(ClientRequestProperties.OptionServerTimeout) in result
+        assert '"{0}": false'.format(crp.results_defer_partial_query_failures) in result
+        assert '"{0}": "0:00:10"'.format(ClientRequestProperties.request_timeout) in result
