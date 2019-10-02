@@ -435,6 +435,11 @@ class KustoClient(object):
 
     def _execute(self, endpoint, database, query, payload, timeout, properties=None):
         """Executes given query against this client"""
+        if properties is not None:
+            client_request_id = properties.get_client_request_id() or str(uuid.uuid4())
+        else:
+            client_request_id = str(uuid.uuid4())
+
         request_headers = copy(self._request_headers)
         json_payload = None
         if not payload:
@@ -443,9 +448,9 @@ class KustoClient(object):
                 json_payload["properties"] = properties.to_json()
 
             request_headers["Content-Type"] = "application/json; charset=utf-8"
-            request_headers["x-ms-client-request-id"] = "KPC.execute;" + str(uuid.uuid4())
+            request_headers["x-ms-client-request-id"] = "KPC.execute;" + client_request_id
         else:
-            request_headers["x-ms-client-request-id"] = "KPC.execute_streaming_ingest;" + str(uuid.uuid4())
+            request_headers["x-ms-client-request-id"] = "KPC.execute_streaming_ingest;" + client_request_id
             request_headers["Content-Encoding"] = "gzip"
             if properties:
                 request_headers.update(json.loads(properties.to_json())["Options"])
@@ -480,11 +485,11 @@ class ClientRequestProperties(object):
 
     results_defer_partial_query_failures = "deferpartialqueryfailures"
     request_timeout = "servertimeout"
-    client_request_id = None
 
     def __init__(self):
         self._options = {}
         self._parameters = {}
+        self._client_request_id = None
 
     def set_parameter(self, name, value):
         """Sets a parameter's value"""
@@ -511,6 +516,15 @@ class ClientRequestProperties(object):
     def get_option(self, name, default_value):
         """Gets an option's value."""
         return self._options.get(name, default_value)
+
+    def set_client_request_id(self, value):
+        """Sets client_request_id's value"""
+        _assert_value_is_valid(value)
+        self._client_request_id = value
+
+    def get_client_request_id(self):
+        """Gets client_request_id's value."""
+        return self._client_request_id
 
     def to_json(self):
         """Safe serialization to a JSON string."""
