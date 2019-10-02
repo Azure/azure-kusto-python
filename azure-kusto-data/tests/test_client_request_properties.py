@@ -21,3 +21,7 @@ class ClientRequestPropertiesTests(unittest.TestCase):
 
         assert '"{0}": false'.format(crp.results_defer_partial_query_failures) in result
         assert '"{0}": "0:00:10"'.format(ClientRequestProperties.request_timeout) in result
+
+        assert crp.get_client_request_id() is None
+        crp.set_client_request_id("CRID")
+        assert crp.get_client_request_id() == "CRID"
