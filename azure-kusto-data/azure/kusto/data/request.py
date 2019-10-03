@@ -451,18 +451,15 @@ class KustoClient(object):
             client_request_id_prefix = "KPC.execute_streaming_ingest;"
             request_headers["Content-Encoding"] = "gzip"
 
+        request_headers["x-ms-client-request-id"] = client_request_id_prefix + str(uuid.uuid4())
+
         if properties is not None:
-            request_headers["x-ms-client-request-id"] = (
-                properties.client_request_id
-                if properties.client_request_id is not None
-                else client_request_id_prefix + str(uuid.uuid4())
-            )
+            if properties.client_request_id is not None:
+                request_headers["x-ms-client-request-id"] = properties.client_request_id
             if properties.application is not None:
                 request_headers["x-ms-app"] = properties.application
             if properties.user is not None:
                 request_headers["x-ms-user"] = properties.user
-        else:
-            request_headers["x-ms-client-request-id"] = client_request_id_prefix + str(uuid.uuid4())
 
         if self._auth_provider:
             request_headers["Authorization"] = self._auth_provider.acquire_authorization_header()
