@@ -335,9 +335,9 @@ class KustoClientTests(unittest.TestCase):
         query = """set truncationmaxrecords = 5;
 range x from 1 to 10 step 1"""
         properties = ClientRequestProperties()
-        properties.set_option(ClientRequestProperties.OptionDeferPartialQueryFailures, False)
+        properties.set_option(ClientRequestProperties.results_defer_partial_query_failures_option_name, False)
         self.assertRaises(KustoServiceError, client.execute_query, "PythonTest", query, properties)
-        properties.set_option(ClientRequestProperties.OptionDeferPartialQueryFailures, True)
+        properties.set_option(ClientRequestProperties.results_defer_partial_query_failures_option_name, True)
         response = client.execute_query("PythonTest", query, properties)
         self.assertEqual(response.errors_count, 1)
         self.assertIn("E_QUERY_RESULT_SET_TOO_LARGE", response.get_exceptions()[0])

@@ -442,13 +442,24 @@ class KustoClient(object):
             if properties:
                 json_payload["properties"] = properties.to_json()
 
+            client_request_id_prefix = "KPC.execute;"
             request_headers["Content-Type"] = "application/json; charset=utf-8"
-            request_headers["x-ms-client-request-id"] = "KPC.execute;" + str(uuid.uuid4())
         else:
-            request_headers["x-ms-client-request-id"] = "KPC.execute_streaming_ingest;" + str(uuid.uuid4())
-            request_headers["Content-Encoding"] = "gzip"
             if properties:
                 request_headers.update(json.loads(properties.to_json())["Options"])
+
+            client_request_id_prefix = "KPC.execute_streaming_ingest;"
+            request_headers["Content-Encoding"] = "gzip"
+
+        request_headers["x-ms-client-request-id"] = client_request_id_prefix + str(uuid.uuid4())
+
+        if properties is not None:
+            if properties.client_request_id is not None:
+                request_headers["x-ms-client-request-id"] = properties.client_request_id
+            if properties.application is not None:
+                request_headers["x-ms-app"] = properties.application
+            if properties.user is not None:
+                request_headers["x-ms-user"] = properties.user
 
         if self._auth_provider:
             request_headers["Authorization"] = self._auth_provider.acquire_authorization_header()
@@ -468,7 +479,7 @@ class KustoClient(object):
 
     def _get_timeout(self, properties, default):
         if properties:
-            return properties.get_option(ClientRequestProperties.OptionServerTimeout, default)
+            return properties.get_option(ClientRequestProperties.request_timeout_option_name, default)
         return default
 
 
@@ -478,12 +489,15 @@ class ClientRequestProperties(object):
     Not all of the documented options are implemented. You are welcome to open an issue in case you need one of them.
     """
 
-    OptionDeferPartialQueryFailures = "deferpartialqueryfailures"  # TODO: Rename: results_defer_partial_query_failures
-    OptionServerTimeout = "servertimeout"  # TODO: Rename: request_timeout
+    results_defer_partial_query_failures_option_name = "deferpartialqueryfailures"
+    request_timeout_option_name = "servertimeout"
 
     def __init__(self):
         self._options = {}
         self._parameters = {}
+        self.client_request_id = None
+        self.application = None
+        self.user = None
 
     def set_parameter(self, name, value):
         """Sets a parameter's value"""
