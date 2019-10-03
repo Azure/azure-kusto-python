@@ -435,11 +435,6 @@ class KustoClient(object):
 
     def _execute(self, endpoint, database, query, payload, timeout, properties=None):
         """Executes given query against this client"""
-        if properties is not None:
-            client_request_id = properties.get_client_request_id() or str(uuid.uuid4())
-        else:
-            client_request_id = str(uuid.uuid4())
-
         request_headers = copy(self._request_headers)
         json_payload = None
         if not payload:
@@ -447,13 +442,27 @@ class KustoClient(object):
             if properties:
                 json_payload["properties"] = properties.to_json()
 
+            client_request_id_prefix = "KPC.execute;"
             request_headers["Content-Type"] = "application/json; charset=utf-8"
-            request_headers["x-ms-client-request-id"] = "KPC.execute;" + client_request_id
         else:
-            request_headers["x-ms-client-request-id"] = "KPC.execute_streaming_ingest;" + client_request_id
-            request_headers["Content-Encoding"] = "gzip"
             if properties:
                 request_headers.update(json.loads(properties.to_json())["Options"])
+
+            client_request_id_prefix = "KPC.execute_streaming_ingest;"
+            request_headers["Content-Encoding"] = "gzip"
+
+        if properties is not None:
+            request_headers["x-ms-client-request-id"] = (
+                properties.client_request_id
+                if properties.client_request_id is not None
+                else client_request_id_prefix + str(uuid.uuid4())
+            )
+            if properties.application is not None:
+                request_headers["x-ms-app"] = properties.application
+            if properties.user is not None:
+                request_headers["x-ms-user"] = properties.user
+        else:
+            request_headers["x-ms-client-request-id"] = client_request_id_prefix + str(uuid.uuid4())
 
         if self._auth_provider:
             request_headers["Authorization"] = self._auth_provider.acquire_authorization_header()
@@ -473,7 +482,7 @@ class KustoClient(object):
 
     def _get_timeout(self, properties, default):
         if properties:
-            return properties.get_option(ClientRequestProperties.request_timeout, default)
+            return properties.get_option(ClientRequestProperties.request_timeout_option_name, default)
         return default
 
 
@@ -483,13 +492,15 @@ class ClientRequestProperties(object):
     Not all of the documented options are implemented. You are welcome to open an issue in case you need one of them.
     """
 
-    results_defer_partial_query_failures = "deferpartialqueryfailures"
-    request_timeout = "servertimeout"
+    results_defer_partial_query_failures_option_name = "deferpartialqueryfailures"
+    request_timeout_option_name = "servertimeout"
 
     def __init__(self):
         self._options = {}
         self._parameters = {}
-        self._client_request_id = None
+        self.client_request_id = None
+        self.application = None
+        self.user = None
 
     def set_parameter(self, name, value):
         """Sets a parameter's value"""
@@ -516,15 +527,6 @@ class ClientRequestProperties(object):
     def get_option(self, name, default_value):
         """Gets an option's value."""
         return self._options.get(name, default_value)
-
-    def set_client_request_id(self, value):
-        """Sets client_request_id's value"""
-        _assert_value_is_valid(value)
-        self._client_request_id = value
-
-    def get_client_request_id(self):
-        """Gets client_request_id's value."""
-        return self._client_request_id
 
     def to_json(self):
         """Safe serialization to a JSON string."""
