@@ -32,6 +32,12 @@ class KustoServiceError(KustoError):
         return self.kusto_response
 
 
+class KustoInvalidAadAuthorityUriError(KustoError):
+    """Raised when AadAuthorityUri environment variable is set but invalid"""
+
+    pass
+
+
 class KustoClientError(KustoError):
     """Raised when a Kusto client is unable to send or complete a request."""
 
