@@ -1,6 +1,5 @@
 """A module to acquire tokens from AAD."""
 import os
-import urllib
 from enum import Enum, unique
 from datetime import timedelta, datetime
 import webbrowser
@@ -32,10 +31,16 @@ class _AadHelper(object):
             return
 
         authority = kcsb.authority_id or "common"
-        auth_context = _fetch_and_validate_aad_authority_uri() + authority
+
+        aad_authority_uri = (
+            os.environ["AadAuthorityUri"] if "AadAuthorityUri" in os.environ else "https://login.microsoftonline.com/"
+        )
+        full_authority_uri = (
+            aad_authority_uri + authority if aad_authority_uri.endswith("/") else aad_authority_uri + "/" + authority
+        )
 
         self._kusto_cluster = "{0.scheme}://{0.hostname}".format(urlparse(kcsb.data_source))
-        self._adal_context = AuthenticationContext(auth_context)
+        self._adal_context = AuthenticationContext(full_authority_uri)
         self._username = None
         if all([kcsb.aad_user_id, kcsb.password]):
             self._authentication_method = AuthenticationMethod.aad_username_password
@@ -115,15 +120,6 @@ class _AadHelper(object):
             )
 
         return _get_header_from_dict(token)
-
-
-def _fetch_and_validate_aad_authority_uri():
-    if "AadAuthorityUri" not in os.environ:
-        return "https://login.microsoftonline.com/"
-
-    aad_authority_uri = os.environ.get("AadAuthorityUri")
-
-    return aad_authority_uri if aad_authority_uri.endswith("/") else aad_authority_uri + "/"
 
 
 def _get_header_from_dict(token):
