@@ -123,16 +123,7 @@ def _fetch_and_validate_aad_authority_uri():
 
     aad_authority_uri = os.environ.get("AadAuthorityUri")
 
-    token = urllib.parse.urlparse(aad_authority_uri)
-
-    if not all([token.scheme == "https", token.netloc, token.path in ["", "/"]]):
-        raise KustoInvalidAadAuthorityUriError(
-            "Invalid Environment Variable. Please set a valid AadAuthority https uri. aad_authority_uri: {0}".format(
-                aad_authority_uri
-            )
-        )
-
-    return aad_authority_uri if token.path == "/" else aad_authority_uri + "/"
+    return aad_authority_uri if aad_authority_uri.endswith("/") else aad_authority_uri + "/"
 
 
 def _get_header_from_dict(token):
