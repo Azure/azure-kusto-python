@@ -10,7 +10,7 @@ import dateutil.parser
 from adal import AuthenticationContext, AdalError
 from adal.constants import TokenResponseFields, OAuth2DeviceCodeResponseParameters
 
-from .exceptions import KustoClientError, KustoAuthenticationError, KustoInvalidAadAuthorityUriError
+from .exceptions import KustoClientError, KustoAuthenticationError
 
 
 @unique
