@@ -486,7 +486,6 @@ class KustoClient(object):
 class ClientRequestProperties(object):
     """This class is a POD used by client making requests to describe specific needs from the service executing the requests.
     For more information please look at: https://docs.microsoft.com/en-us/azure/kusto/api/netfx/request-properties
-    Not all of the documented options are implemented. You are welcome to open an issue in case you need one of them.
     """
 
     results_defer_partial_query_failures_option_name = "deferpartialqueryfailures"
