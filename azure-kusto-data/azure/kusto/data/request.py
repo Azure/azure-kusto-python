@@ -475,6 +475,14 @@ class KustoClient(object):
                 return KustoResponseDataSetV2(response.json())
             return KustoResponseDataSetV1(response.json())
 
+        if payload:
+            raise KustoServiceError(
+                "An error occurred while trying to ingest: Status: {}, Reason: {}, Text: {}".format(
+                    response.status_code, response.reason, response.text
+                ),
+                response,
+            )
+
         raise KustoServiceError([response.json()], response)
 
     def _get_timeout(self, properties, default):
