@@ -477,8 +477,8 @@ class KustoClient(object):
 
         if payload:
             raise KustoServiceError(
-                "An error occurred while trying to ingest: Status: {}, Reason: {}, Text: {}".format(
-                    response.status_code, response.reason, response.text
+                "An error occurred while trying to ingest: Status: {0.status_code}, Reason: {0.reason}, Text: {0.text}".format(
+                    response
                 ),
                 response,
             )
