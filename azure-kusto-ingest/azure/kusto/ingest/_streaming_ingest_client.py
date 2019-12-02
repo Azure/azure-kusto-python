@@ -19,7 +19,7 @@ class KustoStreamingIngestClient(object):
     Tests are run using pytest.
     """
 
-    _mapping_required_formats = {DataFormat.JSON, DataFormat.SINGLEJSON, DataFormat.AVRO}
+    _mapping_required_formats = {DataFormat.JSON, DataFormat.SINGLEJSON, DataFormat.AVRO, DataFormat.MULTIJSON}
 
     def __init__(self, kcsb):
         """Kusto Streaming Ingest Client constructor.
