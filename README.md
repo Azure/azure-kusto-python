@@ -12,10 +12,10 @@
 
 https://github.com/Azure/azure-kusto-ingestion-tools/tree/master/kit
 
-[*azure-kusto-ingestion-tools*]("https://github.com/Azure/azure-kusto-ingestion-tools/tree/master/kit")  a simple toolkit to help with ingestions, available here
+[*azure-kusto-ingestion-tools*]("https://github.com/Azure/azure-kusto-ingestion-tools/tree/master/kit")  a simple toolkit to help with ingestions, available here<br>
 
 [![PyPI version](https://badge.fury.io/py/azure-kusto-ingestion-tools.svg)](https://badge.fury.io/py/azure-kusto-ingestion-tools)
-[![Downloads](https://pepy.tech/badge/azure-kusto-ingestion-tools)](https://pepy.tech/project/azure-kusto-ingestion-tools)
+[![Downloads](https://pepy.tech/badge/azure-kusto-ingestion-tools)](https://pepy.tech/project/azure-kusto-ingestion-tools)<br>
 
 ## Install
 ### Option 1: Via PyPi
