@@ -47,4 +47,9 @@ def dataframe_from_result_table(table):
     columns = [col.column_name for col in table.columns]
     frame = pd.DataFrame(table._rows, columns=columns)
 
+    # fix types
+    for col in table.columns:
+        if col.column_type == "bool":
+            frame[col.column_name] = frame[col.column_name].astype(bool)
+
     return frame
