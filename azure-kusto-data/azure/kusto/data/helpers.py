@@ -32,7 +32,6 @@ def to_pandas_timedelta(raw_value, timedelta_value):
 def dataframe_from_result_table(table):
     import pandas as pd
     from ._models import KustoResultTable
-    from dateutil.tz import UTC
 
     """Converts Kusto tables into pandas DataFrame.
     :param azure.kusto.data._models.KustoResultTable table: Table received from the response.
