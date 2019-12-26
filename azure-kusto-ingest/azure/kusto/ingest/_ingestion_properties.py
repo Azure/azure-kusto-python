@@ -24,6 +24,8 @@ class DataFormat(Enum):
     AVRO = "avro"
     PARQUET = "parquet"
     MULTIJSON = "multijson"
+    ORC = "orc"
+    TSVE = "tsve"
 
 
 class IngestionMappingType(Enum):
@@ -31,6 +33,7 @@ class IngestionMappingType(Enum):
     JSON = "Json"
     AVRO = "Avro"
     PARQUET = "Parquet"
+    ORC = "Orc"
 
 
 class ValidationOptions(IntEnum):
