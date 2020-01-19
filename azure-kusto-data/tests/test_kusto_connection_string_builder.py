@@ -3,7 +3,7 @@
 from uuid import uuid4
 import unittest
 from azure.kusto.data.request import KustoConnectionStringBuilder
-
+from azure.kusto.data.security import AuthenticationMethod
 
 class KustoConnectionStringBuilderTests(unittest.TestCase):
     """Tests class for KustoConnectionStringBuilder."""
@@ -247,3 +247,30 @@ class KustoConnectionStringBuilderTests(unittest.TestCase):
             "Data Source=localhost;AAD Federated Security=True;Authority Id=common;User Token=%s"
             % self.PASSWORDS_REPLACEMENT,
         )
+
+    def test_add_msi(self):
+        client_guid = "kjhjk"
+        object_guid = "87687687"
+        res_guid = "kajsdghdijewhag"
+
+        kcsb = [
+            KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication("localhost"),
+            KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication("localhost", AuthenticationMethod.msi_client_id_type, client_guid),
+            KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication("localhost", AuthenticationMethod.msi_object_id_type, object_guid),
+            KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication("localhost", AuthenticationMethod.msi_res_id_type, res_guid)
+        ]
+
+        assert kcsb[0].msi_type == AuthenticationMethod.msi_default_type.value
+        assert kcsb[0].msi_id == ""
+        assert kcsb[1].msi_type == AuthenticationMethod.msi_client_id_type.value
+        assert kcsb[1].msi_id == client_guid
+        assert kcsb[2].msi_type == AuthenticationMethod.msi_object_id_type.value
+        assert kcsb[2].msi_id == object_guid
+        assert kcsb[3].msi_type == AuthenticationMethod.msi_res_id_type.value
+        assert kcsb[3].msi_id == res_guid
+
+        try:
+            option = "incorrect"
+            fault = KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication("localhost", option, "some id")
+        except Exception as e:
+            assert str(e).index(option) > -1

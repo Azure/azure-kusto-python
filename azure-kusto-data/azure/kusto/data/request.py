@@ -10,7 +10,7 @@ from copy import copy
 import requests
 from requests.adapters import HTTPAdapter
 
-from .security import _AadHelper
+from .security import _AadHelper, AuthenticationMethod
 from .exceptions import KustoServiceError
 from ._response import KustoResponseDataSetV1, KustoResponseDataSetV2
 from ._version import VERSION
@@ -37,9 +37,8 @@ class KustoConnectionStringBuilder(object):
         authority_id = "Authority Id"
         application_token = "Application Token"
         user_token = "User Token"
-
-        # This ordering is needed only for python 2.7 . Once it gets to end of life we can omit the ordering as it is applied by default in python 3.4 and above.
-        __order__ = "data_source, aad_federated_security, aad_user_id, password, application_client_id, application_key, application_certificate, application_certificate_thumbprint, authority_id, application_token, user_token"
+        msi_type = "Managed Service Identity Type"
+        msi_id = "Assigned Managed Service Identity ID"
 
         @classmethod
         def parse(cls, key):
@@ -67,6 +66,10 @@ class KustoConnectionStringBuilder(object):
                 return cls.application_token
             if key in ["user token", "usertoken", "usrtoken"]:
                 return cls.user_token
+            if key in ["msi_type"]:
+                return cls.msi_type
+            if key in ["msi id"]:
+                return cls.msi_id
             raise KeyError(key)
 
         def is_secret(self):
@@ -92,6 +95,8 @@ class KustoConnectionStringBuilder(object):
                 self.authority_id,
                 self.application_token,
                 self.user_token,
+                self.msi_type,
+                self.msi_id,
             ]
 
         def is_bool_type(self):
@@ -225,7 +230,7 @@ class KustoConnectionStringBuilder(object):
     @classmethod
     def with_aad_application_token_authentication(cls, connection_string, application_token):
         """Creates a KustoConnection string builder that will authenticate with AAD application and
-        a certificate credentials.
+        an aoolication token.
         :param str connection_string: Kusto connection string should by of the format:
         https://<clusterName>.kusto.windows.net
         :param str application_token: AAD application token.
@@ -247,6 +252,33 @@ class KustoConnectionStringBuilder(object):
         kcsb = cls(connection_string)
         kcsb[kcsb.ValidKeywords.aad_federated_security] = True
         kcsb[kcsb.ValidKeywords.authority_id] = authority_id
+
+        return kcsb
+
+    @classmethod
+    def with_aad_managed_service_identity_authentication(cls, connection_string, user_assigned_id_type=AuthenticationMethod.msi_default_type, user_assigned_id=None):
+        """"Creates a KustoConnection string builder that will authenticate with AAD application, using
+        an application token obtained from a Microsoft Service Identity endpoint. An optional user
+        assigned application ID can be added to the token.
+
+        :param str connection_string: Kusto connection string should by of the format: https://<clusterName>.kusto.windows.net
+        :param user_assigned_id_type: The type of MSI identity to obtain
+        :param str user_assigned_id: optional user_id. defaults to "None"
+        """
+
+        kcsb = cls(connection_string)
+        kcsb[kcsb.ValidKeywords.aad_federated_security] = True
+
+        if user_assigned_id_type == AuthenticationMethod.msi_default_type:
+            kcsb[kcsb.ValidKeywords.msi_type] = AuthenticationMethod.msi_default_type.value
+            kcsb[kcsb.ValidKeywords.msi_id] = ""
+        else:
+            _assert_value_is_valid(user_assigned_id)
+            if user_assigned_id_type not in [AuthenticationMethod.msi_client_id_type, AuthenticationMethod.msi_object_id_type, AuthenticationMethod.msi_res_id_type]:
+                raise Exception("Invalid user assigned MSI type: " + user_assigned_id_type)
+            else:
+                kcsb[kcsb.ValidKeywords.msi_type] = user_assigned_id_type.value
+                kcsb[kcsb.ValidKeywords.msi_id] = user_assigned_id
 
         return kcsb
 
@@ -323,6 +355,16 @@ class KustoConnectionStringBuilder(object):
     def application_token(self):
         """Application token."""
         return self._internal_dict.get(self.ValidKeywords.application_token)
+
+    @property
+    def msi_type(self):
+        """ A value stating the MSI identity type to obtain """
+        return self._internal_dict.get(self.ValidKeywords.msi_type)
+
+    @property
+    def msi_id(self):
+        """ A user assigned MSI ID to be obtained """
+        return self._internal_dict.get(self.ValidKeywords.msi_id)
 
     def __str__(self):
         dict_copy = self._internal_dict.copy()
