@@ -37,8 +37,8 @@ class KustoConnectionStringBuilder(object):
         authority_id = "Authority Id"
         application_token = "Application Token"
         user_token = "User Token"
-        msi_type = "Managed Service Identity Type"
-        msi_id = "Assigned Managed Service Identity ID"
+        msi_auth = "MSI Authentication"
+        msi_params = "MSI Params"
 
         @classmethod
         def parse(cls, key):
@@ -66,10 +66,10 @@ class KustoConnectionStringBuilder(object):
                 return cls.application_token
             if key in ["user token", "usertoken", "usrtoken"]:
                 return cls.user_token
+            if key in ["msi_auth"]:
+                return cls.msi_auth
             if key in ["msi_type"]:
-                return cls.msi_type
-            if key in ["msi id"]:
-                return cls.msi_id
+                return cls.msi_params
             raise KeyError(key)
 
         def is_secret(self):
@@ -95,13 +95,17 @@ class KustoConnectionStringBuilder(object):
                 self.authority_id,
                 self.application_token,
                 self.user_token,
-                self.msi_type,
-                self.msi_id,
             ]
+
+        def is_dict_type(self):
+            return self in [self.msi_params]
 
         def is_bool_type(self):
             """States whether a word is of type bool or not."""
-            return self in [self.aad_federated_security]
+            return self in [
+                self.aad_federated_security,
+                self.msi_auth,
+            ]
 
     def __init__(self, connection_string):
         """Creates new KustoConnectionStringBuilder.
@@ -144,6 +148,10 @@ class KustoConnectionStringBuilder(object):
         elif keyword.is_bool_type():
             if not isinstance(value, bool):
                 raise TypeError("Expected %s to be bool" % key)
+            self._internal_dict[keyword] = value
+        elif keyword.is_dict_type():
+            if not isinstance(value, dict):
+                raise TypeError("Expected %s to be dict" % key)
             self._internal_dict[keyword] = value
         else:
             raise KeyError("KustoConnectionStringBuilder supports only bools and strings.")
@@ -230,7 +238,7 @@ class KustoConnectionStringBuilder(object):
     @classmethod
     def with_aad_application_token_authentication(cls, connection_string, application_token):
         """Creates a KustoConnection string builder that will authenticate with AAD application and
-        an aoolication token.
+        an application token.
         :param str connection_string: Kusto connection string should by of the format:
         https://<clusterName>.kusto.windows.net
         :param str application_token: AAD application token.
@@ -256,29 +264,43 @@ class KustoConnectionStringBuilder(object):
         return kcsb
 
     @classmethod
-    def with_aad_managed_service_identity_authentication(cls, connection_string, user_assigned_id_type=AuthenticationMethod.msi_default_type, user_assigned_id=None):
+    def with_aad_managed_service_identity_authentication(cls, connection_string, client_id=None, object_id=None, msi_res_id=None, timeout=None):
         """"Creates a KustoConnection string builder that will authenticate with AAD application, using
         an application token obtained from a Microsoft Service Identity endpoint. An optional user
         assigned application ID can be added to the token.
 
         :param str connection_string: Kusto connection string should by of the format: https://<clusterName>.kusto.windows.net
-        :param user_assigned_id_type: The type of MSI identity to obtain
-        :param str user_assigned_id: optional user_id. defaults to "None"
+        :param client_id: an optional user assigned identity provided as an Azure ID of a client
+        :param object_id: an optional user assigned identity provided as an Azure ID of an object
+        :param msi_res_id: an optional user assigned identity provided as an Azure ID of an MSI resource
+        :param timeout: an optional timeout (seconds) to wait for an MSI Authentication to occur
         """
 
         kcsb = cls(connection_string)
-        kcsb[kcsb.ValidKeywords.aad_federated_security] = True
+        params = {"resource": kcsb.data_source}
+        exclusive_pcount = 0
 
-        if user_assigned_id_type == AuthenticationMethod.msi_default_type:
-            kcsb[kcsb.ValidKeywords.msi_type] = AuthenticationMethod.msi_default_type.value
-            kcsb[kcsb.ValidKeywords.msi_id] = ""
-        else:
-            _assert_value_is_valid(user_assigned_id)
-            if user_assigned_id_type not in [AuthenticationMethod.msi_client_id_type, AuthenticationMethod.msi_object_id_type, AuthenticationMethod.msi_res_id_type]:
-                raise Exception("Invalid user assigned MSI type: " + user_assigned_id_type)
-            else:
-                kcsb[kcsb.ValidKeywords.msi_type] = user_assigned_id_type.value
-                kcsb[kcsb.ValidKeywords.msi_id] = user_assigned_id
+        if timeout is not None:
+            params["timeout"] = timeout
+
+        if client_id is not None:
+            params["client_id"] = client_id
+            exclusive_pcount += 1
+
+        if object_id is not None:
+            params["object_id"] = object_id
+            exclusive_pcount += 1
+
+        if msi_res_id is not None:
+            params["msi_res_id"] = msi_res_id
+            exclusive_pcount += 1
+
+        if exclusive_pcount > 1:
+            raise ValueError("the following parameters are mutually exclusive and can not be provided at the same time: user_uid, object_id, msi_res_id")
+
+        kcsb[kcsb.ValidKeywords.aad_federated_security] = True
+        kcsb[kcsb.ValidKeywords.msi_auth] = True
+        kcsb[kcsb.ValidKeywords.msi_params] = params
 
         return kcsb
 
@@ -357,14 +379,14 @@ class KustoConnectionStringBuilder(object):
         return self._internal_dict.get(self.ValidKeywords.application_token)
 
     @property
-    def msi_type(self):
+    def msi_authentication(self):
         """ A value stating the MSI identity type to obtain """
-        return self._internal_dict.get(self.ValidKeywords.msi_type)
+        return self._internal_dict.get(self.ValidKeywords.msi_auth)
 
     @property
-    def msi_id(self):
+    def msi_parameters(self):
         """ A user assigned MSI ID to be obtained """
-        return self._internal_dict.get(self.ValidKeywords.msi_id)
+        return self._internal_dict.get(self.ValidKeywords.msi_params)
 
     def __str__(self):
         dict_copy = self._internal_dict.copy()

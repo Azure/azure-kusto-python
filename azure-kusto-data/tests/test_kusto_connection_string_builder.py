@@ -254,23 +254,23 @@ class KustoConnectionStringBuilderTests(unittest.TestCase):
         res_guid = "kajsdghdijewhag"
 
         kcsb = [
-            KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication("localhost"),
-            KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication("localhost", AuthenticationMethod.msi_client_id_type, client_guid),
-            KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication("localhost", AuthenticationMethod.msi_object_id_type, object_guid),
-            KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication("localhost", AuthenticationMethod.msi_res_id_type, res_guid)
+            KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication("localhost", timeout=1),
+            KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication("localhost", client_id=client_guid, timeout=1),
+            KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication("localhost", object_id=object_guid, timeout=1),
+            KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication("localhost", msi_res_id=res_guid, timeout=1)
         ]
 
-        assert kcsb[0].msi_type == AuthenticationMethod.msi_default_type.value
-        assert kcsb[0].msi_id == ""
-        assert kcsb[1].msi_type == AuthenticationMethod.msi_client_id_type.value
-        assert kcsb[1].msi_id == client_guid
-        assert kcsb[2].msi_type == AuthenticationMethod.msi_object_id_type.value
-        assert kcsb[2].msi_id == object_guid
-        assert kcsb[3].msi_type == AuthenticationMethod.msi_res_id_type.value
-        assert kcsb[3].msi_id == res_guid
+        assert kcsb[0].msi_authentication
+        assert kcsb[0].msi_parameters["resource"] == "localhost"
+        assert kcsb[0].msi_parameters["timeout"] == 1
+        assert kcsb[1].msi_authentication
+        assert kcsb[1].msi_parameters["client_id"] == client_guid
+        assert kcsb[2].msi_authentication
+        assert kcsb[2].msi_parameters["object_id"] == object_guid
+        assert kcsb[3].msi_authentication
+        assert kcsb[3].msi_parameters["msi_res_id"] == res_guid
 
         try:
-            option = "incorrect"
-            fault = KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication("localhost", option, "some id")
-        except Exception as e:
-            assert str(e).index(option) > -1
+            fault = KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication("localhost", client_id=client_guid, object_id=object_guid)
+        except ValueError as e:
+            pass
