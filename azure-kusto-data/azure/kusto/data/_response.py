@@ -46,9 +46,7 @@ class KustoResponseDataSet:
     @property
     def errors_count(self):
         """Checks whether an exception was thrown."""
-        query_status_table = next(
-            (t for t in self.tables if t.table_kind == WellKnownDataSet.QueryCompletionInformation), None
-        )
+        query_status_table = next((t for t in self.tables if t.table_kind == WellKnownDataSet.QueryCompletionInformation), None)
         if not query_status_table:
             return 0
         min_level = 4
@@ -65,18 +63,14 @@ class KustoResponseDataSet:
 
     def get_exceptions(self):
         """Gets the exceptions retrieved from Kusto if exists."""
-        query_status_table = next(
-            (t for t in self.tables if t.table_kind == WellKnownDataSet.QueryCompletionInformation), None
-        )
+        query_status_table = next((t for t in self.tables if t.table_kind == WellKnownDataSet.QueryCompletionInformation), None)
         if not query_status_table:
             return []
         result = []
         for row in query_status_table:
             if row[self._error_column] < 4:
                 result.append(
-                    "Please provide the following data to Kusto: CRID='{0}' Description:'{1}'".format(
-                        row[self._crid_column], row[self._status_column]
-                    )
+                    "Please provide the following data to Kusto: CRID='{0}' Description:'{1}'".format(row[self._crid_column], row[self._status_column])
                 )
         return result
 

@@ -57,9 +57,7 @@ class KustoIngestClient(object):
         storage_client = CloudStorageAccount(container_details.storage_account_name, sas_token=container_details.sas)
         blob_service = storage_client.create_block_blob_service()
 
-        blob_service.create_blob_from_path(
-            container_name=container_details.object_name, blob_name=blob_name, file_path=temp_file_path
-        )
+        blob_service.create_blob_from_path(container_name=container_details.object_name, blob_name=blob_name, file_path=temp_file_path)
 
         url = blob_service.make_blob_url(container_details.object_name, blob_name, sas_token=container_details.sas)
 
@@ -83,24 +81,17 @@ class KustoIngestClient(object):
 
         file_descriptors.append(descriptor)
         blob_name = "{db}__{table}__{guid}__{file}".format(
-            db=ingestion_properties.database,
-            table=ingestion_properties.table,
-            guid=descriptor.source_id or uuid.uuid4(),
-            file=descriptor.stream_name,
+            db=ingestion_properties.database, table=ingestion_properties.table, guid=descriptor.source_id or uuid.uuid4(), file=descriptor.stream_name,
         )
 
         container_details = random.choice(containers)
         storage_client = CloudStorageAccount(container_details.storage_account_name, sas_token=container_details.sas)
         blob_service = storage_client.create_block_blob_service()
 
-        blob_service.create_blob_from_stream(
-            container_name=container_details.object_name, blob_name=blob_name, stream=descriptor.zipped_stream
-        )
+        blob_service.create_blob_from_stream(container_name=container_details.object_name, blob_name=blob_name, stream=descriptor.zipped_stream)
         url = blob_service.make_blob_url(container_details.object_name, blob_name, sas_token=container_details.sas)
 
-        self.ingest_from_blob(
-            BlobDescriptor(url, descriptor.size, descriptor.source_id), ingestion_properties=ingestion_properties
-        )
+        self.ingest_from_blob(BlobDescriptor(url, descriptor.size, descriptor.source_id), ingestion_properties=ingestion_properties)
 
     def ingest_from_blob(self, blob_descriptor, ingestion_properties):
         """Enqueuing an ingest command from azure blobs.
@@ -113,9 +104,7 @@ class KustoIngestClient(object):
         storage_client = CloudStorageAccount(queue_details.storage_account_name, sas_token=queue_details.sas)
         queue_service = storage_client.create_queue_service()
         authorization_context = self._resource_manager.get_authorization_context()
-        ingestion_blob_info = _IngestionBlobInfo(
-            blob_descriptor, ingestion_properties=ingestion_properties, auth_context=authorization_context
-        )
+        ingestion_blob_info = _IngestionBlobInfo(blob_descriptor, ingestion_properties=ingestion_properties, auth_context=authorization_context)
         ingestion_blob_info_json = ingestion_blob_info.to_json()
         encoded = base64.b64encode(ingestion_blob_info_json.encode("utf-8")).decode("utf-8")
         queue_service.put_message(queue_name=queue_details.object_name, content=encoded)

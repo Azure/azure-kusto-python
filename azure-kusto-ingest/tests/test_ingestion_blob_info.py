@@ -30,9 +30,7 @@ class IngestionBlobInfoTest(unittest.TestCase):
 
     def test_blob_info_csv_mapping(self):
         """Tests serialization of csv ingestion blob info."""
-        validation_policy = ValidationPolicy(
-            ValidationOptions.ValidateCsvInputConstantColumns, ValidationImplications.BestEffort
-        )
+        validation_policy = ValidationPolicy(ValidationOptions.ValidateCsvInputConstantColumns, ValidationImplications.BestEffort)
         properties = IngestionProperties(
             database="database",
             table="table",
@@ -53,9 +51,7 @@ class IngestionBlobInfoTest(unittest.TestCase):
 
     def test_blob_csv_mapping_reference(self):
         """Tests serialization of ingestion blob info with csv mapping reference."""
-        validation_policy = ValidationPolicy(
-            ValidationOptions.ValidateCsvInputConstantColumns, ValidationImplications.BestEffort
-        )
+        validation_policy = ValidationPolicy(ValidationOptions.ValidateCsvInputConstantColumns, ValidationImplications.BestEffort)
         properties = IngestionProperties(
             database="database",
             table="table",
@@ -76,9 +72,7 @@ class IngestionBlobInfoTest(unittest.TestCase):
 
     def test_blob_info_json_mapping(self):
         """Tests serialization of json ingestion blob info."""
-        validation_policy = ValidationPolicy(
-            ValidationOptions.ValidateCsvInputConstantColumns, ValidationImplications.BestEffort
-        )
+        validation_policy = ValidationPolicy(ValidationOptions.ValidateCsvInputConstantColumns, ValidationImplications.BestEffort)
         properties = IngestionProperties(
             database="database",
             table="table",
@@ -99,9 +93,7 @@ class IngestionBlobInfoTest(unittest.TestCase):
 
     def test_blob_json_mapping_reference(self):
         """Tests serialization of ingestion blob info with json mapping reference."""
-        validation_policy = ValidationPolicy(
-            ValidationOptions.ValidateCsvInputConstantColumns, ValidationImplications.BestEffort
-        )
+        validation_policy = ValidationPolicy(ValidationOptions.ValidateCsvInputConstantColumns, ValidationImplications.BestEffort)
         properties = IngestionProperties(
             database="database",
             table="table",
@@ -123,42 +115,26 @@ class IngestionBlobInfoTest(unittest.TestCase):
     def test_blob_info_csv_exceptions(self):
         """Tests invalid ingestion properties."""
         with self.assertRaises(KustoDuplicateMappingError):
+            IngestionProperties(database="database", table="table", mapping="mapping", ingestionMapping="ingestionMapping")
+
+        with self.assertRaises(KustoMappingAndMappingReferenceError):
             IngestionProperties(
-                database="database", table="table", mapping="mapping", ingestionMapping="ingestionMapping"
+                database="database", table="table", mapping="mapping", ingestionMappingReference="ingestionMappingReference",
             )
 
         with self.assertRaises(KustoMappingAndMappingReferenceError):
             IngestionProperties(
-                database="database",
-                table="table",
-                mapping="mapping",
-                ingestionMappingReference="ingestionMappingReference",
-            )
-
-        with self.assertRaises(KustoMappingAndMappingReferenceError):
-            IngestionProperties(
-                database="database",
-                table="table",
-                ingestionMapping="ingestionMapping",
-                ingestionMappingReference="ingestionMappingReference",
+                database="database", table="table", ingestionMapping="ingestionMapping", ingestionMappingReference="ingestionMappingReference",
             )
         with self.assertRaises(KustoMappingAndMappingReferenceError):
-            IngestionProperties(
-                database="database", table="table", mapping="mapping", mappingReference="mappingReference"
-            )
+            IngestionProperties(database="database", table="table", mapping="mapping", mappingReference="mappingReference")
         with self.assertRaises(KustoMappingAndMappingReferenceError):
             IngestionProperties(
-                database="database",
-                table="table",
-                ingestionMapping="ingestionMapping",
-                mappingReference="mappingReference",
+                database="database", table="table", ingestionMapping="ingestionMapping", mappingReference="mappingReference",
             )
         with self.assertRaises(KustoDuplicateMappingReferenceError):
             IngestionProperties(
-                database="database",
-                table="table",
-                mappingReference="mappingReference",
-                ingestionMappingReference="ingestionMappingReference",
+                database="database", table="table", mappingReference="mappingReference", ingestionMappingReference="ingestionMappingReference",
             )
 
     def _verify_ingestion_blob_info_result(self, ingestion_blob_info):
@@ -185,6 +161,4 @@ class IngestionBlobInfoTest(unittest.TestCase):
                 '{"ValidationImplications":ValidationImplications.BestEffort,"ValidationOptions":ValidationOptions.ValidateCsvInputConstantColumns}',
             ),
         )
-        self.assertEqual(
-            result["AdditionalProperties"]["tags"], '["tag","drop-by:dropByTags","ingest-by:ingestByTags"]'
-        )
+        self.assertEqual(result["AdditionalProperties"]["tags"], '["tag","drop-by:dropByTags","ingest-by:ingestByTags"]')

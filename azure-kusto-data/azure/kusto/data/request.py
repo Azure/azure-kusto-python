@@ -210,9 +210,7 @@ class KustoConnectionStringBuilder(object):
         return kcsb
 
     @classmethod
-    def with_aad_application_certificate_authentication(
-        cls, connection_string, aad_app_id, certificate, thumbprint, authority_id
-    ):
+    def with_aad_application_certificate_authentication(cls, connection_string, aad_app_id, certificate, thumbprint, authority_id):
         """Creates a KustoConnection string builder that will authenticate with AAD application and
         a certificate credentials.
         :param str connection_string: Kusto connection string should by of the format:
@@ -399,9 +397,7 @@ class KustoConnectionStringBuilder(object):
         return self._build_connection_string(self._internal_dict)
 
     def _build_connection_string(self, kcsb_as_dict):
-        return ";".join(
-            ["{0}={1}".format(word.value, kcsb_as_dict[word]) for word in self.ValidKeywords if word in kcsb_as_dict]
-        )
+        return ";".join(["{0}={1}".format(word.value, kcsb_as_dict[word]) for word in self.ValidKeywords if word in kcsb_as_dict])
 
 
 def _assert_value_is_valid(value):
@@ -468,9 +464,7 @@ class KustoClient(object):
         :return: Kusto response data set.
         :rtype: azure.kusto.data._response.KustoResponseDataSet
         """
-        return self._execute(
-            self._query_endpoint, database, query, None, KustoClient._query_default_timeout, properties
-        )
+        return self._execute(self._query_endpoint, database, query, None, KustoClient._query_default_timeout, properties)
 
     def execute_mgmt(self, database, query, properties=None):
         """Executes a management command.
@@ -530,9 +524,7 @@ class KustoClient(object):
 
         timeout = self._get_timeout(properties, timeout)
 
-        response = self._session.post(
-            endpoint, headers=request_headers, data=payload, json=json_payload, timeout=timeout.seconds
-        )
+        response = self._session.post(endpoint, headers=request_headers, data=payload, json=json_payload, timeout=timeout.seconds)
 
         if response.status_code == 200:
             if endpoint.endswith("v2/rest/query"):
@@ -541,10 +533,7 @@ class KustoClient(object):
 
         if payload:
             raise KustoServiceError(
-                "An error occurred while trying to ingest: Status: {0.status_code}, Reason: {0.reason}, Text: {0.text}".format(
-                    response
-                ),
-                response,
+                "An error occurred while trying to ingest: Status: {0.status_code}, Reason: {0.reason}, Text: {0.text}".format(response), response,
             )
 
         raise KustoServiceError([response.json()], response)

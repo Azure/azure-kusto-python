@@ -4,13 +4,12 @@ from azure.kusto.data.exceptions import KustoAuthenticationError
 from azure.kusto.data.request import KustoConnectionStringBuilder
 from azure.kusto.data.security import _AadHelper, AuthenticationMethod
 
+
 def test_unauthorized_exception():
     """Test the exception thrown when authorization fails."""
     cluster = "https://somecluster.kusto.windows.net"
     username = "username@microsoft.com"
-    kcsb = KustoConnectionStringBuilder.with_aad_user_password_authentication(
-        cluster, username, "StrongestPasswordEver", "authorityName"
-    )
+    kcsb = KustoConnectionStringBuilder.with_aad_user_password_authentication(cluster, username, "StrongestPasswordEver", "authorityName")
     aad_helper = _AadHelper(kcsb)
 
     try:
@@ -31,7 +30,7 @@ def test_msi_auth():
         KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication("localhost", timeout=1),
         KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication("localhost", client_id=client_guid, timeout=1),
         KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication("localhost", object_id=object_guid, timeout=1),
-        KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication("localhost", msi_res_id=res_guid, timeout=1)
+        KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication("localhost", msi_res_id=res_guid, timeout=1),
     ]
 
     helpers = [

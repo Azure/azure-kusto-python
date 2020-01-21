@@ -86,10 +86,7 @@ class KustoStreamingIngestClient(object):
         else:
             stream = stream_descriptor.stream
 
-        if (
-            ingestion_properties.format in self._mapping_required_formats
-            and ingestion_properties.ingestion_mapping_reference is None
-        ):
+        if ingestion_properties.format in self._mapping_required_formats and ingestion_properties.ingestion_mapping_reference is None:
             raise KustoMissingMappingReferenceError()
 
         if not stream_descriptor.is_compressed:

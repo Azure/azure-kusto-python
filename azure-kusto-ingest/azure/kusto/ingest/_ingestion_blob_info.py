@@ -22,9 +22,7 @@ class _IngestionBlobInfo:
         self.properties["ReportMethod"] = ingestion_properties.report_method.value
         self.properties["SourceMessageCreationTime"] = datetime.utcnow().isoformat()
         self.properties["Id"] = (
-            text_type(blob_descriptor.source_id)
-            if hasattr(blob_descriptor, "source_id") and blob_descriptor.source_id is not None
-            else text_type(uuid.uuid4())
+            text_type(blob_descriptor.source_id) if hasattr(blob_descriptor, "source_id") and blob_descriptor.source_id is not None else text_type(uuid.uuid4())
         )
 
         additional_properties = ingestion_properties.additional_properties or {}
@@ -40,9 +38,7 @@ class _IngestionBlobInfo:
         if tags:
             additional_properties["tags"] = _convert_list_to_json(tags)
         if ingestion_properties.ingest_if_not_exists:
-            additional_properties["ingestIfNotExists"] = _convert_list_to_json(
-                ingestion_properties.ingest_if_not_exists
-            )
+            additional_properties["ingestIfNotExists"] = _convert_list_to_json(ingestion_properties.ingest_if_not_exists)
         if ingestion_properties.ingestion_mapping:
             json_string = _convert_dict_to_json(ingestion_properties.ingestion_mapping)
             additional_properties["ingestionMapping"] = json_string
@@ -71,12 +67,4 @@ def _convert_list_to_json(array):
 
 def _convert_dict_to_json(array):
     """ Converts array to a json string """
-    return json.dumps(
-        array,
-        skipkeys=False,
-        allow_nan=False,
-        indent=None,
-        separators=(",", ":"),
-        sort_keys=True,
-        default=lambda o: o.__dict__,
-    )
+    return json.dumps(array, skipkeys=False, allow_nan=False, indent=None, separators=(",", ":"), sort_keys=True, default=lambda o: o.__dict__,)

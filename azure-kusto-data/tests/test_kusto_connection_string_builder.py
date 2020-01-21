@@ -5,6 +5,7 @@ import unittest
 from azure.kusto.data.request import KustoConnectionStringBuilder
 from azure.kusto.data.security import AuthenticationMethod
 
+
 class KustoConnectionStringBuilderTests(unittest.TestCase):
     """Tests class for KustoConnectionStringBuilder."""
 
@@ -46,18 +47,14 @@ class KustoConnectionStringBuilderTests(unittest.TestCase):
                 )
             ),
             KustoConnectionStringBuilder(
-                " Addr = localhost ; AppClientId = {0} ; AppKey ={1}; Authority Id={2} ; aad federated security = {3}".format(
-                    uuid, key, "microsoft.com", True
-                )
+                " Addr = localhost ; AppClientId = {0} ; AppKey ={1}; Authority Id={2} ; aad federated security = {3}".format(uuid, key, "microsoft.com", True)
             ),
             KustoConnectionStringBuilder(
                 "Network Address = localhost; AppClientId = {0} ; AppKey ={1};AuthorityId={2} ; aad federated security = {3}".format(
                     uuid, key, "microsoft.com", True
                 )
             ),
-            KustoConnectionStringBuilder.with_aad_application_key_authentication(
-                "localhost", uuid, key, "microsoft.com"
-            ),
+            KustoConnectionStringBuilder.with_aad_application_key_authentication("localhost", uuid, key, "microsoft.com"),
         ]
 
         try:
@@ -106,22 +103,10 @@ class KustoConnectionStringBuilderTests(unittest.TestCase):
         user = "test"
         password = "Pa$$w0rd"
         kcsbs = [
-            KustoConnectionStringBuilder(
-                "localhost;AAD User ID={0};password={1} ;AAD Federated Security=True ".format(user, password)
-            ),
-            KustoConnectionStringBuilder(
-                "Data Source=localhost ; AaD User ID={0}; Password ={1} ;AAD Federated Security=True".format(
-                    user, password
-                )
-            ),
-            KustoConnectionStringBuilder(
-                " Addr = localhost ; AAD User ID = {0} ; Pwd ={1} ;AAD Federated Security=True".format(user, password)
-            ),
-            KustoConnectionStringBuilder(
-                "Network Address = localhost; AAD User iD = {0} ; Pwd = {1} ;AAD Federated Security= True  ".format(
-                    user, password
-                )
-            ),
+            KustoConnectionStringBuilder("localhost;AAD User ID={0};password={1} ;AAD Federated Security=True ".format(user, password)),
+            KustoConnectionStringBuilder("Data Source=localhost ; AaD User ID={0}; Password ={1} ;AAD Federated Security=True".format(user, password)),
+            KustoConnectionStringBuilder(" Addr = localhost ; AAD User ID = {0} ; Pwd ={1} ;AAD Federated Security=True".format(user, password)),
+            KustoConnectionStringBuilder("Network Address = localhost; AAD User iD = {0} ; Pwd = {1} ;AAD Federated Security= True  ".format(user, password)),
             KustoConnectionStringBuilder.with_aad_user_password_authentication("localhost", user, password),
         ]
 
@@ -146,16 +131,11 @@ class KustoConnectionStringBuilderTests(unittest.TestCase):
             self.assertIsNone(kcsb.application_key)
             self.assertEqual(kcsb.authority_id, "common")
             self.assertEqual(
-                repr(kcsb),
-                "Data Source=localhost;AAD Federated Security=True;AAD User ID={0};Password={1};Authority Id=common".format(
-                    user, password
-                ),
+                repr(kcsb), "Data Source=localhost;AAD Federated Security=True;AAD User ID={0};Password={1};Authority Id=common".format(user, password),
             )
             self.assertEqual(
                 str(kcsb),
-                "Data Source=localhost;AAD Federated Security=True;AAD User ID={0};Password={1};Authority Id=common".format(
-                    user, self.PASSWORDS_REPLACEMENT
-                ),
+                "Data Source=localhost;AAD Federated Security=True;AAD User ID={0};Password={1};Authority Id=common".format(user, self.PASSWORDS_REPLACEMENT),
             )
 
     def test_aad_user_with_authority(self):
@@ -164,9 +144,7 @@ class KustoConnectionStringBuilderTests(unittest.TestCase):
         password = "Pa$$w0rd2"
         authority_id = "13456"
 
-        kcsb = KustoConnectionStringBuilder.with_aad_user_password_authentication(
-            "localhost", user, password, authority_id
-        )
+        kcsb = KustoConnectionStringBuilder.with_aad_user_password_authentication("localhost", user, password, authority_id)
 
         self.assertEqual(kcsb.data_source, "localhost")
         self.assertTrue(kcsb.aad_federated_security)
@@ -176,16 +154,11 @@ class KustoConnectionStringBuilderTests(unittest.TestCase):
         self.assertIsNone(kcsb.application_key)
         self.assertEqual(kcsb.authority_id, authority_id)
         self.assertEqual(
-            repr(kcsb),
-            "Data Source=localhost;AAD Federated Security=True;AAD User ID={0};Password={1};Authority Id=13456".format(
-                user, password
-            ),
+            repr(kcsb), "Data Source=localhost;AAD Federated Security=True;AAD User ID={0};Password={1};Authority Id=13456".format(user, password),
         )
         self.assertEqual(
             str(kcsb),
-            "Data Source=localhost;AAD Federated Security=True;AAD User ID={0};Password={1};Authority Id=13456".format(
-                user, self.PASSWORDS_REPLACEMENT
-            ),
+            "Data Source=localhost;AAD Federated Security=True;AAD User ID={0};Password={1};Authority Id=13456".format(user, self.PASSWORDS_REPLACEMENT),
         )
 
     def test_aad_device_login(self):
@@ -204,9 +177,7 @@ class KustoConnectionStringBuilderTests(unittest.TestCase):
     def test_aad_app_token(self):
         """Checks kcsb that is created with AAD user token."""
         token = "The app hardest token ever"
-        kcsb = KustoConnectionStringBuilder.with_aad_application_token_authentication(
-            "localhost", application_token=token
-        )
+        kcsb = KustoConnectionStringBuilder.with_aad_application_token_authentication("localhost", application_token=token)
         self.assertEqual(kcsb.data_source, "localhost")
         self.assertEqual(kcsb.application_token, token)
         self.assertTrue(kcsb.aad_federated_security)
@@ -217,13 +188,10 @@ class KustoConnectionStringBuilderTests(unittest.TestCase):
         self.assertIsNone(kcsb.user_token)
         self.assertEqual(kcsb.authority_id, "common")
         self.assertEqual(
-            repr(kcsb),
-            "Data Source=localhost;AAD Federated Security=True;Authority Id=common;Application Token=%s" % token,
+            repr(kcsb), "Data Source=localhost;AAD Federated Security=True;Authority Id=common;Application Token=%s" % token,
         )
         self.assertEqual(
-            str(kcsb),
-            "Data Source=localhost;AAD Federated Security=True;Authority Id=common;Application Token=%s"
-            % self.PASSWORDS_REPLACEMENT,
+            str(kcsb), "Data Source=localhost;AAD Federated Security=True;Authority Id=common;Application Token=%s" % self.PASSWORDS_REPLACEMENT,
         )
 
     def test_aad_user_token(self):
@@ -239,13 +207,9 @@ class KustoConnectionStringBuilderTests(unittest.TestCase):
         self.assertIsNone(kcsb.application_key)
         self.assertIsNone(kcsb.application_token)
         self.assertEqual(kcsb.authority_id, "common")
+        self.assertEqual(repr(kcsb), "Data Source=localhost;AAD Federated Security=True;Authority Id=common;User Token=%s" % token)
         self.assertEqual(
-            repr(kcsb), "Data Source=localhost;AAD Federated Security=True;Authority Id=common;User Token=%s" % token
-        )
-        self.assertEqual(
-            str(kcsb),
-            "Data Source=localhost;AAD Federated Security=True;Authority Id=common;User Token=%s"
-            % self.PASSWORDS_REPLACEMENT,
+            str(kcsb), "Data Source=localhost;AAD Federated Security=True;Authority Id=common;User Token=%s" % self.PASSWORDS_REPLACEMENT,
         )
 
     def test_add_msi(self):
@@ -257,7 +221,7 @@ class KustoConnectionStringBuilderTests(unittest.TestCase):
             KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication("localhost0", timeout=1),
             KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication("localhost1", client_id=client_guid, timeout=2),
             KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication("localhost2", object_id=object_guid, timeout=3),
-            KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication("localhost3", msi_res_id=res_guid)
+            KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication("localhost3", msi_res_id=res_guid),
         ]
 
         assert kcsb[0].msi_authentication
