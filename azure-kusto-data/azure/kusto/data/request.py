@@ -10,7 +10,7 @@ from copy import copy
 import requests
 from requests.adapters import HTTPAdapter
 
-from .security import _AadHelper, AuthenticationMethod
+from .security import _AadHelper
 from .exceptions import KustoServiceError
 from ._response import KustoResponseDataSetV1, KustoResponseDataSetV2
 from ._version import VERSION
