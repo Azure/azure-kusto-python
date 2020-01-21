@@ -177,8 +177,7 @@ class KustoClientTests(unittest.TestCase):
             next_time = (
                 timedelta()
                 if expected["xtime"] is None
-                else (abs(expected["xtime"]) + timedelta(days=1, seconds=1, microseconds=1000))
-                * (-1) ** (expected["rownumber"] + 1)
+                else (abs(expected["xtime"]) + timedelta(days=1, seconds=1, microseconds=1000)) * (-1) ** (expected["rownumber"] + 1)
             )
 
             # hacky tests - because time here is relative to previous row, after we pass a time where we have > 500 nanoseconds,
@@ -202,9 +201,7 @@ class KustoClientTests(unittest.TestCase):
         self.assertEqual(row_count, 1)
         result = primary_table[0]
         self.assertEqual(result["BuildVersion"], "1.0.6693.14577")
-        self.assertEqual(
-            result["BuildTime"], datetime(year=2018, month=4, day=29, hour=8, minute=5, second=54, tzinfo=UTC)
-        )
+        self.assertEqual(result["BuildTime"], datetime(year=2018, month=4, day=29, hour=8, minute=5, second=54, tzinfo=UTC))
         self.assertEqual(result["ServiceType"], "Engine")
         self.assertEqual(result["ProductVersion"], "KustoMain_2018.04.29.5")
 
@@ -262,12 +259,8 @@ class KustoClientTests(unittest.TestCase):
                     pandas.to_datetime("2023-01-01T01:01:01.0000009Z"),
                 ]
             ),
-            "xsmalltext": Series(
-                ["", "Zero", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine"], dtype=object
-            ),
-            "xtext": Series(
-                ["", "Zero", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine"], dtype=object
-            ),
+            "xsmalltext": Series(["", "Zero", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine"], dtype=object),
+            "xtext": Series(["", "Zero", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine"], dtype=object),
             "xnumberAsText": Series(["", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9"], dtype=object),
             "xtime": Series(
                 [

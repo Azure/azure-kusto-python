@@ -21,9 +21,7 @@ class StatusQTests(unittest.TestCase):
     @mock.patch("azure.storage.queue.QueueService.peek_messages")
     def test_isempty(self, mocked_q_peek_messages):
         client = KustoIngestClient("some-cluster")
-        with mock.patch.object(
-            client._resource_manager, "get_successful_ingestions_queues"
-        ) as mocked_get_success_qs, mock.patch.object(
+        with mock.patch.object(client._resource_manager, "get_successful_ingestions_queues") as mocked_get_success_qs, mock.patch.object(
             client._resource_manager, "get_failed_ingestions_queues"
         ) as mocked_get_failed_qs:
 
@@ -34,9 +32,7 @@ class StatusQTests(unittest.TestCase):
             mocked_get_failed_qs.return_value = [fake_failed_queue]
 
             mocked_q_peek_messages.side_effect = (
-                lambda queue_name, num_messages=1: []
-                if queue_name == fake_failed_queue.object_name
-                else [QueueMessage() for _ in range(0, num_messages)]
+                lambda queue_name, num_messages=1: [] if queue_name == fake_failed_queue.object_name else [QueueMessage() for _ in range(0, num_messages)]
             )
 
             qs = KustoIngestStatusQueues(client)
@@ -54,9 +50,7 @@ class StatusQTests(unittest.TestCase):
     @mock.patch("azure.storage.queue.QueueService.peek_messages")
     def test_peek(self, mocked_q_peek_messages):
         client = KustoIngestClient("some-cluster")
-        with mock.patch.object(
-            client._resource_manager, "get_successful_ingestions_queues"
-        ) as mocked_get_success_qs, mock.patch.object(
+        with mock.patch.object(client._resource_manager, "get_successful_ingestions_queues") as mocked_get_success_qs, mock.patch.object(
             client._resource_manager, "get_failed_ingestions_queues"
         ) as mocked_get_failed_qs:
 
@@ -107,10 +101,7 @@ class StatusQTests(unittest.TestCase):
                 return m
 
             mocked_q_peek_messages.side_effect = lambda queue_name, num_messages=1: [
-                mock_message(success=True)
-                if queue_name in [fake_success_queue.object_name]
-                else mock_message(success=False)
-                for i in range(0, num_messages)
+                mock_message(success=True) if queue_name in [fake_success_queue.object_name] else mock_message(success=False) for i in range(0, num_messages)
             ]
 
             qs = KustoIngestStatusQueues(client)
@@ -143,9 +134,7 @@ class StatusQTests(unittest.TestCase):
     @mock.patch("azure.storage.queue.QueueService.delete_message")
     def test_pop(self, mocked_q_del_messages, mocked_q_get_messages):
         client = KustoIngestClient("some-cluster")
-        with mock.patch.object(
-            client._resource_manager, "get_successful_ingestions_queues"
-        ) as mocked_get_success_qs, mock.patch.object(
+        with mock.patch.object(client._resource_manager, "get_successful_ingestions_queues") as mocked_get_success_qs, mock.patch.object(
             client._resource_manager, "get_failed_ingestions_queues"
         ) as mocked_get_failed_qs:
 
@@ -196,10 +185,7 @@ class StatusQTests(unittest.TestCase):
                 return m
 
             mocked_q_get_messages.side_effect = lambda queue_name, num_messages=1: [
-                mock_message(success=True)
-                if queue_name in [fake_success_queue.object_name]
-                else mock_message(success=False)
-                for i in range(0, num_messages)
+                mock_message(success=True) if queue_name in [fake_success_queue.object_name] else mock_message(success=False) for i in range(0, num_messages)
             ]
 
             mocked_q_del_messages.return_value = None
@@ -225,12 +211,8 @@ class StatusQTests(unittest.TestCase):
             assert mocked_q_get_messages.call_args_list[0][1]["num_messages"] == 2
 
             actual = {
-                mocked_q_get_messages.call_args_list[1][0][0]: mocked_q_get_messages.call_args_list[1][1][
-                    "num_messages"
-                ],
-                mocked_q_get_messages.call_args_list[2][0][0]: mocked_q_get_messages.call_args_list[2][1][
-                    "num_messages"
-                ],
+                mocked_q_get_messages.call_args_list[1][0][0]: mocked_q_get_messages.call_args_list[1][1]["num_messages"],
+                mocked_q_get_messages.call_args_list[2][0][0]: mocked_q_get_messages.call_args_list[2][1]["num_messages"],
             }
 
             assert actual[fake_failed_queue2.object_name] == 4
@@ -240,9 +222,7 @@ class StatusQTests(unittest.TestCase):
     @mock.patch("azure.storage.queue.QueueService.delete_message")
     def test_pop_unbalanced_queues(self, mocked_q_del_messages, mocked_q_get_messages):
         client = KustoIngestClient("some-cluster")
-        with mock.patch.object(
-            client._resource_manager, "get_successful_ingestions_queues"
-        ) as mocked_get_success_qs, mock.patch.object(
+        with mock.patch.object(client._resource_manager, "get_successful_ingestions_queues") as mocked_get_success_qs, mock.patch.object(
             client._resource_manager, "get_failed_ingestions_queues"
         ) as mocked_get_failed_qs:
 

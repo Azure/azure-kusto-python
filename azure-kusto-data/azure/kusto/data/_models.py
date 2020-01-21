@@ -55,19 +55,13 @@ class KustoResultRow(object):
             # Azure-Data-Explorer(Kusto) supports 7 decimal digits, while the corresponding python types supports only 6.
             # One example why one might want this precision, is when working with pandas.
             # In that case, use azure.kusto.data.helpers.dataframe_from_result_table which takes into account the original value.
-            typed_value = (
-                KustoResultRow.convertion_funcs[column_type](value)
-                if value is not None and column_type in KustoResultRow.convertion_funcs
-                else value
-            )
+            typed_value = KustoResultRow.convertion_funcs[column_type](value) if value is not None and column_type in KustoResultRow.convertion_funcs else value
 
             # This is a special case where plain python will lose precision, so we keep the precise value hidden.
             # When transforming to pandas, we can use the hidden value to convert to precise pandas/numpy types
             if HAS_PANDAS:
                 self._hidden_values.append(
-                    KustoResultRow.pandas_funcs[column_type](value, typed_value)
-                    if value is not None and column_type in KustoResultRow.pandas_funcs
-                    else value
+                    KustoResultRow.pandas_funcs[column_type](value, typed_value) if value is not None and column_type in KustoResultRow.pandas_funcs else value
                 )
 
             self._value_by_index.append(typed_value)
@@ -110,9 +104,7 @@ class KustoResultColumn(object):
         self.ordinal = ordinal
 
     def __repr__(self):
-        return "KustoResultColumn({},{})".format(
-            json.dumps({"ColumnName": self.column_name, "ColumnType": self.column_type}), self.ordinal
-        )
+        return "KustoResultColumn({},{})".format(json.dumps({"ColumnName": self.column_name, "ColumnType": self.column_type}), self.ordinal)
 
 
 class KustoResultTable(object):

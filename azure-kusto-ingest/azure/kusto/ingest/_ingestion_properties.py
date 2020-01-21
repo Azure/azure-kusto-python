@@ -55,9 +55,7 @@ class ValidationPolicy(object):
     """Validation policy to ingest command."""
 
     def __init__(
-        self,
-        validationOptions=ValidationOptions.DoNotValidate,
-        validationImplications=ValidationImplications.BestEffort,
+        self, validationOptions=ValidationOptions.DoNotValidate, validationImplications=ValidationImplications.BestEffort,
     ):
         self.ValidationOptions = validationOptions
         self.ValidationImplications = validationImplications
@@ -165,9 +163,7 @@ class IngestionProperties:
         self.format = dataFormat
         self.ingestion_mapping = ingestionMapping if ingestionMapping is not None else mapping
         self.ingestion_mapping_type = ingestionMappingType
-        self.ingestion_mapping_reference = (
-            ingestionMappingReference if ingestionMappingReference is not None else mappingReference
-        )
+        self.ingestion_mapping_reference = ingestionMappingReference if ingestionMappingReference is not None else mappingReference
         self.additional_tags = additionalTags
         self.ingest_if_not_exists = ingestIfNotExists
         self.ingest_by_tags = ingestByTags

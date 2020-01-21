@@ -1,6 +1,7 @@
 import os
 import unittest
 import json
+import pytest
 import responses
 import io
 from azure.kusto.ingest import KustoStreamingIngestClient, IngestionProperties, DataFormat
@@ -18,9 +19,7 @@ except:
 
 UUID_REGEX = "[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}"
 BLOB_NAME_REGEX = "database__table__" + UUID_REGEX + "__dataset.csv.gz"
-BLOB_URL_REGEX = (
-    "https://storageaccount.blob.core.windows.net/tempstorage/database__table__" + UUID_REGEX + "__dataset.csv.gz[?]sas"
-)
+BLOB_URL_REGEX = "https://storageaccount.blob.core.windows.net/tempstorage/database__table__" + UUID_REGEX + "__dataset.csv.gz[?]sas"
 
 
 def request_callback(request):
@@ -48,9 +47,7 @@ class KustoStreamingIngestClientTests(unittest.TestCase):
     @responses.activate
     def test_streaming_ingest_from_file(self):
         responses.add_callback(
-            responses.POST,
-            "https://somecluster.kusto.windows.net/v1/rest/ingest/database/table",
-            callback=request_callback,
+            responses.POST, "https://somecluster.kusto.windows.net/v1/rest/ingest/database/table", callback=request_callback,
         )
 
         ingest_client = KustoStreamingIngestClient("https://somecluster.kusto.windows.net")
@@ -78,9 +75,7 @@ class KustoStreamingIngestClientTests(unittest.TestCase):
 
         ingest_client.ingest_from_file(file_path, ingestion_properties=ingestion_properties)
 
-        ingestion_properties = IngestionProperties(
-            database="database", table="table", dataFormat=DataFormat.JSON, mappingReference="JsonMapping"
-        )
+        ingestion_properties = IngestionProperties(database="database", table="table", dataFormat=DataFormat.JSON, mappingReference="JsonMapping")
 
         path_parts = ["azure-kusto-ingest", "tests", "input", "dataset.json"]
         missing_path_parts = []
@@ -114,12 +109,11 @@ class KustoStreamingIngestClientTests(unittest.TestCase):
 
         ingest_client.ingest_from_file(file_path, ingestion_properties=ingestion_properties)
 
+    @pytest.mark.skipif(not pandas_installed, reason="requires pandas")
     @responses.activate
     def test_streaming_ingest_from_dataframe(self):
         responses.add_callback(
-            responses.POST,
-            "https://somecluster.kusto.windows.net/v1/rest/ingest/database/table",
-            callback=request_callback,
+            responses.POST, "https://somecluster.kusto.windows.net/v1/rest/ingest/database/table", callback=request_callback,
         )
 
         ingest_client = KustoStreamingIngestClient("https://somecluster.kusto.windows.net")
@@ -136,9 +130,7 @@ class KustoStreamingIngestClientTests(unittest.TestCase):
     @responses.activate
     def test_streaming_ingest_from_stream(self):
         responses.add_callback(
-            responses.POST,
-            "https://somecluster.kusto.windows.net/v1/rest/ingest/database/table",
-            callback=request_callback,
+            responses.POST, "https://somecluster.kusto.windows.net/v1/rest/ingest/database/table", callback=request_callback,
         )
 
         ingest_client = KustoStreamingIngestClient("https://somecluster.kusto.windows.net")

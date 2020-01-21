@@ -37,9 +37,8 @@ class KustoConnectionStringBuilder(object):
         authority_id = "Authority Id"
         application_token = "Application Token"
         user_token = "User Token"
-
-        # This ordering is needed only for python 2.7 . Once it gets to end of life we can omit the ordering as it is applied by default in python 3.4 and above.
-        __order__ = "data_source, aad_federated_security, aad_user_id, password, application_client_id, application_key, application_certificate, application_certificate_thumbprint, authority_id, application_token, user_token"
+        msi_auth = "MSI Authentication"
+        msi_params = "MSI Params"
 
         @classmethod
         def parse(cls, key):
@@ -67,6 +66,10 @@ class KustoConnectionStringBuilder(object):
                 return cls.application_token
             if key in ["user token", "usertoken", "usrtoken"]:
                 return cls.user_token
+            if key in ["msi_auth"]:
+                return cls.msi_auth
+            if key in ["msi_type"]:
+                return cls.msi_params
             raise KeyError(key)
 
         def is_secret(self):
@@ -94,9 +97,15 @@ class KustoConnectionStringBuilder(object):
                 self.user_token,
             ]
 
+        def is_dict_type(self):
+            return self in [self.msi_params]
+
         def is_bool_type(self):
             """States whether a word is of type bool or not."""
-            return self in [self.aad_federated_security]
+            return self in [
+                self.aad_federated_security,
+                self.msi_auth,
+            ]
 
     def __init__(self, connection_string):
         """Creates new KustoConnectionStringBuilder.
@@ -139,6 +148,10 @@ class KustoConnectionStringBuilder(object):
         elif keyword.is_bool_type():
             if not isinstance(value, bool):
                 raise TypeError("Expected %s to be bool" % key)
+            self._internal_dict[keyword] = value
+        elif keyword.is_dict_type():
+            if not isinstance(value, dict):
+                raise TypeError("Expected %s to be dict" % key)
             self._internal_dict[keyword] = value
         else:
             raise KeyError("KustoConnectionStringBuilder supports only bools and strings.")
@@ -197,9 +210,7 @@ class KustoConnectionStringBuilder(object):
         return kcsb
 
     @classmethod
-    def with_aad_application_certificate_authentication(
-        cls, connection_string, aad_app_id, certificate, thumbprint, authority_id
-    ):
+    def with_aad_application_certificate_authentication(cls, connection_string, aad_app_id, certificate, thumbprint, authority_id):
         """Creates a KustoConnection string builder that will authenticate with AAD application and
         a certificate credentials.
         :param str connection_string: Kusto connection string should by of the format:
@@ -225,7 +236,7 @@ class KustoConnectionStringBuilder(object):
     @classmethod
     def with_aad_application_token_authentication(cls, connection_string, application_token):
         """Creates a KustoConnection string builder that will authenticate with AAD application and
-        a certificate credentials.
+        an application token.
         :param str connection_string: Kusto connection string should by of the format:
         https://<clusterName>.kusto.windows.net
         :param str application_token: AAD application token.
@@ -247,6 +258,47 @@ class KustoConnectionStringBuilder(object):
         kcsb = cls(connection_string)
         kcsb[kcsb.ValidKeywords.aad_federated_security] = True
         kcsb[kcsb.ValidKeywords.authority_id] = authority_id
+
+        return kcsb
+
+    @classmethod
+    def with_aad_managed_service_identity_authentication(cls, connection_string, client_id=None, object_id=None, msi_res_id=None, timeout=None):
+        """"Creates a KustoConnection string builder that will authenticate with AAD application, using
+        an application token obtained from a Microsoft Service Identity endpoint. An optional user
+        assigned application ID can be added to the token.
+
+        :param str connection_string: Kusto connection string should by of the format: https://<clusterName>.kusto.windows.net
+        :param client_id: an optional user assigned identity provided as an Azure ID of a client
+        :param object_id: an optional user assigned identity provided as an Azure ID of an object
+        :param msi_res_id: an optional user assigned identity provided as an Azure ID of an MSI resource
+        :param timeout: an optional timeout (seconds) to wait for an MSI Authentication to occur
+        """
+
+        kcsb = cls(connection_string)
+        params = {"resource": kcsb.data_source}
+        exclusive_pcount = 0
+
+        if timeout is not None:
+            params["timeout"] = timeout
+
+        if client_id is not None:
+            params["client_id"] = client_id
+            exclusive_pcount += 1
+
+        if object_id is not None:
+            params["object_id"] = object_id
+            exclusive_pcount += 1
+
+        if msi_res_id is not None:
+            params["msi_res_id"] = msi_res_id
+            exclusive_pcount += 1
+
+        if exclusive_pcount > 1:
+            raise ValueError("the following parameters are mutually exclusive and can not be provided at the same time: user_uid, object_id, msi_res_id")
+
+        kcsb[kcsb.ValidKeywords.aad_federated_security] = True
+        kcsb[kcsb.ValidKeywords.msi_auth] = True
+        kcsb[kcsb.ValidKeywords.msi_params] = params
 
         return kcsb
 
@@ -324,6 +376,16 @@ class KustoConnectionStringBuilder(object):
         """Application token."""
         return self._internal_dict.get(self.ValidKeywords.application_token)
 
+    @property
+    def msi_authentication(self):
+        """ A value stating the MSI identity type to obtain """
+        return self._internal_dict.get(self.ValidKeywords.msi_auth)
+
+    @property
+    def msi_parameters(self):
+        """ A user assigned MSI ID to be obtained """
+        return self._internal_dict.get(self.ValidKeywords.msi_params)
+
     def __str__(self):
         dict_copy = self._internal_dict.copy()
         for key in dict_copy:
@@ -335,9 +397,7 @@ class KustoConnectionStringBuilder(object):
         return self._build_connection_string(self._internal_dict)
 
     def _build_connection_string(self, kcsb_as_dict):
-        return ";".join(
-            ["{0}={1}".format(word.value, kcsb_as_dict[word]) for word in self.ValidKeywords if word in kcsb_as_dict]
-        )
+        return ";".join(["{0}={1}".format(word.value, kcsb_as_dict[word]) for word in self.ValidKeywords if word in kcsb_as_dict])
 
 
 def _assert_value_is_valid(value):
@@ -404,9 +464,7 @@ class KustoClient(object):
         :return: Kusto response data set.
         :rtype: azure.kusto.data._response.KustoResponseDataSet
         """
-        return self._execute(
-            self._query_endpoint, database, query, None, KustoClient._query_default_timeout, properties
-        )
+        return self._execute(self._query_endpoint, database, query, None, KustoClient._query_default_timeout, properties)
 
     def execute_mgmt(self, database, query, properties=None):
         """Executes a management command.
@@ -466,9 +524,7 @@ class KustoClient(object):
 
         timeout = self._get_timeout(properties, timeout)
 
-        response = self._session.post(
-            endpoint, headers=request_headers, data=payload, json=json_payload, timeout=timeout.seconds
-        )
+        response = self._session.post(endpoint, headers=request_headers, data=payload, json=json_payload, timeout=timeout.seconds)
 
         if response.status_code == 200:
             if endpoint.endswith("v2/rest/query"):
@@ -477,10 +533,7 @@ class KustoClient(object):
 
         if payload:
             raise KustoServiceError(
-                "An error occurred while trying to ingest: Status: {0.status_code}, Reason: {0.reason}, Text: {0.text}".format(
-                    response
-                ),
-                response,
+                "An error occurred while trying to ingest: Status: {0.status_code}, Reason: {0.reason}, Text: {0.text}".format(response), response,
             )
 
         raise KustoServiceError([response.json()], response)

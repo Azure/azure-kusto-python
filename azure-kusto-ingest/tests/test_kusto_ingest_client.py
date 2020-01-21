@@ -21,9 +21,7 @@ except:
 
 UUID_REGEX = "[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}"
 BLOB_NAME_REGEX = "database__table__" + UUID_REGEX + "__dataset.csv.gz"
-BLOB_URL_REGEX = (
-    "https://storageaccount.blob.core.windows.net/tempstorage/database__table__" + UUID_REGEX + "__dataset.csv.gz[?]sas"
-)
+BLOB_URL_REGEX = "https://storageaccount.blob.core.windows.net/tempstorage/database__table__" + UUID_REGEX + "__dataset.csv.gz[?]sas"
 
 
 def request_callback(request):
@@ -38,36 +36,15 @@ def request_callback(request):
             "Tables": [
                 {
                     "TableName": "Table_0",
-                    "Columns": [
-                        {"ColumnName": "ResourceTypeName", "DataType": "String"},
-                        {"ColumnName": "StorageRoot", "DataType": "String"},
-                    ],
+                    "Columns": [{"ColumnName": "ResourceTypeName", "DataType": "String"}, {"ColumnName": "StorageRoot", "DataType": "String"},],
                     "Rows": [
-                        [
-                            "SecuredReadyForAggregationQueue",
-                            "https://storageaccount.queue.core.windows.net/readyforaggregation-secured?sas",
-                        ],
-                        [
-                            "SecuredReadyForAggregationQueue",
-                            "https://storageaccount.queue.core.windows.net/readyforaggregation-secured?sas",
-                        ],
-                        [
-                            "SecuredReadyForAggregationQueue",
-                            "https://storageaccount.queue.core.windows.net/readyforaggregation-secured?sas",
-                        ],
-                        [
-                            "SecuredReadyForAggregationQueue",
-                            "https://storageaccount.queue.core.windows.net/readyforaggregation-secured?sas",
-                        ],
-                        [
-                            "SecuredReadyForAggregationQueue",
-                            "https://storageaccount.queue.core.windows.net/readyforaggregation-secured?sas",
-                        ],
+                        ["SecuredReadyForAggregationQueue", "https://storageaccount.queue.core.windows.net/readyforaggregation-secured?sas",],
+                        ["SecuredReadyForAggregationQueue", "https://storageaccount.queue.core.windows.net/readyforaggregation-secured?sas",],
+                        ["SecuredReadyForAggregationQueue", "https://storageaccount.queue.core.windows.net/readyforaggregation-secured?sas",],
+                        ["SecuredReadyForAggregationQueue", "https://storageaccount.queue.core.windows.net/readyforaggregation-secured?sas",],
+                        ["SecuredReadyForAggregationQueue", "https://storageaccount.queue.core.windows.net/readyforaggregation-secured?sas",],
                         ["FailedIngestionsQueue", "https://storageaccount.queue.core.windows.net/failedingestions?sas"],
-                        [
-                            "SuccessfulIngestionsQueue",
-                            "https://storageaccount.queue.core.windows.net/successfulingestions?sas",
-                        ],
+                        ["SuccessfulIngestionsQueue", "https://storageaccount.queue.core.windows.net/successfulingestions?sas",],
                         ["TempStorage", "https://storageaccount.blob.core.windows.net/tempstorage?sas"],
                         ["TempStorage", "https://storageaccount.blob.core.windows.net/tempstorage?sas"],
                         ["TempStorage", "https://storageaccount.blob.core.windows.net/tempstorage?sas"],
@@ -83,11 +60,7 @@ def request_callback(request):
         response_status = 200
         response_body = {
             "Tables": [
-                {
-                    "TableName": "Table_0",
-                    "Columns": [{"ColumnName": "AuthorizationContext", "DataType": "String"}],
-                    "Rows": [["authorization_context"]],
-                }
+                {"TableName": "Table_0", "Columns": [{"ColumnName": "AuthorizationContext", "DataType": "String"}], "Rows": [["authorization_context"]],}
             ]
         }
 
@@ -104,14 +77,9 @@ class KustoIngestClientTests(unittest.TestCase):
     @patch("azure.storage.blob.BlockBlobService.create_blob_from_stream")
     @patch("azure.storage.queue.QueueService.put_message")
     @patch("uuid.uuid4", return_value=MOCKED_UUID_4)
-    def test_sanity_ingest_from_file(
-        self, mock_uuid, mock_put_message_in_queue, mock_create_blob_from_stream, mock_aad
-    ):
+    def test_sanity_ingest_from_file(self, mock_uuid, mock_put_message_in_queue, mock_create_blob_from_stream, mock_aad):
         responses.add_callback(
-            responses.POST,
-            "https://ingest-somecluster.kusto.windows.net/v1/rest/mgmt",
-            callback=request_callback,
-            content_type="application/json",
+            responses.POST, "https://ingest-somecluster.kusto.windows.net/v1/rest/mgmt", callback=request_callback, content_type="application/json",
         )
 
         ingest_client = KustoIngestClient("https://ingest-somecluster.kusto.windows.net")
@@ -137,10 +105,7 @@ class KustoIngestClientTests(unittest.TestCase):
         assert put_message_in_queue_mock_kwargs["queue_name"] == "readyforaggregation-secured"
         queued_message = base64.b64decode(put_message_in_queue_mock_kwargs["content"].encode("utf-8")).decode("utf-8")
         queued_message_json = json.loads(queued_message)
-        expected_url = (
-            "https://storageaccount.blob.core.windows.net/tempstorage/"
-            "database__table__1111-111111-111111-1111__dataset.csv.gz?sas"
-        )
+        expected_url = "https://storageaccount.blob.core.windows.net/tempstorage/" "database__table__1111-111111-111111-1111__dataset.csv.gz?sas"
         # mock_create_blob_from_stream
         assert queued_message_json["BlobPath"] == expected_url
         assert queued_message_json["DatabaseName"] == "database"
@@ -155,10 +120,7 @@ class KustoIngestClientTests(unittest.TestCase):
 
         assert create_blob_from_stream_mock_kwargs["container_name"] == "tempstorage"
         assert type(create_blob_from_stream_mock_kwargs["stream"]) == io.BytesIO
-        assert (
-            create_blob_from_stream_mock_kwargs["blob_name"]
-            == "database__table__1111-111111-111111-1111__dataset.csv.gz"
-        )
+        assert create_blob_from_stream_mock_kwargs["blob_name"] == "database__table__1111-111111-111111-1111__dataset.csv.gz"
 
     @responses.activate
     @pytest.mark.skipif(not pandas_installed, reason="requires pandas")
@@ -167,14 +129,9 @@ class KustoIngestClientTests(unittest.TestCase):
     @patch("uuid.uuid4", return_value=MOCKED_UUID_4)
     @patch("time.time", return_value=MOCKED_TIME)
     @patch("os.getpid", return_value=MOCKED_PID)
-    def test_simple_ingest_from_dataframe(
-        self, mock_pid, mock_time, mock_uuid, mock_put_message_in_queue, mock_create_blob_from_path
-    ):
+    def test_simple_ingest_from_dataframe(self, mock_pid, mock_time, mock_uuid, mock_put_message_in_queue, mock_create_blob_from_path):
         responses.add_callback(
-            responses.POST,
-            "https://ingest-somecluster.kusto.windows.net/v1/rest/mgmt",
-            callback=request_callback,
-            content_type="application/json",
+            responses.POST, "https://ingest-somecluster.kusto.windows.net/v1/rest/mgmt", callback=request_callback, content_type="application/json",
         )
 
         ingest_client = KustoIngestClient("https://ingest-somecluster.kusto.windows.net")
@@ -196,10 +153,9 @@ class KustoIngestClientTests(unittest.TestCase):
         assert put_message_in_queue_mock_kwargs["queue_name"] == "readyforaggregation-secured"
         queued_message = base64.b64decode(put_message_in_queue_mock_kwargs["content"].encode("utf-8")).decode("utf-8")
         queued_message_json = json.loads(queued_message)
-        expected_url = (
-            "https://storageaccount.blob.core.windows.net/tempstorage/"
-            "database__table__1111-111111-111111-1111__df_{}_100_64.csv.gz?sas"
-        ).format(id(df))
+        expected_url = ("https://storageaccount.blob.core.windows.net/tempstorage/" "database__table__1111-111111-111111-1111__df_{}_100_64.csv.gz?sas").format(
+            id(df)
+        )
         # mock_create_blob_from_stream
         assert queued_message_json["BlobPath"] == expected_url
         assert queued_message_json["DatabaseName"] == "database"
@@ -214,9 +170,5 @@ class KustoIngestClientTests(unittest.TestCase):
         import tempfile
 
         assert create_blob_from_path_mock_kwargs["container_name"] == "tempstorage"
-        assert create_blob_from_path_mock_kwargs["file_path"] == os.path.join(
-            tempfile.gettempdir(), "df_{}_100_64.csv.gz".format(id(df))
-        )
-        assert create_blob_from_path_mock_kwargs[
-            "blob_name"
-        ] == "database__table__1111-111111-111111-1111__df_{}_100_64.csv.gz".format(id(df))
+        assert create_blob_from_path_mock_kwargs["file_path"] == os.path.join(tempfile.gettempdir(), "df_{}_100_64.csv.gz".format(id(df)))
+        assert create_blob_from_path_mock_kwargs["blob_name"] == "database__table__1111-111111-111111-1111__df_{}_100_64.csv.gz".format(id(df))

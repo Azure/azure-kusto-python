@@ -57,9 +57,5 @@ class KustoIngestStatusQueues(object):
     """
 
     def __init__(self, kusto_ingest_client):
-        self.success = StatusQueue(
-            kusto_ingest_client._resource_manager.get_successful_ingestions_queues, message_cls=SuccessMessage
-        )
-        self.failure = StatusQueue(
-            kusto_ingest_client._resource_manager.get_failed_ingestions_queues, message_cls=FailureMessage
-        )
+        self.success = StatusQueue(kusto_ingest_client._resource_manager.get_successful_ingestions_queues, message_cls=SuccessMessage)
+        self.failure = StatusQueue(kusto_ingest_client._resource_manager.get_failed_ingestions_queues, message_cls=FailureMessage)

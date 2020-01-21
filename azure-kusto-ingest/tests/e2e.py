@@ -81,12 +81,8 @@ class Helpers:
         mappings.append(JsonColumnMapping(columnName="xtext", jsonPath="$.xtext", cslDataType="string"))
         mappings.append(JsonColumnMapping(columnName="xnumberAsText", jsonPath="$.xnumberAsText", cslDataType="string"))
         mappings.append(JsonColumnMapping(columnName="xtime", jsonPath="$.xtime", cslDataType="timespan"))
-        mappings.append(
-            JsonColumnMapping(columnName="xtextWithNulls", jsonPath="$.xtextWithNulls", cslDataType="string")
-        )
-        mappings.append(
-            JsonColumnMapping(columnName="xdynamicWithNulls", jsonPath="$.xdynamicWithNulls", cslDataType="dynamic")
-        )
+        mappings.append(JsonColumnMapping(columnName="xtextWithNulls", jsonPath="$.xtextWithNulls", cslDataType="string"))
+        mappings.append(JsonColumnMapping(columnName="xdynamicWithNulls", jsonPath="$.xdynamicWithNulls", cslDataType="dynamic"))
         return mappings
 
 
@@ -95,12 +91,8 @@ db_name = "TestingDatabase"  # "PythonTest"
 table_name = "Deft"
 
 
-engine_kcsb = KustoConnectionStringBuilder.with_aad_device_authentication(
-    "https://{}.kusto.windows.net".format(cluster)
-)
-dm_kcsb = KustoConnectionStringBuilder.with_aad_device_authentication(
-    "https://ingest-{}.kusto.windows.net".format(cluster)
-)
+engine_kcsb = KustoConnectionStringBuilder.with_aad_device_authentication("https://{}.kusto.windows.net".format(cluster))
+dm_kcsb = KustoConnectionStringBuilder.with_aad_device_authentication("https://ingest-{}.kusto.windows.net".format(cluster))
 client = KustoClient(engine_kcsb)
 ingest_client = KustoIngestClient(dm_kcsb)
 ingest_status_q = KustoIngestStatusQueues(ingest_client)
@@ -113,11 +105,7 @@ client.execute(db_name, ".drop table {} ifexists".format(table_name))
 @pytest.mark.run(order=1)
 def test_csv_ingest_non_existing_table():
     csv_ingest_props = IngestionProperties(
-        db_name,
-        table_name,
-        dataFormat=DataFormat.CSV,
-        mapping=Helpers.create_deft_table_csv_mappings(),
-        reportLevel=ReportLevel.FailuresAndSuccesses,
+        db_name, table_name, dataFormat=DataFormat.CSV, mapping=Helpers.create_deft_table_csv_mappings(), reportLevel=ReportLevel.FailuresAndSuccesses,
     )
     csv_file_path = os.path.join(os.getcwd(), "azure-kusto-ingest", "tests", "input", "dataset.csv")
     zipped_csv_file_path = os.path.join(os.getcwd(), "azure-kusto-ingest", "tests", "input", "dataset.csv.gz")
@@ -154,11 +142,7 @@ zipped_json_file_path = os.path.join(os.getcwd(), "azure-kusto-ingest", "tests",
 @pytest.mark.run(order=2)
 def test_json_ingest_existing_table():
     json_ingestion_props = IngestionProperties(
-        db_name,
-        table_name,
-        dataFormat=DataFormat.JSON,
-        mapping=Helpers.create_deft_table_json_mappings(),
-        reportLevel=ReportLevel.FailuresAndSuccesses,
+        db_name, table_name, dataFormat=DataFormat.JSON, mapping=Helpers.create_deft_table_json_mappings(), reportLevel=ReportLevel.FailuresAndSuccesses,
     )
 
     for f in [json_file_path, zipped_json_file_path]:
@@ -191,8 +175,7 @@ def test_json_ingest_existing_table():
 def test_ingest_complicated_props():
     # Test ingest with complicated ingestion properties
     validation_policy = ValidationPolicy(
-        validationOptions=ValidationOptions.ValidateCsvInputConstantColumns,
-        validationImplications=ValidationImplications.Fail,
+        validationOptions=ValidationOptions.ValidateCsvInputConstantColumns, validationImplications=ValidationImplications.Fail,
     )
     json_ingestion_props = IngestionProperties(
         db_name,
@@ -278,11 +261,7 @@ def test_json_ingestion_ingest_by_tag():
 @pytest.mark.run(order=5)
 def test_tsv_ingestion_csv_mapping():
     tsv_ingestion_props = IngestionProperties(
-        db_name,
-        table_name,
-        dataFormat=DataFormat.TSV,
-        mapping=Helpers.create_deft_table_csv_mappings(),
-        reportLevel=ReportLevel.FailuresAndSuccesses,
+        db_name, table_name, dataFormat=DataFormat.TSV, mapping=Helpers.create_deft_table_csv_mappings(), reportLevel=ReportLevel.FailuresAndSuccesses,
     )
     tsv_file_path = os.path.join(os.getcwd(), "azure-kusto-ingest", "tests", "input", "dataset.tsv")
 
@@ -384,9 +363,7 @@ def test_streaming_ingest_from_json_file():
             missing_path_parts.append(path_part)
 
     file_path = os.path.join(current_dir, *missing_path_parts)
-    ingestion_properties = IngestionProperties(
-        database=db_name, table=table_name, dataFormat=DataFormat.JSON, mappingReference="JsonMapping"
-    )
+    ingestion_properties = IngestionProperties(database=db_name, table=table_name, dataFormat=DataFormat.JSON, mappingReference="JsonMapping")
     ingest_client.ingest_from_file(file_path, ingestion_properties=ingestion_properties)
 
     path_parts = ["azure-kusto-ingest", "tests", "input", "dataset.jsonz.gz"]
@@ -422,10 +399,7 @@ def test_streaming_ingest_from_io_streams():
     str_stream = io.StringIO(str_sequence)
     ingest_client.ingest_from_stream(str_stream, ingestion_properties=ingestion_properties)
 
-    byte_sequence = (
-        b'0,00000000-0000-0000-0001-020304050607,0,0,0,0,0,0,0,0,0,0,2014-01-01T01:01:01.0000000Z,Zero,"Zero",0,00:00:00,,null'
-        * 600000
-    )
+    byte_sequence = b'0,00000000-0000-0000-0001-020304050607,0,0,0,0,0,0,0,0,0,0,2014-01-01T01:01:01.0000000Z,Zero,"Zero",0,00:00:00,,null' * 600000
     bytes_stream = io.BytesIO(byte_sequence)
 
     try:
@@ -459,29 +433,7 @@ def test_streaming_ingest_from_dataframe():
         "xtextWithNulls",
         "xdynamicWithNulls",
     ]
-    rows = [
-        [
-            0,
-            "00000000-0000-0000-0001-020304050607",
-            0.0,
-            0.0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            "2014-01-01T01:01:01Z",
-            "Zero",
-            "Zero",
-            "0",
-            "00:00:00",
-            None,
-            "",
-        ]
-    ]
+    rows = [[0, "00000000-0000-0000-0001-020304050607", 0.0, 0.0, 0, 0, 0, 0, 0, 0, 0, 0, "2014-01-01T01:01:01Z", "Zero", "Zero", "0", "00:00:00", None, "",]]
     df = DataFrame(data=rows, columns=fields)
     ingestion_properties = IngestionProperties(database=db_name, table=table_name, dataFormat=DataFormat.CSV)
     ingest_client.ingest_from_dataframe(df, ingestion_properties)

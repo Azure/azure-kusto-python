@@ -25,9 +25,7 @@ class StatusQueue(object):
         return [
             QueueDetails(
                 name=queue_details.object_name,
-                service=CloudStorageAccount(
-                    account_name=queue_details.storage_account_name, sas_token=queue_details.sas
-                ).create_queue_service(),
+                service=CloudStorageAccount(account_name=queue_details.storage_account_name, sas_token=queue_details.sas).create_queue_service(),
             )
             for queue_details in self.get_queues_func()
         ]
