@@ -19,8 +19,9 @@ install:
   - pip install codecov coverage
   - pip install ./azure-kusto-data ./azure-kusto-ingest
   - pip freeze
+before_script:
+  - if [[ "$TRAVIS_PYTHON_VERSION" == "3.6" ]]; then black . --line-length 160 --check; fi
 script:
-  - black . --line-length 160 --check
   - pytest
 after_success:
   - coverage report
