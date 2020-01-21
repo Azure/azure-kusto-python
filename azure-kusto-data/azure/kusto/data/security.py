@@ -23,10 +23,6 @@ class AuthenticationMethod(Enum):
     aad_device_login = "aad_device_login"
     aad_token = "aad_token"
     aad_msi = "aad_msi"
-    msi_client_id_type = "client_id"
-    msi_object_id_type = "object_id"
-    msi_res_id_type = "msi_res_id"
-    msi_default_type = "system"
 
 
 class _AadHelper(object):
@@ -58,14 +54,13 @@ class _AadHelper(object):
             self._certificate = kcsb.application_certificate
             self._thumbprint = kcsb.application_certificate_thumbprint
             create_adal_context = True
-        elif kcsb.msi_type is not None:
+        elif kcsb.msi_authentication:
             self._authentication_method = AuthenticationMethod.aad_msi
-            self._msi_type = kcsb.msi_type
-            self._msi_id = kcsb.msi_id
+            self._msi_params = kcsb.msi_parameters
         else:
             self._authentication_method = AuthenticationMethod.aad_device_login
             self._client_id = "db662dc1-0cfe-4e1c-a843-19a68e65be58"
-            create_adal_context = True
+            create_adal_context = False
 
         if create_adal_context:
             authority = kcsb.authority_id or "common"
@@ -88,7 +83,7 @@ class _AadHelper(object):
             elif self._authentication_method is AuthenticationMethod.aad_application_certificate:
                 kwargs = {"client_id": self._client_id, "thumbprint": self._thumbprint}
             elif self._authentication_method is AuthenticationMethod.aad_msi:
-                kwargs = {"msi_type": self._msi_type, "msi_id": self._msi_id}
+                kwargs = self._msi_params
             else:
                 raise error
 
@@ -102,60 +97,55 @@ class _AadHelper(object):
             raise KustoAuthenticationError(self._authentication_method.value, error, **kwargs)
 
     def _acquire_authorization_header(self):
+        # Token was provided by caller
         if self._authentication_method is AuthenticationMethod.aad_token:
             return _get_header("Bearer", self._token)
 
+        # Obtain token from MSI endpoint
         if self._authentication_method == AuthenticationMethod.aad_msi:
             token = self.get_token_from_msi()
-        else:
-            # obtain token from cache and make sure it has not expired
-            token = self._adal_context.acquire_token(self._kusto_cluster, self._username, self._client_id)
-            if token is not None:
-                expiration_date = dateutil.parser.parse(token[TokenResponseFields.EXPIRES_ON])
-                if expiration_date > datetime.now() + timedelta(minutes=1):
-                    return _get_header_from_dict(token)
-                if TokenResponseFields.REFRESH_TOKEN in token:
-                    token = self._adal_context.acquire_token_with_refresh_token(
-                        token[TokenResponseFields.REFRESH_TOKEN], self._client_id, self._kusto_cluster
-                    )
-                    if token is not None:
-                        return _get_header_from_dict(token)
+            return _get_header_from_dict(token)
 
-            if self._authentication_method is AuthenticationMethod.aad_username_password:
-                token = self._adal_context.acquire_token_with_username_password(
-                    self._kusto_cluster, self._username, self._password, self._client_id
+        # obtain token from cache and make sure it has not expired
+        token = self._adal_context.acquire_token(self._kusto_cluster, self._username, self._client_id)
+        if token is not None:
+            expiration_date = dateutil.parser.parse(token[TokenResponseFields.EXPIRES_ON])
+            if expiration_date > datetime.now() + timedelta(minutes=1):
+                return _get_header_from_dict(token)
+            if TokenResponseFields.REFRESH_TOKEN in token:
+                token = self._adal_context.acquire_token_with_refresh_token(
+                    token[TokenResponseFields.REFRESH_TOKEN], self._client_id, self._kusto_cluster
                 )
-            elif self._authentication_method is AuthenticationMethod.aad_application_key:
-                token = self._adal_context.acquire_token_with_client_credentials(
-                    self._kusto_cluster, self._client_id, self._client_secret
-                )
-            elif self._authentication_method is AuthenticationMethod.aad_device_login:
-                code = self._adal_context.acquire_user_code(self._kusto_cluster, self._client_id)
-                print(code[OAuth2DeviceCodeResponseParameters.MESSAGE])
-                webbrowser.open(code[OAuth2DeviceCodeResponseParameters.VERIFICATION_URL])
-                token = self._adal_context.acquire_token_with_device_code(self._kusto_cluster, code, self._client_id)
-            elif self._authentication_method is AuthenticationMethod.aad_application_certificate:
-                token = self._adal_context.acquire_token_with_client_certificate(
-                    self._kusto_cluster, self._client_id, self._certificate, self._thumbprint
-                )
-            else:
-                raise KustoClientError("Please choose authentication method from azure.kusto.data.security.AuthenticationMethod")
+                if token is not None:
+                    return _get_header_from_dict(token)
+
+        # obtain token from AAD
+        if self._authentication_method is AuthenticationMethod.aad_username_password:
+            token = self._adal_context.acquire_token_with_username_password(
+                self._kusto_cluster, self._username, self._password, self._client_id
+            )
+        elif self._authentication_method is AuthenticationMethod.aad_application_key:
+            token = self._adal_context.acquire_token_with_client_credentials(
+                self._kusto_cluster, self._client_id, self._client_secret
+            )
+        elif self._authentication_method is AuthenticationMethod.aad_device_login:
+            code = self._adal_context.acquire_user_code(self._kusto_cluster, self._client_id)
+            print(code[OAuth2DeviceCodeResponseParameters.MESSAGE])
+            webbrowser.open(code[OAuth2DeviceCodeResponseParameters.VERIFICATION_URL])
+            token = self._adal_context.acquire_token_with_device_code(self._kusto_cluster, code, self._client_id)
+        elif self._authentication_method is AuthenticationMethod.aad_application_certificate:
+            token = self._adal_context.acquire_token_with_client_certificate(
+                self._kusto_cluster, self._client_id, self._certificate, self._thumbprint
+            )
+        else:
+            raise KustoClientError("Please choose authentication method from azure.kusto.data.security.AuthenticationMethod")
 
         return _get_header_from_dict(token)
 
     def get_token_from_msi(self):
         credentials = None
         try:
-            if self._msi_type == AuthenticationMethod.msi_default_type.value:
-                credentials = MSIAuthentication(self._kusto_cluster)
-            elif self._msi_type == AuthenticationMethod.msi_client_id_type.value:
-                credentials = MSIAuthentication(self._kusto_cluster, client_id=self._msi_id)
-            elif self._msi_type == AuthenticationMethod.msi_object_id_type.value:
-                credentials = MSIAuthentication(self._kusto_cluster, object_id=self._msi_id)
-            elif self._msi_type == AuthenticationMethod.msi_res_id_type.value:
-                credentials = MSIAuthentication(self._kusto_cluster, msi_res_id=self._msi_id)
-            else:
-                raise KustoClientError("Unexpected MSI authentication method [" + self._msi_type + ", " + self._msi_id + "]")
+            credentials = MSIAuthentication(**self._msi_params)
 
             """
             For future reference, Azure Webapps and Azure Functions may be required to use the get_msi_token_webapp API
@@ -165,7 +155,7 @@ class _AadHelper(object):
             If that is not the case, please remove this comment.
             """
         except Exception as e:
-            raise KustoClientError("Failed to obtain MSI context for [" + self._msi_type + ", " + self._msi_id + "]\n" + str(e))
+            raise KustoClientError("Failed to obtain MSI context for [" + str(self._msi_params) + "]\n" + str(e))
 
         return credentials.token
 

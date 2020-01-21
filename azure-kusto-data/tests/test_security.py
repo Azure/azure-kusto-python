@@ -28,10 +28,10 @@ def test_msi_auth():
     res_guid = "kajsdghdijewhag"
 
     kcsb = [
-        KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication("localhost"),
-        KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication("localhost", AuthenticationMethod.msi_client_id_type, client_guid),
-        KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication("localhost", AuthenticationMethod.msi_object_id_type, object_guid),
-        KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication("localhost", AuthenticationMethod.msi_res_id_type, res_guid)
+        KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication("localhost", timeout=1),
+        KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication("localhost", client_id=client_guid, timeout=1),
+        KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication("localhost", object_id=object_guid, timeout=1),
+        KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication("localhost", msi_res_id=res_guid, timeout=1)
     ]
 
     helpers = [
@@ -41,18 +41,26 @@ def test_msi_auth():
         _AadHelper(kcsb[3]),
     ]
 
+    """
+    * * * Note * * *
+    Each connection test takes about 15-20 seconds which is the time it takes TCP to fail connecting to the nonexistent MSI endpoint
+    The timeout option does not seem to affect this behavior. Could be it only affects the waiting time fora response in successful connections.
+    Please be prudent in adding any future tests!
+    """
     try:
         helpers[0].acquire_authorization_header()
     except KustoAuthenticationError as e:
         assert e.authentication_method == AuthenticationMethod.aad_msi.value
-        assert e.kwargs["msi_type"] == AuthenticationMethod.msi_default_type.value
-        assert e.kwargs["msi_id"] == ""
+        assert "client_id" not in e.kwargs
+        assert "object_id" not in e.kwargs
+        assert "msi_res_id" not in e.kwargs
 
     try:
         helpers[1].acquire_authorization_header()
     except KustoAuthenticationError as e:
         assert e.authentication_method == AuthenticationMethod.aad_msi.value
-        assert e.kwargs["msi_type"] == AuthenticationMethod.msi_client_id_type.value
-        assert e.kwargs["msi_id"] == client_guid
-        assert str(e.exception).index(AuthenticationMethod.msi_client_id_type.value) > -1
+        assert e.kwargs["client_id"] == client_guid
+        assert "object_id" not in e.kwargs
+        assert "msi_res_id" not in e.kwargs
+        assert str(e.exception).index("client_id") > -1
         assert str(e.exception).index(client_guid) > -1

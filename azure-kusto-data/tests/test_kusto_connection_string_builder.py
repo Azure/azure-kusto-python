@@ -254,20 +254,38 @@ class KustoConnectionStringBuilderTests(unittest.TestCase):
         res_guid = "kajsdghdijewhag"
 
         kcsb = [
-            KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication("localhost", timeout=1),
-            KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication("localhost", client_id=client_guid, timeout=1),
-            KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication("localhost", object_id=object_guid, timeout=1),
-            KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication("localhost", msi_res_id=res_guid, timeout=1)
+            KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication("localhost0", timeout=1),
+            KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication("localhost1", client_id=client_guid, timeout=2),
+            KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication("localhost2", object_id=object_guid, timeout=3),
+            KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication("localhost3", msi_res_id=res_guid)
         ]
 
         assert kcsb[0].msi_authentication
-        assert kcsb[0].msi_parameters["resource"] == "localhost"
+        assert kcsb[0].msi_parameters["resource"] == "localhost0"
         assert kcsb[0].msi_parameters["timeout"] == 1
+        assert "client_id" not in kcsb[0].msi_parameters
+        assert "object_id" not in kcsb[0].msi_parameters
+        assert "msi_res_id" not in kcsb[0].msi_parameters
+
         assert kcsb[1].msi_authentication
+        assert kcsb[1].msi_parameters["resource"] == "localhost1"
+        assert kcsb[1].msi_parameters["timeout"] == 2
         assert kcsb[1].msi_parameters["client_id"] == client_guid
+        assert "object_id" not in kcsb[1].msi_parameters
+        assert "msi_res_id" not in kcsb[1].msi_parameters
+
         assert kcsb[2].msi_authentication
+        assert kcsb[2].msi_parameters["resource"] == "localhost2"
+        assert kcsb[2].msi_parameters["timeout"] == 3
+        assert "client_id" not in kcsb[2].msi_parameters
         assert kcsb[2].msi_parameters["object_id"] == object_guid
+        assert "msi_res_id" not in kcsb[2].msi_parameters
+
         assert kcsb[3].msi_authentication
+        assert kcsb[3].msi_parameters["resource"] == "localhost3"
+        assert "timeout" not in kcsb[3].msi_parameters
+        assert "client_id" not in kcsb[3].msi_parameters
+        assert "object_id" not in kcsb[3].msi_parameters
         assert kcsb[3].msi_parameters["msi_res_id"] == res_guid
 
         try:
