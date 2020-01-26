@@ -2,9 +2,10 @@
 import os
 import time
 import tempfile
+import shutil
 from gzip import GzipFile
 
-from azure.kusto.data.request import KustoClient, ClientRequestProperties
+from azure.kusto.data.request import KustoClient
 from ._descriptors import FileDescriptor, StreamDescriptor
 from .exceptions import KustoMissingMappingReferenceError
 from ._ingestion_properties import DataFormat
@@ -43,15 +44,10 @@ class KustoStreamingIngestClient(object):
 
         df.to_csv(temp_file_path, index=False, encoding="utf-8", header=False, compression="gzip")
 
-        fd = FileDescriptor(temp_file_path)
-
         ingestion_properties.format = DataFormat.CSV
 
-        stream_descriptor = StreamDescriptor(fd.zipped_stream, fd.source_id, True)
+        self.ingest_from_file(temp_file_path, ingestion_properties)
 
-        self.ingest_from_stream(stream_descriptor, ingestion_properties)
-
-        fd.delete_files()
         os.unlink(temp_file_path)
 
     def ingest_from_file(self, file_descriptor, ingestion_properties):
@@ -65,11 +61,15 @@ class KustoStreamingIngestClient(object):
         else:
             descriptor = FileDescriptor(file_descriptor)
 
-        stream_descriptor = StreamDescriptor(descriptor.zipped_stream, descriptor.source_id, True)
+        stream = open(descriptor.path, "rb")
+
+        is_compressed = descriptor.path.endswith(".gz") or descriptor.path.endswith(".zip")
+        stream_descriptor = StreamDescriptor(stream, descriptor.source_id, is_compressed)
 
         self.ingest_from_stream(stream_descriptor, ingestion_properties)
 
-        descriptor.delete_files()
+        if stream is not None:
+            stream.close()
 
     def ingest_from_stream(self, stream_descriptor, ingestion_properties):
         """Ingest from io streams.

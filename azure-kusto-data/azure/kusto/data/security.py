@@ -60,7 +60,7 @@ class _AadHelper(object):
         else:
             self._authentication_method = AuthenticationMethod.aad_device_login
             self._client_id = "db662dc1-0cfe-4e1c-a843-19a68e65be58"
-            create_adal_context = False
+            create_adal_context = True
 
         if create_adal_context:
             authority = kcsb.authority_id or "common"

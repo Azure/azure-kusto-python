@@ -3,7 +3,6 @@ import pytest
 import time
 import os
 import uuid
-import sys
 import io
 from six import text_type
 
@@ -23,7 +22,6 @@ from azure.kusto.ingest import (
     ReportMethod,
     FileDescriptor,
     KustoMissingMappingReferenceError,
-    KustoStreamMaxSizeExceededError,
 )
 
 # TODO: change this file to use pytest as runner
