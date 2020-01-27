@@ -51,7 +51,7 @@ class DescriptorsTest(unittest.TestCase):
         filePath = path.join(path.dirname(path.abspath(__file__)), "input", "dataset.csv.gz")
         descriptor = FileDescriptor(filePath, 0)
         with descriptor.open(False) as stream:
-            self.assertEqual(descriptor.size, 2305)
+            self.assertEqual(descriptor.size, 5071)
             self.assertTrue(descriptor.stream_name.endswith(".csv.gz"))
             if sys.version_info[0] >= 3:
                 self.assertTrue(stream.readable(), True)
