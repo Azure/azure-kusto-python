@@ -6,10 +6,6 @@ import uuid
 import os
 import time
 import tempfile
-import shutil
-
-from io import BytesIO
-from gzip import GzipFile
 
 from azure.storage.common import CloudStorageAccount
 
@@ -68,36 +64,25 @@ class KustoIngestClient(object):
         else:
             descriptor = FileDescriptor(file_descriptor)
 
-        if (
-            ingestion_properties.format == DataFormat.PARQUET
-            or ingestion_properties.format == DataFormat.ORC
-            or ingestion_properties.format == DataFormat.AVRO
+        should_compress = (
+            ingestion_properties.format in [DataFormat.AVRO, DataFormat.ORC, DataFormat.PARQUET]
             or descriptor.path.endswith(".gz")
             or descriptor.path.endswith(".zip")
-        ):
-            zipped_stream = open(descriptor.path, "rb")
-        else:
-            descriptor.stream_name += ".gz"
-            zipped_stream = BytesIO()
-            with open(descriptor.path, "rb") as f_in, GzipFile(filename="data", fileobj=zipped_stream, mode="wb") as f_out:
-                shutil.copyfileobj(f_in, f_out)
-            zipped_stream.seek(0)
-
-        blob_name = "{db}__{table}__{guid}__{file}".format(
-            db=ingestion_properties.database, table=ingestion_properties.table, guid=descriptor.source_id or uuid.uuid4(), file=descriptor.stream_name,
         )
 
-        container_details = random.choice(containers)
-        storage_client = CloudStorageAccount(container_details.storage_account_name, sas_token=container_details.sas)
-        blob_service = storage_client.create_block_blob_service()
+        with descriptor.open(should_compress) as stream:
+            blob_name = "{db}__{table}__{guid}__{file}".format(
+                db=ingestion_properties.database, table=ingestion_properties.table, guid=descriptor.source_id or uuid.uuid4(), file=descriptor.stream_name
+            )
 
-        blob_service.create_blob_from_stream(container_name=container_details.object_name, blob_name=blob_name, stream=zipped_stream)
-        url = blob_service.make_blob_url(container_details.object_name, blob_name, sas_token=container_details.sas)
+            container_details = random.choice(containers)
+            storage_client = CloudStorageAccount(container_details.storage_account_name, sas_token=container_details.sas)
+            blob_service = storage_client.create_block_blob_service()
 
-        self.ingest_from_blob(BlobDescriptor(url, descriptor.size, descriptor.source_id), ingestion_properties=ingestion_properties)
+            blob_service.create_blob_from_stream(container_name=container_details.object_name, blob_name=blob_name, stream=stream)
+            url = blob_service.make_blob_url(container_details.object_name, blob_name, sas_token=container_details.sas)
 
-        if zipped_stream is not None:
-            zipped_stream.close()
+            self.ingest_from_blob(BlobDescriptor(url, descriptor.size, descriptor.source_id,), ingestion_properties=ingestion_properties)
 
     def ingest_from_blob(self, blob_descriptor, ingestion_properties):
         """Enqueuing an ingest command from azure blobs.

@@ -2,6 +2,10 @@
 
 import os
 import uuid
+import shutil
+
+from io import BytesIO
+from gzip import GzipFile
 
 
 def assert_uuid4(maybe_uuid, error_message):
@@ -32,12 +36,24 @@ class FileDescriptor(object):
         assert_uuid4(source_id, "source_id must be a valid uuid4")
         self.source_id = source_id
         self.stream_name = os.path.basename(self.path)
-        if not self.size or self.size <= 0:
-            if self.path.endswith(".gz") or self.path.endswith(".zip"):
-                # TODO: this can be improved by reading last 4 bytes
-                self.size = int(os.path.getsize(self.path)) * 5
-            else:
-                self.size = int(os.path.getsize(self.path))
+
+        if self.path.endswith(".gz") or self.path.endswith(".zip"):
+            # TODO: this can be improved by reading last 4 bytes
+            self.size = int(os.path.getsize(self.path)) * 5
+        elif not self.size or self.size <= 0:
+            self.size = int(os.path.getsize(self.path))
+
+    def open(self, should_compress):
+        if should_compress:
+            self.stream_name += ".gz"
+            file_stream = BytesIO()
+            with open(self.path, "rb") as f_in, GzipFile(filename="data", fileobj=file_stream, mode="wb") as f_out:
+                shutil.copyfileobj(f_in, f_out)
+            file_stream.seek(0)
+        else:
+            file_stream = open(self.path, "rb")
+
+        return file_stream
 
 
 class BlobDescriptor(object):
