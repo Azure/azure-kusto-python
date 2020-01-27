@@ -39,7 +39,7 @@ class FileDescriptor(object):
 
         if self.path.endswith(".gz") or self.path.endswith(".zip"):
             # TODO: this can be improved by reading last 4 bytes
-            self.size = int(os.path.getsize(self.path)) * 5
+            self.size = int(os.path.getsize(self.path)) * 11
         elif not self.size or self.size <= 0:
             self.size = int(os.path.getsize(self.path))
 

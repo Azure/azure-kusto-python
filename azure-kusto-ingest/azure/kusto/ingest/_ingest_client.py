@@ -64,7 +64,7 @@ class KustoIngestClient(object):
         else:
             descriptor = FileDescriptor(file_descriptor)
 
-        should_compress = (
+        should_compress = not (
             ingestion_properties.format in [DataFormat.AVRO, DataFormat.ORC, DataFormat.PARQUET]
             or descriptor.path.endswith(".gz")
             or descriptor.path.endswith(".zip")
