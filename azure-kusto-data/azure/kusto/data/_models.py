@@ -153,7 +153,7 @@ class KustoResultTable(object):
         d = self.to_dict()
         # enum is not serializable, using value instead
         d["kind"] = d["kind"].value
-        return json.dumps(d)
+        return json.dumps(d, default=str)
 
     def __bool__(self):
         return any(self.columns)
