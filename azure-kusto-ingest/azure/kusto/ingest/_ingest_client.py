@@ -13,6 +13,7 @@ from azure.kusto.data.request import KustoClient
 from ._descriptors import BlobDescriptor, FileDescriptor
 from ._ingestion_blob_info import _IngestionBlobInfo
 from ._resource_manager import _ResourceManager
+from ._ingestion_properties import DataFormat
 
 
 class KustoIngestClient(object):
@@ -33,7 +34,6 @@ class KustoIngestClient(object):
         """Enqueuing an ingest command from local files.
         :param pandas.DataFrame df: input dataframe to ingest.
         :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
-        
         """
 
         from pandas import DataFrame
@@ -46,24 +46,10 @@ class KustoIngestClient(object):
 
         df.to_csv(temp_file_path, index=False, encoding="utf-8", header=False, compression="gzip")
 
-        fd = FileDescriptor(temp_file_path)
+        ingestion_properties.format = DataFormat.CSV
 
-        blob_name = "{db}__{table}__{guid}__{file}".format(
-            db=ingestion_properties.database, table=ingestion_properties.table, guid=uuid.uuid4(), file=file_name
-        )
+        self.ingest_from_file(temp_file_path, ingestion_properties)
 
-        containers = self._resource_manager.get_containers()
-        container_details = random.choice(containers)
-        storage_client = CloudStorageAccount(container_details.storage_account_name, sas_token=container_details.sas)
-        blob_service = storage_client.create_block_blob_service()
-
-        blob_service.create_blob_from_path(container_name=container_details.object_name, blob_name=blob_name, file_path=temp_file_path)
-
-        url = blob_service.make_blob_url(container_details.object_name, blob_name, sas_token=container_details.sas)
-
-        self.ingest_from_blob(BlobDescriptor(url, fd.size), ingestion_properties=ingestion_properties)
-
-        fd.delete_files()
         os.unlink(temp_file_path)
 
     def ingest_from_file(self, file_descriptor, ingestion_properties):
@@ -71,7 +57,6 @@ class KustoIngestClient(object):
         :param file_descriptor: a FileDescriptor to be ingested.
         :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
         """
-        file_descriptors = list()
         containers = self._resource_manager.get_containers()
 
         if isinstance(file_descriptor, FileDescriptor):
@@ -79,19 +64,25 @@ class KustoIngestClient(object):
         else:
             descriptor = FileDescriptor(file_descriptor)
 
-        file_descriptors.append(descriptor)
-        blob_name = "{db}__{table}__{guid}__{file}".format(
-            db=ingestion_properties.database, table=ingestion_properties.table, guid=descriptor.source_id or uuid.uuid4(), file=descriptor.stream_name,
+        should_compress = not (
+            ingestion_properties.format in [DataFormat.AVRO, DataFormat.ORC, DataFormat.PARQUET]
+            or descriptor.path.endswith(".gz")
+            or descriptor.path.endswith(".zip")
         )
 
-        container_details = random.choice(containers)
-        storage_client = CloudStorageAccount(container_details.storage_account_name, sas_token=container_details.sas)
-        blob_service = storage_client.create_block_blob_service()
+        with descriptor.open(should_compress) as stream:
+            blob_name = "{db}__{table}__{guid}__{file}".format(
+                db=ingestion_properties.database, table=ingestion_properties.table, guid=descriptor.source_id or uuid.uuid4(), file=descriptor.stream_name
+            )
 
-        blob_service.create_blob_from_stream(container_name=container_details.object_name, blob_name=blob_name, stream=descriptor.zipped_stream)
-        url = blob_service.make_blob_url(container_details.object_name, blob_name, sas_token=container_details.sas)
+            container_details = random.choice(containers)
+            storage_client = CloudStorageAccount(container_details.storage_account_name, sas_token=container_details.sas)
+            blob_service = storage_client.create_block_blob_service()
 
-        self.ingest_from_blob(BlobDescriptor(url, descriptor.size, descriptor.source_id), ingestion_properties=ingestion_properties)
+            blob_service.create_blob_from_stream(container_name=container_details.object_name, blob_name=blob_name, stream=stream)
+            url = blob_service.make_blob_url(container_details.object_name, blob_name, sas_token=container_details.sas)
+
+            self.ingest_from_blob(BlobDescriptor(url, descriptor.size, descriptor.source_id,), ingestion_properties=ingestion_properties)
 
     def ingest_from_blob(self, blob_descriptor, ingestion_properties):
         """Enqueuing an ingest command from azure blobs.

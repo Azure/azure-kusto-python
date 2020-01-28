@@ -60,7 +60,7 @@ class _AadHelper(object):
         else:
             self._authentication_method = AuthenticationMethod.aad_device_login
             self._client_id = "db662dc1-0cfe-4e1c-a843-19a68e65be58"
-            create_adal_context = False
+            create_adal_context = True
 
         if create_adal_context:
             authority = kcsb.authority_id or "common"
@@ -137,14 +137,6 @@ class _AadHelper(object):
         credentials = None
         try:
             credentials = MSIAuthentication(**self._msi_params)
-
-            """
-            For future reference, Azure Webapps and Azure Functions may be required to use the get_msi_token_webapp API
-            if MSIAuthentication object does not cover their environment.
-            If that is the case, use get_msi_token_webapp(resource, [optional msi_conf={self._msi_type : self_.msi_id}])
-                The optional param should be used when self._msi_type != "system"
-            If that is not the case, please remove this comment.
-            """
         except Exception as e:
             raise KustoClientError("Failed to obtain MSI context for [" + str(self._msi_params) + "]\n" + str(e))
 

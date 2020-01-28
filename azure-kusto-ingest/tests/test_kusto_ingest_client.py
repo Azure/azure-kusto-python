@@ -4,7 +4,6 @@ import unittest
 import json
 import base64
 from mock import patch
-from six import text_type
 import responses
 import io
 from azure.kusto.ingest import KustoIngestClient, IngestionProperties, DataFormat
@@ -124,12 +123,12 @@ class KustoIngestClientTests(unittest.TestCase):
 
     @responses.activate
     @pytest.mark.skipif(not pandas_installed, reason="requires pandas")
-    @patch("azure.storage.blob.BlockBlobService.create_blob_from_path")
+    @patch("azure.storage.blob.BlockBlobService.create_blob_from_stream")
     @patch("azure.storage.queue.QueueService.put_message")
     @patch("uuid.uuid4", return_value=MOCKED_UUID_4)
     @patch("time.time", return_value=MOCKED_TIME)
     @patch("os.getpid", return_value=MOCKED_PID)
-    def test_simple_ingest_from_dataframe(self, mock_pid, mock_time, mock_uuid, mock_put_message_in_queue, mock_create_blob_from_path):
+    def test_simple_ingest_from_dataframe(self, mock_pid, mock_time, mock_uuid, mock_put_message_in_queue, mock_create_blob_from_stream):
         responses.add_callback(
             responses.POST, "https://ingest-somecluster.kusto.windows.net/v1/rest/mgmt", callback=request_callback, content_type="application/json",
         )
@@ -153,7 +152,7 @@ class KustoIngestClientTests(unittest.TestCase):
         assert put_message_in_queue_mock_kwargs["queue_name"] == "readyforaggregation-secured"
         queued_message = base64.b64decode(put_message_in_queue_mock_kwargs["content"].encode("utf-8")).decode("utf-8")
         queued_message_json = json.loads(queued_message)
-        expected_url = ("https://storageaccount.blob.core.windows.net/tempstorage/" "database__table__1111-111111-111111-1111__df_{}_100_64.csv.gz?sas").format(
+        expected_url = ("https://storageaccount.blob.core.windows.net/tempstorage/database__table__1111-111111-111111-1111__df_{}_100_64.csv.gz?sas").format(
             id(df)
         )
         # mock_create_blob_from_stream
@@ -166,9 +165,8 @@ class KustoIngestClientTests(unittest.TestCase):
         assert queued_message_json["RawDataSize"] > 0
         assert queued_message_json["RetainBlobOnSuccess"] == True
 
-        create_blob_from_path_mock_kwargs = mock_create_blob_from_path.call_args_list[0][1]
-        import tempfile
+        create_blob_from_stream_mock_kwargs = mock_create_blob_from_stream.call_args_list[0][1]
 
-        assert create_blob_from_path_mock_kwargs["container_name"] == "tempstorage"
-        assert create_blob_from_path_mock_kwargs["file_path"] == os.path.join(tempfile.gettempdir(), "df_{}_100_64.csv.gz".format(id(df)))
-        assert create_blob_from_path_mock_kwargs["blob_name"] == "database__table__1111-111111-111111-1111__df_{}_100_64.csv.gz".format(id(df))
+        assert create_blob_from_stream_mock_kwargs["container_name"] == "tempstorage"
+        assert type(create_blob_from_stream_mock_kwargs["stream"]) == io.BufferedReader
+        assert create_blob_from_stream_mock_kwargs["blob_name"] == "database__table__1111-111111-111111-1111__df_{}_100_64.csv.gz".format(id(df))
