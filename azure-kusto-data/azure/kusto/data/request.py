@@ -20,14 +20,16 @@ from .security import _AadHelper
 
 
 class KustoConnectionStringBuilder:
-    """Parses Kusto connection strings.
+    """
+    Parses Kusto connection strings.
     For usages, check out the sample at:
         https://github.com/Azure/azure-kusto-python/blob/master/azure-kusto-data/tests/sample.py
     """
 
     @unique
     class ValidKeywords(Enum):
-        """Set of properties that can be use in a connection string provied to KustoConnectionStringBuilder.
+        """
+        Set of properties that can be use in a connection string provied to KustoConnectionStringBuilder.
         For a complete list of properties go to https://docs.microsoft.com/en-us/azure/kusto/api/connection-strings/kusto
         """
 
@@ -104,7 +106,8 @@ class KustoConnectionStringBuilder:
             return self in [self.aad_federated_security, self.msi_auth]
 
     def __init__(self, connection_string):
-        """Creates new KustoConnectionStringBuilder.
+        """
+        Creates new KustoConnectionStringBuilder.
         :param str connection_string: Kusto connection string should by of the format:
         https://<clusterName>.kusto.windows.net;AAD User ID="user@microsoft.com";Password=P@ssWord
         For more information please look at:
@@ -154,7 +157,8 @@ class KustoConnectionStringBuilder:
 
     @classmethod
     def with_aad_user_password_authentication(cls, connection_string, user_id, password, authority_id="common") -> "KustoConnectionStringBuilder":
-        """Creates a KustoConnection string builder that will authenticate with AAD user name and
+        """
+        Creates a KustoConnection string builder that will authenticate with AAD user name and
         password.
         :param str connection_string: Kusto connection string should by of the format: https://<clusterName>.kusto.windows.net
         :param str user_id: AAD user ID.
@@ -173,7 +177,8 @@ class KustoConnectionStringBuilder:
 
     @classmethod
     def with_aad_user_token_authentication(cls, connection_string, user_token) -> "KustoConnectionStringBuilder":
-        """Creates a KustoConnection string builder that will authenticate with AAD application and
+        """
+        Creates a KustoConnection string builder that will authenticate with AAD application and
         a certificate credentials.
         :param str connection_string: Kusto connection string should by of the format:
         https://<clusterName>.kusto.windows.net
@@ -188,7 +193,8 @@ class KustoConnectionStringBuilder:
 
     @classmethod
     def with_aad_application_key_authentication(cls, connection_string, aad_app_id, app_key, authority_id) -> "KustoConnectionStringBuilder":
-        """Creates a KustoConnection string builder that will authenticate with AAD application and key.
+        """
+        Creates a KustoConnection string builder that will authenticate with AAD application and key.
         :param str connection_string: Kusto connection string should by of the format: https://<clusterName>.kusto.windows.net
         :param str aad_app_id: AAD application ID.
         :param str app_key: Corresponding key of the AAD application.
@@ -209,7 +215,8 @@ class KustoConnectionStringBuilder:
     def with_aad_application_certificate_authentication(
         cls, connection_string, aad_app_id, certificate, thumbprint, authority_id
     ) -> "KustoConnectionStringBuilder":
-        """Creates a KustoConnection string builder that will authenticate with AAD application and
+        """
+        Creates a KustoConnection string builder that will authenticate with AAD application and
         a certificate credentials.
         :param str connection_string: Kusto connection string should by of the format:
         https://<clusterName>.kusto.windows.net
@@ -233,7 +240,8 @@ class KustoConnectionStringBuilder:
 
     @classmethod
     def with_aad_application_token_authentication(cls, connection_string, application_token) -> "KustoConnectionStringBuilder":
-        """Creates a KustoConnection string builder that will authenticate with AAD application and
+        """
+        Creates a KustoConnection string builder that will authenticate with AAD application and
         an application token.
         :param str connection_string: Kusto connection string should by of the format:
         https://<clusterName>.kusto.windows.net
@@ -248,7 +256,8 @@ class KustoConnectionStringBuilder:
 
     @classmethod
     def with_aad_device_authentication(cls, connection_string, authority_id="common") -> "KustoConnectionStringBuilder":
-        """Creates a KustoConnection string builder that will authenticate with AAD application and
+        """
+        Creates a KustoConnection string builder that will authenticate with AAD application and
         password.
         :param str connection_string: Kusto connection string should by of the format: https://<clusterName>.kusto.windows.net
         :param str authority_id: optional param. defaults to "common"
@@ -409,10 +418,12 @@ def _assert_value_is_valid(value):
 class KustoClient:
     """
     Kusto client for Python.
-    KustoClient works with both 2.x and 3.x flavors of Python. All primitive types are supported.
-    KustoClient takes care of ADAL authentication, parsing response and giving you typed result set.
+    The client is a wrapper around the Kusto REST API.
+    To read more about it, go to https://docs.microsoft.com/en-us/azure/kusto/api/rest/
 
-    Tests are run using pytest.
+    The primary methods are:
+    `execute_query`:  executes a KQL query against the Kusto service.
+    `execute_mgmt`: executes a KQL control command against the Kusto service.
     """
 
     _mgmt_default_timeout = timedelta(hours=1, seconds=30)
@@ -458,7 +469,8 @@ class KustoClient:
 
     def execute_query(self, database: str, query: str, properties: ClientRequestProperties = None) -> KustoResponseDataSet:
         """
-        Executes a query.
+        Execute a KQL query.
+        To learn more about KQL go to https://docs.microsoft.com/en-us/azure/kusto/query/
         :param str database: Database against query will be executed.
         :param str query: Query to be executed.
         :param azure.kusto.data.request.ClientRequestProperties properties: Optional additional properties.
@@ -469,7 +481,8 @@ class KustoClient:
 
     def execute_mgmt(self, database: str, query: str, properties: ClientRequestProperties = None) -> KustoResponseDataSet:
         """
-        Executes a management command.
+        Execute a KQL control command.
+        To learn more about KQL control commands go to  https://docs.microsoft.com/en-us/azure/kusto/management/
         :param str database: Database against query will be executed.
         :param str query: Query to be executed.
         :param azure.kusto.data.request.ClientRequestProperties properties: Optional additional properties.
@@ -488,7 +501,10 @@ class KustoClient:
         mapping_name: str = None,
     ):
         """
-        Executes streaming ingest against this client.
+        Execute streaming ingest against this client
+        If the Kusto service is not configured to allow streaming ingestion, this may raise an error
+        To learn more about streaming ingestion go to:
+        https://docs.microsoft.com/en-us/azure/data-explorer/ingest-data-streaming
         :param str database: Target database.
         :param str table: Target table.
         :param io.BaseIO stream: stream object which contains the data to ingest.
