@@ -413,6 +413,7 @@ def _assert_value_is_valid(value):
     if not value or not value.strip():
         raise ValueError("Should not be empty")
 
+
 class ClientRequestProperties:
     """This class is a POD used by client making requests to describe specific needs from the service executing the requests.
     For more information please look at: https://docs.microsoft.com/en-us/azure/kusto/api/netfx/request-properties
@@ -610,5 +611,3 @@ class KustoClient:
             )
 
         raise KustoServiceError([response.json()], response)
-
-
