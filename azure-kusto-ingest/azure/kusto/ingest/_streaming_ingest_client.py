@@ -12,7 +12,7 @@ from ._ingestion_properties import DataFormat
 from io import TextIOWrapper, BytesIO
 
 
-class KustoStreamingIngestClient(object):
+class KustoStreamingIngestClient:
     """Kusto streaming ingest client for Python.
     KustoStreamingIngestClient works with both 2.x and 3.x flavors of Python.
     All primitive types are supported.

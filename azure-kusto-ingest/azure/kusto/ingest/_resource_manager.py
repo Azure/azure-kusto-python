@@ -24,7 +24,7 @@ class _ResourceUri:
         return "https://{0.storage_account_name}.{0.object_type}.core.windows.net/{0.object_name}?{0.sas}".format(self)
 
 
-class _IngestClientResources(object):
+class _IngestClientResources:
     def __init__(
         self, secured_ready_for_aggregation_queues=None, failed_ingestions_queues=None, successful_ingestions_queues=None, containers=None, status_tables=None
     ):
@@ -45,7 +45,7 @@ class _IngestClientResources(object):
         return all(resources)
 
 
-class _ResourceManager(object):
+class _ResourceManager:
     def __init__(self, kusto_client):
         self._kusto_client = kusto_client
         self._refresh_period = timedelta(hours=1)

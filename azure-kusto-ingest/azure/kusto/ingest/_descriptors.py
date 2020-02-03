@@ -18,7 +18,7 @@ def assert_uuid4(maybe_uuid, error_message):
         raise ValueError(error_message)
 
 
-class FileDescriptor(object):
+class FileDescriptor:
     """FileDescriptor is used to describe a file that will be used as an ingestion source."""
 
     def __init__(self, path, size=0, source_id=None):
@@ -56,7 +56,7 @@ class FileDescriptor(object):
         return file_stream
 
 
-class BlobDescriptor(object):
+class BlobDescriptor:
     """FileDescriptor is used to describe a file that will be used as an ingestion source"""
 
     def __init__(self, path, size, source_id=None):
@@ -74,7 +74,7 @@ class BlobDescriptor(object):
         self.source_id = source_id
 
 
-class StreamDescriptor(object):
+class StreamDescriptor:
     """StreamDescriptor is used to describe a stream that will be used as ingestion source"""
 
     def __init__(self, stream, source_id=None, is_compressed=False):

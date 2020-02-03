@@ -26,7 +26,7 @@ class WellKnownDataSet(Enum):
     QueryProperties = "QueryProperties"
 
 
-class KustoResultRow(object):
+class KustoResultRow:
     """Iterator over a Kusto result row."""
 
     convertion_funcs = {"datetime": _converters.to_datetime, "timespan": _converters.to_timedelta, "decimal": Decimal}
@@ -96,7 +96,7 @@ class KustoResultRow(object):
         return "KustoResultRow(['{}'], [{}])".format("', '".join(self._value_by_name), ", ".join(values))
 
 
-class KustoResultColumn(object):
+class KustoResultColumn:
     def __init__(self, json_column, ordinal):
         self.column_name = json_column["ColumnName"]
         self.column_type = json_column.get("ColumnType") or json_column["DataType"]
@@ -106,7 +106,7 @@ class KustoResultColumn(object):
         return "KustoResultColumn({},{})".format(json.dumps({"ColumnName": self.column_name, "ColumnType": self.column_type}), self.ordinal)
 
 
-class KustoResultTable(object):
+class KustoResultTable:
     """Iterator over a Kusto result table."""
 
     def __init__(self, json_table):

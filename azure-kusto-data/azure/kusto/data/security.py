@@ -25,7 +25,7 @@ class AuthenticationMethod(Enum):
     aad_msi = "aad_msi"
 
 
-class _AadHelper(object):
+class _AadHelper:
     def __init__(self, kcsb):
         if any([kcsb.user_token, kcsb.application_token]):
             self._token = kcsb.user_token or kcsb.application_token

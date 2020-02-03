@@ -47,7 +47,7 @@ class ValidationImplications(IntEnum):
     BestEffort = 1
 
 
-class ValidationPolicy(object):
+class ValidationPolicy:
     """Validation policy to ingest command."""
 
     def __init__(self, validationOptions=ValidationOptions.DoNotValidate, validationImplications=ValidationImplications.BestEffort):

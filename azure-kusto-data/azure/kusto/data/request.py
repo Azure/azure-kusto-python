@@ -16,15 +16,17 @@ from ._response import KustoResponseDataSetV1, KustoResponseDataSetV2
 from ._version import VERSION
 
 
-class KustoConnectionStringBuilder(object):
-    """Parses Kusto conenction strings.
+class KustoConnectionStringBuilder:
+    """Parses Kusto connection strings.
     For usages, check out the sample at:
         https://github.com/Azure/azure-kusto-python/blob/master/azure-kusto-data/tests/sample.py
     """
 
     @unique
     class ValidKeywords(Enum):
-        """Distinct set of values KustoConnectionStringBuilder can have."""
+        """Set of properties that can be use in a connection string provied to KustoConnectionStringBuilder.
+        For a complete list of properties go to https://docs.microsoft.com/en-us/azure/kusto/api/connection-strings/kusto
+        """
 
         data_source = "Data Source"
         aad_federated_security = "AAD Federated Security"
@@ -396,7 +398,7 @@ def _assert_value_is_valid(value):
         raise ValueError("Should not be empty")
 
 
-class KustoClient(object):
+class KustoClient:
     """Kusto client for Python.
     KustoClient works with both 2.x and 3.x flavors of Python. All primitive types are supported.
     KustoClient takes care of ADAL authentication, parsing response and giving you typed result set.
@@ -531,7 +533,7 @@ class KustoClient(object):
         return default
 
 
-class ClientRequestProperties(object):
+class ClientRequestProperties:
     """This class is a POD used by client making requests to describe specific needs from the service executing the requests.
     For more information please look at: https://docs.microsoft.com/en-us/azure/kusto/api/netfx/request-properties
     """

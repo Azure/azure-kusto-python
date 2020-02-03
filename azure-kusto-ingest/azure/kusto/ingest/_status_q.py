@@ -4,7 +4,7 @@ import random
 from azure.storage.common import CloudStorageAccount
 
 
-class QueueDetails(object):
+class QueueDetails:
     def __init__(self, name, service):
         self.name = name
         self.service = service
@@ -13,7 +13,7 @@ class QueueDetails(object):
         return "QueueDetails({0.name})".format(self)
 
 
-class StatusQueue(object):
+class StatusQueue:
     """StatusQueue is a class to simplify access to Kusto status queues (backed by azure storage queues).
     """
 

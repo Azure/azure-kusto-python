@@ -16,7 +16,7 @@ from ._resource_manager import _ResourceManager
 from ._ingestion_properties import DataFormat
 
 
-class KustoIngestClient(object):
+class KustoIngestClient:
     """Kusto ingest client for Python.
     KustoIngestClient works with both 2.x and 3.x flavors of Python.
     All primitive types are supported.
