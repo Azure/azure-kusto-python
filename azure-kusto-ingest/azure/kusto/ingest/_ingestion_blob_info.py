@@ -66,4 +66,4 @@ def _convert_list_to_json(array):
 
 def _convert_dict_to_json(array):
     """ Converts array to a json string """
-    return json.dumps(array, skipkeys=False, allow_nan=False, indent=None, separators=(",", ":"), sort_keys=True, default=lambda o: o.__dict__,)
+    return json.dumps(array, skipkeys=False, allow_nan=False, indent=None, separators=(",", ":"), sort_keys=True, default=lambda o: o.__dict__)

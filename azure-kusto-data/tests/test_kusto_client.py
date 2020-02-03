@@ -69,19 +69,7 @@ def mocked_requests_post(*args, **kwargs):
     return MockResponse(None, 404)
 
 
-DIGIT_WORDS = [
-    str("Zero"),
-    str("One"),
-    str("Two"),
-    str("Three"),
-    str("Four"),
-    str("Five"),
-    str("Six"),
-    str("Seven"),
-    str("Eight"),
-    str("Nine"),
-    str("ten"),
-]
+DIGIT_WORDS = [str("Zero"), str("One"), str("Two"), str("Three"), str("Four"), str("Five"), str("Six"), str("Seven"), str("Eight"), str("Nine"), str("ten")]
 
 
 class KustoClientTests(unittest.TestCase):

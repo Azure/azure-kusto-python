@@ -3,11 +3,7 @@ import re
 import json
 from uuid import UUID
 from azure.kusto.ingest._ingestion_blob_info import _IngestionBlobInfo
-from azure.kusto.ingest.exceptions import (
-    KustoDuplicateMappingError,
-    KustoDuplicateMappingReferenceError,
-    KustoMappingAndMappingReferenceError,
-)
+from azure.kusto.ingest.exceptions import KustoDuplicateMappingError, KustoDuplicateMappingReferenceError, KustoMappingAndMappingReferenceError
 from azure.kusto.ingest import (
     BlobDescriptor,
     IngestionProperties,
@@ -117,24 +113,16 @@ class IngestionBlobInfoTest(unittest.TestCase):
             IngestionProperties(database="database", table="table", mapping="mapping", ingestionMapping="ingestionMapping")
 
         with self.assertRaises(KustoMappingAndMappingReferenceError):
-            IngestionProperties(
-                database="database", table="table", mapping="mapping", ingestionMappingReference="ingestionMappingReference",
-            )
+            IngestionProperties(database="database", table="table", mapping="mapping", ingestionMappingReference="ingestionMappingReference")
 
         with self.assertRaises(KustoMappingAndMappingReferenceError):
-            IngestionProperties(
-                database="database", table="table", ingestionMapping="ingestionMapping", ingestionMappingReference="ingestionMappingReference",
-            )
+            IngestionProperties(database="database", table="table", ingestionMapping="ingestionMapping", ingestionMappingReference="ingestionMappingReference")
         with self.assertRaises(KustoMappingAndMappingReferenceError):
             IngestionProperties(database="database", table="table", mapping="mapping", mappingReference="mappingReference")
         with self.assertRaises(KustoMappingAndMappingReferenceError):
-            IngestionProperties(
-                database="database", table="table", ingestionMapping="ingestionMapping", mappingReference="mappingReference",
-            )
+            IngestionProperties(database="database", table="table", ingestionMapping="ingestionMapping", mappingReference="mappingReference")
         with self.assertRaises(KustoDuplicateMappingReferenceError):
-            IngestionProperties(
-                database="database", table="table", mappingReference="mappingReference", ingestionMappingReference="ingestionMappingReference",
-            )
+            IngestionProperties(database="database", table="table", mappingReference="mappingReference", ingestionMappingReference="ingestionMappingReference")
 
     def _verify_ingestion_blob_info_result(self, ingestion_blob_info):
         result = json.loads(ingestion_blob_info)
@@ -154,8 +142,8 @@ class IngestionBlobInfoTest(unittest.TestCase):
         assert result["AdditionalProperties"]["authorizationContext"] == "authorizationContextText"
         assert result["AdditionalProperties"]["ingestIfNotExists"] == '["ingestIfNotExistTags"]'
         assert result["AdditionalProperties"]["ValidationPolicy"] in (
-                '{"ValidationImplications":1,"ValidationOptions":1}',
-                '{"ValidationImplications":ValidationImplications.BestEffort,"ValidationOptions":ValidationOptions.ValidateCsvInputConstantColumns}',
-            )
-        
+            '{"ValidationImplications":1,"ValidationOptions":1}',
+            '{"ValidationImplications":ValidationImplications.BestEffort,"ValidationOptions":ValidationOptions.ValidateCsvInputConstantColumns}',
+        )
+
         assert result["AdditionalProperties"]["tags"] == '["tag","drop-by:dropByTags","ingest-by:ingestByTags"]'

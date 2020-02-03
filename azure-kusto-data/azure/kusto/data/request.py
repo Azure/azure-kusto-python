@@ -74,13 +74,7 @@ class KustoConnectionStringBuilder(object):
 
         def is_secret(self):
             """States for each property if it contains secret"""
-            return self in [
-                self.password,
-                self.application_key,
-                self.application_certificate,
-                self.application_token,
-                self.user_token,
-            ]
+            return self in [self.password, self.application_key, self.application_certificate, self.application_token, self.user_token]
 
         def is_str_type(self):
             """States whether a word is of type str or not."""
@@ -102,10 +96,7 @@ class KustoConnectionStringBuilder(object):
 
         def is_bool_type(self):
             """States whether a word is of type bool or not."""
-            return self in [
-                self.aad_federated_security,
-                self.msi_auth,
-            ]
+            return self in [self.aad_federated_security, self.msi_auth]
 
     def __init__(self, connection_string):
         """Creates new KustoConnectionStringBuilder.
@@ -437,11 +428,7 @@ class KustoClient(object):
         self._query_endpoint = "{0}/v2/rest/query".format(kusto_cluster)
         self._streaming_ingest_endpoint = "{0}/v1/rest/ingest/".format(kusto_cluster)
         self._auth_provider = _AadHelper(kcsb) if kcsb.aad_federated_security else None
-        self._request_headers = {
-            "Accept": "application/json",
-            "Accept-Encoding": "gzip,deflate",
-            "x-ms-client-version": "Kusto.Python.Client:" + VERSION,
-        }
+        self._request_headers = {"Accept": "application/json", "Accept-Encoding": "gzip,deflate", "x-ms-client-version": "Kusto.Python.Client:" + VERSION}
 
     def execute(self, database, query, properties=None):
         """Executes a query or management command.
@@ -533,7 +520,7 @@ class KustoClient(object):
 
         if payload:
             raise KustoServiceError(
-                "An error occurred while trying to ingest: Status: {0.status_code}, Reason: {0.reason}, Text: {0.text}".format(response), response,
+                "An error occurred while trying to ingest: Status: {0.status_code}, Reason: {0.reason}, Text: {0.text}".format(response), response
             )
 
         raise KustoServiceError([response.json()], response)

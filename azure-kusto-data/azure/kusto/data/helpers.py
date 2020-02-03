@@ -1,5 +1,6 @@
 """Kusto helper functions"""
 
+
 def to_pandas_datetime(raw_value, *args):
     import pandas as pd
 

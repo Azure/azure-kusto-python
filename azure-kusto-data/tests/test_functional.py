@@ -182,7 +182,7 @@ class FunctionalTests(unittest.TestCase):
         assert 1 == len(table)
 
         expected_table = [
-            [datetime(2016, 6, 6, 15, 35, tzinfo=tzutc()), "foo", 101, 3.14, False, timedelta(days=4, hours=1, minutes=2, seconds=3, milliseconds=567),],
+            [datetime(2016, 6, 6, 15, 35, tzinfo=tzutc()), "foo", 101, 3.14, False, timedelta(days=4, hours=1, minutes=2, seconds=3, milliseconds=567)],
             [datetime(2016, 6, 7, 16, tzinfo=tzutc()), "bar", 555, 2.71, True, timedelta()],
             [None, str(""), None, None, None, None],
         ]
@@ -193,10 +193,10 @@ class FunctionalTests(unittest.TestCase):
         primary_table = response.primary_results[0]
         for row in primary_table:
             # Test all types
-            for i, t in enumerate([datetime, str,int,float,bool,timedelta]):
+            for i, t in enumerate([datetime, str, int, float, bool, timedelta]):
                 assert row[i] == row[columns[i]]
                 assert row[i] is None or isinstance(row[i], t)
-            
+
         for row_index, row in enumerate(primary_table):
             expected_row = expected_table[row_index]
             for col_index, value in enumerate(row):

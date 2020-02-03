@@ -86,12 +86,12 @@ class KustoConnectionStringBuilderTests(unittest.TestCase):
             assert kcsb.application_key == key
             assert kcsb.authority_id == "microsoft.com"
             assert repr(kcsb) == "Data Source=localhost;AAD Federated Security=True;Application Client Id={0};Application Key={1};Authority Id={2}".format(
-                    uuid, key, "microsoft.com"
-                )
-            
+                uuid, key, "microsoft.com"
+            )
+
             assert str(kcsb) == "Data Source=localhost;AAD Federated Security=True;Application Client Id={0};Application Key={1};Authority Id={2}".format(
-                    uuid, self.PASSWORDS_REPLACEMENT, "microsoft.com"
-                )
+                uuid, self.PASSWORDS_REPLACEMENT, "microsoft.com"
+            )
 
     def test_aad_user(self):
         """Checks kcsb that is created with AAD user credentials."""
@@ -126,8 +126,9 @@ class KustoConnectionStringBuilderTests(unittest.TestCase):
             assert kcsb.application_key is None
             assert kcsb.authority_id == "common"
             assert repr(kcsb) == "Data Source=localhost;AAD Federated Security=True;AAD User ID={0};Password={1};Authority Id=common".format(user, password)
-            assert str(kcsb) =="Data Source=localhost;AAD Federated Security=True;AAD User ID={0};Password={1};Authority Id=common".format(
-                user, self.PASSWORDS_REPLACEMENT)
+            assert str(kcsb) == "Data Source=localhost;AAD Federated Security=True;AAD User ID={0};Password={1};Authority Id=common".format(
+                user, self.PASSWORDS_REPLACEMENT
+            )
 
     def test_aad_user_with_authority(self):
         """Checks kcsb that is created with AAD user credentials."""

@@ -82,7 +82,7 @@ class KustoIngestClient(object):
             blob_service.create_blob_from_stream(container_name=container_details.object_name, blob_name=blob_name, stream=stream)
             url = blob_service.make_blob_url(container_details.object_name, blob_name, sas_token=container_details.sas)
 
-            self.ingest_from_blob(BlobDescriptor(url, descriptor.size, descriptor.source_id,), ingestion_properties=ingestion_properties)
+            self.ingest_from_blob(BlobDescriptor(url, descriptor.size, descriptor.source_id), ingestion_properties=ingestion_properties)
 
     def ingest_from_blob(self, blob_descriptor, ingestion_properties):
         """Enqueuing an ingest command from azure blobs.

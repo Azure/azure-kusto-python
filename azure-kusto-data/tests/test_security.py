@@ -33,12 +33,7 @@ def test_msi_auth():
         KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication("localhost", msi_res_id=res_guid, timeout=1),
     ]
 
-    helpers = [
-        _AadHelper(kcsb[0]),
-        _AadHelper(kcsb[1]),
-        _AadHelper(kcsb[2]),
-        _AadHelper(kcsb[3]),
-    ]
+    helpers = [_AadHelper(kcsb[0]), _AadHelper(kcsb[1]), _AadHelper(kcsb[2]), _AadHelper(kcsb[3])]
 
     """
     * * * Note * * *

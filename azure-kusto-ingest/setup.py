@@ -37,11 +37,6 @@ setup(
         "License :: OSI Approved :: MIT License",
     ],
     packages=find_packages(exclude=["azure", "tests"]),
-    install_requires=[
-        "azure-kusto-data>={}".format(VERSION),
-        "azure-storage-blob==2.1.0",
-        "azure-storage-common==2.1.0",
-        "azure-storage-queue==2.1.0",
-    ],
+    install_requires=["azure-kusto-data>={}".format(VERSION), "azure-storage-blob==2.1.0", "azure-storage-common==2.1.0", "azure-storage-queue==2.1.0"],
     extras_require={"pandas": ["pandas==0.24.1"], ":python_version<'3.0'": ["azure-nspkg"]},
 )

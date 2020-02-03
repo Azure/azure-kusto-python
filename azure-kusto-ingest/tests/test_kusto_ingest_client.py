@@ -35,15 +35,15 @@ def request_callback(request):
             "Tables": [
                 {
                     "TableName": "Table_0",
-                    "Columns": [{"ColumnName": "ResourceTypeName", "DataType": "String"}, {"ColumnName": "StorageRoot", "DataType": "String"},],
+                    "Columns": [{"ColumnName": "ResourceTypeName", "DataType": "String"}, {"ColumnName": "StorageRoot", "DataType": "String"}],
                     "Rows": [
-                        ["SecuredReadyForAggregationQueue", "https://storageaccount.queue.core.windows.net/readyforaggregation-secured?sas",],
-                        ["SecuredReadyForAggregationQueue", "https://storageaccount.queue.core.windows.net/readyforaggregation-secured?sas",],
-                        ["SecuredReadyForAggregationQueue", "https://storageaccount.queue.core.windows.net/readyforaggregation-secured?sas",],
-                        ["SecuredReadyForAggregationQueue", "https://storageaccount.queue.core.windows.net/readyforaggregation-secured?sas",],
-                        ["SecuredReadyForAggregationQueue", "https://storageaccount.queue.core.windows.net/readyforaggregation-secured?sas",],
+                        ["SecuredReadyForAggregationQueue", "https://storageaccount.queue.core.windows.net/readyforaggregation-secured?sas"],
+                        ["SecuredReadyForAggregationQueue", "https://storageaccount.queue.core.windows.net/readyforaggregation-secured?sas"],
+                        ["SecuredReadyForAggregationQueue", "https://storageaccount.queue.core.windows.net/readyforaggregation-secured?sas"],
+                        ["SecuredReadyForAggregationQueue", "https://storageaccount.queue.core.windows.net/readyforaggregation-secured?sas"],
+                        ["SecuredReadyForAggregationQueue", "https://storageaccount.queue.core.windows.net/readyforaggregation-secured?sas"],
                         ["FailedIngestionsQueue", "https://storageaccount.queue.core.windows.net/failedingestions?sas"],
-                        ["SuccessfulIngestionsQueue", "https://storageaccount.queue.core.windows.net/successfulingestions?sas",],
+                        ["SuccessfulIngestionsQueue", "https://storageaccount.queue.core.windows.net/successfulingestions?sas"],
                         ["TempStorage", "https://storageaccount.blob.core.windows.net/tempstorage?sas"],
                         ["TempStorage", "https://storageaccount.blob.core.windows.net/tempstorage?sas"],
                         ["TempStorage", "https://storageaccount.blob.core.windows.net/tempstorage?sas"],
@@ -58,9 +58,7 @@ def request_callback(request):
     if ".get kusto identity token" in body["csl"]:
         response_status = 200
         response_body = {
-            "Tables": [
-                {"TableName": "Table_0", "Columns": [{"ColumnName": "AuthorizationContext", "DataType": "String"}], "Rows": [["authorization_context"]],}
-            ]
+            "Tables": [{"TableName": "Table_0", "Columns": [{"ColumnName": "AuthorizationContext", "DataType": "String"}], "Rows": [["authorization_context"]]}]
         }
 
     return (response_status, response_headers, json.dumps(response_body))
@@ -78,7 +76,7 @@ class KustoIngestClientTests(unittest.TestCase):
     @patch("uuid.uuid4", return_value=MOCKED_UUID_4)
     def test_sanity_ingest_from_file(self, mock_uuid, mock_put_message_in_queue, mock_create_blob_from_stream, mock_aad):
         responses.add_callback(
-            responses.POST, "https://ingest-somecluster.kusto.windows.net/v1/rest/mgmt", callback=request_callback, content_type="application/json",
+            responses.POST, "https://ingest-somecluster.kusto.windows.net/v1/rest/mgmt", callback=request_callback, content_type="application/json"
         )
 
         ingest_client = KustoIngestClient("https://ingest-somecluster.kusto.windows.net")
@@ -130,7 +128,7 @@ class KustoIngestClientTests(unittest.TestCase):
     @patch("os.getpid", return_value=MOCKED_PID)
     def test_simple_ingest_from_dataframe(self, mock_pid, mock_time, mock_uuid, mock_put_message_in_queue, mock_create_blob_from_stream):
         responses.add_callback(
-            responses.POST, "https://ingest-somecluster.kusto.windows.net/v1/rest/mgmt", callback=request_callback, content_type="application/json",
+            responses.POST, "https://ingest-somecluster.kusto.windows.net/v1/rest/mgmt", callback=request_callback, content_type="application/json"
         )
 
         ingest_client = KustoIngestClient("https://ingest-somecluster.kusto.windows.net")
