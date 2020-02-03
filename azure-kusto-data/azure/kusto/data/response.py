@@ -1,15 +1,19 @@
 """This module constains all classes to get Kusto responses. Including error handling."""
+from typing import List
 
-import json
-
-from datetime import timedelta
 from abc import ABCMeta, abstractmethod
 
-from ._models import KustoResultColumn, KustoResultRow, KustoResultTable, WellKnownDataSet
+from ._models import KustoResultTable, WellKnownDataSet
 
 
 class KustoResponseDataSet(metaclass=ABCMeta):
-    """Represents the parsed data set carried by the response to a Kusto request."""
+    """
+    `KustoResponseDataSet` Represents the parsed data set carried by the response to a Kusto request.
+    `KustoResponseDataSet` provides convenient methods to work with the returned result.
+    The result table(s) are accessable via the @primary_results property.
+    @primary_results returns a collection of `KustoResultTable`.
+        It can contain more than one table when [`fork`](https://docs.microsoft.com/en-us/azure/kusto/query/forkoperator) is used.
+    """
 
     def __init__(self, json_response):
         self.tables = [KustoResultTable(t) for t in json_response]
@@ -32,7 +36,7 @@ class KustoResponseDataSet(metaclass=ABCMeta):
         raise NotImplementedError
 
     @property
-    def primary_results(self):
+    def primary_results(self) -> List[KustoResultTable]:
         """Returns primary results. If there is more than one returns a list."""
         if self.tables_count == 1:
             return self.tables
@@ -41,7 +45,7 @@ class KustoResponseDataSet(metaclass=ABCMeta):
         return primary
 
     @property
-    def errors_count(self):
+    def errors_count(self) -> int:
         """Checks whether an exception was thrown."""
         query_status_table = next((t for t in self.tables if t.table_kind == WellKnownDataSet.QueryCompletionInformation), None)
         if not query_status_table:
@@ -58,7 +62,7 @@ class KustoResponseDataSet(metaclass=ABCMeta):
 
         return errors
 
-    def get_exceptions(self):
+    def get_exceptions(self) -> List[str]:
         """Gets the exceptions retrieved from Kusto if exists."""
         query_status_table = next((t for t in self.tables if t.table_kind == WellKnownDataSet.QueryCompletionInformation), None)
         if not query_status_table:
@@ -74,7 +78,7 @@ class KustoResponseDataSet(metaclass=ABCMeta):
     def __iter__(self):
         return iter(self.tables)
 
-    def __getitem__(self, key):
+    def __getitem__(self, key) -> KustoResultTable:
         if isinstance(key, int):
             return self.tables[key]
         try:
@@ -82,11 +86,16 @@ class KustoResponseDataSet(metaclass=ABCMeta):
         except ValueError:
             raise LookupError(key)
 
-    def __len__(self):
+    def __len__(self) -> int:
         return self.tables_count
 
 
 class KustoResponseDataSetV1(KustoResponseDataSet):
+    """
+    KustoResponseDataSetV1 is a wrapper for a V1 Kusto response.
+    It parses V1 response into a convenient KustoResponseDataSet.
+    To read more about V1 response structure, please check out https://docs.microsoft.com/en-us/azure/kusto/api/rest/response
+    """
 
     _status_column = "StatusDescription"
     _crid_column = "ClientActivityId"
@@ -117,6 +126,12 @@ class KustoResponseDataSetV1(KustoResponseDataSet):
 
 
 class KustoResponseDataSetV2(KustoResponseDataSet):
+    """
+    KustoResponseDataSetV2 is a wrapper for a V2 Kusto response.
+    It parses V2 response into a convenient KustoResponseDataSet.
+    To read more about V2 response structure, please check out https://docs.microsoft.com/en-us/azure/kusto/api/rest/response2
+    """
+
     _status_column = "Payload"
     _error_column = "Level"
     _crid_column = "ClientRequestId"

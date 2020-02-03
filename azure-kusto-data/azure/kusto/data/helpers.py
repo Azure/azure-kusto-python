@@ -1,13 +1,17 @@
 """Kusto helper functions"""
-
-
 def to_pandas_datetime(raw_value, *args):
+    """
+    Transform a raw python value to a pandas datetime (datetime64)
+    """
     import pandas as pd
 
     return pd.to_datetime(raw_value)
 
 
 def to_pandas_timedelta(raw_value, timedelta_value):
+    """
+    Transform a raw python value to a pandas timedelta.
+    """
     import pandas as pd
 
     if isinstance(raw_value, (int, float)):
@@ -22,21 +26,21 @@ def to_pandas_timedelta(raw_value, timedelta_value):
             total_seconds = float(time_with_exact_fraction)
 
             return pd.Timedelta(total_seconds, unit="s")
-        else:
-            return pd.Timedelta(timedelta_value)
+        
+        return pd.Timedelta(timedelta_value)
 
     return pd.Timedelta(timedelta_value.total_seconds(), unit="ns")
 
 
 def dataframe_from_result_table(table):
-    import pandas as pd
-    from ._models import KustoResultTable
-
     """Converts Kusto tables into pandas DataFrame.
     :param azure.kusto.data._models.KustoResultTable table: Table received from the response.
     :return: pandas DataFrame.
-    :rtype: pandas.DataFrame
     """
+    import pandas as pd
+    from ._models import KustoResultTable
+
+    
     if not table:
         raise ValueError()
 

@@ -12,7 +12,7 @@ from requests.adapters import HTTPAdapter
 
 from .security import _AadHelper
 from .exceptions import KustoServiceError
-from ._response import KustoResponseDataSetV1, KustoResponseDataSetV2
+from .response import KustoResponseDataSetV1, KustoResponseDataSetV2
 from ._version import VERSION
 
 
@@ -438,7 +438,7 @@ class KustoClient:
         :param str query: Query to be executed.
         :param azure.kusto.data.request.ClientRequestProperties properties: Optional additional properties.
         :return: Kusto response data set.
-        :rtype: azure.kusto.data._response.KustoResponseDataSet
+        :rtype: azure.kusto.data.response.KustoResponseDataSet
         """
         query = query.strip()
         if query.startswith("."):
@@ -451,7 +451,7 @@ class KustoClient:
         :param str query: Query to be executed.
         :param azure.kusto.data.request.ClientRequestProperties properties: Optional additional properties.
         :return: Kusto response data set.
-        :rtype: azure.kusto.data._response.KustoResponseDataSet
+        :rtype: azure.kusto.data.response.KustoResponseDataSet
         """
         return self._execute(self._query_endpoint, database, query, None, KustoClient._query_default_timeout, properties)
 
@@ -461,7 +461,7 @@ class KustoClient:
         :param str query: Query to be executed.
         :param azure.kusto.data.request.ClientRequestProperties properties: Optional additional properties.
         :return: Kusto response data set.
-        :rtype: azure.kusto.data._response.KustoResponseDataSet
+        :rtype: azure.kusto.data.response.KustoResponseDataSet
         """
         return self._execute(self._mgmt_endpoint, database, query, None, KustoClient._mgmt_default_timeout, properties)
 

@@ -1,8 +1,5 @@
 """Setup for Azure.Kusto.Data"""
 
-# To use a consistent encoding
-import codecs
-
 import re
 from os import path
 
@@ -12,11 +9,11 @@ from setuptools import setup, find_packages
 PACKAGE_NAME = "azure-kusto-data"
 
 # a-b-c => a/b/c
-package_folder_path = PACKAGE_NAME.replace("-", path.sep)
+PACKAGE_FOLDER_PATH = PACKAGE_NAME.replace("-", path.sep)
 # a-b-c => a.b.c
-namespace_name = PACKAGE_NAME.replace("-", ".")
+NAMESPACE_NAME = PACKAGE_NAME.replace("-", ".")
 
-with open(path.join(package_folder_path, "_version.py"), "r") as fd:
+with open(path.join(PACKAGE_FOLDER_PATH, "_version.py"), "r") as fd:
     VERSION = re.search(r'^VERSION\s*=\s*[\'"]([^\'"]*)[\'"]', fd.read(), re.MULTILINE).group(1)
 
 if not VERSION:

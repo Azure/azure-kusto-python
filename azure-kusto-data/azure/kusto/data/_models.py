@@ -13,7 +13,7 @@ HAS_PANDAS = True
 try:
     import pandas
     from .helpers import to_pandas_datetime, to_pandas_timedelta
-except ImportError:
+except ImportError as e:
     HAS_PANDAS = False
 
 

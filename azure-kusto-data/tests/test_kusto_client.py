@@ -10,7 +10,7 @@ from dateutil.tz import UTC
 
 from azure.kusto.data.request import KustoClient, ClientRequestProperties
 from azure.kusto.data.exceptions import KustoServiceError
-from azure.kusto.data._response import WellKnownDataSet
+from azure.kusto.data.response import WellKnownDataSet
 from azure.kusto.data.helpers import dataframe_from_result_table
 
 pandas_installed = False
@@ -103,45 +103,45 @@ class KustoClientTests(unittest.TestCase):
         }
 
         for row in response.primary_results[0]:
-            self.assertEqual(row["rownumber"], expected["rownumber"])
-            self.assertEqual(row["rowguid"], expected["rowguid"])
-            self.assertEqual(row["xdouble"], expected["xdouble"])
-            self.assertEqual(row["xfloat"], expected["xfloat"])
-            self.assertEqual(row["xbool"], expected["xbool"])
-            self.assertEqual(row["xint16"], expected["xint16"])
-            self.assertEqual(row["xint32"], expected["xint32"])
-            self.assertEqual(row["xint64"], expected["xint64"])
-            self.assertEqual(row["xuint8"], expected["xuint8"])
-            self.assertEqual(row["xuint16"], expected["xuint16"])
-            self.assertEqual(row["xuint32"], expected["xuint32"])
-            self.assertEqual(row["xuint64"], expected["xuint64"])
-            self.assertEqual(row["xdate"], expected["xdate"])
-            self.assertEqual(row["xsmalltext"], expected["xsmalltext"])
-            self.assertEqual(row["xtext"], expected["xtext"])
-            self.assertEqual(row["xnumberAsText"], expected["xnumberAsText"])
-            self.assertEqual(row["xtime"], expected["xtime"])
-            self.assertEqual(row["xtextWithNulls"], expected["xtextWithNulls"])
-            self.assertEqual(row["xdynamicWithNulls"], expected["xdynamicWithNulls"])
+            assert row["rownumber"] == expected["rownumber"]
+            assert row["rowguid"] == expected["rowguid"]
+            assert row["xdouble"] == expected["xdouble"]
+            assert row["xfloat"] == expected["xfloat"]
+            assert row["xbool"] == expected["xbool"]
+            assert row["xint16"] == expected["xint16"]
+            assert row["xint32"] == expected["xint32"]
+            assert row["xint64"] == expected["xint64"]
+            assert row["xuint8"] == expected["xuint8"]
+            assert row["xuint16"] == expected["xuint16"]
+            assert row["xuint32"] == expected["xuint32"]
+            assert row["xuint64"] == expected["xuint64"]
+            assert row["xdate"] == expected["xdate"]
+            assert row["xsmalltext"] == expected["xsmalltext"]
+            assert row["xtext"] == expected["xtext"]
+            assert row["xnumberAsText"] == expected["xnumberAsText"]
+            assert row["xtime"] == expected["xtime"]
+            assert row["xtextWithNulls"] == expected["xtextWithNulls"]
+            assert row["xdynamicWithNulls"] == expected["xdynamicWithNulls"]
 
-            self.assertEqual(type(row["rownumber"]), type(expected["rownumber"]))
-            self.assertEqual(type(row["rowguid"]), type(expected["rowguid"]))
-            self.assertEqual(type(row["xdouble"]), type(expected["xdouble"]))
-            self.assertEqual(type(row["xfloat"]), type(expected["xfloat"]))
-            self.assertEqual(type(row["xbool"]), type(expected["xbool"]))
-            self.assertEqual(type(row["xint16"]), type(expected["xint16"]))
-            self.assertEqual(type(row["xint32"]), type(expected["xint32"]))
-            self.assertEqual(type(row["xint64"]), type(expected["xint64"]))
-            self.assertEqual(type(row["xuint8"]), type(expected["xuint8"]))
-            self.assertEqual(type(row["xuint16"]), type(expected["xuint16"]))
-            self.assertEqual(type(row["xuint32"]), type(expected["xuint32"]))
-            self.assertEqual(type(row["xuint64"]), type(expected["xuint64"]))
-            self.assertEqual(type(row["xdate"]), type(expected["xdate"]))
-            self.assertEqual(type(row["xsmalltext"]), type(expected["xsmalltext"]))
-            self.assertEqual(type(row["xtext"]), type(expected["xtext"]))
-            self.assertEqual(type(row["xnumberAsText"]), type(expected["xnumberAsText"]))
-            self.assertEqual(type(row["xtime"]), type(expected["xtime"]))
-            self.assertEqual(type(row["xtextWithNulls"]), type(expected["xtextWithNulls"]))
-            self.assertEqual(type(row["xdynamicWithNulls"]), type(expected["xdynamicWithNulls"]))
+            assert isinstance(row["rownumber"], type(expected["rownumber"]))
+            assert isinstance(row["rowguid"], type(expected["rowguid"]))
+            assert isinstance(row["xdouble"], type(expected["xdouble"]))
+            assert isinstance(row["xfloat"], type(expected["xfloat"]))
+            assert isinstance(row["xbool"], type(expected["xbool"]))
+            assert isinstance(row["xint16"], type(expected["xint16"]))
+            assert isinstance(row["xint32"], type(expected["xint32"]))
+            assert isinstance(row["xint64"], type(expected["xint64"]))
+            assert isinstance(row["xuint8"], type(expected["xuint8"]))
+            assert isinstance(row["xuint16"], type(expected["xuint16"]))
+            assert isinstance(row["xuint32"], type(expected["xuint32"]))
+            assert isinstance(row["xuint64"], type(expected["xuint64"]))
+            assert isinstance(row["xdate"], type(expected["xdate"]))
+            assert isinstance(row["xsmalltext"], type(expected["xsmalltext"]))
+            assert isinstance(row["xtext"], type(expected["xtext"]))
+            assert isinstance(row["xnumberAsText"], type(expected["xnumberAsText"]))
+            assert isinstance(row["xtime"], type(expected["xtime"]))
+            assert isinstance(row["xtextWithNulls"], type(expected["xtextWithNulls"]))
+            assert isinstance(row["xdynamicWithNulls"], type(expected["xdynamicWithNulls"]))
 
             expected["rownumber"] = 0 if expected["rownumber"] is None else expected["rownumber"] + 1
             expected["rowguid"] = str("0000000{0}-0000-0000-0001-020304050607".format(expected["rownumber"]))
@@ -180,17 +180,17 @@ class KustoClientTests(unittest.TestCase):
         """Tests contol command."""
         client = KustoClient("https://somecluster.kusto.windows.net")
         response = client.execute_mgmt("NetDefaultDB", ".show version")
-        self.assertEqual(len(response), 1)
+        assert len(response) == 1 
         primary_table = response.primary_results[0]
         row_count = 0
         for _ in primary_table:
             row_count += 1
-        self.assertEqual(row_count, 1)
+        assert row_count == 1 
         result = primary_table[0]
-        self.assertEqual(result["BuildVersion"], "1.0.6693.14577")
-        self.assertEqual(result["BuildTime"], datetime(year=2018, month=4, day=29, hour=8, minute=5, second=54, tzinfo=UTC))
-        self.assertEqual(result["ServiceType"], "Engine")
-        self.assertEqual(result["ProductVersion"], "KustoMain_2018.04.29.5")
+        assert result["BuildVersion"] == "1.0.6693.14577" 
+        assert result["BuildTime"] == datetime(year=2018, month=4, day=29, hour=8, minute=5, second=54, tzinfo=UTC) 
+        assert result["ServiceType"] == "Engine" 
+        assert result["ProductVersion"] == "KustoMain_2018.04.29.5" 
 
     @pytest.mark.skipif(not pandas_installed, reason="requires pandas")
     @patch("requests.Session.post", side_effect=mocked_requests_post)
@@ -319,12 +319,12 @@ range x from 1 to 10 step 1"""
         self.assertRaises(KustoServiceError, client.execute_query, "PythonTest", query, properties)
         properties.set_option(ClientRequestProperties.results_defer_partial_query_failures_option_name, True)
         response = client.execute_query("PythonTest", query, properties)
-        self.assertEqual(response.errors_count, 1)
-        self.assertIn("E_QUERY_RESULT_SET_TOO_LARGE", response.get_exceptions()[0])
-        self.assertEqual(len(response), 3)
+        assert response.errors_count == 1
+        assert "E_QUERY_RESULT_SET_TOO_LARGE" in response.get_exceptions()[0]
+        assert len(response) == 3
         results = list(response.primary_results[0])
-        self.assertEqual(len(results), 5)
-        self.assertEqual(results[0]["x"], 1)
+        assert len(results) == 5
+        assert results[0]["x"] == 1
 
     @patch("requests.Session.post", side_effect=mocked_requests_post)
     def test_admin_then_query(self, mock_post):
@@ -332,14 +332,14 @@ range x from 1 to 10 step 1"""
         client = KustoClient("https://somecluster.kusto.windows.net")
         query = ".show tables | project DatabaseName, TableName"
         response = client.execute_mgmt("PythonTest", query)
-        self.assertEqual(response.errors_count, 0)
-        self.assertEqual(len(response), 4)
+        assert response.errors_count == 0
+        assert len(response) == 4
         results = list(response.primary_results[0])
-        self.assertEqual(len(results), 2)
-        self.assertEqual(response[0].table_kind, WellKnownDataSet.PrimaryResult)
-        self.assertEqual(response[1].table_kind, WellKnownDataSet.QueryProperties)
-        self.assertEqual(response[2].table_kind, WellKnownDataSet.QueryCompletionInformation)
-        self.assertEqual(response[3].table_kind, WellKnownDataSet.TableOfContents)
+        assert len(results) == 2
+        assert response[0].table_kind == WellKnownDataSet.PrimaryResult
+        assert response[1].table_kind == WellKnownDataSet.QueryProperties
+        assert response[2].table_kind == WellKnownDataSet.QueryCompletionInformation
+        assert response[3].table_kind == WellKnownDataSet.TableOfContents
 
     @patch("requests.Session.post", side_effect=mocked_requests_post)
     def test_dynamic(self, mock_post):
@@ -347,22 +347,22 @@ range x from 1 to 10 step 1"""
         client = KustoClient("https://somecluster.kusto.windows.net")
         query = """print dynamic(123), dynamic("123"), dynamic("test bad json"), dynamic(null), dynamic('{"rowId":2,"arr":[0,2]}'), dynamic({"rowId":2,"arr":[0,2]})"""
         row = client.execute_query("PythonTest", query).primary_results[0].rows[0]
-        self.assertIsInstance(row[0], int)
-        self.assertEqual(row[0], 123)
+        assert isinstance(row[0], int)
+        assert row[0] == 123
 
-        self.assertIsInstance(row[1], str)
-        self.assertEqual(row[1], "123")
+        assert isinstance(row[1], str)
+        assert row[1] == "123"
 
-        self.assertIsInstance(row[2], str)
-        self.assertEqual(row[2], "test bad json")
+        assert isinstance(row[2], str)
+        assert row[2] == "test bad json"
 
-        self.assertEqual(row[3], None)
+        assert row[3] == None
 
-        self.assertIsInstance(row[4], str)
-        self.assertEqual(row[4], '{"rowId":2,"arr":[0,2]}')
+        assert isinstance(row[4], str)
+        assert row[4] == '{"rowId":2,"arr":[0,2]}'
 
-        self.assertIsInstance(row[5], dict)
-        self.assertEqual(row[5], {"rowId": 2, "arr": [0, 2]})
+        assert isinstance(row[5], dict)
+        assert row[5] == {"rowId": 2, "arr": [0, 2]}
 
     @patch("requests.Session.post", side_effect=mocked_requests_post)
     def test_empty_result(self, mock_post):
@@ -370,7 +370,7 @@ range x from 1 to 10 step 1"""
         client = KustoClient("https://somecluster.kusto.windows.net")
         query = """print 'a' | take 0"""
         response = client.execute_query("PythonTest", query)
-        self.assertTrue(response.primary_results[0])
+        assert response.primary_results[0]
 
     @patch("requests.Session.post", side_effect=mocked_requests_post)
     def test_null_values_in_data(self, mock_post):
@@ -378,3 +378,5 @@ range x from 1 to 10 step 1"""
         client = KustoClient("https://somecluster.kusto.windows.net")
         query = "PrimaryResultName"
         response = client.execute_query("PythonTest", query)
+
+        assert response is not None
