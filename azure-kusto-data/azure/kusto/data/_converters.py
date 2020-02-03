@@ -1,9 +1,9 @@
-"""Convertion utils"""
+"""Conversion utils"""
 
-from datetime import timedelta
 import re
+from datetime import timedelta
+
 from dateutil import parser
-from decimal import Decimal
 
 # Regex for TimeSpan
 _TIMESPAN_PATTERN = re.compile(r"(-?)((?P<d>[0-9]*).)?(?P<h>[0-9]{2}):(?P<m>[0-9]{2}):(?P<s>[0-9]{2}(\.[0-9]+)?$)")

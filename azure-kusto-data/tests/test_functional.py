@@ -3,9 +3,9 @@
 import json
 import unittest
 from datetime import datetime, timedelta
-from dateutil.tz.tz import tzutc
 
-from azure.kusto.data._response import KustoResponseDataSetV2
+from azure.kusto.data.response import KustoResponseDataSetV2
+from dateutil.tz.tz import tzutc
 
 # Sample response against all tests should be run
 RESPONSE_TEXT = """
@@ -193,9 +193,9 @@ class FunctionalTests(unittest.TestCase):
         primary_table = response.primary_results[0]
         for row in primary_table:
             # Test all types
-            for i, t in enumerate([datetime, str, int, float, bool, timedelta]):
+            for i, expected_type in enumerate([datetime, str, int, float, bool, timedelta]):
                 assert row[i] == row[columns[i]]
-                assert row[i] is None or isinstance(row[i], t)
+                assert row[i] is None or isinstance(row[i], expected_type)
 
         for row_index, row in enumerate(primary_table):
             expected_row = expected_table[row_index]

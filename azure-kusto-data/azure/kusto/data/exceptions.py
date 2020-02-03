@@ -4,8 +4,6 @@
 class KustoError(Exception):
     """Base class for all exceptions raised by the Kusto Python Client Libraries."""
 
-    pass
-
 
 class KustoServiceError(KustoError):
     """Raised when the Kusto service was unable to process a request."""
@@ -34,8 +32,6 @@ class KustoServiceError(KustoError):
 
 class KustoClientError(KustoError):
     """Raised when a Kusto client is unable to send or complete a request."""
-
-    pass
 
 
 class KustoAuthenticationError(KustoClientError):

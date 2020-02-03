@@ -1,11 +1,11 @@
 """A module to acquire tokens from AAD."""
 import os
-from enum import Enum, unique
-from datetime import timedelta, datetime
 import webbrowser
+from datetime import timedelta, datetime
+from enum import Enum, unique
 from urllib.parse import urlparse
-import dateutil.parser
 
+import dateutil.parser
 from adal import AuthenticationContext, AdalError
 from adal.constants import TokenResponseFields, OAuth2DeviceCodeResponseParameters
 from msrestazure.azure_active_directory import MSIAuthentication
@@ -25,7 +25,7 @@ class AuthenticationMethod(Enum):
     aad_msi = "aad_msi"
 
 
-class _AadHelper(object):
+class _AadHelper:
     def __init__(self, kcsb):
         if any([kcsb.user_token, kcsb.application_token]):
             self._token = kcsb.user_token or kcsb.application_token

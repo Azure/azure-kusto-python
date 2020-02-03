@@ -1,30 +1,36 @@
 """A module to make a Kusto request."""
-
-import uuid
+import io
 import json
-
+import uuid
+from copy import copy
 from datetime import timedelta
 from enum import Enum, unique
-from copy import copy
+from typing import Union
 
 import requests
+
+from .data_format import DataFormat
 from requests.adapters import HTTPAdapter
 
-from .security import _AadHelper
-from .exceptions import KustoServiceError
-from ._response import KustoResponseDataSetV1, KustoResponseDataSetV2
 from ._version import VERSION
+from .exceptions import KustoServiceError
+from .response import KustoResponseDataSetV1, KustoResponseDataSetV2, KustoResponseDataSet
+from .security import _AadHelper
 
 
-class KustoConnectionStringBuilder(object):
-    """Parses Kusto conenction strings.
+class KustoConnectionStringBuilder:
+    """
+    Parses Kusto connection strings.
     For usages, check out the sample at:
         https://github.com/Azure/azure-kusto-python/blob/master/azure-kusto-data/tests/sample.py
     """
 
     @unique
     class ValidKeywords(Enum):
-        """Distinct set of values KustoConnectionStringBuilder can have."""
+        """
+        Set of properties that can be use in a connection string provied to KustoConnectionStringBuilder.
+        For a complete list of properties go to https://docs.microsoft.com/en-us/azure/kusto/api/connection-strings/kusto
+        """
 
         data_source = "Data Source"
         aad_federated_security = "AAD Federated Security"
@@ -41,7 +47,7 @@ class KustoConnectionStringBuilder(object):
         msi_params = "MSI Params"
 
         @classmethod
-        def parse(cls, key):
+        def parse(cls, key: str) -> "ValidKeywords":
             """Create a valid keyword."""
             key = key.lower().strip()
             if key in ["data source", "addr", "address", "network address", "server"]:
@@ -72,11 +78,11 @@ class KustoConnectionStringBuilder(object):
                 return cls.msi_params
             raise KeyError(key)
 
-        def is_secret(self):
+        def is_secret(self) -> bool:
             """States for each property if it contains secret"""
             return self in [self.password, self.application_key, self.application_certificate, self.application_token, self.user_token]
 
-        def is_str_type(self):
+        def is_str_type(self) -> bool:
             """States whether a word is of type str or not."""
             return self in [
                 self.aad_user_id,
@@ -91,15 +97,16 @@ class KustoConnectionStringBuilder(object):
                 self.user_token,
             ]
 
-        def is_dict_type(self):
+        def is_dict_type(self) -> bool:
             return self in [self.msi_params]
 
-        def is_bool_type(self):
+        def is_bool_type(self) -> bool:
             """States whether a word is of type bool or not."""
             return self in [self.aad_federated_security, self.msi_auth]
 
     def __init__(self, connection_string):
-        """Creates new KustoConnectionStringBuilder.
+        """
+        Creates new KustoConnectionStringBuilder.
         :param str connection_string: Kusto connection string should by of the format:
         https://<clusterName>.kusto.windows.net;AAD User ID="user@microsoft.com";Password=P@ssWord
         For more information please look at:
@@ -148,8 +155,9 @@ class KustoConnectionStringBuilder(object):
             raise KeyError("KustoConnectionStringBuilder supports only bools and strings.")
 
     @classmethod
-    def with_aad_user_password_authentication(cls, connection_string, user_id, password, authority_id="common"):
-        """Creates a KustoConnection string builder that will authenticate with AAD user name and
+    def with_aad_user_password_authentication(cls, connection_string, user_id, password, authority_id="common") -> "KustoConnectionStringBuilder":
+        """
+        Creates a KustoConnection string builder that will authenticate with AAD user name and
         password.
         :param str connection_string: Kusto connection string should by of the format: https://<clusterName>.kusto.windows.net
         :param str user_id: AAD user ID.
@@ -167,8 +175,9 @@ class KustoConnectionStringBuilder(object):
         return kcsb
 
     @classmethod
-    def with_aad_user_token_authentication(cls, connection_string, user_token):
-        """Creates a KustoConnection string builder that will authenticate with AAD application and
+    def with_aad_user_token_authentication(cls, connection_string, user_token) -> "KustoConnectionStringBuilder":
+        """
+        Creates a KustoConnection string builder that will authenticate with AAD application and
         a certificate credentials.
         :param str connection_string: Kusto connection string should by of the format:
         https://<clusterName>.kusto.windows.net
@@ -182,8 +191,9 @@ class KustoConnectionStringBuilder(object):
         return kcsb
 
     @classmethod
-    def with_aad_application_key_authentication(cls, connection_string, aad_app_id, app_key, authority_id):
-        """Creates a KustoConnection string builder that will authenticate with AAD application and key.
+    def with_aad_application_key_authentication(cls, connection_string, aad_app_id, app_key, authority_id) -> "KustoConnectionStringBuilder":
+        """
+        Creates a KustoConnection string builder that will authenticate with AAD application and key.
         :param str connection_string: Kusto connection string should by of the format: https://<clusterName>.kusto.windows.net
         :param str aad_app_id: AAD application ID.
         :param str app_key: Corresponding key of the AAD application.
@@ -201,8 +211,11 @@ class KustoConnectionStringBuilder(object):
         return kcsb
 
     @classmethod
-    def with_aad_application_certificate_authentication(cls, connection_string, aad_app_id, certificate, thumbprint, authority_id):
-        """Creates a KustoConnection string builder that will authenticate with AAD application and
+    def with_aad_application_certificate_authentication(
+        cls, connection_string, aad_app_id, certificate, thumbprint, authority_id
+    ) -> "KustoConnectionStringBuilder":
+        """
+        Creates a KustoConnection string builder that will authenticate with AAD application and
         a certificate credentials.
         :param str connection_string: Kusto connection string should by of the format:
         https://<clusterName>.kusto.windows.net
@@ -225,8 +238,9 @@ class KustoConnectionStringBuilder(object):
         return kcsb
 
     @classmethod
-    def with_aad_application_token_authentication(cls, connection_string, application_token):
-        """Creates a KustoConnection string builder that will authenticate with AAD application and
+    def with_aad_application_token_authentication(cls, connection_string, application_token) -> "KustoConnectionStringBuilder":
+        """
+        Creates a KustoConnection string builder that will authenticate with AAD application and
         an application token.
         :param str connection_string: Kusto connection string should by of the format:
         https://<clusterName>.kusto.windows.net
@@ -240,8 +254,9 @@ class KustoConnectionStringBuilder(object):
         return kcsb
 
     @classmethod
-    def with_aad_device_authentication(cls, connection_string, authority_id="common"):
-        """Creates a KustoConnection string builder that will authenticate with AAD application and
+    def with_aad_device_authentication(cls, connection_string, authority_id="common") -> "KustoConnectionStringBuilder":
+        """
+        Creates a KustoConnection string builder that will authenticate with AAD application and
         password.
         :param str connection_string: Kusto connection string should by of the format: https://<clusterName>.kusto.windows.net
         :param str authority_id: optional param. defaults to "common"
@@ -253,8 +268,11 @@ class KustoConnectionStringBuilder(object):
         return kcsb
 
     @classmethod
-    def with_aad_managed_service_identity_authentication(cls, connection_string, client_id=None, object_id=None, msi_res_id=None, timeout=None):
-        """"Creates a KustoConnection string builder that will authenticate with AAD application, using
+    def with_aad_managed_service_identity_authentication(
+        cls, connection_string, client_id=None, object_id=None, msi_res_id=None, timeout=None
+    ) -> "KustoConnectionStringBuilder":
+        """"
+        Creates a KustoConnection string builder that will authenticate with AAD application, using
         an application token obtained from a Microsoft Service Identity endpoint. An optional user
         assigned application ID can be added to the token.
 
@@ -294,38 +312,38 @@ class KustoConnectionStringBuilder(object):
         return kcsb
 
     @property
-    def data_source(self):
+    def data_source(self) -> str:
         """The URI specifying the Kusto service endpoint.
         For example, https://kuskus.kusto.windows.net or net.tcp://localhost
         """
         return self._internal_dict.get(self.ValidKeywords.data_source)
 
     @property
-    def aad_user_id(self):
+    def aad_user_id(self) -> str:
         """The username to use for AAD Federated AuthN."""
         return self._internal_dict.get(self.ValidKeywords.aad_user_id)
 
     @property
-    def password(self):
+    def password(self) -> str:
         """The password to use for authentication when username/password authentication is used.
         Must be accompanied by UserID property
         """
         return self._internal_dict.get(self.ValidKeywords.password)
 
     @property
-    def application_client_id(self):
+    def application_client_id(self) -> str:
         """The application client id to use for authentication when federated
         authentication is used.
         """
         return self._internal_dict.get(self.ValidKeywords.application_client_id)
 
     @property
-    def application_key(self):
+    def application_key(self) -> str:
         """The application key to use for authentication when federated authentication is used"""
         return self._internal_dict.get(self.ValidKeywords.application_key)
 
     @property
-    def application_certificate(self):
+    def application_certificate(self) -> str:
         """A PEM encoded certificate private key."""
         return self._internal_dict.get(self.ValidKeywords.application_certificate)
 
@@ -387,7 +405,7 @@ class KustoConnectionStringBuilder(object):
     def __repr__(self):
         return self._build_connection_string(self._internal_dict)
 
-    def _build_connection_string(self, kcsb_as_dict):
+    def _build_connection_string(self, kcsb_as_dict) -> str:
         return ";".join(["{0}={1}".format(word.value, kcsb_as_dict[word]) for word in self.ValidKeywords if word in kcsb_as_dict])
 
 
@@ -396,142 +414,7 @@ def _assert_value_is_valid(value):
         raise ValueError("Should not be empty")
 
 
-class KustoClient(object):
-    """Kusto client for Python.
-    KustoClient works with both 2.x and 3.x flavors of Python. All primitive types are supported.
-    KustoClient takes care of ADAL authentication, parsing response and giving you typed result set.
-
-    Tests are run using pytest.
-    """
-
-    _mgmt_default_timeout = timedelta(hours=1, seconds=30)
-    _query_default_timeout = timedelta(minutes=4, seconds=30)
-    _streaming_ingest_default_timeout = timedelta(minutes=10)
-
-    # The maximum amount of connections to be able to operate in parallel
-    _max_pool_size = 100
-
-    def __init__(self, kcsb):
-        """Kusto Client constructor.
-        :param kcsb: The connection string to initialize KustoClient.
-        :type kcsb: azure.kusto.data.request.KustoConnectionStringBuilder or str
-        """
-        if not isinstance(kcsb, KustoConnectionStringBuilder):
-            kcsb = KustoConnectionStringBuilder(kcsb)
-        kusto_cluster = kcsb.data_source
-
-        # Create a session object for connection pooling
-        self._session = requests.Session()
-        self._session.mount("http://", HTTPAdapter(pool_maxsize=self._max_pool_size))
-        self._session.mount("https://", HTTPAdapter(pool_maxsize=self._max_pool_size))
-        self._mgmt_endpoint = "{0}/v1/rest/mgmt".format(kusto_cluster)
-        self._query_endpoint = "{0}/v2/rest/query".format(kusto_cluster)
-        self._streaming_ingest_endpoint = "{0}/v1/rest/ingest/".format(kusto_cluster)
-        self._auth_provider = _AadHelper(kcsb) if kcsb.aad_federated_security else None
-        self._request_headers = {"Accept": "application/json", "Accept-Encoding": "gzip,deflate", "x-ms-client-version": "Kusto.Python.Client:" + VERSION}
-
-    def execute(self, database, query, properties=None):
-        """Executes a query or management command.
-        :param str database: Database against query will be executed.
-        :param str query: Query to be executed.
-        :param azure.kusto.data.request.ClientRequestProperties properties: Optional additional properties.
-        :return: Kusto response data set.
-        :rtype: azure.kusto.data._response.KustoResponseDataSet
-        """
-        query = query.strip()
-        if query.startswith("."):
-            return self.execute_mgmt(database, query, properties)
-        return self.execute_query(database, query, properties)
-
-    def execute_query(self, database, query, properties=None):
-        """Executes a query.
-        :param str database: Database against query will be executed.
-        :param str query: Query to be executed.
-        :param azure.kusto.data.request.ClientRequestProperties properties: Optional additional properties.
-        :return: Kusto response data set.
-        :rtype: azure.kusto.data._response.KustoResponseDataSet
-        """
-        return self._execute(self._query_endpoint, database, query, None, KustoClient._query_default_timeout, properties)
-
-    def execute_mgmt(self, database, query, properties=None):
-        """Executes a management command.
-        :param str database: Database against query will be executed.
-        :param str query: Query to be executed.
-        :param azure.kusto.data.request.ClientRequestProperties properties: Optional additional properties.
-        :return: Kusto response data set.
-        :rtype: azure.kusto.data._response.KustoResponseDataSet
-        """
-        return self._execute(self._mgmt_endpoint, database, query, None, KustoClient._mgmt_default_timeout, properties)
-
-    def execute_streaming_ingest(self, database, table, stream, stream_format, properties=None, mapping_name=None):
-        """Executes streaming ingest against this client.
-        :param str database: Target database.
-        :param str table: Target table.
-        :param io.BaseIO stream: stream object which contains the data to ingest.
-        :param DataFormat stream_format: Format of the data in the stream.
-        :param ClientRequestProperties properties: additional request properties.
-        :param str mapping_name: Pre-defined mapping of the table. Required when stream_format is json/avro.
-        """
-        endpoint = self._streaming_ingest_endpoint + database + "/" + table + "?streamFormat=" + stream_format
-        if mapping_name is not None:
-            endpoint = endpoint + "&mappingName=" + mapping_name
-
-        self._execute(endpoint, database, None, stream, KustoClient._streaming_ingest_default_timeout, properties)
-
-    def _execute(self, endpoint, database, query, payload, timeout, properties=None):
-        """Executes given query against this client"""
-        request_headers = copy(self._request_headers)
-        json_payload = None
-        if not payload:
-            json_payload = {"db": database, "csl": query}
-            if properties:
-                json_payload["properties"] = properties.to_json()
-
-            client_request_id_prefix = "KPC.execute;"
-            request_headers["Content-Type"] = "application/json; charset=utf-8"
-        else:
-            if properties:
-                request_headers.update(json.loads(properties.to_json())["Options"])
-
-            client_request_id_prefix = "KPC.execute_streaming_ingest;"
-            request_headers["Content-Encoding"] = "gzip"
-
-        request_headers["x-ms-client-request-id"] = client_request_id_prefix + str(uuid.uuid4())
-
-        if properties is not None:
-            if properties.client_request_id is not None:
-                request_headers["x-ms-client-request-id"] = properties.client_request_id
-            if properties.application is not None:
-                request_headers["x-ms-app"] = properties.application
-            if properties.user is not None:
-                request_headers["x-ms-user"] = properties.user
-
-        if self._auth_provider:
-            request_headers["Authorization"] = self._auth_provider.acquire_authorization_header()
-
-        timeout = self._get_timeout(properties, timeout)
-
-        response = self._session.post(endpoint, headers=request_headers, data=payload, json=json_payload, timeout=timeout.seconds)
-
-        if response.status_code == 200:
-            if endpoint.endswith("v2/rest/query"):
-                return KustoResponseDataSetV2(response.json())
-            return KustoResponseDataSetV1(response.json())
-
-        if payload:
-            raise KustoServiceError(
-                "An error occurred while trying to ingest: Status: {0.status_code}, Reason: {0.reason}, Text: {0.text}".format(response), response
-            )
-
-        raise KustoServiceError([response.json()], response)
-
-    def _get_timeout(self, properties, default):
-        if properties:
-            return properties.get_option(ClientRequestProperties.request_timeout_option_name, default)
-        return default
-
-
-class ClientRequestProperties(object):
+class ClientRequestProperties:
     """This class is a POD used by client making requests to describe specific needs from the service executing the requests.
     For more information please look at: https://docs.microsoft.com/en-us/azure/kusto/api/netfx/request-properties
     """
@@ -575,3 +458,156 @@ class ClientRequestProperties(object):
     def to_json(self):
         """Safe serialization to a JSON string."""
         return json.dumps({"Options": self._options, "Parameters": self._parameters}, default=str)
+
+
+class KustoClient:
+    """
+    Kusto client for Python.
+    The client is a wrapper around the Kusto REST API.
+    To read more about it, go to https://docs.microsoft.com/en-us/azure/kusto/api/rest/
+
+    The primary methods are:
+    `execute_query`:  executes a KQL query against the Kusto service.
+    `execute_mgmt`: executes a KQL control command against the Kusto service.
+    """
+
+    _mgmt_default_timeout = timedelta(hours=1, seconds=30)
+    _query_default_timeout = timedelta(minutes=4, seconds=30)
+    _streaming_ingest_default_timeout = timedelta(minutes=10)
+
+    # The maximum amount of connections to be able to operate in parallel
+    _max_pool_size = 100
+
+    def __init__(self, kcsb: Union[KustoConnectionStringBuilder, str]):
+        """
+        Kusto Client constructor.
+        :param kcsb: The connection string to initialize KustoClient.
+        :type kcsb: azure.kusto.data.request.KustoConnectionStringBuilder or str
+        """
+        if not isinstance(kcsb, KustoConnectionStringBuilder):
+            kcsb = KustoConnectionStringBuilder(kcsb)
+        kusto_cluster = kcsb.data_source
+
+        # Create a session object for connection pooling
+        self._session = requests.Session()
+        self._session.mount("http://", HTTPAdapter(pool_maxsize=self._max_pool_size))
+        self._session.mount("https://", HTTPAdapter(pool_maxsize=self._max_pool_size))
+        self._mgmt_endpoint = "{0}/v1/rest/mgmt".format(kusto_cluster)
+        self._query_endpoint = "{0}/v2/rest/query".format(kusto_cluster)
+        self._streaming_ingest_endpoint = "{0}/v1/rest/ingest/".format(kusto_cluster)
+        self._auth_provider = _AadHelper(kcsb) if kcsb.aad_federated_security else None
+        self._request_headers = {"Accept": "application/json", "Accept-Encoding": "gzip,deflate", "x-ms-client-version": "Kusto.Python.Client:" + VERSION}
+
+    def execute(self, database: str, query: str, properties: ClientRequestProperties = None) -> KustoResponseDataSet:
+        """
+        Executes a query or management command.
+        :param str database: Database against query will be executed.
+        :param str query: Query to be executed.
+        :param azure.kusto.data.request.ClientRequestProperties properties: Optional additional properties.
+        :return: Kusto response data set.
+        :rtype: azure.kusto.data.response.KustoResponseDataSet
+        """
+        query = query.strip()
+        if query.startswith("."):
+            return self.execute_mgmt(database, query, properties)
+        return self.execute_query(database, query, properties)
+
+    def execute_query(self, database: str, query: str, properties: ClientRequestProperties = None) -> KustoResponseDataSet:
+        """
+        Execute a KQL query.
+        To learn more about KQL go to https://docs.microsoft.com/en-us/azure/kusto/query/
+        :param str database: Database against query will be executed.
+        :param str query: Query to be executed.
+        :param azure.kusto.data.request.ClientRequestProperties properties: Optional additional properties.
+        :return: Kusto response data set.
+        :rtype: azure.kusto.data.response.KustoResponseDataSet
+        """
+        return self._execute(self._query_endpoint, database, query, None, KustoClient._query_default_timeout, properties)
+
+    def execute_mgmt(self, database: str, query: str, properties: ClientRequestProperties = None) -> KustoResponseDataSet:
+        """
+        Execute a KQL control command.
+        To learn more about KQL control commands go to  https://docs.microsoft.com/en-us/azure/kusto/management/
+        :param str database: Database against query will be executed.
+        :param str query: Query to be executed.
+        :param azure.kusto.data.request.ClientRequestProperties properties: Optional additional properties.
+        :return: Kusto response data set.
+        :rtype: azure.kusto.data.response.KustoResponseDataSet
+        """
+        return self._execute(self._mgmt_endpoint, database, query, None, KustoClient._mgmt_default_timeout, properties)
+
+    def execute_streaming_ingest(
+        self,
+        database: str,
+        table: str,
+        stream: io.IOBase,
+        stream_format: Union[DataFormat, str],
+        properties: ClientRequestProperties = None,
+        mapping_name: str = None,
+    ):
+        """
+        Execute streaming ingest against this client
+        If the Kusto service is not configured to allow streaming ingestion, this may raise an error
+        To learn more about streaming ingestion go to:
+        https://docs.microsoft.com/en-us/azure/data-explorer/ingest-data-streaming
+        :param str database: Target database.
+        :param str table: Target table.
+        :param io.BaseIO stream: stream object which contains the data to ingest.
+        :param DataFormat stream_format: Format of the data in the stream.
+        :param ClientRequestProperties properties: additional request properties.
+        :param str mapping_name: Pre-defined mapping of the table. Required when stream_format is json/avro.
+        """
+        stream_format = stream_format.value if isinstance(stream_format, DataFormat) else DataFormat(stream_format.lower()).value
+        endpoint = self._streaming_ingest_endpoint + database + "/" + table + "?streamFormat=" + stream_format
+        if mapping_name is not None:
+            endpoint = endpoint + "&mappingName=" + mapping_name
+
+        self._execute(endpoint, database, None, stream, KustoClient._streaming_ingest_default_timeout, properties)
+
+    def _execute(self, endpoint: str, database: str, query: str, payload: io.IOBase, timeout: timedelta, properties: ClientRequestProperties = None):
+        """Executes given query against this client"""
+        request_headers = copy(self._request_headers)
+        json_payload = None
+        if not payload:
+            json_payload = {"db": database, "csl": query}
+            if properties:
+                json_payload["properties"] = properties.to_json()
+
+            client_request_id_prefix = "KPC.execute;"
+            request_headers["Content-Type"] = "application/json; charset=utf-8"
+        else:
+            if properties:
+                request_headers.update(json.loads(properties.to_json())["Options"])
+
+            client_request_id_prefix = "KPC.execute_streaming_ingest;"
+            request_headers["Content-Encoding"] = "gzip"
+
+        request_headers["x-ms-client-request-id"] = client_request_id_prefix + str(uuid.uuid4())
+
+        if properties is not None:
+            if properties.client_request_id is not None:
+                request_headers["x-ms-client-request-id"] = properties.client_request_id
+            if properties.application is not None:
+                request_headers["x-ms-app"] = properties.application
+            if properties.user is not None:
+                request_headers["x-ms-user"] = properties.user
+
+        if self._auth_provider:
+            request_headers["Authorization"] = self._auth_provider.acquire_authorization_header()
+
+        if properties:
+            timeout = properties.get_option(ClientRequestProperties.request_timeout_option_name, timeout)
+
+        response = self._session.post(endpoint, headers=request_headers, data=payload, json=json_payload, timeout=timeout.seconds)
+
+        if response.status_code == 200:
+            if endpoint.endswith("v2/rest/query"):
+                return KustoResponseDataSetV2(response.json())
+            return KustoResponseDataSetV1(response.json())
+
+        if payload:
+            raise KustoServiceError(
+                "An error occurred while trying to ingest: Status: {0.status_code}, Reason: {0.reason}, Text: {0.text}".format(response), response
+            )
+
+        raise KustoServiceError([response.json()], response)

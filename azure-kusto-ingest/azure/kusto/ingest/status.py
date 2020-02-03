@@ -1,13 +1,11 @@
 """Kusto ingest client for Python."""
 
 import json
-import base64
 
-from azure.storage.common import CloudStorageAccount
 from ._status_q import StatusQueue
 
 
-class StatusMessage(object):
+class StatusMessage:
     OperationId = None
     Database = None
     Table = None
@@ -49,7 +47,7 @@ class FailureMessage(StatusMessage):
     ShouldRetry = None
 
 
-class KustoIngestStatusQueues(object):
+class KustoIngestStatusQueues:
     """Kusto ingest Status Queue.
     Use this class to get status messages from Kusto status queues.
     Currently there are two queues exposed: `failure` and `success` queues.

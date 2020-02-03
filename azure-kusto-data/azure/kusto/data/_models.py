@@ -1,19 +1,19 @@
 """Kusto Data Models"""
 
 import json
-from datetime import datetime, timedelta
-from enum import Enum
 from decimal import Decimal
+from enum import Enum
+from typing import Iterator
+
 from . import _converters
 from .exceptions import KustoServiceError
-
 
 HAS_PANDAS = True
 
 try:
     import pandas
     from .helpers import to_pandas_datetime, to_pandas_timedelta
-except ImportError:
+except ImportError as e:
     HAS_PANDAS = False
 
 
@@ -26,7 +26,7 @@ class WellKnownDataSet(Enum):
     QueryProperties = "QueryProperties"
 
 
-class KustoResultRow(object):
+class KustoResultRow:
     """Iterator over a Kusto result row."""
 
     convertion_funcs = {"datetime": _converters.to_datetime, "timespan": _converters.to_timedelta, "decimal": Decimal}
@@ -67,7 +67,7 @@ class KustoResultRow(object):
             self._value_by_name[column.column_name] = typed_value
 
     @property
-    def columns_count(self):
+    def columns_count(self) -> int:
         return len(self._value_by_name)
 
     def __iter__(self):
@@ -82,10 +82,10 @@ class KustoResultRow(object):
     def __len__(self):
         return self.columns_count
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
         return self._value_by_name
 
-    def to_list(self):
+    def to_list(self) -> list:
         return self._value_by_index
 
     def __str__(self):
@@ -96,7 +96,7 @@ class KustoResultRow(object):
         return "KustoResultRow(['{}'], [{}])".format("', '".join(self._value_by_name), ", ".join(values))
 
 
-class KustoResultColumn(object):
+class KustoResultColumn:
     def __init__(self, json_column, ordinal):
         self.column_name = json_column["ColumnName"]
         self.column_type = json_column.get("ColumnType") or json_column["DataType"]
@@ -106,7 +106,7 @@ class KustoResultColumn(object):
         return "KustoResultColumn({},{})".format(json.dumps({"ColumnName": self.column_name, "ColumnType": self.column_type}), self.ordinal)
 
 
-class KustoResultTable(object):
+class KustoResultTable:
     """Iterator over a Kusto result table."""
 
     def __init__(self, json_table):
@@ -122,16 +122,16 @@ class KustoResultTable(object):
         self.rows = [KustoResultRow(self.columns, row) for row in json_table["Rows"]]
 
     @property
-    def _rows(self):
+    def _rows(self) -> Iterator:
         for row in self.rows:
             yield row._hidden_values
 
     @property
-    def rows_count(self):
+    def rows_count(self) -> int:
         return len(self.rows)
 
     @property
-    def columns_count(self):
+    def columns_count(self) -> int:
         return len(self.columns)
 
     def to_dict(self):

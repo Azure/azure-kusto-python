@@ -1,7 +1,7 @@
 """This file has all classes to define ingestion properties."""
 
-from enum import Enum, IntEnum
 import warnings
+from enum import Enum, IntEnum
 
 from .exceptions import KustoDuplicateMappingError, KustoDuplicateMappingReferenceError, KustoMappingAndMappingReferenceError
 
@@ -47,7 +47,7 @@ class ValidationImplications(IntEnum):
     BestEffort = 1
 
 
-class ValidationPolicy(object):
+class ValidationPolicy:
     """Validation policy to ingest command."""
 
     def __init__(self, validationOptions=ValidationOptions.DoNotValidate, validationImplications=ValidationImplications.BestEffort):

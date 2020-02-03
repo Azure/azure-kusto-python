@@ -22,6 +22,12 @@ def test_unauthorized_exception():
 
 
 def test_msi_auth():
+    """
+    * * * Note * * *
+    Each connection test takes about 15-20 seconds which is the time it takes TCP to fail connecting to the nonexistent MSI endpoint
+    The timeout option does not seem to affect this behavior. Could be it only affects the waiting time fora response in successful connections.
+    Please be prudent in adding any future tests!
+    """
     client_guid = "kjhjk"
     object_guid = "87687687"
     res_guid = "kajsdghdijewhag"
@@ -35,12 +41,6 @@ def test_msi_auth():
 
     helpers = [_AadHelper(kcsb[0]), _AadHelper(kcsb[1]), _AadHelper(kcsb[2]), _AadHelper(kcsb[3])]
 
-    """
-    * * * Note * * *
-    Each connection test takes about 15-20 seconds which is the time it takes TCP to fail connecting to the nonexistent MSI endpoint
-    The timeout option does not seem to affect this behavior. Could be it only affects the waiting time fora response in successful connections.
-    Please be prudent in adding any future tests!
-    """
     try:
         helpers[0].acquire_authorization_header()
     except KustoAuthenticationError as e:
