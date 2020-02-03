@@ -8,7 +8,6 @@ from enum import Enum, unique
 from typing import Union
 
 import requests
-from azure.kusto.data.request import ClientRequestProperties
 
 from .data_format import DataFormat
 from requests.adapters import HTTPAdapter
@@ -414,6 +413,51 @@ def _assert_value_is_valid(value):
     if not value or not value.strip():
         raise ValueError("Should not be empty")
 
+class ClientRequestProperties:
+    """This class is a POD used by client making requests to describe specific needs from the service executing the requests.
+    For more information please look at: https://docs.microsoft.com/en-us/azure/kusto/api/netfx/request-properties
+    """
+
+    results_defer_partial_query_failures_option_name = "deferpartialqueryfailures"
+    request_timeout_option_name = "servertimeout"
+
+    def __init__(self):
+        self._options = {}
+        self._parameters = {}
+        self.client_request_id = None
+        self.application = None
+        self.user = None
+
+    def set_parameter(self, name, value):
+        """Sets a parameter's value"""
+        _assert_value_is_valid(name)
+        self._parameters[name] = value
+
+    def has_parameter(self, name):
+        """Checks if a parameter is specified."""
+        return name in self._parameters
+
+    def get_parameter(self, name, default_value):
+        """Gets a parameter's value."""
+        return self._parameters.get(name, default_value)
+
+    def set_option(self, name, value):
+        """Sets an option's value"""
+        _assert_value_is_valid(name)
+        self._options[name] = value
+
+    def has_option(self, name):
+        """Checks if an option is specified."""
+        return name in self._options
+
+    def get_option(self, name, default_value):
+        """Gets an option's value."""
+        return self._options.get(name, default_value)
+
+    def to_json(self):
+        """Safe serialization to a JSON string."""
+        return json.dumps({"Options": self._options, "Parameters": self._parameters}, default=str)
+
 
 class KustoClient:
     """
@@ -568,47 +612,3 @@ class KustoClient:
         raise KustoServiceError([response.json()], response)
 
 
-class ClientRequestProperties:
-    """This class is a POD used by client making requests to describe specific needs from the service executing the requests.
-    For more information please look at: https://docs.microsoft.com/en-us/azure/kusto/api/netfx/request-properties
-    """
-
-    results_defer_partial_query_failures_option_name = "deferpartialqueryfailures"
-    request_timeout_option_name = "servertimeout"
-
-    def __init__(self):
-        self._options = {}
-        self._parameters = {}
-        self.client_request_id = None
-        self.application = None
-        self.user = None
-
-    def set_parameter(self, name, value):
-        """Sets a parameter's value"""
-        _assert_value_is_valid(name)
-        self._parameters[name] = value
-
-    def has_parameter(self, name):
-        """Checks if a parameter is specified."""
-        return name in self._parameters
-
-    def get_parameter(self, name, default_value):
-        """Gets a parameter's value."""
-        return self._parameters.get(name, default_value)
-
-    def set_option(self, name, value):
-        """Sets an option's value"""
-        _assert_value_is_valid(name)
-        self._options[name] = value
-
-    def has_option(self, name):
-        """Checks if an option is specified."""
-        return name in self._options
-
-    def get_option(self, name, default_value):
-        """Gets an option's value."""
-        return self._options.get(name, default_value)
-
-    def to_json(self):
-        """Safe serialization to a JSON string."""
-        return json.dumps({"Options": self._options, "Parameters": self._parameters}, default=str)
