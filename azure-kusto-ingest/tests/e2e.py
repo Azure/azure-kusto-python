@@ -4,7 +4,6 @@ import time
 import os
 import uuid
 import io
-from six import text_type
 
 from azure.kusto.data.request import KustoClient, KustoConnectionStringBuilder
 from azure.kusto.ingest.status import KustoIngestStatusQueues
@@ -130,7 +129,7 @@ def test_csv_ingest_non_existing_table():
     time.sleep(20)
     response = client.execute(db_name, "{} | count".format(table_name))
     for row in response.primary_results[0]:
-        assert int(row["Count"]) == 20, "{0} | count = {1}".format(table_name, text_type(row["Count"]))
+        assert int(row["Count"]) == 20, "{0} | count = {1}".format(table_name, str(row["Count"]))
 
 
 json_file_path = os.path.join(os.getcwd(), "azure-kusto-ingest", "tests", "input", "dataset.json")
@@ -166,7 +165,7 @@ def test_json_ingest_existing_table():
     time.sleep(20)
     response = client.execute(db_name, "{} | count".format(table_name))
     for row in response.primary_results[0]:
-        assert int(row["Count"]) == 24, "{0} | count = {1}".format(table_name, text_type(row["Count"]))
+        assert int(row["Count"]) == 24, "{0} | count = {1}".format(table_name, str(row["Count"]))
 
 
 @pytest.mark.run(order=3)
@@ -216,7 +215,7 @@ def test_ingest_complicated_props():
     time.sleep(20)
     response = client.execute(db_name, "{} | count".format(table_name))
     for row in response.primary_results[0]:
-        assert int(row["Count"]) == 28, "{0} | count = {1}".format(table_name, text_type(row["Count"]))
+        assert int(row["Count"]) == 28, "{0} | count = {1}".format(table_name, str(row["Count"]))
 
 
 @pytest.mark.run(order=4)
@@ -253,7 +252,7 @@ def test_json_ingestion_ingest_by_tag():
     time.sleep(20)
     response = client.execute(db_name, "{} | count".format(table_name))
     for row in response.primary_results[0]:
-        assert int(row["Count"]) == 28, "{0} | count = {1}".format(table_name, text_type(row["Count"]))
+        assert int(row["Count"]) == 28, "{0} | count = {1}".format(table_name, str(row["Count"]))
 
 
 @pytest.mark.run(order=5)
@@ -284,7 +283,7 @@ def test_tsv_ingestion_csv_mapping():
     time.sleep(20)
     response = client.execute(db_name, "{} | count".format(table_name))
     for row in response.primary_results[0]:
-        assert int(row["Count"]) == 38, "{0} | count = {1}".format(table_name, text_type(row["Count"]))
+        assert int(row["Count"]) == 38, "{0} | count = {1}".format(table_name, str(row["Count"]))
 
 
 @pytest.mark.run(order=6)

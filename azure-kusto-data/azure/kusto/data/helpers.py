@@ -1,6 +1,4 @@
 """Kusto helper functions"""
-import six
-
 
 def to_pandas_datetime(raw_value, *args):
     import pandas as pd
@@ -11,11 +9,11 @@ def to_pandas_datetime(raw_value, *args):
 def to_pandas_timedelta(raw_value, timedelta_value):
     import pandas as pd
 
-    if isinstance(raw_value, (six.integer_types, float)):
+    if isinstance(raw_value, (int, float)):
         # https://docs.microsoft.com/en-us/dotnet/api/system.datetime.ticks
         # kusto saves up to ticks, 1 tick == 100 nanoseconds
         return pd.Timedelta(raw_value * 100, unit="ns")
-    if isinstance(raw_value, six.string_types):
+    if isinstance(raw_value, str):
         fraction = raw_value.split(".")[-1]
         if fraction.isdigit():
             whole_part = int(timedelta_value.total_seconds())

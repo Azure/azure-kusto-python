@@ -2,7 +2,6 @@ import argparse
 import os
 from subprocess import check_call
 from pathlib import Path
-from six import text_type
 
 
 try:
@@ -38,7 +37,7 @@ def travis_build_package():
         return failure
 
     abs_dist_path = Path(os.environ["TRAVIS_BUILD_DIR"], "dist")
-    [create_package(package, text_type(abs_dist_path)) for package in package_list]
+    [create_package(package, str(abs_dist_path)) for package in package_list]
 
     print("Produced:\n{}".format(list(abs_dist_path.glob("*"))))
 

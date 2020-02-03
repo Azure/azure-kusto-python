@@ -21,15 +21,15 @@ class KustoConnectionStringBuilderTests(unittest.TestCase):
         ]
 
         for kcsb in kcsbs:
-            self.assertEqual(kcsb.data_source, "localhost")
-            self.assertFalse(kcsb.aad_federated_security)
-            self.assertIsNone(kcsb.aad_user_id)
-            self.assertIsNone(kcsb.password)
-            self.assertIsNone(kcsb.application_client_id)
-            self.assertIsNone(kcsb.application_key)
-            self.assertEqual(kcsb.authority_id, "common")
-            self.assertEqual(repr(kcsb), "Data Source=localhost;Authority Id=common")
-            self.assertEqual(str(kcsb), "Data Source=localhost;Authority Id=common")
+            assert kcsb.data_source == "localhost"
+            assert not kcsb.aad_federated_security
+            assert kcsb.aad_user_id is None
+            assert kcsb.password is None
+            assert kcsb.application_client_id is None
+            assert kcsb.application_key is None
+            assert kcsb.authority_id == "common"
+            assert repr(kcsb) == "Data Source=localhost;Authority Id=common"
+            assert str(kcsb) == "Data Source=localhost;Authority Id=common"
 
     def test_aad_app(self):
         """Checks kcsb that is created with AAD application credentials."""
@@ -78,25 +78,20 @@ class KustoConnectionStringBuilderTests(unittest.TestCase):
         kcsbs.append(kcsb2)
 
         for kcsb in kcsbs:
-            self.assertEqual(kcsb.data_source, "localhost")
-            self.assertTrue(kcsb.aad_federated_security)
-            self.assertIsNone(kcsb.aad_user_id)
-            self.assertIsNone(kcsb.password)
-            self.assertEqual(kcsb.application_client_id, uuid)
-            self.assertEqual(kcsb.application_key, key)
-            self.assertEqual(kcsb.authority_id, "microsoft.com")
-            self.assertEqual(
-                repr(kcsb),
-                "Data Source=localhost;AAD Federated Security=True;Application Client Id={0};Application Key={1};Authority Id={2}".format(
+            assert kcsb.data_source == "localhost"
+            assert kcsb.aad_federated_security
+            assert kcsb.aad_user_id is None
+            assert kcsb.password is None
+            assert kcsb.application_client_id == uuid
+            assert kcsb.application_key == key
+            assert kcsb.authority_id == "microsoft.com"
+            assert repr(kcsb) == "Data Source=localhost;AAD Federated Security=True;Application Client Id={0};Application Key={1};Authority Id={2}".format(
                     uuid, key, "microsoft.com"
-                ),
-            )
-            self.assertEqual(
-                str(kcsb),
-                "Data Source=localhost;AAD Federated Security=True;Application Client Id={0};Application Key={1};Authority Id={2}".format(
+                )
+            
+            assert str(kcsb) == "Data Source=localhost;AAD Federated Security=True;Application Client Id={0};Application Key={1};Authority Id={2}".format(
                     uuid, self.PASSWORDS_REPLACEMENT, "microsoft.com"
-                ),
-            )
+                )
 
     def test_aad_user(self):
         """Checks kcsb that is created with AAD user credentials."""
@@ -123,20 +118,16 @@ class KustoConnectionStringBuilderTests(unittest.TestCase):
         kcsbs.append(kcsb2)
 
         for kcsb in kcsbs:
-            self.assertEqual(kcsb.data_source, "localhost")
-            self.assertTrue(kcsb.aad_federated_security)
-            self.assertEqual(kcsb.aad_user_id, user)
-            self.assertEqual(kcsb.password, password)
-            self.assertIsNone(kcsb.application_client_id)
-            self.assertIsNone(kcsb.application_key)
-            self.assertEqual(kcsb.authority_id, "common")
-            self.assertEqual(
-                repr(kcsb), "Data Source=localhost;AAD Federated Security=True;AAD User ID={0};Password={1};Authority Id=common".format(user, password),
-            )
-            self.assertEqual(
-                str(kcsb),
-                "Data Source=localhost;AAD Federated Security=True;AAD User ID={0};Password={1};Authority Id=common".format(user, self.PASSWORDS_REPLACEMENT),
-            )
+            assert kcsb.data_source == "localhost"
+            assert kcsb.aad_federated_security
+            assert kcsb.aad_user_id == user
+            assert kcsb.password == password
+            assert kcsb.application_client_id is None
+            assert kcsb.application_key is None
+            assert kcsb.authority_id == "common"
+            assert repr(kcsb) == "Data Source=localhost;AAD Federated Security=True;AAD User ID={0};Password={1};Authority Id=common".format(user, password)
+            assert str(kcsb) =="Data Source=localhost;AAD Federated Security=True;AAD User ID={0};Password={1};Authority Id=common".format(
+                user, self.PASSWORDS_REPLACEMENT)
 
     def test_aad_user_with_authority(self):
         """Checks kcsb that is created with AAD user credentials."""
@@ -146,71 +137,62 @@ class KustoConnectionStringBuilderTests(unittest.TestCase):
 
         kcsb = KustoConnectionStringBuilder.with_aad_user_password_authentication("localhost", user, password, authority_id)
 
-        self.assertEqual(kcsb.data_source, "localhost")
-        self.assertTrue(kcsb.aad_federated_security)
-        self.assertEqual(kcsb.aad_user_id, user)
-        self.assertEqual(kcsb.password, password)
-        self.assertIsNone(kcsb.application_client_id)
-        self.assertIsNone(kcsb.application_key)
-        self.assertEqual(kcsb.authority_id, authority_id)
-        self.assertEqual(
-            repr(kcsb), "Data Source=localhost;AAD Federated Security=True;AAD User ID={0};Password={1};Authority Id=13456".format(user, password),
-        )
-        self.assertEqual(
-            str(kcsb),
-            "Data Source=localhost;AAD Federated Security=True;AAD User ID={0};Password={1};Authority Id=13456".format(user, self.PASSWORDS_REPLACEMENT),
+        assert kcsb.data_source == "localhost"
+        assert kcsb.aad_federated_security
+        assert kcsb.aad_user_id == user
+        assert kcsb.password == password
+        assert kcsb.application_client_id is None
+        assert kcsb.application_key is None
+        assert kcsb.authority_id == authority_id
+        assert repr(kcsb) == "Data Source=localhost;AAD Federated Security=True;AAD User ID={0};Password={1};Authority Id=13456".format(user, password)
+        assert str(kcsb) == "Data Source=localhost;AAD Federated Security=True;AAD User ID={0};Password={1};Authority Id=13456".format(
+            user, self.PASSWORDS_REPLACEMENT
         )
 
     def test_aad_device_login(self):
         """Checks kcsb that is created with AAD device login."""
         kcsb = KustoConnectionStringBuilder.with_aad_device_authentication("localhost")
-        self.assertEqual(kcsb.data_source, "localhost")
-        self.assertTrue(kcsb.aad_federated_security)
-        self.assertIsNone(kcsb.aad_user_id)
-        self.assertIsNone(kcsb.password)
-        self.assertIsNone(kcsb.application_client_id)
-        self.assertIsNone(kcsb.application_key)
-        self.assertEqual(kcsb.authority_id, "common")
-        self.assertEqual(repr(kcsb), "Data Source=localhost;AAD Federated Security=True;Authority Id=common")
-        self.assertEqual(str(kcsb), "Data Source=localhost;AAD Federated Security=True;Authority Id=common")
+        assert kcsb.data_source == "localhost"
+        assert kcsb.aad_federated_security
+        assert kcsb.aad_user_id is None
+        assert kcsb.password is None
+        assert kcsb.application_client_id is None
+        assert kcsb.application_key is None
+        assert kcsb.authority_id == "common"
+        assert repr(kcsb) == "Data Source=localhost;AAD Federated Security=True;Authority Id=common"
+        assert str(kcsb) == "Data Source=localhost;AAD Federated Security=True;Authority Id=common"
 
     def test_aad_app_token(self):
         """Checks kcsb that is created with AAD user token."""
         token = "The app hardest token ever"
         kcsb = KustoConnectionStringBuilder.with_aad_application_token_authentication("localhost", application_token=token)
-        self.assertEqual(kcsb.data_source, "localhost")
-        self.assertEqual(kcsb.application_token, token)
-        self.assertTrue(kcsb.aad_federated_security)
-        self.assertIsNone(kcsb.aad_user_id)
-        self.assertIsNone(kcsb.password)
-        self.assertIsNone(kcsb.application_client_id)
-        self.assertIsNone(kcsb.application_key)
-        self.assertIsNone(kcsb.user_token)
-        self.assertEqual(kcsb.authority_id, "common")
-        self.assertEqual(
-            repr(kcsb), "Data Source=localhost;AAD Federated Security=True;Authority Id=common;Application Token=%s" % token,
-        )
-        self.assertEqual(
-            str(kcsb), "Data Source=localhost;AAD Federated Security=True;Authority Id=common;Application Token=%s" % self.PASSWORDS_REPLACEMENT,
-        )
+        assert kcsb.data_source == "localhost"
+        assert kcsb.application_token == token
+        assert kcsb.aad_federated_security
+        assert kcsb.aad_user_id is None
+        assert kcsb.password is None
+        assert kcsb.application_client_id is None
+        assert kcsb.application_key is None
+        assert kcsb.user_token is None
+        assert kcsb.authority_id == "common"
+        assert repr(kcsb) == "Data Source=localhost;AAD Federated Security=True;Authority Id=common;Application Token=%s" % token
+        assert str(kcsb) == "Data Source=localhost;AAD Federated Security=True;Authority Id=common;Application Token=%s" % self.PASSWORDS_REPLACEMENT
 
     def test_aad_user_token(self):
         """Checks kcsb that is created with AAD user token."""
         token = "The user hardest token ever"
         kcsb = KustoConnectionStringBuilder.with_aad_user_token_authentication("localhost", user_token=token)
-        self.assertEqual(kcsb.data_source, "localhost")
-        self.assertEqual(kcsb.user_token, token)
-        self.assertTrue(kcsb.aad_federated_security)
-        self.assertIsNone(kcsb.aad_user_id)
-        self.assertIsNone(kcsb.password)
-        self.assertIsNone(kcsb.application_client_id)
-        self.assertIsNone(kcsb.application_key)
-        self.assertIsNone(kcsb.application_token)
-        self.assertEqual(kcsb.authority_id, "common")
-        self.assertEqual(repr(kcsb), "Data Source=localhost;AAD Federated Security=True;Authority Id=common;User Token=%s" % token)
-        self.assertEqual(
-            str(kcsb), "Data Source=localhost;AAD Federated Security=True;Authority Id=common;User Token=%s" % self.PASSWORDS_REPLACEMENT,
-        )
+        assert kcsb.data_source == "localhost"
+        assert kcsb.user_token == token
+        assert kcsb.aad_federated_security
+        assert kcsb.aad_user_id is None
+        assert kcsb.password is None
+        assert kcsb.application_client_id is None
+        assert kcsb.application_key is None
+        assert kcsb.application_token is None
+        assert kcsb.authority_id == "common"
+        assert repr(kcsb) == "Data Source=localhost;AAD Federated Security=True;Authority Id=common;User Token=%s" % token
+        assert str(kcsb) == "Data Source=localhost;AAD Federated Security=True;Authority Id=common;User Token=%s" % self.PASSWORDS_REPLACEMENT
 
     def test_add_msi(self):
         client_guid = "kjhjk"

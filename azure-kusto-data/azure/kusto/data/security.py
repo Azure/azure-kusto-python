@@ -3,7 +3,7 @@ import os
 from enum import Enum, unique
 from datetime import timedelta, datetime
 import webbrowser
-from six.moves.urllib.parse import urlparse
+from urllib.parse import urlparse
 import dateutil.parser
 
 from adal import AuthenticationContext, AdalError

@@ -15,10 +15,10 @@ class ResourceUriTests(unittest.TestCase):
 
         uri = "https://{}.blob.core.windows.net/{}?{}".format(storage_name, container_name, container_sas)
         connection_string = _ResourceUri.parse(uri)
-        self.assertEqual(connection_string.storage_account_name, storage_name)
-        self.assertEqual(connection_string.object_type, "blob")
-        self.assertEqual(connection_string.sas, container_sas)
-        self.assertEqual(connection_string.object_name, container_name)
+        assert connection_string.storage_account_name == storage_name
+        assert connection_string.object_type == "blob"
+        assert connection_string.sas == container_sas
+        assert connection_string.object_name == container_name
 
     def test_queue_uri(self):
         """Tests parsing queues uris."""
@@ -28,7 +28,7 @@ class ResourceUriTests(unittest.TestCase):
 
         uri = "https://{}.queue.core.windows.net/{}?{}".format(storage_name, queue_name, queue_sas)
         connection_string = _ResourceUri.parse(uri)
-        self.assertEqual(connection_string.storage_account_name, storage_name)
-        self.assertEqual(connection_string.object_type, "queue")
-        self.assertEqual(connection_string.sas, queue_sas)
-        self.assertEqual(connection_string.object_name, queue_name)
+        assert connection_string.storage_account_name == storage_name
+        assert connection_string.object_type == "queue"
+        assert connection_string.sas == queue_sas
+        assert connection_string.object_name == queue_name

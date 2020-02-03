@@ -3,7 +3,6 @@
 import json
 import unittest
 from datetime import datetime, timedelta
-from six import text_type
 from dateutil.tz.tz import tzutc
 
 from azure.kusto.data._response import KustoResponseDataSetV2
@@ -177,39 +176,31 @@ class FunctionalTests(unittest.TestCase):
         """Tests on happy path, validating response and iterations over it."""
         response = KustoResponseDataSetV2(json.loads(RESPONSE_TEXT))
         # Test that basic iteration works
-        self.assertEqual(len(response), 3)
-        self.assertEqual(len(list(response.primary_results[0])), 3)
+        assert len(response) == 3
+        assert len(list(response.primary_results[0])) == 3
         table = list(response.tables[0])
-        self.assertEqual(1, len(table))
+        assert 1 == len(table)
 
         expected_table = [
             [datetime(2016, 6, 6, 15, 35, tzinfo=tzutc()), "foo", 101, 3.14, False, timedelta(days=4, hours=1, minutes=2, seconds=3, milliseconds=567),],
             [datetime(2016, 6, 7, 16, tzinfo=tzutc()), "bar", 555, 2.71, True, timedelta()],
-            [None, text_type(""), None, None, None, None],
+            [None, str(""), None, None, None, None],
         ]
+
+        columns = ["Timestamp", "Name", "Altitude", "Temperature", "IsFlying", "TimeFlying"]
 
         # Test access by index and by column name
         primary_table = response.primary_results[0]
         for row in primary_table:
-            self.assertEqual(row[0], row["Timestamp"])
-            self.assertEqual(row[1], row["Name"])
-            self.assertEqual(row[2], row["Altitude"])
-            self.assertEqual(row[3], row["Temperature"])
-            self.assertEqual(row[4], row["IsFlying"])
-            self.assertEqual(row[5], row["TimeFlying"])
-
             # Test all types
-            self.assertEqual(type(row[0]), datetime if row[0] else type(None))
-            self.assertEqual(type(row[1]), text_type)
-            self.assertEqual(type(row[2]), int if row[2] else type(None))
-            self.assertEqual(type(row[3]), float if row[3] else type(None))
-            self.assertEqual(type(row[4]), bool if row[4] is not None else type(None))
-            self.assertEqual(type(row[5]), timedelta if row[5] is not None else type(None))
-
+            for i, t in enumerate([datetime, str,int,float,bool,timedelta]):
+                assert row[i] == row[columns[i]]
+                assert row[i] is None or isinstance(row[i], t)
+            
         for row_index, row in enumerate(primary_table):
             expected_row = expected_table[row_index]
             for col_index, value in enumerate(row):
-                self.assertEqual(value, expected_row[col_index])
+                assert value == expected_row[col_index]
 
     def test_invalid_table(self):
         """Tests calling of table with index that doesn't exists."""
@@ -227,11 +218,11 @@ class FunctionalTests(unittest.TestCase):
     def test_iterating_after_end(self):
         """Tests StopIteration is raised when the response ends."""
         response = KustoResponseDataSetV2(json.loads(RESPONSE_TEXT))
-        self.assertEqual(sum(1 for _ in response.primary_results[0]), 3)
+        assert sum(1 for _ in response.primary_results[0]) == 3
 
     def test_row_equality(self):
         """Tests the rows are idempotent."""
         response = KustoResponseDataSetV2(json.loads(RESPONSE_TEXT))
         table = response.primary_results[0]
         for row_index, row in enumerate(table):
-            self.assertEqual(table[row_index], row)
+            assert table[row_index] == row

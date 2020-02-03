@@ -3,7 +3,6 @@
 import json
 import uuid
 from datetime import datetime
-from six import text_type
 
 from ._descriptors import BlobDescriptor
 
@@ -22,7 +21,7 @@ class _IngestionBlobInfo:
         self.properties["ReportMethod"] = ingestion_properties.report_method.value
         self.properties["SourceMessageCreationTime"] = datetime.utcnow().isoformat()
         self.properties["Id"] = (
-            text_type(blob_descriptor.source_id) if hasattr(blob_descriptor, "source_id") and blob_descriptor.source_id is not None else text_type(uuid.uuid4())
+            str(blob_descriptor.source_id) if hasattr(blob_descriptor, "source_id") and blob_descriptor.source_id is not None else str(uuid.uuid4())
         )
 
         additional_properties = ingestion_properties.additional_properties or {}

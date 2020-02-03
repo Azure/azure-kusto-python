@@ -5,13 +5,10 @@ import json
 from datetime import timedelta
 from abc import ABCMeta, abstractmethod
 
-import six
-
 from ._models import KustoResultColumn, KustoResultRow, KustoResultTable, WellKnownDataSet
 
 
-@six.add_metaclass(ABCMeta)
-class KustoResponseDataSet:
+class KustoResponseDataSet(metaclass=ABCMeta):
     """Represents the parsed data set carried by the response to a Kusto request."""
 
     def __init__(self, json_response):
@@ -78,7 +75,7 @@ class KustoResponseDataSet:
         return iter(self.tables)
 
     def __getitem__(self, key):
-        if isinstance(key, six.integer_types):
+        if isinstance(key, int):
             return self.tables[key]
         try:
             return self.tables[self.tables_names.index(key)]
