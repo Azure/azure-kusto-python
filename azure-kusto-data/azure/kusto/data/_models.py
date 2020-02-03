@@ -1,12 +1,11 @@
 """Kusto Data Models"""
 
 import json
-from datetime import datetime, timedelta
-from enum import Enum
 from decimal import Decimal
+from enum import Enum
+
 from . import _converters
 from .exceptions import KustoServiceError
-
 
 HAS_PANDAS = True
 

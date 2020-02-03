@@ -1,7 +1,6 @@
 """This module constains all classes to get Kusto responses. Including error handling."""
-from typing import List
-
 from abc import ABCMeta, abstractmethod
+from typing import List
 
 from ._models import KustoResultTable, WellKnownDataSet
 

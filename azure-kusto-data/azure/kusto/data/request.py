@@ -1,19 +1,18 @@
 """A module to make a Kusto request."""
 
-import uuid
 import json
-
+import uuid
+from copy import copy
 from datetime import timedelta
 from enum import Enum, unique
-from copy import copy
 
 import requests
 from requests.adapters import HTTPAdapter
 
-from .security import _AadHelper
+from ._version import VERSION
 from .exceptions import KustoServiceError
 from .response import KustoResponseDataSetV1, KustoResponseDataSetV2
-from ._version import VERSION
+from .security import _AadHelper
 
 
 class KustoConnectionStringBuilder:

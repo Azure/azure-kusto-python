@@ -1,9 +1,7 @@
 """Kusto ingest client for Python."""
 
 import json
-import base64
 
-from azure.storage.common import CloudStorageAccount
 from ._status_q import StatusQueue
 
 

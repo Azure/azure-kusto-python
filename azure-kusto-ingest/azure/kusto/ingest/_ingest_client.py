@@ -1,19 +1,19 @@
 """Kusto Ingest Client"""
 
 import base64
-import random
-import uuid
 import os
-import time
+import random
 import tempfile
-
-from azure.storage.common import CloudStorageAccount
+import time
+import uuid
 
 from azure.kusto.data.request import KustoClient
+from azure.storage.common import CloudStorageAccount
+
 from ._descriptors import BlobDescriptor, FileDescriptor
 from ._ingestion_blob_info import _IngestionBlobInfo
-from ._resource_manager import _ResourceManager
 from ._ingestion_properties import DataFormat
+from ._resource_manager import _ResourceManager
 
 
 class KustoIngestClient:

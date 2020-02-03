@@ -1,11 +1,10 @@
 """Descriptors the ingest command should work with."""
 
 import os
-import uuid
 import shutil
-
-from io import BytesIO
+import uuid
 from gzip import GzipFile
+from io import BytesIO
 
 
 def assert_uuid4(maybe_uuid, error_message):

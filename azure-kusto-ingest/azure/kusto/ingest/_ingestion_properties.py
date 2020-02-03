@@ -1,7 +1,7 @@
 """This file has all classes to define ingestion properties."""
 
-from enum import Enum, IntEnum
 import warnings
+from enum import Enum, IntEnum
 
 from .exceptions import KustoDuplicateMappingError, KustoDuplicateMappingReferenceError, KustoMappingAndMappingReferenceError
 

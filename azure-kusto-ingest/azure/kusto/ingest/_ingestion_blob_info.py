@@ -4,8 +4,6 @@ import json
 import uuid
 from datetime import datetime
 
-from ._descriptors import BlobDescriptor
-
 
 class _IngestionBlobInfo:
     def __init__(self, blob_descriptor, ingestion_properties, auth_context=None):

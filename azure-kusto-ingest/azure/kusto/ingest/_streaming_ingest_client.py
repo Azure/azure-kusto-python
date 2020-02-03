@@ -1,15 +1,15 @@
 """Kusto Streaming Ingest Client"""
 import os
-import time
 import tempfile
-import shutil
+import time
 from gzip import GzipFile
+from io import TextIOWrapper, BytesIO
 
 from azure.kusto.data.request import KustoClient
+
 from ._descriptors import FileDescriptor, StreamDescriptor
-from .exceptions import KustoMissingMappingReferenceError
 from ._ingestion_properties import DataFormat
-from io import TextIOWrapper, BytesIO
+from .exceptions import KustoMissingMappingReferenceError
 
 
 class KustoStreamingIngestClient:

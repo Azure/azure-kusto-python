@@ -1,7 +1,7 @@
 """This module is serve as a cache to all resources needed by the kusto ingest client."""
 
-from datetime import datetime, timedelta
 import re
+from datetime import datetime, timedelta
 
 _URI_FORMAT = re.compile("https://(\\w+).(queue|blob|table).core.windows.net/([\\w,-]+)\\?(.*)")
 

@@ -1,6 +1,7 @@
 """Status Queue logic to wrap over Azure Storage Queues"""
 import base64
 import random
+
 from azure.storage.common import CloudStorageAccount
 
 
