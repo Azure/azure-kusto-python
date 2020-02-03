@@ -2,13 +2,8 @@ import unittest
 import re
 import json
 from uuid import UUID
-from six import assertRegex
 from azure.kusto.ingest._ingestion_blob_info import _IngestionBlobInfo
-from azure.kusto.ingest.exceptions import (
-    KustoDuplicateMappingError,
-    KustoDuplicateMappingReferenceError,
-    KustoMappingAndMappingReferenceError,
-)
+from azure.kusto.ingest.exceptions import KustoDuplicateMappingError, KustoDuplicateMappingReferenceError, KustoMappingAndMappingReferenceError
 from azure.kusto.ingest import (
     BlobDescriptor,
     IngestionProperties,
@@ -118,47 +113,37 @@ class IngestionBlobInfoTest(unittest.TestCase):
             IngestionProperties(database="database", table="table", mapping="mapping", ingestionMapping="ingestionMapping")
 
         with self.assertRaises(KustoMappingAndMappingReferenceError):
-            IngestionProperties(
-                database="database", table="table", mapping="mapping", ingestionMappingReference="ingestionMappingReference",
-            )
+            IngestionProperties(database="database", table="table", mapping="mapping", ingestionMappingReference="ingestionMappingReference")
 
         with self.assertRaises(KustoMappingAndMappingReferenceError):
-            IngestionProperties(
-                database="database", table="table", ingestionMapping="ingestionMapping", ingestionMappingReference="ingestionMappingReference",
-            )
+            IngestionProperties(database="database", table="table", ingestionMapping="ingestionMapping", ingestionMappingReference="ingestionMappingReference")
         with self.assertRaises(KustoMappingAndMappingReferenceError):
             IngestionProperties(database="database", table="table", mapping="mapping", mappingReference="mappingReference")
         with self.assertRaises(KustoMappingAndMappingReferenceError):
-            IngestionProperties(
-                database="database", table="table", ingestionMapping="ingestionMapping", mappingReference="mappingReference",
-            )
+            IngestionProperties(database="database", table="table", ingestionMapping="ingestionMapping", mappingReference="mappingReference")
         with self.assertRaises(KustoDuplicateMappingReferenceError):
-            IngestionProperties(
-                database="database", table="table", mappingReference="mappingReference", ingestionMappingReference="ingestionMappingReference",
-            )
+            IngestionProperties(database="database", table="table", mappingReference="mappingReference", ingestionMappingReference="ingestionMappingReference")
 
     def _verify_ingestion_blob_info_result(self, ingestion_blob_info):
         result = json.loads(ingestion_blob_info)
-        self.assertIsNotNone(result)
-        self.assertIsInstance(result, dict)
-        self.assertEqual(result["BlobPath"], "somepath")
-        self.assertEqual(result["DatabaseName"], "database")
-        self.assertEqual(result["TableName"], "table")
-        self.assertIsInstance(result["RawDataSize"], int)
-        self.assertIsInstance(result["IgnoreSizeLimit"], bool)
-        self.assertIsInstance(result["FlushImmediately"], bool)
-        self.assertIsInstance(result["RetainBlobOnSuccess"], bool)
-        self.assertIsInstance(result["ReportMethod"], int)
-        self.assertIsInstance(result["ReportLevel"], int)
-        self.assertIsInstance(UUID(result["Id"]), UUID)
-        assertRegex(self, result["SourceMessageCreationTime"], TIMESTAMP_REGEX)
-        self.assertEqual(result["AdditionalProperties"]["authorizationContext"], "authorizationContextText")
-        self.assertEqual(result["AdditionalProperties"]["ingestIfNotExists"], '["ingestIfNotExistTags"]')
-        self.assertIn(
-            result["AdditionalProperties"]["ValidationPolicy"],
-            (
-                '{"ValidationImplications":1,"ValidationOptions":1}',
-                '{"ValidationImplications":ValidationImplications.BestEffort,"ValidationOptions":ValidationOptions.ValidateCsvInputConstantColumns}',
-            ),
+        assert result is not None
+        assert isinstance(result, dict)
+        assert result["BlobPath"] == "somepath"
+        assert result["DatabaseName"] == "database"
+        assert result["TableName"] == "table"
+        assert isinstance(result["RawDataSize"], int)
+        assert isinstance(result["IgnoreSizeLimit"], bool)
+        assert isinstance(result["FlushImmediately"], bool)
+        assert isinstance(result["RetainBlobOnSuccess"], bool)
+        assert isinstance(result["ReportMethod"], int)
+        assert isinstance(result["ReportLevel"], int)
+        assert isinstance(UUID(result["Id"]), UUID)
+        assert re.match(TIMESTAMP_REGEX, result["SourceMessageCreationTime"])
+        assert result["AdditionalProperties"]["authorizationContext"] == "authorizationContextText"
+        assert result["AdditionalProperties"]["ingestIfNotExists"] == '["ingestIfNotExistTags"]'
+        assert result["AdditionalProperties"]["ValidationPolicy"] in (
+            '{"ValidationImplications":1,"ValidationOptions":1}',
+            '{"ValidationImplications":ValidationImplications.BestEffort,"ValidationOptions":ValidationOptions.ValidateCsvInputConstantColumns}',
         )
-        self.assertEqual(result["AdditionalProperties"]["tags"], '["tag","drop-by:dropByTags","ingest-by:ingestByTags"]')
+
+        assert result["AdditionalProperties"]["tags"] == '["tag","drop-by:dropByTags","ingest-by:ingestByTags"]'

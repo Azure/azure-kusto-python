@@ -3,11 +3,7 @@
 from enum import Enum, IntEnum
 import warnings
 
-from .exceptions import (
-    KustoDuplicateMappingError,
-    KustoDuplicateMappingReferenceError,
-    KustoMappingAndMappingReferenceError,
-)
+from .exceptions import KustoDuplicateMappingError, KustoDuplicateMappingReferenceError, KustoMappingAndMappingReferenceError
 
 
 class DataFormat(Enum):
@@ -54,9 +50,7 @@ class ValidationImplications(IntEnum):
 class ValidationPolicy(object):
     """Validation policy to ingest command."""
 
-    def __init__(
-        self, validationOptions=ValidationOptions.DoNotValidate, validationImplications=ValidationImplications.BestEffort,
-    ):
+    def __init__(self, validationOptions=ValidationOptions.DoNotValidate, validationImplications=ValidationImplications.BestEffort):
         self.ValidationOptions = validationOptions
         self.ValidationImplications = validationImplications
 

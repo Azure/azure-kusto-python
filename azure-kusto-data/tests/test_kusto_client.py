@@ -5,7 +5,6 @@ import json
 import unittest
 from datetime import datetime, timedelta
 import pytest
-from six import text_type
 from mock import patch
 from dateutil.tz import UTC
 
@@ -31,7 +30,7 @@ def mocked_requests_post(*args, **kwargs):
 
         def __init__(self, json_data, status_code):
             self.json_data = json_data
-            self.text = text_type(json_data)
+            self.text = str(json_data)
             self.status_code = status_code
             self.headers = None
 
@@ -70,19 +69,7 @@ def mocked_requests_post(*args, **kwargs):
     return MockResponse(None, 404)
 
 
-DIGIT_WORDS = [
-    text_type("Zero"),
-    text_type("One"),
-    text_type("Two"),
-    text_type("Three"),
-    text_type("Four"),
-    text_type("Five"),
-    text_type("Six"),
-    text_type("Seven"),
-    text_type("Eight"),
-    text_type("Nine"),
-    text_type("ten"),
-]
+DIGIT_WORDS = [str("Zero"), str("One"), str("Two"), str("Three"), str("Four"), str("Five"), str("Six"), str("Seven"), str("Eight"), str("Nine"), str("ten")]
 
 
 class KustoClientTests(unittest.TestCase):
@@ -95,7 +82,7 @@ class KustoClientTests(unittest.TestCase):
         response = client.execute_query("PythonTest", "Deft")
         expected = {
             "rownumber": None,
-            "rowguid": text_type(""),
+            "rowguid": str(""),
             "xdouble": None,
             "xfloat": None,
             "xbool": None,
@@ -107,12 +94,12 @@ class KustoClientTests(unittest.TestCase):
             "xuint32": None,
             "xuint64": None,
             "xdate": None,
-            "xsmalltext": text_type(""),
-            "xtext": text_type(""),
-            "xnumberAsText": text_type(""),
+            "xsmalltext": str(""),
+            "xtext": str(""),
+            "xnumberAsText": str(""),
             "xtime": None,
-            "xtextWithNulls": text_type(""),
-            "xdynamicWithNulls": text_type(""),
+            "xtextWithNulls": str(""),
+            "xdynamicWithNulls": str(""),
         }
 
         for row in response.primary_results[0]:
@@ -157,7 +144,7 @@ class KustoClientTests(unittest.TestCase):
             self.assertEqual(type(row["xdynamicWithNulls"]), type(expected["xdynamicWithNulls"]))
 
             expected["rownumber"] = 0 if expected["rownumber"] is None else expected["rownumber"] + 1
-            expected["rowguid"] = text_type("0000000{0}-0000-0000-0001-020304050607".format(expected["rownumber"]))
+            expected["rowguid"] = str("0000000{0}-0000-0000-0001-020304050607".format(expected["rownumber"]))
             expected["xdouble"] = round(float(0) if expected["xdouble"] is None else expected["xdouble"] + 1.0001, 4)
             expected["xfloat"] = round(float(0) if expected["xfloat"] is None else expected["xfloat"] + 1.01, 2)
             expected["xbool"] = False if expected["xbool"] is None else not expected["xbool"]
@@ -172,7 +159,7 @@ class KustoClientTests(unittest.TestCase):
             expected["xdate"] = expected["xdate"].replace(year=expected["xdate"].year + 1)
             expected["xsmalltext"] = DIGIT_WORDS[int(expected["xint16"])]
             expected["xtext"] = DIGIT_WORDS[int(expected["xint16"])]
-            expected["xnumberAsText"] = text_type(expected["xint16"])
+            expected["xnumberAsText"] = str(expected["xint16"])
 
             next_time = (
                 timedelta()
@@ -281,8 +268,8 @@ class KustoClientTests(unittest.TestCase):
             "xtextWithNulls": Series(["", "", "", "", "", "", "", "", "", "", ""], dtype=object),
             "xdynamicWithNulls": Series(
                 [
-                    text_type(""),
-                    text_type(""),
+                    str(""),
+                    str(""),
                     {"rowId": 1, "arr": [0, 1]},
                     {"rowId": 2, "arr": [0, 2]},
                     {"rowId": 3, "arr": [0, 3]},
@@ -363,15 +350,15 @@ range x from 1 to 10 step 1"""
         self.assertIsInstance(row[0], int)
         self.assertEqual(row[0], 123)
 
-        self.assertIsInstance(row[1], text_type)
+        self.assertIsInstance(row[1], str)
         self.assertEqual(row[1], "123")
 
-        self.assertIsInstance(row[2], text_type)
+        self.assertIsInstance(row[2], str)
         self.assertEqual(row[2], "test bad json")
 
         self.assertEqual(row[3], None)
 
-        self.assertIsInstance(row[4], text_type)
+        self.assertIsInstance(row[4], str)
         self.assertEqual(row[4], '{"rowId":2,"arr":[0,2]}')
 
         self.assertIsInstance(row[5], dict)

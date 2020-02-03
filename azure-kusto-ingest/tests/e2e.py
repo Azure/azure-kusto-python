@@ -4,7 +4,6 @@ import time
 import os
 import uuid
 import io
-from six import text_type
 
 from azure.kusto.data.request import KustoClient, KustoConnectionStringBuilder
 from azure.kusto.ingest.status import KustoIngestStatusQueues
@@ -103,7 +102,7 @@ client.execute(db_name, ".drop table {} ifexists".format(table_name))
 @pytest.mark.run(order=1)
 def test_csv_ingest_non_existing_table():
     csv_ingest_props = IngestionProperties(
-        db_name, table_name, dataFormat=DataFormat.CSV, mapping=Helpers.create_deft_table_csv_mappings(), reportLevel=ReportLevel.FailuresAndSuccesses,
+        db_name, table_name, dataFormat=DataFormat.CSV, mapping=Helpers.create_deft_table_csv_mappings(), reportLevel=ReportLevel.FailuresAndSuccesses
     )
     csv_file_path = os.path.join(os.getcwd(), "azure-kusto-ingest", "tests", "input", "dataset.csv")
     zipped_csv_file_path = os.path.join(os.getcwd(), "azure-kusto-ingest", "tests", "input", "dataset.csv.gz")
@@ -130,7 +129,7 @@ def test_csv_ingest_non_existing_table():
     time.sleep(20)
     response = client.execute(db_name, "{} | count".format(table_name))
     for row in response.primary_results[0]:
-        assert int(row["Count"]) == 20, "{0} | count = {1}".format(table_name, text_type(row["Count"]))
+        assert int(row["Count"]) == 20, "{0} | count = {1}".format(table_name, str(row["Count"]))
 
 
 json_file_path = os.path.join(os.getcwd(), "azure-kusto-ingest", "tests", "input", "dataset.json")
@@ -140,7 +139,7 @@ zipped_json_file_path = os.path.join(os.getcwd(), "azure-kusto-ingest", "tests",
 @pytest.mark.run(order=2)
 def test_json_ingest_existing_table():
     json_ingestion_props = IngestionProperties(
-        db_name, table_name, dataFormat=DataFormat.JSON, mapping=Helpers.create_deft_table_json_mappings(), reportLevel=ReportLevel.FailuresAndSuccesses,
+        db_name, table_name, dataFormat=DataFormat.JSON, mapping=Helpers.create_deft_table_json_mappings(), reportLevel=ReportLevel.FailuresAndSuccesses
     )
 
     for f in [json_file_path, zipped_json_file_path]:
@@ -166,14 +165,14 @@ def test_json_ingest_existing_table():
     time.sleep(20)
     response = client.execute(db_name, "{} | count".format(table_name))
     for row in response.primary_results[0]:
-        assert int(row["Count"]) == 24, "{0} | count = {1}".format(table_name, text_type(row["Count"]))
+        assert int(row["Count"]) == 24, "{0} | count = {1}".format(table_name, str(row["Count"]))
 
 
 @pytest.mark.run(order=3)
 def test_ingest_complicated_props():
     # Test ingest with complicated ingestion properties
     validation_policy = ValidationPolicy(
-        validationOptions=ValidationOptions.ValidateCsvInputConstantColumns, validationImplications=ValidationImplications.Fail,
+        validationOptions=ValidationOptions.ValidateCsvInputConstantColumns, validationImplications=ValidationImplications.Fail
     )
     json_ingestion_props = IngestionProperties(
         db_name,
@@ -216,7 +215,7 @@ def test_ingest_complicated_props():
     time.sleep(20)
     response = client.execute(db_name, "{} | count".format(table_name))
     for row in response.primary_results[0]:
-        assert int(row["Count"]) == 28, "{0} | count = {1}".format(table_name, text_type(row["Count"]))
+        assert int(row["Count"]) == 28, "{0} | count = {1}".format(table_name, str(row["Count"]))
 
 
 @pytest.mark.run(order=4)
@@ -253,13 +252,13 @@ def test_json_ingestion_ingest_by_tag():
     time.sleep(20)
     response = client.execute(db_name, "{} | count".format(table_name))
     for row in response.primary_results[0]:
-        assert int(row["Count"]) == 28, "{0} | count = {1}".format(table_name, text_type(row["Count"]))
+        assert int(row["Count"]) == 28, "{0} | count = {1}".format(table_name, str(row["Count"]))
 
 
 @pytest.mark.run(order=5)
 def test_tsv_ingestion_csv_mapping():
     tsv_ingestion_props = IngestionProperties(
-        db_name, table_name, dataFormat=DataFormat.TSV, mapping=Helpers.create_deft_table_csv_mappings(), reportLevel=ReportLevel.FailuresAndSuccesses,
+        db_name, table_name, dataFormat=DataFormat.TSV, mapping=Helpers.create_deft_table_csv_mappings(), reportLevel=ReportLevel.FailuresAndSuccesses
     )
     tsv_file_path = os.path.join(os.getcwd(), "azure-kusto-ingest", "tests", "input", "dataset.tsv")
 
@@ -284,7 +283,7 @@ def test_tsv_ingestion_csv_mapping():
     time.sleep(20)
     response = client.execute(db_name, "{} | count".format(table_name))
     for row in response.primary_results[0]:
-        assert int(row["Count"]) == 38, "{0} | count = {1}".format(table_name, text_type(row["Count"]))
+        assert int(row["Count"]) == 38, "{0} | count = {1}".format(table_name, str(row["Count"]))
 
 
 @pytest.mark.run(order=6)
@@ -431,7 +430,7 @@ def test_streaming_ingest_from_dataframe():
         "xtextWithNulls",
         "xdynamicWithNulls",
     ]
-    rows = [[0, "00000000-0000-0000-0001-020304050607", 0.0, 0.0, 0, 0, 0, 0, 0, 0, 0, 0, "2014-01-01T01:01:01Z", "Zero", "Zero", "0", "00:00:00", None, "",]]
+    rows = [[0, "00000000-0000-0000-0001-020304050607", 0.0, 0.0, 0, 0, 0, 0, 0, 0, 0, 0, "2014-01-01T01:01:01Z", "Zero", "Zero", "0", "00:00:00", None, ""]]
     df = DataFrame(data=rows, columns=fields)
     ingestion_properties = IngestionProperties(database=db_name, table=table_name, dataFormat=DataFormat.CSV)
     ingest_client.ingest_from_dataframe(df, ingestion_properties)

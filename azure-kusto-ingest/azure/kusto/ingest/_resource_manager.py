@@ -26,7 +26,7 @@ class _ResourceUri:
 
 class _IngestClientResources(object):
     def __init__(
-        self, secured_ready_for_aggregation_queues=None, failed_ingestions_queues=None, successful_ingestions_queues=None, containers=None, status_tables=None,
+        self, secured_ready_for_aggregation_queues=None, failed_ingestions_queues=None, successful_ingestions_queues=None, containers=None, status_tables=None
     ):
         self.secured_ready_for_aggregation_queues = secured_ready_for_aggregation_queues
         self.failed_ingestions_queues = failed_ingestions_queues
@@ -77,7 +77,7 @@ class _ResourceManager(object):
         containers = self._get_resource_by_name(table, "TempStorage")
         status_tables = self._get_resource_by_name(table, "IngestionsStatusTable")
 
-        return _IngestClientResources(secured_ready_for_aggregation_queues, failed_ingestions_queues, successful_ingestions_queues, containers, status_tables,)
+        return _IngestClientResources(secured_ready_for_aggregation_queues, failed_ingestions_queues, successful_ingestions_queues, containers, status_tables)
 
     def _refresh_authorization_context(self):
         if (

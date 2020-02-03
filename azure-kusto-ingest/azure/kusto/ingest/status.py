@@ -3,7 +3,6 @@
 import json
 import base64
 
-import six
 from azure.storage.common import CloudStorageAccount
 from ._status_q import StatusQueue
 
@@ -22,7 +21,7 @@ class StatusMessage(object):
         self._raw = s
 
         o = json.loads(s)
-        for key, value in six.iteritems(o):
+        for key, value in o.items():
             if hasattr(self, key):
                 try:
                     setattr(self, key, value)

@@ -46,9 +46,7 @@ def request_callback(request):
 class KustoStreamingIngestClientTests(unittest.TestCase):
     @responses.activate
     def test_streaming_ingest_from_file(self):
-        responses.add_callback(
-            responses.POST, "https://somecluster.kusto.windows.net/v1/rest/ingest/database/table", callback=request_callback,
-        )
+        responses.add_callback(responses.POST, "https://somecluster.kusto.windows.net/v1/rest/ingest/database/table", callback=request_callback)
 
         ingest_client = KustoStreamingIngestClient("https://somecluster.kusto.windows.net")
         ingestion_properties = IngestionProperties(database="database", table="table", dataFormat=DataFormat.CSV)
@@ -112,9 +110,7 @@ class KustoStreamingIngestClientTests(unittest.TestCase):
     @pytest.mark.skipif(not pandas_installed, reason="requires pandas")
     @responses.activate
     def test_streaming_ingest_from_dataframe(self):
-        responses.add_callback(
-            responses.POST, "https://somecluster.kusto.windows.net/v1/rest/ingest/database/table", callback=request_callback,
-        )
+        responses.add_callback(responses.POST, "https://somecluster.kusto.windows.net/v1/rest/ingest/database/table", callback=request_callback)
 
         ingest_client = KustoStreamingIngestClient("https://somecluster.kusto.windows.net")
         ingestion_properties = IngestionProperties(database="database", table="table", dataFormat=DataFormat.CSV)
@@ -129,9 +125,7 @@ class KustoStreamingIngestClientTests(unittest.TestCase):
 
     @responses.activate
     def test_streaming_ingest_from_stream(self):
-        responses.add_callback(
-            responses.POST, "https://somecluster.kusto.windows.net/v1/rest/ingest/database/table", callback=request_callback,
-        )
+        responses.add_callback(responses.POST, "https://somecluster.kusto.windows.net/v1/rest/ingest/database/table", callback=request_callback)
 
         ingest_client = KustoStreamingIngestClient("https://somecluster.kusto.windows.net")
         ingestion_properties = IngestionProperties(database="database", table="table", dataFormat=DataFormat.CSV)

@@ -199,10 +199,10 @@ class StatusQTests(unittest.TestCase):
             assert len(get_failure_actual) == 6
 
             for m in get_failure_actual:
-                assert isinstance(m, FailureMessage) == True
+                assert isinstance(m, FailureMessage)
 
             for m in get_success_actual:
-                assert isinstance(m, SuccessMessage) == True
+                assert isinstance(m, SuccessMessage)
 
             assert mocked_q_get_messages.call_count == 3
             assert mocked_q_del_messages.call_count == len(get_success_actual) + len(get_failure_actual)
@@ -285,7 +285,7 @@ class StatusQTests(unittest.TestCase):
             assert len(get_failure_actual) == 6
 
             for m in get_failure_actual:
-                assert isinstance(m, FailureMessage) == True
+                assert isinstance(m, FailureMessage)
 
             assert mocked_q_get_messages.call_count == 3
 

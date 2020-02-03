@@ -2,7 +2,6 @@ import argparse
 import os
 from subprocess import check_call
 from pathlib import Path
-from six import text_type
 
 
 try:
@@ -38,7 +37,7 @@ def travis_build_package():
         return failure
 
     abs_dist_path = Path(os.environ["TRAVIS_BUILD_DIR"], "dist")
-    [create_package(package, text_type(abs_dist_path)) for package in package_list]
+    [create_package(package, str(abs_dist_path)) for package in package_list]
 
     print("Produced:\n{}".format(list(abs_dist_path.glob("*"))))
 
@@ -53,9 +52,7 @@ def travis_build_package():
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Build Azure package.")
     parser.add_argument("name", help="The package name")
-    parser.add_argument(
-        "--dest", "-d", default=DEFAULT_DESTINATION_FOLDER, help="Destination folder. Relative to the package dir. [default: %(default)s]",
-    )
+    parser.add_argument("--dest", "-d", default=DEFAULT_DESTINATION_FOLDER, help="Destination folder. Relative to the package dir. [default: %(default)s]")
 
     args = parser.parse_args()
     if args.name == "all":

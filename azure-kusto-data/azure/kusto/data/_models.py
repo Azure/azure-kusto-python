@@ -4,7 +4,6 @@ import json
 from datetime import datetime, timedelta
 from enum import Enum
 from decimal import Decimal
-import six
 from . import _converters
 from .exceptions import KustoServiceError
 
@@ -76,7 +75,7 @@ class KustoResultRow(object):
             yield self[i]
 
     def __getitem__(self, key):
-        if isinstance(key, six.integer_types):
+        if isinstance(key, int):
             return self._value_by_index[key]
         return self._value_by_name[key]
 
