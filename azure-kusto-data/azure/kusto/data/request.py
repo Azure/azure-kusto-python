@@ -1,6 +1,4 @@
 """A module to make a Kusto request."""
-from __future__ import annotations
-
 import io
 import json
 import uuid
@@ -10,6 +8,8 @@ from enum import Enum, unique
 from typing import Union
 
 import requests
+from azure.kusto.data.request import ClientRequestProperties
+
 from .data_format import DataFormat
 from requests.adapters import HTTPAdapter
 
