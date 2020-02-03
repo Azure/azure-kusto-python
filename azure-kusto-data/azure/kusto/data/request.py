@@ -8,11 +8,10 @@ from enum import Enum, unique
 from typing import Union
 
 import requests
-
-from .data_format import DataFormat
 from requests.adapters import HTTPAdapter
 
 from ._version import VERSION
+from .data_format import DataFormat
 from .exceptions import KustoServiceError
 from .response import KustoResponseDataSetV1, KustoResponseDataSetV2, KustoResponseDataSet
 from .security import _AadHelper
@@ -28,7 +27,7 @@ class KustoConnectionStringBuilder:
     @unique
     class ValidKeywords(Enum):
         """
-        Set of properties that can be use in a connection string provied to KustoConnectionStringBuilder.
+        Set of properties that can be use in a connection string provided to KustoConnectionStringBuilder.
         For a complete list of properties go to https://docs.microsoft.com/en-us/azure/kusto/api/connection-strings/kusto
         """
 
@@ -45,6 +44,7 @@ class KustoConnectionStringBuilder:
         user_token = "User Token"
         msi_auth = "MSI Authentication"
         msi_params = "MSI Params"
+        az_cli = "AZ CLI"
 
         @classmethod
         def parse(cls, key: str) -> "ValidKeywords":
@@ -102,9 +102,9 @@ class KustoConnectionStringBuilder:
 
         def is_bool_type(self) -> bool:
             """States whether a word is of type bool or not."""
-            return self in [self.aad_federated_security, self.msi_auth]
+            return self in [self.aad_federated_security, self.msi_auth, self.az_cli]
 
-    def __init__(self, connection_string):
+    def __init__(self, connection_string: str):
         """
         Creates new KustoConnectionStringBuilder.
         :param str connection_string: Kusto connection string should by of the format:
@@ -268,6 +268,19 @@ class KustoConnectionStringBuilder:
         return kcsb
 
     @classmethod
+    def with_az_cli_authentication(cls, connection_string) -> "KustoConnectionStringBuilder":
+        """
+        Creates a KustoConnection string builder that will use existing authenticated az cli profile
+        password.
+        :param str connection_string: Kusto connection string should by of the format: https://<clusterName>.kusto.windows.net
+        """
+        kcsb = cls(connection_string)
+        kcsb[kcsb.ValidKeywords.az_cli] = True
+        kcsb[kcsb.ValidKeywords.aad_federated_security] = True
+
+        return kcsb
+
+    @classmethod
     def with_aad_managed_service_identity_authentication(
         cls, connection_string, client_id=None, object_id=None, msi_res_id=None, timeout=None
     ) -> "KustoConnectionStringBuilder":
@@ -395,6 +408,10 @@ class KustoConnectionStringBuilder:
         """ A user assigned MSI ID to be obtained """
         return self._internal_dict.get(self.ValidKeywords.msi_params)
 
+    @property
+    def az_cli(self):
+        return self._internal_dict.get(self.ValidKeywords.az_cli)
+
     def __str__(self):
         dict_copy = self._internal_dict.copy()
         for key in dict_copy:
@@ -495,6 +512,7 @@ class KustoClient:
         self._mgmt_endpoint = "{0}/v1/rest/mgmt".format(kusto_cluster)
         self._query_endpoint = "{0}/v2/rest/query".format(kusto_cluster)
         self._streaming_ingest_endpoint = "{0}/v1/rest/ingest/".format(kusto_cluster)
+        # TODO: this is somewhat confusing
         self._auth_provider = _AadHelper(kcsb) if kcsb.aad_federated_security else None
         self._request_headers = {"Accept": "application/json", "Accept-Encoding": "gzip,deflate", "x-ms-client-version": "Kusto.Python.Client:" + VERSION}
 

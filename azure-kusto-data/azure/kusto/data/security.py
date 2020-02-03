@@ -13,6 +13,43 @@ from msrestazure.azure_active_directory import MSIAuthentication
 from .exceptions import KustoClientError, KustoAuthenticationError
 
 
+def _get_azure_cli_auth_token() -> dict:
+    """
+    Try to get the az cli authenticated token
+    :return: refresh token
+    """
+    import os
+
+    try:
+        # this makes it cleaner, but in case azure cli is not present on virtual env,
+        # but cli exists on computer, we can try and manually get the token from the cache
+        from azure.cli.core._profile import Profile
+        from azure.cli.core._session import ACCOUNT
+        from azure.cli.core._environment import get_config_dir
+
+        azure_folder = get_config_dir()
+        ACCOUNT.load(os.path.join(azure_folder, "azureProfile.json"))
+        profile = Profile(storage=ACCOUNT)
+        token_data = profile.get_raw_token()[0][2]
+
+        return token_data
+
+    except ModuleNotFoundError:
+        try:
+            import os
+            import json
+
+            folder = os.getenv("AZURE_CONFIG_DIR", None) or os.path.expanduser(os.path.join("~", ".azure"))
+            token_path = os.path.join(folder, "accessTokens.json")
+            with open(token_path) as f:
+                data = json.load(f)
+
+            # TODO: not sure I should take the first
+            return data[0]
+        except Exception:
+            pass
+
+
 @unique
 class AuthenticationMethod(Enum):
     """Enum representing all authentication methods available in Kusto with Python."""
@@ -23,17 +60,14 @@ class AuthenticationMethod(Enum):
     aad_device_login = "aad_device_login"
     aad_token = "aad_token"
     aad_msi = "aad_msi"
+    az_cli_profile = "az_cli_profile"
+
+
+CLOUD_LOGIN_URL = "https://login.microsoftonline.com/"
 
 
 class _AadHelper:
     def __init__(self, kcsb):
-        if any([kcsb.user_token, kcsb.application_token]):
-            self._token = kcsb.user_token or kcsb.application_token
-            self._authentication_method = AuthenticationMethod.aad_token
-            return
-
-        create_adal_context = False
-
         self._kusto_cluster = "{0.scheme}://{0.hostname}".format(urlparse(kcsb.data_source))
         self._username = None
 
@@ -42,31 +76,34 @@ class _AadHelper:
             self._client_id = "db662dc1-0cfe-4e1c-a843-19a68e65be58"
             self._username = kcsb.aad_user_id
             self._password = kcsb.password
-            create_adal_context = True
         elif all([kcsb.application_client_id, kcsb.application_key]):
             self._authentication_method = AuthenticationMethod.aad_application_key
             self._client_id = kcsb.application_client_id
             self._client_secret = kcsb.application_key
-            create_adal_context = True
         elif all([kcsb.application_client_id, kcsb.application_certificate, kcsb.application_certificate_thumbprint]):
             self._authentication_method = AuthenticationMethod.aad_application_certificate
             self._client_id = kcsb.application_client_id
             self._certificate = kcsb.application_certificate
             self._thumbprint = kcsb.application_certificate_thumbprint
-            create_adal_context = True
         elif kcsb.msi_authentication:
             self._authentication_method = AuthenticationMethod.aad_msi
             self._msi_params = kcsb.msi_parameters
+            return
+        elif any([kcsb.user_token, kcsb.application_token]):
+            self._token = kcsb.user_token or kcsb.application_token
+            self._authentication_method = AuthenticationMethod.aad_token
+            return
+        elif kcsb.az_cli:
+            self._authentication_method = AuthenticationMethod.az_cli_profile
+            return
         else:
             self._authentication_method = AuthenticationMethod.aad_device_login
             self._client_id = "db662dc1-0cfe-4e1c-a843-19a68e65be58"
-            create_adal_context = True
 
-        if create_adal_context:
-            authority = kcsb.authority_id or "common"
-            aad_authority_uri = os.environ.get("AadAuthorityUri", "https://login.microsoftonline.com/")
-            full_authority_uri = aad_authority_uri + authority if aad_authority_uri.endswith("/") else aad_authority_uri + "/" + authority
-            self._adal_context = AuthenticationContext(full_authority_uri)
+        authority = kcsb.authority_id or "common"
+        aad_authority_uri = os.environ.get("AadAuthorityUri", CLOUD_LOGIN_URL)
+        full_authority_uri = aad_authority_uri + authority if aad_authority_uri.endswith("/") else aad_authority_uri + "/" + authority
+        self._adal_context = AuthenticationContext(full_authority_uri)
 
     def acquire_authorization_header(self):
         """Acquire tokens from AAD."""
@@ -105,14 +142,37 @@ class _AadHelper:
             token = self.get_token_from_msi()
             return _get_header_from_dict(token)
 
-        # obtain token from cache and make sure it has not expired
-        token = self._adal_context.acquire_token(self._kusto_cluster, self._username, self._client_id)
+        user = self._username
+        client_id = getattr(self, '_client_id', None)
+
+        token = None
+
+        if self._authentication_method == AuthenticationMethod.az_cli_profile:
+            stored_token = _get_azure_cli_auth_token()
+
+            if (TokenResponseFields.REFRESH_TOKEN in stored_token and
+                TokenResponseFields._CLIENT_ID in stored_token and
+                TokenResponseFields._AUTHORITY in stored_token
+            ):
+                client_id = stored_token[TokenResponseFields._CLIENT_ID]
+                user = stored_token[TokenResponseFields.USER_ID]
+
+            # TODO: this is a hack because the resource requested might be different (loading stored token
+            if getattr(self, '_adal_context', None) is None:
+                self._adal_context = AuthenticationContext(stored_token[TokenResponseFields._AUTHORITY])
+                refresh_token = stored_token[TokenResponseFields.REFRESH_TOKEN]
+                token = self._adal_context.acquire_token_with_refresh_token(refresh_token, client_id, self._kusto_cluster)
+
+
+        if token is None:
+            # obtain token from cache and make sure it has not expired
+            token = self._adal_context.acquire_token(self._kusto_cluster, user, client_id)
         if token is not None:
             expiration_date = dateutil.parser.parse(token[TokenResponseFields.EXPIRES_ON])
             if expiration_date > datetime.now() + timedelta(minutes=1):
                 return _get_header_from_dict(token)
             if TokenResponseFields.REFRESH_TOKEN in token:
-                token = self._adal_context.acquire_token_with_refresh_token(token[TokenResponseFields.REFRESH_TOKEN], self._client_id, self._kusto_cluster)
+                token = self._adal_context.acquire_token_with_refresh_token(token[TokenResponseFields.REFRESH_TOKEN], client_id, self._kusto_cluster)
                 if token is not None:
                     return _get_header_from_dict(token)
 
