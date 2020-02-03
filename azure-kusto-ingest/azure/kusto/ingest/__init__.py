@@ -1,9 +1,10 @@
 """Kusto Ingest"""
 
-from ._ingest_client import KustoIngestClient
-from ._streaming_ingest_client import KustoStreamingIngestClient
-from ._descriptors import BlobDescriptor, FileDescriptor, StreamDescriptor
-from ._ingestion_properties import (
+from ._version import VERSION as __version__
+from .descriptors import BlobDescriptor, FileDescriptor, StreamDescriptor
+from .exceptions import KustoMissingMappingReferenceError
+from .ingest_client import KustoIngestClient
+from .ingestion_properties import (
     DataFormat,
     ValidationPolicy,
     ValidationImplications,
@@ -15,6 +16,4 @@ from ._ingestion_properties import (
     IngestionProperties,
     IngestionMappingType,
 )
-from .exceptions import KustoMissingMappingReferenceError
-
-from ._version import VERSION as __version__
+from .streaming_ingest_client import KustoStreamingIngestClient

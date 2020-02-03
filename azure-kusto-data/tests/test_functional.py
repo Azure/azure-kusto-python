@@ -3,9 +3,9 @@
 import json
 import unittest
 from datetime import datetime, timedelta
-from dateutil.tz.tz import tzutc
 
 from azure.kusto.data.response import KustoResponseDataSetV2
+from dateutil.tz.tz import tzutc
 
 # Sample response against all tests should be run
 RESPONSE_TEXT = """

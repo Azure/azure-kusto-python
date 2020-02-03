@@ -1,10 +1,10 @@
 ﻿"""A simple example how to use KustoClient."""
 
 from datetime import timedelta
-from azure.kusto.data.request import KustoClient, KustoConnectionStringBuilder, ClientRequestProperties
+
 from azure.kusto.data.exceptions import KustoServiceError
 from azure.kusto.data.helpers import dataframe_from_result_table
-
+from azure.kusto.data.request import KustoClient, KustoConnectionStringBuilder, ClientRequestProperties
 
 ######################################################
 ##                        AUTH                      ##
@@ -102,7 +102,6 @@ except KustoServiceError as error:
     print("4. Error:", error)
     print("4. Is semantic error:", error.is_semantic_error())
     print("4. Has partial results:", error.has_partial_results())
-
 
 client = KustoClient("https://kustolab.kusto.windows.net")
 response = client.execute("ML", ".show version")

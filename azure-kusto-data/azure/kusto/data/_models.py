@@ -3,6 +3,7 @@
 import json
 from decimal import Decimal
 from enum import Enum
+from typing import Iterator
 
 from . import _converters
 from .exceptions import KustoServiceError
@@ -66,7 +67,7 @@ class KustoResultRow:
             self._value_by_name[column.column_name] = typed_value
 
     @property
-    def columns_count(self):
+    def columns_count(self) -> int:
         return len(self._value_by_name)
 
     def __iter__(self):
@@ -81,10 +82,10 @@ class KustoResultRow:
     def __len__(self):
         return self.columns_count
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
         return self._value_by_name
 
-    def to_list(self):
+    def to_list(self) -> list:
         return self._value_by_index
 
     def __str__(self):
@@ -121,16 +122,16 @@ class KustoResultTable:
         self.rows = [KustoResultRow(self.columns, row) for row in json_table["Rows"]]
 
     @property
-    def _rows(self):
+    def _rows(self) -> Iterator:
         for row in self.rows:
             yield row._hidden_values
 
     @property
-    def rows_count(self):
+    def rows_count(self) -> int:
         return len(self.rows)
 
     @property
-    def columns_count(self):
+    def columns_count(self) -> int:
         return len(self.columns)
 
     def to_dict(self):

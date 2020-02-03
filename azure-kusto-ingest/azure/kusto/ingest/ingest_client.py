@@ -6,32 +6,35 @@ import random
 import tempfile
 import time
 import uuid
+from typing import Union
 
-from azure.kusto.data.request import KustoClient
+from azure.kusto.data.request import KustoClient, KustoConnectionStringBuilder
 from azure.storage.common import CloudStorageAccount
 
-from ._descriptors import BlobDescriptor, FileDescriptor
+from .descriptors import BlobDescriptor, FileDescriptor
 from ._ingestion_blob_info import _IngestionBlobInfo
-from ._ingestion_properties import DataFormat
+from .ingestion_properties import DataFormat, IngestionProperties
 from ._resource_manager import _ResourceManager
 
 
 class KustoIngestClient:
-    """Kusto ingest client for Python.
-    KustoIngestClient works with both 2.x and 3.x flavors of Python.
-    All primitive types are supported.
-
-    Tests are run using pytest.
+    """
+    Kusto ingest client provides methods to allow ingestion into kusto (ADX).
+    To learn more about the different types of ingestions and when to use each, visit:
+    https://docs.microsoft.com/en-us/azure/data-explorer/ingest-data-overview#ingestion-methods
     """
 
-    def __init__(self, kcsb):
+    def __init__(self, kcsb: Union[str, KustoConnectionStringBuilder]):
         """Kusto Ingest Client constructor.
         :param kcsb: The connection string to initialize KustoClient.
         """
         self._resource_manager = _ResourceManager(KustoClient(kcsb))
 
-    def ingest_from_dataframe(self, df, ingestion_properties):
-        """Enqueuing an ingest command from local files.
+    def ingest_from_dataframe(self, df, ingestion_properties: IngestionProperties):
+        """
+        Enqueue an ingest command from local files.
+        To learn more about ingestion methods go to:
+        https://docs.microsoft.com/en-us/azure/data-explorer/ingest-data-overview#ingestion-methods
         :param pandas.DataFrame df: input dataframe to ingest.
         :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
         """
@@ -52,8 +55,11 @@ class KustoIngestClient:
 
         os.unlink(temp_file_path)
 
-    def ingest_from_file(self, file_descriptor, ingestion_properties):
-        """Enqueuing an ingest command from local files.
+    def ingest_from_file(self, file_descriptor: Union[FileDescriptor, str], ingestion_properties: IngestionProperties):
+        """
+        Enqueue an ingest command from local files.
+        To learn more about ingestion methods go to:
+        https://docs.microsoft.com/en-us/azure/data-explorer/ingest-data-overview#ingestion-methods
         :param file_descriptor: a FileDescriptor to be ingested.
         :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
         """
@@ -84,8 +90,11 @@ class KustoIngestClient:
 
             self.ingest_from_blob(BlobDescriptor(url, descriptor.size, descriptor.source_id), ingestion_properties=ingestion_properties)
 
-    def ingest_from_blob(self, blob_descriptor, ingestion_properties):
-        """Enqueuing an ingest command from azure blobs.
+    def ingest_from_blob(self, blob_descriptor: BlobDescriptor, ingestion_properties: IngestionProperties):
+        """
+        Enqueue an ingest command from azure blobs.
+        To learn more about ingestion methods go to:
+        https://docs.microsoft.com/en-us/azure/data-explorer/ingest-data-overview#ingestion-methods
         :param azure.kusto.ingest.BlobDescriptor blob_descriptor: An object that contains a description of the blob to be ingested.
         :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
         """

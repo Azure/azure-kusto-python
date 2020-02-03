@@ -7,8 +7,8 @@ from io import TextIOWrapper, BytesIO
 
 from azure.kusto.data.request import KustoClient
 
-from ._descriptors import FileDescriptor, StreamDescriptor
-from ._ingestion_properties import DataFormat
+from .descriptors import FileDescriptor, StreamDescriptor
+from .ingestion_properties import DataFormat
 from .exceptions import KustoMissingMappingReferenceError
 
 

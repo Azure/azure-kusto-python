@@ -2,6 +2,7 @@
 
 import unittest
 from datetime import timedelta
+
 from azure.kusto.data.request import ClientRequestProperties
 
 

@@ -1,23 +1,23 @@
 """Tests for KustoClient."""
 
-import os
 import json
+import os
 import unittest
 from datetime import datetime, timedelta
+
 import pytest
-from mock import patch
-from dateutil.tz import UTC
-
-from azure.kusto.data.request import KustoClient, ClientRequestProperties
 from azure.kusto.data.exceptions import KustoServiceError
-from azure.kusto.data.response import WellKnownDataSet
 from azure.kusto.data.helpers import dataframe_from_result_table
+from azure.kusto.data.request import KustoClient, ClientRequestProperties
+from azure.kusto.data.response import WellKnownDataSet
+from dateutil.tz import UTC
+from mock import patch
 
-pandas_installed = False
+PANDAS = False
 try:
     import pandas
 
-    pandas_installed = True
+    PANDAS = True
 except:
     pass
 
@@ -192,7 +192,7 @@ class KustoClientTests(unittest.TestCase):
         assert result["ServiceType"] == "Engine"
         assert result["ProductVersion"] == "KustoMain_2018.04.29.5"
 
-    @pytest.mark.skipif(not pandas_installed, reason="requires pandas")
+    @pytest.mark.skipif(not PANDAS, reason="requires pandas")
     @patch("requests.Session.post", side_effect=mocked_requests_post)
     def test_sanity_data_frame(self, mock_post):
         """Tests KustoResponse to pandas.DataFrame."""
@@ -345,7 +345,8 @@ range x from 1 to 10 step 1"""
     def test_dynamic(self, mock_post):
         """Tests dynamic responses."""
         client = KustoClient("https://somecluster.kusto.windows.net")
-        query = """print dynamic(123), dynamic("123"), dynamic("test bad json"), dynamic(null), dynamic('{"rowId":2,"arr":[0,2]}'), dynamic({"rowId":2,"arr":[0,2]})"""
+        query = """print dynamic(123), dynamic("123"), dynamic("test bad json"),"""
+        """ dynamic(null), dynamic('{"rowId":2,"arr":[0,2]}'), dynamic({"rowId":2,"arr":[0,2]})"""
         row = client.execute_query("PythonTest", query).primary_results[0].rows[0]
         assert isinstance(row[0], int)
         assert row[0] == 123
@@ -356,7 +357,7 @@ range x from 1 to 10 step 1"""
         assert isinstance(row[2], str)
         assert row[2] == "test bad json"
 
-        assert row[3] == None
+        assert row[3] is None
 
         assert isinstance(row[4], str)
         assert row[4] == '{"rowId":2,"arr":[0,2]}'
