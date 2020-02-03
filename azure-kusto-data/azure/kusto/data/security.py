@@ -143,26 +143,26 @@ class _AadHelper:
             return _get_header_from_dict(token)
 
         user = self._username
-        client_id = getattr(self, '_client_id', None)
+        client_id = getattr(self, "_client_id", None)
 
         token = None
 
         if self._authentication_method == AuthenticationMethod.az_cli_profile:
             stored_token = _get_azure_cli_auth_token()
 
-            if (TokenResponseFields.REFRESH_TOKEN in stored_token and
-                TokenResponseFields._CLIENT_ID in stored_token and
-                TokenResponseFields._AUTHORITY in stored_token
+            if (
+                TokenResponseFields.REFRESH_TOKEN in stored_token
+                and TokenResponseFields._CLIENT_ID in stored_token
+                and TokenResponseFields._AUTHORITY in stored_token
             ):
                 client_id = stored_token[TokenResponseFields._CLIENT_ID]
                 user = stored_token[TokenResponseFields.USER_ID]
 
             # TODO: this is a hack because the resource requested might be different (loading stored token
-            if getattr(self, '_adal_context', None) is None:
+            if getattr(self, "_adal_context", None) is None:
                 self._adal_context = AuthenticationContext(stored_token[TokenResponseFields._AUTHORITY])
                 refresh_token = stored_token[TokenResponseFields.REFRESH_TOKEN]
                 token = self._adal_context.acquire_token_with_refresh_token(refresh_token, client_id, self._kusto_cluster)
-
 
         if token is None:
             # obtain token from cache and make sure it has not expired
