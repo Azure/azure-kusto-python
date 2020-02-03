@@ -41,7 +41,6 @@ def test_msi_auth():
 
     helpers = [_AadHelper(kcsb[0]), _AadHelper(kcsb[1]), _AadHelper(kcsb[2]), _AadHelper(kcsb[3])]
 
-    
     try:
         helpers[0].acquire_authorization_header()
     except KustoAuthenticationError as e:

@@ -180,17 +180,17 @@ class KustoClientTests(unittest.TestCase):
         """Tests contol command."""
         client = KustoClient("https://somecluster.kusto.windows.net")
         response = client.execute_mgmt("NetDefaultDB", ".show version")
-        assert len(response) == 1 
+        assert len(response) == 1
         primary_table = response.primary_results[0]
         row_count = 0
         for _ in primary_table:
             row_count += 1
-        assert row_count == 1 
+        assert row_count == 1
         result = primary_table[0]
-        assert result["BuildVersion"] == "1.0.6693.14577" 
-        assert result["BuildTime"] == datetime(year=2018, month=4, day=29, hour=8, minute=5, second=54, tzinfo=UTC) 
-        assert result["ServiceType"] == "Engine" 
-        assert result["ProductVersion"] == "KustoMain_2018.04.29.5" 
+        assert result["BuildVersion"] == "1.0.6693.14577"
+        assert result["BuildTime"] == datetime(year=2018, month=4, day=29, hour=8, minute=5, second=54, tzinfo=UTC)
+        assert result["ServiceType"] == "Engine"
+        assert result["ProductVersion"] == "KustoMain_2018.04.29.5"
 
     @pytest.mark.skipif(not pandas_installed, reason="requires pandas")
     @patch("requests.Session.post", side_effect=mocked_requests_post)

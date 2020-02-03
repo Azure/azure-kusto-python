@@ -1,4 +1,6 @@
 """Kusto helper functions"""
+
+
 def to_pandas_datetime(raw_value, *args):
     """
     Transform a raw python value to a pandas datetime (datetime64)
@@ -26,7 +28,7 @@ def to_pandas_timedelta(raw_value, timedelta_value):
             total_seconds = float(time_with_exact_fraction)
 
             return pd.Timedelta(total_seconds, unit="s")
-        
+
         return pd.Timedelta(timedelta_value)
 
     return pd.Timedelta(timedelta_value.total_seconds(), unit="ns")
@@ -40,7 +42,6 @@ def dataframe_from_result_table(table):
     import pandas as pd
     from ._models import KustoResultTable
 
-    
     if not table:
         raise ValueError()
 
