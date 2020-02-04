@@ -68,16 +68,16 @@ CLOUD_LOGIN_URL = "https://login.microsoftonline.com/"
 
 
 class _AadHelper:
-    authentication_method: AuthenticationMethod = None
-    auth_context: Optional[AuthenticationContext] = None
-    username: Optional[str] = None
-    kusto_uri: Optional[str] = None
-    authority_uri: Optional[str] = None
-    client_id: Optional[str] = None
-    password: Optional[str] = None
-    thumbprint: Optional[str] = None
-    certificate: Optional[str] = None
-    msi_params: Optional[dict] = None
+    authentication_method = None
+    auth_context = None
+    username = None
+    kusto_uri = None
+    authority_uri = None
+    client_id = None
+    password = None
+    thumbprint = None
+    certificate = None
+    msi_params = None
 
     def __init__(self, kcsb):
         self.kusto_uri = "{0.scheme}://{0.hostname}".format(urlparse(kcsb.data_source))
