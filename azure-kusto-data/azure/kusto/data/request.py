@@ -512,7 +512,7 @@ class KustoClient:
         self._mgmt_endpoint = "{0}/v1/rest/mgmt".format(kusto_cluster)
         self._query_endpoint = "{0}/v2/rest/query".format(kusto_cluster)
         self._streaming_ingest_endpoint = "{0}/v1/rest/ingest/".format(kusto_cluster)
-        # TODO: this is somewhat confusing
+        # notice that in this context, federated actually just stands for add auth, not aad federated auth (legacy code)
         self._auth_provider = _AadHelper(kcsb) if kcsb.aad_federated_security else None
         self._request_headers = {"Accept": "application/json", "Accept-Encoding": "gzip,deflate", "x-ms-client-version": "Kusto.Python.Client:" + VERSION}
 
