@@ -3,11 +3,12 @@ import os
 import unittest
 import json
 import base64
+
+from asynctest import CoroutineMock
 from mock import patch
 import responses
 import io
 from azure.kusto.ingest import KustoIngestClient, IngestionProperties, DataFormat
-
 
 pandas_installed = False
 try:
@@ -70,54 +71,55 @@ class KustoIngestClientTests(unittest.TestCase):
     MOCKED_TIME = 100
 
     @responses.activate
-    @patch("azure.kusto.data.security._AadHelper.acquire_authorization_header", return_value=None)
+    @pytest.mark.asyncio
     @patch("azure.storage.blob.BlockBlobService.create_blob_from_stream")
     @patch("azure.storage.queue.QueueService.put_message")
     @patch("uuid.uuid4", return_value=MOCKED_UUID_4)
-    def test_sanity_ingest_from_file(self, mock_uuid, mock_put_message_in_queue, mock_create_blob_from_stream, mock_aad):
-        responses.add_callback(
-            responses.POST, "https://ingest-somecluster.kusto.windows.net/v1/rest/mgmt", callback=request_callback, content_type="application/json"
-        )
+    async def test_sanity_ingest_from_file(self, mock_uuid, mock_put_message_in_queue, mock_create_blob_from_stream):
+        with patch("azure.kusto.data.security._AadHelper.acquire_authorization_header", new=CoroutineMock()) as mock_aad:
+            responses.add_callback(
+                responses.POST, "https://ingest-somecluster.kusto.windows.net/v1/rest/mgmt", callback=request_callback, content_type="application/json"
+            )
 
-        ingest_client = KustoIngestClient("https://ingest-somecluster.kusto.windows.net")
-        ingestion_properties = IngestionProperties(database="database", table="table", dataFormat=DataFormat.CSV)
+            ingest_client = KustoIngestClient("https://ingest-somecluster.kusto.windows.net")
+            ingestion_properties = IngestionProperties(database="database", table="table", dataFormat=DataFormat.CSV)
 
-        # ensure test can work when executed from within directories
-        current_dir = os.getcwd()
-        path_parts = ["azure-kusto-ingest", "tests", "input", "dataset.csv"]
-        missing_path_parts = []
-        for path_part in path_parts:
-            if path_part not in current_dir:
-                missing_path_parts.append(path_part)
+            # ensure test can work when executed from within directories
+            current_dir = os.getcwd()
+            path_parts = ["azure-kusto-ingest", "tests", "input", "dataset.csv"]
+            missing_path_parts = []
+            for path_part in path_parts:
+                if path_part not in current_dir:
+                    missing_path_parts.append(path_part)
 
-        file_path = os.path.join(current_dir, *missing_path_parts)
+            file_path = os.path.join(current_dir, *missing_path_parts)
 
-        ingest_client.ingest_from_file(file_path, ingestion_properties=ingestion_properties)
+            ingest_client.ingest_from_file(file_path, ingestion_properties=ingestion_properties)
 
-        # mock_put_message_in_queue
-        assert mock_put_message_in_queue.call_count == 1
+            # mock_put_message_in_queue
+            assert mock_put_message_in_queue.call_count == 1
 
-        put_message_in_queue_mock_kwargs = mock_put_message_in_queue.call_args_list[0][1]
+            put_message_in_queue_mock_kwargs = mock_put_message_in_queue.call_args_list[0][1]
 
-        assert put_message_in_queue_mock_kwargs["queue_name"] == "readyforaggregation-secured"
-        queued_message = base64.b64decode(put_message_in_queue_mock_kwargs["content"].encode("utf-8")).decode("utf-8")
-        queued_message_json = json.loads(queued_message)
-        expected_url = "https://storageaccount.blob.core.windows.net/tempstorage/" "database__table__1111-111111-111111-1111__dataset.csv.gz?sas"
-        # mock_create_blob_from_stream
-        assert queued_message_json["BlobPath"] == expected_url
-        assert queued_message_json["DatabaseName"] == "database"
-        assert queued_message_json["IgnoreSizeLimit"] == False
-        assert queued_message_json["AdditionalProperties"]["format"] == "csv"
-        assert queued_message_json["FlushImmediately"] == False
-        assert queued_message_json["TableName"] == "table"
-        assert queued_message_json["RawDataSize"] > 0
-        assert queued_message_json["RetainBlobOnSuccess"] == True
+            assert put_message_in_queue_mock_kwargs["queue_name"] == "readyforaggregation-secured"
+            queued_message = base64.b64decode(put_message_in_queue_mock_kwargs["content"].encode("utf-8")).decode("utf-8")
+            queued_message_json = json.loads(queued_message)
+            expected_url = "https://storageaccount.blob.core.windows.net/tempstorage/" "database__table__1111-111111-111111-1111__dataset.csv.gz?sas"
+            # mock_create_blob_from_stream
+            assert queued_message_json["BlobPath"] == expected_url
+            assert queued_message_json["DatabaseName"] == "database"
+            assert queued_message_json["IgnoreSizeLimit"] == False
+            assert queued_message_json["AdditionalProperties"]["format"] == "csv"
+            assert queued_message_json["FlushImmediately"] == False
+            assert queued_message_json["TableName"] == "table"
+            assert queued_message_json["RawDataSize"] > 0
+            assert queued_message_json["RetainBlobOnSuccess"] == True
 
-        create_blob_from_stream_mock_kwargs = mock_create_blob_from_stream.call_args_list[0][1]
+            create_blob_from_stream_mock_kwargs = mock_create_blob_from_stream.call_args_list[0][1]
 
-        assert create_blob_from_stream_mock_kwargs["container_name"] == "tempstorage"
-        assert type(create_blob_from_stream_mock_kwargs["stream"]) == io.BytesIO
-        assert create_blob_from_stream_mock_kwargs["blob_name"] == "database__table__1111-111111-111111-1111__dataset.csv.gz"
+            assert create_blob_from_stream_mock_kwargs["container_name"] == "tempstorage"
+            assert type(create_blob_from_stream_mock_kwargs["stream"]) == io.BytesIO
+            assert create_blob_from_stream_mock_kwargs["blob_name"] == "database__table__1111-111111-111111-1111__dataset.csv.gz"
 
     @responses.activate
     @pytest.mark.skipif(not pandas_installed, reason="requires pandas")
@@ -126,7 +128,8 @@ class KustoIngestClientTests(unittest.TestCase):
     @patch("uuid.uuid4", return_value=MOCKED_UUID_4)
     @patch("time.time", return_value=MOCKED_TIME)
     @patch("os.getpid", return_value=MOCKED_PID)
-    def test_simple_ingest_from_dataframe(self, mock_pid, mock_time, mock_uuid, mock_put_message_in_queue, mock_create_blob_from_stream):
+    @pytest.mark.asyncio
+    async def test_simple_ingest_from_dataframe(self, mock_pid, mock_time, mock_uuid, mock_put_message_in_queue, mock_create_blob_from_stream):
         responses.add_callback(
             responses.POST, "https://ingest-somecluster.kusto.windows.net/v1/rest/mgmt", callback=request_callback, content_type="application/json"
         )

@@ -1,11 +1,12 @@
 """Tests for security module."""
-
+import pytest
 from azure.kusto.data.exceptions import KustoAuthenticationError
 from azure.kusto.data.request import KustoConnectionStringBuilder
 from azure.kusto.data.security import _AadHelper, AuthenticationMethod
 
 
-def test_unauthorized_exception():
+@pytest.mark.asyncio
+async def test_unauthorized_exception():
     """Test the exception thrown when authorization fails."""
     cluster = "https://somecluster.kusto.windows.net"
     username = "username@microsoft.com"
@@ -13,7 +14,7 @@ def test_unauthorized_exception():
     aad_helper = _AadHelper(kcsb)
 
     try:
-        aad_helper.acquire_authorization_header()
+        await aad_helper.acquire_authorization_header()
     except KustoAuthenticationError as error:
         assert error.authentication_method == AuthenticationMethod.aad_username_password.value
         assert error.authority == "https://login.microsoftonline.com/authorityName"
@@ -21,7 +22,8 @@ def test_unauthorized_exception():
         assert error.kwargs["username"] == username
 
 
-def test_msi_auth():
+@pytest.mark.asyncio
+async def test_msi_auth():
     """
     * * * Note * * *
     Each connection test takes about 15-20 seconds which is the time it takes TCP to fail connecting to the nonexistent MSI endpoint
@@ -42,7 +44,7 @@ def test_msi_auth():
     helpers = [_AadHelper(kcsb[0]), _AadHelper(kcsb[1]), _AadHelper(kcsb[2]), _AadHelper(kcsb[3])]
 
     try:
-        helpers[0].acquire_authorization_header()
+        await helpers[0].acquire_authorization_header()
     except KustoAuthenticationError as e:
         assert e.authentication_method == AuthenticationMethod.aad_msi.value
         assert "client_id" not in e.kwargs
@@ -50,7 +52,7 @@ def test_msi_auth():
         assert "msi_res_id" not in e.kwargs
 
     try:
-        helpers[1].acquire_authorization_header()
+        await helpers[1].acquire_authorization_header()
     except KustoAuthenticationError as e:
         assert e.authentication_method == AuthenticationMethod.aad_msi.value
         assert e.kwargs["client_id"] == client_guid

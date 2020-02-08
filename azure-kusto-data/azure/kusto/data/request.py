@@ -525,7 +525,9 @@ class KustoClient:
 
     @staticmethod
     def _build_runtime_error(func_name: str) -> RuntimeError:
-        return RuntimeError(f"Kusto driver has detected a running event loop, consider using {func_name}_async instead of {func_name}")
+        return RuntimeError(
+            "Kusto driver has detected a running event loop, consider using {func_name}_async instead of {func_name}".format(func_name=func_name)
+        )
 
     def execute(self, database: str, query: str, properties: ClientRequestProperties = None) -> KustoResponseDataSet:
         """
@@ -664,8 +666,19 @@ class KustoClient:
         return KustoServiceError([response_json], response)
 
     def _execute(self, endpoint: str, database: str, query: str, payload: io.IOBase, timeout: timedelta, properties: ClientRequestProperties = None):
-        """Sync version of self._execute_async"""
-        return async_to_sync(self._execute_async)(endpoint, database, query, payload, timeout, properties)
+        """Executes given query against this client"""
+        request_params = self._build_execute_request_params(database, payload, properties, query, timeout)
+        json_payload = request_params.get("json_payload")
+        request_headers = request_params.get("json_payload")
+        timeout = request_params.get("timeout")
+
+        if self._auth_provider:
+            request_headers["Authorization"] = async_to_sync(self._auth_provider.acquire_authorization_header)()
+
+        response = self._session.post(endpoint, headers=request_headers, data=payload, json=json_payload, timeout=timeout.seconds)
+        response_json = response.json()
+
+        return self._kusto_parse_by_endpoint(endpoint, response_json)
 
     async def _query(self, endpoint: str, **kwargs) -> list:
         raw_response = await utils.run_request(endpoint, **kwargs)
@@ -680,7 +693,7 @@ class KustoClient:
     async def _execute_async(
         self, endpoint: str, database: str, query: str, payload: io.IOBase, timeout: timedelta, properties: ClientRequestProperties = None
     ) -> KustoResponseDataSet:
-        """Executes given query against this client"""
+        """Sync version of self._execute"""
         request_params = self._build_execute_request_params(database, payload, properties, query, timeout)
         json_payload = request_params.get("json_payload")
         request_headers = request_params.get("json_payload")
