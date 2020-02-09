@@ -2,7 +2,6 @@
 import io
 import json
 import uuid
-import warnings
 from copy import copy
 from datetime import timedelta
 from enum import Enum, unique
@@ -15,12 +14,12 @@ from requests.adapters import HTTPAdapter
 
 from ._version import VERSION
 from .data_format import DataFormat
-from .exceptions import KustoServiceError
+from .exceptions import KustoServiceError, KustoAsyncRuntimeError
 from .response import KustoResponseDataSetV1, KustoResponseDataSetV2, KustoResponseDataSet
 from .security import _AadHelper
-from .asyncio import utils
 
 from asgiref.sync import async_to_sync
+import aiohttp
 
 
 class KustoConnectionStringBuilder:
@@ -523,12 +522,6 @@ class KustoClient:
         self._auth_provider = _AadHelper(kcsb) if kcsb.aad_federated_security else None
         self._request_headers = {"Accept": "application/json", "Accept-Encoding": "gzip,deflate", "x-ms-client-version": "Kusto.Python.Client:" + VERSION}
 
-    @staticmethod
-    def _build_runtime_error(func_name: str) -> RuntimeError:
-        return RuntimeError(
-            "Kusto driver has detected a running event loop, consider using {func_name}_async instead of {func_name}".format(func_name=func_name)
-        )
-
     def execute(self, database: str, query: str, properties: ClientRequestProperties = None) -> KustoResponseDataSet:
         """
         Sync version of self.execute_async
@@ -536,7 +529,7 @@ class KustoClient:
         try:
             return async_to_sync(self.execute_async)(database, query, properties)
         except RuntimeError as e:
-            raise self._build_runtime_error("execute") from e
+            raise KustoAsyncRuntimeError("execute") from e
 
     async def execute_async(self, database: str, query: str, properties: ClientRequestProperties = None) -> KustoResponseDataSet:
         """
@@ -559,7 +552,7 @@ class KustoClient:
         try:
             return async_to_sync(self.execute_query_async)(database, query, properties)
         except RuntimeError as e:
-            raise self._build_runtime_error("execute_query") from e
+            raise KustoAsyncRuntimeError("execute_query") from e
 
     async def execute_query_async(self, database: str, query: str, properties: ClientRequestProperties = None) -> KustoResponseDataSet:
         """
@@ -580,7 +573,7 @@ class KustoClient:
         try:
             return async_to_sync(self.execute_mgmt_async)(database, query, properties)
         except RuntimeError as e:
-            raise self._build_runtime_error("execute_mgmt") from e
+            raise KustoAsyncRuntimeError("execute_mgmt") from e
 
     async def execute_mgmt_async(self, database: str, query: str, properties: ClientRequestProperties = None) -> KustoResponseDataSet:
         """
@@ -680,8 +673,16 @@ class KustoClient:
 
         return self._kusto_parse_by_endpoint(endpoint, response_json)
 
+    @staticmethod
+    async def run_request(endpoint: str, **kwargs) -> dict:
+        async with aiohttp.ClientSession() as session:
+            async with session.post(endpoint, **kwargs) as response:
+                response_json = await response.json()
+
+                return {"response": response, "response_json": response_json}
+
     async def _query(self, endpoint: str, **kwargs) -> list:
-        raw_response = await utils.run_request(endpoint, **kwargs)
+        raw_response = await self.run_request(endpoint, **kwargs)
         response = raw_response.get("response")
         response_json = raw_response.get("response_json")
 
