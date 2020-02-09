@@ -8,7 +8,7 @@ from urllib.parse import urlparse
 
 import dateutil.parser
 from adal import AuthenticationContext, AdalError
-from adal.constants import TokenResponseFields, OAuth2DeviceCodeResponseParameters
+from adal.constants import TokenResponseFields, OAuth2DeviceCodeResponseParameters, OAuth2ResponseParameters
 from msrestazure.azure_active_directory import MSIAuthentication
 
 from .exceptions import KustoClientError, KustoAuthenticationError
@@ -212,7 +212,13 @@ class _AadHelper:
 
 
 def _get_header_from_dict(token: dict):
-    return _get_header(token[TokenResponseFields.TOKEN_TYPE], token[TokenResponseFields.ACCESS_TOKEN])
+    if TokenResponseFields.TOKEN_TYPE in token:
+        return _get_header(token[TokenResponseFields.TOKEN_TYPE], token[TokenResponseFields.ACCESS_TOKEN])
+    elif OAuth2ResponseParameters.TOKEN_TYPE in token:
+        # Assume OAuth2 format (e.g. MSI Token)
+        return _get_header(token[OAuth2ResponseParameters.TOKEN_TYPE], token[OAuth2ResponseParameters.ACCESS_TOKEN])
+    else:
+        raise KustoClientError("Unexpected token format!")
 
 
 def _get_header(token_type, access_token):
