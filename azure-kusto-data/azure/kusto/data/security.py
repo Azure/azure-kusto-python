@@ -218,7 +218,7 @@ def _get_header_from_dict(token: dict):
         # Assume OAuth2 format (e.g. MSI Token)
         return _get_header(token[OAuth2ResponseParameters.TOKEN_TYPE], token[OAuth2ResponseParameters.ACCESS_TOKEN])
     else:
-        raise KustoClientError("Unexpected token format!")
+        raise KustoClientError("Unable to determine the token type. Neither 'tokenType' nor 'token_type' property is present.")
 
 
 def _get_header(token_type, access_token):
