@@ -12,12 +12,22 @@ from azure.kusto.data.request import KustoClient, ClientRequestProperties
 from azure.kusto.data.response import WellKnownDataSet
 from dateutil.tz import UTC
 from mock import patch
+from aioresponses import aioresponses, CallbackResult
+from .async_unittest import AsyncUnittest
 
 PANDAS = False
 try:
     import pandas
 
     PANDAS = True
+except:
+    pass
+
+async_installed = False
+try:
+    import asgiref
+
+    async_installed = True
 except:
     pass
 
@@ -72,14 +82,14 @@ def mocked_requests_post(*args, **kwargs):
 DIGIT_WORDS = [str("Zero"), str("One"), str("Two"), str("Three"), str("Four"), str("Five"), str("Six"), str("Seven"), str("Eight"), str("Nine"), str("ten")]
 
 
-class KustoClientTests(unittest.TestCase):
-    """Tests class for KustoClient."""
+class KustoClientMixin:
+    HOST = "https://somecluster.kusto.windows.net"
 
-    @patch("requests.Session.post", side_effect=mocked_requests_post)
-    def test_sanity_query(self, mock_post):
-        """Test query V2."""
-        client = KustoClient("https://somecluster.kusto.windows.net")
-        response = client.execute_query("PythonTest", "Deft")
+    def _create_kusto_client(self):
+        return KustoClient(self.HOST)
+
+    @staticmethod
+    def _assert_sanity_query_response(response):
         expected = {
             "rownumber": None,
             "rowguid": str(""),
@@ -101,7 +111,6 @@ class KustoClientTests(unittest.TestCase):
             "xtextWithNulls": str(""),
             "xdynamicWithNulls": str(""),
         }
-
         for row in response.primary_results[0]:
             assert row["rownumber"] == expected["rownumber"]
             assert row["rowguid"] == expected["rowguid"]
@@ -175,11 +184,8 @@ class KustoClientTests(unittest.TestCase):
             if expected["xint16"] > 0:
                 expected["xdynamicWithNulls"] = {"rowId": expected["xint16"], "arr": [0, expected["xint16"]]}
 
-    @patch("requests.Session.post", side_effect=mocked_requests_post)
-    def test_sanity_control_command(self, mock_post):
-        """Tests contol command."""
-        client = KustoClient("https://somecluster.kusto.windows.net")
-        response = client.execute_mgmt("NetDefaultDB", ".show version")
+    @staticmethod
+    def _assert_sanity_control_command_response(response):
         assert len(response) == 1
         primary_table = response.primary_results[0]
         row_count = 0
@@ -192,16 +198,10 @@ class KustoClientTests(unittest.TestCase):
         assert result["ServiceType"] == "Engine"
         assert result["ProductVersion"] == "KustoMain_2018.04.29.5"
 
-    @pytest.mark.skipif(not PANDAS, reason="requires pandas")
-    @patch("requests.Session.post", side_effect=mocked_requests_post)
-    def test_sanity_data_frame(self, mock_post):
-        """Tests KustoResponse to pandas.DataFrame."""
-
+    def _assert_sanity_data_frame_response(self, data_frame):
         from pandas import DataFrame, Series
         from pandas.util.testing import assert_frame_equal
 
-        client = KustoClient("https://somecluster.kusto.windows.net")
-        data_frame = dataframe_from_result_table(client.execute_query("PythonTest", "Deft").primary_results[0])
         self.assertEqual(len(data_frame.columns), 19)
         expected_dict = {
             "rownumber": Series([None, 0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0]),
@@ -283,7 +283,6 @@ class KustoClientTests(unittest.TestCase):
                 dtype=object,
             ),
         }
-
         columns = [
             "rownumber",
             "rowguid",
@@ -308,17 +307,8 @@ class KustoClientTests(unittest.TestCase):
         expected_data_frame = DataFrame(expected_dict, columns=columns, copy=True)
         assert_frame_equal(data_frame, expected_data_frame)
 
-    @patch("requests.Session.post", side_effect=mocked_requests_post)
-    def test_partial_results(self, mock_post):
-        """Tests partial results."""
-        client = KustoClient("https://somecluster.kusto.windows.net")
-        query = """set truncationmaxrecords = 5;
-range x from 1 to 10 step 1"""
-        properties = ClientRequestProperties()
-        properties.set_option(ClientRequestProperties.results_defer_partial_query_failures_option_name, False)
-        self.assertRaises(KustoServiceError, client.execute_query, "PythonTest", query, properties)
-        properties.set_option(ClientRequestProperties.results_defer_partial_query_failures_option_name, True)
-        response = client.execute_query("PythonTest", query, properties)
+    @staticmethod
+    def _assert_partial_results_response(response):
         assert response.errors_count == 1
         assert "E_QUERY_RESULT_SET_TOO_LARGE" in response.get_exceptions()[0]
         assert len(response) == 3
@@ -326,12 +316,8 @@ range x from 1 to 10 step 1"""
         assert len(results) == 5
         assert results[0]["x"] == 1
 
-    @patch("requests.Session.post", side_effect=mocked_requests_post)
-    def test_admin_then_query(self, mock_post):
-        """Tests admin then query."""
-        client = KustoClient("https://somecluster.kusto.windows.net")
-        query = ".show tables | project DatabaseName, TableName"
-        response = client.execute_mgmt("PythonTest", query)
+    @staticmethod
+    def _assert_admin_then_query_response(response):
         assert response.errors_count == 0
         assert len(response) == 4
         results = list(response.primary_results[0])
@@ -341,34 +327,80 @@ range x from 1 to 10 step 1"""
         assert response[2].table_kind == WellKnownDataSet.QueryCompletionInformation
         assert response[3].table_kind == WellKnownDataSet.TableOfContents
 
+    @staticmethod
+    def _assert_dynamic_response(row):
+        assert isinstance(row[0], int)
+        assert row[0] == 123
+        assert isinstance(row[1], str)
+        assert row[1] == "123"
+        assert isinstance(row[2], str)
+        assert row[2] == "test bad json"
+        assert row[3] is None
+        assert isinstance(row[4], str)
+        assert row[4] == '{"rowId":2,"arr":[0,2]}'
+        assert isinstance(row[5], dict)
+        assert row[5] == {"rowId": 2, "arr": [0, 2]}
+
+
+class KustoClientTestsSync(unittest.TestCase, KustoClientMixin):
+    """Tests class for KustoClient Sync API"""
+    @patch("requests.Session.post", side_effect=mocked_requests_post)
+    def test_sanity_query(self, mock_post):
+        """Test query V2."""
+        client = self._create_kusto_client()
+        response = client.execute_query("PythonTest", "Deft")
+        self._assert_sanity_query_response(response)
+
+    @patch("requests.Session.post", side_effect=mocked_requests_post)
+    def test_sanity_control_command(self, mock_post):
+        """Tests contol command."""
+        client = self._create_kusto_client()
+        response = client.execute_mgmt("NetDefaultDB", ".show version")
+        self._assert_sanity_control_command_response(response)
+
+    @pytest.mark.skipif(not PANDAS, reason="requires pandas")
+    @patch("requests.Session.post", side_effect=mocked_requests_post)
+    def test_sanity_data_frame(self, mock_post):
+        """Tests KustoResponse to pandas.DataFrame."""
+        client = self._create_kusto_client()
+        response = client.execute_query("PythonTest", "Deft")
+        data_frame = dataframe_from_result_table(response.primary_results[0])
+        self._assert_sanity_data_frame_response(data_frame)
+
+    @patch("requests.Session.post", side_effect=mocked_requests_post)
+    def test_partial_results(self, mock_post):
+        """Tests partial results."""
+        client = self._create_kusto_client()
+        query = """set truncationmaxrecords = 5;
+range x from 1 to 10 step 1"""
+        properties = ClientRequestProperties()
+        properties.set_option(ClientRequestProperties.results_defer_partial_query_failures_option_name, False)
+        self.assertRaises(KustoServiceError, client.execute_query, "PythonTest", query, properties)
+        properties.set_option(ClientRequestProperties.results_defer_partial_query_failures_option_name, True)
+        response = client.execute_query("PythonTest", query, properties)
+        self._assert_partial_results_response(response)
+
+    @patch("requests.Session.post", side_effect=mocked_requests_post)
+    def test_admin_then_query(self, mock_post):
+        """Tests admin then query."""
+        client = self._create_kusto_client()
+        query = ".show tables | project DatabaseName, TableName"
+        response = client.execute_mgmt("PythonTest", query)
+        self._assert_admin_then_query_response(response)
+
     @patch("requests.Session.post", side_effect=mocked_requests_post)
     def test_dynamic(self, mock_post):
         """Tests dynamic responses."""
-        client = KustoClient("https://somecluster.kusto.windows.net")
+        client = self._create_kusto_client()
         query = """print dynamic(123), dynamic("123"), dynamic("test bad json"),"""
         """ dynamic(null), dynamic('{"rowId":2,"arr":[0,2]}'), dynamic({"rowId":2,"arr":[0,2]})"""
         row = client.execute_query("PythonTest", query).primary_results[0].rows[0]
-        assert isinstance(row[0], int)
-        assert row[0] == 123
-
-        assert isinstance(row[1], str)
-        assert row[1] == "123"
-
-        assert isinstance(row[2], str)
-        assert row[2] == "test bad json"
-
-        assert row[3] is None
-
-        assert isinstance(row[4], str)
-        assert row[4] == '{"rowId":2,"arr":[0,2]}'
-
-        assert isinstance(row[5], dict)
-        assert row[5] == {"rowId": 2, "arr": [0, 2]}
+        self._assert_dynamic_response(row)
 
     @patch("requests.Session.post", side_effect=mocked_requests_post)
     def test_empty_result(self, mock_post):
         """Tests dynamic responses."""
-        client = KustoClient("https://somecluster.kusto.windows.net")
+        client = self._create_kusto_client()
         query = """print 'a' | take 0"""
         response = client.execute_query("PythonTest", query)
         assert response.primary_results[0]
@@ -376,8 +408,105 @@ range x from 1 to 10 step 1"""
     @patch("requests.Session.post", side_effect=mocked_requests_post)
     def test_null_values_in_data(self, mock_post):
         """Tests response with null values in non nullable column types"""
-        client = KustoClient("https://somecluster.kusto.windows.net")
+        client = self._create_kusto_client()
         query = "PrimaryResultName"
         response = client.execute_query("PythonTest", query)
 
+        assert response is not None
+
+
+@pytest.mark.skipif(not async_installed, reason="requires async")
+class KustoClientTestsAsync(AsyncUnittest, KustoClientMixin):
+    """Tests class for KustoClient ASync API"""
+    @staticmethod
+    def _mock_callback(url, **kwargs):
+        body = json.dumps(mocked_requests_post(str(url), **kwargs).json())
+        return CallbackResult(status=200, body=body)
+
+    def _mock_query(self, mocked):
+        url = "{host}/v2/rest/query".format(host=self.HOST)
+        mocked.post(url, callback=self._mock_callback)
+
+    def _mock_mgmt(self, mocked):
+        url = "{host}/v1/rest/mgmt".format(host=self.HOST)
+        mocked.post(url, callback=self._mock_callback)
+
+    @aioresponses()
+    def test_sanity_query_async(self, mocked):
+        """Async version of self.test_sanity_query"""
+        self._mock_query(mocked)
+        client = self._create_kusto_client()
+        response = self.loop.run_until_complete(client.execute_query_async("PythonTest", "Deft"))
+        self._assert_sanity_query_response(response)
+
+    @aioresponses()
+    def test_sanity_control_command_async(self, mocked):
+        """Async version of self.test_sanity_control_command"""
+        self._mock_mgmt(mocked)
+        client = self._create_kusto_client()
+        response = self.loop.run_until_complete(client.execute_mgmt_async("NetDefaultDB", ".show version"))
+        self._assert_sanity_control_command_response(response)
+
+    @pytest.mark.skipif(not PANDAS, reason="requires pandas")
+    @aioresponses()
+    def test_sanity_data_frame_async(self, mocked):
+        """Async version of self.test_sanity_data_frame"""
+        self._mock_query(mocked)
+        client = self._create_kusto_client()
+        response = self.loop.run_until_complete(client.execute_query_async("PythonTest", "Deft"))
+        data_frame = dataframe_from_result_table(response.primary_results[0])
+        self._assert_sanity_data_frame_response(data_frame)
+
+    @aioresponses()
+    def test_partial_results_async(self, mocked):
+        """Async version of self.test_partial_results"""
+        client = self._create_kusto_client()
+        query = """set truncationmaxrecords = 5;
+range x from 1 to 10 step 1"""
+        properties = ClientRequestProperties()
+        properties.set_option(ClientRequestProperties.results_defer_partial_query_failures_option_name, False)
+        self._mock_query(mocked)
+        with self.assertRaises(KustoServiceError):
+            self.loop.run_until_complete(client.execute_query_async("PythonTest", query, properties))
+        properties.set_option(ClientRequestProperties.results_defer_partial_query_failures_option_name, True)
+        self._mock_query(mocked)
+        response = self.loop.run_until_complete(client.execute_query_async("PythonTest", query, properties))
+        self._assert_partial_results_response(response)
+
+    @aioresponses()
+    def test_admin_then_query_async(self, mocked):
+        """Async version of self.test_admin_then_query"""
+        self._mock_mgmt(mocked)
+        client = self._create_kusto_client()
+        query = ".show tables | project DatabaseName, TableName"
+        response = self.loop.run_until_complete(client.execute_mgmt_async("PythonTest", query))
+        self._assert_admin_then_query_response(response)
+
+    @aioresponses()
+    def test_dynamic_async(self, mocked):
+        """Async version of self.test_dynamic"""
+        self._mock_query(mocked)
+        client = self._create_kusto_client()
+        query = """print dynamic(123), dynamic("123"), dynamic("test bad json"),"""
+        """ dynamic(null), dynamic('{"rowId":2,"arr":[0,2]}'), dynamic({"rowId":2,"arr":[0,2]})"""
+        response = self.loop.run_until_complete(client.execute_query_async("PythonTest", query))
+        row = response.primary_results[0].rows[0]
+        self._assert_dynamic_response(row)
+
+    @aioresponses()
+    def test_empty_result_async(self, mocked):
+        """Async version of self.test_empty_result"""
+        self._mock_query(mocked)
+        client = self._create_kusto_client()
+        query = """print 'a' | take 0"""
+        response = self.loop.run_until_complete(client.execute_query_async("PythonTest", query))
+        assert response.primary_results[0]
+
+    @aioresponses()
+    def test_null_values_in_data_async(self, mocked):
+        """Async version of self.test_null_values_in_data"""
+        self._mock_query(mocked)
+        client = self._create_kusto_client()
+        query = "PrimaryResultName"
+        response = self.loop.run_until_complete(client.execute_query_async("PythonTest", query))
         assert response is not None

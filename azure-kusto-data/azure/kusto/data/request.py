@@ -593,7 +593,7 @@ class KustoClient:
 
     async def execute_mgmt_async(self, database: str, query: str, properties: ClientRequestProperties = None) -> KustoResponseDataSet:
         """
-        Asynv version of self.execute_mgmt
+        Async version of self.execute_mgmt
         """
         if not async_installed:
             raise KustoAsyncSyntaxError()

@@ -53,5 +53,7 @@ class KustoAuthenticationError(KustoClientError):
 
 
 class KustoAsyncSyntaxError(SyntaxError):
+    """Raised when trying to use async syntax without installing the needed modules"""
+
     def __init__(self):
         super().__init__("Async modules not installed, run 'pip install azure-kusto-data[async]' to leverage async capabilities")
