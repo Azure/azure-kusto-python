@@ -52,8 +52,6 @@ class KustoAuthenticationError(KustoClientError):
         return "KustoAuthenticationError('{}', '{}', '{}')".format(self.authentication_method, repr(self.exception), self.kwargs)
 
 
-class KustoAsyncRuntimeError(RuntimeError):
-    """Raised when trying to use sync flow from an async environment"""
-
-    def __init__(self, func_name):
-        super().__init__("Kusto driver has detected a running event loop, consider using {func_name}_async instead of {func_name}".format(func_name=func_name))
+class KustoAsyncSyntaxError(SyntaxError):
+    def __init__(self):
+        super().__init__("Async modules not installed, run 'pip install azure-kusto-data[async]' to leverage async capabilities")

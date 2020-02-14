@@ -8,18 +8,22 @@ from enum import Enum, unique
 from typing import Union, List
 
 import requests
-from aiohttp import ClientResponse
 from requests import Response
 from requests.adapters import HTTPAdapter
 
 from ._version import VERSION
 from .data_format import DataFormat
-from .exceptions import KustoServiceError, KustoAsyncRuntimeError
+from .exceptions import KustoServiceError, KustoAsyncSyntaxError
 from .response import KustoResponseDataSetV1, KustoResponseDataSetV2, KustoResponseDataSet
 from .security import _AadHelper
 
-from asgiref.sync import async_to_sync
-import aiohttp
+async_installed = False
+try:
+    from aiohttp import ClientResponse, ClientSession
+
+    async_installed = True
+except ImportError:
+    pass
 
 
 class KustoConnectionStringBuilder:
@@ -482,6 +486,12 @@ class ClientRequestProperties:
         return json.dumps({"Options": self._options, "Parameters": self._parameters}, default=str)
 
 
+def _get_dynamic_response_type():
+    if async_installed:
+        return Union[ClientResponse, Response]
+    return Response
+
+
 class KustoClient:
     """
     Kusto client for Python.
@@ -524,15 +534,6 @@ class KustoClient:
 
     def execute(self, database: str, query: str, properties: ClientRequestProperties = None) -> KustoResponseDataSet:
         """
-        Sync version of self.execute_async
-        """
-        try:
-            return async_to_sync(self.execute_async)(database, query, properties)
-        except RuntimeError as e:
-            raise KustoAsyncRuntimeError("execute") from e
-
-    async def execute_async(self, database: str, query: str, properties: ClientRequestProperties = None) -> KustoResponseDataSet:
-        """
         Executes a query or management command.
         :param str database: Database against query will be executed.
         :param str query: Query to be executed.
@@ -542,19 +543,22 @@ class KustoClient:
         """
         query = query.strip()
         if query.startswith("."):
+            return self.execute_mgmt(database, query, properties)
+        return self.execute_query(database, query, properties)
+
+    async def execute_async(self, database: str, query: str, properties: ClientRequestProperties = None) -> KustoResponseDataSet:
+        """
+        Async version of self.execute
+        """
+        if not async_installed:
+            raise KustoAsyncSyntaxError()
+
+        query = query.strip()
+        if query.startswith("."):
             return await self.execute_mgmt_async(database, query, properties)
         return await self.execute_query_async(database, query, properties)
 
     def execute_query(self, database: str, query: str, properties: ClientRequestProperties = None) -> KustoResponseDataSet:
-        """
-        Sync version of self.execute_query_async
-        """
-        try:
-            return async_to_sync(self.execute_query_async)(database, query, properties)
-        except RuntimeError as e:
-            raise KustoAsyncRuntimeError("execute_query") from e
-
-    async def execute_query_async(self, database: str, query: str, properties: ClientRequestProperties = None) -> KustoResponseDataSet:
         """
         Execute a KQL query.
         To learn more about KQL go to https://docs.microsoft.com/en-us/azure/kusto/query/
@@ -564,18 +568,18 @@ class KustoClient:
         :return: Kusto response data set.
         :rtype: azure.kusto.data.response.KustoResponseDataSet
         """
+        return self._execute(self._query_endpoint, database, query, None, KustoClient._query_default_timeout, properties)
+
+    async def execute_query_async(self, database: str, query: str, properties: ClientRequestProperties = None) -> KustoResponseDataSet:
+        """
+        Async version of self.execute_query
+        """
+        if not async_installed:
+            raise KustoAsyncSyntaxError()
+
         return await self._execute_async(self._query_endpoint, database, query, None, KustoClient._query_default_timeout, properties)
 
     def execute_mgmt(self, database: str, query: str, properties: ClientRequestProperties = None) -> KustoResponseDataSet:
-        """
-        Sync version of self.execute_mgmt_async
-        """
-        try:
-            return async_to_sync(self.execute_mgmt_async)(database, query, properties)
-        except RuntimeError as e:
-            raise KustoAsyncRuntimeError("execute_mgmt") from e
-
-    async def execute_mgmt_async(self, database: str, query: str, properties: ClientRequestProperties = None) -> KustoResponseDataSet:
         """
         Execute a KQL control command.
         To learn more about KQL control commands go to  https://docs.microsoft.com/en-us/azure/kusto/management/
@@ -585,6 +589,15 @@ class KustoClient:
         :return: Kusto response data set.
         :rtype: azure.kusto.data.response.KustoResponseDataSet
         """
+        return self._execute(self._mgmt_endpoint, database, query, None, KustoClient._mgmt_default_timeout, properties)
+
+    async def execute_mgmt_async(self, database: str, query: str, properties: ClientRequestProperties = None) -> KustoResponseDataSet:
+        """
+        Asynv version of self.execute_mgmt
+        """
+        if not async_installed:
+            raise KustoAsyncSyntaxError()
+
         return await self._execute_async(self._mgmt_endpoint, database, query, None, KustoClient._mgmt_default_timeout, properties)
 
     def execute_streaming_ingest(
@@ -651,7 +664,7 @@ class KustoClient:
         return {"json_payload": json_payload, "request_headers": request_headers, "timeout": timeout}
 
     @staticmethod
-    def _build_kusto_service_error(payload: io.IOBase, response: Union[ClientResponse, Response], response_json: List[dict]) -> KustoServiceError:
+    def _build_kusto_service_error(payload: io.IOBase, response: _get_dynamic_response_type(), response_json: List[dict]) -> KustoServiceError:
         if payload:
             return KustoServiceError(
                 "An error occurred while trying to ingest: Status: {0.status_code}, Reason: {0.reason}, Text: {0.text}".format(response), response
@@ -666,7 +679,7 @@ class KustoClient:
         timeout = request_params.get("timeout")
 
         if self._auth_provider:
-            request_headers["Authorization"] = async_to_sync(self._auth_provider.acquire_authorization_header)()
+            request_headers["Authorization"] = self._auth_provider.acquire_authorization_header()
 
         response = self._session.post(endpoint, headers=request_headers, data=payload, json=json_payload, timeout=timeout.seconds)
         response_json = response.json()
@@ -674,15 +687,15 @@ class KustoClient:
         return self._kusto_parse_by_endpoint(endpoint, response_json)
 
     @staticmethod
-    async def run_request(endpoint: str, **kwargs) -> dict:
-        async with aiohttp.ClientSession() as session:
+    async def _run_request(endpoint: str, **kwargs) -> dict:
+        async with ClientSession() as session:
             async with session.post(endpoint, **kwargs) as response:
                 response_json = await response.json()
 
                 return {"response": response, "response_json": response_json}
 
     async def _query(self, endpoint: str, **kwargs) -> list:
-        raw_response = await self.run_request(endpoint, **kwargs)
+        raw_response = await self._run_request(endpoint, **kwargs)
         response = raw_response.get("response")
         response_json = raw_response.get("response_json")
 
@@ -694,14 +707,14 @@ class KustoClient:
     async def _execute_async(
         self, endpoint: str, database: str, query: str, payload: io.IOBase, timeout: timedelta, properties: ClientRequestProperties = None
     ) -> KustoResponseDataSet:
-        """Sync version of self._execute"""
+        """Async version of self._execute"""
         request_params = self._build_execute_request_params(database, payload, properties, query, timeout)
         json_payload = request_params.get("json_payload")
         request_headers = request_params.get("json_payload")
         timeout = request_params.get("timeout")
 
         if self._auth_provider:
-            request_headers["Authorization"] = await self._auth_provider.acquire_authorization_header()
+            request_headers["Authorization"] = await self._auth_provider.acquire_authorization_header_async()
 
         response_json = await self._query(endpoint, headers=request_headers, data=payload, json=json_payload, timeout=timeout.seconds)
 

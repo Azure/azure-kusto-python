@@ -3,7 +3,6 @@
 import json
 import os
 import unittest
-from aioresponses import aioresponses, CallbackResult
 from datetime import datetime, timedelta
 
 import pytest
@@ -12,6 +11,7 @@ from azure.kusto.data.helpers import dataframe_from_result_table
 from azure.kusto.data.request import KustoClient, ClientRequestProperties
 from azure.kusto.data.response import WellKnownDataSet
 from dateutil.tz import UTC
+from mock import patch
 
 PANDAS = False
 try:
@@ -38,7 +38,7 @@ def mocked_requests_post(*args, **kwargs):
             """Get json data from response."""
             return self.json_data
 
-    if str(args[0]) == "https://somecluster.kusto.windows.net/v2/rest/query":
+    if args[0] == "https://somecluster.kusto.windows.net/v2/rest/query":
         if "truncationmaxrecords" in kwargs["json"]["csl"]:
             if json.loads(kwargs["json"]["properties"])["Options"]["deferpartialqueryfailures"]:
                 file_name = "query_partial_results_defer_is_true.json"
@@ -57,7 +57,7 @@ def mocked_requests_post(*args, **kwargs):
             data = response_file.read()
         return MockResponse(json.loads(data), 200)
 
-    elif str(args[0]) == "https://somecluster.kusto.windows.net/v1/rest/mgmt":
+    elif args[0] == "https://somecluster.kusto.windows.net/v1/rest/mgmt":
         if kwargs["json"]["csl"] == ".show version":
             file_name = "versionshowcommandresult.json"
         else:
@@ -75,32 +75,11 @@ DIGIT_WORDS = [str("Zero"), str("One"), str("Two"), str("Three"), str("Four"), s
 class KustoClientTests(unittest.TestCase):
     """Tests class for KustoClient."""
 
-    HOST = "https://somecluster.kusto.windows.net"
-
-    def create_kusto_client(self):
-        return KustoClient(self.HOST)
-
-    @staticmethod
-    def mock_callback(url, **kwargs):
-        body = json.dumps(mocked_requests_post(url, **kwargs).json())
-        return CallbackResult(status=200, body=body)
-
-    def mock_query(self, mocked):
-        url = "{host}/v2/rest/query".format(host=self.HOST)
-        mocked.post(url, callback=self.mock_callback)
-
-    def mock_mgmt(self, mocked):
-        url = "{host}/v1/rest/mgmt".format(host=self.HOST)
-        mocked.post(url, callback=self.mock_callback)
-
-    @aioresponses()
-    def test_sanity_query(self, mocked):
+    @patch("requests.Session.post", side_effect=mocked_requests_post)
+    def test_sanity_query(self, mock_post):
         """Test query V2."""
-        db = "PythonTest"
-        query = "Deft"
-        self.mock_query(mocked)
-        client = self.create_kusto_client()
-        response = client.execute_query(db, query)
+        client = KustoClient("https://somecluster.kusto.windows.net")
+        response = client.execute_query("PythonTest", "Deft")
         expected = {
             "rownumber": None,
             "rowguid": str(""),
@@ -196,14 +175,11 @@ class KustoClientTests(unittest.TestCase):
             if expected["xint16"] > 0:
                 expected["xdynamicWithNulls"] = {"rowId": expected["xint16"], "arr": [0, expected["xint16"]]}
 
-    @aioresponses()
-    def test_sanity_control_command(self, mocked):
+    @patch("requests.Session.post", side_effect=mocked_requests_post)
+    def test_sanity_control_command(self, mock_post):
         """Tests contol command."""
-        db = "NetDefaultDB"
-        query = ".show version"
-        self.mock_mgmt(mocked)
-        client = self.create_kusto_client()
-        response = client.execute_mgmt(db, query)
+        client = KustoClient("https://somecluster.kusto.windows.net")
+        response = client.execute_mgmt("NetDefaultDB", ".show version")
         assert len(response) == 1
         primary_table = response.primary_results[0]
         row_count = 0
@@ -217,18 +193,15 @@ class KustoClientTests(unittest.TestCase):
         assert result["ProductVersion"] == "KustoMain_2018.04.29.5"
 
     @pytest.mark.skipif(not PANDAS, reason="requires pandas")
-    @aioresponses()
-    def test_sanity_data_frame(self, mocked):
+    @patch("requests.Session.post", side_effect=mocked_requests_post)
+    def test_sanity_data_frame(self, mock_post):
         """Tests KustoResponse to pandas.DataFrame."""
 
         from pandas import DataFrame, Series
         from pandas.util.testing import assert_frame_equal
 
-        db = "PythonTest"
-        query = "Deft"
-        self.mock_query(mocked)
-        client = self.create_kusto_client()
-        data_frame = dataframe_from_result_table(client.execute_query(db, query).primary_results[0])
+        client = KustoClient("https://somecluster.kusto.windows.net")
+        data_frame = dataframe_from_result_table(client.execute_query("PythonTest", "Deft").primary_results[0])
         self.assertEqual(len(data_frame.columns), 19)
         expected_dict = {
             "rownumber": Series([None, 0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0]),
@@ -335,20 +308,17 @@ class KustoClientTests(unittest.TestCase):
         expected_data_frame = DataFrame(expected_dict, columns=columns, copy=True)
         assert_frame_equal(data_frame, expected_data_frame)
 
-    @aioresponses()
-    def test_partial_results(self, mocked):
+    @patch("requests.Session.post", side_effect=mocked_requests_post)
+    def test_partial_results(self, mock_post):
         """Tests partial results."""
-        host = "https://somecluster.kusto.windows.net"
-        db = "PythonTest"
-        query = """set truncationmaxrecords = 5;range x from 1 to 10 step 1"""
-        client = KustoClient(host)
+        client = KustoClient("https://somecluster.kusto.windows.net")
+        query = """set truncationmaxrecords = 5;
+range x from 1 to 10 step 1"""
         properties = ClientRequestProperties()
         properties.set_option(ClientRequestProperties.results_defer_partial_query_failures_option_name, False)
-        self.mock_query(mocked)
-        self.assertRaises(KustoServiceError, client.execute_query, db, query, properties)
+        self.assertRaises(KustoServiceError, client.execute_query, "PythonTest", query, properties)
         properties.set_option(ClientRequestProperties.results_defer_partial_query_failures_option_name, True)
-        self.mock_query(mocked)
-        response = client.execute_query(db, query, properties)
+        response = client.execute_query("PythonTest", query, properties)
         assert response.errors_count == 1
         assert "E_QUERY_RESULT_SET_TOO_LARGE" in response.get_exceptions()[0]
         assert len(response) == 3
@@ -356,14 +326,12 @@ class KustoClientTests(unittest.TestCase):
         assert len(results) == 5
         assert results[0]["x"] == 1
 
-    @aioresponses()
-    def test_admin_then_query(self, mocked):
+    @patch("requests.Session.post", side_effect=mocked_requests_post)
+    def test_admin_then_query(self, mock_post):
         """Tests admin then query."""
-        db = "PythonTest"
+        client = KustoClient("https://somecluster.kusto.windows.net")
         query = ".show tables | project DatabaseName, TableName"
-        self.mock_mgmt(mocked)
-        client = self.create_kusto_client()
-        response = client.execute_mgmt(db, query)
+        response = client.execute_mgmt("PythonTest", query)
         assert response.errors_count == 0
         assert len(response) == 4
         results = list(response.primary_results[0])
@@ -373,15 +341,13 @@ class KustoClientTests(unittest.TestCase):
         assert response[2].table_kind == WellKnownDataSet.QueryCompletionInformation
         assert response[3].table_kind == WellKnownDataSet.TableOfContents
 
-    @aioresponses()
-    def test_dynamic(self, mocked):
+    @patch("requests.Session.post", side_effect=mocked_requests_post)
+    def test_dynamic(self, mock_post):
         """Tests dynamic responses."""
-        db = "PythonTest"
+        client = KustoClient("https://somecluster.kusto.windows.net")
         query = """print dynamic(123), dynamic("123"), dynamic("test bad json"),"""
         """ dynamic(null), dynamic('{"rowId":2,"arr":[0,2]}'), dynamic({"rowId":2,"arr":[0,2]})"""
-        self.mock_query(mocked)
-        client = self.create_kusto_client()
-        row = client.execute_query(db, query).primary_results[0].rows[0]
+        row = client.execute_query("PythonTest", query).primary_results[0].rows[0]
         assert isinstance(row[0], int)
         assert row[0] == 123
 
@@ -399,23 +365,19 @@ class KustoClientTests(unittest.TestCase):
         assert isinstance(row[5], dict)
         assert row[5] == {"rowId": 2, "arr": [0, 2]}
 
-    @aioresponses()
-    def test_empty_result(self, mocked):
+    @patch("requests.Session.post", side_effect=mocked_requests_post)
+    def test_empty_result(self, mock_post):
         """Tests dynamic responses."""
-        db = "PythonTest"
+        client = KustoClient("https://somecluster.kusto.windows.net")
         query = """print 'a' | take 0"""
-        self.mock_query(mocked)
-        client = self.create_kusto_client()
-        response = client.execute_query(db, query)
+        response = client.execute_query("PythonTest", query)
         assert response.primary_results[0]
 
-    @aioresponses()
-    def test_null_values_in_data(self, mocked):
+    @patch("requests.Session.post", side_effect=mocked_requests_post)
+    def test_null_values_in_data(self, mock_post):
         """Tests response with null values in non nullable column types"""
-        db = "PythonTest"
+        client = KustoClient("https://somecluster.kusto.windows.net")
         query = "PrimaryResultName"
-        self.mock_query(mocked)
-        client = self.create_kusto_client()
-        response = client.execute_query(db, query)
+        response = client.execute_query("PythonTest", query)
 
         assert response is not None
