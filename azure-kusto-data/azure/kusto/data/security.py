@@ -1,10 +1,9 @@
 """A module to acquire tokens from AAD."""
+import json
 import os
 import webbrowser
-import json
 from datetime import timedelta, datetime
 from enum import Enum, unique
-from typing import Optional
 from urllib.parse import urlparse
 
 import dateutil.parser
@@ -13,76 +12,6 @@ from adal.constants import TokenResponseFields, OAuth2DeviceCodeResponseParamete
 from msrestazure.azure_active_directory import MSIAuthentication
 
 from .exceptions import KustoClientError, KustoAuthenticationError
-
-try:
-    from asgiref.sync import sync_to_async
-    from aiofile import AIOFile
-except ImportError:
-    pass
-
-
-def load_azure_cli_profile():
-    from azure.cli.core._profile import Profile
-    from azure.cli.core._session import ACCOUNT
-    from azure.cli.core._environment import get_config_dir
-
-    azure_folder = get_config_dir()
-    ACCOUNT.load(os.path.join(azure_folder, "azureProfile.json"))
-    profile = Profile(storage=ACCOUNT)
-    return profile
-
-
-def get_env_azure_token_path() -> str:
-    folder = os.getenv("AZURE_CONFIG_DIR", None) or os.path.expanduser(os.path.join("~", ".azure"))
-    token_path = os.path.join(folder, "accessTokens.json")
-    return token_path
-
-
-def _get_azure_cli_auth_token() -> dict:
-    """
-    Try to get the az cli authenticated token
-    :return: refresh token
-    """
-    try:
-        profile = load_azure_cli_profile()
-        token_data = profile.get_raw_token()[0][2]
-
-        return token_data
-
-    except ModuleNotFoundError:
-        try:
-            token_path = get_env_azure_token_path()
-            with open(token_path) as f:
-                data = json.load(f)
-
-            # TODO: not sure I should take the first
-            return data[0]
-        except Exception:
-            pass
-
-
-async def _get_azure_cli_auth_token_async() -> dict:
-    """
-    Async version of _get_azure_cli_auth_token
-    """
-    try:
-        profile = load_azure_cli_profile()
-        raw_token = await sync_to_async(profile.get_raw_token)()
-        token_data = raw_token[0][2]
-
-        return token_data
-
-    except ModuleNotFoundError:
-        try:
-            token_path = get_env_azure_token_path()
-            async with AIOFile(token_path) as af:
-                raw_data = await af.read()
-                data = json.loads(raw_data)
-
-            # TODO: not sure I should take the first
-            return data[0]
-        except Exception:
-            pass
 
 
 @unique
@@ -101,7 +30,7 @@ class AuthenticationMethod(Enum):
 CLOUD_LOGIN_URL = "https://login.microsoftonline.com/"
 
 
-class _AadHelper:
+class _AadHelperBase:
     authentication_method = None
     auth_context = None
     username = None
@@ -171,9 +100,62 @@ class _AadHelper:
         return KustoAuthenticationError(self.authentication_method.value, error, **kwargs)
 
     @staticmethod
+    def _get_header(token_type, access_token):
+        return "{0} {1}".format(token_type, access_token)
+
+    def _get_header_from_dict(self, token: dict):
+        if TokenResponseFields.TOKEN_TYPE in token:
+            return self._get_header(token[TokenResponseFields.TOKEN_TYPE], token[TokenResponseFields.ACCESS_TOKEN])
+        elif OAuth2ResponseParameters.TOKEN_TYPE in token:
+            # Assume OAuth2 format (e.g. MSI Token)
+            return self._get_header(token[OAuth2ResponseParameters.TOKEN_TYPE], token[OAuth2ResponseParameters.ACCESS_TOKEN])
+        else:
+            raise KustoClientError("Unable to determine the token type. Neither 'tokenType' nor 'token_type' property is present.")
+
+    def _set_from_stored_token(self, stored_token):
+        if (
+                TokenResponseFields.REFRESH_TOKEN in stored_token
+                and TokenResponseFields._CLIENT_ID in stored_token
+                and TokenResponseFields._AUTHORITY in stored_token
+        ):
+            self.client_id = stored_token[TokenResponseFields._CLIENT_ID]
+            self.username = stored_token[TokenResponseFields.USER_ID]
+            self.authority_uri = stored_token[TokenResponseFields._AUTHORITY]
+
+    @staticmethod
+    def _get_expiration_data_from_token(token):
+        return dateutil.parser.parse(token[TokenResponseFields.EXPIRES_ON])
+
+    @staticmethod
     def _authentication_method_missing_exception() -> KustoClientError:
         return KustoClientError("Please choose authentication method from azure.kusto.data.security.AuthenticationMethod")
 
+    @staticmethod
+    def _is_expired(expiration_date):
+        return expiration_date <= datetime.now() + timedelta(minutes=1)
+
+    def _build_msi_exception(self, e: Exception) -> KustoClientError:
+        return KustoClientError("Failed to obtain MSI context for [" + str(self.msi_params) + "]\n" + str(e))
+
+    @staticmethod
+    def _load_azure_cli_profile():
+        from azure.cli.core._profile import Profile
+        from azure.cli.core._session import ACCOUNT
+        from azure.cli.core._environment import get_config_dir
+
+        azure_folder = get_config_dir()
+        ACCOUNT.load(os.path.join(azure_folder, "azureProfile.json"))
+        profile = Profile(storage=ACCOUNT)
+        return profile
+
+    @staticmethod
+    def _get_env_azure_token_path() -> str:
+        folder = os.getenv("AZURE_CONFIG_DIR", None) or os.path.expanduser(os.path.join("~", ".azure"))
+        token_path = os.path.join(folder, "accessTokens.json")
+        return token_path
+
+
+class _AadHelper(_AadHelperBase):
     def acquire_authorization_header(self) -> str:
         """Acquire tokens from AAD."""
         try:
@@ -181,45 +163,20 @@ class _AadHelper:
         except (AdalError, KustoClientError) as error:
             raise self._build_kusto_authentication_error(error)
 
-    async def acquire_authorization_header_async(self) -> str:
-        """Acquire tokens from AAD."""
-        try:
-            return await self._acquire_authorization_header_async()
-        except (AdalError, KustoClientError) as error:
-            raise self._build_kusto_authentication_error(error)
-
-    @staticmethod
-    def _get_expiration_data_from_token(token):
-        return dateutil.parser.parse(token[TokenResponseFields.EXPIRES_ON])
-
-    def _set_from_stored_token(self, stored_token):
-        if (
-            TokenResponseFields.REFRESH_TOKEN in stored_token
-            and TokenResponseFields._CLIENT_ID in stored_token
-            and TokenResponseFields._AUTHORITY in stored_token
-        ):
-            self.client_id = stored_token[TokenResponseFields._CLIENT_ID]
-            self.username = stored_token[TokenResponseFields.USER_ID]
-            self.authority_uri = stored_token[TokenResponseFields._AUTHORITY]
-
-    @staticmethod
-    def _is_expired(expiration_date):
-        return expiration_date <= datetime.now() + timedelta(minutes=1)
-
     def _acquire_authorization_header(self) -> str:
         # Token was provided by caller
         if self.authentication_method is AuthenticationMethod.aad_token:
-            return _get_header("Bearer", self.token)
+            return self._get_header("Bearer", self.token)
 
         # Obtain token from MSI endpoint
         if self.authentication_method == AuthenticationMethod.aad_msi:
             token = self.get_token_from_msi()
-            return _get_header_from_dict(token)
+            return self._get_header_from_dict(token)
 
         refresh_token = None
 
         if self.authentication_method == AuthenticationMethod.az_cli_profile:
-            stored_token = _get_azure_cli_auth_token()
+            stored_token = self._get_azure_cli_auth_token()
             self._set_from_stored_token(stored_token)
             refresh_token = stored_token[TokenResponseFields.REFRESH_TOKEN]
 
@@ -234,11 +191,11 @@ class _AadHelper:
         if token is not None:
             expiration_date = self._get_expiration_data_from_token(token)
             if not self._is_expired(expiration_date):
-                return _get_header_from_dict(token)
+                return self._get_header_from_dict(token)
             if TokenResponseFields.REFRESH_TOKEN in token:
                 token = self.auth_context.acquire_token_with_refresh_token(token[TokenResponseFields.REFRESH_TOKEN], self.client_id, self.kusto_uri)
                 if token is not None:
-                    return _get_header_from_dict(token)
+                    return self._get_header_from_dict(token)
 
         # obtain token from AAD
         if self.authentication_method is AuthenticationMethod.aad_username_password:
@@ -255,65 +212,7 @@ class _AadHelper:
         else:
             raise self._authentication_method_missing_exception()
 
-        return _get_header_from_dict(token)
-
-    async def _acquire_authorization_header_async(self) -> str:
-        """Async version of self._acquire_authorization_header"""
-        if self.authentication_method is AuthenticationMethod.aad_token:
-            return _get_header("Bearer", self.token)
-
-        # Obtain token from MSI endpoint
-        if self.authentication_method == AuthenticationMethod.aad_msi:
-            token = await self.get_token_from_msi_async()
-            return _get_header_from_dict(token)
-
-        refresh_token = None
-
-        if self.authentication_method == AuthenticationMethod.az_cli_profile:
-            stored_token = await _get_azure_cli_auth_token_async()
-            self._set_from_stored_token(stored_token)
-            refresh_token = stored_token[TokenResponseFields.REFRESH_TOKEN]
-
-        if self.auth_context is None:
-            self.auth_context = AuthenticationContext(self.authority_uri)
-
-        if refresh_token is not None:
-            token = await sync_to_async(self.auth_context.acquire_token_with_refresh_token)(refresh_token, self.client_id, self.kusto_uri)
-        else:
-            token = await sync_to_async(self.auth_context.acquire_token)(self.kusto_uri, self.username, self.client_id)
-
-        if token is not None:
-            expiration_date = self._get_expiration_data_from_token(token)
-            if not self._is_expired(expiration_date):
-                return _get_header_from_dict(token)
-            if TokenResponseFields.REFRESH_TOKEN in token:
-                token = await sync_to_async(self.auth_context.acquire_token_with_refresh_token)(
-                    token[TokenResponseFields.REFRESH_TOKEN], self.client_id, self.kusto_uri
-                )
-                if token is not None:
-                    return _get_header_from_dict(token)
-
-        # obtain token from AAD
-        if self.authentication_method is AuthenticationMethod.aad_username_password:
-            token = await sync_to_async(self.auth_context.acquire_token_with_username_password)(self.kusto_uri, self.username, self.password, self.client_id)
-        elif self.authentication_method is AuthenticationMethod.aad_application_key:
-            token = await sync_to_async(self.auth_context.acquire_token_with_client_credentials)(self.kusto_uri, self.client_id, self.client_secret)
-        elif self.authentication_method is AuthenticationMethod.aad_device_login:
-            code = await sync_to_async(self.auth_context.acquire_user_code)(self.kusto_uri, self.client_id)
-            print(code[OAuth2DeviceCodeResponseParameters.MESSAGE])
-            webbrowser.open(code[OAuth2DeviceCodeResponseParameters.VERIFICATION_URL])
-            token = await sync_to_async(self.auth_context.acquire_token_with_device_code)(self.kusto_uri, code, self.client_id)
-        elif self.authentication_method is AuthenticationMethod.aad_application_certificate:
-            token = await sync_to_async(self.auth_context.acquire_token_with_client_certificate)(
-                self.kusto_uri, self.client_id, self.certificate, self.thumbprint
-            )
-        else:
-            raise self._authentication_method_missing_exception()
-
-        return _get_header_from_dict(token)
-
-    def _build_msi_exception(self, e: Exception) -> KustoClientError:
-        return KustoClientError("Failed to obtain MSI context for [" + str(self.msi_params) + "]\n" + str(e))
+        return self._get_header_from_dict(token)
 
     def get_token_from_msi(self) -> dict:
         try:
@@ -323,24 +222,23 @@ class _AadHelper:
 
         return credentials.token
 
-    async def get_token_from_msi_async(self) -> dict:
+    def _get_azure_cli_auth_token(self) -> dict:
+        """
+        Try to get the az cli authenticated token
+        :return: refresh token
+        """
         try:
-            credentials = await sync_to_async(MSIAuthentication)(**self.msi_params)
-        except Exception as e:
-            raise self._build_msi_exception(e)
+            profile = self._load_azure_cli_profile()
+            token_data = profile.get_raw_token()[0][2]
 
-        return credentials.token
+            return token_data
+        except ModuleNotFoundError:
+            try:
+                token_path = self._get_env_azure_token_path()
+                with open(token_path) as f:
+                    data = json.load(f)
 
-
-def _get_header_from_dict(token: dict):
-    if TokenResponseFields.TOKEN_TYPE in token:
-        return _get_header(token[TokenResponseFields.TOKEN_TYPE], token[TokenResponseFields.ACCESS_TOKEN])
-    elif OAuth2ResponseParameters.TOKEN_TYPE in token:
-        # Assume OAuth2 format (e.g. MSI Token)
-        return _get_header(token[OAuth2ResponseParameters.TOKEN_TYPE], token[OAuth2ResponseParameters.ACCESS_TOKEN])
-    else:
-        raise KustoClientError("Unable to determine the token type. Neither 'tokenType' nor 'token_type' property is present.")
-
-
-def _get_header(token_type, access_token):
-    return "{0} {1}".format(token_type, access_token)
+                # TODO: not sure I should take the first
+                return data[0]
+            except Exception:
+                pass

@@ -43,14 +43,15 @@ Download a zip of the code via GitHub or PyPi. Then follow the same instructions
     * `pip install azure-kusto-data[pandas]`
     * `pip install azure-kusto-ingest[pandas]`
     
-* Async - Support for async functionality. Allows you to use:
-    * `response = await kustoClient.execute_async(...)`
-    * `response = await kustoClient.execute_query_async(...)`
-    * `response = await kustoClient.execute_mgmt_async(...)`  
+* Asyncio - Support for async functionality. Allows you to use:
+    * `from azure.kusto.data.aio.request import KustoClient`
+    * `client = KustoClient(kcsb)`
+    * `response = await client.execute(...)`
+    * `response = await client.execute_query(...)`
+    * `response = await client.execute_mgmt(...)`  
       
         Since these are optional dependencies, install with async:
-        * `pip install azure-kusto-data[async]`
-        * `pip install azure-kusto-ingest[async]`
+        * `pip install azure-kusto-data[aio]`
 
 ## Minimum Requirements
 * Python 3.5 and above

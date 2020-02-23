@@ -52,8 +52,8 @@ class KustoAuthenticationError(KustoClientError):
         return "KustoAuthenticationError('{}', '{}', '{}')".format(self.authentication_method, repr(self.exception), self.kwargs)
 
 
-class KustoAsyncSyntaxError(SyntaxError):
-    """Raised when trying to use async syntax without installing the needed modules"""
+class KustoAioSyntaxError(SyntaxError):
+    """Raised when trying to use aio syntax without installing the needed modules"""
 
     def __init__(self):
-        super().__init__("Async modules not installed, run 'pip install azure-kusto-data[async]' to leverage async capabilities")
+        super().__init__("Aio modules not installed, run 'pip install azure-kusto-data[aio]' to leverage aio capabilities")
