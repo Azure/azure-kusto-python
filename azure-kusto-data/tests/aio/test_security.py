@@ -1,7 +1,6 @@
 """Tests for security module."""
 import pytest
 from azure.kusto.data._decorators import aio_documented_by
-from azure.kusto.data.aio.security import _AadHelper
 from azure.kusto.data.exceptions import KustoAuthenticationError
 from azure.kusto.data.request import KustoConnectionStringBuilder
 from azure.kusto.data.security import AuthenticationMethod
@@ -11,6 +10,7 @@ from ..test_security import test_msi_auth as test_msi_auth_sync, test_unauthoriz
 
 aio_installed = False
 try:
+    from azure.kusto.data.aio.security import _AadHelper
     import asgiref
 
     aio_installed = True

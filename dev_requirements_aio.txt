@@ -1,0 +1,2 @@
+aioresponses==0.6.2
+pytest-asyncio==0.10.0

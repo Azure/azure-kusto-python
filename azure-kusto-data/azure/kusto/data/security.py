@@ -114,9 +114,9 @@ class _AadHelperBase:
 
     def _set_from_stored_token(self, stored_token):
         if (
-                TokenResponseFields.REFRESH_TOKEN in stored_token
-                and TokenResponseFields._CLIENT_ID in stored_token
-                and TokenResponseFields._AUTHORITY in stored_token
+            TokenResponseFields.REFRESH_TOKEN in stored_token
+            and TokenResponseFields._CLIENT_ID in stored_token
+            and TokenResponseFields._AUTHORITY in stored_token
         ):
             self.client_id = stored_token[TokenResponseFields._CLIENT_ID]
             self.username = stored_token[TokenResponseFields.USER_ID]
