@@ -1,11 +1,8 @@
 """Kusto Data Models"""
-
 import json
 from decimal import Decimal
 from enum import Enum
-from typing import Union, Iterator
-
-from requests import Response
+from typing import Iterator
 
 from . import _converters
 from .exceptions import KustoServiceError
@@ -17,18 +14,6 @@ try:
     from .helpers import to_pandas_datetime, to_pandas_timedelta
 except ImportError as e:
     HAS_PANDAS = False
-
-aio_installed = True
-try:
-    from aiohttp import ClientResponse, ClientSession
-except ImportError:
-    aio_installed = False
-
-
-def _get_dynamic_response_type():
-    if aio_installed:
-        return Union[ClientResponse, Response]
-    return Response
 
 
 class WellKnownDataSet(Enum):

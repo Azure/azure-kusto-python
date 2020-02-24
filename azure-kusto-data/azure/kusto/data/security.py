@@ -134,9 +134,6 @@ class _AadHelperBase:
     def _is_expired(expiration_date):
         return expiration_date <= datetime.now() + timedelta(minutes=1)
 
-    def _build_msi_exception(self, e: Exception) -> KustoClientError:
-        return KustoClientError("Failed to obtain MSI context for [" + str(self.msi_params) + "]\n" + str(e))
-
     @staticmethod
     def _load_azure_cli_profile():
         from azure.cli.core._profile import Profile
@@ -218,7 +215,7 @@ class _AadHelper(_AadHelperBase):
         try:
             credentials = MSIAuthentication(**self.msi_params)
         except Exception as e:
-            raise self._build_msi_exception(e)
+            raise KustoClientError.msi_token_exception(self.msi_params, e)
 
         return credentials.token
 

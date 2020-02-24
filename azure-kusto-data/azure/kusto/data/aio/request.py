@@ -5,8 +5,8 @@ from typing import Union
 
 from .security import _AadHelper
 from .._decorators import documented_by, aio_documented_by
-from ..exceptions import KustoAioSyntaxError
-from ..request import KustoClient as KustoClientSync, _KustoClientBase, KustoConnectionStringBuilder, ClientRequestProperties
+from ..exceptions import KustoAioSyntaxError, KustoServiceError
+from ..request import KustoClient as KustoClientSync, _KustoClientBase, KustoConnectionStringBuilder, ClientRequestProperties, ExecuteRequestParams
 from ..response import KustoResponseDataSet
 
 try:
@@ -54,7 +54,7 @@ class KustoClient(_KustoClientBase):
         response_json = raw_response.response_json
 
         if response.status != 200:
-            raise self._build_kusto_service_error(kwargs.get("data"), response, response_json)
+            raise KustoServiceError([response_json], response)
 
         return response_json
 
@@ -62,7 +62,7 @@ class KustoClient(_KustoClientBase):
     async def _execute(
         self, endpoint: str, database: str, query: str, payload: io.IOBase, timeout: timedelta, properties: ClientRequestProperties = None
     ) -> KustoResponseDataSet:
-        request_params = self._build_execute_request_params(database, payload, properties, query, timeout)
+        request_params = ExecuteRequestParams(database, payload, properties, query, timeout, self._request_headers)
         json_payload = request_params.json_payload
         request_headers = request_params.request_headers
         timeout = request_params.timeout

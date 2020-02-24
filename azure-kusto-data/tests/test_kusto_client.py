@@ -18,7 +18,7 @@ except:
     pass
 
 
-class KustoClientTestsTests(unittest.TestCase, KustoClientTestsMixin):
+class KustoClientTests(unittest.TestCase, KustoClientTestsMixin):
     """Tests class for KustoClient API"""
 
     @patch("requests.Session.post", side_effect=mocked_requests_post)

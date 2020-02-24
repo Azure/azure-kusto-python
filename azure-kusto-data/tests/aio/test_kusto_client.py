@@ -9,7 +9,7 @@ from azure.kusto.data.request import ClientRequestProperties
 
 from .case import TestCase
 from ..kusto_client_common import KustoClientTestsMixin, mocked_requests_post
-from ..test_kusto_client import KustoClientTestsTests as KustoClientTestsSync
+from ..test_kusto_client import KustoClientTests as KustoClientTestsSync
 
 PANDAS = False
 try:
@@ -32,7 +32,7 @@ except:
 
 @pytest.mark.skipif(not aio_installed, reason="requires aio")
 @aio_documented_by(KustoClientTestsSync)
-class KustoClientTestsTests(TestCase, KustoClientTestsMixin):
+class KustoClientTests(TestCase, KustoClientTestsMixin):
     @staticmethod
     def _mock_callback(url, **kwargs):
         body = json.dumps(mocked_requests_post(str(url), **kwargs).json())

@@ -6,14 +6,14 @@ from adal.constants import TokenResponseFields, OAuth2DeviceCodeResponseParamete
 from msrestazure.azure_active_directory import MSIAuthentication
 
 from .._decorators import aio_documented_by
-from ..exceptions import KustoClientError
+from ..exceptions import KustoClientError, KustoAioSyntaxError
 from ..security import _AadHelperBase, _AadHelper as _AadHelperSync, AuthenticationMethod
 
 try:
     from asgiref.sync import sync_to_async
     from aiofile import AIOFile
 except ImportError:
-    pass
+    raise KustoAioSyntaxError()
 
 
 class _AadHelper(_AadHelperBase):
@@ -104,6 +104,6 @@ class _AadHelper(_AadHelperBase):
         try:
             credentials = await sync_to_async(MSIAuthentication)(**self.msi_params)
         except Exception as e:
-            raise self._build_msi_exception(e)
+            raise KustoClientError.msi_token_exception(self.msi_params, e)
 
         return credentials.token

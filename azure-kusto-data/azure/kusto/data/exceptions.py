@@ -1,4 +1,5 @@
 """All kusto exceptions that can be thrown from this client."""
+from typing import Any, List
 
 
 class KustoError(Exception):
@@ -32,6 +33,19 @@ class KustoServiceError(KustoError):
 
 class KustoClientError(KustoError):
     """Raised when a Kusto client is unable to send or complete a request."""
+
+    @classmethod
+    def msi_token_exception(cls, msi_params, e):
+        return cls("Failed to obtain MSI context for [" + str(msi_params) + "]\n" + str(e))
+
+
+class KustoRequestException(KustoError):
+    """Raised when a Kusto request fails"""
+
+    def __init__(self, response, response_json):
+        super().__init__()
+        self.response = response
+        self.response_json = response_json
 
 
 class KustoAuthenticationError(KustoClientError):

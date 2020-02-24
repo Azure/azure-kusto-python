@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 
 from azure.kusto.data.response import WellKnownDataSet
 from dateutil.tz import UTC
+from requests import HTTPError
 
 PANDAS = False
 try:
@@ -25,10 +26,35 @@ def mocked_requests_post(*args, **kwargs):
             self.text = str(json_data)
             self.status_code = status_code
             self.headers = None
+            self.reason = ""
 
         def json(self):
             """Get json data from response."""
             return self.json_data
+
+        def raise_for_status(self):
+            """Raises stored :class:`HTTPError`, if one occurred."""
+            http_error_msg = ""
+            if isinstance(self.reason, bytes):
+                # We attempt to decode utf-8 first because some servers
+                # choose to localize their reason strings. If the string
+                # isn't utf-8, we fall back to iso-8859-1 for all other
+                # encodings. (See PR #3538)
+                try:
+                    reason = self.reason.decode("utf-8")
+                except UnicodeDecodeError:
+                    reason = self.reason.decode("iso-8859-1")
+            else:
+                reason = self.reason
+
+            if 400 <= self.status_code < 500:
+                http_error_msg = u"%s Client Error: %s for url: %s" % (self.status_code, reason, self.url)
+
+            elif 500 <= self.status_code < 600:
+                http_error_msg = u"%s Server Error: %s for url: %s" % (self.status_code, reason, self.url)
+
+            if http_error_msg:
+                raise HTTPError(http_error_msg, response=self)
 
     if args[0] == "https://somecluster.kusto.windows.net/v2/rest/query":
         if "truncationmaxrecords" in kwargs["json"]["csl"]:
