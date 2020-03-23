@@ -3,7 +3,8 @@
 import warnings
 from enum import Enum, IntEnum
 
-from .exceptions import KustoDuplicateMappingError, KustoDuplicateMappingReferenceError, KustoMappingAndMappingReferenceError
+from .exceptions import KustoDuplicateMappingError, KustoDuplicateMappingReferenceError, \
+    KustoMappingAndMappingReferenceError
 
 
 class DataFormat(Enum):
@@ -50,7 +51,8 @@ class ValidationImplications(IntEnum):
 class ValidationPolicy:
     """Validation policy to ingest command."""
 
-    def __init__(self, validationOptions=ValidationOptions.DoNotValidate, validationImplications=ValidationImplications.BestEffort):
+    def __init__(self, validationOptions=ValidationOptions.DoNotValidate,
+                 validationImplications=ValidationImplications.BestEffort):
         self.ValidationOptions = validationOptions
         self.ValidationImplications = validationImplications
 
@@ -69,15 +71,112 @@ class ReportMethod(IntEnum):
     Queue = 0
 
 
-class ColumnMapping:
-    """Abstract class to column mapping."""
+class MappingConsts(Enum):
+    """Mapping properties keys."""
+    # Json Mapping consts
+    PATH = "Path",
+    TRANSFORMATION_METHOD = "Transform"
+    # csv Mapping consts
+    ORDINAL = "Ordinal"
+    CONST_VALUE = "ConstValue"
+    # Avro Mapping consts
+    FIELD_NAME = "Field"
+    COLUMNS = "Columns"
+    # General Mapping consts
+    STORAGE_DATA_TYPE = "StorageDataType"
 
+
+class TransformationMethod(Enum):
+    # Transformations to configure over json column mapping
+    NONE = "None"
+    PROPERTY_BAG_ARRAY_TO_DICTIONARY = "PropertyBagArrayToDictionary",
+    SOURCE_LOCATION = "SourceLocation"
+    SOURCE_LINE_NUMBER = "SourceLineNumber"
+    GET_PATH_ELEMENT = "GetPathElement"
+    UNKNOWN_ERROR = "UnknownMethod"
+    DATE_TIME_FROM_UNIX_SECONDS = "DateTimeFromUnixSeconds"
+    DATE_TIME_FROM_UNIX_MILLISECONDS = "DateTimeFromUnixMilliseconds"
+    DATE_TIME_FROM_UNIX_MICROSECONDS = "DateTimeFromUnixMicroseconds"
+    DATE_TIME_FROM_UNIX_NANOSECONDS = "DateTimeFromUnixNanoseconds"
+
+
+class ColumnMapping:
+    """ Common class to all the column mapping kinds."""
+
+    def __init__(self, columnName, cslDataType, properties={}):
+        self.columnName = columnName
+        self.columnType = cslDataType
+        self.properties = properties
+
+    def setPath(self, path):
+        self.properties[MappingConsts.PATH.value] = path
+
+    def getPath(self):
+        return self.properties[MappingConsts.PATH.value]
+
+    def setTransform(self, transform=TransformationMethod.NONE):
+        self.properties[MappingConsts.TRANSFORMATION_METHOD.value] = transform.value
+
+    def getTransform(self):
+        return self.properties[MappingConsts.TRANSFORMATION_METHOD.value]
+
+    def setOrdinal(self, ordinal):
+        self.properties[MappingConsts.ORDINAL.value] = str(ordinal)
+
+    def getOrdinal(self):
+        return int(self.properties[MappingConsts.ORDINAL.value])
+
+    def setConstantValue(self, constValue):
+        self.properties[MappingConsts.CONST_VALUE.value] = constValue
+
+    def getConstantValue(self):
+        return self.properties[MappingConsts.CONST_VALUE.value]
+
+    def setField(self, field):
+        self.properties[MappingConsts.FIELD_NAME.value] = field
+
+    def setField(self):
+        return self.properties[MappingConsts.FIELD_NAME.value]
+
+    def setColumns(self, columns):
+        self.properties = [MappingConsts.COLUMNS.value] = columns
+
+    def getColumns(self):
+        return self.properties[MappingConsts.COLUMNS.value]
+
+    def setStorageDataType(self, dataType):
+        self.properties[MappingConsts.STORAGE_DATA_TYPE.value] = dataType
+
+    def getStorageDataType(self):
+        return self.properties[MappingConsts.STORAGE_DATA_TYPE.value]
+
+    def isValid(self, ingestionMappingType):
+        if not isinstance(self.columnName, str) or self.columnName == "":
+            return False
+        if ingestionMappingType == IngestionMappingType.CSV:
+            return True
+        elif ingestionMappingType == IngestionMappingType.JSON or IngestionMappingType == IngestionMappingType.PARQUET \
+                or ingestionMappingType == ingestionMappingType.ORC:
+            transform = self.getTransform()
+            path = self.getPath()
+            return (isinstance(path, str) and path != "") or transform == TransformationMethod.SOURCE_LINE_NUMBER.value\
+                or transform == TransformationMethod.SOURCE_LOCATION.value
+        elif ingestionMappingType == IngestionMappingType.AVRO:
+            avroCols = self.getColumns()
+            return isinstance(avroCols, str) and avroCols != ""
+        else:
+            return False
+
+
+class ColumnMappingBase:
+    """Deprecated abstract base mapping class"""
     pass
 
 
-class CsvColumnMapping(ColumnMapping):
+class CsvColumnMapping(ColumnMappingBase):
     """Class to represent a csv column mapping."""
 
+    @DeprecationWarning
     def __init__(self, columnName, cslDataType, ordinal):
         self.Name = columnName
         self.DataType = cslDataType
@@ -87,9 +186,10 @@ class CsvColumnMapping(ColumnMapping):
         return "target: {0.Name} ,source: {0.Ordinal}, datatype: {0.DataType}".format(self)
 
 
-class JsonColumnMapping(ColumnMapping):
+class JsonColumnMapping(ColumnMappingBase):
     """ Class to represent a json column mapping """
 
+    @DeprecationWarning
     def __init__(self, columnName, jsonPath, cslDataType=None):
         self.column = columnName
         self.path = jsonPath
@@ -103,24 +203,24 @@ class IngestionProperties:
     """Class to represent ingestion properties."""
 
     def __init__(
-        self,
-        database,
-        table,
-        dataFormat=DataFormat.CSV,
-        mapping=None,
-        ingestionMapping=None,
-        mappingReference=None,
-        ingestionMappingType=None,
-        ingestionMappingReference=None,
-        additionalTags=None,
-        ingestIfNotExists=None,
-        ingestByTags=None,
-        dropByTags=None,
-        flushImmediately=False,
-        reportLevel=ReportLevel.DoNotReport,
-        reportMethod=ReportMethod.Queue,
-        validationPolicy=None,
-        additionalProperties=None,
+            self,
+            database,
+            table,
+            dataFormat=DataFormat.CSV,
+            mapping=None,
+            ingestionMapping=None,
+            mappingReference=None,
+            ingestionMappingType=None,
+            ingestionMappingReference=None,
+            additionalTags=None,
+            ingestIfNotExists=None,
+            ingestByTags=None,
+            dropByTags=None,
+            flushImmediately=False,
+            reportLevel=ReportLevel.DoNotReport,
+            reportMethod=ReportMethod.Queue,
+            validationPolicy=None,
+            additionalProperties=None,
     ):
         # mapping_reference will be deprecated in the next major version
         if mappingReference is not None:

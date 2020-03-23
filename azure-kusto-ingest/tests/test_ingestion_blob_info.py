@@ -2,14 +2,14 @@ import unittest
 import re
 import json
 from uuid import UUID
+
 from azure.kusto.ingest._ingestion_blob_info import _IngestionBlobInfo
 from azure.kusto.ingest.exceptions import KustoDuplicateMappingError, KustoDuplicateMappingReferenceError, KustoMappingAndMappingReferenceError
 from azure.kusto.ingest import (
     BlobDescriptor,
     IngestionProperties,
     DataFormat,
-    CsvColumnMapping,
-    JsonColumnMapping,
+    ColumnMapping,
     ReportLevel,
     ReportMethod,
     ValidationPolicy,
@@ -19,18 +19,20 @@ from azure.kusto.ingest import (
 
 TIMESTAMP_REGEX = "[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}.[0-9]{6}"
 
-
+@deprecated
 class IngestionBlobInfoTest(unittest.TestCase):
     """Tests serialization of ingestion blob info. This serialization will be queued to the DM."""
 
     def test_blob_info_csv_mapping(self):
         """Tests serialization of csv ingestion blob info."""
         validation_policy = ValidationPolicy(ValidationOptions.ValidateCsvInputConstantColumns, ValidationImplications.BestEffort)
+        columnMapping = ColumnMapping("ColumnName", "cslDataType")
+        columnMapping.setOrdinal(1)
         properties = IngestionProperties(
             database="database",
             table="table",
             dataFormat=DataFormat.CSV,
-            ingestionMapping=[CsvColumnMapping("ColumnName", "cslDataType", 1)],
+            ingestionMapping=[columnMapping],
             additionalTags=["tag"],
             ingestIfNotExists=["ingestIfNotExistTags"],
             ingestByTags=["ingestByTags"],

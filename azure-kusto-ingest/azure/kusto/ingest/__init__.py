@@ -15,5 +15,8 @@ from .ingestion_properties import (
     JsonColumnMapping,
     IngestionProperties,
     IngestionMappingType,
+    ColumnMapping,
+    TransformationMethod,
+    MappingConsts
 )
 from .streaming_ingest_client import KustoStreamingIngestClient
