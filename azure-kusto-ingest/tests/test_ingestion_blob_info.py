@@ -19,6 +19,7 @@ from azure.kusto.ingest import (
 
 TIMESTAMP_REGEX = "[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}.[0-9]{6}"
 
+
 class IngestionBlobInfoTest(unittest.TestCase):
     """Tests serialization of ingestion blob info. This serialization will be queued to the DM."""
 
