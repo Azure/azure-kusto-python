@@ -20,7 +20,6 @@ from azure.kusto.ingest import (
     FileDescriptor,
     KustoMissingMappingReferenceError,
     ColumnMapping,
-    MappingConsts,
     IngestionMappingType
 )
 
@@ -82,18 +81,13 @@ class Helpers:
         return mappings
 
 
-cluster = "ohadprod.westeurope"  # "toshetah"
-db_name = "ohtst"  # "PythonTest"
-table_name = "Deft" # streamingingestion policy should be configured for this table for the tests to work
+cluster = "Dadubovs1.westus"  # "toshetah"
+db_name = "TestingDatabase"  # "PythonTest"
+table_name = "Deft"
 
-client_id = "d5e0a24c-3a09-40ce-a1d6-dc5ab58dae66"
-client_secret = "L+0hoM34kqC22XRniWOgkETwVvawiir2odEjYqZeyXA="
 
-# read more at https://docs.microsoft.com/en-us/onedrive/find-your-office-365-tenant-id
-authority_id = "72f988bf-86f1-41af-91ab-2d7cd011db47"
-
-engine_kcsb = KustoConnectionStringBuilder.with_aad_application_key_authentication("https://{}.kusto.windows.net".format(cluster), client_id, client_secret, authority_id)
-dm_kcsb = KustoConnectionStringBuilder.with_aad_application_key_authentication("https://ingest-{}.kusto.windows.net".format(cluster), client_id, client_secret, authority_id)
+engine_kcsb = KustoConnectionStringBuilder.with_aad_device_authentication("https://{}.kusto.windows.net".format(cluster))
+dm_kcsb = KustoConnectionStringBuilder.with_aad_device_authentication("https://ingest-{}.kusto.windows.net".format(cluster))
 client = KustoClient(engine_kcsb)
 ingest_client = KustoIngestClient(dm_kcsb)
 ingest_status_q = KustoIngestStatusQueues(ingest_client)
