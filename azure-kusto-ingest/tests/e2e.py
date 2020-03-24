@@ -20,11 +20,11 @@ from azure.kusto.ingest import (
     FileDescriptor,
     KustoMissingMappingReferenceError,
     ColumnMapping,
-    MappingConsts, IngestionMappingType)
+    MappingConsts,
+    IngestionMappingType
+)
 
 # TODO: change this file to use pytest as runner
-
-
 class Helpers:
     """A class to define mappings to deft table."""
 
@@ -35,50 +35,50 @@ class Helpers:
     def create_deft_table_csv_mappings():
         """A method to define csv mappings to deft table."""
         mappings = list()
-        mappings.append(ColumnMapping(columnName="rownumber", cslDataType="int", properties={MappingConsts.ORDINAL.value:"0"}))
-        mappings.append(ColumnMapping(columnName="rowguid", cslDataType="string", properties={MappingConsts.ORDINAL.value:"1"}))
-        mappings.append(ColumnMapping(columnName="xdouble", cslDataType="real", properties={MappingConsts.ORDINAL.value:"2"}))
-        mappings.append(ColumnMapping(columnName="xfloat", cslDataType="real", properties={MappingConsts.ORDINAL.value:"3"}))
-        mappings.append(ColumnMapping(columnName="xbool", cslDataType="bool", properties={MappingConsts.ORDINAL.value:"4"}))
-        mappings.append(ColumnMapping(columnName="xint16", cslDataType="int", properties={MappingConsts.ORDINAL.value:"5"}))
-        mappings.append(ColumnMapping(columnName="xint32", cslDataType="int", properties={MappingConsts.ORDINAL.value:"6"}))
-        mappings.append(ColumnMapping(columnName="xint64", cslDataType="long", properties={MappingConsts.ORDINAL.value:"7"}))
-        mappings.append(ColumnMapping(columnName="xuint8", cslDataType="long", properties={MappingConsts.ORDINAL.value:"8"}))
-        mappings.append(ColumnMapping(columnName="xuint16", cslDataType="long", properties={MappingConsts.ORDINAL.value:"9"}))
-        mappings.append(ColumnMapping(columnName="xuint32", cslDataType="long", properties={MappingConsts.ORDINAL.value:"10"}))
-        mappings.append(ColumnMapping(columnName="xuint64", cslDataType="long", properties={MappingConsts.ORDINAL.value:"11"}))
-        mappings.append(ColumnMapping(columnName="xdate", cslDataType="datetime", properties={MappingConsts.ORDINAL.value:"12"}))
-        mappings.append(ColumnMapping(columnName="xsmalltext", cslDataType="string", properties={MappingConsts.ORDINAL.value:"13"}))
-        mappings.append(ColumnMapping(columnName="xtext", cslDataType="string", properties={MappingConsts.ORDINAL.value:"14"}))
-        mappings.append(ColumnMapping(columnName="xnumberAsText", cslDataType="string", properties={MappingConsts.ORDINAL.value:"15"}))
-        mappings.append(ColumnMapping(columnName="xtime", cslDataType="timespan", properties={MappingConsts.ORDINAL.value:"16"}))
-        mappings.append(ColumnMapping(columnName="xtextWithNulls", cslDataType="string", properties={MappingConsts.ORDINAL.value:"17"}))
-        mappings.append(ColumnMapping(columnName="xdynamicWithNulls", cslDataType="dynamic", properties={MappingConsts.ORDINAL.value:"18"}))
+        mappings.append(ColumnMapping(columnName="rownumber", columnType="int", ordinal=0))
+        mappings.append(ColumnMapping(columnName="rowguid", columnType="string", ordinal=1))
+        mappings.append(ColumnMapping(columnName="xdouble", columnType="real", ordinal=2))
+        mappings.append(ColumnMapping(columnName="xfloat", columnType="real", ordinal=3))
+        mappings.append(ColumnMapping(columnName="xbool", columnType="bool", ordinal=4))
+        mappings.append(ColumnMapping(columnName="xint16", columnType="int", ordinal=5))
+        mappings.append(ColumnMapping(columnName="xint32", columnType="int", ordinal=6))
+        mappings.append(ColumnMapping(columnName="xint64", columnType="long", ordinal=7))
+        mappings.append(ColumnMapping(columnName="xuint8", columnType="long", ordinal=8))
+        mappings.append(ColumnMapping(columnName="xuint16", columnType="long", ordinal=9))
+        mappings.append(ColumnMapping(columnName="xuint32", columnType="long", ordinal=10))
+        mappings.append(ColumnMapping(columnName="xuint64", columnType="long", ordinal=11))
+        mappings.append(ColumnMapping(columnName="xdate", columnType="datetime", ordinal=12))
+        mappings.append(ColumnMapping(columnName="xsmalltext", columnType="string", ordinal=13))
+        mappings.append(ColumnMapping(columnName="xtext", columnType="string", ordinal=14))
+        mappings.append(ColumnMapping(columnName="xnumberAsText", columnType="string", ordinal=15))
+        mappings.append(ColumnMapping(columnName="xtime", columnType="timespan", ordinal=16))
+        mappings.append(ColumnMapping(columnName="xtextWithNulls", columnType="string", ordinal=17))
+        mappings.append(ColumnMapping(columnName="xdynamicWithNulls", columnType="dynamic", ordinal=18))
         return mappings
 
     @staticmethod
     def create_deft_table_json_mappings():
         """A method to define json mappings to deft table."""
         mappings = list()
-        mappings.append(ColumnMapping(columnName="rownumber", properties={MappingConsts.PATH.value:"$.rownumber"}, cslDataType="int"))
-        mappings.append(ColumnMapping(columnName="rowguid", properties={MappingConsts.PATH.value:"$.rowguid"}, cslDataType="string"))
-        mappings.append(ColumnMapping(columnName="xdouble", properties={MappingConsts.PATH.value:"$.xdouble"}, cslDataType="real"))
-        mappings.append(ColumnMapping(columnName="xfloat", properties={MappingConsts.PATH.value:"$.xfloat"}, cslDataType="real"))
-        mappings.append(ColumnMapping(columnName="xbool", properties={MappingConsts.PATH.value:"$.xbool"}, cslDataType="bool"))
-        mappings.append(ColumnMapping(columnName="xint16", properties={MappingConsts.PATH.value:"$.xint16"}, cslDataType="int"))
-        mappings.append(ColumnMapping(columnName="xint32", properties={MappingConsts.PATH.value:"$.xint32"}, cslDataType="int"))
-        mappings.append(ColumnMapping(columnName="xint64", properties={MappingConsts.PATH.value:"$.xint64"}, cslDataType="long"))
-        mappings.append(ColumnMapping(columnName="xuint8", properties={MappingConsts.PATH.value:"$.xuint8"}, cslDataType="long"))
-        mappings.append(ColumnMapping(columnName="xuint16", properties={MappingConsts.PATH.value:"$.xuint16"}, cslDataType="long"))
-        mappings.append(ColumnMapping(columnName="xuint32", properties={MappingConsts.PATH.value:"$.xuint32"}, cslDataType="long"))
-        mappings.append(ColumnMapping(columnName="xuint64", properties={MappingConsts.PATH.value:"$.xuint64"}, cslDataType="long"))
-        mappings.append(ColumnMapping(columnName="xdate", properties={MappingConsts.PATH.value:"$.xdate"}, cslDataType="datetime"))
-        mappings.append(ColumnMapping(columnName="xsmalltext", properties={MappingConsts.PATH.value:"$.xsmalltext"}, cslDataType="string"))
-        mappings.append(ColumnMapping(columnName="xtext", properties={MappingConsts.PATH.value:"$.xtext"}, cslDataType="string"))
-        mappings.append(ColumnMapping(columnName="xnumberAsText", properties={MappingConsts.PATH.value:"$.xnumberAsText"}, cslDataType="string"))
-        mappings.append(ColumnMapping(columnName="xtime", properties={MappingConsts.PATH.value:"$.xtime"}, cslDataType="timespan"))
-        mappings.append(ColumnMapping(columnName="xtextWithNulls", properties={MappingConsts.PATH.value:"$.xtextWithNulls"}, cslDataType="string"))
-        mappings.append(ColumnMapping(columnName="xdynamicWithNulls", properties={MappingConsts.PATH.value:"$.xdynamicWithNulls"}, cslDataType="dynamic"))
+        mappings.append(ColumnMapping(columnName="rownumber", path="$.rownumber", columnType="int"))
+        mappings.append(ColumnMapping(columnName="rowguid", path="$.rowguid", columnType="string"))
+        mappings.append(ColumnMapping(columnName="xdouble", path="$.xdouble", columnType="real"))
+        mappings.append(ColumnMapping(columnName="xfloat", path="$.xfloat", columnType="real"))
+        mappings.append(ColumnMapping(columnName="xbool", path="$.xbool", columnType="bool"))
+        mappings.append(ColumnMapping(columnName="xint16", path="$.xint16", columnType="int"))
+        mappings.append(ColumnMapping(columnName="xint32", path="$.xint32", columnType="int"))
+        mappings.append(ColumnMapping(columnName="xint64", path="$.xint64", columnType="long"))
+        mappings.append(ColumnMapping(columnName="xuint8", path="$.xuint8", columnType="long"))
+        mappings.append(ColumnMapping(columnName="xuint16", path="$.xuint16", columnType="long"))
+        mappings.append(ColumnMapping(columnName="xuint32", path="$.xuint32", columnType="long"))
+        mappings.append(ColumnMapping(columnName="xuint64", path="$.xuint64", columnType="long"))
+        mappings.append(ColumnMapping(columnName="xdate", path="$.xdate", columnType="datetime"))
+        mappings.append(ColumnMapping(columnName="xsmalltext", path="$.xsmalltext", columnType="string"))
+        mappings.append(ColumnMapping(columnName="xtext", path="$.xtext", columnType="string"))
+        mappings.append(ColumnMapping(columnName="xnumberAsText", path="$.xnumberAsText", columnType="string"))
+        mappings.append(ColumnMapping(columnName="xtime", path="$.xtime", columnType="timespan"))
+        mappings.append(ColumnMapping(columnName="xtextWithNulls", path="$.xtextWithNulls", columnType="string"))
+        mappings.append(ColumnMapping(columnName="xdynamicWithNulls", path="$.xdynamicWithNulls", columnType="dynamic"))
         return mappings
 
 
@@ -140,154 +140,154 @@ def test_csv_ingest_non_existing_table():
 json_file_path = os.path.join(os.getcwd(), "azure-kusto-ingest", "tests", "input", "dataset.json")
 zipped_json_file_path = os.path.join(os.getcwd(), "azure-kusto-ingest", "tests", "input", "dataset.jsonz.gz")
 
-#
-# @pytest.mark.run(order=2)
-# def test_json_ingest_existing_table():
-#     json_ingestion_props = IngestionProperties(
-#         db_name, table_name, dataFormat=DataFormat.JSON, mapping=Helpers.create_deft_table_json_mappings(), reportLevel=ReportLevel.FailuresAndSuccesses
-#     )
-#
-#     for f in [json_file_path, zipped_json_file_path]:
-#         ingest_client.ingest_from_file(f, json_ingestion_props)
-#
-#     successes = 0
-#     timeout = 60
-#
-#     while successes != 2 and timeout > 0:
-#         while ingest_status_q.success.is_empty() and timeout > 0:
-#             time.sleep(1)
-#             timeout -= 1
-#
-#         success_message = ingest_status_q.success.pop()
-#
-#         assert success_message[0].Database == db_name
-#         assert success_message[0].Table == table_name
-#
-#         successes += 1
-#
-#     assert successes == 2
-#     # TODO: status queues only mark ingestion was successful, but takes time for data to become available
-#     time.sleep(20)
-#     response = client.execute(db_name, "{} | count".format(table_name))
-#     for row in response.primary_results[0]:
-#         assert int(row["Count"]) == 24, "{0} | count = {1}".format(table_name, str(row["Count"]))
-#
-#
-# @pytest.mark.run(order=3)
-# def test_ingest_complicated_props():
-#     # Test ingest with complicated ingestion properties
-#     validation_policy = ValidationPolicy(
-#         validationOptions=ValidationOptions.ValidateCsvInputConstantColumns, validationImplications=ValidationImplications.Fail
-#     )
-#     json_ingestion_props = IngestionProperties(
-#         db_name,
-#         table_name,
-#         dataFormat=DataFormat.JSON,
-#         mapping=Helpers.create_deft_table_json_mappings(),
-#         additionalTags=["a", "b"],
-#         ingestIfNotExists=["aaaa", "bbbb"],
-#         ingestByTags=["ingestByTag"],
-#         dropByTags=["drop", "drop-by"],
-#         flushImmediately=False,
-#         reportLevel=ReportLevel.FailuresAndSuccesses,
-#         reportMethod=ReportMethod.Queue,
-#         validationPolicy=validation_policy,
-#     )
-#
-#     file_paths = [json_file_path, zipped_json_file_path]
-#     fds = [FileDescriptor(fp, 0, uuid.uuid4()) for fp in file_paths]
-#     source_ids = ["{}".format(fd.source_id) for fd in fds]
-#
-#     for fd in fds:
-#         ingest_client.ingest_from_file(fd, json_ingestion_props)
-#
-#     successes = 0
-#     timeout = 60
-#     while successes != 2 and timeout > 0:
-#         while ingest_status_q.success.is_empty() and timeout > 0:
-#             time.sleep(1)
-#             timeout -= 1
-#
-#         success_message = ingest_status_q.success.pop()
-#         if success_message[0].IngestionSourceId in source_ids:
-#             assert success_message[0].Database == db_name
-#             assert success_message[0].Table == table_name
-#
-#             successes += 1
-#
-#     assert successes == 2
-#     # TODO: status queues only mark ingestion was successful, but takes time for data to become available
-#     time.sleep(20)
-#     response = client.execute(db_name, "{} | count".format(table_name))
-#     for row in response.primary_results[0]:
-#         assert int(row["Count"]) == 28, "{0} | count = {1}".format(table_name, str(row["Count"]))
-#
-#
-# @pytest.mark.run(order=4)
-# def test_json_ingestion_ingest_by_tag():
-#     json_ingestion_props = IngestionProperties(
-#         db_name,
-#         table_name,
-#         dataFormat=DataFormat.JSON,
-#         mapping=Helpers.create_deft_table_json_mappings(),
-#         ingestIfNotExists=["ingestByTag"],
-#         reportLevel=ReportLevel.FailuresAndSuccesses,
-#         dropByTags=["drop", "drop-by"],
-#     )
-#     for f in [json_file_path, zipped_json_file_path]:
-#         ingest_client.ingest_from_file(f, json_ingestion_props)
-#
-#     successes = 0
-#     timeout = 60
-#     while successes != 2 and timeout > 0:
-#         while ingest_status_q.success.is_empty() and timeout > 0:
-#             time.sleep(1)
-#             timeout -= 1
-#
-#         success_message = ingest_status_q.success.pop()
-#
-#         assert success_message[0].Database == db_name
-#         assert success_message[0].Table == table_name
-#
-#         successes += 1
-#
-#     assert successes == 2
-#     # TODO: status queues only mark ingestion was successful, but takes time for data to become available
-#     time.sleep(20)
-#     response = client.execute(db_name, "{} | count".format(table_name))
-#     for row in response.primary_results[0]:
-#         assert int(row["Count"]) == 28, "{0} | count = {1}".format(table_name, str(row["Count"]))
-#
-#
-# @pytest.mark.run(order=5)
-# def test_tsv_ingestion_csv_mapping():
-#     tsv_ingestion_props = IngestionProperties(
-#         db_name, table_name, dataFormat=DataFormat.TSV, mapping=Helpers.create_deft_table_csv_mappings(), reportLevel=ReportLevel.FailuresAndSuccesses
-#     )
-#     tsv_file_path = os.path.join(os.getcwd(), "azure-kusto-ingest", "tests", "input", "dataset.tsv")
-#
-#     ingest_client.ingest_from_file(tsv_file_path, tsv_ingestion_props)
-#
-#     successes = 0
-#     timeout = 60
-#     while successes != 1 and timeout > 0:
-#         while ingest_status_q.success.is_empty() and timeout > 0:
-#             time.sleep(1)
-#             timeout -= 1
-#
-#         success_message = ingest_status_q.success.pop()
-#
-#         assert success_message[0].Table == table_name
-#         assert success_message[0].Database == db_name
-#
-#         successes += 1
-#
-#     assert successes == 1
-#     # TODO: status queues only mark ingestion was successful, but takes time for data to become available
-#     time.sleep(20)
-#     response = client.execute(db_name, "{} | count".format(table_name))
-#     for row in response.primary_results[0]:
-#         assert int(row["Count"]) == 38, "{0} | count = {1}".format(table_name, str(row["Count"]))
+
+@pytest.mark.run(order=2)
+def test_json_ingest_existing_table():
+    json_ingestion_props = IngestionProperties(
+        db_name, table_name, dataFormat=DataFormat.JSON, mapping=Helpers.create_deft_table_json_mappings(), reportLevel=ReportLevel.FailuresAndSuccesses
+    )
+
+    for f in [json_file_path, zipped_json_file_path]:
+        ingest_client.ingest_from_file(f, json_ingestion_props)
+
+    successes = 0
+    timeout = 60
+
+    while successes != 2 and timeout > 0:
+        while ingest_status_q.success.is_empty() and timeout > 0:
+            time.sleep(1)
+            timeout -= 1
+
+        success_message = ingest_status_q.success.pop()
+
+        assert success_message[0].Database == db_name
+        assert success_message[0].Table == table_name
+
+        successes += 1
+
+    assert successes == 2
+    # TODO: status queues only mark ingestion was successful, but takes time for data to become available
+    time.sleep(20)
+    response = client.execute(db_name, "{} | count".format(table_name))
+    for row in response.primary_results[0]:
+        assert int(row["Count"]) == 24, "{0} | count = {1}".format(table_name, str(row["Count"]))
+
+
+@pytest.mark.run(order=3)
+def test_ingest_complicated_props():
+    # Test ingest with complicated ingestion properties
+    validation_policy = ValidationPolicy(
+        validationOptions=ValidationOptions.ValidateCsvInputConstantColumns, validationImplications=ValidationImplications.Fail
+    )
+    json_ingestion_props = IngestionProperties(
+        db_name,
+        table_name,
+        dataFormat=DataFormat.JSON,
+        mapping=Helpers.create_deft_table_json_mappings(),
+        additionalTags=["a", "b"],
+        ingestIfNotExists=["aaaa", "bbbb"],
+        ingestByTags=["ingestByTag"],
+        dropByTags=["drop", "drop-by"],
+        flushImmediately=False,
+        reportLevel=ReportLevel.FailuresAndSuccesses,
+        reportMethod=ReportMethod.Queue,
+        validationPolicy=validation_policy,
+    )
+
+    file_paths = [json_file_path, zipped_json_file_path]
+    fds = [FileDescriptor(fp, 0, uuid.uuid4()) for fp in file_paths]
+    source_ids = ["{}".format(fd.source_id) for fd in fds]
+
+    for fd in fds:
+        ingest_client.ingest_from_file(fd, json_ingestion_props)
+
+    successes = 0
+    timeout = 60
+    while successes != 2 and timeout > 0:
+        while ingest_status_q.success.is_empty() and timeout > 0:
+            time.sleep(1)
+            timeout -= 1
+
+        success_message = ingest_status_q.success.pop()
+        if success_message[0].IngestionSourceId in source_ids:
+            assert success_message[0].Database == db_name
+            assert success_message[0].Table == table_name
+
+            successes += 1
+
+    assert successes == 2
+    # TODO: status queues only mark ingestion was successful, but takes time for data to become available
+    time.sleep(20)
+    response = client.execute(db_name, "{} | count".format(table_name))
+    for row in response.primary_results[0]:
+        assert int(row["Count"]) == 28, "{0} | count = {1}".format(table_name, str(row["Count"]))
+
+
+@pytest.mark.run(order=4)
+def test_json_ingestion_ingest_by_tag():
+    json_ingestion_props = IngestionProperties(
+        db_name,
+        table_name,
+        dataFormat=DataFormat.JSON,
+        mapping=Helpers.create_deft_table_json_mappings(),
+        ingestIfNotExists=["ingestByTag"],
+        reportLevel=ReportLevel.FailuresAndSuccesses,
+        dropByTags=["drop", "drop-by"],
+    )
+    for f in [json_file_path, zipped_json_file_path]:
+        ingest_client.ingest_from_file(f, json_ingestion_props)
+
+    successes = 0
+    timeout = 60
+    while successes != 2 and timeout > 0:
+        while ingest_status_q.success.is_empty() and timeout > 0:
+            time.sleep(1)
+            timeout -= 1
+
+        success_message = ingest_status_q.success.pop()
+
+        assert success_message[0].Database == db_name
+        assert success_message[0].Table == table_name
+
+        successes += 1
+
+    assert successes == 2
+    # TODO: status queues only mark ingestion was successful, but takes time for data to become available
+    time.sleep(20)
+    response = client.execute(db_name, "{} | count".format(table_name))
+    for row in response.primary_results[0]:
+        assert int(row["Count"]) == 28, "{0} | count = {1}".format(table_name, str(row["Count"]))
+
+
+@pytest.mark.run(order=5)
+def test_tsv_ingestion_csv_mapping():
+    tsv_ingestion_props = IngestionProperties(
+        db_name, table_name, dataFormat=DataFormat.TSV, mapping=Helpers.create_deft_table_csv_mappings(), reportLevel=ReportLevel.FailuresAndSuccesses
+    )
+    tsv_file_path = os.path.join(os.getcwd(), "azure-kusto-ingest", "tests", "input", "dataset.tsv")
+
+    ingest_client.ingest_from_file(tsv_file_path, tsv_ingestion_props)
+
+    successes = 0
+    timeout = 60
+    while successes != 1 and timeout > 0:
+        while ingest_status_q.success.is_empty() and timeout > 0:
+            time.sleep(1)
+            timeout -= 1
+
+        success_message = ingest_status_q.success.pop()
+
+        assert success_message[0].Table == table_name
+        assert success_message[0].Database == db_name
+
+        successes += 1
+
+    assert successes == 1
+    # TODO: status queues only mark ingestion was successful, but takes time for data to become available
+    time.sleep(20)
+    response = client.execute(db_name, "{} | count".format(table_name))
+    for row in response.primary_results[0]:
+        assert int(row["Count"]) == 38, "{0} | count = {1}".format(table_name, str(row["Count"]))
 
 
 @pytest.mark.run(order=6)

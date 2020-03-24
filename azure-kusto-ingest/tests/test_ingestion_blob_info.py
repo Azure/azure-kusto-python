@@ -19,7 +19,6 @@ from azure.kusto.ingest import (
 
 TIMESTAMP_REGEX = "[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}.[0-9]{6}"
 
-@deprecated
 class IngestionBlobInfoTest(unittest.TestCase):
     """Tests serialization of ingestion blob info. This serialization will be queued to the DM."""
 
@@ -74,7 +73,7 @@ class IngestionBlobInfoTest(unittest.TestCase):
             database="database",
             table="table",
             dataFormat=DataFormat.JSON,
-            ingestionMapping=[JsonColumnMapping("ColumnName", "jsonpath", "datatype")],
+            ingestionMapping=[ColumnMapping("ColumnName", "datatype", path="jsonpath")],
             additionalTags=["tag"],
             ingestIfNotExists=["ingestIfNotExistTags"],
             ingestByTags=["ingestByTags"],
