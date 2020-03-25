@@ -26,8 +26,8 @@ class IngestionBlobInfoTest(unittest.TestCase):
     def test_blob_info_csv_mapping(self):
         """Tests serialization of csv ingestion blob info."""
         validation_policy = ValidationPolicy(ValidationOptions.ValidateCsvInputConstantColumns, ValidationImplications.BestEffort)
-        columnMapping = ColumnMapping("ColumnName", "cslDataType")
-        columnMapping.setOrdinal(1)
+        columnMapping = ColumnMapping("ColumnName", "cslDataType", ordinal=1)
+
         properties = IngestionProperties(
             database="database",
             table="table",
