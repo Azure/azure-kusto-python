@@ -73,7 +73,7 @@ class MappingConsts(Enum):
     """Mapping properties keys."""
 
     # Json Mapping consts
-    PATH = ("Path",)
+    PATH = "Path"
     TRANSFORMATION_METHOD = "Transform"
     # csv Mapping consts
     ORDINAL = "Ordinal"
