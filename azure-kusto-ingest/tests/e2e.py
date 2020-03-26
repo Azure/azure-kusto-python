@@ -20,7 +20,7 @@ from azure.kusto.ingest import (
     FileDescriptor,
     KustoMissingMappingReferenceError,
     ColumnMapping,
-    IngestionMappingType
+    IngestionMappingType,
 )
 
 # TODO: change this file to use pytest as runner
@@ -100,8 +100,12 @@ client.execute(db_name, ".drop table {} ifexists".format(table_name))
 @pytest.mark.run(order=1)
 def test_csv_ingest_non_existing_table():
     csv_ingest_props = IngestionProperties(
-        db_name, table_name, dataFormat=DataFormat.CSV, ingestionMapping=Helpers.create_deft_table_csv_mappings(),
-        ingestionMappingType=IngestionMappingType.CSV, reportLevel=ReportLevel.FailuresAndSuccesses
+        db_name,
+        table_name,
+        dataFormat=DataFormat.CSV,
+        ingestionMapping=Helpers.create_deft_table_csv_mappings(),
+        ingestionMappingType=IngestionMappingType.CSV,
+        reportLevel=ReportLevel.FailuresAndSuccesses,
     )
     csv_file_path = os.path.join(os.getcwd(), "azure-kusto-ingest", "tests", "input", "dataset.csv")
     zipped_csv_file_path = os.path.join(os.getcwd(), "azure-kusto-ingest", "tests", "input", "dataset.csv.gz")
@@ -296,8 +300,7 @@ def test_streaming_ingest_from_opened_file():
     file_path = os.path.join(current_dir, *missing_path_parts)
     stream = open(file_path, "r")
     ingestion_properties = IngestionProperties(database=db_name, table=table_name, dataFormat=DataFormat.CSV)
-    client.execute(db_name,
-                   '.alter table {} policy streamingingestion enable'.format(table_name))
+    client.execute(db_name, ".alter table {} policy streamingingestion enable".format(table_name))
     streaming_ingest_client.ingest_from_stream(stream, ingestion_properties=ingestion_properties)
 
 
