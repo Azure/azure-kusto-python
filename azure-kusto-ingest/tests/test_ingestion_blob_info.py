@@ -53,7 +53,7 @@ class IngestionBlobInfoTest(unittest.TestCase):
             database="database",
             table="table",
             dataFormat=DataFormat.CSV,
-            mappingReference="csvMappingReference",
+            ingestionMappingReference="csvMappingReference",
             additionalTags=["tag"],
             ingestIfNotExists=["ingestIfNotExistTags"],
             ingestByTags=["ingestByTags"],
@@ -113,7 +113,6 @@ class IngestionBlobInfoTest(unittest.TestCase):
         """Tests invalid ingestion properties."""
         with self.assertRaises(KustoDuplicateMappingError):
             IngestionProperties(database="database", table="table", mapping="mapping", ingestionMapping="ingestionMapping")
-
         with self.assertRaises(KustoMappingAndMappingReferenceError):
             IngestionProperties(database="database", table="table", mapping="mapping", ingestionMappingReference="ingestionMappingReference")
 

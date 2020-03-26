@@ -23,6 +23,7 @@ from azure.kusto.ingest import (
     IngestionMappingType,
 )
 
+
 # TODO: change this file to use pytest as runner
 class Helpers:
     """A class to define mappings to deft table."""
