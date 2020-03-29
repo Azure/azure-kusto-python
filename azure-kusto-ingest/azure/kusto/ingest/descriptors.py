@@ -41,7 +41,7 @@ class FileDescriptor:
             if self.path.endswith(".gz") or self.path.endswith(".zip"):
                 # TODO: this can be improved by reading last 4 bytes
                 raw_size *= 11
-            this.size = raw_size
+            self.size = raw_size
 
     def open(self, should_compress):
         if should_compress:
