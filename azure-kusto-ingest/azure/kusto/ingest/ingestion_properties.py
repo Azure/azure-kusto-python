@@ -3,7 +3,8 @@
 import warnings
 from enum import Enum, IntEnum
 
-from .exceptions import KustoDuplicateMappingError, KustoDuplicateMappingReferenceError, KustoMappingAndMappingReferenceError
+from .exceptions import KustoDuplicateMappingError, KustoDuplicateMappingReferenceError, \
+    KustoMappingAndMappingReferenceError
 
 
 class DataFormat(Enum):
@@ -50,7 +51,8 @@ class ValidationImplications(IntEnum):
 class ValidationPolicy:
     """Validation policy to ingest command."""
 
-    def __init__(self, validationOptions=ValidationOptions.DoNotValidate, validationImplications=ValidationImplications.BestEffort):
+    def __init__(self, validationOptions=ValidationOptions.DoNotValidate,
+                 validationImplications=ValidationImplications.BestEffort):
         self.ValidationOptions = validationOptions
         self.ValidationImplications = validationImplications
 
@@ -69,26 +71,10 @@ class ReportMethod(IntEnum):
     Queue = 0
 
 
-class MappingConsts(Enum):
-    """Mapping properties keys."""
-
-    # Json Mapping consts
-    PATH = "Path"
-    TRANSFORMATION_METHOD = "Transform"
-    # csv Mapping consts
-    ORDINAL = "Ordinal"
-    CONST_VALUE = "ConstValue"
-    # Avro Mapping consts
-    FIELD_NAME = "Field"
-    COLUMNS = "Columns"
-    # General Mapping consts
-    STORAGE_DATA_TYPE = "StorageDataType"
-
-
 class TransformationMethod(Enum):
     # Transformations to configure over json column mapping
     NONE = "None"
-    PROPERTY_BAG_ARRAY_TO_DICTIONARY = ("PropertyBagArrayToDictionary",)
+    PROPERTY_BAG_ARRAY_TO_DICTIONARY = "PropertyBagArrayToDictionary",
     SOURCE_LOCATION = "SourceLocation"
     SOURCE_LINE_NUMBER = "SourceLineNumber"
     GET_PATH_ELEMENT = "GetPathElement"
@@ -101,11 +87,23 @@ class TransformationMethod(Enum):
 
 class ColumnMapping:
     """Common class to all the column mapping kinds."""
+    """Mapping properties keys."""
+    # Json Mapping consts
+    PATH = "Path",
+    TRANSFORMATION_METHOD = "Transform"
+    # csv Mapping consts
+    ORDINAL = "Ordinal"
+    CONST_VALUE = "ConstValue"
+    # Avro Mapping consts
+    FIELD_NAME = "Field"
+    COLUMNS = "Columns"
+    # General Mapping consts
+    STORAGE_DATA_TYPE = "StorageDataType"
 
     def __init__(
         self,
-        columnName,
-        columnType,
+        column_name,
+        column_type,
         path=None,
         transform=TransformationMethod.NONE,
         ordinal=None,
@@ -114,28 +112,27 @@ class ColumnMapping:
         columns=None,
         storage_data_type=None,
     ):
-        self.column = columnName
-        self.datatype = columnType
+        self.column = column_name
+        self.datatype = column_type
         self.properties = {}
         if path:
-            self.properties[MappingConsts.PATH.value] = path
+            self.properties[self.PATH] = path
         if transform != TransformationMethod.NONE:
-            self.properties[MappingConsts.TRANSFORMATION_METHOD.value] = transform.value
+            self.properties[self.TRANSFORMATION_METHOD] = transform.value
         if ordinal is not None:
-            self.properties[MappingConsts.ORDINAL.value] = str(ordinal)
+            self.properties[self.ORDINAL] = str(ordinal)
         if const_value:
-            self.properties[MappingConsts.CONST_VALUE.value] = const_value
+            self.properties[self.CONST_VALUE] = const_value
         if field:
-            self.properties[MappingConsts.FIELD_NAME.value] = field
+            self.properties[self.FIELD_NAME] = field
         if columns:
-            self.properties[MappingConsts.COLUMNS.value] = columns
+            self.properties[self.COLUMNS] = columns
         if storage_data_type:
-            self.properties[MappingConsts.STORAGE_DATA_TYPE.value] = storage_data_type
+            self.properties[self.STORAGE_DATA_TYPE] = storage_data_type
 
 
 class ColumnMappingBase:
     """Deprecated abstract base mapping class"""
-
     pass
 
 

@@ -17,6 +17,5 @@ from .ingestion_properties import (
     IngestionMappingType,
     ColumnMapping,
     TransformationMethod,
-    MappingConsts,
 )
 from .streaming_ingest_client import KustoStreamingIngestClient
