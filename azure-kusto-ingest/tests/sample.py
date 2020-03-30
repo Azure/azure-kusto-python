@@ -1,5 +1,7 @@
 """Samples on how to use Kusto Ingest client. Just Replace variables and run!"""
 
+import io
+
 from azure.kusto.data.request import KustoConnectionStringBuilder
 from azure.kusto.ingest import (
     KustoIngestClient,
