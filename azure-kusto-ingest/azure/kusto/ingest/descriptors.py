@@ -3,8 +3,10 @@
 import os
 import shutil
 import uuid
+import struct
+from zipfile import ZipFile
 from gzip import GzipFile
-from io import BytesIO
+from io import BytesIO, SEEK_END
 
 
 def assert_uuid4(maybe_uuid, error_message):
@@ -19,6 +21,10 @@ def assert_uuid4(maybe_uuid, error_message):
 
 class FileDescriptor:
     """FileDescriptor is used to describe a file that will be used as an ingestion source."""
+
+    # The compressed sized of a 4GB file that will not cause the gzip stream size (unsigned int) to rollover given a 1:40 compression factor
+    c_gzip_max_disk_size_for_detections = int(4 * 1024 * 1024 * 1024 / 40)
+    c_default_compression_factor = 11
 
     def __init__(self, path, size=0, source_id=None):
         """
@@ -36,11 +42,32 @@ class FileDescriptor:
         self.source_id = source_id
         self.stream_name = os.path.basename(self.path)
 
-        if self.path.endswith(".gz") or self.path.endswith(".zip"):
-            # TODO: this can be improved by reading last 4 bytes
-            self.size = int(os.path.getsize(self.path)) * 11
-        elif not self.size or self.size <= 0:
-            self.size = int(os.path.getsize(self.path))
+        if size == 0:
+            self._detect_size()
+
+    def _detect_size(self):
+        if self.path.endswith(".gz"):
+            # This logic follow after the C# implementation
+            # See IngstionHelpers.cs for an explanation as to what stands behind it
+            with open(self.path, "rb") as f:
+                disk_size = f.seek(-4, SEEK_END)
+                uncompressed_size = struct.unpack("I", f.read(4))[0]
+                if (disk_size >= uncompressed_size) or (disk_size >= self.c_gzip_max_disk_size_for_detections):
+                    uncompressed_size = disk_size * self.c_default_compression_factor
+
+                self.size = uncompressed_size
+
+        elif self.path.endswith(".zip"):
+            uncompressed_size = 0
+            with ZipFile(self.path) as zip_archive:
+                for f in zip_archive.infolist():
+                    if not f.is_dir():
+                        uncompressed_size += f.file_size
+
+                self.size = uncompressed_size
+
+        else:
+            self.size = os.path.getsize(self.path)
 
     def open(self, should_compress):
         if should_compress:
