@@ -36,11 +36,12 @@ class FileDescriptor:
         self.source_id = source_id
         self.stream_name = os.path.basename(self.path)
 
-        if self.path.endswith(".gz") or self.path.endswith(".zip"):
-            # TODO: this can be improved by reading last 4 bytes
-            self.size = int(os.path.getsize(self.path)) * 11
-        elif not self.size or self.size <= 0:
-            self.size = int(os.path.getsize(self.path))
+        if size == 0:
+            raw_size = int(os.path.getsize(self.path))
+            if self.path.endswith(".gz") or self.path.endswith(".zip"):
+                # TODO: this can be improved by reading last 4 bytes
+                raw_size *= 11
+            self.size = raw_size
 
     def open(self, should_compress):
         if should_compress:
