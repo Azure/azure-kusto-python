@@ -72,7 +72,9 @@ class ReportMethod(IntEnum):
 
 
 class TransformationMethod(Enum):
-    # Transformations to configure over json column mapping
+    """Transformations to configure over json column mapping
+    To read more about mapping transformations look here: https://docs.microsoft.com/en-us/azure/kusto/management/mappings#mapping-transformations"""
+
     NONE = "None"
     PROPERTY_BAG_ARRAY_TO_DICTIONARY = "PropertyBagArrayToDictionary",
     SOURCE_LOCATION = "SourceLocation"
@@ -86,8 +88,10 @@ class TransformationMethod(Enum):
 
 
 class ColumnMapping:
-    """Common class to all the column mapping kinds."""
-    """Mapping properties keys."""
+    """Use this class to create mappings for IngestionProperties.ingestionMappings and utilize mappings that were not
+    pre-created (it is recommended to create the mappings in advance and use ingestionMappingReference).
+    To read more about mappings look here: https://docs.microsoft.com/en-us/azure/kusto/management/mappings"""
+
     # Json Mapping consts
     PATH = "Path",
     TRANSFORMATION_METHOD = "Transform"
