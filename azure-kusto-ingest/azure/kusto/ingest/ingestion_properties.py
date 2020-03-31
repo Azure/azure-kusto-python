@@ -91,7 +91,7 @@ class ColumnMapping:
     To read more about mappings look here: https://docs.microsoft.com/en-us/azure/kusto/management/mappings"""
 
     # Json Mapping consts
-    PATH = ("Path",)
+    PATH = "Path"
     TRANSFORMATION_METHOD = "Transform"
     # csv Mapping consts
     ORDINAL = "Ordinal"
