@@ -1,0 +1,40 @@
+# This workflow will install the dependencies, run tests and lint every push
+
+name: Python package
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.5, 3.6, 3.7]
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r dev_requirements.txt
+        pip install codecov coverage
+        pip install ./azure-kusto-data ./azure-kusto-ingest
+        pip freeze
+    - name: Lint with black
+      if: matrix.python-version == 3.6 # deploy is on 3.6 so black is needed only here
+      run: |
+        pip install black
+        black . --line-length 160 --check
+    - name: Test with pytest
+      run: |
+        pip install pytest
+        pytest
