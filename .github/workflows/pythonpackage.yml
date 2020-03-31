@@ -30,7 +30,7 @@ jobs:
         pip install ./azure-kusto-data ./azure-kusto-ingest
         pip freeze
     - name: Lint with black
-      if: matrix.python-version == 3.5 # deploy is on 3.5 so black is needed only here
+      if: matrix.python-version == 3.6 # deploy is on 3.6 so black is needed only here
       run: |
         pip install black
         pip black . --line-length 160 --check
