@@ -3,8 +3,7 @@
 import warnings
 from enum import Enum, IntEnum
 
-from .exceptions import KustoDuplicateMappingError, KustoDuplicateMappingReferenceError, \
-    KustoMappingAndMappingReferenceError
+from .exceptions import KustoDuplicateMappingError, KustoDuplicateMappingReferenceError, KustoMappingAndMappingReferenceError
 
 
 class DataFormat(Enum):
@@ -51,8 +50,7 @@ class ValidationImplications(IntEnum):
 class ValidationPolicy:
     """Validation policy to ingest command."""
 
-    def __init__(self, validationOptions=ValidationOptions.DoNotValidate,
-                 validationImplications=ValidationImplications.BestEffort):
+    def __init__(self, validationOptions=ValidationOptions.DoNotValidate, validationImplications=ValidationImplications.BestEffort):
         self.ValidationOptions = validationOptions
         self.ValidationImplications = validationImplications
 
@@ -76,7 +74,7 @@ class TransformationMethod(Enum):
     To read more about mapping transformations look here: https://docs.microsoft.com/en-us/azure/kusto/management/mappings#mapping-transformations"""
 
     NONE = "None"
-    PROPERTY_BAG_ARRAY_TO_DICTIONARY = "PropertyBagArrayToDictionary",
+    PROPERTY_BAG_ARRAY_TO_DICTIONARY = ("PropertyBagArrayToDictionary",)
     SOURCE_LOCATION = "SourceLocation"
     SOURCE_LINE_NUMBER = "SourceLineNumber"
     GET_PATH_ELEMENT = "GetPathElement"
@@ -93,7 +91,7 @@ class ColumnMapping:
     To read more about mappings look here: https://docs.microsoft.com/en-us/azure/kusto/management/mappings"""
 
     # Json Mapping consts
-    PATH = "Path",
+    PATH = ("Path",)
     TRANSFORMATION_METHOD = "Transform"
     # csv Mapping consts
     ORDINAL = "Ordinal"
@@ -137,6 +135,7 @@ class ColumnMapping:
 
 class ColumnMappingBase:
     """Deprecated abstract base mapping class"""
+
     pass
 
 
