@@ -37,7 +37,7 @@ class DescriptorsTest(unittest.TestCase):
         """Tests FileDescriptor with size and zipped file."""
         filePath = path.join(path.dirname(path.abspath(__file__)), "input", "dataset.csv.gz")
         assert filePath.endswith(".gz")
-        assert int(path.getsize(self.path)) >10
+        assert int(path.getsize(filePath)) >10
         descriptor = FileDescriptor(filePath, 10)
         with descriptor.open(False) as stream:
             assert descriptor.size > 10
