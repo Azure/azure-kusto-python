@@ -25,7 +25,7 @@ class DescriptorsTest(unittest.TestCase):
         filePath = path.join(path.dirname(path.abspath(__file__)), "input", "dataset.csv")
         descriptor = FileDescriptor(filePath, 0)
         with descriptor.open(True) as stream:
-            assert descriptor.size > 0
+            assert descriptor.size > 10
             assert descriptor.stream_name.endswith(".csv.gz")
             if sys.version_info[0] >= 3:
                 assert stream.readable()
@@ -36,11 +36,9 @@ class DescriptorsTest(unittest.TestCase):
     def test_zipped_file_with_size(self):
         """Tests FileDescriptor with size and zipped file."""
         filePath = path.join(path.dirname(path.abspath(__file__)), "input", "dataset.csv.gz")
-        assert filePath.endswith(".gz")
-        assert int(path.getsize(filePath)) >10
         descriptor = FileDescriptor(filePath, 10)
         with descriptor.open(False) as stream:
-            assert descriptor.size > 10
+            assert descriptor.size == 10
             assert descriptor.stream_name.endswith(".csv.gz")
             if sys.version_info[0] >= 3:
                 assert stream.readable()
