@@ -33,7 +33,7 @@ jobs:
       if: matrix.python-version == 3.6 # deploy is on 3.6 so black is needed only here
       run: |
         pip install black
-        pip black . --line-length 160 --check
+        black . --line-length 160 --check
     - name: Test with pytest
       run: |
         pip install pytest
