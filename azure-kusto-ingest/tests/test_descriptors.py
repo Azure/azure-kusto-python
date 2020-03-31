@@ -63,7 +63,7 @@ class DescriptorsTest(unittest.TestCase):
 
     def test_unzipped_file_dont_compress(self):
         """Tests FileDescriptor with size and unzipped file."""
-        filePath = path.dirname(path.abspath(__file__)), "input", "dataset.csv.gz")
+        filePath = path.join(path.dirname(path.abspath(__file__)), "input", "dataset.csv")
         descriptor = FileDescriptor(filePath, 10)
         with descriptor.open(False) as stream:
             assert descriptor.size == 10
