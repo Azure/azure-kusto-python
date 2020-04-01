@@ -7,15 +7,15 @@ from azure.kusto.ingest import FileDescriptor
 class DescriptorsTest(unittest.TestCase):
     """Test class for FileDescriptor and BlobDescriptor."""
 
-    _uncompressed_size = 1569
-    _mock_size = 10
+    uncompressed_size = 1569
+    mock_size = 10
 
     def test_unzipped_file_with_size(self):
         """Tests FileDescriptor with size and unzipped file."""
         filePath = path.join(path.dirname(path.abspath(__file__)), "input", "dataset.csv")
-        descriptor = FileDescriptor(filePath, self._mock_size)
+        descriptor = FileDescriptor(filePath, self.mock_size)
         with descriptor.open(True) as stream:
-            assert descriptor.size == self._mock_size
+            assert descriptor.size == self.mock_size
             assert descriptor.stream_name.endswith(".csv.gz")
             if sys.version_info[0] >= 3:
                 assert stream.readable()
@@ -28,7 +28,7 @@ class DescriptorsTest(unittest.TestCase):
         filePath = path.join(path.dirname(path.abspath(__file__)), "input", "dataset.csv")
         descriptor = FileDescriptor(filePath, 0)
         with descriptor.open(True) as stream:
-            assert descriptor.size == self._uncompressed_size
+            assert descriptor.size == self.uncompressed_size
             assert descriptor.stream_name.endswith(".csv.gz")
             if sys.version_info[0] >= 3:
                 assert stream.readable()
@@ -39,9 +39,9 @@ class DescriptorsTest(unittest.TestCase):
     def test_zipped_file_with_size(self):
         """Tests FileDescriptor with size and zipped file."""
         filePath = path.join(path.dirname(path.abspath(__file__)), "input", "dataset.csv.gz")
-        descriptor = FileDescriptor(filePath, self._mock_size)
+        descriptor = FileDescriptor(filePath, self.mock_size)
         with descriptor.open(False) as stream:
-            assert descriptor.size == self._mock_size
+            assert descriptor.size == self.mock_size
             assert descriptor.stream_name.endswith(".csv.gz")
             if sys.version_info[0] >= 3:
                 assert stream.readable()
@@ -54,7 +54,7 @@ class DescriptorsTest(unittest.TestCase):
         filePath = path.join(path.dirname(path.abspath(__file__)), "input", "dataset.csv.gz")
         descriptor = FileDescriptor(filePath, 0)
         with descriptor.open(False) as stream:
-            assert descriptor.size == self._uncompressed_size
+            assert descriptor.size == self.uncompressed_size
             assert descriptor.stream_name.endswith(".csv.gz")
             if sys.version_info[0] >= 3:
                 assert stream.readable()
@@ -68,7 +68,7 @@ class DescriptorsTest(unittest.TestCase):
         descriptor = FileDescriptor(filePath, 0)
         with descriptor.open(False) as stream:
             # the zip archive contains 2 copies of the source file
-            assert descriptor.size == self._uncompressed_size * 2
+            assert descriptor.size == self.uncompressed_size * 2
             assert descriptor.stream_name.endswith(".csv.zip")
             if sys.version_info[0] >= 3:
                 assert stream.readable()
@@ -79,9 +79,9 @@ class DescriptorsTest(unittest.TestCase):
     def test_unzipped_file_dont_compress(self):
         """Tests FileDescriptor with size and unzipped file."""
         filePath = path.join(path.dirname(path.abspath(__file__)), "input", "dataset.csv")
-        descriptor = FileDescriptor(filePath, self._mock_size)
+        descriptor = FileDescriptor(filePath, self.mock_size)
         with descriptor.open(False) as stream:
-            assert descriptor.size == self._mock_size
+            assert descriptor.size == self.mock_size
             assert descriptor.stream_name.endswith(".csv")
             if sys.version_info[0] >= 3:
                 assert stream.readable()
