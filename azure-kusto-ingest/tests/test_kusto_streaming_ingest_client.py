@@ -73,7 +73,7 @@ class KustoStreamingIngestClientTests(unittest.TestCase):
 
         ingest_client.ingest_from_file(file_path, ingestion_properties=ingestion_properties)
 
-        ingestion_properties = IngestionProperties(database="database", table="table", dataFormat=DataFormat.JSON, mappingReference="JsonMapping")
+        ingestion_properties = IngestionProperties(database="database", table="table", dataFormat=DataFormat.JSON, ingestionMappingReference="JsonMapping")
 
         path_parts = ["azure-kusto-ingest", "tests", "input", "dataset.json"]
         missing_path_parts = []

@@ -2,14 +2,14 @@ import unittest
 import re
 import json
 from uuid import UUID
+
 from azure.kusto.ingest._ingestion_blob_info import _IngestionBlobInfo
 from azure.kusto.ingest.exceptions import KustoDuplicateMappingError, KustoDuplicateMappingReferenceError, KustoMappingAndMappingReferenceError
 from azure.kusto.ingest import (
     BlobDescriptor,
     IngestionProperties,
     DataFormat,
-    CsvColumnMapping,
-    JsonColumnMapping,
+    ColumnMapping,
     ReportLevel,
     ReportMethod,
     ValidationPolicy,
@@ -26,11 +26,13 @@ class IngestionBlobInfoTest(unittest.TestCase):
     def test_blob_info_csv_mapping(self):
         """Tests serialization of csv ingestion blob info."""
         validation_policy = ValidationPolicy(ValidationOptions.ValidateCsvInputConstantColumns, ValidationImplications.BestEffort)
+        columnMapping = ColumnMapping("ColumnName", "cslDataType", ordinal=1)
+
         properties = IngestionProperties(
             database="database",
             table="table",
             dataFormat=DataFormat.CSV,
-            ingestionMapping=[CsvColumnMapping("ColumnName", "cslDataType", 1)],
+            ingestionMapping=[columnMapping],
             additionalTags=["tag"],
             ingestIfNotExists=["ingestIfNotExistTags"],
             ingestByTags=["ingestByTags"],
@@ -51,7 +53,7 @@ class IngestionBlobInfoTest(unittest.TestCase):
             database="database",
             table="table",
             dataFormat=DataFormat.CSV,
-            mappingReference="csvMappingReference",
+            ingestionMappingReference="csvMappingReference",
             additionalTags=["tag"],
             ingestIfNotExists=["ingestIfNotExistTags"],
             ingestByTags=["ingestByTags"],
@@ -72,7 +74,7 @@ class IngestionBlobInfoTest(unittest.TestCase):
             database="database",
             table="table",
             dataFormat=DataFormat.JSON,
-            ingestionMapping=[JsonColumnMapping("ColumnName", "jsonpath", "datatype")],
+            ingestionMapping=[ColumnMapping("ColumnName", "datatype", path="jsonpath")],
             additionalTags=["tag"],
             ingestIfNotExists=["ingestIfNotExistTags"],
             ingestByTags=["ingestByTags"],
@@ -111,7 +113,6 @@ class IngestionBlobInfoTest(unittest.TestCase):
         """Tests invalid ingestion properties."""
         with self.assertRaises(KustoDuplicateMappingError):
             IngestionProperties(database="database", table="table", mapping="mapping", ingestionMapping="ingestionMapping")
-
         with self.assertRaises(KustoMappingAndMappingReferenceError):
             IngestionProperties(database="database", table="table", mapping="mapping", ingestionMappingReference="ingestionMappingReference")
 

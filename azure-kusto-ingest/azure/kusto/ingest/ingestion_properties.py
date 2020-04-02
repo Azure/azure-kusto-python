@@ -69,15 +69,80 @@ class ReportMethod(IntEnum):
     Queue = 0
 
 
+class TransformationMethod(Enum):
+    """Transformations to configure over json column mapping
+    To read more about mapping transformations look here: https://docs.microsoft.com/en-us/azure/kusto/management/mappings#mapping-transformations"""
+
+    NONE = "None"
+    PROPERTY_BAG_ARRAY_TO_DICTIONARY = ("PropertyBagArrayToDictionary",)
+    SOURCE_LOCATION = "SourceLocation"
+    SOURCE_LINE_NUMBER = "SourceLineNumber"
+    GET_PATH_ELEMENT = "GetPathElement"
+    UNKNOWN_ERROR = "UnknownMethod"
+    DATE_TIME_FROM_UNIX_SECONDS = "DateTimeFromUnixSeconds"
+    DATE_TIME_FROM_UNIX_MILLISECONDS = "DateTimeFromUnixMilliseconds"
+    DATE_TIME_FROM_UNIX_MICROSECONDS = "DateTimeFromUnixMicroseconds"
+    DATE_TIME_FROM_UNIX_NANOSECONDS = "DateTimeFromUnixNanoseconds"
+
+
 class ColumnMapping:
-    """Abstract class to column mapping."""
+    """Use this class to create mappings for IngestionProperties.ingestionMappings and utilize mappings that were not
+    pre-created (it is recommended to create the mappings in advance and use ingestionMappingReference).
+    To read more about mappings look here: https://docs.microsoft.com/en-us/azure/kusto/management/mappings"""
+
+    # Json Mapping consts
+    PATH = "Path"
+    TRANSFORMATION_METHOD = "Transform"
+    # csv Mapping consts
+    ORDINAL = "Ordinal"
+    CONST_VALUE = "ConstValue"
+    # Avro Mapping consts
+    FIELD_NAME = "Field"
+    COLUMNS = "Columns"
+    # General Mapping consts
+    STORAGE_DATA_TYPE = "StorageDataType"
+
+    def __init__(
+        self,
+        column_name,
+        column_type,
+        path=None,
+        transform=TransformationMethod.NONE,
+        ordinal=None,
+        const_value=None,
+        field=None,
+        columns=None,
+        storage_data_type=None,
+    ):
+        self.column = column_name
+        self.datatype = column_type
+        self.properties = {}
+        if path:
+            self.properties[self.PATH] = path
+        if transform != TransformationMethod.NONE:
+            self.properties[self.TRANSFORMATION_METHOD] = transform.value
+        if ordinal is not None:
+            self.properties[self.ORDINAL] = str(ordinal)
+        if const_value:
+            self.properties[self.CONST_VALUE] = const_value
+        if field:
+            self.properties[self.FIELD_NAME] = field
+        if columns:
+            self.properties[self.COLUMNS] = columns
+        if storage_data_type:
+            self.properties[self.STORAGE_DATA_TYPE] = storage_data_type
+
+
+class ColumnMappingBase:
+    """Deprecated abstract base mapping class"""
 
     pass
 
 
-class CsvColumnMapping(ColumnMapping):
+class CsvColumnMapping(ColumnMappingBase):
     """Class to represent a csv column mapping."""
 
+    @DeprecationWarning
     def __init__(self, columnName, cslDataType, ordinal):
         self.Name = columnName
         self.DataType = cslDataType
@@ -87,9 +152,10 @@ class CsvColumnMapping(ColumnMapping):
         return "target: {0.Name} ,source: {0.Ordinal}, datatype: {0.DataType}".format(self)
 
 
-class JsonColumnMapping(ColumnMapping):
+class JsonColumnMapping(ColumnMappingBase):
     """ Class to represent a json column mapping """
 
+    @DeprecationWarning
     def __init__(self, columnName, jsonPath, cslDataType=None):
         self.column = columnName
         self.path = jsonPath
