@@ -73,8 +73,7 @@ class FileDescriptor:
         elif self.path.endswith(".zip"):
             with ZipFile(self.path) as zip_archive:
                 for f in zip_archive.infolist():
-                    if not f.is_dir():
-                        uncompressed_size += f.file_size
+                    uncompressed_size += f.file_size
 
         else:
             uncompressed_size = os.path.getsize(self.path)
