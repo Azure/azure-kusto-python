@@ -3,8 +3,10 @@
 import os
 import shutil
 import uuid
+import struct
+from zipfile import ZipFile
 from gzip import GzipFile
-from io import BytesIO
+from io import BytesIO, SEEK_END
 
 
 def assert_uuid4(maybe_uuid, error_message):
@@ -20,6 +22,12 @@ def assert_uuid4(maybe_uuid, error_message):
 class FileDescriptor:
     """FileDescriptor is used to describe a file that will be used as an ingestion source."""
 
+    # Gzip keeps the decompressed stream size as a UINT32 in the last 4 bytes of the stream, however this poses a limit to the expressed size which is 4GB
+    # The standard says that when the size is bigger then 4GB, the UINT rolls over.
+    # The below constant expresses the maximal size of a compressed stream that will not cause the UINT32 to rollover given a maximal compression ratio of 1:40
+    GZIP_MAX_DISK_SIZE_FOR_DETECTION = int(4 * 1024 * 1024 * 1024 / 40)
+    DEFAULT_COMPRESSION_RATIO = 11
+
     def __init__(self, path, size=0, source_id=None):
         """
         :param path: file path.
@@ -30,18 +38,47 @@ class FileDescriptor:
         :type source_id: str (of a uuid4) or uuid4.
         """
         self.path = path
-        self.size = size
+        self._size = size
+        self._detect_size_once = size < 1
 
         assert_uuid4(source_id, "source_id must be a valid uuid4")
         self.source_id = source_id
         self.stream_name = os.path.basename(self.path)
 
-        if size == 0:
-            raw_size = int(os.path.getsize(self.path))
-            if self.path.endswith(".gz") or self.path.endswith(".zip"):
-                # TODO: this can be improved by reading last 4 bytes
-                raw_size *= 11
-            self.size = raw_size
+    @property
+    def size(self):
+        if self._detect_size_once:
+            self._detect_size()
+            self._detect_size_once = False
+
+        return self._size
+
+    @size.setter
+    def size(self, size):
+        if size > 0:
+            self._size = size
+            self._detect_size_once = False
+
+    def _detect_size(self):
+        uncompressed_size = 0
+        if self.path.endswith(".gz"):
+            # This logic follow after the C# implementation
+            # See IngstionHelpers.cs for an explanation as to what stands behind it
+            with open(self.path, "rb") as f:
+                disk_size = f.seek(-4, SEEK_END)
+                uncompressed_size = struct.unpack("I", f.read(4))[0]
+                if (disk_size >= uncompressed_size) or (disk_size >= self.GZIP_MAX_DISK_SIZE_FOR_DETECTION):
+                    uncompressed_size = disk_size * self.DEFAULT_COMPRESSION_RATIO
+
+        elif self.path.endswith(".zip"):
+            with ZipFile(self.path) as zip_archive:
+                for f in zip_archive.infolist():
+                    uncompressed_size += f.file_size
+
+        else:
+            uncompressed_size = os.path.getsize(self.path)
+
+        self._size = uncompressed_size
 
     def open(self, should_compress):
         if should_compress:
