@@ -8,7 +8,7 @@ class DescriptorsTest(unittest.TestCase):
     """Test class for FileDescriptor and BlobDescriptor."""
 
     uncompressed_size = 1569
-    mock_size = 10
+    mock_size = 11
 
     def test_unzipped_file_with_size(self):
         """Tests FileDescriptor with size and unzipped file."""
