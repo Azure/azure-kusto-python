@@ -25,6 +25,7 @@ from azure.kusto.ingest import (
     KustoMissingMappingReferenceError,
 )
 
+
 class Helpers:
     """A class to define mappings to deft table."""
 
@@ -80,7 +81,7 @@ class Helpers:
         mappings.append(JsonColumnMapping(columnName="xtextWithNulls", jsonPath="$.xtextWithNulls", cslDataType="string"))
         mappings.append(JsonColumnMapping(columnName="xdynamicWithNulls", jsonPath="$.xdynamicWithNulls", cslDataType="dynamic"))
         return mappings
-    
+
     @staticmethod
     def get_test_table_json_mapping_reference():
         """A method to get json mappings reference to test table."""
@@ -106,10 +107,11 @@ class Helpers:
                     '    { "column" : "xdynamicWithNulls", "datatype" : "dynamic", "Properties":{"Path":"$.xdynamicWithNulls"}},'
                     ']'"""
 
+
 # Get environment variables
 engine_cs = os.environ.get("ENGINE_CONECTION_STRING")
 dm_cs = os.environ.get("DM_CONECTION_STRING")
-db_name = os.environ.get("TEST_DATABASE") # Existed db with streaming ingestion enabled
+db_name = os.environ.get("TEST_DATABASE")  # Existed db with streaming ingestion enabled
 app_id = os.environ.get("APP_ID")
 app_key = os.environ.get("APP_KEY")
 tenant_id = os.environ.get("TENANT_ID")
@@ -144,6 +146,7 @@ json_file_path = os.path.join(input_folder_path, "dataset.json")
 zipped_json_file_path = os.path.join(input_folder_path, "dataset.jsonz.gz")
 
 current_count = 0
+
 
 def assert_row_count(expected_row_count, timeout=300):
     global current_count
@@ -201,17 +204,19 @@ def test_csv_ingest_non_existing_table():
     client.execute(db_name, ".create table {} ingestion json mapping 'JsonMapping' {}".format(table_name, Helpers.get_test_table_json_mapping_reference()))
 
 
-
 def test_json_ingest_existing_table():
     json_ingestion_props = IngestionProperties(
-        db_name, table_name, dataFormat=DataFormat.JSON, ingestionMapping=Helpers.create_test_table_json_mappings(), reportLevel=ReportLevel.FailuresAndSuccesses
+        db_name,
+        table_name,
+        dataFormat=DataFormat.JSON,
+        ingestionMapping=Helpers.create_test_table_json_mappings(),
+        reportLevel=ReportLevel.FailuresAndSuccesses,
     )
-        
+
     for f in [json_file_path, zipped_json_file_path]:
         ingest_client.ingest_from_file(f, json_ingestion_props)
 
     assert_success_mesagges_count(2)
-
 
     assert_row_count(4)
 
@@ -266,7 +271,7 @@ def test_json_ingestion_ingest_by_tag():
 def test_tsv_ingestion_csv_mapping():
     tsv_ingestion_props = IngestionProperties(
         db_name, table_name, dataFormat=DataFormat.TSV, ingestionMapping=Helpers.create_test_table_csv_mappings(), reportLevel=ReportLevel.FailuresAndSuccesses
-        )
+    )
 
     ingest_client.ingest_from_file(tsv_file_path, tsv_ingestion_props)
 
@@ -279,13 +284,13 @@ def test_streaming_ingest_from_opened_file():
 
     stream = open(csv_file_path, "r")
     streaming_ingest_client.ingest_from_stream(stream, ingestion_properties=ingestion_properties)
-    
+
     assert_row_count(10, timeout=120)
 
 
 def test_streaming_ingest_form_csv_file():
     ingestion_properties = IngestionProperties(database=db_name, table=table_name, dataFormat=DataFormat.CSV)
-    
+
     for f in [csv_file_path, zipped_csv_file_path]:
         streaming_ingest_client.ingest_from_file(f, ingestion_properties=ingestion_properties)
 
@@ -299,7 +304,7 @@ def test_streaming_ingest_from_json_file():
 
     for f in [json_file_path, zipped_json_file_path]:
         streaming_ingest_client.ingest_from_file(f, ingestion_properties=ingestion_properties)
-    
+
     assert_row_count(4, timeout=120)
 
 
@@ -360,5 +365,5 @@ def test_streaming_ingest_from_dataframe():
     df = DataFrame(data=rows, columns=fields)
     ingestion_properties = IngestionProperties(database=db_name, table=table_name, dataFormat=DataFormat.CSV)
     ingest_client.ingest_from_dataframe(df, ingestion_properties)
-    
+
     assert_row_count(1, timeout=120)
