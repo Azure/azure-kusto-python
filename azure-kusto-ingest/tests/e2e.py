@@ -1,4 +1,4 @@
-"""E2E tests for ingest_client."""
+"""E2E tests for ingest_client. """
 import pytest
 import time
 import os
