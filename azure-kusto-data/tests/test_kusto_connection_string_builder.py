@@ -1,6 +1,7 @@
 """Tests for KustoConnectionStringBuilder."""
 
 import unittest
+from typing import Callable
 from uuid import uuid4
 
 from azure.kusto.data.request import KustoConnectionStringBuilder
@@ -235,7 +236,25 @@ class KustoConnectionStringBuilderTests(unittest.TestCase):
         assert "object_id" not in kcsb[3].msi_parameters
         assert kcsb[3].msi_parameters["msi_res_id"] == res_guid
 
+        exception_occurred = False
         try:
             fault = KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication("localhost", client_id=client_guid, object_id=object_guid)
         except ValueError as e:
-            pass
+            exception_occurred = True
+        finally:
+            assert exception_occurred
+
+    def test_add_token_provider(self):
+        caller_token = "caller token"
+        token_provider = lambda: caller_token
+        kscb = KustoConnectionStringBuilder.with_token_provider("localhost", token_provider)
+
+        assert kscb.token_provider() == caller_token
+
+        exception_occurred = False
+        try:
+            kscb = KustoConnectionStringBuilder.with_token_provider("localhost", caller_token)
+        except AssertionError as ex:
+            exception_occurred = True
+        finally:
+            assert exception_occurred
