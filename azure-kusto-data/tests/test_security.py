@@ -59,9 +59,10 @@ def test_msi_auth():
         assert str(e.exception).index("client_id") > -1
         assert str(e.exception).index(client_guid) > -1
 
+
 def test_token_provider_auth():
-    valid_token_provider = lambda : "caller token"
-    invalid_token_provider = lambda : 12345678
+    valid_token_provider = lambda: "caller token"
+    invalid_token_provider = lambda: 12345678
 
     valid_kcsb = KustoConnectionStringBuilder.with_token_provider("localhost", valid_token_provider)
     invalid_kcsb = KustoConnectionStringBuilder.with_token_provider("localhost", invalid_token_provider)
