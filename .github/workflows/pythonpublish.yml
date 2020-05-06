@@ -2,7 +2,7 @@ name: PyPi Release Pipeline
 
 on:
   release:
-    types: [published]
+    types: [stared]
 
 jobs:
   deploy:
