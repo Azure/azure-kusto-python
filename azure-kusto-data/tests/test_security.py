@@ -58,3 +58,23 @@ def test_msi_auth():
         assert "msi_res_id" not in e.kwargs
         assert str(e.exception).index("client_id") > -1
         assert str(e.exception).index(client_guid) > -1
+
+
+def test_token_provider_auth():
+    valid_token_provider = lambda: "caller token"
+    invalid_token_provider = lambda: 12345678
+
+    valid_kcsb = KustoConnectionStringBuilder.with_token_provider("localhost", valid_token_provider)
+    invalid_kcsb = KustoConnectionStringBuilder.with_token_provider("localhost", invalid_token_provider)
+
+    valid_helper = _AadHelper(valid_kcsb)
+    invalid_helper = _AadHelper(invalid_kcsb)
+
+    auth_header = valid_helper.acquire_authorization_header()
+    assert auth_header.index(valid_token_provider()) > -1
+
+    try:
+        invalid_helper.acquire_authorization_header()
+    except KustoAuthenticationError as e:
+        assert e.authentication_method == AuthenticationMethod.token_provider.value
+        assert str(e.exception).index(str(type(invalid_token_provider()))) > -1

@@ -5,7 +5,7 @@ import uuid
 from copy import copy
 from datetime import timedelta
 from enum import Enum, unique
-from typing import Union
+from typing import Union, Callable
 
 import requests
 from requests.adapters import HTTPAdapter
@@ -114,6 +114,7 @@ class KustoConnectionStringBuilder:
         """
         _assert_value_is_valid(connection_string)
         self._internal_dict = {}
+        self._token_provider = None
         if connection_string is not None and "=" not in connection_string.partition(";")[0]:
             connection_string = "Data Source=" + connection_string
 
@@ -324,6 +325,21 @@ class KustoConnectionStringBuilder:
 
         return kcsb
 
+    @classmethod
+    def with_token_provider(cls, connection_string: str, token_provider: Callable[[], str]) -> "KustoConnectionStringBuilder":
+        """
+        Create a KustoConnectionStringBuilder that uses a callback function to obtain a connection token
+        :param str connection_string: Kusto connection string should by of the format: https://<clusterName>.kusto.windows.net
+        :param token_provider: a parameterless function that returns a valid bearer token for the relevant kusto resource as a string
+        """
+
+        assert callable(token_provider)
+
+        kcsb = cls(connection_string)
+        kcsb._token_provider = token_provider
+
+        return kcsb
+
     @property
     def data_source(self) -> str:
         """The URI specifying the Kusto service endpoint.
@@ -411,6 +427,10 @@ class KustoConnectionStringBuilder:
     @property
     def az_cli(self):
         return self._internal_dict.get(self.ValidKeywords.az_cli)
+
+    @property
+    def token_provider(self):
+        return self._token_provider
 
     def __str__(self):
         dict_copy = self._internal_dict.copy()
