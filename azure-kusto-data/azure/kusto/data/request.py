@@ -5,7 +5,7 @@ import uuid
 from copy import copy
 from datetime import timedelta
 from enum import Enum, unique
-from typing import Union
+from typing import Union, Callable
 
 import requests
 from requests.adapters import HTTPAdapter
@@ -326,7 +326,7 @@ class KustoConnectionStringBuilder:
         return kcsb
 
     @classmethod
-    def with_token_provider(cls, connection_string: str, token_provider: callable) -> "KustoConnectionStringBuilder":
+    def with_token_provider(cls, connection_string: str, token_provider: Callable[[], str]) -> "KustoConnectionStringBuilder":
         """
         Create a KustoConnectionStringBuilder that uses a callback function to obtain a connection token
         :param str connection_string: Kusto connection string should by of the format: https://<clusterName>.kusto.windows.net

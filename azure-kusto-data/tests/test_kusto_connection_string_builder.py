@@ -1,7 +1,6 @@
 """Tests for KustoConnectionStringBuilder."""
 
 import unittest
-from typing import Callable
 from uuid import uuid4
 
 from azure.kusto.data.request import KustoConnectionStringBuilder
