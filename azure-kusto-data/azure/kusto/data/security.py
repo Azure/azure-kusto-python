@@ -71,6 +71,7 @@ CLOUD_LOGIN_URL = "https://login.microsoftonline.com/"
 class _AadHelper:
     authentication_method = None
     auth_context = None
+    msi_auth_context = None
     username = None
     kusto_uri = None
     authority_uri = None
@@ -220,11 +221,17 @@ class _AadHelper:
 
     def get_token_from_msi(self) -> dict:
         try:
-            credentials = MSIAuthentication(**self.msi_params)
+            if self.msi_auth_context is None:
+                # Create the MSI Authentication object, the first token is acquired implicitly
+                self.msi_auth_context = MSIAuthentication(**self.msi_params)
+            else:
+                # Acquire a fresh token
+                self.msi_auth_context.set_token()
+
         except Exception as e:
             raise KustoClientError("Failed to obtain MSI context for [" + str(self.msi_params) + "]\n" + str(e))
 
-        return credentials.token
+        return self.msi_auth_context.token
 
 
 def _get_header_from_dict(token: dict):
