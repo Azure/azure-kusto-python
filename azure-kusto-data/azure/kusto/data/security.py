@@ -62,6 +62,7 @@ class AuthenticationMethod(Enum):
     aad_token = "aad_token"
     aad_msi = "aad_msi"
     az_cli_profile = "az_cli_profile"
+    token_provider = "token_provider"
 
 
 CLOUD_LOGIN_URL = "https://login.microsoftonline.com/"
@@ -70,6 +71,7 @@ CLOUD_LOGIN_URL = "https://login.microsoftonline.com/"
 class _AadHelper:
     authentication_method = None
     auth_context = None
+    msi_auth_context = None
     username = None
     kusto_uri = None
     authority_uri = None
@@ -78,6 +80,7 @@ class _AadHelper:
     thumbprint = None
     certificate = None
     msi_params = None
+    token_provider = None
 
     def __init__(self, kcsb):
         self.kusto_uri = "{0.scheme}://{0.hostname}".format(urlparse(kcsb.data_source))
@@ -108,6 +111,9 @@ class _AadHelper:
         elif kcsb.az_cli:
             self.authentication_method = AuthenticationMethod.az_cli_profile
             return
+        elif kcsb.token_provider:
+            self.authentication_method = AuthenticationMethod.token_provider
+            self.token_provider = kcsb.token_provider
         else:
             self.authentication_method = AuthenticationMethod.aad_device_login
             self.client_id = "db662dc1-0cfe-4e1c-a843-19a68e65be58"
@@ -131,6 +137,8 @@ class _AadHelper:
                 kwargs = {"client_id": self.client_id, "thumbprint": self.thumbprint}
             elif self.authentication_method is AuthenticationMethod.aad_msi:
                 kwargs = self.msi_params
+            elif self.authentication_method is AuthenticationMethod.token_provider:
+                kwargs = {}
             else:
                 raise error
 
@@ -138,6 +146,8 @@ class _AadHelper:
 
             if self.authentication_method is AuthenticationMethod.aad_msi:
                 kwargs["authority"] = AuthenticationMethod.aad_msi.value
+            elif self.authentication_method is AuthenticationMethod.token_provider:
+                kwargs["authority"] = AuthenticationMethod.token_provider.value
             elif self.auth_context is not None:
                 kwargs["authority"] = self.auth_context.authority.url
 
@@ -147,6 +157,13 @@ class _AadHelper:
         # Token was provided by caller
         if self.authentication_method is AuthenticationMethod.aad_token:
             return _get_header("Bearer", self.token)
+
+        if self.authentication_method is AuthenticationMethod.token_provider:
+            caller_token = self.token_provider()
+            if not isinstance(caller_token, str):
+                raise KustoClientError("Token provider returned something that is not a string [" + str(type(caller_token)) + "]")
+
+            return _get_header("Bearer", caller_token)
 
         # Obtain token from MSI endpoint
         if self.authentication_method == AuthenticationMethod.aad_msi:
@@ -204,11 +221,17 @@ class _AadHelper:
 
     def get_token_from_msi(self) -> dict:
         try:
-            credentials = MSIAuthentication(**self.msi_params)
+            if self.msi_auth_context is None:
+                # Create the MSI Authentication object, the first token is acquired implicitly
+                self.msi_auth_context = MSIAuthentication(**self.msi_params)
+            else:
+                # Acquire a fresh token
+                self.msi_auth_context.set_token()
+
         except Exception as e:
             raise KustoClientError("Failed to obtain MSI context for [" + str(self.msi_params) + "]\n" + str(e))
 
-        return credentials.token
+        return self.msi_auth_context.token
 
 
 def _get_header_from_dict(token: dict):

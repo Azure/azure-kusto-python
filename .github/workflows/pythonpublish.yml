@@ -1,8 +1,11 @@
+# This workflows will upload a Python Package using Twine when a release is created
+# For more information see: https://help.github.com/en/actions/language-and-framework-guides/using-python-with-github-actions#publishing-to-package-registries
+
 name: Upload Python Package
 
 on:
   release:
-    types: [published]
+    types: [created]
 
 jobs:
   deploy:
@@ -18,9 +21,20 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-    - name: Build and publish
-      
-      uses: pypa/gh-action-pypi-publish@master
-      with:
-        user: microsoftkusto
-        password: ${{ secrets.pypi_password }}      
+        pip install setuptools wheel twine
+    - name: Publish azure-kusto-data
+      working-directory: ./azure-kusto-data
+      env:
+        TWINE_USERNAME: microsoftkusto
+        TWINE_PASSWORD: ${{ secrets.pypi_password }}
+      run: |
+        python setup.py sdist bdist_wheel
+        twine upload dist/*
+    - name: Publish azure-kusto-ingest
+      working-directory: ./azure-kusto-ingest
+      env:
+        TWINE_USERNAME: microsoftkusto
+        TWINE_PASSWORD: ${{ secrets.pypi_password }}
+      run: |
+        python setup.py sdist bdist_wheel
+        twine upload dist/*
