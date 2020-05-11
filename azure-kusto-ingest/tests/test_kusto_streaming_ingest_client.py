@@ -152,11 +152,3 @@ class KustoStreamingIngestClientTests(unittest.TestCase):
         str_sequence = u'{"Name":"Ben","Age":"56","Weight":"75"}'
         str_stream = io.StringIO(str_sequence)
         ingest_client.ingest_from_stream(str_stream, ingestion_properties=ingestion_properties)
-
-        byte_sequence = b"56,56,56" * 600000
-        bytes_stream = io.BytesIO(byte_sequence)
-
-        try:
-            ingest_client.ingest_from_stream(bytes_stream, ingestion_properties=ingestion_properties)
-        except KustoStreamMaxSizeExceededError:
-            pass
