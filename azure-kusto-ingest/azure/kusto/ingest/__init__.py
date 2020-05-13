@@ -1,5 +1,5 @@
-"""Kusto Ingest"""
-
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License
 from ._version import VERSION as __version__
 from .descriptors import BlobDescriptor, FileDescriptor, StreamDescriptor
 from .exceptions import KustoMissingMappingReferenceError

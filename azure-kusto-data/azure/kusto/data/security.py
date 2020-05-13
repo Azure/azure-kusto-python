@@ -1,9 +1,9 @@
-"""A module to acquire tokens from AAD."""
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License
 import os
 import webbrowser
 from datetime import timedelta, datetime
 from enum import Enum, unique
-from typing import Optional
 from urllib.parse import urlparse
 
 import dateutil.parser

@@ -1,5 +1,5 @@
-"""This module represents the object to write to azure queue that the DM is listening to."""
-
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License
 import json
 import uuid
 from datetime import datetime

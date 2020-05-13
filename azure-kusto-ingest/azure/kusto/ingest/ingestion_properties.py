@@ -1,5 +1,5 @@
-"""This file has all classes to define ingestion properties."""
-
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License
 import warnings
 from enum import Enum, IntEnum
 

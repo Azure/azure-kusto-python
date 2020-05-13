@@ -1,4 +1,5 @@
-"""Kusto Streaming Ingest Client"""
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License
 import os
 import tempfile
 import time

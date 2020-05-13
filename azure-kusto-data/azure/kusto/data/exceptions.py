@@ -1,4 +1,5 @@
-"""All kusto exceptions that can be thrown from this client."""
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License
 
 
 class KustoError(Exception):

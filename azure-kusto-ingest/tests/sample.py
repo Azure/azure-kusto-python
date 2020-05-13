@@ -1,5 +1,5 @@
-"""Samples on how to use Kusto Ingest client. Just Replace variables and run!"""
-
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License
 import io
 
 from azure.kusto.data.request import KustoConnectionStringBuilder

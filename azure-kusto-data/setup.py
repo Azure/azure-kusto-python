@@ -1,5 +1,5 @@
-"""Setup for Azure.Kusto.Data"""
-
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License
 import re
 from os import path
 

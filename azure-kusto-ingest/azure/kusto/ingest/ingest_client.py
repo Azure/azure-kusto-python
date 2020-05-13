@@ -1,5 +1,5 @@
-"""Kusto Ingest Client"""
-
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License
 import base64
 import os
 import random

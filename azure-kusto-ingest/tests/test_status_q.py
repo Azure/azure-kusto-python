@@ -1,3 +1,5 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License
 from azure.kusto.ingest import KustoIngestClient
 from azure.kusto.ingest._resource_manager import _ResourceUri
 from azure.kusto.ingest.status import KustoIngestStatusQueues, SuccessMessage, FailureMessage

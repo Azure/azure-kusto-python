@@ -1,5 +1,5 @@
-"""Descriptors the ingest command should work with."""
-
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License
 import os
 import shutil
 import uuid

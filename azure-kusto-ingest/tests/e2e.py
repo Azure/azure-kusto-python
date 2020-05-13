@@ -1,4 +1,5 @@
-"""E2E tests for ingest_client."""
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License
 import pytest
 import time
 import os

@@ -1,5 +1,5 @@
-"""Converter tests of the client."""
-
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License
 import unittest
 from datetime import timedelta
 

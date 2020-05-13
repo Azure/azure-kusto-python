@@ -1,4 +1,5 @@
-"""Kusto helper functions"""
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License
 
 
 def to_pandas_datetime(raw_value, *args):
