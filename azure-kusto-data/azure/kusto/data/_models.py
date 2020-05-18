@@ -1,4 +1,5 @@
-"""Kusto Data Models"""
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License.
 
 import json
 from decimal import Decimal

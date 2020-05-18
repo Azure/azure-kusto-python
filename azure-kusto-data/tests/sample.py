@@ -1,4 +1,6 @@
-﻿"""A simple example how to use KustoClient."""
+﻿# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License
+"""A simple example how to use KustoClient."""
 
 from datetime import timedelta
 

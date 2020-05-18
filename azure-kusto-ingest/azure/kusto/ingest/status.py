@@ -1,5 +1,5 @@
-"""Kusto ingest client for Python."""
-
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License
 import json
 
 from ._status_q import StatusQueue

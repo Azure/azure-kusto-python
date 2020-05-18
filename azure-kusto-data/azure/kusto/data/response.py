@@ -1,4 +1,5 @@
-"""This module constains all classes to get Kusto responses. Including error handling."""
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License
 from abc import ABCMeta, abstractmethod
 from typing import List
 

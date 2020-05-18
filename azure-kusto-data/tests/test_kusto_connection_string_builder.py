@@ -1,5 +1,5 @@
-"""Tests for KustoConnectionStringBuilder."""
-
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License
 import unittest
 from uuid import uuid4
 

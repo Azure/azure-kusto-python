@@ -1,5 +1,5 @@
-"""Tests class _connection_string."""
-
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License
 import unittest
 from azure.kusto.ingest._resource_manager import _ResourceUri
 

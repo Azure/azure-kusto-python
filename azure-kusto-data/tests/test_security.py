@@ -1,5 +1,5 @@
-"""Tests for security module."""
-
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License
 from azure.kusto.data.exceptions import KustoAuthenticationError
 from azure.kusto.data.request import KustoConnectionStringBuilder
 from azure.kusto.data.security import _AadHelper, AuthenticationMethod

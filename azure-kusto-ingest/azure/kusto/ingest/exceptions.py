@@ -1,4 +1,5 @@
-"""All exceptions can be raised by KustoIngestClient."""
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License
 
 from azure.kusto.data.exceptions import KustoClientError
 

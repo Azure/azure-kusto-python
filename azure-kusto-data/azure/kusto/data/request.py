@@ -1,4 +1,5 @@
-"""A module to make a Kusto request."""
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License
 import io
 import json
 import uuid

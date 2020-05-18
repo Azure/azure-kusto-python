@@ -1,5 +1,5 @@
-"""This module is serve as a cache to all resources needed by the kusto ingest client."""
-
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License
 import re
 from datetime import datetime, timedelta
 

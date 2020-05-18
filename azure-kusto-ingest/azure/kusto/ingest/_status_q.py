@@ -1,4 +1,5 @@
-"""Status Queue logic to wrap over Azure Storage Queues"""
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License
 import base64
 import random
 

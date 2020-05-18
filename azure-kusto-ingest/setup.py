@@ -1,4 +1,5 @@
-"""Setup for Azure.Kusto.Ingest"""
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License
 
 import re
 from os import path
