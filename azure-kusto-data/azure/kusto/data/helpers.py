@@ -12,7 +12,7 @@ def to_pandas_datetime(raw_value, *args):
     return pd.to_datetime(raw_value)
 
 
-def to_pandas_timedelta(raw_value, timedelta_value) -> 'pandas.Timedelta':
+def to_pandas_timedelta(raw_value, timedelta_value) -> "pandas.Timedelta":
     """
     Transform a raw python value to a pandas timedelta.
     """

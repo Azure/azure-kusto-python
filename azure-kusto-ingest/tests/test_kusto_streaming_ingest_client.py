@@ -51,7 +51,7 @@ class KustoStreamingIngestClientTests(unittest.TestCase):
         responses.add_callback(responses.POST, "https://somecluster.kusto.windows.net/v1/rest/ingest/database/table", callback=request_callback)
 
         ingest_client = KustoStreamingIngestClient("https://somecluster.kusto.windows.net")
-        ingestion_properties = IngestionProperties(database="database", table="table", dataFormat=DataFormat.CSV)
+        ingestion_properties = IngestionProperties(database="database", table="table", data_format=DataFormat.CSV)
 
         # ensure test can work when executed from within directories
         current_dir = os.getcwd()
@@ -75,7 +75,7 @@ class KustoStreamingIngestClientTests(unittest.TestCase):
 
         ingest_client.ingest_from_file(file_path, ingestion_properties=ingestion_properties)
 
-        ingestion_properties = IngestionProperties(database="database", table="table", dataFormat=DataFormat.JSON, ingestionMappingReference="JsonMapping")
+        ingestion_properties = IngestionProperties(database="database", table="table", data_format=DataFormat.JSON, ingestion_mapping_reference="JsonMapping")
 
         path_parts = ["azure-kusto-ingest", "tests", "input", "dataset.json"]
         missing_path_parts = []
@@ -97,7 +97,7 @@ class KustoStreamingIngestClientTests(unittest.TestCase):
 
         ingest_client.ingest_from_file(file_path, ingestion_properties=ingestion_properties)
 
-        ingestion_properties = IngestionProperties(database="database", table="table", dataFormat=DataFormat.TSV)
+        ingestion_properties = IngestionProperties(database="database", table="table", data_format=DataFormat.TSV)
 
         path_parts = ["azure-kusto-ingest", "tests", "input", "dataset.tsv"]
         missing_path_parts = []
@@ -115,7 +115,7 @@ class KustoStreamingIngestClientTests(unittest.TestCase):
         responses.add_callback(responses.POST, "https://somecluster.kusto.windows.net/v1/rest/ingest/database/table", callback=request_callback)
 
         ingest_client = KustoStreamingIngestClient("https://somecluster.kusto.windows.net")
-        ingestion_properties = IngestionProperties(database="database", table="table", dataFormat=DataFormat.CSV)
+        ingestion_properties = IngestionProperties(database="database", table="table", data_format=DataFormat.CSV)
 
         from pandas import DataFrame
 
@@ -130,7 +130,7 @@ class KustoStreamingIngestClientTests(unittest.TestCase):
         responses.add_callback(responses.POST, "https://somecluster.kusto.windows.net/v1/rest/ingest/database/table", callback=request_callback)
 
         ingest_client = KustoStreamingIngestClient("https://somecluster.kusto.windows.net")
-        ingestion_properties = IngestionProperties(database="database", table="table", dataFormat=DataFormat.CSV)
+        ingestion_properties = IngestionProperties(database="database", table="table", data_format=DataFormat.CSV)
 
         byte_sequence = b"56,56,56"
         bytes_stream = io.BytesIO(byte_sequence)

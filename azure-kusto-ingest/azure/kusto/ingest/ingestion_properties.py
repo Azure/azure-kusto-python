@@ -140,7 +140,6 @@ class IngestionProperties:
         self,
         database,
         table,
-
         # backward compat - will be removed in future versions
         dataFormat=DataFormat.CSV,
         ingestionMapping=None,
@@ -155,7 +154,6 @@ class IngestionProperties:
         reportMethod=ReportMethod.Queue,
         validationPolicy=None,
         additionalProperties=None,
-
         # pythonic
         data_format=DataFormat.CSV,
         ingestion_mapping=None,

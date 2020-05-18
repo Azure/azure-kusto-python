@@ -158,8 +158,7 @@ class KustoConnectionStringBuilder:
 
     @classmethod
     def with_aad_user_password_authentication(
-        cls, connection_string: str, user_id: str, password: str,
-        authority_id: str = "common"
+        cls, connection_string: str, user_id: str, password: str, authority_id: str = "common"
     ) -> "KustoConnectionStringBuilder":
         """
         Creates a KustoConnection string builder that will authenticate with AAD user name and
@@ -196,8 +195,9 @@ class KustoConnectionStringBuilder:
         return kcsb
 
     @classmethod
-    def with_aad_application_key_authentication(cls, connection_string: str, aad_app_id: str, app_key: str,
-                                                authority_id: str) -> "KustoConnectionStringBuilder":
+    def with_aad_application_key_authentication(
+        cls, connection_string: str, aad_app_id: str, app_key: str, authority_id: str
+    ) -> "KustoConnectionStringBuilder":
         """
         Creates a KustoConnection string builder that will authenticate with AAD application and key.
         :param str connection_string: Kusto connection string should by of the format: https://<clusterName>.kusto.windows.net

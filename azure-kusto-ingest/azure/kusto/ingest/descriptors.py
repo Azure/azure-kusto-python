@@ -5,12 +5,14 @@ import os
 import shutil
 import uuid
 import struct
+from typing import AnyStr, Any, Union
+from typing.io import IO
 from zipfile import ZipFile
 from gzip import GzipFile
 from io import BytesIO, SEEK_END
 
 
-def assert_uuid4(maybe_uuid, error_message):
+def assert_uuid4(maybe_uuid: str, error_message: str):
     # none is valid value for our purposes
     if maybe_uuid is None:
         return
@@ -81,7 +83,7 @@ class FileDescriptor:
 
         self._size = uncompressed_size
 
-    def open(self, should_compress):
+    def open(self, should_compress: bool) -> BytesIO:
         if should_compress:
             self.stream_name += ".gz"
             file_stream = BytesIO()
@@ -97,7 +99,7 @@ class FileDescriptor:
 class BlobDescriptor:
     """FileDescriptor is used to describe a file that will be used as an ingestion source"""
 
-    def __init__(self, path, size, source_id=None):
+    def __init__(self, path: str, size: int, source_id: str = None):
         """
         :param path: blob uri.
         :type path: str.
@@ -115,7 +117,7 @@ class BlobDescriptor:
 class StreamDescriptor:
     """StreamDescriptor is used to describe a stream that will be used as ingestion source"""
 
-    def __init__(self, stream: io.IOBase, source_id: str = None, is_compressed: bool = False):
+    def __init__(self, stream: Union[IO[AnyStr], BytesIO], source_id: str = None, is_compressed: bool = False):
         """
         :param stream: in-memory stream object.
         :type stream: io.BaseIO

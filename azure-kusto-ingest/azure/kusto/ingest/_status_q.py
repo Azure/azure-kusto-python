@@ -3,7 +3,7 @@
 import base64
 import random
 
-from azure.storage.common import CloudStorageAccount
+from azure.storage.queue import QueueServiceClient, QueueClient, QueueMessage
 
 
 class QueueDetails:

@@ -1,6 +1,5 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
-import base64
 import os
 import random
 import tempfile
@@ -9,12 +8,13 @@ import uuid
 from typing import Union
 
 from azure.kusto.data.request import KustoClient, KustoConnectionStringBuilder
-from azure.storage.common import CloudStorageAccount
+from azure.storage.blob import BlobServiceClient
+from azure.storage.queue import QueueServiceClient, TextBase64EncodePolicy
 
-from .descriptors import BlobDescriptor, FileDescriptor
 from ._ingestion_blob_info import _IngestionBlobInfo
-from .ingestion_properties import DataFormat, IngestionProperties
 from ._resource_manager import _ResourceManager
+from .descriptors import BlobDescriptor, FileDescriptor
+from .ingestion_properties import DataFormat, IngestionProperties
 
 
 class KustoIngestClient:
@@ -81,14 +81,12 @@ class KustoIngestClient:
                 db=ingestion_properties.database, table=ingestion_properties.table, guid=descriptor.source_id or uuid.uuid4(), file=descriptor.stream_name
             )
 
-            container_details = random.choice(containers)
-            storage_client = CloudStorageAccount(container_details.storage_account_name, sas_token=container_details.sas)
-            blob_service = storage_client.create_block_blob_service()
+            random_container = random.choice(containers)
+            blob_service = BlobServiceClient.from_connection_string(str(random_container))
+            blob_client = blob_service.get_blob_client(container=random_container.object_name, blob=blob_name)
+            blob_client.upload_blob(data=stream)
 
-            blob_service.create_blob_from_stream(container_name=container_details.object_name, blob_name=blob_name, stream=stream)
-            url = blob_service.make_blob_url(container_details.object_name, blob_name, sas_token=container_details.sas)
-
-            self.ingest_from_blob(BlobDescriptor(url, descriptor.size, descriptor.source_id), ingestion_properties=ingestion_properties)
+            self.ingest_from_blob(BlobDescriptor(blob_client.url, descriptor.size, descriptor.source_id), ingestion_properties=ingestion_properties)
 
     def ingest_from_blob(self, blob_descriptor: BlobDescriptor, ingestion_properties: IngestionProperties):
         """
@@ -100,11 +98,12 @@ class KustoIngestClient:
         """
         queues = self._resource_manager.get_ingestion_queues()
 
-        queue_details = random.choice(queues)
-        storage_client = CloudStorageAccount(queue_details.storage_account_name, sas_token=queue_details.sas)
-        queue_service = storage_client.create_queue_service()
+        random_queue = random.choice(queues)
+        queue_service = QueueServiceClient.from_connection_string(str(random_queue))
         authorization_context = self._resource_manager.get_authorization_context()
         ingestion_blob_info = _IngestionBlobInfo(blob_descriptor, ingestion_properties=ingestion_properties, auth_context=authorization_context)
         ingestion_blob_info_json = ingestion_blob_info.to_json()
-        encoded = base64.b64encode(ingestion_blob_info_json.encode("utf-8")).decode("utf-8")
-        queue_service.put_message(queue_name=queue_details.object_name, content=encoded)
+        # TODO: perhaps this needs to be more visible
+        content = ingestion_blob_info_json.encode("utf-8").decode("utf-8")
+        queue_client = queue_service.get_queue_client(queue=random_queue.object_name, message_encode_policy=TextBase64EncodePolicy)
+        queue_client.send_message(content=content)

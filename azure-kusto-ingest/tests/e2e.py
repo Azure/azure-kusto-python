@@ -1,21 +1,18 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
-import pytest
-import time
-import os
-import uuid
 import io
+import os
+import time
+import uuid
 
-from azure.kusto.data.request import KustoClient, KustoConnectionStringBuilder
 from azure.kusto.data.exceptions import KustoServiceError
-from azure.kusto.ingest.status import KustoIngestStatusQueues
+from azure.kusto.data.request import KustoClient, KustoConnectionStringBuilder
 from azure.kusto.ingest import (
     KustoIngestClient,
     KustoStreamingIngestClient,
     IngestionProperties,
-    JsonColumnMapping,
-    CsvColumnMapping,
     DataFormat,
+    ColumnMapping,
     IngestionMappingType,
     ValidationPolicy,
     ValidationOptions,
@@ -23,8 +20,8 @@ from azure.kusto.ingest import (
     ReportLevel,
     ReportMethod,
     FileDescriptor,
-    KustoMissingMappingReferenceError,
 )
+from azure.kusto.ingest.status import KustoIngestStatusQueues
 
 
 class Helpers:
@@ -37,50 +34,50 @@ class Helpers:
     def create_test_table_csv_mappings():
         """A method to define csv mappings to test table."""
         mappings = list()
-        mappings.append(CsvColumnMapping(columnName="rownumber", cslDataType="int", ordinal=0))
-        mappings.append(CsvColumnMapping(columnName="rowguid", cslDataType="string", ordinal=1))
-        mappings.append(CsvColumnMapping(columnName="xdouble", cslDataType="real", ordinal=2))
-        mappings.append(CsvColumnMapping(columnName="xfloat", cslDataType="real", ordinal=3))
-        mappings.append(CsvColumnMapping(columnName="xbool", cslDataType="bool", ordinal=4))
-        mappings.append(CsvColumnMapping(columnName="xint16", cslDataType="int", ordinal=5))
-        mappings.append(CsvColumnMapping(columnName="xint32", cslDataType="int", ordinal=6))
-        mappings.append(CsvColumnMapping(columnName="xint64", cslDataType="long", ordinal=7))
-        mappings.append(CsvColumnMapping(columnName="xuint8", cslDataType="long", ordinal=8))
-        mappings.append(CsvColumnMapping(columnName="xuint16", cslDataType="long", ordinal=9))
-        mappings.append(CsvColumnMapping(columnName="xuint32", cslDataType="long", ordinal=10))
-        mappings.append(CsvColumnMapping(columnName="xuint64", cslDataType="long", ordinal=11))
-        mappings.append(CsvColumnMapping(columnName="xdate", cslDataType="datetime", ordinal=12))
-        mappings.append(CsvColumnMapping(columnName="xsmalltext", cslDataType="string", ordinal=13))
-        mappings.append(CsvColumnMapping(columnName="xtext", cslDataType="string", ordinal=14))
-        mappings.append(CsvColumnMapping(columnName="xnumberAsText", cslDataType="string", ordinal=15))
-        mappings.append(CsvColumnMapping(columnName="xtime", cslDataType="timespan", ordinal=16))
-        mappings.append(CsvColumnMapping(columnName="xtextWithNulls", cslDataType="string", ordinal=17))
-        mappings.append(CsvColumnMapping(columnName="xdynamicWithNulls", cslDataType="dynamic", ordinal=18))
+        mappings.append(ColumnMapping(column_name="rownumber", column_type="int", ordinal=0))
+        mappings.append(ColumnMapping(column_name="rowguid", column_type="string", ordinal=1))
+        mappings.append(ColumnMapping(column_name="xdouble", column_type="real", ordinal=2))
+        mappings.append(ColumnMapping(column_name="xfloat", column_type="real", ordinal=3))
+        mappings.append(ColumnMapping(column_name="xbool", column_type="bool", ordinal=4))
+        mappings.append(ColumnMapping(column_name="xint16", column_type="int", ordinal=5))
+        mappings.append(ColumnMapping(column_name="xint32", column_type="int", ordinal=6))
+        mappings.append(ColumnMapping(column_name="xint64", column_type="long", ordinal=7))
+        mappings.append(ColumnMapping(column_name="xuint8", column_type="long", ordinal=8))
+        mappings.append(ColumnMapping(column_name="xuint16", column_type="long", ordinal=9))
+        mappings.append(ColumnMapping(column_name="xuint32", column_type="long", ordinal=10))
+        mappings.append(ColumnMapping(column_name="xuint64", column_type="long", ordinal=11))
+        mappings.append(ColumnMapping(column_name="xdate", column_type="datetime", ordinal=12))
+        mappings.append(ColumnMapping(column_name="xsmalltext", column_type="string", ordinal=13))
+        mappings.append(ColumnMapping(column_name="xtext", column_type="string", ordinal=14))
+        mappings.append(ColumnMapping(column_name="xnumberAsText", column_type="string", ordinal=15))
+        mappings.append(ColumnMapping(column_name="xtime", column_type="timespan", ordinal=16))
+        mappings.append(ColumnMapping(column_name="xtextWithNulls", column_type="string", ordinal=17))
+        mappings.append(ColumnMapping(column_name="xdynamicWithNulls", column_type="dynamic", ordinal=18))
         return mappings
 
     @staticmethod
     def create_test_table_json_mappings():
         """A method to define json mappings to test table."""
         mappings = list()
-        mappings.append(JsonColumnMapping(columnName="rownumber", jsonPath="$.rownumber", cslDataType="int"))
-        mappings.append(JsonColumnMapping(columnName="rowguid", jsonPath="$.rowguid", cslDataType="string"))
-        mappings.append(JsonColumnMapping(columnName="xdouble", jsonPath="$.xdouble", cslDataType="real"))
-        mappings.append(JsonColumnMapping(columnName="xfloat", jsonPath="$.xfloat", cslDataType="real"))
-        mappings.append(JsonColumnMapping(columnName="xbool", jsonPath="$.xbool", cslDataType="bool"))
-        mappings.append(JsonColumnMapping(columnName="xint16", jsonPath="$.xint16", cslDataType="int"))
-        mappings.append(JsonColumnMapping(columnName="xint32", jsonPath="$.xint32", cslDataType="int"))
-        mappings.append(JsonColumnMapping(columnName="xint64", jsonPath="$.xint64", cslDataType="long"))
-        mappings.append(JsonColumnMapping(columnName="xuint8", jsonPath="$.xuint8", cslDataType="long"))
-        mappings.append(JsonColumnMapping(columnName="xuint16", jsonPath="$.xuint16", cslDataType="long"))
-        mappings.append(JsonColumnMapping(columnName="xuint32", jsonPath="$.xuint32", cslDataType="long"))
-        mappings.append(JsonColumnMapping(columnName="xuint64", jsonPath="$.xuint64", cslDataType="long"))
-        mappings.append(JsonColumnMapping(columnName="xdate", jsonPath="$.xdate", cslDataType="datetime"))
-        mappings.append(JsonColumnMapping(columnName="xsmalltext", jsonPath="$.xsmalltext", cslDataType="string"))
-        mappings.append(JsonColumnMapping(columnName="xtext", jsonPath="$.xtext", cslDataType="string"))
-        mappings.append(JsonColumnMapping(columnName="xnumberAsText", jsonPath="$.xnumberAsText", cslDataType="string"))
-        mappings.append(JsonColumnMapping(columnName="xtime", jsonPath="$.xtime", cslDataType="timespan"))
-        mappings.append(JsonColumnMapping(columnName="xtextWithNulls", jsonPath="$.xtextWithNulls", cslDataType="string"))
-        mappings.append(JsonColumnMapping(columnName="xdynamicWithNulls", jsonPath="$.xdynamicWithNulls", cslDataType="dynamic"))
+        mappings.append(ColumnMapping(column_name="rownumber", path="$.rownumber", column_type="int"))
+        mappings.append(ColumnMapping(column_name="rowguid", path="$.rowguid", column_type="string"))
+        mappings.append(ColumnMapping(column_name="xdouble", path="$.xdouble", column_type="real"))
+        mappings.append(ColumnMapping(column_name="xfloat", path="$.xfloat", column_type="real"))
+        mappings.append(ColumnMapping(column_name="xbool", path="$.xbool", column_type="bool"))
+        mappings.append(ColumnMapping(column_name="xint16", path="$.xint16", column_type="int"))
+        mappings.append(ColumnMapping(column_name="xint32", path="$.xint32", column_type="int"))
+        mappings.append(ColumnMapping(column_name="xint64", path="$.xint64", column_type="long"))
+        mappings.append(ColumnMapping(column_name="xuint8", path="$.xuint8", column_type="long"))
+        mappings.append(ColumnMapping(column_name="xuint16", path="$.xuint16", column_type="long"))
+        mappings.append(ColumnMapping(column_name="xuint32", path="$.xuint32", column_type="long"))
+        mappings.append(ColumnMapping(column_name="xuint64", path="$.xuint64", column_type="long"))
+        mappings.append(ColumnMapping(column_name="xdate", path="$.xdate", column_type="datetime"))
+        mappings.append(ColumnMapping(column_name="xsmalltext", path="$.xsmalltext", column_type="string"))
+        mappings.append(ColumnMapping(column_name="xtext", path="$.xtext", column_type="string"))
+        mappings.append(ColumnMapping(column_name="xnumberAsText", path="$.xnumberAsText", column_type="string"))
+        mappings.append(ColumnMapping(column_name="xtime", path="$.xtime", column_type="timespan"))
+        mappings.append(ColumnMapping(column_name="xtextWithNulls", path="$.xtextWithNulls", column_type="string"))
+        mappings.append(ColumnMapping(column_name="xdynamicWithNulls", path="$.xdynamicWithNulls", column_type="dynamic"))
         return mappings
 
     @staticmethod
@@ -149,7 +146,7 @@ zipped_json_file_path = os.path.join(input_folder_path, "dataset.jsonz.gz")
 current_count = 0
 
 
-def assert_row_count(expected_row_count, timeout=300):
+def assert_row_count(expected_row_count: int, timeout=300):
     global current_count
     row_count = 0
 
@@ -173,7 +170,7 @@ def assert_row_count(expected_row_count, timeout=300):
     assert False, "Row count expected = {}, while actual row count = {}".format(expected_row_count, row_count)
 
 
-def assert_success_mesagges_count(expected_success_messages, timeout=60):
+def assert_success_messages_count(expected_success_messages: int, timeout=60):
     successes = 0
     timeout = 60
     while successes != expected_success_messages and timeout > 0:
@@ -193,13 +190,17 @@ def assert_success_mesagges_count(expected_success_messages, timeout=60):
 
 def test_csv_ingest_non_existing_table():
     csv_ingest_props = IngestionProperties(
-        db_name, table_name, dataFormat=DataFormat.CSV, ingestionMapping=Helpers.create_test_table_csv_mappings(), reportLevel=ReportLevel.FailuresAndSuccesses
+        db_name,
+        table_name,
+        data_format=DataFormat.CSV,
+        ingestion_mapping=Helpers.create_test_table_csv_mappings(),
+        report_level=ReportLevel.FailuresAndSuccesses,
     )
 
     for f in [csv_file_path, zipped_csv_file_path]:
         ingest_client.ingest_from_file(f, csv_ingest_props)
 
-    assert_success_mesagges_count(2)
+    assert_success_messages_count(2)
     assert_row_count(20)
 
     client.execute(db_name, ".create table {} ingestion json mapping 'JsonMapping' {}".format(table_name, Helpers.get_test_table_json_mapping_reference()))
@@ -209,15 +210,15 @@ def test_json_ingest_existing_table():
     json_ingestion_props = IngestionProperties(
         db_name,
         table_name,
-        dataFormat=DataFormat.JSON,
-        ingestionMapping=Helpers.create_test_table_json_mappings(),
-        reportLevel=ReportLevel.FailuresAndSuccesses,
+        data_format=DataFormat.JSON,
+        ingestion_mapping=Helpers.create_test_table_json_mappings(),
+        report_level=ReportLevel.FailuresAndSuccesses,
     )
 
     for f in [json_file_path, zipped_json_file_path]:
         ingest_client.ingest_from_file(f, json_ingestion_props)
 
-    assert_success_mesagges_count(2)
+    assert_success_messages_count(2)
 
     assert_row_count(4)
 
@@ -229,16 +230,16 @@ def test_ingest_complicated_props():
     json_ingestion_props = IngestionProperties(
         db_name,
         table_name,
-        dataFormat=DataFormat.JSON,
-        ingestionMapping=Helpers.create_test_table_json_mappings(),
-        additionalTags=["a", "b"],
-        ingestIfNotExists=["aaaa", "bbbb"],
-        ingestByTags=["ingestByTag"],
-        dropByTags=["drop", "drop-by"],
-        flushImmediately=False,
-        reportLevel=ReportLevel.FailuresAndSuccesses,
-        reportMethod=ReportMethod.Queue,
-        validationPolicy=validation_policy,
+        data_format=DataFormat.JSON,
+        ingestion_mapping=Helpers.create_test_table_json_mappings(),
+        additional_tags=["a", "b"],
+        ingest_if_not_exists=["aaaa", "bbbb"],
+        ingest_by_tags=["ingestByTag"],
+        drop_by_tags=["drop", "drop-by"],
+        flush_immediately=False,
+        report_level=ReportLevel.FailuresAndSuccesses,
+        report_method=ReportMethod.Queue,
+        validation_policy=validation_policy,
     )
 
     file_paths = [json_file_path, zipped_json_file_path]
@@ -247,7 +248,7 @@ def test_ingest_complicated_props():
     for fd in fds:
         ingest_client.ingest_from_file(fd, json_ingestion_props)
 
-    assert_success_mesagges_count(2)
+    assert_success_messages_count(2)
     assert_row_count(4)
 
 
@@ -255,33 +256,37 @@ def test_json_ingestion_ingest_by_tag():
     json_ingestion_props = IngestionProperties(
         db_name,
         table_name,
-        dataFormat=DataFormat.JSON,
-        ingestionMapping=Helpers.create_test_table_json_mappings(),
-        ingestIfNotExists=["ingestByTag"],
-        reportLevel=ReportLevel.FailuresAndSuccesses,
-        dropByTags=["drop", "drop-by"],
+        data_format=DataFormat.JSON,
+        ingestion_mapping=Helpers.create_test_table_json_mappings(),
+        ingest_if_not_exists=["ingestByTag"],
+        report_level=ReportLevel.FailuresAndSuccesses,
+        drop_by_tags=["drop", "drop-by"],
     )
 
     for f in [json_file_path, zipped_json_file_path]:
         ingest_client.ingest_from_file(f, json_ingestion_props)
 
-    assert_success_mesagges_count(2)
+    assert_success_messages_count(2)
     assert_row_count(0)
 
 
 def test_tsv_ingestion_csv_mapping():
     tsv_ingestion_props = IngestionProperties(
-        db_name, table_name, dataFormat=DataFormat.TSV, ingestionMapping=Helpers.create_test_table_csv_mappings(), reportLevel=ReportLevel.FailuresAndSuccesses
+        db_name,
+        table_name,
+        data_format=DataFormat.TSV,
+        ingestion_mapping=Helpers.create_test_table_csv_mappings(),
+        report_level=ReportLevel.FailuresAndSuccesses,
     )
 
     ingest_client.ingest_from_file(tsv_file_path, tsv_ingestion_props)
 
-    assert_success_mesagges_count(1)
+    assert_success_messages_count(1)
     assert_row_count(10)
 
 
 def test_streaming_ingest_from_opened_file():
-    ingestion_properties = IngestionProperties(database=db_name, table=table_name, dataFormat=DataFormat.CSV)
+    ingestion_properties = IngestionProperties(database=db_name, table=table_name, data_format=DataFormat.CSV)
 
     stream = open(csv_file_path, "r")
     streaming_ingest_client.ingest_from_stream(stream, ingestion_properties=ingestion_properties)
@@ -290,7 +295,7 @@ def test_streaming_ingest_from_opened_file():
 
 
 def test_streaming_ingest_form_csv_file():
-    ingestion_properties = IngestionProperties(database=db_name, table=table_name, dataFormat=DataFormat.CSV)
+    ingestion_properties = IngestionProperties(database=db_name, table=table_name, data_format=DataFormat.CSV)
 
     for f in [csv_file_path, zipped_csv_file_path]:
         streaming_ingest_client.ingest_from_file(f, ingestion_properties=ingestion_properties)
@@ -300,7 +305,11 @@ def test_streaming_ingest_form_csv_file():
 
 def test_streaming_ingest_from_json_file():
     ingestion_properties = IngestionProperties(
-        database=db_name, table=table_name, dataFormat=DataFormat.JSON, ingestionMappingReference="JsonMapping", ingestionMappingType=IngestionMappingType.JSON
+        database=db_name,
+        table=table_name,
+        data_format=DataFormat.JSON,
+        ingestion_mapping_reference="JsonMapping",
+        ingestion_mapping_type=IngestionMappingType.JSON,
     )
 
     for f in [json_file_path, zipped_json_file_path]:
@@ -310,7 +319,7 @@ def test_streaming_ingest_from_json_file():
 
 
 def test_streaming_ingest_from_csv_io_streams():
-    ingestion_properties = IngestionProperties(database=db_name, table=table_name, dataFormat=DataFormat.CSV)
+    ingestion_properties = IngestionProperties(database=db_name, table=table_name, data_format=DataFormat.CSV)
     byte_sequence = b'0,00000000-0000-0000-0001-020304050607,0,0,0,0,0,0,0,0,0,0,2014-01-01T01:01:01.0000000Z,Zero,"Zero",0,00:00:00,,null'
     bytes_stream = io.BytesIO(byte_sequence)
     streaming_ingest_client.ingest_from_stream(bytes_stream, ingestion_properties=ingestion_properties)
@@ -324,7 +333,11 @@ def test_streaming_ingest_from_csv_io_streams():
 
 def test_streaming_ingest_from_json_io_streams():
     ingestion_properties = IngestionProperties(
-        database=db_name, table=table_name, dataFormat=DataFormat.JSON, ingestionMappingReference="JsonMapping", ingestionMappingType=IngestionMappingType.JSON
+        database=db_name,
+        table=table_name,
+        data_format=DataFormat.JSON,
+        ingestion_mapping_reference="JsonMapping",
+        ingestion_mapping_type=IngestionMappingType.JSON,
     )
 
     byte_sequence = b'{"rownumber": 0, "rowguid": "00000000-0000-0000-0001-020304050607", "xdouble": 0.0, "xfloat": 0.0, "xbool": 0, "xint16": 0, "xint32": 0, "xint64": 0, "xunit8": 0, "xuint16": 0, "xunit32": 0, "xunit64": 0, "xdate": "2014-01-01T01:01:01Z", "xsmalltext": "Zero", "xtext": "Zero", "xnumberAsText": "0", "xtime": "00:00:00", "xtextWithNulls": null, "xdynamicWithNulls": ""}'
@@ -364,7 +377,7 @@ def test_streaming_ingest_from_dataframe():
     ]
     rows = [[0, "00000000-0000-0000-0001-020304050607", 0.0, 0.0, 0, 0, 0, 0, 0, 0, 0, 0, "2014-01-01T01:01:01Z", "Zero", "Zero", "0", "00:00:00", None, ""]]
     df = DataFrame(data=rows, columns=fields)
-    ingestion_properties = IngestionProperties(database=db_name, table=table_name, dataFormat=DataFormat.CSV)
+    ingestion_properties = IngestionProperties(database=db_name, table=table_name, data_format=DataFormat.CSV)
     ingest_client.ingest_from_dataframe(df, ingestion_properties)
 
     assert_row_count(1, timeout=120)
