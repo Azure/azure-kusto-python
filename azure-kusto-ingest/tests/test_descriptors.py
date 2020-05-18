@@ -62,9 +62,7 @@ class DescriptorsTest(unittest.TestCase):
         filePath = path.join(path.dirname(path.abspath(__file__)), "input", "dataset.csv.gz")
         descriptor = FileDescriptor(filePath, 0)
         with descriptor.open(False) as stream:
-            # TODO: since we don't know if the file is opened on CRLF system or an LF system, allow both sizes
-            #   a more robust approach would be to open the file and check
-            assert descriptor.size in (self.uncompressed_size, self.uncompressed_size_2)
+            assert descriptor.size == self.uncompressed_size
             assert descriptor.stream_name.endswith(".csv.gz")
             if sys.version_info[0] >= 3:
                 assert stream.readable()
@@ -78,9 +76,7 @@ class DescriptorsTest(unittest.TestCase):
         descriptor = FileDescriptor(filePath, 0)
         with descriptor.open(False) as stream:
             # the zip archive contains 2 copies of the source file
-            # TODO: since we don't know if the file is opened on CRLF system or an LF system, allow both sizes
-            #   a more robust approach would be to open the file and check
-            assert descriptor.size in (self.uncompressed_size * 2, self.uncompressed_size_2 * 2)
+            assert descriptor.size == self.uncompressed_size * 2
             assert descriptor.stream_name.endswith(".csv.zip")
             if sys.version_info[0] >= 3:
                 assert stream.readable()

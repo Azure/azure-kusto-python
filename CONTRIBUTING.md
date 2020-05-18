@@ -29,7 +29,7 @@ After which, running tests is simple.
 Just run:
 
 ```bash
-pytest ./azure-kusto-da1569ta ./azure-kusto-ingest 
+pytest ./azure-kusto-data ./azure-kusto-ingest 
 ```
 
 ## Style
