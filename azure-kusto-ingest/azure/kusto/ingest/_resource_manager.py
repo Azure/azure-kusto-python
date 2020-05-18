@@ -3,6 +3,9 @@
 import re
 from datetime import datetime, timedelta
 
+from azure.kusto.data import KustoClient
+from azure.kusto.data._models import KustoResultTable
+
 _URI_FORMAT = re.compile("https://(\\w+).(queue|blob|table).core.windows.net/([\\w,-]+)\\?(.*)")
 
 
@@ -46,7 +49,7 @@ class _IngestClientResources:
 
 
 class _ResourceManager:
-    def __init__(self, kusto_client):
+    def __init__(self, kusto_client: KustoClient):
         self._kusto_client = kusto_client
         self._refresh_period = timedelta(hours=1)
 
@@ -65,7 +68,7 @@ class _ResourceManager:
             self._ingest_client_resources = self._get_ingest_client_resources_from_service()
             self._ingest_client_resources_last_update = datetime.utcnow()
 
-    def _get_resource_by_name(self, table, resource_name):
+    def _get_resource_by_name(self, table: KustoResultTable, resource_name: str):
         return [_ResourceUri.parse(row["StorageRoot"]) for row in table if row["ResourceTypeName"] == resource_name]
 
     def _get_ingest_client_resources_from_service(self):

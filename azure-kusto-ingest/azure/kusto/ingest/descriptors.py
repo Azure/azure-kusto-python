@@ -1,5 +1,6 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
+import io
 import os
 import shutil
 import uuid
@@ -114,7 +115,7 @@ class BlobDescriptor:
 class StreamDescriptor:
     """StreamDescriptor is used to describe a stream that will be used as ingestion source"""
 
-    def __init__(self, stream, source_id=None, is_compressed=False):
+    def __init__(self, stream: io.IOBase, source_id: str = None, is_compressed: bool = False):
         """
         :param stream: in-memory stream object.
         :type stream: io.BaseIO

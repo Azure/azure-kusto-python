@@ -157,7 +157,10 @@ class KustoConnectionStringBuilder:
             raise KeyError("KustoConnectionStringBuilder supports only bools and strings.")
 
     @classmethod
-    def with_aad_user_password_authentication(cls, connection_string, user_id, password, authority_id="common") -> "KustoConnectionStringBuilder":
+    def with_aad_user_password_authentication(
+        cls, connection_string: str, user_id: str, password: str,
+        authority_id: str = "common"
+    ) -> "KustoConnectionStringBuilder":
         """
         Creates a KustoConnection string builder that will authenticate with AAD user name and
         password.
@@ -177,7 +180,7 @@ class KustoConnectionStringBuilder:
         return kcsb
 
     @classmethod
-    def with_aad_user_token_authentication(cls, connection_string, user_token) -> "KustoConnectionStringBuilder":
+    def with_aad_user_token_authentication(cls, connection_string: str, user_token: str) -> "KustoConnectionStringBuilder":
         """
         Creates a KustoConnection string builder that will authenticate with AAD application and
         a certificate credentials.
@@ -193,7 +196,8 @@ class KustoConnectionStringBuilder:
         return kcsb
 
     @classmethod
-    def with_aad_application_key_authentication(cls, connection_string, aad_app_id, app_key, authority_id) -> "KustoConnectionStringBuilder":
+    def with_aad_application_key_authentication(cls, connection_string: str, aad_app_id: str, app_key: str,
+                                                authority_id: str) -> "KustoConnectionStringBuilder":
         """
         Creates a KustoConnection string builder that will authenticate with AAD application and key.
         :param str connection_string: Kusto connection string should by of the format: https://<clusterName>.kusto.windows.net
@@ -214,7 +218,7 @@ class KustoConnectionStringBuilder:
 
     @classmethod
     def with_aad_application_certificate_authentication(
-        cls, connection_string, aad_app_id, certificate, thumbprint, authority_id
+        cls, connection_string: str, aad_app_id: str, certificate: str, thumbprint: str, authority_id: str
     ) -> "KustoConnectionStringBuilder":
         """
         Creates a KustoConnection string builder that will authenticate with AAD application and
@@ -240,7 +244,7 @@ class KustoConnectionStringBuilder:
         return kcsb
 
     @classmethod
-    def with_aad_application_token_authentication(cls, connection_string, application_token) -> "KustoConnectionStringBuilder":
+    def with_aad_application_token_authentication(cls, connection_string: str, application_token: str) -> "KustoConnectionStringBuilder":
         """
         Creates a KustoConnection string builder that will authenticate with AAD application and
         an application token.
@@ -256,7 +260,7 @@ class KustoConnectionStringBuilder:
         return kcsb
 
     @classmethod
-    def with_aad_device_authentication(cls, connection_string, authority_id="common") -> "KustoConnectionStringBuilder":
+    def with_aad_device_authentication(cls, connection_string: str, authority_id: str = "common") -> "KustoConnectionStringBuilder":
         """
         Creates a KustoConnection string builder that will authenticate with AAD application and
         password.
@@ -270,7 +274,7 @@ class KustoConnectionStringBuilder:
         return kcsb
 
     @classmethod
-    def with_az_cli_authentication(cls, connection_string) -> "KustoConnectionStringBuilder":
+    def with_az_cli_authentication(cls, connection_string: str) -> "KustoConnectionStringBuilder":
         """
         Creates a KustoConnection string builder that will use existing authenticated az cli profile
         password.
@@ -284,7 +288,7 @@ class KustoConnectionStringBuilder:
 
     @classmethod
     def with_aad_managed_service_identity_authentication(
-        cls, connection_string, client_id=None, object_id=None, msi_res_id=None, timeout=None
+        cls, connection_string: str, client_id: str = None, object_id: str = None, msi_res_id: str = None, timeout: str = None
     ) -> "KustoConnectionStringBuilder":
         """"
         Creates a KustoConnection string builder that will authenticate with AAD application, using
@@ -467,7 +471,7 @@ class ClientRequestProperties:
         self.application = None
         self.user = None
 
-    def set_parameter(self, name, value):
+    def set_parameter(self, name: str, value: str):
         """Sets a parameter's value"""
         _assert_value_is_valid(name)
         self._parameters[name] = value

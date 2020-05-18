@@ -106,7 +106,7 @@ class KustoResponseDataSetV1(KustoResponseDataSet):
         "QueryStatus": WellKnownDataSet.QueryCompletionInformation,
     }
 
-    def __init__(self, json_response):
+    def __init__(self, json_response: dict):
         super(KustoResponseDataSetV1, self).__init__(json_response["Tables"])
         if self.tables_count <= 2:
             self.tables[0].table_kind = WellKnownDataSet.PrimaryResult
@@ -136,5 +136,5 @@ class KustoResponseDataSetV2(KustoResponseDataSet):
     _error_column = "Level"
     _crid_column = "ClientRequestId"
 
-    def __init__(self, json_response):
+    def __init__(self, json_response: dict):
         super(KustoResponseDataSetV2, self).__init__([t for t in json_response if t["FrameType"] == "DataTable"])

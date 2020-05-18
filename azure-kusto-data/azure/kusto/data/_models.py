@@ -98,7 +98,7 @@ class KustoResultRow:
 
 
 class KustoResultColumn:
-    def __init__(self, json_column, ordinal):
+    def __init__(self, json_column: dict, ordinal: int):
         self.column_name = json_column["ColumnName"]
         self.column_type = json_column.get("ColumnType") or json_column["DataType"]
         self.ordinal = ordinal
@@ -110,7 +110,7 @@ class KustoResultColumn:
 class KustoResultTable:
     """Iterator over a Kusto result table."""
 
-    def __init__(self, json_table):
+    def __init__(self, json_table: dict):
         self.table_name = json_table.get("TableName")
         self.table_id = json_table.get("TableId")
         self.table_kind = WellKnownDataSet[json_table["TableKind"]] if "TableKind" in json_table else None

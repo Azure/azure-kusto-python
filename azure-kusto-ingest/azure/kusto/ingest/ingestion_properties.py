@@ -133,38 +133,6 @@ class ColumnMapping:
             self.properties[self.STORAGE_DATA_TYPE] = storage_data_type
 
 
-class ColumnMappingBase:
-    """Deprecated abstract base mapping class"""
-
-    pass
-
-
-class CsvColumnMapping(ColumnMappingBase):
-    """Class to represent a csv column mapping."""
-
-    @DeprecationWarning
-    def __init__(self, columnName, cslDataType, ordinal):
-        self.Name = columnName
-        self.DataType = cslDataType
-        self.Ordinal = ordinal
-
-    def __str__(self):
-        return "target: {0.Name} ,source: {0.Ordinal}, datatype: {0.DataType}".format(self)
-
-
-class JsonColumnMapping(ColumnMappingBase):
-    """ Class to represent a json column mapping """
-
-    @DeprecationWarning
-    def __init__(self, columnName, jsonPath, cslDataType=None):
-        self.column = columnName
-        self.path = jsonPath
-        self.datatype = cslDataType
-
-    def __str__(self):
-        return "target: {0.column} ,source: {0.path}, datatype: {0.datatype}".format(self)
-
-
 class IngestionProperties:
     """Class to represent ingestion properties."""
 
@@ -172,10 +140,10 @@ class IngestionProperties:
         self,
         database,
         table,
+
+        # backward compat - will be removed in future versions
         dataFormat=DataFormat.CSV,
-        mapping=None,
         ingestionMapping=None,
-        mappingReference=None,
         ingestionMappingType=None,
         ingestionMappingReference=None,
         additionalTags=None,
@@ -187,49 +155,41 @@ class IngestionProperties:
         reportMethod=ReportMethod.Queue,
         validationPolicy=None,
         additionalProperties=None,
+
+        # pythonic
+        data_format=DataFormat.CSV,
+        ingestion_mapping=None,
+        ingestion_mapping_type=None,
+        ingestion_mapping_reference=None,
+        additional_tags=None,
+        ingest_if_not_exists=None,
+        ingest_by_tags=None,
+        drop_by_tags=None,
+        flush_immediately=False,
+        report_level=ReportLevel.DoNotReport,
+        report_method=ReportMethod.Queue,
+        validation_policy=None,
+        additional_properties=None,
     ):
-        # mapping_reference will be deprecated in the next major version
-        if mappingReference is not None:
-            warnings.warn(
-                """
-                mappingReference will be deprecated in the next major version.
-                Please use ingestionMappingReference instead
-                """,
-                PendingDeprecationWarning,
-            )
-
-        # mapping will be deprecated in the next major version
-        if mapping is not None:
-            warnings.warn(
-                """
-                mapping will be deprecated in the next major version.
-                Please use ingestionMapping instead
-                """,
-                PendingDeprecationWarning,
-            )
-
-        if mapping is not None and ingestionMapping is not None:
-            raise KustoDuplicateMappingError()
-
-        mapping_exists = mapping is not None or ingestionMapping is not None
-        if mapping_exists and (mappingReference is not None or ingestionMappingReference is not None):
+        mapping_exists = ingestionMapping is not None or ingestion_mapping is not None
+        if mapping_exists and (ingestion_mapping_reference is not None or ingestionMappingReference is not None):
             raise KustoMappingAndMappingReferenceError()
 
-        if mappingReference is not None and ingestionMappingReference is not None:
+        if ingestion_mapping_reference is not None and ingestionMappingReference is not None:
             raise KustoDuplicateMappingReferenceError()
 
         self.database = database
         self.table = table
-        self.format = dataFormat
-        self.ingestion_mapping = ingestionMapping if ingestionMapping is not None else mapping
-        self.ingestion_mapping_type = ingestionMappingType
-        self.ingestion_mapping_reference = ingestionMappingReference if ingestionMappingReference is not None else mappingReference
-        self.additional_tags = additionalTags
-        self.ingest_if_not_exists = ingestIfNotExists
-        self.ingest_by_tags = ingestByTags
-        self.drop_by_tags = dropByTags
-        self.flush_immediately = flushImmediately
-        self.report_level = reportLevel
-        self.report_method = reportMethod
-        self.validation_policy = validationPolicy
-        self.additional_properties = additionalProperties
+        self.format = dataFormat or data_format
+        self.ingestion_mapping = ingestionMapping or ingestion_mapping
+        self.ingestion_mapping_type = ingestionMappingType or ingestion_mapping_type
+        self.ingestion_mapping_reference = ingestionMappingReference or ingestion_mapping_reference
+        self.additional_tags = additionalTags or additional_tags
+        self.ingest_if_not_exists = ingestIfNotExists or ingest_if_not_exists
+        self.ingest_by_tags = ingestByTags or ingest_by_tags
+        self.drop_by_tags = dropByTags or drop_by_tags
+        self.flush_immediately = flushImmediately or flush_immediately
+        self.report_level = reportLevel or report_level
+        self.report_method = reportMethod or report_method
+        self.validation_policy = validationPolicy or validation_policy
+        self.additional_properties = additionalProperties or additional_properties

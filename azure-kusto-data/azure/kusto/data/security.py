@@ -9,6 +9,7 @@ from urllib.parse import urlparse
 import dateutil.parser
 from adal import AuthenticationContext, AdalError
 from adal.constants import TokenResponseFields, OAuth2DeviceCodeResponseParameters, OAuth2ResponseParameters
+from azure.kusto.data import KustoConnectionStringBuilder
 from msrestazure.azure_active_directory import MSIAuthentication
 
 from .exceptions import KustoClientError, KustoAuthenticationError
@@ -82,7 +83,7 @@ class _AadHelper:
     msi_params = None
     token_provider = None
 
-    def __init__(self, kcsb):
+    def __init__(self, kcsb: KustoConnectionStringBuilder):
         self.kusto_uri = "{0.scheme}://{0.hostname}".format(urlparse(kcsb.data_source))
         self.username = None
 
@@ -244,5 +245,5 @@ def _get_header_from_dict(token: dict):
         raise KustoClientError("Unable to determine the token type. Neither 'tokenType' nor 'token_type' property is present.")
 
 
-def _get_header(token_type, access_token):
+def _get_header(token_type: str, access_token: str) -> str:
     return "{0} {1}".format(token_type, access_token)

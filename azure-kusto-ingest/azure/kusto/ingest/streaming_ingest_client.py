@@ -1,15 +1,17 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
+import io
 import os
 import tempfile
 import time
 from gzip import GzipFile
 from io import TextIOWrapper, BytesIO
+from typing import Union
 
-from azure.kusto.data.request import KustoClient
+from azure.kusto.data.request import KustoClient, KustoConnectionStringBuilder
 
 from .descriptors import FileDescriptor, StreamDescriptor
-from .ingestion_properties import DataFormat
+from .ingestion_properties import DataFormat, IngestionProperties
 from .exceptions import KustoMissingMappingReferenceError
 
 
@@ -22,13 +24,13 @@ class KustoStreamingIngestClient:
 
     _mapping_required_formats = {DataFormat.JSON, DataFormat.SINGLEJSON, DataFormat.AVRO, DataFormat.MULTIJSON}
 
-    def __init__(self, kcsb):
+    def __init__(self, kcsb: KustoConnectionStringBuilder):
         """Kusto Streaming Ingest Client constructor.
         :param KustoConnectionStringBuilder kcsb: The connection string to initialize KustoClient.
         """
         self._kusto_client = KustoClient(kcsb)
 
-    def ingest_from_dataframe(self, df, ingestion_properties):
+    def ingest_from_dataframe(self, df: 'pandas.DataFrame', ingestion_properties: IngestionProperties):
         """Ingest from pandas DataFrame.
         :param pandas.DataFrame df: input dataframe to ingest.
         :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
@@ -50,7 +52,7 @@ class KustoStreamingIngestClient:
 
         os.unlink(temp_file_path)
 
-    def ingest_from_file(self, file_descriptor, ingestion_properties):
+    def ingest_from_file(self, file_descriptor: Union[str, FileDescriptor], ingestion_properties: IngestionProperties):
         """Ingest from local files.
         :param file_descriptor: a FileDescriptor to be ingested.
         :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
@@ -71,7 +73,7 @@ class KustoStreamingIngestClient:
         if stream is not None:
             stream.close()
 
-    def ingest_from_stream(self, stream_descriptor, ingestion_properties):
+    def ingest_from_stream(self, stream_descriptor: Union[io.IOBase, StreamDescriptor], ingestion_properties: IngestionProperties):
         """Ingest from io streams.
         :param azure.kusto.ingest.StreamDescriptor stream_descriptor: An object that contains a description of the stream to
                be ingested.
