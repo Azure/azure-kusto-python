@@ -8,7 +8,7 @@ from io import TextIOWrapper, BytesIO
 from typing import Union, AnyStr
 from typing.io import IO
 
-from azure.kusto.data.request import KustoClient, KustoConnectionStringBuilder
+from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
 
 from .descriptors import FileDescriptor, StreamDescriptor
 from .exceptions import KustoMissingMappingReferenceError

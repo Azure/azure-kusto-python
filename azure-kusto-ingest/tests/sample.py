@@ -2,7 +2,7 @@
 # Licensed under the MIT License
 import io
 
-from azure.kusto.data.request import KustoConnectionStringBuilder
+from azure.kusto.data import KustoConnectionStringBuilder
 from azure.kusto.ingest import (
     KustoIngestClient,
     IngestionProperties,

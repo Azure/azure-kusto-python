@@ -1,9 +1,8 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
-import warnings
 from enum import Enum, IntEnum
 
-from .exceptions import KustoDuplicateMappingError, KustoDuplicateMappingReferenceError, KustoMappingAndMappingReferenceError
+from .exceptions import KustoDuplicateMappingReferenceError, KustoMappingAndMappingReferenceError
 
 
 class DataFormat(Enum):

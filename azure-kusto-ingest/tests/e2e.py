@@ -6,7 +6,7 @@ import time
 import uuid
 
 from azure.kusto.data.exceptions import KustoServiceError
-from azure.kusto.data.request import KustoClient, KustoConnectionStringBuilder
+from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
 from azure.kusto.ingest import (
     KustoIngestClient,
     KustoStreamingIngestClient,
@@ -106,36 +106,49 @@ class Helpers:
                     ']'"""
 
 
-# Get environment variables
-engine_cs = os.environ.get("ENGINE_CONECTION_STRING")
-dm_cs = os.environ.get("DM_CONECTION_STRING")
-db_name = os.environ.get("TEST_DATABASE")  # Existed db with streaming ingestion enabled
-app_id = os.environ.get("APP_ID")
-app_key = os.environ.get("APP_KEY")
-tenant_id = os.environ.get("TENANT_ID")
+def engine_kcsb_from_env() -> KustoConnectionStringBuilder:
+    engine_cs = os.environ.get("ENGINE_CONNECTION_STRING")
+    app_id = os.environ.get("APP_ID")
+    app_key = os.environ.get("APP_KEY")
+    auth_id = os.environ.get("AUTH_ID")
+    return KustoConnectionStringBuilder.with_aad_application_key_authentication(engine_cs, app_id, app_key, auth_id)
+
+
+def dm_kcsb_from_env() -> KustoConnectionStringBuilder:
+    engine_cs = os.environ.get("ENGINE_CONNECTION_STRING")
+    dm_cs = os.environ.get("DM_CONNECTION_STRING") or engine_cs.replace("//", "//ingest-")
+    app_id = os.environ.get("APP_ID")
+    app_key = os.environ.get("APP_KEY")
+    auth_id = os.environ.get("AUTH_ID")
+    return KustoConnectionStringBuilder.with_aad_application_key_authentication(dm_cs, app_id, app_key, auth_id)
+
+
+def clean_previous_tests(engine_client, database, table):
+    engine_client.execute(database, ".drop table {} ifexists".format(table))
+    while not ingest_status_q.success.is_empty():
+        ingest_status_q.success.pop()
+
+
+def get_file_path() -> str:
+    current_dir = os.getcwd()
+    path_parts = ["azure-kusto-ingest", "tests", "input"]
+    missing_path_parts = []
+    for path_part in path_parts:
+        if path_part not in current_dir:
+            missing_path_parts.append(path_part)
+    return os.path.join(current_dir, *missing_path_parts)
+
 
 # Init clients
-table_name = "python_test"
-engine_kcsb = KustoConnectionStringBuilder.with_aad_application_key_authentication(engine_cs, app_id, app_key, tenant_id)
-dm_kcsb = KustoConnectionStringBuilder.with_aad_application_key_authentication(dm_cs, app_id, app_key, tenant_id)
-client = KustoClient(engine_kcsb)
-ingest_client = KustoIngestClient(dm_kcsb)
+test_db = os.environ.get("TEST_DATABASE")
+test_table = "python"
+client = KustoClient(engine_kcsb_from_env())
+ingest_client = KustoIngestClient(dm_kcsb_from_env())
 ingest_status_q = KustoIngestStatusQueues(ingest_client)
-streaming_ingest_client = KustoStreamingIngestClient(engine_kcsb)
+streaming_ingest_client = KustoStreamingIngestClient(engine_kcsb_from_env())
 
-# Clean previous test
-client.execute(db_name, ".drop table {} ifexists".format(table_name))
-while not ingest_status_q.success.is_empty():
-    ingest_status_q.success.pop()
-
-# Get files paths
-current_dir = os.getcwd()
-path_parts = ["azure-kusto-ingest", "tests", "input"]
-missing_path_parts = []
-for path_part in path_parts:
-    if path_part not in current_dir:
-        missing_path_parts.append(path_part)
-input_folder_path = os.path.join(current_dir, *missing_path_parts)
+clean_previous_tests(client, test_db, test_table)
+input_folder_path = get_file_path()
 
 csv_file_path = os.path.join(input_folder_path, "dataset.csv")
 tsv_file_path = os.path.join(input_folder_path, "dataset.tsv")
@@ -146,33 +159,31 @@ zipped_json_file_path = os.path.join(input_folder_path, "dataset.jsonz.gz")
 current_count = 0
 
 
-def assert_row_count(expected_row_count: int, timeout=300):
+# assertions
+def assert_rows_added(expected_row_count: int, timeout=300):
     global current_count
-    row_count = 0
 
+    response = None
     while timeout > 0:
         time.sleep(10)
         timeout -= 10
 
         try:
-            response = client.execute(db_name, "{} | count".format(table_name))
+            response = client.execute(test_db, "{} | count".format(test_table))
+            break
         except KustoServiceError:
-            continue
+            pass
 
-        if response is not None:
-            row = response.primary_results[0][0]
-            row_count = int(row["Count"]) - current_count
-            if row_count == expected_row_count:
-                current_count += row_count
-                return
+    if response is not None:
+        row = response.primary_results[0][0]
+        row_count = int(row["Count"]) - current_count
+        current_count += row_count
 
-    current_count += row_count
-    assert False, "Row count expected = {}, while actual row count = {}".format(expected_row_count, row_count)
+        assert row_count == expected_row_count, f"Row count expected = {expected_row_count}, while actual row count = {row_count}"
 
 
 def assert_success_messages_count(expected_success_messages: int, timeout=60):
     successes = 0
-    timeout = 60
     while successes != expected_success_messages and timeout > 0:
         while ingest_status_q.success.is_empty() and timeout > 0:
             time.sleep(1)
@@ -180,8 +191,8 @@ def assert_success_messages_count(expected_success_messages: int, timeout=60):
 
         success_message = ingest_status_q.success.pop()
 
-        assert success_message[0].Database == db_name
-        assert success_message[0].Table == table_name
+        assert success_message[0].Database == test_db
+        assert success_message[0].Table == test_table
 
         successes += 1
 
@@ -190,8 +201,8 @@ def assert_success_messages_count(expected_success_messages: int, timeout=60):
 
 def test_csv_ingest_non_existing_table():
     csv_ingest_props = IngestionProperties(
-        db_name,
-        table_name,
+        test_db,
+        test_table,
         data_format=DataFormat.CSV,
         ingestion_mapping=Helpers.create_test_table_csv_mappings(),
         report_level=ReportLevel.FailuresAndSuccesses,
@@ -201,15 +212,15 @@ def test_csv_ingest_non_existing_table():
         ingest_client.ingest_from_file(f, csv_ingest_props)
 
     assert_success_messages_count(2)
-    assert_row_count(20)
+    assert_rows_added(20)
 
-    client.execute(db_name, ".create table {} ingestion json mapping 'JsonMapping' {}".format(table_name, Helpers.get_test_table_json_mapping_reference()))
+    client.execute(test_db, ".create table {} ingestion json mapping 'JsonMapping' {}".format(test_table, Helpers.get_test_table_json_mapping_reference()))
 
 
 def test_json_ingest_existing_table():
     json_ingestion_props = IngestionProperties(
-        db_name,
-        table_name,
+        test_db,
+        test_table,
         data_format=DataFormat.JSON,
         ingestion_mapping=Helpers.create_test_table_json_mappings(),
         report_level=ReportLevel.FailuresAndSuccesses,
@@ -220,7 +231,7 @@ def test_json_ingest_existing_table():
 
     assert_success_messages_count(2)
 
-    assert_row_count(4)
+    assert_rows_added(4)
 
 
 def test_ingest_complicated_props():
@@ -228,8 +239,8 @@ def test_ingest_complicated_props():
         validationOptions=ValidationOptions.ValidateCsvInputConstantColumns, validationImplications=ValidationImplications.Fail
     )
     json_ingestion_props = IngestionProperties(
-        db_name,
-        table_name,
+        test_db,
+        test_table,
         data_format=DataFormat.JSON,
         ingestion_mapping=Helpers.create_test_table_json_mappings(),
         additional_tags=["a", "b"],
@@ -249,13 +260,13 @@ def test_ingest_complicated_props():
         ingest_client.ingest_from_file(fd, json_ingestion_props)
 
     assert_success_messages_count(2)
-    assert_row_count(4)
+    assert_rows_added(4)
 
 
 def test_json_ingestion_ingest_by_tag():
     json_ingestion_props = IngestionProperties(
-        db_name,
-        table_name,
+        test_db,
+        test_table,
         data_format=DataFormat.JSON,
         ingestion_mapping=Helpers.create_test_table_json_mappings(),
         ingest_if_not_exists=["ingestByTag"],
@@ -267,13 +278,13 @@ def test_json_ingestion_ingest_by_tag():
         ingest_client.ingest_from_file(f, json_ingestion_props)
 
     assert_success_messages_count(2)
-    assert_row_count(0)
+    assert_rows_added(0)
 
 
 def test_tsv_ingestion_csv_mapping():
     tsv_ingestion_props = IngestionProperties(
-        db_name,
-        table_name,
+        test_db,
+        test_table,
         data_format=DataFormat.TSV,
         ingestion_mapping=Helpers.create_test_table_csv_mappings(),
         report_level=ReportLevel.FailuresAndSuccesses,
@@ -282,31 +293,31 @@ def test_tsv_ingestion_csv_mapping():
     ingest_client.ingest_from_file(tsv_file_path, tsv_ingestion_props)
 
     assert_success_messages_count(1)
-    assert_row_count(10)
+    assert_rows_added(10)
 
 
 def test_streaming_ingest_from_opened_file():
-    ingestion_properties = IngestionProperties(database=db_name, table=table_name, data_format=DataFormat.CSV)
+    ingestion_properties = IngestionProperties(database=test_db, table=test_table, data_format=DataFormat.CSV)
 
     stream = open(csv_file_path, "r")
     streaming_ingest_client.ingest_from_stream(stream, ingestion_properties=ingestion_properties)
 
-    assert_row_count(10, timeout=120)
+    assert_rows_added(10, timeout=120)
 
 
 def test_streaming_ingest_form_csv_file():
-    ingestion_properties = IngestionProperties(database=db_name, table=table_name, data_format=DataFormat.CSV)
+    ingestion_properties = IngestionProperties(database=test_db, table=test_table, data_format=DataFormat.CSV)
 
     for f in [csv_file_path, zipped_csv_file_path]:
         streaming_ingest_client.ingest_from_file(f, ingestion_properties=ingestion_properties)
 
-    assert_row_count(20, timeout=120)
+    assert_rows_added(20, timeout=120)
 
 
 def test_streaming_ingest_from_json_file():
     ingestion_properties = IngestionProperties(
-        database=db_name,
-        table=table_name,
+        database=test_db,
+        table=test_table,
         data_format=DataFormat.JSON,
         ingestion_mapping_reference="JsonMapping",
         ingestion_mapping_type=IngestionMappingType.JSON,
@@ -315,11 +326,11 @@ def test_streaming_ingest_from_json_file():
     for f in [json_file_path, zipped_json_file_path]:
         streaming_ingest_client.ingest_from_file(f, ingestion_properties=ingestion_properties)
 
-    assert_row_count(4, timeout=120)
+    assert_rows_added(4, timeout=120)
 
 
 def test_streaming_ingest_from_csv_io_streams():
-    ingestion_properties = IngestionProperties(database=db_name, table=table_name, data_format=DataFormat.CSV)
+    ingestion_properties = IngestionProperties(database=test_db, table=test_table, data_format=DataFormat.CSV)
     byte_sequence = b'0,00000000-0000-0000-0001-020304050607,0,0,0,0,0,0,0,0,0,0,2014-01-01T01:01:01.0000000Z,Zero,"Zero",0,00:00:00,,null'
     bytes_stream = io.BytesIO(byte_sequence)
     streaming_ingest_client.ingest_from_stream(bytes_stream, ingestion_properties=ingestion_properties)
@@ -328,13 +339,13 @@ def test_streaming_ingest_from_csv_io_streams():
     str_stream = io.StringIO(str_sequence)
     streaming_ingest_client.ingest_from_stream(str_stream, ingestion_properties=ingestion_properties)
 
-    assert_row_count(2, timeout=120)
+    assert_rows_added(2, timeout=120)
 
 
 def test_streaming_ingest_from_json_io_streams():
     ingestion_properties = IngestionProperties(
-        database=db_name,
-        table=table_name,
+        database=test_db,
+        table=test_table,
         data_format=DataFormat.JSON,
         ingestion_mapping_reference="JsonMapping",
         ingestion_mapping_type=IngestionMappingType.JSON,
@@ -348,7 +359,7 @@ def test_streaming_ingest_from_json_io_streams():
     str_stream = io.StringIO(str_sequence)
     streaming_ingest_client.ingest_from_stream(str_stream, ingestion_properties=ingestion_properties)
 
-    assert_row_count(2, timeout=120)
+    assert_rows_added(2, timeout=120)
 
 
 def test_streaming_ingest_from_dataframe():
@@ -377,7 +388,7 @@ def test_streaming_ingest_from_dataframe():
     ]
     rows = [[0, "00000000-0000-0000-0001-020304050607", 0.0, 0.0, 0, 0, 0, 0, 0, 0, 0, 0, "2014-01-01T01:01:01Z", "Zero", "Zero", "0", "00:00:00", None, ""]]
     df = DataFrame(data=rows, columns=fields)
-    ingestion_properties = IngestionProperties(database=db_name, table=table_name, data_format=DataFormat.CSV)
+    ingestion_properties = IngestionProperties(database=test_db, table=test_table, data_format=DataFormat.CSV)
     ingest_client.ingest_from_dataframe(df, ingestion_properties)
 
-    assert_row_count(1, timeout=120)
+    assert_rows_added(1, timeout=120)

@@ -4,11 +4,9 @@ import json
 import uuid
 from datetime import datetime
 
-from azure.kusto.ingest import IngestionProperties, BlobDescriptor
-
 
 class _IngestionBlobInfo:
-    def __init__(self, blob_descriptor: BlobDescriptor, ingestion_properties: IngestionProperties, auth_context=None):
+    def __init__(self, blob_descriptor: 'BlobDescriptor', ingestion_properties: 'IngestionProperties', auth_context=None):
         self.properties = dict()
         self.properties["BlobPath"] = blob_descriptor.path
         self.properties["RawDataSize"] = blob_descriptor.size

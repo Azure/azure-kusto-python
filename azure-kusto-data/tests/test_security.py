@@ -1,7 +1,8 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
+import pytest
 from azure.kusto.data.exceptions import KustoAuthenticationError
-from azure.kusto.data.request import KustoConnectionStringBuilder
+from azure.kusto.data import KustoConnectionStringBuilder
 from azure.kusto.data.security import _AadHelper, AuthenticationMethod
 
 
@@ -20,7 +21,8 @@ def test_unauthorized_exception():
         assert error.kusto_cluster == cluster
         assert error.kwargs["username"] == username
 
-
+# TODO: remove this once we can control the timeout
+@pytest.mark.skip()
 def test_msi_auth():
     """
     * * * Note * * *
@@ -39,7 +41,7 @@ def test_msi_auth():
         KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication("localhost", msi_res_id=res_guid, timeout=1),
     ]
 
-    helpers = [_AadHelper(kcsb[0]), _AadHelper(kcsb[1]), _AadHelper(kcsb[2]), _AadHelper(kcsb[3])]
+    helpers = [_AadHelper(i) for i in kcsb]
 
     try:
         helpers[0].acquire_authorization_header()

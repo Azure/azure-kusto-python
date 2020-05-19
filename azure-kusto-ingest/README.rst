@@ -3,7 +3,7 @@ Microsoft Azure Kusto Ingest Library for Python
 
 .. code-block:: python
 
-    from azure.kusto.data.request import KustoConnectionStringBuilder
+    from azure.kusto.data import KustoConnectionStringBuilder
     from azure.kusto.ingest import KustoIngestClient, IngestionProperties, FileDescriptor, BlobDescriptor, DataFormat
 
     ingestion_props = IngestionProperties(database="{database_name}", table="{table_name}", data_format=DataFormat.CSV)
@@ -21,7 +21,7 @@ Overview
 --------
 
 *Kusto Python Ingest Client* Library provides the capability to ingest data into Kusto clusters using Python.
-It is Python 2.x/3.x compatible and supports data types through familiar Python DB API interface.
+It is Python 3.x compatible and supports data types through familiar Python DB API interface.
 
 It's possible to use the library, for instance, from `Jupyter Notebooks <http://jupyter.org/>`_ which are attached to Spark clusters,
 including, but not exclusively, `Azure Databricks <https://azure.microsoft.com/en-us/services/databricks>`_ instances.

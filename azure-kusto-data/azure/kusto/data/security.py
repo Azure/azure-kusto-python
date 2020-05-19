@@ -9,7 +9,6 @@ from urllib.parse import urlparse
 import dateutil.parser
 from adal import AuthenticationContext, AdalError
 from adal.constants import TokenResponseFields, OAuth2DeviceCodeResponseParameters, OAuth2ResponseParameters
-from azure.kusto.data import KustoConnectionStringBuilder
 from msrestazure.azure_active_directory import MSIAuthentication
 
 from .exceptions import KustoClientError, KustoAuthenticationError
@@ -83,7 +82,7 @@ class _AadHelper:
     msi_params = None
     token_provider = None
 
-    def __init__(self, kcsb: KustoConnectionStringBuilder):
+    def __init__(self, kcsb: 'KustoConnectionStringBuilder'):
         self.kusto_uri = "{0.scheme}://{0.hostname}".format(urlparse(kcsb.data_source))
         self.username = None
 

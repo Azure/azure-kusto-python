@@ -3,7 +3,7 @@
 from azure.kusto.ingest import KustoIngestClient
 from azure.kusto.ingest._resource_manager import _ResourceUri
 from azure.kusto.ingest.status import KustoIngestStatusQueues, SuccessMessage, FailureMessage
-from azure.storage.queue.models import QueueMessage
+from azure.storage.queue import QueueMessage
 from uuid import uuid4
 import time
 import json
@@ -26,7 +26,6 @@ class StatusQTests(unittest.TestCase):
         with mock.patch.object(client._resource_manager, "get_successful_ingestions_queues") as mocked_get_success_qs, mock.patch.object(
             client._resource_manager, "get_failed_ingestions_queues"
         ) as mocked_get_failed_qs:
-
             fake_failed_queue = _ResourceUri("mocked_storage_account1", "queue", "mocked_qf_name", "mocked_sas")
             fake_success_queue = _ResourceUri("mocked_storage_account2", "queue", "mocked_qs_name", "mocked_sas")
 

@@ -73,8 +73,8 @@ class KustoIngestClientTests(unittest.TestCase):
 
     @responses.activate
     @patch("azure.kusto.data.security._AadHelper.acquire_authorization_header", return_value=None)
-    @patch("azure.storage.blob.BlockBlobService.create_blob_from_stream")
-    @patch("azure.storage.queue.QueueService.put_message")
+    @patch("azure.storage.blob.BlobClient.upload_blob")
+    @patch("azure.storage.queue.QueueClient.send_message")
     @patch("uuid.uuid4", return_value=MOCKED_UUID_4)
     def test_sanity_ingest_from_file(self, mock_uuid, mock_put_message_in_queue, mock_create_blob_from_stream, mock_aad):
         responses.add_callback(
@@ -108,12 +108,12 @@ class KustoIngestClientTests(unittest.TestCase):
         # mock_create_blob_from_stream
         assert queued_message_json["BlobPath"] == expected_url
         assert queued_message_json["DatabaseName"] == "database"
-        assert queued_message_json["IgnoreSizeLimit"] == False
+        assert queued_message_json["IgnoreSizeLimit"] is False
         assert queued_message_json["AdditionalProperties"]["format"] == "csv"
-        assert queued_message_json["FlushImmediately"] == False
+        assert queued_message_json["FlushImmediately"] is False
         assert queued_message_json["TableName"] == "table"
         assert queued_message_json["RawDataSize"] > 0
-        assert queued_message_json["RetainBlobOnSuccess"] == True
+        assert queued_message_json["RetainBlobOnSuccess"] is True
 
         create_blob_from_stream_mock_kwargs = mock_create_blob_from_stream.call_args_list[0][1]
 
@@ -123,8 +123,8 @@ class KustoIngestClientTests(unittest.TestCase):
 
     @responses.activate
     @pytest.mark.skipif(not pandas_installed, reason="requires pandas")
-    @patch("azure.storage.blob.BlockBlobService.create_blob_from_stream")
-    @patch("azure.storage.queue.QueueService.put_message")
+    @patch("azure.storage.blob.BlobClient.upload_blob")
+    @patch("azure.storage.queue.QueueClient.send_message")
     @patch("uuid.uuid4", return_value=MOCKED_UUID_4)
     @patch("time.time", return_value=MOCKED_TIME)
     @patch("os.getpid", return_value=MOCKED_PID)
@@ -150,7 +150,7 @@ class KustoIngestClientTests(unittest.TestCase):
         put_message_in_queue_mock_kwargs = mock_put_message_in_queue.call_args_list[0][1]
 
         assert put_message_in_queue_mock_kwargs["queue_name"] == "readyforaggregation-secured"
-        queued_message = base64.b64decode(put_message_in_queue_mock_kwargs["content"].encode("utf-8")).decode("utf-8")
+        queued_message = put_message_in_queue_mock_kwargs["content"].encode("utf-8").decode("utf-8")
         queued_message_json = json.loads(queued_message)
         expected_url = ("https://storageaccount.blob.core.windows.net/tempstorage/database__table__1111-111111-111111-1111__df_{}_100_64.csv.gz?sas").format(
             id(df)
@@ -158,12 +158,12 @@ class KustoIngestClientTests(unittest.TestCase):
         # mock_create_blob_from_stream
         assert queued_message_json["BlobPath"] == expected_url
         assert queued_message_json["DatabaseName"] == "database"
-        assert queued_message_json["IgnoreSizeLimit"] == False
+        assert queued_message_json["IgnoreSizeLimit"] is False
         assert queued_message_json["AdditionalProperties"]["format"] == "csv"
-        assert queued_message_json["FlushImmediately"] == False
+        assert queued_message_json["FlushImmediately"] is False
         assert queued_message_json["TableName"] == "table"
         assert queued_message_json["RawDataSize"] > 0
-        assert queued_message_json["RetainBlobOnSuccess"] == True
+        assert queued_message_json["RetainBlobOnSuccess"] is True
 
         create_blob_from_stream_mock_kwargs = mock_create_blob_from_stream.call_args_list[0][1]
 

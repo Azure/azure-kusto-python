@@ -1,15 +1,15 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
-import io
 import os
 import shutil
-import uuid
 import struct
-from typing import AnyStr, Any, Union
-from typing.io import IO
-from zipfile import ZipFile
+import uuid
 from gzip import GzipFile
 from io import BytesIO, SEEK_END
+from typing import AnyStr, Union
+from zipfile import ZipFile
+
+from typing.io import IO
 
 
 def assert_uuid4(maybe_uuid: str, error_message: str):

@@ -524,7 +524,7 @@ class KustoClient:
         """
         Kusto Client constructor.
         :param kcsb: The connection string to initialize KustoClient.
-        :type kcsb: azure.kusto.data.request.KustoConnectionStringBuilder or str
+        :type kcsb: azure.kusto.data.KustoConnectionStringBuilder or str
         """
         if not isinstance(kcsb, KustoConnectionStringBuilder):
             kcsb = KustoConnectionStringBuilder(kcsb)
@@ -546,7 +546,7 @@ class KustoClient:
         Executes a query or management command.
         :param str database: Database against query will be executed.
         :param str query: Query to be executed.
-        :param azure.kusto.data.request.ClientRequestProperties properties: Optional additional properties.
+        :param azure.kusto.data.ClientRequestProperties properties: Optional additional properties.
         :return: Kusto response data set.
         :rtype: azure.kusto.data.response.KustoResponseDataSet
         """
@@ -561,7 +561,7 @@ class KustoClient:
         To learn more about KQL go to https://docs.microsoft.com/en-us/azure/kusto/query/
         :param str database: Database against query will be executed.
         :param str query: Query to be executed.
-        :param azure.kusto.data.request.ClientRequestProperties properties: Optional additional properties.
+        :param azure.kusto.data.ClientRequestProperties properties: Optional additional properties.
         :return: Kusto response data set.
         :rtype: azure.kusto.data.response.KustoResponseDataSet
         """
@@ -573,7 +573,7 @@ class KustoClient:
         To learn more about KQL control commands go to  https://docs.microsoft.com/en-us/azure/kusto/management/
         :param str database: Database against query will be executed.
         :param str query: Query to be executed.
-        :param azure.kusto.data.request.ClientRequestProperties properties: Optional additional properties.
+        :param azure.kusto.data.ClientRequestProperties properties: Optional additional properties.
         :return: Kusto response data set.
         :rtype: azure.kusto.data.response.KustoResponseDataSet
         """
