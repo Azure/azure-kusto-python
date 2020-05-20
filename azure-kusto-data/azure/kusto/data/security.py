@@ -82,7 +82,7 @@ class _AadHelper:
     msi_params = None
     token_provider = None
 
-    def __init__(self, kcsb: 'KustoConnectionStringBuilder'):
+    def __init__(self, kcsb: "KustoConnectionStringBuilder"):
         self.kusto_uri = "{0.scheme}://{0.hostname}".format(urlparse(kcsb.data_source))
         self.username = None
 

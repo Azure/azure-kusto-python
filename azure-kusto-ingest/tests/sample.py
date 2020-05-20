@@ -75,7 +75,10 @@ client.ingest_from_file("{filename}.csv", ingestion_properties=ingestion_props)
 
 
 # ingest from blob
-blob_descriptor = BlobDescriptor("https://{path_to_blob}.csv.gz?sas", 10)  # 10 is the raw size of the data in bytes.
+blob_descriptor = BlobDescriptor(
+    "https://{path_to_blob}.csv.gz?sp=rl&st=2020-05-20T13:38:37Z&se=2020-05-21T13:38:37Z&sv=2019-10-10&sr=c&sig=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    10,
+)  # 10 is the raw size of the data in bytes.
 client.ingest_from_blob(blob_descriptor, ingestion_properties=ingestion_props)
 
 # ingest from dataframe

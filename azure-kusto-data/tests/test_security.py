@@ -21,6 +21,7 @@ def test_unauthorized_exception():
         assert error.kusto_cluster == cluster
         assert error.kwargs["username"] == username
 
+
 # TODO: remove this once we can control the timeout
 @pytest.mark.skip()
 def test_msi_auth():

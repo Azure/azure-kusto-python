@@ -1,8 +1,5 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
-from ._models import KustoResultTable
-
-
 def to_pandas_datetime(raw_value, *args):
     """
     Transform a raw python value to a pandas datetime (datetime64)
@@ -36,7 +33,7 @@ def to_pandas_timedelta(raw_value, timedelta_value) -> "pandas.Timedelta":
     return pd.Timedelta(timedelta_value.total_seconds(), unit="ns")
 
 
-def dataframe_from_result_table(table: KustoResultTable):
+def dataframe_from_result_table(table: "KustoResultTable"):
     """Converts Kusto tables into pandas DataFrame.
     :param azure.kusto.data._models.KustoResultTable table: Table received from the response.
     :return: pandas DataFrame.
@@ -45,6 +42,8 @@ def dataframe_from_result_table(table: KustoResultTable):
 
     if not table:
         raise ValueError()
+
+    from azure.kusto.data._models import KustoResultTable
 
     if not isinstance(table, KustoResultTable):
         raise TypeError("Expected KustoResultTable got {}".format(type(table).__name__))

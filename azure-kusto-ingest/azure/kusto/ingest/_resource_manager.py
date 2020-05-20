@@ -11,7 +11,7 @@ _URI_FORMAT = re.compile("https://(\\w+).(queue|blob|table).core.windows.net/([\
 
 
 class _ResourceUri:
-    def __init__(self, storage_account_name, object_type, object_name, sas):
+    def __init__(self, storage_account_name: str, object_type: str, object_name: str, sas: str):
         self.storage_account_name = storage_account_name
         self.object_type = object_type
         self.object_name = object_name
@@ -23,9 +23,12 @@ class _ResourceUri:
         match = _URI_FORMAT.search(uri)
         return cls(match.group(1), match.group(2), match.group(3), match.group(4))
 
-    def to_string(self):
-        """Stringify the resource uri instance"""
-        return "https://{0.storage_account_name}.{0.object_type}.core.windows.net/{0.object_name}?{0.sas}".format(self)
+    @property
+    def uri(self) -> str:
+        return f"https://{self.storage_account_name}.{self.object_type}.core.windows.net/{self.object_name}"
+
+    def __str__(self):
+        return f"https://{self.storage_account_name}.{self.object_type}.core.windows.net/{self.object_name}?{self.sas}"
 
 
 class _IngestClientResources:

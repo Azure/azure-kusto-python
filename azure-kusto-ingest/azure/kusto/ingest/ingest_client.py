@@ -82,7 +82,7 @@ class KustoIngestClient:
             )
 
             random_container = random.choice(containers)
-            blob_service = BlobServiceClient.from_connection_string(str(random_container))
+            blob_service = BlobServiceClient(str(random_container))
             blob_client = blob_service.get_blob_client(container=random_container.object_name, blob=blob_name)
             blob_client.upload_blob(data=stream)
 
@@ -99,11 +99,11 @@ class KustoIngestClient:
         queues = self._resource_manager.get_ingestion_queues()
 
         random_queue = random.choice(queues)
-        queue_service = QueueServiceClient.from_connection_string(str(random_queue))
+        queue_service = QueueServiceClient(str(random_queue))
         authorization_context = self._resource_manager.get_authorization_context()
         ingestion_blob_info = _IngestionBlobInfo(blob_descriptor, ingestion_properties=ingestion_properties, auth_context=authorization_context)
         ingestion_blob_info_json = ingestion_blob_info.to_json()
         # TODO: perhaps this needs to be more visible
-        content = ingestion_blob_info_json.encode("utf-8").decode("utf-8")
+        content = ingestion_blob_info_json
         queue_client = queue_service.get_queue_client(queue=random_queue.object_name, message_encode_policy=TextBase64EncodePolicy)
         queue_client.send_message(content=content)
