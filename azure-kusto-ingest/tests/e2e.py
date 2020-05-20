@@ -370,7 +370,6 @@ def test_streaming_ingest_from_dataframe():
 
     assert_row_count(1, timeout=120)
 
-
 def pytest_sessionfinish(session, exitstatus):
     client.execute(db_name, ".drop table {} ifexists".format(table_name))
 
