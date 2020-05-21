@@ -10,7 +10,6 @@ import responses
 import io
 from azure.kusto.ingest import KustoIngestClient, IngestionProperties, DataFormat
 
-
 pandas_installed = False
 try:
     import pandas
@@ -18,7 +17,6 @@ try:
     pandas_installed = True
 except:
     pass
-
 
 UUID_REGEX = "[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}"
 BLOB_NAME_REGEX = "database__table__" + UUID_REGEX + "__dataset.csv.gz"
@@ -141,7 +139,7 @@ class KustoIngestClientTests(unittest.TestCase):
         put_message_in_queue_mock_kwargs = mock_put_message_in_queue.call_args_list[0][1]
 
         queued_message_json = json.loads(put_message_in_queue_mock_kwargs["content"])
-        expected_url = "https://storageaccount.blob.core.windows.net/tempstorage/database__table__1111-111111-111111-1111__dataset.csv.gz?sp=rl&st=2020-05-20T13:38:37Z&se=2020-05-21T13:38:37Z&sv=2019-10-10&sr=c&sig=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+        expected_url = "https://storageaccount.blob.core.windows.net/tempstorage/database__table__1111-111111-111111-1111__dataset.csv.gz?sp=rl&st=2020-05-20T13%3A38%3A37Z&se=2020-05-21T13%3A38%3A37Z&sv=2019-10-10&sr=c&sig=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
         # mock_upload_blob_from_stream
         assert queued_message_json["BlobPath"] == expected_url
         assert queued_message_json["DatabaseName"] == "database"
@@ -154,8 +152,7 @@ class KustoIngestClientTests(unittest.TestCase):
 
         upload_blob_kwargs = mock_upload_blob_from_stream.call_args_list[0][1]
 
-        assert type(upload_blob_kwargs["stream"]) == io.BytesIO
-        assert upload_blob_kwargs["blob_name"] == "database__table__1111-111111-111111-1111__dataset.csv.gz"
+        assert type(upload_blob_kwargs["data"]) == io.BytesIO
 
     @responses.activate
     @pytest.mark.skipif(not pandas_installed, reason="requires pandas")
@@ -186,9 +183,7 @@ class KustoIngestClientTests(unittest.TestCase):
         put_message_in_queue_mock_kwargs = mock_put_message_in_queue.call_args_list[0][1]
 
         queued_message_json = json.loads(put_message_in_queue_mock_kwargs["content"])
-        expected_url = (
-            "https://storageaccount.blob.core.windows.net/tempstorage/database__table__1111-111111-111111-1111__df_{}_100_64.csv.gz?sp=rl&st=2020-05-20T13:38:37Z&se=2020-05-21T13:38:37Z&sv=2019-10-10&sr=c&sig=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-        ).format(id(df))
+        expected_url = f"https://storageaccount.blob.core.windows.net/tempstorage/database__table__1111-111111-111111-1111__df_{id(df)}_100_64.csv.gz?sp=rl&st=2020-05-20T13%3A38%3A37Z&se=2020-05-21T13%3A38%3A37Z&sv=2019-10-10&sr=c&sig=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
         # mock_upload_blob_from_stream
         assert queued_message_json["BlobPath"] == expected_url
         assert queued_message_json["DatabaseName"] == "database"
@@ -201,5 +196,4 @@ class KustoIngestClientTests(unittest.TestCase):
 
         upload_blob_kwargs = mock_upload_blob_from_stream.call_args_list[0][1]
 
-        assert type(upload_blob_kwargs["stream"]) == io.BufferedReader
-        assert upload_blob_kwargs["blob_name"] == "database__table__1111-111111-111111-1111__df_{}_100_64.csv.gz".format(id(df))
+        assert type(upload_blob_kwargs["data"]) == io.BufferedReader

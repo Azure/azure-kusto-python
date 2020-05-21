@@ -26,7 +26,7 @@ class StatusQueue:
         self.message_cls = message_cls
 
     def _get_queues(self) -> List[QueueClient]:
-        return [QueueServiceClient(str(q)).get_queue_client(queue=q.object_name) for q in self.get_queues_func()]
+        return [QueueServiceClient(q.account_uri).get_queue_client(queue=q.object_name) for q in self.get_queues_func()]
 
     def is_empty(self) -> bool:
         """Checks if Status queue has any messages        
@@ -95,7 +95,7 @@ class StatusQueue:
 
         def _pop_specific_q(_q: QueueClient, _n: int) -> bool:
             has_messages = False
-            for m in _q.receive_messages(_n):
+            for m in _q.receive_messages(messages_per_page=_n):
                 if m:
                     has_messages = True
                     result.append(m if raw else self._deserialize_message(m))

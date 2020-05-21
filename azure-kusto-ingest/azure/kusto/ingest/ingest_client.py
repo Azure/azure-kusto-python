@@ -8,7 +8,7 @@ import uuid
 from typing import Union
 
 from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
-from azure.storage.blob import BlobServiceClient
+from azure.storage.blob import BlobServiceClient, ContainerClient
 from azure.storage.queue import QueueServiceClient, TextBase64EncodePolicy
 
 from ._ingestion_blob_info import _IngestionBlobInfo
@@ -82,7 +82,8 @@ class KustoIngestClient:
             )
 
             random_container = random.choice(containers)
-            blob_service = BlobServiceClient(str(random_container))
+
+            blob_service = BlobServiceClient(random_container.account_uri)
             blob_client = blob_service.get_blob_client(container=random_container.object_name, blob=blob_name)
             blob_client.upload_blob(data=stream)
 
@@ -99,7 +100,7 @@ class KustoIngestClient:
         queues = self._resource_manager.get_ingestion_queues()
 
         random_queue = random.choice(queues)
-        queue_service = QueueServiceClient(str(random_queue))
+        queue_service = QueueServiceClient(random_queue.account_uri)
         authorization_context = self._resource_manager.get_authorization_context()
         ingestion_blob_info = _IngestionBlobInfo(blob_descriptor, ingestion_properties=ingestion_properties, auth_context=authorization_context)
         ingestion_blob_info_json = ingestion_blob_info.to_json()

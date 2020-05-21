@@ -27,6 +27,10 @@ class _ResourceUri:
     def uri(self) -> str:
         return f"https://{self.storage_account_name}.{self.object_type}.core.windows.net/{self.object_name}"
 
+    @property
+    def account_uri(self) -> str:
+        return f"https://{self.storage_account_name}.{self.object_type}.core.windows.net/?{self.sas}"
+
     def __str__(self):
         return f"https://{self.storage_account_name}.{self.object_type}.core.windows.net/{self.object_name}?{self.sas}"
 

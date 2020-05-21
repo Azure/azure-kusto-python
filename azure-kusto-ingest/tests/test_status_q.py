@@ -60,8 +60,8 @@ def fake_peek_factory(f):
 
 
 def fake_receive_factory(f):
-    def fake_receive(self, n):
-        return f(self.queue_name, n)
+    def fake_receive(self, messages_per_page, *args, **kwargs):
+        return f(self.queue_name, messages_per_page)
 
     return fake_receive
 
@@ -178,17 +178,20 @@ class StatusQTests(unittest.TestCase):
 
     def test_pop(self):
         client = KustoIngestClient("some-cluster")
+
+        fake_receive = fake_receive_factory(
+            lambda queue_name, num_messages=1: [
+                mock_message(success=True) if "qs" in queue_name else mock_message(success=False) for _ in range(0, num_messages)
+            ]
+        )
+
         with mock.patch.object(client._resource_manager, "get_successful_ingestions_queues") as mocked_get_success_qs, mock.patch.object(
             client._resource_manager, "get_failed_ingestions_queues"
         ) as mocked_get_failed_qs, mock.patch.object(
             QueueClient,
             "receive_messages",
             autospec=True,
-            side_effect=fake_receive_factory(
-                lambda queue_name, num_messages=1: [
-                    mock_message(success=True) if "qs" in queue_name else mock_message(success=False) for _ in range(0, num_messages)
-                ]
-            ),
+            side_effect=fake_receive,
         ) as q_receive_mock, mock.patch.object(
             QueueClient, "delete_message", return_value=None
         ) as q_del_mock:
@@ -232,11 +235,11 @@ class StatusQTests(unittest.TestCase):
             assert q_receive_mock.call_count == 3
             assert q_del_mock.call_count == len(get_success_actual) + len(get_failure_actual)
 
-            assert q_receive_mock.call_args_list[0][0][1] == 2
+            assert q_receive_mock.call_args_list[0][1]['messages_per_page'] == 2
 
             actual = {
-                q_receive_mock.call_args_list[1][0][0].queue_name: q_receive_mock.call_args_list[1][0][1],
-                q_receive_mock.call_args_list[2][0][0].queue_name: q_receive_mock.call_args_list[2][0][1],
+                q_receive_mock.call_args_list[1][0][0].queue_name: q_receive_mock.call_args_list[1][1]['messages_per_page'],
+                q_receive_mock.call_args_list[2][0][0].queue_name: q_receive_mock.call_args_list[2][1]['messages_per_page'],
             }
 
             assert actual[fake_failed_queue2.object_name] == 4
@@ -244,14 +247,19 @@ class StatusQTests(unittest.TestCase):
 
     def test_pop_unbalanced_queues(self):
         client = KustoIngestClient("some-cluster")
+
+        fake_receive = fake_receive_factory(
+            lambda queue_name, messages_per_page=1: [
+                mock_message(success=False) for _ in range(0, messages_per_page)
+            ] if "1" in queue_name else []
+        )
         with mock.patch.object(client._resource_manager, "get_successful_ingestions_queues"), mock.patch.object(
             client._resource_manager, "get_failed_ingestions_queues"
         ) as mocked_get_failed_qs, mock.patch.object(
             QueueClient,
             "receive_messages",
             autospec=True,
-            side_effect=fake_receive_factory(
-                lambda queue_name, num_messages=1: [mock_message(success=True) for _ in range(0, num_messages)] if "f1" in queue_name else []),
+            side_effect=fake_receive,
         ) as q_receive_mock, mock.patch.object(
             QueueClient, "delete_message", return_value=None
         ):
@@ -285,6 +293,6 @@ class StatusQTests(unittest.TestCase):
             actual = {}
 
             for call_args in q_receive_mock.call_args_list:
-                actual[call_args[0][0]] = actual.get(call_args[0][0], 0) + call_args[0][0]
+                actual[call_args[0][0].queue_name] = actual.get(call_args[0][0].queue_name, 0) + call_args[1]['messages_per_page']
 
             assert actual[fake_failed_queue2.object_name] + actual[fake_failed_queue1.object_name] == (4 + 4 + 6)
