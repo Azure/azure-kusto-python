@@ -5,7 +5,7 @@ import random
 from typing import List, Callable
 
 from azure.kusto.ingest._resource_manager import _ResourceUri
-from azure.storage.queue import QueueServiceClient, QueueClient, QueueMessage
+from azure.storage.queue import QueueServiceClient, QueueClient, QueueMessage, TextBase64EncodePolicy, TextBase64DecodePolicy
 
 
 class QueueDetails:
@@ -26,7 +26,10 @@ class StatusQueue:
         self.message_cls = message_cls
 
     def _get_queues(self) -> List[QueueClient]:
-        return [QueueServiceClient(q.account_uri).get_queue_client(queue=q.object_name) for q in self.get_queues_func()]
+        return [
+            QueueServiceClient(q.account_uri).get_queue_client(queue=q.object_name, message_decode_policy=TextBase64DecodePolicy())
+            for q in self.get_queues_func()
+        ]
 
     def is_empty(self) -> bool:
         """Checks if Status queue has any messages        
@@ -49,7 +52,7 @@ class StatusQueue:
 
         def _peek_specific_q(_q: QueueClient, _n: int) -> bool:
             has_messages = False
-            for m in _q.peek_messages(_n):
+            for m in _q.peek_messages(max_messages=_n):
                 if m:
                     has_messages = True
                     result.append(m if raw else self._deserialize_message(m))

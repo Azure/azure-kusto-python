@@ -8,7 +8,7 @@ import uuid
 from typing import Union
 
 from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
-from azure.storage.blob import BlobServiceClient, ContainerClient
+from azure.storage.blob import BlobServiceClient
 from azure.storage.queue import QueueServiceClient, TextBase64EncodePolicy
 
 from ._ingestion_blob_info import _IngestionBlobInfo
@@ -106,5 +106,5 @@ class KustoIngestClient:
         ingestion_blob_info_json = ingestion_blob_info.to_json()
         # TODO: perhaps this needs to be more visible
         content = ingestion_blob_info_json
-        queue_client = queue_service.get_queue_client(queue=random_queue.object_name, message_encode_policy=TextBase64EncodePolicy)
+        queue_client = queue_service.get_queue_client(queue=random_queue.object_name, message_encode_policy=TextBase64EncodePolicy())
         queue_client.send_message(content=content)
