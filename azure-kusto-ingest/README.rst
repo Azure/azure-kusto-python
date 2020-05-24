@@ -31,6 +31,3 @@ including, but not exclusively, `Azure Databricks <https://azure.microsoft.com/e
 * `Data ingest sample <https://github.com/Azure/azure-kusto-python/blob/master/azure-kusto-ingest/tests/sample.py>`_.
 
 * `GitHub Repository <https://github.com/Azure/azure-kusto-python/tree/master/azure-kusto-data>`_.
-
-.. image:: https://travis-ci.org/Azure/azure-kusto-python.svg
-    :target: https://travis-ci.org/Azure/azure-kusto-python
