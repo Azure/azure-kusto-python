@@ -144,7 +144,8 @@ def get_file_path() -> str:
 
 # Init clients
 test_db = os.environ.get("TEST_DATABASE")
-test_table = "python_test" + str(int(time.time()))
+python_version = '.'.join([str(v) for v in sys.version_info[:3]])
+test_table = "python_test_{0}_{1}".format(python_version, str(int(time.time())))
 client = KustoClient(engine_kcsb_from_env())
 ingest_client = KustoIngestClient(dm_kcsb_from_env())
 ingest_status_q = KustoIngestStatusQueues(ingest_client)
@@ -206,10 +207,11 @@ def assert_success_messages_count(expected_success_messages: int, timeout=60):
 
         success_message = ingest_status_q.success.pop()
 
-        assert success_message[0].Database == test_db
-        assert success_message[0].Table == test_table
-        assert dateutil.parser.parse(success_message[0].SucceededOn) > start_time
-        successes += 1
+        # only record up to date messages - discard old one
+        if dateutil.parser.parse(success_message[0].SucceededOn) > start_time:
+            assert success_message[0].Database == test_db
+            assert success_message[0].Table == test_table
+            successes += 1
 
     assert successes == expected_success_messages
 
