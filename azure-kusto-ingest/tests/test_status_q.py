@@ -53,8 +53,8 @@ def mock_message(success):
 
 
 def fake_peek_factory(f):
-    def fake_peek(self, n):
-        return f(self.queue_name, n)
+    def fake_peek(self, max_messages):
+        return f(self.queue_name, max_messages)
 
     return fake_peek
 
@@ -112,8 +112,8 @@ class StatusQTests(unittest.TestCase):
             assert qs.failure.is_empty() is True
 
             assert q_mock.call_count == 2
-            assert q_mock.call_args_list[0][0][1] == 2
-            assert q_mock.call_args_list[1][0][1] == 2
+            assert q_mock.call_args_list[0][1]["max_messages"] == 2
+            assert q_mock.call_args_list[1][1]["max_messages"] == 2
 
     def test_peek(self):
         client = KustoIngestClient("some-cluster")
@@ -170,7 +170,7 @@ class StatusQTests(unittest.TestCase):
             assert len(QueueClient.peek_messages.call_args_list) == 3
 
             for call_args in q_mock.call_args_list:
-                actual[call_args[0][0].queue_name] = actual.get(call_args[0][0].queue_name, 0) + call_args[0][1]
+                actual[call_args[0][0].queue_name] = actual.get(call_args[0][0].queue_name, 0) + call_args[1]["max_messages"]
 
             assert actual[fake_failed_queue2.object_name] == 4
             assert actual[fake_failed_queue1.object_name] == 4

@@ -24,14 +24,14 @@ from azure.kusto.ingest import (
 from azure.kusto.ingest.status import KustoIngestStatusQueues
 
 
-class Helpers:
+class TestData:
     """A class to define mappings to deft table."""
 
     def __init__(self):
         pass
 
     @staticmethod
-    def create_test_table_csv_mappings():
+    def test_table_csv_mappings():
         """A method to define csv mappings to test table."""
         mappings = list()
         mappings.append(ColumnMapping(column_name="rownumber", column_type="int", ordinal=0))
@@ -56,7 +56,7 @@ class Helpers:
         return mappings
 
     @staticmethod
-    def create_test_table_json_mappings():
+    def test_table_json_mappings():
         """A method to define json mappings to test table."""
         mappings = list()
         mappings.append(ColumnMapping(column_name="rownumber", path="$.rownumber", column_type="int"))
@@ -81,7 +81,7 @@ class Helpers:
         return mappings
 
     @staticmethod
-    def get_test_table_json_mapping_reference():
+    def test_table_json_mapping_reference():
         """A method to get json mappings reference to test table."""
         return """'['
                     '    { "column" : "rownumber", "datatype" : "int", "Properties":{"Path":"$.rownumber"}},'
@@ -160,13 +160,13 @@ current_count = 0
 
 
 # assertions
-def assert_rows_added(expected_row_count: int, timeout=300):
+def assert_rows_added(expected_row_count: int, timeout=30):
     global current_count
 
     response = None
     while timeout > 0:
-        time.sleep(10)
-        timeout -= 10
+        time.sleep(1)
+        timeout -= 1
 
         try:
             response = client.execute(test_db, "{} | count".format(test_table))
@@ -204,8 +204,9 @@ def test_csv_ingest_non_existing_table():
         test_db,
         test_table,
         data_format=DataFormat.CSV,
-        ingestion_mapping=Helpers.create_test_table_csv_mappings(),
+        ingestion_mapping=TestData.test_table_csv_mappings(),
         report_level=ReportLevel.FailuresAndSuccesses,
+        flush_immediately=True,
     )
 
     for f in [csv_file_path, zipped_csv_file_path]:
@@ -214,15 +215,16 @@ def test_csv_ingest_non_existing_table():
     assert_success_messages_count(2)
     assert_rows_added(20)
 
-    client.execute(test_db, ".create table {} ingestion json mapping 'JsonMapping' {}".format(test_table, Helpers.get_test_table_json_mapping_reference()))
+    client.execute(test_db, ".create table {} ingestion json mapping 'JsonMapping' {}".format(test_table, TestData.test_table_json_mapping_reference()))
 
 
 def test_json_ingest_existing_table():
     json_ingestion_props = IngestionProperties(
         test_db,
         test_table,
+        flush_immediately=True,
         data_format=DataFormat.JSON,
-        ingestion_mapping=Helpers.create_test_table_json_mappings(),
+        ingestion_mapping=TestData.test_table_json_mappings(),
         report_level=ReportLevel.FailuresAndSuccesses,
     )
 
@@ -236,13 +238,13 @@ def test_json_ingest_existing_table():
 
 def test_ingest_complicated_props():
     validation_policy = ValidationPolicy(
-        validationOptions=ValidationOptions.ValidateCsvInputConstantColumns, validationImplications=ValidationImplications.Fail
+        validation_options=ValidationOptions.ValidateCsvInputConstantColumns, validation_implications=ValidationImplications.Fail
     )
     json_ingestion_props = IngestionProperties(
         test_db,
         test_table,
         data_format=DataFormat.JSON,
-        ingestion_mapping=Helpers.create_test_table_json_mappings(),
+        ingestion_mapping=TestData.test_table_json_mappings(),
         additional_tags=["a", "b"],
         ingest_if_not_exists=["aaaa", "bbbb"],
         ingest_by_tags=["ingestByTag"],
@@ -268,10 +270,11 @@ def test_json_ingestion_ingest_by_tag():
         test_db,
         test_table,
         data_format=DataFormat.JSON,
-        ingestion_mapping=Helpers.create_test_table_json_mappings(),
+        ingestion_mapping=TestData.test_table_json_mappings(),
         ingest_if_not_exists=["ingestByTag"],
         report_level=ReportLevel.FailuresAndSuccesses,
         drop_by_tags=["drop", "drop-by"],
+        flush_immediately=True,
     )
 
     for f in [json_file_path, zipped_json_file_path]:
@@ -285,8 +288,9 @@ def test_tsv_ingestion_csv_mapping():
     tsv_ingestion_props = IngestionProperties(
         test_db,
         test_table,
+        flush_immediately=True,
         data_format=DataFormat.TSV,
-        ingestion_mapping=Helpers.create_test_table_csv_mappings(),
+        ingestion_mapping=TestData.test_table_csv_mappings(),
         report_level=ReportLevel.FailuresAndSuccesses,
     )
 
@@ -318,6 +322,7 @@ def test_streaming_ingest_from_json_file():
     ingestion_properties = IngestionProperties(
         database=test_db,
         table=test_table,
+        flush_immediately=True,
         data_format=DataFormat.JSON,
         ingestion_mapping_reference="JsonMapping",
         ingestion_mapping_type=IngestionMappingType.JSON,
@@ -347,6 +352,7 @@ def test_streaming_ingest_from_json_io_streams():
         database=test_db,
         table=test_table,
         data_format=DataFormat.JSON,
+        flush_immediately=True,
         ingestion_mapping_reference="JsonMapping",
         ingestion_mapping_type=IngestionMappingType.JSON,
     )
@@ -388,7 +394,7 @@ def test_streaming_ingest_from_dataframe():
     ]
     rows = [[0, "00000000-0000-0000-0001-020304050607", 0.0, 0.0, 0, 0, 0, 0, 0, 0, 0, 0, "2014-01-01T01:01:01Z", "Zero", "Zero", "0", "00:00:00", None, ""]]
     df = DataFrame(data=rows, columns=fields)
-    ingestion_properties = IngestionProperties(database=test_db, table=test_table, data_format=DataFormat.CSV)
+    ingestion_properties = IngestionProperties(database=test_db, table=test_table, flush_immediately=True, data_format=DataFormat.CSV)
     ingest_client.ingest_from_dataframe(df, ingestion_properties)
 
     assert_rows_added(1, timeout=120)
