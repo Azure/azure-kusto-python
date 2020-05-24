@@ -1,5 +1,4 @@
 # Microsoft Azure Kusto  (Azure Data Explorer) SDK  for Python
-[![](https://travis-ci.org/Azure/azure-kusto-python.svg?branch=master)](https://travis-ci.org/Azure/azure-kusto-python)
 
 [*azure-kusto-data*]("https://github.com/Azure/azure-kusto-python/tree/master/azure-kusto-data") Package provides the capability to query Kusto clusters with Python.<br>
 [![PyPI version](https://badge.fury.io/py/azure-kusto-data.svg)](https://badge.fury.io/py/azure-kusto-data)
