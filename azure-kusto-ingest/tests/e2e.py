@@ -1,17 +1,14 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
+import datetime
 import io
 import os
+import sys
 import time
 import uuid
-import datetime
-import dateutil
-import dateutil.parser
-import sys
 
-
-from azure.kusto.data.exceptions import KustoServiceError
 from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
+from azure.kusto.data.exceptions import KustoServiceError
 from azure.kusto.ingest import (
     KustoIngestClient,
     KustoStreamingIngestClient,
@@ -26,7 +23,6 @@ from azure.kusto.ingest import (
     ReportMethod,
     FileDescriptor,
 )
-from azure.kusto.ingest.status import KustoIngestStatusQueues
 
 
 class TestData:
@@ -130,8 +126,6 @@ def dm_kcsb_from_env() -> KustoConnectionStringBuilder:
 
 def clean_previous_tests(engine_client, database, table):
     engine_client.execute(database, ".drop table {0} ifexists".format(table))
-    while not ingest_status_q.success.is_empty():
-        ingest_status_q.success.pop()
 
 
 def get_file_path() -> str:
@@ -151,7 +145,6 @@ python_version = "_".join([str(v) for v in sys.version_info[:3]])
 test_table = "python_test_{0}_{1}".format(python_version, str(int(time.time())))
 client = KustoClient(engine_kcsb_from_env())
 ingest_client = KustoIngestClient(dm_kcsb_from_env())
-ingest_status_q = KustoIngestStatusQueues(ingest_client)
 streaming_ingest_client = KustoStreamingIngestClient(engine_kcsb_from_env())
 
 start_time = datetime.datetime.now(datetime.timezone.utc)
@@ -201,24 +194,6 @@ def assert_rows_added(expected: int, timeout=60):
     assert actual == expected, "Row count expected = {0}, while actual row count = {1}".format(expected, actual)
 
 
-def assert_success_messages_count(expected_success_messages: int, timeout=60):
-    successes = 0
-    while successes != expected_success_messages and timeout > 0:
-        while ingest_status_q.success.is_empty() and timeout > 0:
-            time.sleep(1)
-            timeout -= 1
-
-        success_message = ingest_status_q.success.pop()
-
-        # only record up to date messages - discard old one
-        if dateutil.parser.parse(success_message[0].SucceededOn) > start_time:
-            assert success_message[0].Database == test_db
-            assert success_message[0].Table == test_table
-            successes += 1
-
-    assert successes == expected_success_messages
-
-
 def test_csv_ingest_existing_table():
     csv_ingest_props = IngestionProperties(
         test_db,
@@ -232,7 +207,6 @@ def test_csv_ingest_existing_table():
     for f in [csv_file_path, zipped_csv_file_path]:
         ingest_client.ingest_from_file(f, csv_ingest_props)
 
-    assert_success_messages_count(2)
     assert_rows_added(20)
 
 
@@ -248,8 +222,6 @@ def test_json_ingest_existing_table():
 
     for f in [json_file_path, zipped_json_file_path]:
         ingest_client.ingest_from_file(f, json_ingestion_props)
-
-    assert_success_messages_count(2)
 
     assert_rows_added(4)
 
@@ -279,7 +251,6 @@ def test_ingest_complicated_props():
     for fd in fds:
         ingest_client.ingest_from_file(fd, json_ingestion_props)
 
-    assert_success_messages_count(2)
     assert_rows_added(4)
 
 
@@ -298,7 +269,6 @@ def test_json_ingestion_ingest_by_tag():
     for f in [json_file_path, zipped_json_file_path]:
         ingest_client.ingest_from_file(f, json_ingestion_props)
 
-    assert_success_messages_count(2)
     assert_rows_added(0)
 
 
@@ -314,7 +284,6 @@ def test_tsv_ingestion_csv_mapping():
 
     ingest_client.ingest_from_file(tsv_file_path, tsv_ingestion_props)
 
-    assert_success_messages_count(1)
     assert_rows_added(10)
 
 
