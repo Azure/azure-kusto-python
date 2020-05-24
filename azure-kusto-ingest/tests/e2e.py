@@ -4,6 +4,9 @@ import io
 import os
 import time
 import uuid
+import datetime
+import dateutil
+import dateutil.parser
 
 from azure.kusto.data.exceptions import KustoServiceError
 from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
@@ -147,6 +150,8 @@ ingest_client = KustoIngestClient(dm_kcsb_from_env())
 ingest_status_q = KustoIngestStatusQueues(ingest_client)
 streaming_ingest_client = KustoStreamingIngestClient(engine_kcsb_from_env())
 
+start_time = datetime.datetime.now(datetime.timezone.utc)
+
 clean_previous_tests(client, test_db, test_table)
 input_folder_path = get_file_path()
 
@@ -158,28 +163,36 @@ zipped_json_file_path = os.path.join(input_folder_path, "dataset.jsonz.gz")
 
 current_count = 0
 
+client.execute(
+    test_db,
+    f".create table {test_table} (rownumber: int, rowguid: string, xdouble: real, xfloat: real, xbool: bool, xint16: int, xint32: int, xint64: long, xuint8: long, xuint16: long, xuint32: long, xuint64: long, xdate: datetime, xsmalltext: string, xtext: string, xnumberAsText: string, xtime: timespan, xtextWithNulls: string, xdynamicWithNulls: dynamic)",
+)
+client.execute(test_db, f".create table {test_table} ingestion json mapping 'JsonMapping' {TestData.test_table_json_mapping_reference()}")
+
 
 # assertions
-def assert_rows_added(expected_row_count: int, timeout=30):
+def assert_rows_added(expected: int, timeout=60):
     global current_count
 
-    response = None
+    actual = 0
     while timeout > 0:
         time.sleep(1)
         timeout -= 1
 
         try:
             response = client.execute(test_db, "{} | count".format(test_table))
-            break
         except KustoServiceError:
-            pass
+            continue
 
-    if response is not None:
-        row = response.primary_results[0][0]
-        row_count = int(row["Count"]) - current_count
-        current_count += row_count
+        if response is not None:
+            row = response.primary_results[0][0]
+            actual = int(row["Count"]) - current_count
+            # this is done to allow for data to arrive properly
+            if actual >= expected:
+                break
 
-        assert row_count == expected_row_count, f"Row count expected = {expected_row_count}, while actual row count = {row_count}"
+    current_count += actual
+    assert actual == expected, f"Row count expected = {expected}, while actual row count = {actual}"
 
 
 def assert_success_messages_count(expected_success_messages: int, timeout=60):
@@ -193,13 +206,13 @@ def assert_success_messages_count(expected_success_messages: int, timeout=60):
 
         assert success_message[0].Database == test_db
         assert success_message[0].Table == test_table
-
+        assert dateutil.parser.parse(success_message[0].SucceededOn) > start_time
         successes += 1
 
     assert successes == expected_success_messages
 
 
-def test_csv_ingest_non_existing_table():
+def test_csv_ingest_existing_table():
     csv_ingest_props = IngestionProperties(
         test_db,
         test_table,
@@ -214,8 +227,6 @@ def test_csv_ingest_non_existing_table():
 
     assert_success_messages_count(2)
     assert_rows_added(20)
-
-    client.execute(test_db, ".create table {} ingestion json mapping 'JsonMapping' {}".format(test_table, TestData.test_table_json_mapping_reference()))
 
 
 def test_json_ingest_existing_table():
