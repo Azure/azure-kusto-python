@@ -129,7 +129,7 @@ def dm_kcsb_from_env() -> KustoConnectionStringBuilder:
 
 
 def clean_previous_tests(engine_client, database, table):
-    engine_client.execute(database, ".drop table {} ifexists".format(table))
+    engine_client.execute(database, ".drop table {0} ifexists".format(table))
     while not ingest_status_q.success.is_empty():
         ingest_status_q.success.pop()
 
