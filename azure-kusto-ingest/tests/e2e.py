@@ -1,15 +1,14 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
+import datetime
 import io
 import os
+import sys
 import time
 import uuid
-import datetime
-import dateutil
-import dateutil.parser
 
-from azure.kusto.data.exceptions import KustoServiceError
 from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
+from azure.kusto.data.exceptions import KustoServiceError
 from azure.kusto.ingest import (
     KustoIngestClient,
     KustoStreamingIngestClient,
@@ -24,7 +23,6 @@ from azure.kusto.ingest import (
     ReportMethod,
     FileDescriptor,
 )
-from azure.kusto.ingest.status import KustoIngestStatusQueues
 
 
 class TestData:
@@ -127,9 +125,7 @@ def dm_kcsb_from_env() -> KustoConnectionStringBuilder:
 
 
 def clean_previous_tests(engine_client, database, table):
-    engine_client.execute(database, ".drop table {} ifexists".format(table))
-    while not ingest_status_q.success.is_empty():
-        ingest_status_q.success.pop()
+    engine_client.execute(database, ".drop table {0} ifexists".format(table))
 
 
 def get_file_path() -> str:
@@ -144,10 +140,11 @@ def get_file_path() -> str:
 
 # Init clients
 test_db = os.environ.get("TEST_DATABASE")
-test_table = "python"
+
+python_version = "_".join([str(v) for v in sys.version_info[:3]])
+test_table = "python_test_{0}_{1}".format(python_version, str(int(time.time())))
 client = KustoClient(engine_kcsb_from_env())
 ingest_client = KustoIngestClient(dm_kcsb_from_env())
-ingest_status_q = KustoIngestStatusQueues(ingest_client)
 streaming_ingest_client = KustoStreamingIngestClient(engine_kcsb_from_env())
 
 start_time = datetime.datetime.now(datetime.timezone.utc)
@@ -165,9 +162,11 @@ current_count = 0
 
 client.execute(
     test_db,
-    f".create table {test_table} (rownumber: int, rowguid: string, xdouble: real, xfloat: real, xbool: bool, xint16: int, xint32: int, xint64: long, xuint8: long, xuint16: long, xuint32: long, xuint64: long, xdate: datetime, xsmalltext: string, xtext: string, xnumberAsText: string, xtime: timespan, xtextWithNulls: string, xdynamicWithNulls: dynamic)",
+    ".create table {0} (rownumber: int, rowguid: string, xdouble: real, xfloat: real, xbool: bool, xint16: int, xint32: int, xint64: long, xuint8: long, xuint16: long, xuint32: long, xuint64: long, xdate: datetime, xsmalltext: string, xtext: string, xnumberAsText: string, xtime: timespan, xtextWithNulls: string, xdynamicWithNulls: dynamic)".format(
+        test_table
+    ),
 )
-client.execute(test_db, f".create table {test_table} ingestion json mapping 'JsonMapping' {TestData.test_table_json_mapping_reference()}")
+client.execute(test_db, ".create table {0} ingestion json mapping 'JsonMapping' {1}".format(test_table, TestData.test_table_json_mapping_reference()))
 
 
 # assertions
@@ -192,24 +191,7 @@ def assert_rows_added(expected: int, timeout=60):
                 break
 
     current_count += actual
-    assert actual == expected, f"Row count expected = {expected}, while actual row count = {actual}"
-
-
-def assert_success_messages_count(expected_success_messages: int, timeout=60):
-    successes = 0
-    while successes != expected_success_messages and timeout > 0:
-        while ingest_status_q.success.is_empty() and timeout > 0:
-            time.sleep(1)
-            timeout -= 1
-
-        success_message = ingest_status_q.success.pop()
-
-        assert success_message[0].Database == test_db
-        assert success_message[0].Table == test_table
-        assert dateutil.parser.parse(success_message[0].SucceededOn) > start_time
-        successes += 1
-
-    assert successes == expected_success_messages
+    assert actual == expected, "Row count expected = {0}, while actual row count = {1}".format(expected, actual)
 
 
 def test_csv_ingest_existing_table():
@@ -225,7 +207,6 @@ def test_csv_ingest_existing_table():
     for f in [csv_file_path, zipped_csv_file_path]:
         ingest_client.ingest_from_file(f, csv_ingest_props)
 
-    assert_success_messages_count(2)
     assert_rows_added(20)
 
 
@@ -241,8 +222,6 @@ def test_json_ingest_existing_table():
 
     for f in [json_file_path, zipped_json_file_path]:
         ingest_client.ingest_from_file(f, json_ingestion_props)
-
-    assert_success_messages_count(2)
 
     assert_rows_added(4)
 
@@ -272,7 +251,6 @@ def test_ingest_complicated_props():
     for fd in fds:
         ingest_client.ingest_from_file(fd, json_ingestion_props)
 
-    assert_success_messages_count(2)
     assert_rows_added(4)
 
 
@@ -291,7 +269,6 @@ def test_json_ingestion_ingest_by_tag():
     for f in [json_file_path, zipped_json_file_path]:
         ingest_client.ingest_from_file(f, json_ingestion_props)
 
-    assert_success_messages_count(2)
     assert_rows_added(0)
 
 
@@ -307,12 +284,11 @@ def test_tsv_ingestion_csv_mapping():
 
     ingest_client.ingest_from_file(tsv_file_path, tsv_ingestion_props)
 
-    assert_success_messages_count(1)
     assert_rows_added(10)
 
 
 def test_streaming_ingest_from_opened_file():
-    client.execute(test_db, f'.clear database {test_db} cache streamingingestion schema')
+    client.execute(test_db, ".clear database cache streamingingestion schema")
     ingestion_properties = IngestionProperties(database=test_db, table=test_table, data_format=DataFormat.CSV)
 
     with open(csv_file_path, "r") as stream:
@@ -322,7 +298,7 @@ def test_streaming_ingest_from_opened_file():
 
 
 def test_streaming_ingest_from_csv_file():
-    client.execute(test_db, f'.clear database {test_db} cache streamingingestion schema')
+    client.execute(test_db, ".clear database cache streamingingestion schema")
     ingestion_properties = IngestionProperties(database=test_db, table=test_table, flush_immediately=True, data_format=DataFormat.CSV)
 
     for f in [csv_file_path, zipped_csv_file_path]:
@@ -332,7 +308,7 @@ def test_streaming_ingest_from_csv_file():
 
 
 def test_streaming_ingest_from_json_file():
-    client.execute(test_db, f'.clear database {test_db} cache streamingingestion schema')
+    client.execute(test_db, ".clear database cache streamingingestion schema")
     ingestion_properties = IngestionProperties(
         database=test_db,
         table=test_table,
@@ -349,7 +325,7 @@ def test_streaming_ingest_from_json_file():
 
 
 def test_streaming_ingest_from_csv_io_streams():
-    client.execute(test_db, f'.clear database {test_db} cache streamingingestion schema')
+    client.execute(test_db, ".clear database cache streamingingestion schema")
     ingestion_properties = IngestionProperties(database=test_db, table=test_table, data_format=DataFormat.CSV)
     byte_sequence = b'0,00000000-0000-0000-0001-020304050607,0,0,0,0,0,0,0,0,0,0,2014-01-01T01:01:01.0000000Z,Zero,"Zero",0,00:00:00,,null'
     bytes_stream = io.BytesIO(byte_sequence)
@@ -413,3 +389,7 @@ def test_streaming_ingest_from_dataframe():
     ingest_client.ingest_from_dataframe(df, ingestion_properties)
 
     assert_rows_added(1, timeout=120)
+
+
+def pytest_sessionfinish(session, exitstatus):
+    client.execute(test_db, ".drop table {} ifexists".format(test_table))

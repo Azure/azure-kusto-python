@@ -1,14 +1,14 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
-import pytest
+import io
+import json
 import os
 import unittest
-import json
-import base64
-from mock import patch
+
+import pytest
 import responses
-import io
 from azure.kusto.ingest import KustoIngestClient, IngestionProperties, DataFormat
+from mock import patch
 
 pandas_installed = False
 try:
@@ -100,7 +100,7 @@ def request_callback(request):
             "Tables": [{"TableName": "Table_0", "Columns": [{"ColumnName": "AuthorizationContext", "DataType": "String"}], "Rows": [["authorization_context"]]}]
         }
 
-    return (response_status, response_headers, json.dumps(response_body))
+    return response_status, response_headers, json.dumps(response_body)
 
 
 class KustoIngestClientTests(unittest.TestCase):
@@ -139,9 +139,11 @@ class KustoIngestClientTests(unittest.TestCase):
         put_message_in_queue_mock_kwargs = mock_put_message_in_queue.call_args_list[0][1]
 
         queued_message_json = json.loads(put_message_in_queue_mock_kwargs["content"])
-        expected_url = "https://storageaccount.blob.core.windows.net/tempstorage/database__table__1111-111111-111111-1111__dataset.csv.gz?sp=rl&st=2020-05-20T13%3A38%3A37Z&se=2020-05-21T13%3A38%3A37Z&sv=2019-10-10&sr=c&sig=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+        expected_url = "https://storageaccount.blob.core.windows.net/tempstorage/database__table__1111-111111-111111-1111__dataset.csv.gz?"
         # mock_upload_blob_from_stream
-        assert queued_message_json["BlobPath"] == expected_url
+        # not checking the query string because it can change order, just checking it's there
+        assert queued_message_json["BlobPath"].startswith(expected_url) is True
+        assert len(queued_message_json["BlobPath"]) > len(expected_url)
         assert queued_message_json["DatabaseName"] == "database"
         assert queued_message_json["IgnoreSizeLimit"] is False
         assert queued_message_json["AdditionalProperties"]["format"] == "csv"
@@ -183,9 +185,11 @@ class KustoIngestClientTests(unittest.TestCase):
         put_message_in_queue_mock_kwargs = mock_put_message_in_queue.call_args_list[0][1]
 
         queued_message_json = json.loads(put_message_in_queue_mock_kwargs["content"])
-        expected_url = f"https://storageaccount.blob.core.windows.net/tempstorage/database__table__1111-111111-111111-1111__df_{id(df)}_100_64.csv.gz?sp=rl&st=2020-05-20T13%3A38%3A37Z&se=2020-05-21T13%3A38%3A37Z&sv=2019-10-10&sr=c&sig=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+        expected_url = "https://storageaccount.blob.core.windows.net/tempstorage/database__table__1111-111111-111111-1111__df_{0}_100_64.csv.gz?".format(id(df))
         # mock_upload_blob_from_stream
-        assert queued_message_json["BlobPath"] == expected_url
+        # not checking the query string because it can change order, just checking it's there
+        assert queued_message_json["BlobPath"].startswith(expected_url) is True
+        assert len(queued_message_json["BlobPath"]) > len(expected_url)
         assert queued_message_json["DatabaseName"] == "database"
         assert queued_message_json["IgnoreSizeLimit"] is False
         assert queued_message_json["AdditionalProperties"]["format"] == "csv"
