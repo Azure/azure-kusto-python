@@ -1,9 +1,11 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
-import base64
 import random
 
-from azure.storage.common import CloudStorageAccount
+from typing import List, Callable
+
+from azure.kusto.ingest._resource_manager import _ResourceUri
+from azure.storage.queue import QueueServiceClient, QueueClient, QueueMessage, TextBase64EncodePolicy, TextBase64DecodePolicy
 
 
 class QueueDetails:
@@ -19,63 +21,57 @@ class StatusQueue:
     """StatusQueue is a class to simplify access to Kusto status queues (backed by azure storage queues).
     """
 
-    def __init__(self, get_queues_func, message_cls):
+    def __init__(self, get_queues_func: Callable[[], List[_ResourceUri]], message_cls):
         self.get_queues_func = get_queues_func
         self.message_cls = message_cls
 
-    def _get_q_services(self):
+    def _get_queues(self) -> List[QueueClient]:
         return [
-            QueueDetails(
-                name=queue_details.object_name,
-                service=CloudStorageAccount(account_name=queue_details.storage_account_name, sas_token=queue_details.sas).create_queue_service(),
-            )
-            for queue_details in self.get_queues_func()
+            QueueServiceClient(q.account_uri).get_queue_client(queue=q.object_name, message_decode_policy=TextBase64DecodePolicy())
+            for q in self.get_queues_func()
         ]
 
-    def is_empty(self):
+    def is_empty(self) -> bool:
         """Checks if Status queue has any messages        
         """
-        return not self.peek(1, raw=True)
+        return len(self.peek(1, raw=True)) == 0
 
-    def _decode_content(self, content):
-        return base64.b64decode(content).decode("utf-8")
-
-    def _deserialize_message(self, m):
+    def _deserialize_message(self, m: QueueMessage):
         """Deserialize a message and return at as `message_cls`
         :param m: original message m.
         """
-        return self.message_cls(self._decode_content(m.content))
+        return self.message_cls(m.content)
 
     # TODO: current implementation takes a union top n /  len(queues), which is not ideal,
-    # because the user is not supposed to know that there can be multiple underlying queues
-    def peek(self, n=1, raw=False):
+    #  because the user is not supposed to know that there can be multiple underlying queues
+    def peek(self, n=1, raw=False) -> List[QueueMessage]:
         """Peek status queue
         :param int n: number of messages to return as part of peek.
         :param bool raw: should message content be returned as is (no parsing).        
         """
 
-        def _peek_specific_q(_q, _n):
+        def _peek_specific_q(_q: QueueClient, _n: int) -> bool:
             has_messages = False
-            for m in _q.service.peek_messages(_q.name, num_messages=_n):
-                if m is not None:
+            for m in _q.peek_messages(max_messages=_n):
+                if m:
                     has_messages = True
                     result.append(m if raw else self._deserialize_message(m))
 
-                    # short circut to prevent unneeded work
+                    # short circuit to prevent unneeded work
                     if len(result) == n:
                         return True
             return has_messages
 
-        q_services = self._get_q_services()
-        random.shuffle(q_services)
+        queues = self._get_queues()
+        random.shuffle(queues)
 
-        per_q = int(n / len(q_services)) + 1
+        per_q = int(n / len(queues)) + 1
 
         result = []
 
         non_empty_qs = []
 
-        for q in q_services:
+        for q in queues:
             if _peek_specific_q(q, per_q):
                 non_empty_qs.append(q)
 
@@ -92,38 +88,38 @@ class StatusQueue:
         return result
 
     # TODO: current implementation takes a union top n /  len(queues), which is not ideal,
-    # because the user is not supposed to know that there can be multiple underlying queues
-    def pop(self, n=1, raw=False, delete=True):
+    #  because the user is not supposed to know that there can be multiple underlying queues
+    def pop(self, n: int = 1, raw: bool = False, delete: bool = True) -> List[QueueMessage]:
         """Pop status queue
         :param int n: number of messages to return as part of peek.
         :param bool raw: should message content be returned as is (no parsing).
         :param bool delete: should message be deleted after pop. default is True as this is expected of a q.
         """
 
-        def _pop_specific_q(_q, _n):
+        def _pop_specific_q(_q: QueueClient, _n: int) -> bool:
             has_messages = False
-            for m in _q.service.get_messages(_q.name, num_messages=_n):
-                if m is not None:
+            for m in _q.receive_messages(messages_per_page=_n):
+                if m:
                     has_messages = True
                     result.append(m if raw else self._deserialize_message(m))
                     if delete:
-                        _q.service.delete_message(_q.name, m.id, m.pop_receipt)
+                        _q.delete_message(m.id, m.pop_receipt)
 
-                    # short circut to prevent unneeded work
+                    # short circuit to prevent unneeded work
                     if len(result) == n:
                         return True
             return has_messages
 
-        q_services = self._get_q_services()
-        random.shuffle(q_services)
+        queues = self._get_queues()
+        random.shuffle(queues)
 
-        per_q = int(n / len(q_services)) + 1
+        per_q = int(n / len(queues)) + 1
 
         result = []
 
         non_empty_qs = []
 
-        for q in q_services:
+        for q in queues:
             if _pop_specific_q(q, per_q):
                 non_empty_qs.append(q)
 

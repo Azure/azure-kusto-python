@@ -2,7 +2,7 @@
 # Licensed under the MIT License
 import io
 
-from azure.kusto.data.request import KustoConnectionStringBuilder
+from azure.kusto.data import KustoConnectionStringBuilder
 from azure.kusto.ingest import (
     KustoIngestClient,
     IngestionProperties,
@@ -60,12 +60,12 @@ client = KustoIngestClient(kcsb)
 ingestion_props = IngestionProperties(
     database="{database_name}",
     table="{table_name}",
-    dataFormat=DataFormat.CSV,
+    data_format=DataFormat.CSV,
     # in case status update for success are also required
     # reportLevel=ReportLevel.FailuresAndSuccesses,
     # in case a mapping is required
-    # ingestionMappingReference="{json_mapping_that_already_exists_on_table}"
-    # ingestionMappingType=IngestionMappingType.Json
+    # ingestion_mapping_reference="{json_mapping_that_already_exists_on_table}"
+    # ingestion_mapping_type=IngestionMappingType.Json
 )
 
 # ingest from file
@@ -75,7 +75,10 @@ client.ingest_from_file("{filename}.csv", ingestion_properties=ingestion_props)
 
 
 # ingest from blob
-blob_descriptor = BlobDescriptor("https://{path_to_blob}.csv.gz?sas", 10)  # 10 is the raw size of the data in bytes.
+blob_descriptor = BlobDescriptor(
+    "https://{path_to_blob}.csv.gz?sp=rl&st=2020-05-20T13:38:37Z&se=2020-05-21T13:38:37Z&sv=2019-10-10&sr=c&sig=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    10,
+)  # 10 is the raw size of the data in bytes.
 client.ingest_from_blob(blob_descriptor, ingestion_properties=ingestion_props)
 
 # ingest from dataframe
@@ -145,12 +148,12 @@ cluster = "https://{cluster_name}.kusto.windows.net"
 
 client = KustoStreamingIngestClient(kcsb)
 
-ingestion_props = IngestionProperties(database="{database_name}", table="{table_name}", dataFormat=DataFormat.CSV)
+ingestion_properties = IngestionProperties(database="{database_name}", table="{table_name}", data_format=DataFormat.CSV)
 
 # ingest from file
 file_descriptor = FileDescriptor("{filename}.csv", 3333)  # 3333 is the raw size of the data in bytes.
-client.ingest_from_file(file_descriptor, ingestion_properties=ingestion_props)
-client.ingest_from_file("{filename}.csv", ingestion_properties=ingestion_props)
+client.ingest_from_file(file_descriptor, ingestion_properties=ingestion_properties)
+client.ingest_from_file("{filename}.csv", ingestion_properties=ingestion_properties)
 
 # ingest from dataframe
 import pandas
@@ -160,7 +163,7 @@ rows = [[1, "abc", 15.3], [2, "cde", 99.9]]
 
 df = pandas.DataFrame(data=rows, columns=fields)
 
-client.ingest_from_dataframe(df, ingestion_properties=ingestion_props)
+client.ingest_from_dataframe(df, ingestion_properties=ingestion_properties)
 
 # ingest from stream
 byte_sequence = b"56,56,56"

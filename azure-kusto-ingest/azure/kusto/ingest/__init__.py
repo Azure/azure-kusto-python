@@ -11,8 +11,6 @@ from .ingestion_properties import (
     ValidationOptions,
     ReportLevel,
     ReportMethod,
-    CsvColumnMapping,
-    JsonColumnMapping,
     IngestionProperties,
     IngestionMappingType,
     ColumnMapping,

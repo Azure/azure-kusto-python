@@ -6,7 +6,7 @@ Overview
 
 .. code-block:: python
 
-    from azure.kusto.data.request import KustoClient, KustoConnectionStringBuilder
+    from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
 
     cluster = "<insert here your cluster name>"
     client_id = "<insert here your AAD application id>"
@@ -25,7 +25,8 @@ Overview
 
 
 
-*Kusto Python Client* Library provides the capability to query Kusto clusters using Python. It is Python 2.x/3.x compatible and supports
+*Kusto Python Client* Library provides the capability to query Kusto clusters using Python.
+It is Python 3.x compatible and supports
 all data types through familiar Python DB API interface.
 
 It's possible to use the library, for instance, from `Jupyter Notebooks

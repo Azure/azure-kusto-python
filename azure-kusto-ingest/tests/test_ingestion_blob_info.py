@@ -33,16 +33,16 @@ class IngestionBlobInfoTest(unittest.TestCase):
         properties = IngestionProperties(
             database="database",
             table="table",
-            dataFormat=DataFormat.CSV,
-            ingestionMapping=[columnMapping],
-            additionalTags=["tag"],
-            ingestIfNotExists=["ingestIfNotExistTags"],
-            ingestByTags=["ingestByTags"],
-            dropByTags=["dropByTags"],
-            flushImmediately=True,
-            reportLevel=ReportLevel.DoNotReport,
-            reportMethod=ReportMethod.Queue,
-            validationPolicy=validation_policy,
+            data_format=DataFormat.CSV,
+            ingestion_mapping=[columnMapping],
+            additional_tags=["tag"],
+            ingest_if_not_exists=["ingestIfNotExistTags"],
+            ingest_by_tags=["ingestByTags"],
+            drop_by_tags=["dropByTags"],
+            flush_immediately=True,
+            report_level=ReportLevel.DoNotReport,
+            report_method=ReportMethod.Queue,
+            validation_policy=validation_policy,
         )
         blob = BlobDescriptor("somepath", 10)
         blob_info = _IngestionBlobInfo(blob, properties, auth_context="authorizationContextText")
@@ -54,16 +54,16 @@ class IngestionBlobInfoTest(unittest.TestCase):
         properties = IngestionProperties(
             database="database",
             table="table",
-            dataFormat=DataFormat.CSV,
-            ingestionMappingReference="csvMappingReference",
-            additionalTags=["tag"],
-            ingestIfNotExists=["ingestIfNotExistTags"],
-            ingestByTags=["ingestByTags"],
-            dropByTags=["dropByTags"],
-            flushImmediately=True,
-            reportLevel=ReportLevel.DoNotReport,
-            reportMethod=ReportMethod.Queue,
-            validationPolicy=validation_policy,
+            data_format=DataFormat.CSV,
+            ingestion_mapping_reference="csvMappingReference",
+            additional_tags=["tag"],
+            ingest_if_not_exists=["ingestIfNotExistTags"],
+            ingest_by_tags=["ingestByTags"],
+            drop_by_tags=["dropByTags"],
+            flush_immediately=True,
+            report_level=ReportLevel.DoNotReport,
+            report_method=ReportMethod.Queue,
+            validation_policy=validation_policy,
         )
         blob = BlobDescriptor("somepath", 10)
         blob_info = _IngestionBlobInfo(blob, properties, auth_context="authorizationContextText")
@@ -75,16 +75,16 @@ class IngestionBlobInfoTest(unittest.TestCase):
         properties = IngestionProperties(
             database="database",
             table="table",
-            dataFormat=DataFormat.JSON,
-            ingestionMapping=[ColumnMapping("ColumnName", "datatype", path="jsonpath")],
-            additionalTags=["tag"],
-            ingestIfNotExists=["ingestIfNotExistTags"],
-            ingestByTags=["ingestByTags"],
-            dropByTags=["dropByTags"],
-            flushImmediately=True,
-            reportLevel=ReportLevel.DoNotReport,
-            reportMethod=ReportMethod.Queue,
-            validationPolicy=validation_policy,
+            data_format=DataFormat.JSON,
+            ingestion_mapping=[ColumnMapping("ColumnName", "datatype", path="jsonpath")],
+            additional_tags=["tag"],
+            ingest_if_not_exists=["ingestIfNotExistTags"],
+            ingest_by_tags=["ingestByTags"],
+            drop_by_tags=["dropByTags"],
+            flush_immediately=True,
+            report_level=ReportLevel.DoNotReport,
+            report_method=ReportMethod.Queue,
+            validation_policy=validation_policy,
         )
         blob = BlobDescriptor("somepath", 10)
         blob_info = _IngestionBlobInfo(blob, properties, auth_context="authorizationContextText")
@@ -96,16 +96,16 @@ class IngestionBlobInfoTest(unittest.TestCase):
         properties = IngestionProperties(
             database="database",
             table="table",
-            dataFormat=DataFormat.JSON,
-            mappingReference="jsonMappingReference",
-            additionalTags=["tag"],
-            ingestIfNotExists=["ingestIfNotExistTags"],
-            ingestByTags=["ingestByTags"],
-            dropByTags=["dropByTags"],
-            flushImmediately=True,
-            reportLevel=ReportLevel.DoNotReport,
-            reportMethod=ReportMethod.Queue,
-            validationPolicy=validation_policy,
+            data_format=DataFormat.JSON,
+            ingestion_mapping_reference="jsonMappingReference",
+            additional_tags=["tag"],
+            ingest_if_not_exists=["ingestIfNotExistTags"],
+            ingest_by_tags=["ingestByTags"],
+            drop_by_tags=["dropByTags"],
+            flush_immediately=True,
+            report_level=ReportLevel.DoNotReport,
+            report_method=ReportMethod.Queue,
+            validation_policy=validation_policy,
         )
         blob = BlobDescriptor("somepath", 10)
         blob_info = _IngestionBlobInfo(blob, properties, auth_context="authorizationContextText")
@@ -113,19 +113,10 @@ class IngestionBlobInfoTest(unittest.TestCase):
 
     def test_blob_info_csv_exceptions(self):
         """Tests invalid ingestion properties."""
-        with self.assertRaises(KustoDuplicateMappingError):
-            IngestionProperties(database="database", table="table", mapping="mapping", ingestionMapping="ingestionMapping")
         with self.assertRaises(KustoMappingAndMappingReferenceError):
-            IngestionProperties(database="database", table="table", mapping="mapping", ingestionMappingReference="ingestionMappingReference")
-
-        with self.assertRaises(KustoMappingAndMappingReferenceError):
-            IngestionProperties(database="database", table="table", ingestionMapping="ingestionMapping", ingestionMappingReference="ingestionMappingReference")
-        with self.assertRaises(KustoMappingAndMappingReferenceError):
-            IngestionProperties(database="database", table="table", mapping="mapping", mappingReference="mappingReference")
-        with self.assertRaises(KustoMappingAndMappingReferenceError):
-            IngestionProperties(database="database", table="table", ingestionMapping="ingestionMapping", mappingReference="mappingReference")
-        with self.assertRaises(KustoDuplicateMappingReferenceError):
-            IngestionProperties(database="database", table="table", mappingReference="mappingReference", ingestionMappingReference="ingestionMappingReference")
+            IngestionProperties(
+                database="database", table="table", ingestion_mapping="ingestionMapping", ingestion_mapping_reference="ingestionMappingReference"
+            )
 
     def _verify_ingestion_blob_info_result(self, ingestion_blob_info):
         result = json.loads(ingestion_blob_info)

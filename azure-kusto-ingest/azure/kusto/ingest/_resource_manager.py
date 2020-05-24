@@ -2,12 +2,16 @@
 # Licensed under the MIT License
 import re
 from datetime import datetime, timedelta
+from typing import List
+
+from azure.kusto.data import KustoClient
+from azure.kusto.data._models import KustoResultTable
 
 _URI_FORMAT = re.compile("https://(\\w+).(queue|blob|table).core.windows.net/([\\w,-]+)\\?(.*)")
 
 
 class _ResourceUri:
-    def __init__(self, storage_account_name, object_type, object_name, sas):
+    def __init__(self, storage_account_name: str, object_type: str, object_name: str, sas: str):
         self.storage_account_name = storage_account_name
         self.object_type = object_type
         self.object_name = object_name
@@ -19,14 +23,26 @@ class _ResourceUri:
         match = _URI_FORMAT.search(uri)
         return cls(match.group(1), match.group(2), match.group(3), match.group(4))
 
-    def to_string(self):
-        """Stringify the resource uri instance"""
-        return "https://{0.storage_account_name}.{0.object_type}.core.windows.net/{0.object_name}?{0.sas}".format(self)
+    @property
+    def uri(self) -> str:
+        return f"https://{self.storage_account_name}.{self.object_type}.core.windows.net/{self.object_name}"
+
+    @property
+    def account_uri(self) -> str:
+        return f"https://{self.storage_account_name}.{self.object_type}.core.windows.net/?{self.sas}"
+
+    def __str__(self):
+        return f"https://{self.storage_account_name}.{self.object_type}.core.windows.net/{self.object_name}?{self.sas}"
 
 
 class _IngestClientResources:
     def __init__(
-        self, secured_ready_for_aggregation_queues=None, failed_ingestions_queues=None, successful_ingestions_queues=None, containers=None, status_tables=None
+        self,
+        secured_ready_for_aggregation_queues: List[_ResourceUri] = None,
+        failed_ingestions_queues: List[_ResourceUri] = None,
+        successful_ingestions_queues: List[_ResourceUri] = None,
+        containers: List[_ResourceUri] = None,
+        status_tables: List[_ResourceUri] = None,
     ):
         self.secured_ready_for_aggregation_queues = secured_ready_for_aggregation_queues
         self.failed_ingestions_queues = failed_ingestions_queues
@@ -46,7 +62,7 @@ class _IngestClientResources:
 
 
 class _ResourceManager:
-    def __init__(self, kusto_client):
+    def __init__(self, kusto_client: KustoClient):
         self._kusto_client = kusto_client
         self._refresh_period = timedelta(hours=1)
 
@@ -65,7 +81,7 @@ class _ResourceManager:
             self._ingest_client_resources = self._get_ingest_client_resources_from_service()
             self._ingest_client_resources_last_update = datetime.utcnow()
 
-    def _get_resource_by_name(self, table, resource_name):
+    def _get_resource_by_name(self, table: KustoResultTable, resource_name: str):
         return [_ResourceUri.parse(row["StorageRoot"]) for row in table if row["ResourceTypeName"] == resource_name]
 
     def _get_ingest_client_resources_from_service(self):
@@ -91,23 +107,23 @@ class _ResourceManager:
     def _get_authorization_context_from_service(self):
         return self._kusto_client.execute("NetDefaultDB", ".get kusto identity token").primary_results[0][0]["AuthorizationContext"]
 
-    def get_ingestion_queues(self):
+    def get_ingestion_queues(self) -> List[_ResourceUri]:
         self._refresh_ingest_client_resources()
         return self._ingest_client_resources.secured_ready_for_aggregation_queues
 
-    def get_failed_ingestions_queues(self):
+    def get_failed_ingestions_queues(self) -> List[_ResourceUri]:
         self._refresh_ingest_client_resources()
         return self._ingest_client_resources.failed_ingestions_queues
 
-    def get_successful_ingestions_queues(self):
+    def get_successful_ingestions_queues(self) -> List[_ResourceUri]:
         self._refresh_ingest_client_resources()
         return self._ingest_client_resources.successful_ingestions_queues
 
-    def get_containers(self):
+    def get_containers(self) -> List[_ResourceUri]:
         self._refresh_ingest_client_resources()
         return self._ingest_client_resources.containers
 
-    def get_ingestions_status_tables(self):
+    def get_ingestions_status_tables(self) -> List[_ResourceUri]:
         self._refresh_ingest_client_resources()
         return self._ingest_client_resources.status_tables
 

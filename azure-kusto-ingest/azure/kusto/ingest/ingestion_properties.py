@@ -1,9 +1,9 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
-import warnings
 from enum import Enum, IntEnum
+from typing import List
 
-from .exceptions import KustoDuplicateMappingError, KustoDuplicateMappingReferenceError, KustoMappingAndMappingReferenceError
+from .exceptions import KustoDuplicateMappingReferenceError, KustoMappingAndMappingReferenceError
 
 
 class DataFormat(Enum):
@@ -50,9 +50,9 @@ class ValidationImplications(IntEnum):
 class ValidationPolicy:
     """Validation policy to ingest command."""
 
-    def __init__(self, validationOptions=ValidationOptions.DoNotValidate, validationImplications=ValidationImplications.BestEffort):
-        self.ValidationOptions = validationOptions
-        self.ValidationImplications = validationImplications
+    def __init__(self, validation_options=ValidationOptions.DoNotValidate, validation_implications=ValidationImplications.BestEffort):
+        self.ValidationOptions = validation_options
+        self.ValidationImplications = validation_implications
 
 
 class ReportLevel(IntEnum):
@@ -104,12 +104,12 @@ class ColumnMapping:
 
     def __init__(
         self,
-        column_name,
+        column_name: str,
         column_type,
-        path=None,
-        transform=TransformationMethod.NONE,
-        ordinal=None,
-        const_value=None,
+        path: str = None,
+        transform: TransformationMethod = TransformationMethod.NONE,
+        ordinal: int = None,
+        const_value: str = None,
         field=None,
         columns=None,
         storage_data_type=None,
@@ -133,103 +133,66 @@ class ColumnMapping:
             self.properties[self.STORAGE_DATA_TYPE] = storage_data_type
 
 
-class ColumnMappingBase:
-    """Deprecated abstract base mapping class"""
-
-    pass
-
-
-class CsvColumnMapping(ColumnMappingBase):
-    """Class to represent a csv column mapping."""
-
-    @DeprecationWarning
-    def __init__(self, columnName, cslDataType, ordinal):
-        self.Name = columnName
-        self.DataType = cslDataType
-        self.Ordinal = ordinal
-
-    def __str__(self):
-        return "target: {0.Name} ,source: {0.Ordinal}, datatype: {0.DataType}".format(self)
-
-
-class JsonColumnMapping(ColumnMappingBase):
-    """ Class to represent a json column mapping """
-
-    @DeprecationWarning
-    def __init__(self, columnName, jsonPath, cslDataType=None):
-        self.column = columnName
-        self.path = jsonPath
-        self.datatype = cslDataType
-
-    def __str__(self):
-        return "target: {0.column} ,source: {0.path}, datatype: {0.datatype}".format(self)
-
-
 class IngestionProperties:
-    """Class to represent ingestion properties."""
+    """
+    Class to represent ingestion properties.
+    For more information check out https://docs.microsoft.com/en-us/azure/data-explorer/ingestion-properties
+    """
 
     def __init__(
         self,
-        database,
-        table,
-        dataFormat=DataFormat.CSV,
-        mapping=None,
-        ingestionMapping=None,
-        mappingReference=None,
-        ingestionMappingType=None,
-        ingestionMappingReference=None,
-        additionalTags=None,
-        ingestIfNotExists=None,
-        ingestByTags=None,
-        dropByTags=None,
-        flushImmediately=False,
-        reportLevel=ReportLevel.DoNotReport,
-        reportMethod=ReportMethod.Queue,
-        validationPolicy=None,
-        additionalProperties=None,
+        database: str,
+        table: str,
+        data_format: DataFormat = DataFormat.CSV,
+        ingestion_mapping: List[ColumnMapping] = None,
+        ingestion_mapping_type: IngestionMappingType = None,
+        ingestion_mapping_reference: str = None,
+        ingest_if_not_exists: List[str] = None,
+        ingest_by_tags: List[str] = None,
+        drop_by_tags: List[str] = None,
+        additional_tags: List[str] = None,
+        flush_immediately: bool = False,
+        report_level: ReportLevel = ReportLevel.DoNotReport,
+        report_method: ReportMethod = ReportMethod.Queue,
+        validation_policy: ValidationPolicy = None,
+        additional_properties: dict = None,
+        **kwargs
     ):
-        # mapping_reference will be deprecated in the next major version
-        if mappingReference is not None:
-            warnings.warn(
-                """
-                mappingReference will be deprecated in the next major version.
-                Please use ingestionMappingReference instead
-                """,
-                PendingDeprecationWarning,
-            )
 
-        # mapping will be deprecated in the next major version
-        if mapping is not None:
-            warnings.warn(
-                """
-                mapping will be deprecated in the next major version.
-                Please use ingestionMapping instead
-                """,
-                PendingDeprecationWarning,
-            )
+        # backward compat - will be removed in future versions
+        dataFormat = kwargs.get("dataFormat", None)
+        ingestionMapping = kwargs.get("ingestionMapping", None)
+        ingestionMappingType = kwargs.get("ingestionMappingType", None)
+        ingestionMappingReference = kwargs.get("ingestionMappingType", None)
+        additionalTags = kwargs.get("additionalTags", None)
+        ingestIfNotExists = kwargs.get("ingestIfNotExists", None)
+        ingestByTags = kwargs.get("ingestByTags", None)
+        dropByTags = kwargs.get("dropByTags", None)
+        flushImmediately = kwargs.get("flushImmediately", None)
+        reportLevel = kwargs.get("reportLevel", None)
+        reportMethod = kwargs.get("reportMethod", None)
+        validationPolicy = kwargs.get("validationPolicy", None)
+        additionalProperties = kwargs.get("additionalProperties", None)
 
-        if mapping is not None and ingestionMapping is not None:
-            raise KustoDuplicateMappingError()
-
-        mapping_exists = mapping is not None or ingestionMapping is not None
-        if mapping_exists and (mappingReference is not None or ingestionMappingReference is not None):
+        mapping_exists = ingestionMapping is not None or ingestion_mapping is not None
+        if mapping_exists and (ingestion_mapping_reference is not None or ingestionMappingReference is not None):
             raise KustoMappingAndMappingReferenceError()
 
-        if mappingReference is not None and ingestionMappingReference is not None:
+        if ingestion_mapping_reference is not None and ingestionMappingReference is not None:
             raise KustoDuplicateMappingReferenceError()
 
         self.database = database
         self.table = table
-        self.format = dataFormat
-        self.ingestion_mapping = ingestionMapping if ingestionMapping is not None else mapping
-        self.ingestion_mapping_type = ingestionMappingType
-        self.ingestion_mapping_reference = ingestionMappingReference if ingestionMappingReference is not None else mappingReference
-        self.additional_tags = additionalTags
-        self.ingest_if_not_exists = ingestIfNotExists
-        self.ingest_by_tags = ingestByTags
-        self.drop_by_tags = dropByTags
-        self.flush_immediately = flushImmediately
-        self.report_level = reportLevel
-        self.report_method = reportMethod
-        self.validation_policy = validationPolicy
-        self.additional_properties = additionalProperties
+        self.format = dataFormat or data_format
+        self.ingestion_mapping = ingestionMapping or ingestion_mapping
+        self.ingestion_mapping_type = ingestionMappingType or ingestion_mapping_type
+        self.ingestion_mapping_reference = ingestionMappingReference or ingestion_mapping_reference
+        self.additional_tags = additionalTags or additional_tags
+        self.ingest_if_not_exists = ingestIfNotExists or ingest_if_not_exists
+        self.ingest_by_tags = ingestByTags or ingest_by_tags
+        self.drop_by_tags = dropByTags or drop_by_tags
+        self.flush_immediately = flushImmediately or flush_immediately
+        self.report_level = reportLevel or report_level
+        self.report_method = reportMethod or report_method
+        self.validation_policy = validationPolicy or validation_policy
+        self.additional_properties = additionalProperties or additional_properties

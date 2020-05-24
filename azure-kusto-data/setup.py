@@ -30,17 +30,19 @@ setup(
     author_email="kustalk@microsoft.com",
     license="MIT",
     classifiers=[
-        "Development Status :: 3 - Alpha",
+        # 5 - Production/Stable depends on multi-threading / aio / perf
+        "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
         "Topic :: Software Development",
         "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
         "License :: OSI Approved :: MIT License",
     ],
     namespace_packages=["azure"],
     keywords="kusto wrapper client library",
     packages=find_packages(exclude=["azure", "tests"]),
     install_requires=["adal>=1.0.0", "python-dateutil>=2.8.0", "requests>=2.13.0", "msrestazure>=0.4.14"],
-    extras_require={"pandas": ["pandas==0.24.1"], ":python_version<'3.0'": ["azure-nspkg"]},
+    extras_require={"pandas": ["pandas"]},
 )

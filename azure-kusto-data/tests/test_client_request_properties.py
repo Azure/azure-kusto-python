@@ -4,7 +4,7 @@
 import unittest
 from datetime import timedelta
 
-from azure.kusto.data.request import ClientRequestProperties
+from azure.kusto.data import ClientRequestProperties
 
 
 class ClientRequestPropertiesTests(unittest.TestCase):

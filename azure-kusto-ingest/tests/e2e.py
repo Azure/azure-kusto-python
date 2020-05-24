@@ -1,21 +1,21 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
-import pytest
-import time
-import os
-import uuid
 import io
+import os
+import time
+import uuid
+import datetime
+import dateutil
+import dateutil.parser
 
-from azure.kusto.data.request import KustoClient, KustoConnectionStringBuilder
 from azure.kusto.data.exceptions import KustoServiceError
-from azure.kusto.ingest.status import KustoIngestStatusQueues
+from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
 from azure.kusto.ingest import (
     KustoIngestClient,
     KustoStreamingIngestClient,
     IngestionProperties,
-    JsonColumnMapping,
-    CsvColumnMapping,
     DataFormat,
+    ColumnMapping,
     IngestionMappingType,
     ValidationPolicy,
     ValidationOptions,
@@ -23,68 +23,68 @@ from azure.kusto.ingest import (
     ReportLevel,
     ReportMethod,
     FileDescriptor,
-    KustoMissingMappingReferenceError,
 )
+from azure.kusto.ingest.status import KustoIngestStatusQueues
 
 
-class Helpers:
+class TestData:
     """A class to define mappings to deft table."""
 
     def __init__(self):
         pass
 
     @staticmethod
-    def create_test_table_csv_mappings():
+    def test_table_csv_mappings():
         """A method to define csv mappings to test table."""
         mappings = list()
-        mappings.append(CsvColumnMapping(columnName="rownumber", cslDataType="int", ordinal=0))
-        mappings.append(CsvColumnMapping(columnName="rowguid", cslDataType="string", ordinal=1))
-        mappings.append(CsvColumnMapping(columnName="xdouble", cslDataType="real", ordinal=2))
-        mappings.append(CsvColumnMapping(columnName="xfloat", cslDataType="real", ordinal=3))
-        mappings.append(CsvColumnMapping(columnName="xbool", cslDataType="bool", ordinal=4))
-        mappings.append(CsvColumnMapping(columnName="xint16", cslDataType="int", ordinal=5))
-        mappings.append(CsvColumnMapping(columnName="xint32", cslDataType="int", ordinal=6))
-        mappings.append(CsvColumnMapping(columnName="xint64", cslDataType="long", ordinal=7))
-        mappings.append(CsvColumnMapping(columnName="xuint8", cslDataType="long", ordinal=8))
-        mappings.append(CsvColumnMapping(columnName="xuint16", cslDataType="long", ordinal=9))
-        mappings.append(CsvColumnMapping(columnName="xuint32", cslDataType="long", ordinal=10))
-        mappings.append(CsvColumnMapping(columnName="xuint64", cslDataType="long", ordinal=11))
-        mappings.append(CsvColumnMapping(columnName="xdate", cslDataType="datetime", ordinal=12))
-        mappings.append(CsvColumnMapping(columnName="xsmalltext", cslDataType="string", ordinal=13))
-        mappings.append(CsvColumnMapping(columnName="xtext", cslDataType="string", ordinal=14))
-        mappings.append(CsvColumnMapping(columnName="xnumberAsText", cslDataType="string", ordinal=15))
-        mappings.append(CsvColumnMapping(columnName="xtime", cslDataType="timespan", ordinal=16))
-        mappings.append(CsvColumnMapping(columnName="xtextWithNulls", cslDataType="string", ordinal=17))
-        mappings.append(CsvColumnMapping(columnName="xdynamicWithNulls", cslDataType="dynamic", ordinal=18))
+        mappings.append(ColumnMapping(column_name="rownumber", column_type="int", ordinal=0))
+        mappings.append(ColumnMapping(column_name="rowguid", column_type="string", ordinal=1))
+        mappings.append(ColumnMapping(column_name="xdouble", column_type="real", ordinal=2))
+        mappings.append(ColumnMapping(column_name="xfloat", column_type="real", ordinal=3))
+        mappings.append(ColumnMapping(column_name="xbool", column_type="bool", ordinal=4))
+        mappings.append(ColumnMapping(column_name="xint16", column_type="int", ordinal=5))
+        mappings.append(ColumnMapping(column_name="xint32", column_type="int", ordinal=6))
+        mappings.append(ColumnMapping(column_name="xint64", column_type="long", ordinal=7))
+        mappings.append(ColumnMapping(column_name="xuint8", column_type="long", ordinal=8))
+        mappings.append(ColumnMapping(column_name="xuint16", column_type="long", ordinal=9))
+        mappings.append(ColumnMapping(column_name="xuint32", column_type="long", ordinal=10))
+        mappings.append(ColumnMapping(column_name="xuint64", column_type="long", ordinal=11))
+        mappings.append(ColumnMapping(column_name="xdate", column_type="datetime", ordinal=12))
+        mappings.append(ColumnMapping(column_name="xsmalltext", column_type="string", ordinal=13))
+        mappings.append(ColumnMapping(column_name="xtext", column_type="string", ordinal=14))
+        mappings.append(ColumnMapping(column_name="xnumberAsText", column_type="string", ordinal=15))
+        mappings.append(ColumnMapping(column_name="xtime", column_type="timespan", ordinal=16))
+        mappings.append(ColumnMapping(column_name="xtextWithNulls", column_type="string", ordinal=17))
+        mappings.append(ColumnMapping(column_name="xdynamicWithNulls", column_type="dynamic", ordinal=18))
         return mappings
 
     @staticmethod
-    def create_test_table_json_mappings():
+    def test_table_json_mappings():
         """A method to define json mappings to test table."""
         mappings = list()
-        mappings.append(JsonColumnMapping(columnName="rownumber", jsonPath="$.rownumber", cslDataType="int"))
-        mappings.append(JsonColumnMapping(columnName="rowguid", jsonPath="$.rowguid", cslDataType="string"))
-        mappings.append(JsonColumnMapping(columnName="xdouble", jsonPath="$.xdouble", cslDataType="real"))
-        mappings.append(JsonColumnMapping(columnName="xfloat", jsonPath="$.xfloat", cslDataType="real"))
-        mappings.append(JsonColumnMapping(columnName="xbool", jsonPath="$.xbool", cslDataType="bool"))
-        mappings.append(JsonColumnMapping(columnName="xint16", jsonPath="$.xint16", cslDataType="int"))
-        mappings.append(JsonColumnMapping(columnName="xint32", jsonPath="$.xint32", cslDataType="int"))
-        mappings.append(JsonColumnMapping(columnName="xint64", jsonPath="$.xint64", cslDataType="long"))
-        mappings.append(JsonColumnMapping(columnName="xuint8", jsonPath="$.xuint8", cslDataType="long"))
-        mappings.append(JsonColumnMapping(columnName="xuint16", jsonPath="$.xuint16", cslDataType="long"))
-        mappings.append(JsonColumnMapping(columnName="xuint32", jsonPath="$.xuint32", cslDataType="long"))
-        mappings.append(JsonColumnMapping(columnName="xuint64", jsonPath="$.xuint64", cslDataType="long"))
-        mappings.append(JsonColumnMapping(columnName="xdate", jsonPath="$.xdate", cslDataType="datetime"))
-        mappings.append(JsonColumnMapping(columnName="xsmalltext", jsonPath="$.xsmalltext", cslDataType="string"))
-        mappings.append(JsonColumnMapping(columnName="xtext", jsonPath="$.xtext", cslDataType="string"))
-        mappings.append(JsonColumnMapping(columnName="xnumberAsText", jsonPath="$.xnumberAsText", cslDataType="string"))
-        mappings.append(JsonColumnMapping(columnName="xtime", jsonPath="$.xtime", cslDataType="timespan"))
-        mappings.append(JsonColumnMapping(columnName="xtextWithNulls", jsonPath="$.xtextWithNulls", cslDataType="string"))
-        mappings.append(JsonColumnMapping(columnName="xdynamicWithNulls", jsonPath="$.xdynamicWithNulls", cslDataType="dynamic"))
+        mappings.append(ColumnMapping(column_name="rownumber", path="$.rownumber", column_type="int"))
+        mappings.append(ColumnMapping(column_name="rowguid", path="$.rowguid", column_type="string"))
+        mappings.append(ColumnMapping(column_name="xdouble", path="$.xdouble", column_type="real"))
+        mappings.append(ColumnMapping(column_name="xfloat", path="$.xfloat", column_type="real"))
+        mappings.append(ColumnMapping(column_name="xbool", path="$.xbool", column_type="bool"))
+        mappings.append(ColumnMapping(column_name="xint16", path="$.xint16", column_type="int"))
+        mappings.append(ColumnMapping(column_name="xint32", path="$.xint32", column_type="int"))
+        mappings.append(ColumnMapping(column_name="xint64", path="$.xint64", column_type="long"))
+        mappings.append(ColumnMapping(column_name="xuint8", path="$.xuint8", column_type="long"))
+        mappings.append(ColumnMapping(column_name="xuint16", path="$.xuint16", column_type="long"))
+        mappings.append(ColumnMapping(column_name="xuint32", path="$.xuint32", column_type="long"))
+        mappings.append(ColumnMapping(column_name="xuint64", path="$.xuint64", column_type="long"))
+        mappings.append(ColumnMapping(column_name="xdate", path="$.xdate", column_type="datetime"))
+        mappings.append(ColumnMapping(column_name="xsmalltext", path="$.xsmalltext", column_type="string"))
+        mappings.append(ColumnMapping(column_name="xtext", path="$.xtext", column_type="string"))
+        mappings.append(ColumnMapping(column_name="xnumberAsText", path="$.xnumberAsText", column_type="string"))
+        mappings.append(ColumnMapping(column_name="xtime", path="$.xtime", column_type="timespan"))
+        mappings.append(ColumnMapping(column_name="xtextWithNulls", path="$.xtextWithNulls", column_type="string"))
+        mappings.append(ColumnMapping(column_name="xdynamicWithNulls", path="$.xdynamicWithNulls", column_type="dynamic"))
         return mappings
 
     @staticmethod
-    def get_test_table_json_mapping_reference():
+    def test_table_json_mapping_reference():
         """A method to get json mappings reference to test table."""
         return """'['
                     '    { "column" : "rownumber", "datatype" : "int", "Properties":{"Path":"$.rownumber"}},'
@@ -109,36 +109,51 @@ class Helpers:
                     ']'"""
 
 
-# Get environment variables
-engine_cs = os.environ.get("ENGINE_CONECTION_STRING")
-dm_cs = os.environ.get("DM_CONECTION_STRING")
-db_name = os.environ.get("TEST_DATABASE")  # Existed db with streaming ingestion enabled
-app_id = os.environ.get("APP_ID")
-app_key = os.environ.get("APP_KEY")
-tenant_id = os.environ.get("TENANT_ID")
+def engine_kcsb_from_env() -> KustoConnectionStringBuilder:
+    engine_cs = os.environ.get("ENGINE_CONNECTION_STRING")
+    app_id = os.environ.get("APP_ID")
+    app_key = os.environ.get("APP_KEY")
+    auth_id = os.environ.get("AUTH_ID")
+    return KustoConnectionStringBuilder.with_aad_application_key_authentication(engine_cs, app_id, app_key, auth_id)
+
+
+def dm_kcsb_from_env() -> KustoConnectionStringBuilder:
+    engine_cs = os.environ.get("ENGINE_CONNECTION_STRING")
+    dm_cs = os.environ.get("DM_CONNECTION_STRING") or engine_cs.replace("//", "//ingest-")
+    app_id = os.environ.get("APP_ID")
+    app_key = os.environ.get("APP_KEY")
+    auth_id = os.environ.get("AUTH_ID")
+    return KustoConnectionStringBuilder.with_aad_application_key_authentication(dm_cs, app_id, app_key, auth_id)
+
+
+def clean_previous_tests(engine_client, database, table):
+    engine_client.execute(database, ".drop table {} ifexists".format(table))
+    while not ingest_status_q.success.is_empty():
+        ingest_status_q.success.pop()
+
+
+def get_file_path() -> str:
+    current_dir = os.getcwd()
+    path_parts = ["azure-kusto-ingest", "tests", "input"]
+    missing_path_parts = []
+    for path_part in path_parts:
+        if path_part not in current_dir:
+            missing_path_parts.append(path_part)
+    return os.path.join(current_dir, *missing_path_parts)
+
 
 # Init clients
-table_name = "python_test"
-engine_kcsb = KustoConnectionStringBuilder.with_aad_application_key_authentication(engine_cs, app_id, app_key, tenant_id)
-dm_kcsb = KustoConnectionStringBuilder.with_aad_application_key_authentication(dm_cs, app_id, app_key, tenant_id)
-client = KustoClient(engine_kcsb)
-ingest_client = KustoIngestClient(dm_kcsb)
+test_db = os.environ.get("TEST_DATABASE")
+test_table = "python"
+client = KustoClient(engine_kcsb_from_env())
+ingest_client = KustoIngestClient(dm_kcsb_from_env())
 ingest_status_q = KustoIngestStatusQueues(ingest_client)
-streaming_ingest_client = KustoStreamingIngestClient(engine_kcsb)
+streaming_ingest_client = KustoStreamingIngestClient(engine_kcsb_from_env())
 
-# Clean previous test
-client.execute(db_name, ".drop table {} ifexists".format(table_name))
-while not ingest_status_q.success.is_empty():
-    ingest_status_q.success.pop()
+start_time = datetime.datetime.now(datetime.timezone.utc)
 
-# Get files paths
-current_dir = os.getcwd()
-path_parts = ["azure-kusto-ingest", "tests", "input"]
-missing_path_parts = []
-for path_part in path_parts:
-    if path_part not in current_dir:
-        missing_path_parts.append(path_part)
-input_folder_path = os.path.join(current_dir, *missing_path_parts)
+clean_previous_tests(client, test_db, test_table)
+input_folder_path = get_file_path()
 
 csv_file_path = os.path.join(input_folder_path, "dataset.csv")
 tsv_file_path = os.path.join(input_folder_path, "dataset.tsv")
@@ -148,34 +163,40 @@ zipped_json_file_path = os.path.join(input_folder_path, "dataset.jsonz.gz")
 
 current_count = 0
 
+client.execute(
+    test_db,
+    f".create table {test_table} (rownumber: int, rowguid: string, xdouble: real, xfloat: real, xbool: bool, xint16: int, xint32: int, xint64: long, xuint8: long, xuint16: long, xuint32: long, xuint64: long, xdate: datetime, xsmalltext: string, xtext: string, xnumberAsText: string, xtime: timespan, xtextWithNulls: string, xdynamicWithNulls: dynamic)",
+)
+client.execute(test_db, f".create table {test_table} ingestion json mapping 'JsonMapping' {TestData.test_table_json_mapping_reference()}")
 
-def assert_row_count(expected_row_count, timeout=300):
+
+# assertions
+def assert_rows_added(expected: int, timeout=60):
     global current_count
-    row_count = 0
 
+    actual = 0
     while timeout > 0:
-        time.sleep(10)
-        timeout -= 10
+        time.sleep(1)
+        timeout -= 1
 
         try:
-            response = client.execute(db_name, "{} | count".format(table_name))
+            response = client.execute(test_db, "{} | count".format(test_table))
         except KustoServiceError:
             continue
 
         if response is not None:
             row = response.primary_results[0][0]
-            row_count = int(row["Count"]) - current_count
-            if row_count == expected_row_count:
-                current_count += row_count
-                return
+            actual = int(row["Count"]) - current_count
+            # this is done to allow for data to arrive properly
+            if actual >= expected:
+                break
 
-    current_count += row_count
-    assert False, "Row count expected = {}, while actual row count = {}".format(expected_row_count, row_count)
+    current_count += actual
+    assert actual == expected, f"Row count expected = {expected}, while actual row count = {actual}"
 
 
-def assert_success_mesagges_count(expected_success_messages, timeout=60):
+def assert_success_messages_count(expected_success_messages: int, timeout=60):
     successes = 0
-    timeout = 60
     while successes != expected_success_messages and timeout > 0:
         while ingest_status_q.success.is_empty() and timeout > 0:
             time.sleep(1)
@@ -183,62 +204,66 @@ def assert_success_mesagges_count(expected_success_messages, timeout=60):
 
         success_message = ingest_status_q.success.pop()
 
-        assert success_message[0].Database == db_name
-        assert success_message[0].Table == table_name
-
+        assert success_message[0].Database == test_db
+        assert success_message[0].Table == test_table
+        assert dateutil.parser.parse(success_message[0].SucceededOn) > start_time
         successes += 1
 
     assert successes == expected_success_messages
 
 
-def test_csv_ingest_non_existing_table():
+def test_csv_ingest_existing_table():
     csv_ingest_props = IngestionProperties(
-        db_name, table_name, dataFormat=DataFormat.CSV, ingestionMapping=Helpers.create_test_table_csv_mappings(), reportLevel=ReportLevel.FailuresAndSuccesses
+        test_db,
+        test_table,
+        data_format=DataFormat.CSV,
+        ingestion_mapping=TestData.test_table_csv_mappings(),
+        report_level=ReportLevel.FailuresAndSuccesses,
+        flush_immediately=True,
     )
 
     for f in [csv_file_path, zipped_csv_file_path]:
         ingest_client.ingest_from_file(f, csv_ingest_props)
 
-    assert_success_mesagges_count(2)
-    assert_row_count(20)
-
-    client.execute(db_name, ".create table {} ingestion json mapping 'JsonMapping' {}".format(table_name, Helpers.get_test_table_json_mapping_reference()))
+    assert_success_messages_count(2)
+    assert_rows_added(20)
 
 
 def test_json_ingest_existing_table():
     json_ingestion_props = IngestionProperties(
-        db_name,
-        table_name,
-        dataFormat=DataFormat.JSON,
-        ingestionMapping=Helpers.create_test_table_json_mappings(),
-        reportLevel=ReportLevel.FailuresAndSuccesses,
+        test_db,
+        test_table,
+        flush_immediately=True,
+        data_format=DataFormat.JSON,
+        ingestion_mapping=TestData.test_table_json_mappings(),
+        report_level=ReportLevel.FailuresAndSuccesses,
     )
 
     for f in [json_file_path, zipped_json_file_path]:
         ingest_client.ingest_from_file(f, json_ingestion_props)
 
-    assert_success_mesagges_count(2)
+    assert_success_messages_count(2)
 
-    assert_row_count(4)
+    assert_rows_added(4)
 
 
 def test_ingest_complicated_props():
     validation_policy = ValidationPolicy(
-        validationOptions=ValidationOptions.ValidateCsvInputConstantColumns, validationImplications=ValidationImplications.Fail
+        validation_options=ValidationOptions.ValidateCsvInputConstantColumns, validation_implications=ValidationImplications.Fail
     )
     json_ingestion_props = IngestionProperties(
-        db_name,
-        table_name,
-        dataFormat=DataFormat.JSON,
-        ingestionMapping=Helpers.create_test_table_json_mappings(),
-        additionalTags=["a", "b"],
-        ingestIfNotExists=["aaaa", "bbbb"],
-        ingestByTags=["ingestByTag"],
-        dropByTags=["drop", "drop-by"],
-        flushImmediately=False,
-        reportLevel=ReportLevel.FailuresAndSuccesses,
-        reportMethod=ReportMethod.Queue,
-        validationPolicy=validation_policy,
+        test_db,
+        test_table,
+        data_format=DataFormat.JSON,
+        ingestion_mapping=TestData.test_table_json_mappings(),
+        additional_tags=["a", "b"],
+        ingest_if_not_exists=["aaaa", "bbbb"],
+        ingest_by_tags=["ingestByTag"],
+        drop_by_tags=["drop", "drop-by"],
+        flush_immediately=False,
+        report_level=ReportLevel.FailuresAndSuccesses,
+        report_method=ReportMethod.Queue,
+        validation_policy=validation_policy,
     )
 
     file_paths = [json_file_path, zipped_json_file_path]
@@ -247,70 +272,85 @@ def test_ingest_complicated_props():
     for fd in fds:
         ingest_client.ingest_from_file(fd, json_ingestion_props)
 
-    assert_success_mesagges_count(2)
-    assert_row_count(4)
+    assert_success_messages_count(2)
+    assert_rows_added(4)
 
 
 def test_json_ingestion_ingest_by_tag():
     json_ingestion_props = IngestionProperties(
-        db_name,
-        table_name,
-        dataFormat=DataFormat.JSON,
-        ingestionMapping=Helpers.create_test_table_json_mappings(),
-        ingestIfNotExists=["ingestByTag"],
-        reportLevel=ReportLevel.FailuresAndSuccesses,
-        dropByTags=["drop", "drop-by"],
+        test_db,
+        test_table,
+        data_format=DataFormat.JSON,
+        ingestion_mapping=TestData.test_table_json_mappings(),
+        ingest_if_not_exists=["ingestByTag"],
+        report_level=ReportLevel.FailuresAndSuccesses,
+        drop_by_tags=["drop", "drop-by"],
+        flush_immediately=True,
     )
 
     for f in [json_file_path, zipped_json_file_path]:
         ingest_client.ingest_from_file(f, json_ingestion_props)
 
-    assert_success_mesagges_count(2)
-    assert_row_count(0)
+    assert_success_messages_count(2)
+    assert_rows_added(0)
 
 
 def test_tsv_ingestion_csv_mapping():
     tsv_ingestion_props = IngestionProperties(
-        db_name, table_name, dataFormat=DataFormat.TSV, ingestionMapping=Helpers.create_test_table_csv_mappings(), reportLevel=ReportLevel.FailuresAndSuccesses
+        test_db,
+        test_table,
+        flush_immediately=True,
+        data_format=DataFormat.TSV,
+        ingestion_mapping=TestData.test_table_csv_mappings(),
+        report_level=ReportLevel.FailuresAndSuccesses,
     )
 
     ingest_client.ingest_from_file(tsv_file_path, tsv_ingestion_props)
 
-    assert_success_mesagges_count(1)
-    assert_row_count(10)
+    assert_success_messages_count(1)
+    assert_rows_added(10)
 
 
 def test_streaming_ingest_from_opened_file():
-    ingestion_properties = IngestionProperties(database=db_name, table=table_name, dataFormat=DataFormat.CSV)
+    client.execute(test_db, f'.clear database {test_db} cache streamingingestion schema')
+    ingestion_properties = IngestionProperties(database=test_db, table=test_table, data_format=DataFormat.CSV)
 
-    stream = open(csv_file_path, "r")
-    streaming_ingest_client.ingest_from_stream(stream, ingestion_properties=ingestion_properties)
+    with open(csv_file_path, "r") as stream:
+        streaming_ingest_client.ingest_from_stream(stream, ingestion_properties=ingestion_properties)
 
-    assert_row_count(10, timeout=120)
+    assert_rows_added(10, timeout=120)
 
 
-def test_streaming_ingest_form_csv_file():
-    ingestion_properties = IngestionProperties(database=db_name, table=table_name, dataFormat=DataFormat.CSV)
+def test_streaming_ingest_from_csv_file():
+    client.execute(test_db, f'.clear database {test_db} cache streamingingestion schema')
+    ingestion_properties = IngestionProperties(database=test_db, table=test_table, flush_immediately=True, data_format=DataFormat.CSV)
 
     for f in [csv_file_path, zipped_csv_file_path]:
         streaming_ingest_client.ingest_from_file(f, ingestion_properties=ingestion_properties)
 
-    assert_row_count(20, timeout=120)
+    assert_rows_added(20, timeout=120)
 
 
 def test_streaming_ingest_from_json_file():
+    client.execute(test_db, f'.clear database {test_db} cache streamingingestion schema')
     ingestion_properties = IngestionProperties(
-        database=db_name, table=table_name, dataFormat=DataFormat.JSON, ingestionMappingReference="JsonMapping", ingestionMappingType=IngestionMappingType.JSON
+        database=test_db,
+        table=test_table,
+        flush_immediately=True,
+        data_format=DataFormat.JSON,
+        ingestion_mapping_reference="JsonMapping",
+        ingestion_mapping_type=IngestionMappingType.JSON,
     )
 
     for f in [json_file_path, zipped_json_file_path]:
         streaming_ingest_client.ingest_from_file(f, ingestion_properties=ingestion_properties)
 
-    assert_row_count(4, timeout=120)
+    assert_rows_added(4, timeout=120)
 
 
 def test_streaming_ingest_from_csv_io_streams():
-    ingestion_properties = IngestionProperties(database=db_name, table=table_name, dataFormat=DataFormat.CSV)
+    client.execute(test_db, f'.clear database {test_db} cache streamingingestion schema')
+    ingestion_properties = IngestionProperties(database=test_db, table=test_table, data_format=DataFormat.CSV)
     byte_sequence = b'0,00000000-0000-0000-0001-020304050607,0,0,0,0,0,0,0,0,0,0,2014-01-01T01:01:01.0000000Z,Zero,"Zero",0,00:00:00,,null'
     bytes_stream = io.BytesIO(byte_sequence)
     streaming_ingest_client.ingest_from_stream(bytes_stream, ingestion_properties=ingestion_properties)
@@ -319,23 +359,28 @@ def test_streaming_ingest_from_csv_io_streams():
     str_stream = io.StringIO(str_sequence)
     streaming_ingest_client.ingest_from_stream(str_stream, ingestion_properties=ingestion_properties)
 
-    assert_row_count(2, timeout=120)
+    assert_rows_added(2, timeout=120)
 
 
 def test_streaming_ingest_from_json_io_streams():
     ingestion_properties = IngestionProperties(
-        database=db_name, table=table_name, dataFormat=DataFormat.JSON, ingestionMappingReference="JsonMapping", ingestionMappingType=IngestionMappingType.JSON
+        database=test_db,
+        table=test_table,
+        data_format=DataFormat.JSON,
+        flush_immediately=True,
+        ingestion_mapping_reference="JsonMapping",
+        ingestion_mapping_type=IngestionMappingType.JSON,
     )
 
     byte_sequence = b'{"rownumber": 0, "rowguid": "00000000-0000-0000-0001-020304050607", "xdouble": 0.0, "xfloat": 0.0, "xbool": 0, "xint16": 0, "xint32": 0, "xint64": 0, "xunit8": 0, "xuint16": 0, "xunit32": 0, "xunit64": 0, "xdate": "2014-01-01T01:01:01Z", "xsmalltext": "Zero", "xtext": "Zero", "xnumberAsText": "0", "xtime": "00:00:00", "xtextWithNulls": null, "xdynamicWithNulls": ""}'
     bytes_stream = io.BytesIO(byte_sequence)
     streaming_ingest_client.ingest_from_stream(bytes_stream, ingestion_properties=ingestion_properties)
 
-    str_sequence = u'{"rownumber": 0, "rowguid": "00000000-0000-0000-0001-020304050607", "xdouble": 0.0, "xfloat": 0.0, "xbool": 0, "xint16": 0, "xint32": 0, "xint64": 0, "xunit8": 0, "xuint16": 0, "xunit32": 0, "xunit64": 0, "xdate": "2014-01-01T01:01:01Z", "xsmalltext": "Zero", "xtext": "Zero", "xnumberAsText": "0", "xtime": "00:00:00", "xtextWithNulls": null, "xdynamicWithNulls": ""}'
+    str_sequence = '{"rownumber": 0, "rowguid": "00000000-0000-0000-0001-020304050607", "xdouble": 0.0, "xfloat": 0.0, "xbool": 0, "xint16": 0, "xint32": 0, "xint64": 0, "xunit8": 0, "xuint16": 0, "xunit32": 0, "xunit64": 0, "xdate": "2014-01-01T01:01:01Z", "xsmalltext": "Zero", "xtext": "Zero", "xnumberAsText": "0", "xtime": "00:00:00", "xtextWithNulls": null, "xdynamicWithNulls": ""}'
     str_stream = io.StringIO(str_sequence)
     streaming_ingest_client.ingest_from_stream(str_stream, ingestion_properties=ingestion_properties)
 
-    assert_row_count(2, timeout=120)
+    assert_rows_added(2, timeout=120)
 
 
 def test_streaming_ingest_from_dataframe():
@@ -364,7 +409,7 @@ def test_streaming_ingest_from_dataframe():
     ]
     rows = [[0, "00000000-0000-0000-0001-020304050607", 0.0, 0.0, 0, 0, 0, 0, 0, 0, 0, 0, "2014-01-01T01:01:01Z", "Zero", "Zero", "0", "00:00:00", None, ""]]
     df = DataFrame(data=rows, columns=fields)
-    ingestion_properties = IngestionProperties(database=db_name, table=table_name, dataFormat=DataFormat.CSV)
+    ingestion_properties = IngestionProperties(database=test_db, table=test_table, flush_immediately=True, data_format=DataFormat.CSV)
     ingest_client.ingest_from_dataframe(df, ingestion_properties)
 
-    assert_row_count(1, timeout=120)
+    assert_rows_added(1, timeout=120)

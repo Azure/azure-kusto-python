@@ -10,7 +10,6 @@ import responses
 import io
 from azure.kusto.ingest import KustoIngestClient, IngestionProperties, DataFormat
 
-
 pandas_installed = False
 try:
     import pandas
@@ -18,7 +17,6 @@ try:
     pandas_installed = True
 except:
     pass
-
 
 UUID_REGEX = "[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}"
 BLOB_NAME_REGEX = "database__table__" + UUID_REGEX + "__dataset.csv.gz"
@@ -39,19 +37,58 @@ def request_callback(request):
                     "TableName": "Table_0",
                     "Columns": [{"ColumnName": "ResourceTypeName", "DataType": "String"}, {"ColumnName": "StorageRoot", "DataType": "String"}],
                     "Rows": [
-                        ["SecuredReadyForAggregationQueue", "https://storageaccount.queue.core.windows.net/readyforaggregation-secured?sas"],
-                        ["SecuredReadyForAggregationQueue", "https://storageaccount.queue.core.windows.net/readyforaggregation-secured?sas"],
-                        ["SecuredReadyForAggregationQueue", "https://storageaccount.queue.core.windows.net/readyforaggregation-secured?sas"],
-                        ["SecuredReadyForAggregationQueue", "https://storageaccount.queue.core.windows.net/readyforaggregation-secured?sas"],
-                        ["SecuredReadyForAggregationQueue", "https://storageaccount.queue.core.windows.net/readyforaggregation-secured?sas"],
-                        ["FailedIngestionsQueue", "https://storageaccount.queue.core.windows.net/failedingestions?sas"],
-                        ["SuccessfulIngestionsQueue", "https://storageaccount.queue.core.windows.net/successfulingestions?sas"],
-                        ["TempStorage", "https://storageaccount.blob.core.windows.net/tempstorage?sas"],
-                        ["TempStorage", "https://storageaccount.blob.core.windows.net/tempstorage?sas"],
-                        ["TempStorage", "https://storageaccount.blob.core.windows.net/tempstorage?sas"],
-                        ["TempStorage", "https://storageaccount.blob.core.windows.net/tempstorage?sas"],
-                        ["TempStorage", "https://storageaccount.blob.core.windows.net/tempstorage?sas"],
-                        ["IngestionsStatusTable", "https://storageaccount.table.core.windows.net/ingestionsstatus?sas"],
+                        [
+                            "SecuredReadyForAggregationQueue",
+                            "https://storageaccount.queue.core.windows.net/readyforaggregation-secured?sp=rl&st=2020-05-20T13:38:37Z&se=2020-05-21T13:38:37Z&sv=2019-10-10&sr=c&sig=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+                        ],
+                        [
+                            "SecuredReadyForAggregationQueue",
+                            "https://storageaccount.queue.core.windows.net/readyforaggregation-secured?sp=rl&st=2020-05-20T13:38:37Z&se=2020-05-21T13:38:37Z&sv=2019-10-10&sr=c&sig=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+                        ],
+                        [
+                            "SecuredReadyForAggregationQueue",
+                            "https://storageaccount.queue.core.windows.net/readyforaggregation-secured?sp=rl&st=2020-05-20T13:38:37Z&se=2020-05-21T13:38:37Z&sv=2019-10-10&sr=c&sig=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+                        ],
+                        [
+                            "SecuredReadyForAggregationQueue",
+                            "https://storageaccount.queue.core.windows.net/readyforaggregation-secured?sp=rl&st=2020-05-20T13:38:37Z&se=2020-05-21T13:38:37Z&sv=2019-10-10&sr=c&sig=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+                        ],
+                        [
+                            "SecuredReadyForAggregationQueue",
+                            "https://storageaccount.queue.core.windows.net/readyforaggregation-secured?sp=rl&st=2020-05-20T13:38:37Z&se=2020-05-21T13:38:37Z&sv=2019-10-10&sr=c&sig=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+                        ],
+                        [
+                            "FailedIngestionsQueue",
+                            "https://storageaccount.queue.core.windows.net/failedingestions?sp=rl&st=2020-05-20T13:38:37Z&se=2020-05-21T13:38:37Z&sv=2019-10-10&sr=c&sig=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+                        ],
+                        [
+                            "SuccessfulIngestionsQueue",
+                            "https://storageaccount.queue.core.windows.net/successfulingestions?sp=rl&st=2020-05-20T13:38:37Z&se=2020-05-21T13:38:37Z&sv=2019-10-10&sr=c&sig=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+                        ],
+                        [
+                            "TempStorage",
+                            "https://storageaccount.blob.core.windows.net/tempstorage?sp=rl&st=2020-05-20T13:38:37Z&se=2020-05-21T13:38:37Z&sv=2019-10-10&sr=c&sig=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+                        ],
+                        [
+                            "TempStorage",
+                            "https://storageaccount.blob.core.windows.net/tempstorage?sp=rl&st=2020-05-20T13:38:37Z&se=2020-05-21T13:38:37Z&sv=2019-10-10&sr=c&sig=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+                        ],
+                        [
+                            "TempStorage",
+                            "https://storageaccount.blob.core.windows.net/tempstorage?sp=rl&st=2020-05-20T13:38:37Z&se=2020-05-21T13:38:37Z&sv=2019-10-10&sr=c&sig=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+                        ],
+                        [
+                            "TempStorage",
+                            "https://storageaccount.blob.core.windows.net/tempstorage?sp=rl&st=2020-05-20T13:38:37Z&se=2020-05-21T13:38:37Z&sv=2019-10-10&sr=c&sig=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+                        ],
+                        [
+                            "TempStorage",
+                            "https://storageaccount.blob.core.windows.net/tempstorage?sp=rl&st=2020-05-20T13:38:37Z&se=2020-05-21T13:38:37Z&sv=2019-10-10&sr=c&sig=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+                        ],
+                        [
+                            "IngestionsStatusTable",
+                            "https://storageaccount.table.core.windows.net/ingestionsstatus?sp=rl&st=2020-05-20T13:38:37Z&se=2020-05-21T13:38:37Z&sv=2019-10-10&sr=c&sig=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+                        ],
                     ],
                 }
             ]
@@ -73,16 +110,16 @@ class KustoIngestClientTests(unittest.TestCase):
 
     @responses.activate
     @patch("azure.kusto.data.security._AadHelper.acquire_authorization_header", return_value=None)
-    @patch("azure.storage.blob.BlockBlobService.create_blob_from_stream")
-    @patch("azure.storage.queue.QueueService.put_message")
+    @patch("azure.storage.blob.BlobClient.upload_blob")
+    @patch("azure.storage.queue.QueueClient.send_message")
     @patch("uuid.uuid4", return_value=MOCKED_UUID_4)
-    def test_sanity_ingest_from_file(self, mock_uuid, mock_put_message_in_queue, mock_create_blob_from_stream, mock_aad):
+    def test_sanity_ingest_from_file(self, mock_uuid, mock_put_message_in_queue, mock_upload_blob_from_stream, mock_aad):
         responses.add_callback(
             responses.POST, "https://ingest-somecluster.kusto.windows.net/v1/rest/mgmt", callback=request_callback, content_type="application/json"
         )
 
         ingest_client = KustoIngestClient("https://ingest-somecluster.kusto.windows.net")
-        ingestion_properties = IngestionProperties(database="database", table="table", dataFormat=DataFormat.CSV)
+        ingestion_properties = IngestionProperties(database="database", table="table", data_format=DataFormat.CSV)
 
         # ensure test can work when executed from within directories
         current_dir = os.getcwd()
@@ -101,40 +138,36 @@ class KustoIngestClientTests(unittest.TestCase):
 
         put_message_in_queue_mock_kwargs = mock_put_message_in_queue.call_args_list[0][1]
 
-        assert put_message_in_queue_mock_kwargs["queue_name"] == "readyforaggregation-secured"
-        queued_message = base64.b64decode(put_message_in_queue_mock_kwargs["content"].encode("utf-8")).decode("utf-8")
-        queued_message_json = json.loads(queued_message)
-        expected_url = "https://storageaccount.blob.core.windows.net/tempstorage/" "database__table__1111-111111-111111-1111__dataset.csv.gz?sas"
-        # mock_create_blob_from_stream
+        queued_message_json = json.loads(put_message_in_queue_mock_kwargs["content"])
+        expected_url = "https://storageaccount.blob.core.windows.net/tempstorage/database__table__1111-111111-111111-1111__dataset.csv.gz?sp=rl&st=2020-05-20T13%3A38%3A37Z&se=2020-05-21T13%3A38%3A37Z&sv=2019-10-10&sr=c&sig=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+        # mock_upload_blob_from_stream
         assert queued_message_json["BlobPath"] == expected_url
         assert queued_message_json["DatabaseName"] == "database"
-        assert queued_message_json["IgnoreSizeLimit"] == False
+        assert queued_message_json["IgnoreSizeLimit"] is False
         assert queued_message_json["AdditionalProperties"]["format"] == "csv"
-        assert queued_message_json["FlushImmediately"] == False
+        assert queued_message_json["FlushImmediately"] is False
         assert queued_message_json["TableName"] == "table"
         assert queued_message_json["RawDataSize"] > 0
-        assert queued_message_json["RetainBlobOnSuccess"] == True
+        assert queued_message_json["RetainBlobOnSuccess"] is True
 
-        create_blob_from_stream_mock_kwargs = mock_create_blob_from_stream.call_args_list[0][1]
+        upload_blob_kwargs = mock_upload_blob_from_stream.call_args_list[0][1]
 
-        assert create_blob_from_stream_mock_kwargs["container_name"] == "tempstorage"
-        assert type(create_blob_from_stream_mock_kwargs["stream"]) == io.BytesIO
-        assert create_blob_from_stream_mock_kwargs["blob_name"] == "database__table__1111-111111-111111-1111__dataset.csv.gz"
+        assert type(upload_blob_kwargs["data"]) == io.BytesIO
 
     @responses.activate
     @pytest.mark.skipif(not pandas_installed, reason="requires pandas")
-    @patch("azure.storage.blob.BlockBlobService.create_blob_from_stream")
-    @patch("azure.storage.queue.QueueService.put_message")
+    @patch("azure.storage.blob.BlobClient.upload_blob")
+    @patch("azure.storage.queue.QueueClient.send_message")
     @patch("uuid.uuid4", return_value=MOCKED_UUID_4)
     @patch("time.time", return_value=MOCKED_TIME)
     @patch("os.getpid", return_value=MOCKED_PID)
-    def test_simple_ingest_from_dataframe(self, mock_pid, mock_time, mock_uuid, mock_put_message_in_queue, mock_create_blob_from_stream):
+    def test_simple_ingest_from_dataframe(self, mock_pid, mock_time, mock_uuid, mock_put_message_in_queue, mock_upload_blob_from_stream):
         responses.add_callback(
             responses.POST, "https://ingest-somecluster.kusto.windows.net/v1/rest/mgmt", callback=request_callback, content_type="application/json"
         )
 
         ingest_client = KustoIngestClient("https://ingest-somecluster.kusto.windows.net")
-        ingestion_properties = IngestionProperties(database="database", table="table", dataFormat=DataFormat.CSV)
+        ingestion_properties = IngestionProperties(database="database", table="table", data_format=DataFormat.CSV)
 
         from pandas import DataFrame
 
@@ -149,24 +182,18 @@ class KustoIngestClientTests(unittest.TestCase):
 
         put_message_in_queue_mock_kwargs = mock_put_message_in_queue.call_args_list[0][1]
 
-        assert put_message_in_queue_mock_kwargs["queue_name"] == "readyforaggregation-secured"
-        queued_message = base64.b64decode(put_message_in_queue_mock_kwargs["content"].encode("utf-8")).decode("utf-8")
-        queued_message_json = json.loads(queued_message)
-        expected_url = ("https://storageaccount.blob.core.windows.net/tempstorage/database__table__1111-111111-111111-1111__df_{}_100_64.csv.gz?sas").format(
-            id(df)
-        )
-        # mock_create_blob_from_stream
+        queued_message_json = json.loads(put_message_in_queue_mock_kwargs["content"])
+        expected_url = f"https://storageaccount.blob.core.windows.net/tempstorage/database__table__1111-111111-111111-1111__df_{id(df)}_100_64.csv.gz?sp=rl&st=2020-05-20T13%3A38%3A37Z&se=2020-05-21T13%3A38%3A37Z&sv=2019-10-10&sr=c&sig=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+        # mock_upload_blob_from_stream
         assert queued_message_json["BlobPath"] == expected_url
         assert queued_message_json["DatabaseName"] == "database"
-        assert queued_message_json["IgnoreSizeLimit"] == False
+        assert queued_message_json["IgnoreSizeLimit"] is False
         assert queued_message_json["AdditionalProperties"]["format"] == "csv"
-        assert queued_message_json["FlushImmediately"] == False
+        assert queued_message_json["FlushImmediately"] is False
         assert queued_message_json["TableName"] == "table"
         assert queued_message_json["RawDataSize"] > 0
-        assert queued_message_json["RetainBlobOnSuccess"] == True
+        assert queued_message_json["RetainBlobOnSuccess"] is True
 
-        create_blob_from_stream_mock_kwargs = mock_create_blob_from_stream.call_args_list[0][1]
+        upload_blob_kwargs = mock_upload_blob_from_stream.call_args_list[0][1]
 
-        assert create_blob_from_stream_mock_kwargs["container_name"] == "tempstorage"
-        assert type(create_blob_from_stream_mock_kwargs["stream"]) == io.BufferedReader
-        assert create_blob_from_stream_mock_kwargs["blob_name"] == "database__table__1111-111111-111111-1111__df_{}_100_64.csv.gz".format(id(df))
+        assert type(upload_blob_kwargs["data"]) == io.BufferedReader

@@ -13,9 +13,12 @@ HAS_PANDAS = True
 
 try:
     import pandas
-    from .helpers import to_pandas_datetime, to_pandas_timedelta
 except ImportError as e:
     HAS_PANDAS = False
+
+# This part is outside the try/catch because a failure here should raise an error
+if HAS_PANDAS:
+    from .helpers import to_pandas_datetime, to_pandas_timedelta
 
 
 class WellKnownDataSet(Enum):
@@ -30,7 +33,7 @@ class WellKnownDataSet(Enum):
 class KustoResultRow:
     """Iterator over a Kusto result row."""
 
-    convertion_funcs = {"datetime": _converters.to_datetime, "timespan": _converters.to_timedelta, "decimal": Decimal}
+    conversion_funcs = {"datetime": _converters.to_datetime, "timespan": _converters.to_timedelta, "decimal": Decimal}
 
     if HAS_PANDAS:
         pandas_funcs = {"datetime": to_pandas_datetime, "timespan": to_pandas_timedelta}
@@ -55,7 +58,7 @@ class KustoResultRow:
             # Azure-Data-Explorer(Kusto) supports 7 decimal digits, while the corresponding python types supports only 6.
             # One example why one might want this precision, is when working with pandas.
             # In that case, use azure.kusto.data.helpers.dataframe_from_result_table which takes into account the original value.
-            typed_value = KustoResultRow.convertion_funcs[column_type](value) if value is not None and column_type in KustoResultRow.convertion_funcs else value
+            typed_value = KustoResultRow.conversion_funcs[column_type](value) if value is not None and column_type in KustoResultRow.conversion_funcs else value
 
             # This is a special case where plain python will lose precision, so we keep the precise value hidden.
             # When transforming to pandas, we can use the hidden value to convert to precise pandas/numpy types
@@ -98,7 +101,7 @@ class KustoResultRow:
 
 
 class KustoResultColumn:
-    def __init__(self, json_column, ordinal):
+    def __init__(self, json_column: dict, ordinal: int):
         self.column_name = json_column["ColumnName"]
         self.column_type = json_column.get("ColumnType") or json_column["DataType"]
         self.ordinal = ordinal
@@ -110,7 +113,7 @@ class KustoResultColumn:
 class KustoResultTable:
     """Iterator over a Kusto result table."""
 
-    def __init__(self, json_table):
+    def __init__(self, json_table: dict):
         self.table_name = json_table.get("TableName")
         self.table_id = json_table.get("TableId")
         self.table_kind = WellKnownDataSet[json_table["TableKind"]] if "TableKind" in json_table else None
