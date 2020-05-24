@@ -40,6 +40,3 @@ including, but not exclusively, `Azure Databricks
 * `Kusto query sample <https://github.com/Azure/azure-kusto-python/blob/master/azure-kusto-data/tests/sample.py>`_.
 
 * `GitHub Repository <https://github.com/Azure/azure-kusto-python/tree/master/azure-kusto-data>`_.
-
-.. image:: https://travis-ci.org/Azure/azure-kusto-python.svg
-    :target: https://travis-ci.org/Azure/azure-kusto-python
