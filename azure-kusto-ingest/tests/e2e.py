@@ -165,9 +165,11 @@ current_count = 0
 
 client.execute(
     test_db,
-    f".create table {test_table} (rownumber: int, rowguid: string, xdouble: real, xfloat: real, xbool: bool, xint16: int, xint32: int, xint64: long, xuint8: long, xuint16: long, xuint32: long, xuint64: long, xdate: datetime, xsmalltext: string, xtext: string, xnumberAsText: string, xtime: timespan, xtextWithNulls: string, xdynamicWithNulls: dynamic)",
+    ".create table {0} (rownumber: int, rowguid: string, xdouble: real, xfloat: real, xbool: bool, xint16: int, xint32: int, xint64: long, xuint8: long, xuint16: long, xuint32: long, xuint64: long, xdate: datetime, xsmalltext: string, xtext: string, xnumberAsText: string, xtime: timespan, xtextWithNulls: string, xdynamicWithNulls: dynamic)".format(
+        test_table
+    ),
 )
-client.execute(test_db, f".create table {test_table} ingestion json mapping 'JsonMapping' {TestData.test_table_json_mapping_reference()}")
+client.execute(test_db, ".create table {0} ingestion json mapping 'JsonMapping' {1}".format(test_table, TestData.test_table_json_mapping_reference()))
 
 
 # assertions
@@ -192,7 +194,7 @@ def assert_rows_added(expected: int, timeout=60):
                 break
 
     current_count += actual
-    assert actual == expected, f"Row count expected = {expected}, while actual row count = {actual}"
+    assert actual == expected, "Row count expected = {0}, while actual row count = {1}".format(expected, actual)
 
 
 def assert_success_messages_count(expected_success_messages: int, timeout=60):
@@ -312,7 +314,7 @@ def test_tsv_ingestion_csv_mapping():
 
 
 def test_streaming_ingest_from_opened_file():
-    client.execute(test_db, f".clear database {test_db} cache streamingingestion schema")
+    client.execute(test_db, ".clear database {0} cache streamingingestion schema".format(test_db))
     ingestion_properties = IngestionProperties(database=test_db, table=test_table, data_format=DataFormat.CSV)
 
     with open(csv_file_path, "r") as stream:
@@ -322,7 +324,7 @@ def test_streaming_ingest_from_opened_file():
 
 
 def test_streaming_ingest_from_csv_file():
-    client.execute(test_db, f".clear database {test_db} cache streamingingestion schema")
+    client.execute(test_db, ".clear database {0} cache streamingingestion schema".format(test_db))
     ingestion_properties = IngestionProperties(database=test_db, table=test_table, flush_immediately=True, data_format=DataFormat.CSV)
 
     for f in [csv_file_path, zipped_csv_file_path]:
@@ -332,7 +334,7 @@ def test_streaming_ingest_from_csv_file():
 
 
 def test_streaming_ingest_from_json_file():
-    client.execute(test_db, f".clear database {test_db} cache streamingingestion schema")
+    client.execute(test_db, ".clear database {0} cache streamingingestion schema".format(test_db))
     ingestion_properties = IngestionProperties(
         database=test_db,
         table=test_table,
@@ -349,7 +351,7 @@ def test_streaming_ingest_from_json_file():
 
 
 def test_streaming_ingest_from_csv_io_streams():
-    client.execute(test_db, f".clear database {test_db} cache streamingingestion schema")
+    client.execute(test_db, ".clear database {0} cache streamingingestion schema".format(test_db))
     ingestion_properties = IngestionProperties(database=test_db, table=test_table, data_format=DataFormat.CSV)
     byte_sequence = b'0,00000000-0000-0000-0001-020304050607,0,0,0,0,0,0,0,0,0,0,2014-01-01T01:01:01.0000000Z,Zero,"Zero",0,00:00:00,,null'
     bytes_stream = io.BytesIO(byte_sequence)

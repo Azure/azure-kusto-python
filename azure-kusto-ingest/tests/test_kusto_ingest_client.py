@@ -183,7 +183,9 @@ class KustoIngestClientTests(unittest.TestCase):
         put_message_in_queue_mock_kwargs = mock_put_message_in_queue.call_args_list[0][1]
 
         queued_message_json = json.loads(put_message_in_queue_mock_kwargs["content"])
-        expected_url = f"https://storageaccount.blob.core.windows.net/tempstorage/database__table__1111-111111-111111-1111__df_{id(df)}_100_64.csv.gz?sp=rl&st=2020-05-20T13%3A38%3A37Z&se=2020-05-21T13%3A38%3A37Z&sv=2019-10-10&sr=c&sig=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+        expected_url = "https://storageaccount.blob.core.windows.net/tempstorage/database__table__1111-111111-111111-1111__df_{0}_100_64.csv.gz?sp=rl&st=2020-05-20T13%3A38%3A37Z&se=2020-05-21T13%3A38%3A37Z&sv=2019-10-10&sr=c&sig=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx".format(
+            id(df)
+        )
         # mock_upload_blob_from_stream
         assert queued_message_json["BlobPath"] == expected_url
         assert queued_message_json["DatabaseName"] == "database"

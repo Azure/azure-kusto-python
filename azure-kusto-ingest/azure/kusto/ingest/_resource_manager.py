@@ -25,14 +25,14 @@ class _ResourceUri:
 
     @property
     def uri(self) -> str:
-        return f"https://{self.storage_account_name}.{self.object_type}.core.windows.net/{self.object_name}"
+        return "https://{0.storage_account_name}.{0.object_type}.core.windows.net/{0.object_name}".format(self)
 
     @property
     def account_uri(self) -> str:
-        return f"https://{self.storage_account_name}.{self.object_type}.core.windows.net/?{self.sas}"
+        return "https://{0.storage_account_name}.{0.object_type}.core.windows.net/?{0.sas}".format(self)
 
     def __str__(self):
-        return f"https://{self.storage_account_name}.{self.object_type}.core.windows.net/{self.object_name}?{self.sas}"
+        return "https://{0.storage_account_name}.{0.object_type}.core.windows.net/{0.object_name}?{0.sas}"
 
 
 class _IngestClientResources:
