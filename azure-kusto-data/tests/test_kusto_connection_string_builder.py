@@ -3,7 +3,7 @@
 import unittest
 from uuid import uuid4
 
-from azure.kusto.data.request import KustoConnectionStringBuilder
+from azure.kusto.data import KustoConnectionStringBuilder
 
 
 class KustoConnectionStringBuilderTests(unittest.TestCase):

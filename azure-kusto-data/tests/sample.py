@@ -6,7 +6,7 @@ from datetime import timedelta
 
 from azure.kusto.data.exceptions import KustoServiceError
 from azure.kusto.data.helpers import dataframe_from_result_table
-from azure.kusto.data.request import KustoClient, KustoConnectionStringBuilder, ClientRequestProperties
+from azure.kusto.data import KustoClient, KustoConnectionStringBuilder, ClientRequestProperties
 
 ######################################################
 ##                        AUTH                      ##

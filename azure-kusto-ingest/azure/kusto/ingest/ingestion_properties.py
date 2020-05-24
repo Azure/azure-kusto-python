@@ -1,9 +1,9 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
-import warnings
 from enum import Enum, IntEnum
+from typing import List
 
-from .exceptions import KustoDuplicateMappingError, KustoDuplicateMappingReferenceError, KustoMappingAndMappingReferenceError
+from .exceptions import KustoDuplicateMappingReferenceError, KustoMappingAndMappingReferenceError
 
 
 class DataFormat(Enum):
@@ -50,9 +50,9 @@ class ValidationImplications(IntEnum):
 class ValidationPolicy:
     """Validation policy to ingest command."""
 
-    def __init__(self, validationOptions=ValidationOptions.DoNotValidate, validationImplications=ValidationImplications.BestEffort):
-        self.ValidationOptions = validationOptions
-        self.ValidationImplications = validationImplications
+    def __init__(self, validation_options=ValidationOptions.DoNotValidate, validation_implications=ValidationImplications.BestEffort):
+        self.ValidationOptions = validation_options
+        self.ValidationImplications = validation_implications
 
 
 class ReportLevel(IntEnum):
@@ -104,12 +104,12 @@ class ColumnMapping:
 
     def __init__(
         self,
-        column_name,
+        column_name: str,
         column_type,
-        path=None,
-        transform=TransformationMethod.NONE,
-        ordinal=None,
-        const_value=None,
+        path: str = None,
+        transform: TransformationMethod = TransformationMethod.NONE,
+        ordinal: int = None,
+        const_value: str = None,
         field=None,
         columns=None,
         storage_data_type=None,
@@ -134,43 +134,46 @@ class ColumnMapping:
 
 
 class IngestionProperties:
-    """Class to represent ingestion properties."""
+    """
+    Class to represent ingestion properties.
+    For more information check out https://docs.microsoft.com/en-us/azure/data-explorer/ingestion-properties
+    """
 
     def __init__(
         self,
-        database,
-        table,
+        database: str,
+        table: str,
+        data_format: DataFormat = DataFormat.CSV,
+        ingestion_mapping: List[ColumnMapping] = None,
+        ingestion_mapping_type: IngestionMappingType = None,
+        ingestion_mapping_reference: str = None,
+        ingest_if_not_exists: List[str] = None,
+        ingest_by_tags: List[str] = None,
+        drop_by_tags: List[str] = None,
+        additional_tags: List[str] = None,
+        flush_immediately: bool = False,
+        report_level: ReportLevel = ReportLevel.DoNotReport,
+        report_method: ReportMethod = ReportMethod.Queue,
+        validation_policy: ValidationPolicy = None,
+        additional_properties: dict = None,
+        **kwargs
+    ):
 
         # backward compat - will be removed in future versions
-        dataFormat=DataFormat.CSV,
-        ingestionMapping=None,
-        ingestionMappingType=None,
-        ingestionMappingReference=None,
-        additionalTags=None,
-        ingestIfNotExists=None,
-        ingestByTags=None,
-        dropByTags=None,
-        flushImmediately=False,
-        reportLevel=ReportLevel.DoNotReport,
-        reportMethod=ReportMethod.Queue,
-        validationPolicy=None,
-        additionalProperties=None,
+        dataFormat = kwargs.get("dataFormat", None)
+        ingestionMapping = kwargs.get("ingestionMapping", None)
+        ingestionMappingType = kwargs.get("ingestionMappingType", None)
+        ingestionMappingReference = kwargs.get("ingestionMappingType", None)
+        additionalTags = kwargs.get("additionalTags", None)
+        ingestIfNotExists = kwargs.get("ingestIfNotExists", None)
+        ingestByTags = kwargs.get("ingestByTags", None)
+        dropByTags = kwargs.get("dropByTags", None)
+        flushImmediately = kwargs.get("flushImmediately", None)
+        reportLevel = kwargs.get("reportLevel", None)
+        reportMethod = kwargs.get("reportMethod", None)
+        validationPolicy = kwargs.get("validationPolicy", None)
+        additionalProperties = kwargs.get("additionalProperties", None)
 
-        # pythonic
-        data_format=DataFormat.CSV,
-        ingestion_mapping=None,
-        ingestion_mapping_type=None,
-        ingestion_mapping_reference=None,
-        additional_tags=None,
-        ingest_if_not_exists=None,
-        ingest_by_tags=None,
-        drop_by_tags=None,
-        flush_immediately=False,
-        report_level=ReportLevel.DoNotReport,
-        report_method=ReportMethod.Queue,
-        validation_policy=None,
-        additional_properties=None,
-    ):
         mapping_exists = ingestionMapping is not None or ingestion_mapping is not None
         if mapping_exists and (ingestion_mapping_reference is not None or ingestionMappingReference is not None):
             raise KustoMappingAndMappingReferenceError()

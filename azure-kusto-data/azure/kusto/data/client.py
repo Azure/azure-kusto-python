@@ -158,8 +158,7 @@ class KustoConnectionStringBuilder:
 
     @classmethod
     def with_aad_user_password_authentication(
-        cls, connection_string: str, user_id: str, password: str,
-        authority_id: str = "common"
+        cls, connection_string: str, user_id: str, password: str, authority_id: str = "common"
     ) -> "KustoConnectionStringBuilder":
         """
         Creates a KustoConnection string builder that will authenticate with AAD user name and
@@ -196,8 +195,9 @@ class KustoConnectionStringBuilder:
         return kcsb
 
     @classmethod
-    def with_aad_application_key_authentication(cls, connection_string: str, aad_app_id: str, app_key: str,
-                                                authority_id: str) -> "KustoConnectionStringBuilder":
+    def with_aad_application_key_authentication(
+        cls, connection_string: str, aad_app_id: str, app_key: str, authority_id: str
+    ) -> "KustoConnectionStringBuilder":
         """
         Creates a KustoConnection string builder that will authenticate with AAD application and key.
         :param str connection_string: Kusto connection string should by of the format: https://<clusterName>.kusto.windows.net
@@ -524,7 +524,7 @@ class KustoClient:
         """
         Kusto Client constructor.
         :param kcsb: The connection string to initialize KustoClient.
-        :type kcsb: azure.kusto.data.request.KustoConnectionStringBuilder or str
+        :type kcsb: azure.kusto.data.KustoConnectionStringBuilder or str
         """
         if not isinstance(kcsb, KustoConnectionStringBuilder):
             kcsb = KustoConnectionStringBuilder(kcsb)
@@ -546,7 +546,7 @@ class KustoClient:
         Executes a query or management command.
         :param str database: Database against query will be executed.
         :param str query: Query to be executed.
-        :param azure.kusto.data.request.ClientRequestProperties properties: Optional additional properties.
+        :param azure.kusto.data.ClientRequestProperties properties: Optional additional properties.
         :return: Kusto response data set.
         :rtype: azure.kusto.data.response.KustoResponseDataSet
         """
@@ -561,7 +561,7 @@ class KustoClient:
         To learn more about KQL go to https://docs.microsoft.com/en-us/azure/kusto/query/
         :param str database: Database against query will be executed.
         :param str query: Query to be executed.
-        :param azure.kusto.data.request.ClientRequestProperties properties: Optional additional properties.
+        :param azure.kusto.data.ClientRequestProperties properties: Optional additional properties.
         :return: Kusto response data set.
         :rtype: azure.kusto.data.response.KustoResponseDataSet
         """
@@ -573,7 +573,7 @@ class KustoClient:
         To learn more about KQL control commands go to  https://docs.microsoft.com/en-us/azure/kusto/management/
         :param str database: Database against query will be executed.
         :param str query: Query to be executed.
-        :param azure.kusto.data.request.ClientRequestProperties properties: Optional additional properties.
+        :param azure.kusto.data.ClientRequestProperties properties: Optional additional properties.
         :return: Kusto response data set.
         :rtype: azure.kusto.data.response.KustoResponseDataSet
         """
