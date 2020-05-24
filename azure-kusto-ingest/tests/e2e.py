@@ -144,7 +144,7 @@ def get_file_path() -> str:
 
 # Init clients
 test_db = os.environ.get("TEST_DATABASE")
-test_table = "python"
+test_table = "python_test" + str(int(time.time()))
 client = KustoClient(engine_kcsb_from_env())
 ingest_client = KustoIngestClient(dm_kcsb_from_env())
 ingest_status_q = KustoIngestStatusQueues(ingest_client)
@@ -413,3 +413,7 @@ def test_streaming_ingest_from_dataframe():
     ingest_client.ingest_from_dataframe(df, ingestion_properties)
 
     assert_rows_added(1, timeout=120)
+
+
+def pytest_sessionfinish(session, exitstatus):
+    client.execute(test_db, ".drop table {} ifexists".format(test_table))
