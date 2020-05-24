@@ -39,5 +39,11 @@ jobs:
         pip install pytest
         pytest
     - name: EtoE Test with pytest
+      env:
+        APP_ID: ${{ secrets.APP_ID }}
+        APP_KEY: ${{ secrets.APP_KEY }}
+        AUTH_ID: ${{ secrets.AUTH_ID }}
+        TEST_DATABASE: ${{ secrets.TEST_DATABASE }}
+        ENGINE_CONNECTION_STRING: ${{ secrets.ENGINE_CONNECTION_STRING }}
       run: |
         pytest ./azure-kusto-ingest/tests/e2e.py
