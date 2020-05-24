@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.5, 3.6, 3.7]
+        python-version: [3.5, 3.6, 3.7, 3.8]
 
     steps:
     - uses: actions/checkout@v2
@@ -38,3 +38,6 @@ jobs:
       run: |
         pip install pytest
         pytest
+    - name: EtoE Test with pytest
+      run: |
+        pytest ./azure-kusto-ingest/tests/e2e.py
