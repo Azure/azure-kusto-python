@@ -288,7 +288,7 @@ def test_tsv_ingestion_csv_mapping():
 
 
 def test_streaming_ingest_from_opened_file():
-    client.execute(test_db, ".clear database {0} cache streamingingestion schema".format(test_db))
+    client.execute(test_db, ".clear database cache streamingingestion schema")
     ingestion_properties = IngestionProperties(database=test_db, table=test_table, data_format=DataFormat.CSV)
 
     with open(csv_file_path, "r") as stream:
@@ -298,7 +298,7 @@ def test_streaming_ingest_from_opened_file():
 
 
 def test_streaming_ingest_from_csv_file():
-    client.execute(test_db, ".clear database {0} cache streamingingestion schema".format(test_db))
+    client.execute(test_db, ".clear database cache streamingingestion schema")
     ingestion_properties = IngestionProperties(database=test_db, table=test_table, flush_immediately=True, data_format=DataFormat.CSV)
 
     for f in [csv_file_path, zipped_csv_file_path]:
@@ -308,7 +308,7 @@ def test_streaming_ingest_from_csv_file():
 
 
 def test_streaming_ingest_from_json_file():
-    client.execute(test_db, ".clear database {0} cache streamingingestion schema".format(test_db))
+    client.execute(test_db, ".clear database cache streamingingestion schema")
     ingestion_properties = IngestionProperties(
         database=test_db,
         table=test_table,
@@ -325,7 +325,7 @@ def test_streaming_ingest_from_json_file():
 
 
 def test_streaming_ingest_from_csv_io_streams():
-    client.execute(test_db, ".clear database {0} cache streamingingestion schema".format(test_db))
+    client.execute(test_db, ".clear database cache streamingingestion schema")
     ingestion_properties = IngestionProperties(database=test_db, table=test_table, data_format=DataFormat.CSV)
     byte_sequence = b'0,00000000-0000-0000-0001-020304050607,0,0,0,0,0,0,0,0,0,0,2014-01-01T01:01:01.0000000Z,Zero,"Zero",0,00:00:00,,null'
     bytes_stream = io.BytesIO(byte_sequence)
