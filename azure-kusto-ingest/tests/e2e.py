@@ -147,7 +147,7 @@ def get_file_path() -> str:
 # Init clients
 test_db = os.environ.get("TEST_DATABASE")
 
-python_version = ".".join([str(v) for v in sys.version_info[:3]])
+python_version = "_".join([str(v) for v in sys.version_info[:3]])
 test_table = "python_test_{0}_{1}".format(python_version, str(int(time.time())))
 client = KustoClient(engine_kcsb_from_env())
 ingest_client = KustoIngestClient(dm_kcsb_from_env())
