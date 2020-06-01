@@ -10,7 +10,7 @@ class KustoServiceError(KustoError):
     """Raised when the Kusto service was unable to process a request."""
 
     def __init__(self, messages, http_response, kusto_response=None):
-        super(KustoServiceError, self).__init__(self, messages)
+        KustoError.__init__(self, messages)
         self.http_response = http_response
         self.kusto_response = kusto_response
 
@@ -39,7 +39,7 @@ class KustoAuthenticationError(KustoClientError):
     """Raised when authentication fails."""
 
     def __init__(self, authentication_method, exception, **kwargs):
-        super(KustoAuthenticationError, self).__init__()
+        KustoClientError.__init__(self)
         self.authentication_method = authentication_method
         self.authority = kwargs["authority"]
         self.kusto_cluster = kwargs["resource"]
