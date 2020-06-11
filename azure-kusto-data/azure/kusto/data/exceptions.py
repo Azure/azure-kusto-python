@@ -1,5 +1,7 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
+from typing import List, Union
+import requests
 
 
 class KustoError(Exception):
@@ -9,8 +11,8 @@ class KustoError(Exception):
 class KustoServiceError(KustoError):
     """Raised when the Kusto service was unable to process a request."""
 
-    def __init__(self, messages, http_response, kusto_response=None):
-        super(KustoServiceError, self).__init__(self, messages)
+    def __init__(self, messages: Union[str, List[dict]], http_response: requests.Response, kusto_response=None):
+        super().__init__(messages)
         self.http_response = http_response
         self.kusto_response = kusto_response
 
@@ -38,8 +40,8 @@ class KustoClientError(KustoError):
 class KustoAuthenticationError(KustoClientError):
     """Raised when authentication fails."""
 
-    def __init__(self, authentication_method, exception, **kwargs):
-        super(KustoAuthenticationError, self).__init__()
+    def __init__(self, authentication_method: str, exception: Exception, **kwargs):
+        super().__init__()
         self.authentication_method = authentication_method
         self.authority = kwargs["authority"]
         self.kusto_cluster = kwargs["resource"]
