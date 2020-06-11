@@ -55,14 +55,14 @@ def _get_azure_cli_auth_token() -> dict:
 class AuthenticationMethod(Enum):
     """Enum representing all authentication methods available in Kusto with Python."""
 
-    aad_username_password: str = "aad_username_password"
-    aad_application_key: str = "aad_application_key"
-    aad_application_certificate: str = "aad_application_certificate"
-    aad_device_login: str = "aad_device_login"
-    aad_token: str = "aad_token"
-    aad_msi: str = "aad_msi"
-    az_cli_profile: str = "az_cli_profile"
-    token_provider: str = "token_provider"
+    aad_username_password = "aad_username_password"
+    aad_application_key = "aad_application_key"
+    aad_application_certificate = "aad_application_certificate"
+    aad_device_login = "aad_device_login"
+    aad_token = "aad_token"
+    aad_msi = "aad_msi"
+    az_cli_profile = "az_cli_profile"
+    token_provider = "token_provider"
 
 
 CLOUD_LOGIN_URL = "https://login.microsoftonline.com/"
@@ -145,13 +145,13 @@ class _AadHelper:
             kwargs["resource"] = self.kusto_uri
 
             if self.authentication_method is AuthenticationMethod.aad_msi:
-                kwargs["authority"] = AuthenticationMethod.aad_msi
+                kwargs["authority"] = AuthenticationMethod.aad_msi.value
             elif self.authentication_method is AuthenticationMethod.token_provider:
-                kwargs["authority"] = AuthenticationMethod.token_provider
+                kwargs["authority"] = AuthenticationMethod.token_provider.value
             elif self.auth_context is not None:
                 kwargs["authority"] = self.auth_context.authority.url
 
-            raise KustoAuthenticationError(self.authentication_method, error, **kwargs)
+            raise KustoAuthenticationError(self.authentication_method.value, error, **kwargs)
 
     def _acquire_authorization_header(self) -> str:
         # Token was provided by caller
