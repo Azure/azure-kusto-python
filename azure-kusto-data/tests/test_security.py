@@ -16,7 +16,7 @@ def test_unauthorized_exception():
     try:
         aad_helper.acquire_authorization_header()
     except KustoAuthenticationError as error:
-        assert error.authentication_method == AuthenticationMethod.aad_username_password.value
+        assert error.authentication_method == AuthenticationMethod.aad_username_password
         assert error.authority == "https://login.microsoftonline.com/authorityName"
         assert error.kusto_cluster == cluster
         assert error.kwargs["username"] == username
@@ -47,7 +47,7 @@ def test_msi_auth():
     try:
         helpers[0].acquire_authorization_header()
     except KustoAuthenticationError as e:
-        assert e.authentication_method == AuthenticationMethod.aad_msi.value
+        assert e.authentication_method == AuthenticationMethod.aad_msi
         assert "client_id" not in e.kwargs
         assert "object_id" not in e.kwargs
         assert "msi_res_id" not in e.kwargs
@@ -55,7 +55,7 @@ def test_msi_auth():
     try:
         helpers[1].acquire_authorization_header()
     except KustoAuthenticationError as e:
-        assert e.authentication_method == AuthenticationMethod.aad_msi.value
+        assert e.authentication_method == AuthenticationMethod.aad_msi
         assert e.kwargs["client_id"] == client_guid
         assert "object_id" not in e.kwargs
         assert "msi_res_id" not in e.kwargs
@@ -79,5 +79,5 @@ def test_token_provider_auth():
     try:
         invalid_helper.acquire_authorization_header()
     except KustoAuthenticationError as e:
-        assert e.authentication_method == AuthenticationMethod.token_provider.value
+        assert e.authentication_method == AuthenticationMethod.token_provider
         assert str(e.exception).index(str(type(invalid_token_provider()))) > -1

@@ -40,7 +40,7 @@ class KustoClientError(KustoError):
 class KustoAuthenticationError(KustoClientError):
     """Raised when authentication fails."""
 
-    def __init__(self, authentication_method, exception, **kwargs):
+    def __init__(self, authentication_method: str, exception: Exception, **kwargs):
         super().__init__()
         self.authentication_method = authentication_method
         self.authority = kwargs["authority"]
