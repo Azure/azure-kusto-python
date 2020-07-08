@@ -200,40 +200,60 @@ class KustoConnectionStringBuilderTests(unittest.TestCase):
         object_guid = "87687687"
         res_guid = "kajsdghdijewhag"
 
+        """
+        Use of object_id and msi_res_id is disabled pending support of azure-identity
+        When version 1.4.1 is released and these parameters are supported enable the functionality and tests back 
+        """
+        exception_occurred = False
+        try:
+            KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication("localhost2", object_id=object_guid, timeout=3)
+        except ValueError:
+            exception_occurred = True
+
+        assert exception_occurred is True
+
+        exception_occurred = False
+        try:
+            KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication("localhost3", msi_res_id=res_guid)
+        except ValueError:
+            exception_occurred = True
+
+        assert exception_occurred is True
+
+
+
         kcsb = [
             KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication("localhost0", timeout=1),
             KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication("localhost1", client_id=client_guid, timeout=2),
-            KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication("localhost2", object_id=object_guid, timeout=3),
-            KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication("localhost3", msi_res_id=res_guid),
+            # KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication("localhost2", object_id=object_guid, timeout=3),
+            # KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication("localhost3", msi_res_id=res_guid),
         ]
 
         assert kcsb[0].msi_authentication
-        assert kcsb[0].msi_parameters["resource"] == "localhost0"
-        assert kcsb[0].msi_parameters["timeout"] == 1
+        assert kcsb[0].msi_parameters["connection_timeout"] == 1
         assert "client_id" not in kcsb[0].msi_parameters
         assert "object_id" not in kcsb[0].msi_parameters
         assert "msi_res_id" not in kcsb[0].msi_parameters
 
         assert kcsb[1].msi_authentication
-        assert kcsb[1].msi_parameters["resource"] == "localhost1"
-        assert kcsb[1].msi_parameters["timeout"] == 2
+        assert kcsb[1].msi_parameters["connection_timeout"] == 2
         assert kcsb[1].msi_parameters["client_id"] == client_guid
         assert "object_id" not in kcsb[1].msi_parameters
         assert "msi_res_id" not in kcsb[1].msi_parameters
 
+        """
         assert kcsb[2].msi_authentication
-        assert kcsb[2].msi_parameters["resource"] == "localhost2"
-        assert kcsb[2].msi_parameters["timeout"] == 3
+        assert kcsb[2].msi_parameters["connection_timeout"] == 3
         assert "client_id" not in kcsb[2].msi_parameters
         assert kcsb[2].msi_parameters["object_id"] == object_guid
         assert "msi_res_id" not in kcsb[2].msi_parameters
 
         assert kcsb[3].msi_authentication
-        assert kcsb[3].msi_parameters["resource"] == "localhost3"
         assert "timeout" not in kcsb[3].msi_parameters
         assert "client_id" not in kcsb[3].msi_parameters
         assert "object_id" not in kcsb[3].msi_parameters
         assert kcsb[3].msi_parameters["msi_res_id"] == res_guid
+        """
 
         exception_occurred = False
         try:
