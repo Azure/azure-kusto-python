@@ -47,8 +47,10 @@ def _get_azure_cli_auth_token() -> dict:
 
             # TODO: not sure I should take the first
             return data[0]
-        except Exception:
-            pass
+        except Exception as e:
+            raise KustoAuthenticationError(
+                AuthenticationMethod.az_cli_profile, e, message="Azure cli token was not found. Please run 'az login' to setup account."
+            )
 
 
 @unique
