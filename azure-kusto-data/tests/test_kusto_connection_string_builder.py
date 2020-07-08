@@ -220,8 +220,6 @@ class KustoConnectionStringBuilderTests(unittest.TestCase):
 
         assert exception_occurred is True
 
-
-
         kcsb = [
             KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication("localhost0", timeout=1),
             KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication("localhost1", client_id=client_guid, timeout=2),
