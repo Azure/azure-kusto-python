@@ -315,15 +315,15 @@ class KustoConnectionStringBuilder:
 
         if object_id is not None:
             # Until we upgrade azure-identity to version 1.4.1, only client_id is excepted as a hint for user managed service identity
-            raise ValueError("User Managed Service Identity with object_id is temporarily not supported by azure identity 1.3.1."
-                             " Please use client_id instead.")
+            raise ValueError("User Managed Service Identity with object_id is temporarily not supported by azure identity 1.3.1. Please use client_id instead.")
             params["object_id"] = object_id
             exclusive_pcount += 1
 
         if msi_res_id is not None:
             # Until we upgrade azure-identity to version 1.4.1, only client_id is excepted as a hint for user managed service identity
-            raise ValueError("User Managed Service Identity with msi_res_id is temporarily not supported by azure identity 1.3.1."
-                             " Please use client_id instead.")
+            raise ValueError(
+                "User Managed Service Identity with msi_res_id is temporarily not supported by azure identity 1.3.1. Please use client_id instead."
+            )
             params["msi_res_id"] = msi_res_id
             exclusive_pcount += 1
 
