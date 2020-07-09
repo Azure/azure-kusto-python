@@ -48,9 +48,7 @@ def _get_azure_cli_auth_token() -> dict:
             # TODO: not sure I should take the first
             return data[0]
         except Exception as e:
-            raise KustoAuthenticationError(
-                AuthenticationMethod.az_cli_profile, e, message="Azure cli token was not found. Please run 'az login' to setup account."
-            )
+            raise KustoClientError("Azure cli token was not found. Please run 'az login' to setup account.", e)
 
 
 @unique
@@ -152,6 +150,8 @@ class _AadHelper:
                 kwargs["authority"] = AuthenticationMethod.token_provider.value
             elif self.auth_context is not None:
                 kwargs["authority"] = self.auth_context.authority.url
+            elif self.authentication_method is AuthenticationMethod.az_cli_profile:
+                kwargs["authority"] = AuthenticationMethod.az_cli_profile.value
 
             raise KustoAuthenticationError(self.authentication_method.value, error, **kwargs)
 
