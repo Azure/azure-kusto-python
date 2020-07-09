@@ -40,6 +40,7 @@ class KustoConnectionStringBuilder:
         application_key = "Application Key"
         application_certificate = "Application Certificate"
         application_certificate_thumbprint = "Application Certificate Thumbprint"
+        public_application_certificate = "Public Application Certificate"
         authority_id = "Authority Id"
         application_token = "Application Token"
         user_token = "User Token"
@@ -65,6 +66,8 @@ class KustoConnectionStringBuilder:
                 return cls.application_certificate
             if key in ["application certificate thumbprint"]:
                 return cls.application_certificate_thumbprint
+            if key in ["public application certificate"]:
+                return cls.public_application_certificate
             if key in ["authority id", "authorityid", "authority", "tenantid", "tenant", "tid"]:
                 return cls.authority_id
             if key in ["aad federated security", "federated security", "federated", "fed", "aadfed"]:
@@ -89,6 +92,7 @@ class KustoConnectionStringBuilder:
                 self.aad_user_id,
                 self.application_certificate,
                 self.application_certificate_thumbprint,
+                self.public_application_certificate,
                 self.application_client_id,
                 self.data_source,
                 self.password,
@@ -221,8 +225,8 @@ class KustoConnectionStringBuilder:
         cls, connection_string: str, aad_app_id: str, certificate: str, thumbprint: str, authority_id: str
     ) -> "KustoConnectionStringBuilder":
         """
-        Creates a KustoConnection string builder that will authenticate with AAD application and
-        a certificate credentials.
+        Creates a KustoConnection string builder that will authenticate with AAD application using
+        a certificate.
         :param str connection_string: Kusto connection string should by of the format:
         https://<clusterName>.kusto.windows.net
         :param str aad_app_id: AAD application ID.
@@ -234,10 +238,42 @@ class KustoConnectionStringBuilder:
         _assert_value_is_valid(certificate)
         _assert_value_is_valid(thumbprint)
         _assert_value_is_valid(authority_id)
+
         kcsb = cls(connection_string)
         kcsb[kcsb.ValidKeywords.aad_federated_security] = True
         kcsb[kcsb.ValidKeywords.application_client_id] = aad_app_id
         kcsb[kcsb.ValidKeywords.application_certificate] = certificate
+        kcsb[kcsb.ValidKeywords.application_certificate_thumbprint] = thumbprint
+        kcsb[kcsb.ValidKeywords.authority_id] = authority_id
+
+        return kcsb
+
+    @classmethod
+    def with_aad_application_certificate_sni_authentication(
+            cls, connection_string: str, aad_app_id: str, private_certificate: str, public_certificate: str, thumbprint: str, authority_id: str
+    ) -> "KustoConnectionStringBuilder":
+        """
+        Creates a KustoConnection string builder that will authenticate with AAD application using
+        a certificate Subject Name and Issuer.
+        :param str connection_string: Kusto connection string should by of the format:
+        https://<clusterName>.kusto.windows.net
+        :param str aad_app_id: AAD application ID.
+        :param str private_certificate: A PEM encoded certificate private key.
+        :param str public_certificate: A public certificate matching the provided PEM certificate private key.
+        :param str thumbprint: hex encoded thumbprint of the certificate.
+        :param str authority_id: Authority id (aka Tenant id) must be provided
+        """
+        _assert_value_is_valid(aad_app_id)
+        _assert_value_is_valid(private_certificate)
+        _assert_value_is_valid(public_certificate)
+        _assert_value_is_valid(thumbprint)
+        _assert_value_is_valid(authority_id)
+
+        kcsb = cls(connection_string)
+        kcsb[kcsb.ValidKeywords.aad_federated_security] = True
+        kcsb[kcsb.ValidKeywords.application_client_id] = aad_app_id
+        kcsb[kcsb.ValidKeywords.application_certificate] = private_certificate
+        kcsb[kcsb.ValidKeywords.public_application_certificate] = public_certificate
         kcsb[kcsb.ValidKeywords.application_certificate_thumbprint] = thumbprint
         kcsb[kcsb.ValidKeywords.authority_id] = authority_id
 
@@ -393,6 +429,15 @@ class KustoConnectionStringBuilder:
     @application_certificate_thumbprint.setter
     def application_certificate_thumbprint(self, value):
         self[self.ValidKeywords.application_certificate_thumbprint] = value
+
+    @property
+    def application_public_certificate(self) -> str:
+        """A public certificate matching the PEM encoded certificate private key."""
+        return self._internal_dict.get(self.ValidKeywords.public_application_certificate)
+
+    @application_public_certificate.setter
+    def application_public_certificate(self, value):
+        self[self.ValidKeywords.public_application_certificate] = value
 
     @property
     def authority_id(self):
