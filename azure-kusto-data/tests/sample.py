@@ -37,7 +37,7 @@ kcsb = KustoConnectionStringBuilder.with_aad_application_certificate_authenticat
 kcsb = KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication(cluster)
 
 # In case you want to authenticate with a User Assigned Managed Service Identity (MSI)
-user_assigned_client_id="the AAD identity client id"
+user_assigned_client_id = "the AAD identity client id"
 kcsb = KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication(cluster, client_id=user_assigned_client_id)
 
 # In case you want to authenticate with AAD username and password
