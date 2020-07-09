@@ -250,7 +250,7 @@ class KustoConnectionStringBuilder:
 
     @classmethod
     def with_aad_application_certificate_sni_authentication(
-            cls, connection_string: str, aad_app_id: str, private_certificate: str, public_certificate: str, thumbprint: str, authority_id: str
+        cls, connection_string: str, aad_app_id: str, private_certificate: str, public_certificate: str, thumbprint: str, authority_id: str
     ) -> "KustoConnectionStringBuilder":
         """
         Creates a KustoConnection string builder that will authenticate with AAD application using
