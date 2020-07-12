@@ -9,7 +9,7 @@ from urllib.parse import urlparse
 import dateutil.parser
 from adal import AuthenticationContext, AdalError
 from adal.constants import TokenResponseFields, OAuth2DeviceCodeResponseParameters, OAuth2ResponseParameters
-from msrestazure.azure_active_directory import MSIAuthentication
+from azure.identity import ManagedIdentityCredential
 
 from .exceptions import KustoClientError, KustoAuthenticationError
 
@@ -61,7 +61,7 @@ class AuthenticationMethod(Enum):
     aad_application_certificate_sni = "aad_application_certificate_sni"
     aad_device_login = "aad_device_login"
     aad_token = "aad_token"
-    aad_msi = "aad_msi"
+    managed_service_identity = "managed_service_identity"
     az_cli_profile = "az_cli_profile"
     token_provider = "token_provider"
 
@@ -108,7 +108,7 @@ class _AadHelper:
                 self.authentication_method = AuthenticationMethod.aad_application_certificate
 
         elif kcsb.msi_authentication:
-            self.authentication_method = AuthenticationMethod.aad_msi
+            self.authentication_method = AuthenticationMethod.managed_service_identity
             self.msi_params = kcsb.msi_parameters
             return
         elif any([kcsb.user_token, kcsb.application_token]):
@@ -142,7 +142,7 @@ class _AadHelper:
                 kwargs = {"client_id": self.client_id}
             elif self.authentication_method in (AuthenticationMethod.aad_application_certificate, AuthenticationMethod.aad_application_certificate_sni):
                 kwargs = {"client_id": self.client_id, "thumbprint": self.thumbprint}
-            elif self.authentication_method is AuthenticationMethod.aad_msi:
+            elif self.authentication_method is AuthenticationMethod.managed_service_identity:
                 kwargs = self.msi_params
             elif self.authentication_method is AuthenticationMethod.token_provider:
                 kwargs = {}
@@ -151,8 +151,8 @@ class _AadHelper:
 
             kwargs["resource"] = self.kusto_uri
 
-            if self.authentication_method is AuthenticationMethod.aad_msi:
-                kwargs["authority"] = AuthenticationMethod.aad_msi.value
+            if self.authentication_method is AuthenticationMethod.managed_service_identity:
+                kwargs["authority"] = AuthenticationMethod.managed_service_identity.value
             elif self.authentication_method is AuthenticationMethod.token_provider:
                 kwargs["authority"] = AuthenticationMethod.token_provider.value
             elif self.auth_context is not None:
@@ -175,7 +175,7 @@ class _AadHelper:
             return _get_header("Bearer", caller_token)
 
         # Obtain token from MSI endpoint
-        if self.authentication_method == AuthenticationMethod.aad_msi:
+        if self.authentication_method == AuthenticationMethod.managed_service_identity:
             token = self.get_token_from_msi()
             return _get_header_from_dict(token)
 
@@ -233,16 +233,13 @@ class _AadHelper:
     def get_token_from_msi(self) -> dict:
         try:
             if self.msi_auth_context is None:
-                # Create the MSI Authentication object, the first token is acquired implicitly
-                self.msi_auth_context = MSIAuthentication(**self.msi_params)
-            else:
-                # Acquire a fresh token
-                self.msi_auth_context.set_token()
+                # Create the MSI Authentication object
+                self.msi_auth_context = ManagedIdentityCredential(**self.msi_params)
+
+            return self.msi_auth_context.get_token(self.kusto_uri)
 
         except Exception as e:
             raise KustoClientError("Failed to obtain MSI context for [" + str(self.msi_params) + "]\n" + str(e))
-
-        return self.msi_auth_context.token
 
 
 def _get_header_from_dict(token: dict):

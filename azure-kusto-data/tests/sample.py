@@ -45,6 +45,13 @@ with open(filename, "r") as cert_file:
 thumbprint = "certificate's thumbprint"
 kcsb = KustoConnectionStringBuilder.with_aad_application_certificate_sni_authentication(cluster, client_id, PEM, public_certificate, thumbprint, authority_id)
 
+# In case you want to authenticate with a System Assigned Managed Service Identity (MSI)
+kcsb = KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication(cluster)
+
+# In case you want to authenticate with a User Assigned Managed Service Identity (MSI)
+user_assigned_client_id = "the AAD identity client id"
+kcsb = KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication(cluster, client_id=user_assigned_client_id)
+
 # In case you want to authenticate with AAD username and password
 username = "<username>"
 password = "<password>"

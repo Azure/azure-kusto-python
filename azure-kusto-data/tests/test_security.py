@@ -35,11 +35,15 @@ def test_msi_auth():
     object_guid = "87687687"
     res_guid = "kajsdghdijewhag"
 
+    """
+    Use of object_id and msi_res_id is disabled pending support of azure-identity
+    When version 1.4.1 is released and these parameters are supported enable the functionality and tests back 
+    """
     kcsb = [
         KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication("localhost", timeout=1),
         KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication("localhost", client_id=client_guid, timeout=1),
-        KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication("localhost", object_id=object_guid, timeout=1),
-        KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication("localhost", msi_res_id=res_guid, timeout=1),
+        # KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication("localhost", object_id=object_guid, timeout=1),
+        # KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication("localhost", msi_res_id=res_guid, timeout=1),
     ]
 
     helpers = [_AadHelper(i) for i in kcsb]

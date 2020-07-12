@@ -339,26 +339,32 @@ class KustoConnectionStringBuilder:
         """
 
         kcsb = cls(connection_string)
-        params = {"resource": kcsb.data_source}
+        params = {}
         exclusive_pcount = 0
 
         if timeout is not None:
-            params["timeout"] = timeout
+            params["connection_timeout"] = timeout
 
         if client_id is not None:
             params["client_id"] = client_id
             exclusive_pcount += 1
 
         if object_id is not None:
+            # Until we upgrade azure-identity to version 1.4.1, only client_id is excepted as a hint for user managed service identity
+            raise ValueError("User Managed Service Identity with object_id is temporarily not supported by azure identity 1.3.1. Please use client_id instead.")
             params["object_id"] = object_id
             exclusive_pcount += 1
 
         if msi_res_id is not None:
+            # Until we upgrade azure-identity to version 1.4.1, only client_id is excepted as a hint for user managed service identity
+            raise ValueError(
+                "User Managed Service Identity with msi_res_id is temporarily not supported by azure identity 1.3.1. Please use client_id instead."
+            )
             params["msi_res_id"] = msi_res_id
             exclusive_pcount += 1
 
         if exclusive_pcount > 1:
-            raise ValueError("the following parameters are mutually exclusive and can not be provided at the same time: user_uid, object_id, msi_res_id")
+            raise ValueError("the following parameters are mutually exclusive and can not be provided at the same time: client_uid, object_id, msi_res_id")
 
         kcsb[kcsb.ValidKeywords.aad_federated_security] = True
         kcsb[kcsb.ValidKeywords.msi_auth] = True
