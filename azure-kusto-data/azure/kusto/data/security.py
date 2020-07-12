@@ -47,8 +47,8 @@ def _get_azure_cli_auth_token() -> dict:
 
             # TODO: not sure I should take the first
             return data[0]
-        except Exception:
-            pass
+        except Exception as e:
+            raise KustoClientError("Azure cli token was not found. Please run 'az login' to setup account.", e)
 
 
 @unique
@@ -58,6 +58,7 @@ class AuthenticationMethod(Enum):
     aad_username_password = "aad_username_password"
     aad_application_key = "aad_application_key"
     aad_application_certificate = "aad_application_certificate"
+    aad_application_certificate_sni = "aad_application_certificate_sni"
     aad_device_login = "aad_device_login"
     aad_token = "aad_token"
     managed_service_identity = "managed_service_identity"
@@ -78,7 +79,8 @@ class _AadHelper:
     client_id = None
     password = None
     thumbprint = None
-    certificate = None
+    private_certificate = None
+    public_certificate = None
     msi_params = None
     token_provider = None
 
@@ -96,10 +98,15 @@ class _AadHelper:
             self.client_id = kcsb.application_client_id
             self.client_secret = kcsb.application_key
         elif all([kcsb.application_client_id, kcsb.application_certificate, kcsb.application_certificate_thumbprint]):
-            self.authentication_method = AuthenticationMethod.aad_application_certificate
             self.client_id = kcsb.application_client_id
-            self.certificate = kcsb.application_certificate
+            self.private_certificate = kcsb.application_certificate
             self.thumbprint = kcsb.application_certificate_thumbprint
+            if all([kcsb.application_public_certificate]):
+                self.public_certificate = kcsb.application_public_certificate
+                self.authentication_method = AuthenticationMethod.aad_application_certificate_sni
+            else:
+                self.authentication_method = AuthenticationMethod.aad_application_certificate
+
         elif kcsb.msi_authentication:
             self.authentication_method = AuthenticationMethod.managed_service_identity
             self.msi_params = kcsb.msi_parameters
@@ -133,7 +140,7 @@ class _AadHelper:
                 kwargs = {"client_id": self.client_id}
             elif self.authentication_method is AuthenticationMethod.aad_device_login:
                 kwargs = {"client_id": self.client_id}
-            elif self.authentication_method is AuthenticationMethod.aad_application_certificate:
+            elif self.authentication_method in (AuthenticationMethod.aad_application_certificate, AuthenticationMethod.aad_application_certificate_sni):
                 kwargs = {"client_id": self.client_id, "thumbprint": self.thumbprint}
             elif self.authentication_method is AuthenticationMethod.managed_service_identity:
                 kwargs = self.msi_params
@@ -150,6 +157,8 @@ class _AadHelper:
                 kwargs["authority"] = AuthenticationMethod.token_provider.value
             elif self.auth_context is not None:
                 kwargs["authority"] = self.auth_context.authority.url
+            elif self.authentication_method is AuthenticationMethod.az_cli_profile:
+                kwargs["authority"] = AuthenticationMethod.az_cli_profile.value
 
             raise KustoAuthenticationError(self.authentication_method.value, error, **kwargs)
 
@@ -212,8 +221,10 @@ class _AadHelper:
             print(code[OAuth2DeviceCodeResponseParameters.MESSAGE])
             webbrowser.open(code[OAuth2DeviceCodeResponseParameters.VERIFICATION_URL])
             token = self.auth_context.acquire_token_with_device_code(self.kusto_uri, code, self.client_id)
-        elif self.authentication_method is AuthenticationMethod.aad_application_certificate:
-            token = self.auth_context.acquire_token_with_client_certificate(self.kusto_uri, self.client_id, self.certificate, self.thumbprint)
+        elif self.authentication_method in (AuthenticationMethod.aad_application_certificate, AuthenticationMethod.aad_application_certificate):
+            token = self.auth_context.acquire_token_with_client_certificate(
+                self.kusto_uri, self.client_id, self.private_certificate, self.thumbprint, self.public_certificate
+            )
         else:
             raise KustoClientError("Please choose authentication method from azure.kusto.data.security.AuthenticationMethod")
 

@@ -37,6 +37,18 @@ with open(filename, "r") as pem_file:
 thumbprint = "certificate's thumbprint"
 kcsb = KustoConnectionStringBuilder.with_aad_application_certificate_authentication(cluster, client_id, PEM, thumbprint, authority_id)
 
+# In case you want to authenticate with AAD application certificate Subject Name & Issuer
+filename = "path to a PEM certificate"
+with open(filename, "r") as pem_file:
+    PEM = pem_file.read()
+
+filename = "path to a public certificate"
+with open(filename, "r") as cert_file:
+    public_certificate = cert_file.read()
+
+thumbprint = "certificate's thumbprint"
+kcsb = KustoConnectionStringBuilder.with_aad_application_certificate_sni_authentication(cluster, client_id, PEM, public_certificate, thumbprint, authority_id)
+
 # In case you want to authenticate with a System Assigned Managed Service Identity (MSI)
 kcsb = KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication(cluster)
 

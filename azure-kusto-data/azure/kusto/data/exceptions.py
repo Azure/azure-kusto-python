@@ -43,9 +43,11 @@ class KustoAuthenticationError(KustoClientError):
     def __init__(self, authentication_method: str, exception: Exception, **kwargs):
         super().__init__()
         self.authentication_method = authentication_method
-        self.authority = kwargs["authority"]
-        self.kusto_cluster = kwargs["resource"]
         self.exception = exception
+        if "authority" in kwargs:
+            self.authority = kwargs["authority"]
+        if "resource" in kwargs:
+            self.kusto_cluster = kwargs["resource"]
         self.kwargs = kwargs
 
     def __str__(self):
