@@ -10,6 +10,7 @@ import dateutil.parser
 from adal import AuthenticationContext, AdalError
 from adal.constants import TokenResponseFields, OAuth2DeviceCodeResponseParameters, OAuth2ResponseParameters
 from azure.identity import ManagedIdentityCredential
+from azure.core.credentials import AccessToken
 
 from .exceptions import KustoClientError, KustoAuthenticationError
 
@@ -176,8 +177,8 @@ class _AadHelper:
 
         # Obtain token from MSI endpoint
         if self.authentication_method == AuthenticationMethod.managed_service_identity:
-            token = self.get_token_from_msi()
-            return _get_header_from_dict(token)
+            msi_token = self.get_token_from_msi()
+            return _get_header('Bearer', msi_token.token)
 
         refresh_token = None
 
@@ -230,7 +231,7 @@ class _AadHelper:
 
         return _get_header_from_dict(token)
 
-    def get_token_from_msi(self) -> dict:
+    def get_token_from_msi(self) -> AccessToken:
         try:
             if self.msi_auth_context is None:
                 # Create the MSI Authentication object
