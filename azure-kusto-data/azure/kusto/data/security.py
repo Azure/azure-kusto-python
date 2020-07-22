@@ -178,7 +178,7 @@ class _AadHelper:
         # Obtain token from MSI endpoint
         if self.authentication_method == AuthenticationMethod.managed_service_identity:
             msi_token = self.get_token_from_msi()
-            return _get_header('Bearer', msi_token.token)
+            return _get_header("Bearer", msi_token.token)
 
         refresh_token = None
 
