@@ -222,7 +222,7 @@ class _AadHelper:
             print(code[OAuth2DeviceCodeResponseParameters.MESSAGE])
             webbrowser.open(code[OAuth2DeviceCodeResponseParameters.VERIFICATION_URL])
             token = self.auth_context.acquire_token_with_device_code(self.kusto_uri, code, self.client_id)
-        elif self.authentication_method in (AuthenticationMethod.aad_application_certificate, AuthenticationMethod.aad_application_certificate):
+        elif self.authentication_method in (AuthenticationMethod.aad_application_certificate, AuthenticationMethod.aad_application_certificate_sni):
             token = self.auth_context.acquire_token_with_client_certificate(
                 self.kusto_uri, self.client_id, self.private_certificate, self.thumbprint, self.public_certificate
             )
