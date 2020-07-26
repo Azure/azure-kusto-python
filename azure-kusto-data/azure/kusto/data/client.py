@@ -383,6 +383,7 @@ class KustoConnectionStringBuilder:
         assert callable(token_provider)
 
         kcsb = cls(connection_string)
+        kcsb[kcsb.ValidKeywords.aad_federated_security] = True
         kcsb._token_provider = token_provider
 
         return kcsb
