@@ -11,11 +11,12 @@ def main():
     repo_name = sys.argv[1]
     branch_name = sys.argv[2]
     test_name = sys.argv[3]
+    runner = sys.argv[4]
     repo_root = os.path.join(os.getcwd(), "root")
 
     try:
         load_repo(repo_root, repo_name, branch_name)
-        run_test(repo_root, repo_name, branch_name, test_name)
+        run_test(repo_root, repo_name, branch_name, test_name, runner)
     finally:
         clean = "rmdir /s /q " + repo_root
         print(clean)
@@ -31,15 +32,16 @@ def load_repo(root, name, branch):
         zip_repo.extractall(root)
 
 
-def run_test(root, name, branch, test):
-    path = os.path.join(root, name + "-" + branch)
+def run_test(root, name, branch, test, runner):
+    path = os.path.join(root, name + "-" + branch.replace("/", "-"))
     path = os.path.join(path, test)
-    proc = subprocess.run(path, shell=True, capture_output=True, timeout=5*60)
+    proc = subprocess.run([runner, path], shell=True, capture_output=True, timeout=5 * 60)
     print("tests completed")
-    print(proc.stdout)
-    print(proc.stderr)
+    print(proc.stdout.decode("ascii"))
+    print(proc.stderr.decode("ascii"))
     if proc.returncode != 0:
         raise Exception()
+
 
 # Run the program
 main()

@@ -47,12 +47,14 @@ def main():
 
     # Test Certificate auth
     if app_id is not None and certificate_file is not None and certificate_private_key is not None and certificate_authority is not None:
-        kcsb = KustoConnectionStringBuilder.with_aad_application_certificate_authentication(cluster_uri, app_id, certificate_private_key,
-                                                                                            certificate_thumbprint, certificate_authority)
+        kcsb = KustoConnectionStringBuilder.with_aad_application_certificate_authentication(
+            cluster_uri, app_id, certificate_private_key, certificate_thumbprint, certificate_authority
+        )
         run_test("Connect with certificate", lambda: ping_server(kcsb))
 
-        kcsb = KustoConnectionStringBuilder.with_aad_application_certificate_authentication(cluster_uri, app_id, certificate_private_key,
-                                                                                            certificate_thumbprint, certificate_authority, certificate_file)
+        kcsb = KustoConnectionStringBuilder.with_aad_application_certificate_authentication(
+            cluster_uri, app_id, certificate_private_key, certificate_thumbprint, certificate_authority, certificate_file
+        )
         run_test("Connect with certificate subject name and issuer", lambda: ping_server(kcsb))
 
     # Test manual options
@@ -72,7 +74,7 @@ def main():
 
     # Test Az Cli
     az_installed = subprocess.run(["where", "az"], capture_output=True)
-    if  az_installed.returncode == 0:
+    if az_installed.returncode == 0:
         print("Trying login with az-cli. This may fail if refresh token is expired")
         kcsb.with_az_cli_authentication(cluster_uri)
         run_test("Connect with az-cli", lambda: ping_server(kcsb))
