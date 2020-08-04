@@ -163,7 +163,7 @@ class IngestionProperties:
         dataFormat = kwargs.get("dataFormat", None)
         ingestionMapping = kwargs.get("ingestionMapping", None)
         ingestionMappingType = kwargs.get("ingestionMappingType", None)
-        ingestionMappingReference = kwargs.get("ingestionMappingType", None)
+        ingestionMappingReference = kwargs.get("ingestionMappingReference", None)
         additionalTags = kwargs.get("additionalTags", None)
         ingestIfNotExists = kwargs.get("ingestIfNotExists", None)
         ingestByTags = kwargs.get("ingestByTags", None)
