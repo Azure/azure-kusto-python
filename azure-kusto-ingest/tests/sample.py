@@ -81,10 +81,10 @@ ingestion_props = IngestionProperties(
     table="{table_name}",
     data_format=DataFormat.CSV,
     # in case status update for success are also required
-    # reportLevel=ReportLevel.FailuresAndSuccesses,
+    # report_level=ReportLevel.FailuresAndSuccesses,
     # in case a mapping is required
     # ingestion_mapping_reference="{json_mapping_that_already_exists_on_table}"
-    # ingestion_mapping_type=IngestionMappingType.Json
+    # ingestion_mapping_type=IngestionMappingType.JSON
 )
 
 # ingest from file
