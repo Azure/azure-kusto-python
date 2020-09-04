@@ -7,13 +7,14 @@ from typing import List
 from azure.kusto.data import KustoClient
 from azure.kusto.data._models import KustoResultTable
 
-_URI_FORMAT = re.compile("https://(\\w+).(queue|blob|table).core.windows.net/([\\w,-]+)\\?(.*)")
+_URI_FORMAT = re.compile("https://(\\w+).(queue|blob|table).(core.\\w+.net)/([\\w,-]+)\\?(.*)")
 
 
 class _ResourceUri:
-    def __init__(self, storage_account_name: str, object_type: str, object_name: str, sas: str):
+    def __init__(self, storage_account_name: str, object_type: str, endpoint_suffix: str, object_name: str, sas: str):
         self.storage_account_name = storage_account_name
         self.object_type = object_type
+        self.endpoint_suffix = endpoint_suffix
         self.object_name = object_name
         self.sas = sas
 
@@ -21,18 +22,18 @@ class _ResourceUri:
     def parse(cls, uri):
         """Parses uri into a ResourceUri object"""
         match = _URI_FORMAT.search(uri)
-        return cls(match.group(1), match.group(2), match.group(3), match.group(4))
+        return cls(match.group(1), match.group(2), match.group(3), match.group(4), match.group(5))
 
     @property
     def uri(self) -> str:
-        return "https://{0.storage_account_name}.{0.object_type}.core.windows.net/{0.object_name}".format(self)
+        return "https://{0.storage_account_name}.{0.object_type}.{0.endpoint_suffix}/{0.object_name}".format(self)
 
     @property
     def account_uri(self) -> str:
-        return "https://{0.storage_account_name}.{0.object_type}.core.windows.net/?{0.sas}".format(self)
+        return "https://{0.storage_account_name}.{0.object_type}.{0.endpoint_suffix}/?{0.sas}".format(self)
 
     def __str__(self):
-        return "https://{0.storage_account_name}.{0.object_type}.core.windows.net/{0.object_name}?{0.sas}"
+        return "https://{0.storage_account_name}.{0.object_type}.{0.endpoint_suffix}/{0.object_name}?{0.sas}"
 
 
 class _IngestClientResources:
