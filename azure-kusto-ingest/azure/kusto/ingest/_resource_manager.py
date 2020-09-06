@@ -7,7 +7,7 @@ from typing import List
 from azure.kusto.data import KustoClient
 from azure.kusto.data._models import KustoResultTable
 
-_URI_FORMAT = re.compile("https://(\\w+).(queue|blob|table).(core.\\w+.net)/([\\w,-]+)\\?(.*)")
+_URI_FORMAT = re.compile("https://(\\w+).(queue|blob|table).(core.\\w+.\\w+)/([\\w,-]+)\\?(.*)")
 
 
 class _ResourceUri:
