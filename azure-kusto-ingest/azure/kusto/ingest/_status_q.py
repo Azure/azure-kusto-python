@@ -18,8 +18,7 @@ class QueueDetails:
 
 
 class StatusQueue:
-    """StatusQueue is a class to simplify access to Kusto status queues (backed by azure storage queues).
-    """
+    """StatusQueue is a class to simplify access to Kusto status queues (backed by azure storage queues)."""
 
     def __init__(self, get_queues_func: Callable[[], List[_ResourceUri]], message_cls):
         self.get_queues_func = get_queues_func
@@ -32,8 +31,7 @@ class StatusQueue:
         ]
 
     def is_empty(self) -> bool:
-        """Checks if Status queue has any messages        
-        """
+        """Checks if Status queue has any messages"""
         return len(self.peek(1, raw=True)) == 0
 
     def _deserialize_message(self, m: QueueMessage):
@@ -47,7 +45,7 @@ class StatusQueue:
     def peek(self, n=1, raw=False) -> List[QueueMessage]:
         """Peek status queue
         :param int n: number of messages to return as part of peek.
-        :param bool raw: should message content be returned as is (no parsing).        
+        :param bool raw: should message content be returned as is (no parsing).
         """
 
         def _peek_specific_q(_q: QueueClient, _n: int) -> bool:
