@@ -6,8 +6,10 @@ import tempfile
 import time
 import uuid
 from typing import Union
+from urllib.parse import urlparse
 
 from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
+from azure.kusto.data.exceptions import KustoServiceError, KustoClientError
 from azure.storage.blob import BlobServiceClient
 from azure.storage.queue import QueueServiceClient, TextBase64EncodePolicy
 
@@ -17,18 +19,25 @@ from .descriptors import BlobDescriptor, FileDescriptor
 from .ingestion_properties import DataFormat, IngestionProperties
 
 
-class KustoIngestClient:
+class QueuedIngestClient:
     """
-    Kusto ingest client provides methods to allow ingestion into kusto (ADX).
+    Kusto queued ingest client provides methods to allow ingestion into kusto (ADX).
     To learn more about the different types of ingestions and when to use each, visit:
     https://docs.microsoft.com/en-us/azure/data-explorer/ingest-data-overview#ingestion-methods
     """
+
+    _INGEST_PREFIX = 'ingest-'
+    _WRONG_ENDPOINT_MESSAGE = "You are using '{0}' client type, but the provided endpoint is of ServiceType '{1}'. Initialize the client with the appropriate endpoint URI"
+    _EXPECTED_SERVICE_TYPE = 'DataManagement'
 
     def __init__(self, kcsb: Union[str, KustoConnectionStringBuilder]):
         """Kusto Ingest Client constructor.
         :param kcsb: The connection string to initialize KustoClient.
         """
         self._resource_manager = _ResourceManager(KustoClient(kcsb))
+        if not isinstance(kcsb, KustoConnectionStringBuilder):
+            kcsb = KustoConnectionStringBuilder(kcsb)
+        self._connection_datasource = kcsb.data_source
 
     def ingest_from_dataframe(self, df, ingestion_properties: IngestionProperties):
         """
@@ -63,7 +72,10 @@ class KustoIngestClient:
         :param file_descriptor: a FileDescriptor to be ingested.
         :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
         """
-        containers = self._resource_manager.get_containers()
+        try:
+            containers = self._resource_manager.get_containers()
+        except KustoServiceError:
+            self.validate_endpoint_service_type()
 
         if isinstance(file_descriptor, FileDescriptor):
             descriptor = file_descriptor
@@ -71,14 +83,15 @@ class KustoIngestClient:
             descriptor = FileDescriptor(file_descriptor)
 
         should_compress = not (
-            ingestion_properties.format in [DataFormat.AVRO, DataFormat.ORC, DataFormat.PARQUET]
-            or descriptor.path.endswith(".gz")
-            or descriptor.path.endswith(".zip")
+                ingestion_properties.format in [DataFormat.AVRO, DataFormat.ORC, DataFormat.PARQUET]
+                or descriptor.path.endswith(".gz")
+                or descriptor.path.endswith(".zip")
         )
 
         with descriptor.open(should_compress) as stream:
             blob_name = "{db}__{table}__{guid}__{file}".format(
-                db=ingestion_properties.database, table=ingestion_properties.table, guid=descriptor.source_id or uuid.uuid4(), file=descriptor.stream_name
+                db=ingestion_properties.database, table=ingestion_properties.table,
+                guid=descriptor.source_id or uuid.uuid4(), file=descriptor.stream_name
             )
 
             random_container = random.choice(containers)
@@ -108,3 +121,31 @@ class KustoIngestClient:
         content = ingestion_blob_info_json
         queue_client = queue_service.get_queue_client(queue=random_queue.object_name, message_encode_policy=TextBase64EncodePolicy())
         queue_client.send_message(content=content)
+
+    def validate_endpoint_service_type(self):
+        if not hasattr(self, '_endpoint_service_type') or len(self._endpoint_service_type) == 0 or self._endpoint_service_type.isspace():
+            self._endpoint_service_type = self._retrieve_service_type()
+
+        if not self._EXPECTED_SERVICE_TYPE == self._endpoint_service_type:
+            message = self._WRONG_ENDPOINT_MESSAGE.format(self._EXPECTED_SERVICE_TYPE, self._endpoint_service_type)
+            if not hasattr(self, '_suggested_endpoint_uri') or len(self._suggested_endpoint_uri) == 0 or self._suggested_endpoint_uri.isspace():
+                self._suggested_endpoint_uri = self._generate_endpoint_suggestion(self._connection_datasource)
+            if not hasattr(self, '_suggested_endpoint_uri') or len(self._suggested_endpoint_uri) == 0 or self._suggested_endpoint_uri.isspace():
+                message += '.'
+            else:
+                message = "{0}: '{1}'".format(message, self._suggested_endpoint_uri)
+            raise KustoClientError(message)
+
+    def _retrieve_service_type(self):
+        if self._resource_manager is not None:
+            return self._resource_manager.retrieve_service_type()
+        return ''
+
+    def _generate_endpoint_suggestion(self, datasource):
+        """The default is not passing a suggestion to the exception String"""
+        endpoint_uri_to_suggest_str = ''
+        if not len(datasource) == 0 and not datasource.isspace():
+            endpoint_uri_to_suggest = urlparse(datasource) # Standardize URL formatting
+            endpoint_uri_to_suggest = urlparse(endpoint_uri_to_suggest.scheme + '://' + self._INGEST_PREFIX + endpoint_uri_to_suggest.hostname)
+            endpoint_uri_to_suggest_str = endpoint_uri_to_suggest.geturl()
+        return endpoint_uri_to_suggest_str

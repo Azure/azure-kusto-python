@@ -6,6 +6,7 @@ from typing import List
 
 from azure.kusto.data import KustoClient
 from azure.kusto.data._models import KustoResultTable
+from azure.kusto.data.exceptions import KustoServiceError, KustoClientError
 
 _URI_FORMAT = re.compile("https://(\\w+).(queue|blob|table).(core.\\w+.\\w+)/([\\w,-]+)\\?(.*)")
 
@@ -63,6 +64,9 @@ class _IngestClientResources:
 
 
 class _ResourceManager:
+    _SHOW_VERSION = '.show version'
+    _SERVICE_TYPE_COLUMN_NAME = 'ServiceType'
+
     def __init__(self, kusto_client: KustoClient):
         self._kusto_client = kusto_client
         self._refresh_period = timedelta(hours=1)
@@ -131,3 +135,15 @@ class _ResourceManager:
     def get_authorization_context(self):
         self._refresh_authorization_context()
         return self._authorization_context
+
+    def retrieve_service_type(self):
+        try:
+            command_result = self._kusto_client.execute("NetDefaultDB", self._SHOW_VERSION)
+        except KustoServiceError:
+            raise KustoServiceError("Couldn't retrieve ServiceType because of a service exception executing {0}".format(self._SHOW_VERSION), None)
+        except KustoClientError:
+            raise KustoClientError("Couldn't retrieve ServiceType because of a client exception executing {0}".format(self._SHOW_VERSION))
+        try:
+            return command_result.primary_results[0][0][self._SERVICE_TYPE_COLUMN_NAME]
+        except:
+            raise KustoServiceError("Couldn't retrieve ServiceType because '.show version' didn't return any records")
