@@ -11,8 +11,8 @@ from azure.kusto.ingest._resource_manager import _ResourceUri
 from azure.kusto.ingest.status import KustoIngestStatusQueues, SuccessMessage, FailureMessage
 from azure.storage.queue import QueueMessage, QueueClient
 
-SAS = 'sp=rl&st=2020-05-20T13:38:37Z&se=2020-05-21T13:38:37Z&sv=2019-10-10&sr=c&sig=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
-OBJECT_TYPE = 'core.windows.net'
+SAS = "sp=rl&st=2020-05-20T13:38:37Z&se=2020-05-21T13:38:37Z&sv=2019-10-10&sr=c&sig=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+OBJECT_TYPE = "core.windows.net"
 
 
 def mock_message(success):

@@ -24,7 +24,7 @@ from azure.kusto.ingest import (
     FileDescriptor,
 )
 
-CLEAR_DB_CACHE = '.clear database cache streamingingestion schema'
+CLEAR_DB_CACHE = ".clear database cache streamingingestion schema"
 
 
 class TestData:

@@ -26,9 +26,11 @@ class QueuedIngestClient:
     https://docs.microsoft.com/en-us/azure/data-explorer/ingest-data-overview#ingestion-methods
     """
 
-    _INGEST_PREFIX = 'ingest-'
-    _WRONG_ENDPOINT_MESSAGE = "You are using '{0}' client type, but the provided endpoint is of ServiceType '{1}'. Initialize the client with the appropriate endpoint URI"
-    _EXPECTED_SERVICE_TYPE = 'DataManagement'
+    _INGEST_PREFIX = "ingest-"
+    _WRONG_ENDPOINT_MESSAGE = (
+        "You are using '{0}' client type, but the provided endpoint is of ServiceType '{1}'. Initialize the client with the appropriate endpoint URI"
+    )
+    _EXPECTED_SERVICE_TYPE = "DataManagement"
 
     def __init__(self, kcsb: Union[str, KustoConnectionStringBuilder]):
         """Kusto Ingest Client constructor.
@@ -83,15 +85,14 @@ class QueuedIngestClient:
             descriptor = FileDescriptor(file_descriptor)
 
         should_compress = not (
-                ingestion_properties.format in [DataFormat.AVRO, DataFormat.ORC, DataFormat.PARQUET]
-                or descriptor.path.endswith(".gz")
-                or descriptor.path.endswith(".zip")
+            ingestion_properties.format in [DataFormat.AVRO, DataFormat.ORC, DataFormat.PARQUET]
+            or descriptor.path.endswith(".gz")
+            or descriptor.path.endswith(".zip")
         )
 
         with descriptor.open(should_compress) as stream:
             blob_name = "{db}__{table}__{guid}__{file}".format(
-                db=ingestion_properties.database, table=ingestion_properties.table,
-                guid=descriptor.source_id or uuid.uuid4(), file=descriptor.stream_name
+                db=ingestion_properties.database, table=ingestion_properties.table, guid=descriptor.source_id or uuid.uuid4(), file=descriptor.stream_name
             )
 
             random_container = random.choice(containers)
@@ -123,15 +124,15 @@ class QueuedIngestClient:
         queue_client.send_message(content=content)
 
     def validate_endpoint_service_type(self):
-        if not hasattr(self, '_endpoint_service_type') or len(self._endpoint_service_type) == 0 or self._endpoint_service_type.isspace():
+        if not hasattr(self, "_endpoint_service_type") or len(self._endpoint_service_type) == 0 or self._endpoint_service_type.isspace():
             self._endpoint_service_type = self._retrieve_service_type()
 
         if not self._EXPECTED_SERVICE_TYPE == self._endpoint_service_type:
             message = self._WRONG_ENDPOINT_MESSAGE.format(self._EXPECTED_SERVICE_TYPE, self._endpoint_service_type)
-            if not hasattr(self, '_suggested_endpoint_uri') or len(self._suggested_endpoint_uri) == 0 or self._suggested_endpoint_uri.isspace():
+            if not hasattr(self, "_suggested_endpoint_uri") or len(self._suggested_endpoint_uri) == 0 or self._suggested_endpoint_uri.isspace():
                 self._suggested_endpoint_uri = self._generate_endpoint_suggestion(self._connection_datasource)
-            if not hasattr(self, '_suggested_endpoint_uri') or len(self._suggested_endpoint_uri) == 0 or self._suggested_endpoint_uri.isspace():
-                message += '.'
+            if not hasattr(self, "_suggested_endpoint_uri") or len(self._suggested_endpoint_uri) == 0 or self._suggested_endpoint_uri.isspace():
+                message += "."
             else:
                 message = "{0}: '{1}'".format(message, self._suggested_endpoint_uri)
             raise KustoClientError(message)
@@ -139,13 +140,13 @@ class QueuedIngestClient:
     def _retrieve_service_type(self):
         if self._resource_manager is not None:
             return self._resource_manager.retrieve_service_type()
-        return ''
+        return ""
 
     def _generate_endpoint_suggestion(self, datasource):
         """The default is not passing a suggestion to the exception String"""
-        endpoint_uri_to_suggest_str = ''
+        endpoint_uri_to_suggest_str = ""
         if not len(datasource) == 0 and not datasource.isspace():
-            endpoint_uri_to_suggest = urlparse(datasource) # Standardize URL formatting
-            endpoint_uri_to_suggest = urlparse(endpoint_uri_to_suggest.scheme + '://' + self._INGEST_PREFIX + endpoint_uri_to_suggest.hostname)
+            endpoint_uri_to_suggest = urlparse(datasource)  # Standardize URL formatting
+            endpoint_uri_to_suggest = urlparse(endpoint_uri_to_suggest.scheme + "://" + self._INGEST_PREFIX + endpoint_uri_to_suggest.hostname)
             endpoint_uri_to_suggest_str = endpoint_uri_to_suggest.geturl()
         return endpoint_uri_to_suggest_str
