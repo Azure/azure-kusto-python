@@ -7,7 +7,7 @@ import unittest
 
 import pytest
 import responses
-from azure.kusto.ingest import KustoIngestClient, IngestionProperties, DataFormat
+from azure.kusto.ingest import QueuedIngestClient, IngestionProperties, DataFormat
 from mock import patch
 
 pandas_installed = False
@@ -21,6 +21,8 @@ except:
 UUID_REGEX = "[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}"
 BLOB_NAME_REGEX = "database__table__" + UUID_REGEX + "__dataset.csv.gz"
 BLOB_URL_REGEX = "https://storageaccount.blob.core.windows.net/tempstorage/database__table__" + UUID_REGEX + "__dataset.csv.gz[?]sas"
+STORAGE_QUEUE_URL = 'https://storageaccount.queue.core.windows.net/readyforaggregation-secured?sp=rl&st=2020-05-20T13:38:37Z&se=2020-05-21T13:38:37Z&sv=2019-10-10&sr=c&sig=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+TMP_STORAGE_QUEUE_URL = 'https://storageaccount.blob.core.windows.net/tempstorage?sp=rl&st=2020-05-20T13:38:37Z&se=2020-05-21T13:38:37Z&sv=2019-10-10&sr=c&sig=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
 
 
 def request_callback(request):
@@ -39,23 +41,23 @@ def request_callback(request):
                     "Rows": [
                         [
                             "SecuredReadyForAggregationQueue",
-                            "https://storageaccount.queue.core.windows.net/readyforaggregation-secured?sp=rl&st=2020-05-20T13:38:37Z&se=2020-05-21T13:38:37Z&sv=2019-10-10&sr=c&sig=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+                            STORAGE_QUEUE_URL,
                         ],
                         [
                             "SecuredReadyForAggregationQueue",
-                            "https://storageaccount.queue.core.windows.net/readyforaggregation-secured?sp=rl&st=2020-05-20T13:38:37Z&se=2020-05-21T13:38:37Z&sv=2019-10-10&sr=c&sig=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+                            STORAGE_QUEUE_URL,
                         ],
                         [
                             "SecuredReadyForAggregationQueue",
-                            "https://storageaccount.queue.core.windows.net/readyforaggregation-secured?sp=rl&st=2020-05-20T13:38:37Z&se=2020-05-21T13:38:37Z&sv=2019-10-10&sr=c&sig=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+                            STORAGE_QUEUE_URL,
                         ],
                         [
                             "SecuredReadyForAggregationQueue",
-                            "https://storageaccount.queue.core.windows.net/readyforaggregation-secured?sp=rl&st=2020-05-20T13:38:37Z&se=2020-05-21T13:38:37Z&sv=2019-10-10&sr=c&sig=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+                            STORAGE_QUEUE_URL,
                         ],
                         [
                             "SecuredReadyForAggregationQueue",
-                            "https://storageaccount.queue.core.windows.net/readyforaggregation-secured?sp=rl&st=2020-05-20T13:38:37Z&se=2020-05-21T13:38:37Z&sv=2019-10-10&sr=c&sig=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+                            STORAGE_QUEUE_URL,
                         ],
                         [
                             "FailedIngestionsQueue",
@@ -67,23 +69,23 @@ def request_callback(request):
                         ],
                         [
                             "TempStorage",
-                            "https://storageaccount.blob.core.windows.net/tempstorage?sp=rl&st=2020-05-20T13:38:37Z&se=2020-05-21T13:38:37Z&sv=2019-10-10&sr=c&sig=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+                            TMP_STORAGE_QUEUE_URL,
                         ],
                         [
                             "TempStorage",
-                            "https://storageaccount.blob.core.windows.net/tempstorage?sp=rl&st=2020-05-20T13:38:37Z&se=2020-05-21T13:38:37Z&sv=2019-10-10&sr=c&sig=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+                            TMP_STORAGE_QUEUE_URL,
                         ],
                         [
                             "TempStorage",
-                            "https://storageaccount.blob.core.windows.net/tempstorage?sp=rl&st=2020-05-20T13:38:37Z&se=2020-05-21T13:38:37Z&sv=2019-10-10&sr=c&sig=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+                            TMP_STORAGE_QUEUE_URL,
                         ],
                         [
                             "TempStorage",
-                            "https://storageaccount.blob.core.windows.net/tempstorage?sp=rl&st=2020-05-20T13:38:37Z&se=2020-05-21T13:38:37Z&sv=2019-10-10&sr=c&sig=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+                            TMP_STORAGE_QUEUE_URL,
                         ],
                         [
                             "TempStorage",
-                            "https://storageaccount.blob.core.windows.net/tempstorage?sp=rl&st=2020-05-20T13:38:37Z&se=2020-05-21T13:38:37Z&sv=2019-10-10&sr=c&sig=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+                            TMP_STORAGE_QUEUE_URL,
                         ],
                         [
                             "IngestionsStatusTable",
@@ -118,7 +120,7 @@ class KustoIngestClientTests(unittest.TestCase):
             responses.POST, "https://ingest-somecluster.kusto.windows.net/v1/rest/mgmt", callback=request_callback, content_type="application/json"
         )
 
-        ingest_client = KustoIngestClient("https://ingest-somecluster.kusto.windows.net")
+        ingest_client = QueuedIngestClient("https://ingest-somecluster.kusto.windows.net")
         ingestion_properties = IngestionProperties(database="database", table="table", data_format=DataFormat.CSV)
 
         # ensure test can work when executed from within directories
@@ -168,7 +170,7 @@ class KustoIngestClientTests(unittest.TestCase):
             responses.POST, "https://ingest-somecluster.kusto.windows.net/v1/rest/mgmt", callback=request_callback, content_type="application/json"
         )
 
-        ingest_client = KustoIngestClient("https://ingest-somecluster.kusto.windows.net")
+        ingest_client = QueuedIngestClient("https://ingest-somecluster.kusto.windows.net")
         ingestion_properties = IngestionProperties(database="database", table="table", data_format=DataFormat.CSV)
 
         from pandas import DataFrame

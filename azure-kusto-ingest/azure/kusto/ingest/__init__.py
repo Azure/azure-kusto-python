@@ -3,7 +3,7 @@
 from ._version import VERSION as __version__
 from .descriptors import BlobDescriptor, FileDescriptor, StreamDescriptor
 from .exceptions import KustoMissingMappingReferenceError
-from .ingest_client import KustoIngestClient
+from .ingest_client import QueuedIngestClient
 from .ingestion_properties import (
     DataFormat,
     ValidationPolicy,

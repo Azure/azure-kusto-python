@@ -6,10 +6,13 @@ import unittest
 from uuid import uuid4
 
 import mock
-from azure.kusto.ingest import KustoIngestClient
+from azure.kusto.ingest import QueuedIngestClient
 from azure.kusto.ingest._resource_manager import _ResourceUri
 from azure.kusto.ingest.status import KustoIngestStatusQueues, SuccessMessage, FailureMessage
 from azure.storage.queue import QueueMessage, QueueClient
+
+SAS = 'sp=rl&st=2020-05-20T13:38:37Z&se=2020-05-21T13:38:37Z&sv=2019-10-10&sr=c&sig=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+OBJECT_TYPE = 'core.windows.net'
 
 
 def mock_message(success):
@@ -75,14 +78,14 @@ def fake_delete_factory(f):
 
 class StatusQTests(unittest.TestCase):
     def test_init(self):
-        client = KustoIngestClient("some-cluster")
+        client = QueuedIngestClient("some-cluster")
         qs = KustoIngestStatusQueues(client)
 
         assert qs.success.message_cls == SuccessMessage
         assert qs.failure.message_cls == FailureMessage
 
     def test_isempty(self):
-        client = KustoIngestClient("some-cluster")
+        client = QueuedIngestClient("some-cluster")
 
         fake_peek = fake_peek_factory(
             lambda queue_name, num_messages=1: [mock_message(success=True) for _ in range(0, num_messages)] if "qs" in queue_name else []
@@ -92,17 +95,17 @@ class StatusQTests(unittest.TestCase):
         ) as mocked_get_failed_qs, mock.patch.object(QueueClient, "peek_messages", autospec=True, side_effect=fake_peek) as q_mock:
             fake_failed_queue = _ResourceUri(
                 "mocked_storage_account1",
-                "core.windows.net",
+                OBJECT_TYPE,
                 "queue",
                 "mocked_qf_name",
-                "sp=rl&st=2020-05-20T13:38:37Z&se=2020-05-21T13:38:37Z&sv=2019-10-10&sr=c&sig=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+                SAS,
             )
             fake_success_queue = _ResourceUri(
                 "mocked_storage_account2",
-                "core.windows.net",
+                OBJECT_TYPE,
                 "queue",
                 "mocked_qs_name",
-                "sp=rl&st=2020-05-20T13:38:37Z&se=2020-05-21T13:38:37Z&sv=2019-10-10&sr=c&sig=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+                SAS,
             )
 
             mocked_get_success_qs.return_value = [fake_success_queue]
@@ -118,7 +121,7 @@ class StatusQTests(unittest.TestCase):
             assert q_mock.call_args_list[1][1]["max_messages"] == 2
 
     def test_peek(self):
-        client = KustoIngestClient("some-cluster")
+        client = QueuedIngestClient("some-cluster")
 
         fake_peek = fake_peek_factory(
             lambda queue_name, num_messages=1: [
@@ -132,24 +135,24 @@ class StatusQTests(unittest.TestCase):
 
             fake_failed_queue1 = _ResourceUri(
                 "mocked_storage_account_f1",
-                "core.windows.net",
+                OBJECT_TYPE,
                 "queue",
                 "mocked_qf_1_name",
-                "sp=rl&st=2020-05-20T13:38:37Z&se=2020-05-21T13:38:37Z&sv=2019-10-10&sr=c&sig=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+                SAS,
             )
             fake_failed_queue2 = _ResourceUri(
                 "mocked_storage_account_f2",
-                "core.windows.net",
+                OBJECT_TYPE,
                 "queue",
                 "mocked_qf_2_name",
-                "sp=rl&st=2020-05-20T13:38:37Z&se=2020-05-21T13:38:37Z&sv=2019-10-10&sr=c&sig=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+                SAS,
             )
             fake_success_queue = _ResourceUri(
                 "mocked_storage_account2",
-                "core.windows.net",
+                OBJECT_TYPE,
                 "queue",
                 "mocked_qs_name",
-                "sp=rl&st=2020-05-20T13:38:37Z&se=2020-05-21T13:38:37Z&sv=2019-10-10&sr=c&sig=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+                SAS,
             )
 
             mocked_get_success_qs.return_value = [fake_success_queue]
@@ -182,7 +185,7 @@ class StatusQTests(unittest.TestCase):
             assert actual[fake_success_queue.object_name] == 2
 
     def test_pop(self):
-        client = KustoIngestClient("some-cluster")
+        client = QueuedIngestClient("some-cluster")
 
         fake_receive = fake_receive_factory(
             lambda queue_name, num_messages=1: [
@@ -203,24 +206,24 @@ class StatusQTests(unittest.TestCase):
 
             fake_failed_queue1 = _ResourceUri(
                 "mocked_storage_account_f1",
-                "core.windows.net",
+                OBJECT_TYPE,
                 "queue",
                 "mocked_qf_1_name",
-                "sp=rl&st=2020-05-20T13:38:37Z&se=2020-05-21T13:38:37Z&sv=2019-10-10&sr=c&sig=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+                SAS,
             )
             fake_failed_queue2 = _ResourceUri(
                 "mocked_storage_account_f2",
-                "core.windows.net",
+                OBJECT_TYPE,
                 "queue",
                 "mocked_qf_2_name",
-                "sp=rl&st=2020-05-20T13:38:37Z&se=2020-05-21T13:38:37Z&sv=2019-10-10&sr=c&sig=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+                SAS,
             )
             fake_success_queue = _ResourceUri(
                 "mocked_storage_account2",
-                "core.windows.net",
+                OBJECT_TYPE,
                 "queue",
                 "mocked_qs_name",
-                "sp=rl&st=2020-05-20T13:38:37Z&se=2020-05-21T13:38:37Z&sv=2019-10-10&sr=c&sig=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+                SAS,
             )
 
             mocked_get_success_qs.return_value = [fake_success_queue]
@@ -254,7 +257,7 @@ class StatusQTests(unittest.TestCase):
             assert actual[fake_failed_queue1.object_name] == 4
 
     def test_pop_unbalanced_queues(self):
-        client = KustoIngestClient("some-cluster")
+        client = QueuedIngestClient("some-cluster")
 
         fake_receive = fake_receive_factory(
             lambda queue_name, messages_per_page=1: [mock_message(success=False) for _ in range(0, messages_per_page)] if "1" in queue_name else []
@@ -272,17 +275,17 @@ class StatusQTests(unittest.TestCase):
 
             fake_failed_queue1 = _ResourceUri(
                 "mocked_storage_account_f1",
-                "core.windows.net",
+                OBJECT_TYPE,
                 "queue",
                 "mocked_qf_1_name",
-                "sp=rl&st=2020-05-20T13:38:37Z&se=2020-05-21T13:38:37Z&sv=2019-10-10&sr=c&sig=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+                SAS,
             )
             fake_failed_queue2 = _ResourceUri(
                 "mocked_storage_account_f2",
-                "core.windows.net",
+                OBJECT_TYPE,
                 "queue",
                 "mocked_qf_2_name",
-                "sp=rl&st=2020-05-20T13:38:37Z&se=2020-05-21T13:38:37Z&sv=2019-10-10&sr=c&sig=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+                SAS,
             )
 
             mocked_get_failed_qs.return_value = [fake_failed_queue1, fake_failed_queue2]
