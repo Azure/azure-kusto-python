@@ -146,4 +146,4 @@ class _ResourceManager:
         try:
             return command_result.primary_results[0][0][self._SERVICE_TYPE_COLUMN_NAME]
         except (TypeError, KeyError):
-            raise KustoServiceError("Couldn't retrieve ServiceType because '.show version' didn't return any records")
+            raise KustoServiceError("Couldn't retrieve ServiceType because '{0}' didn't return any records".format(self._SHOW_VERSION))
