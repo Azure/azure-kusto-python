@@ -64,8 +64,8 @@ class _IngestClientResources:
 
 
 class _ResourceManager:
-    _SHOW_VERSION = '.show version'
-    _SERVICE_TYPE_COLUMN_NAME = 'ServiceType'
+    _SHOW_VERSION = ".show version"
+    _SERVICE_TYPE_COLUMN_NAME = "ServiceType"
 
     def __init__(self, kusto_client: KustoClient):
         self._kusto_client = kusto_client

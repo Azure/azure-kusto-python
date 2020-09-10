@@ -11,7 +11,7 @@ class KustoError(Exception):
 class KustoServiceError(KustoError):
     """Raised when the Kusto service was unable to process a request."""
 
-    def __init__(self, messages: Union[str, List[dict]], http_response: requests.Response = None, kusto_response = None):
+    def __init__(self, messages: Union[str, List[dict]], http_response: requests.Response = None, kusto_response=None):
         super().__init__(messages)
         self.http_response = http_response
         self.kusto_response = kusto_response
