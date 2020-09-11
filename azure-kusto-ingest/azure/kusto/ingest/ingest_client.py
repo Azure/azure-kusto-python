@@ -111,7 +111,10 @@ class QueuedIngestClient:
         :param azure.kusto.ingest.BlobDescriptor blob_descriptor: An object that contains a description of the blob to be ingested.
         :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
         """
-        queues = self._resource_manager.get_ingestion_queues()
+        try:
+            queues = self._resource_manager.get_ingestion_queues()
+        except KustoServiceError:
+            self.validate_endpoint_service_type()
 
         random_queue = random.choice(queues)
         queue_service = QueueServiceClient(random_queue.account_uri)
@@ -129,18 +132,19 @@ class QueuedIngestClient:
 
         if not self._EXPECTED_SERVICE_TYPE == self._endpoint_service_type:
             message = self._WRONG_ENDPOINT_MESSAGE.format(self._EXPECTED_SERVICE_TYPE, self._endpoint_service_type)
+            has_endpoint = True
             if not hasattr(self, "_suggested_endpoint_uri") or len(self._suggested_endpoint_uri) == 0 or self._suggested_endpoint_uri.isspace():
                 self._suggested_endpoint_uri = self._generate_endpoint_suggestion(self._connection_datasource)
-            if not hasattr(self, "_suggested_endpoint_uri") or len(self._suggested_endpoint_uri) == 0 or self._suggested_endpoint_uri.isspace():
-                message += "."
-            else:
+                if not hasattr(self, "_suggested_endpoint_uri") or len(self._suggested_endpoint_uri) == 0 or self._suggested_endpoint_uri.isspace():
+                    has_endpoint = False
+            if has_endpoint:
                 message = "{0}: '{1}'".format(message, self._suggested_endpoint_uri)
+            else:
+                message += "."
             raise KustoClientError(message)
 
     def _retrieve_service_type(self):
-        if self._resource_manager is not None:
-            return self._resource_manager.retrieve_service_type()
-        return ""
+        return self._resource_manager.retrieve_service_type()
 
     def _generate_endpoint_suggestion(self, datasource):
         """The default is not passing a suggestion to the exception String"""
