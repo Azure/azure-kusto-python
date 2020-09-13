@@ -121,7 +121,18 @@ def request_error_callback(request):
     if ".show version" in body["csl"]:
         response_status = 200
         response_body = {
-            "Tables":[{"TableName":"Table_0","Columns":[{"ColumnName":"BuildVersion","DataType":"String"},{"ColumnName":"BuildTime","DataType":"DateTime"},{"ColumnName":"ServiceType","DataType":"String"},{"ColumnName":"ProductVersion","DataType":"String"}],"Rows":[["1.0.0.0","2000-01-01T00:00:00Z","Engine","PrivateBuild.yischoen.YISCHOEN-OP7070.2020-09-07 12-09-22"]]}]
+            "Tables": [
+                {
+                    "TableName": "Table_0",
+                    "Columns": [
+                        {"ColumnName": "BuildVersion", "DataType": "String"},
+                        {"ColumnName": "BuildTime", "DataType": "DateTime"},
+                        {"ColumnName": "ServiceType", "DataType": "String"},
+                        {"ColumnName": "ProductVersion", "DataType": "String"},
+                    ],
+                    "Rows": [["1.0.0.0", "2000-01-01T00:00:00Z", "Engine", "PrivateBuild.yischoen.YISCHOEN-OP7070.2020-09-07 12-09-22"]],
+                }
+            ]
         }
 
     return response_status, response_headers, json.dumps(response_body)
@@ -204,9 +215,11 @@ class KustoIngestClientTests(unittest.TestCase):
         except Exception as e:
             reached_exception = True
             assert e.__class__ == KustoClientError
-            assert e.args[0] == 'You are using \'DataManagement\' client type, but the provided endpoint is of ServiceType \'Engine\'. Initialize the client with the appropriate endpoint URI: \'https://ingest-somecluster.kusto.windows.net\''
+            assert (
+                e.args[0]
+                == "You are using 'DataManagement' client type, but the provided endpoint is of ServiceType 'Engine'. Initialize the client with the appropriate endpoint URI: 'https://ingest-somecluster.kusto.windows.net'"
+            )
         assert reached_exception is True
-
 
     @responses.activate
     @pytest.mark.skipif(not pandas_installed, reason="requires pandas")
