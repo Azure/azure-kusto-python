@@ -7,6 +7,7 @@ import unittest
 
 import pytest
 import responses
+from azure.kusto.data.exceptions import KustoClientError
 from azure.kusto.ingest import QueuedIngestClient, IngestionProperties, DataFormat
 from mock import patch
 
@@ -105,6 +106,27 @@ def request_callback(request):
     return response_status, response_headers, json.dumps(response_body)
 
 
+def request_error_callback(request):
+    body = json.loads(request.body.decode()) if type(request.body) == bytes else json.loads(request.body)
+    response_status = 400
+    response_headers = []
+    response_body = {}
+
+    if ".get ingestion resources" in body["csl"]:
+        response_status = 400
+        response_body = {
+            "Tables": [{"TableName": "Table_0", "Columns": [{"ColumnName": "AuthorizationContext", "DataType": "String"}], "Rows": [["authorization_context"]]}]
+        }
+
+    if ".show version" in body["csl"]:
+        response_status = 200
+        response_body = {
+            "Tables":[{"TableName":"Table_0","Columns":[{"ColumnName":"BuildVersion","DataType":"String"},{"ColumnName":"BuildTime","DataType":"DateTime"},{"ColumnName":"ServiceType","DataType":"String"},{"ColumnName":"ProductVersion","DataType":"String"}],"Rows":[["1.0.0.0","2000-01-01T00:00:00Z","Engine","PrivateBuild.yischoen.YISCHOEN-OP7070.2020-09-07 12-09-22"]]}]
+        }
+
+    return response_status, response_headers, json.dumps(response_body)
+
+
 class KustoIngestClientTests(unittest.TestCase):
     MOCKED_UUID_4 = "1111-111111-111111-1111"
     MOCKED_PID = 64
@@ -157,6 +179,34 @@ class KustoIngestClientTests(unittest.TestCase):
         upload_blob_kwargs = mock_upload_blob_from_stream.call_args_list[0][1]
 
         assert type(upload_blob_kwargs["data"]) == io.BytesIO
+
+    @responses.activate
+    def test_ingest_from_file_wrong_endpoint(self):
+        responses.add_callback(
+            responses.POST, "https://somecluster.kusto.windows.net/v1/rest/mgmt", callback=request_error_callback, content_type="application/json"
+        )
+
+        ingest_client = QueuedIngestClient("https://somecluster.kusto.windows.net")
+        ingestion_properties = IngestionProperties(database="database", table="table", data_format=DataFormat.CSV)
+
+        current_dir = os.getcwd()
+        path_parts = ["azure-kusto-ingest", "tests", "input", "dataset.csv"]
+        missing_path_parts = []
+        for path_part in path_parts:
+            if path_part not in current_dir:
+                missing_path_parts.append(path_part)
+
+        file_path = os.path.join(current_dir, *missing_path_parts)
+
+        reached_exception = False
+        try:
+            ingest_client.ingest_from_file(file_path, ingestion_properties=ingestion_properties)
+        except Exception as e:
+            reached_exception = True
+            assert e.__class__ == KustoClientError
+            assert e.args[0] == 'You are using \'DataManagement\' client type, but the provided endpoint is of ServiceType \'Engine\'. Initialize the client with the appropriate endpoint URI: \'https://ingest-somecluster.kusto.windows.net\''
+        assert reached_exception is True
+
 
     @responses.activate
     @pytest.mark.skipif(not pandas_installed, reason="requires pandas")
