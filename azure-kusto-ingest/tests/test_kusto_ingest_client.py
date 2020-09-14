@@ -7,8 +7,8 @@ import unittest
 
 import pytest
 import responses
-from azure.kusto.data.exceptions import KustoClientError
 from azure.kusto.ingest import QueuedIngestClient, IngestionProperties, DataFormat
+from azure.kusto.ingest.exceptions import KustoInvalidEndpointError
 from mock import patch
 
 pandas_installed = False
@@ -23,7 +23,7 @@ UUID_REGEX = "[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12
 BLOB_NAME_REGEX = "database__table__" + UUID_REGEX + "__dataset.csv.gz"
 BLOB_URL_REGEX = "https://storageaccount.blob.core.windows.net/tempstorage/database__table__" + UUID_REGEX + "__dataset.csv.gz[?]sas"
 STORAGE_QUEUE_URL = "https://storageaccount.queue.core.windows.net/readyforaggregation-secured?sp=rl&st=2020-05-20T13:38:37Z&se=2020-05-21T13:38:37Z&sv=2019-10-10&sr=c&sig=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-TMP_STORAGE_QUEUE_URL = "https://storageaccount.blob.core.windows.net/tempstorage?sp=rl&st=2020-05-20T13:38:37Z&se=2020-05-21T13:38:37Z&sv=2019-10-10&sr=c&sig=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+TEMP_STORAGE_URL = "https://storageaccount.blob.core.windows.net/tempstorage?sp=rl&st=2020-05-20T13:38:37Z&se=2020-05-21T13:38:37Z&sv=2019-10-10&sr=c&sig=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 
 
 def request_callback(request):
@@ -70,23 +70,23 @@ def request_callback(request):
                         ],
                         [
                             "TempStorage",
-                            TMP_STORAGE_QUEUE_URL,
+                            TEMP_STORAGE_URL,
                         ],
                         [
                             "TempStorage",
-                            TMP_STORAGE_QUEUE_URL,
+                            TEMP_STORAGE_URL,
                         ],
                         [
                             "TempStorage",
-                            TMP_STORAGE_QUEUE_URL,
+                            TEMP_STORAGE_URL,
                         ],
                         [
                             "TempStorage",
-                            TMP_STORAGE_QUEUE_URL,
+                            TEMP_STORAGE_URL,
                         ],
                         [
                             "TempStorage",
-                            TMP_STORAGE_QUEUE_URL,
+                            TEMP_STORAGE_URL,
                         ],
                         [
                             "IngestionsStatusTable",
@@ -209,17 +209,13 @@ class KustoIngestClientTests(unittest.TestCase):
 
         file_path = os.path.join(current_dir, *missing_path_parts)
 
-        reached_exception = False
-        try:
+        with self.assertRaises(KustoInvalidEndpointError) as ex:
             ingest_client.ingest_from_file(file_path, ingestion_properties=ingestion_properties)
-        except Exception as e:
-            reached_exception = True
-            assert e.__class__ == KustoClientError
-            assert (
-                e.args[0]
-                == "You are using 'DataManagement' client type, but the provided endpoint is of ServiceType 'Engine'. Initialize the client with the appropriate endpoint URI: 'https://ingest-somecluster.kusto.windows.net'"
-            )
-        assert reached_exception is True
+        self.assertEqual(
+            ex.exception.args[0],
+            "You are using 'DataManagement' client type, but the provided endpoint is of ServiceType 'Engine'. Initialize the client with the appropriate endpoint URI: 'https://ingest-somecluster.kusto.windows.net'",
+            "Expected exception was not raised",
+        )
 
     @responses.activate
     @pytest.mark.skipif(not pandas_installed, reason="requires pandas")
