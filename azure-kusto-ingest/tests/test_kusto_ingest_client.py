@@ -130,7 +130,7 @@ def request_error_callback(request):
                         {"ColumnName": "ServiceType", "DataType": "String"},
                         {"ColumnName": "ProductVersion", "DataType": "String"},
                     ],
-                    "Rows": [["1.0.0.0", "2000-01-01T00:00:00Z", "Engine", "PrivateBuild.yischoen.YISCHOEN-OP7070.2020-09-07 12-09-22"]],
+                    "Rows": [["1.0.0.0", "2000-01-01T00:00:00Z", "Engine", "2020-09-07 12-09-22"]],
                 }
             ]
         }
