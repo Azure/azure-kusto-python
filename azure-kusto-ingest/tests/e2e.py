@@ -110,19 +110,19 @@ class TestData:
 
 
 def engine_kcsb_from_env() -> KustoConnectionStringBuilder:
-    engine_cs = "https://yischoen.westcentralus.dev.kusto.windows.net"
-    app_id = "ba80e9b4-4855-46d1-8ef4-6f32df342ad4"
-    app_key = "_QgA0h8F-uJQcXS60cqOtjN_7CnKXDU-6t"
-    auth_id = "microsoft.com"
+    engine_cs = os.environ.get("ENGINE_CONNECTION_STRING")
+    app_id = os.environ.get("APP_ID")
+    app_key = os.environ.get("APP_KEY")
+    auth_id = os.environ.get("AUTH_ID")
     return KustoConnectionStringBuilder.with_aad_application_key_authentication(engine_cs, app_id, app_key, auth_id)
 
 
 def dm_kcsb_from_env() -> KustoConnectionStringBuilder:
-    engine_cs = "https://yischoen.westcentralus.dev.kusto.windows.net"
+    engine_cs = os.environ.get("ENGINE_CONNECTION_STRING")
     dm_cs = os.environ.get("DM_CONNECTION_STRING") or engine_cs.replace("//", "//ingest-")
-    app_id = "ba80e9b4-4855-46d1-8ef4-6f32df342ad4"
-    app_key = "_QgA0h8F-uJQcXS60cqOtjN_7CnKXDU-6t"
-    auth_id = "microsoft.com"
+    app_id = os.environ.get("APP_ID")
+    app_key = os.environ.get("APP_KEY")
+    auth_id = os.environ.get("AUTH_ID")
     return KustoConnectionStringBuilder.with_aad_application_key_authentication(dm_cs, app_id, app_key, auth_id)
 
 
