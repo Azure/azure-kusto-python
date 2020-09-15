@@ -20,7 +20,7 @@ from .exceptions import KustoInvalidEndpointError
 from .ingestion_properties import DataFormat, IngestionProperties
 
 
-class QueuedIngestClient:
+class KustoIngestClient:
     """
     Kusto queued ingest client provides methods to allow ingestion into kusto (ADX).
     To learn more about the different types of ingestions and when to use each, visit:
@@ -75,7 +75,7 @@ class QueuedIngestClient:
         try:
             containers = self._resource_manager.get_containers()
         except KustoServiceError as ex:
-            self.__validate_endpoint_service_type()
+            self._validate_endpoint_service_type()
             raise ex
 
         if isinstance(file_descriptor, FileDescriptor):
@@ -113,7 +113,7 @@ class QueuedIngestClient:
         try:
             queues = self._resource_manager.get_ingestion_queues()
         except KustoServiceError as ex:
-            self.__validate_endpoint_service_type()
+            self._validate_endpoint_service_type()
             raise ex
 
         random_queue = random.choice(queues)
@@ -126,7 +126,7 @@ class QueuedIngestClient:
         queue_client = queue_service.get_queue_client(queue=random_queue.object_name, message_encode_policy=TextBase64EncodePolicy())
         queue_client.send_message(content=content)
 
-    def __validate_endpoint_service_type(self):
+    def _validate_endpoint_service_type(self):
         if not hasattr(self, "_endpoint_service_type") or len(self._endpoint_service_type) == 0 or self._endpoint_service_type.isspace():
             self._endpoint_service_type = self._retrieve_service_type()
 
@@ -134,7 +134,7 @@ class QueuedIngestClient:
             has_endpoint = True
             if not hasattr(self, "_suggested_endpoint_uri") or len(self._suggested_endpoint_uri) == 0 or self._suggested_endpoint_uri.isspace():
                 self._suggested_endpoint_uri = self._generate_endpoint_suggestion(self._connection_datasource)
-                if not hasattr(self, "_suggested_endpoint_uri") or len(self._suggested_endpoint_uri) == 0 or self._suggested_endpoint_uri.isspace():
+                if len(self._suggested_endpoint_uri) == 0 or self._suggested_endpoint_uri.isspace():
                     has_endpoint = False
             if has_endpoint:
                 raise KustoInvalidEndpointError(self._EXPECTED_SERVICE_TYPE, self._endpoint_service_type, self._suggested_endpoint_uri)

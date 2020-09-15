@@ -10,7 +10,7 @@ import uuid
 from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
 from azure.kusto.data.exceptions import KustoServiceError
 from azure.kusto.ingest import (
-    QueuedIngestClient,
+    KustoIngestClient,
     KustoStreamingIngestClient,
     IngestionProperties,
     DataFormat,
@@ -110,19 +110,19 @@ class TestData:
 
 
 def engine_kcsb_from_env() -> KustoConnectionStringBuilder:
-    engine_cs = os.environ.get("ENGINE_CONNECTION_STRING")
-    app_id = os.environ.get("APP_ID")
-    app_key = os.environ.get("APP_KEY")
-    auth_id = os.environ.get("AUTH_ID")
+    engine_cs = "https://yischoen.westcentralus.dev.kusto.windows.net"
+    app_id = "ba80e9b4-4855-46d1-8ef4-6f32df342ad4"
+    app_key = "_QgA0h8F-uJQcXS60cqOtjN_7CnKXDU-6t"
+    auth_id = "microsoft.com"
     return KustoConnectionStringBuilder.with_aad_application_key_authentication(engine_cs, app_id, app_key, auth_id)
 
 
 def dm_kcsb_from_env() -> KustoConnectionStringBuilder:
-    engine_cs = os.environ.get("ENGINE_CONNECTION_STRING")
+    engine_cs = "https://yischoen.westcentralus.dev.kusto.windows.net"
     dm_cs = os.environ.get("DM_CONNECTION_STRING") or engine_cs.replace("//", "//ingest-")
-    app_id = os.environ.get("APP_ID")
-    app_key = os.environ.get("APP_KEY")
-    auth_id = os.environ.get("AUTH_ID")
+    app_id = "ba80e9b4-4855-46d1-8ef4-6f32df342ad4"
+    app_key = "_QgA0h8F-uJQcXS60cqOtjN_7CnKXDU-6t"
+    auth_id = "microsoft.com"
     return KustoConnectionStringBuilder.with_aad_application_key_authentication(dm_cs, app_id, app_key, auth_id)
 
 
@@ -141,12 +141,12 @@ def get_file_path() -> str:
 
 
 # Init clients
-test_db = os.environ.get("TEST_DATABASE")
+test_db = "YihezkelTest"
 
 python_version = "_".join([str(v) for v in sys.version_info[:3]])
 test_table = "python_test_{0}_{1}".format(python_version, str(int(time.time())))
 client = KustoClient(engine_kcsb_from_env())
-ingest_client = QueuedIngestClient(dm_kcsb_from_env())
+ingest_client = KustoIngestClient(dm_kcsb_from_env())
 streaming_ingest_client = KustoStreamingIngestClient(engine_kcsb_from_env())
 
 start_time = datetime.datetime.now(datetime.timezone.utc)

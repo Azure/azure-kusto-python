@@ -7,7 +7,7 @@ import unittest
 
 import pytest
 import responses
-from azure.kusto.ingest import QueuedIngestClient, IngestionProperties, DataFormat
+from azure.kusto.ingest import KustoIngestClient, IngestionProperties, DataFormat
 from azure.kusto.ingest.exceptions import KustoInvalidEndpointError
 from mock import patch
 
@@ -153,7 +153,7 @@ class KustoIngestClientTests(unittest.TestCase):
             responses.POST, "https://ingest-somecluster.kusto.windows.net/v1/rest/mgmt", callback=request_callback, content_type="application/json"
         )
 
-        ingest_client = QueuedIngestClient("https://ingest-somecluster.kusto.windows.net")
+        ingest_client = KustoIngestClient("https://ingest-somecluster.kusto.windows.net")
         ingestion_properties = IngestionProperties(database="database", table="table", data_format=DataFormat.CSV)
 
         # ensure test can work when executed from within directories
@@ -197,7 +197,7 @@ class KustoIngestClientTests(unittest.TestCase):
             responses.POST, "https://somecluster.kusto.windows.net/v1/rest/mgmt", callback=request_error_callback, content_type="application/json"
         )
 
-        ingest_client = QueuedIngestClient("https://somecluster.kusto.windows.net")
+        ingest_client = KustoIngestClient("https://somecluster.kusto.windows.net")
         ingestion_properties = IngestionProperties(database="database", table="table", data_format=DataFormat.CSV)
 
         current_dir = os.getcwd()
@@ -229,7 +229,7 @@ class KustoIngestClientTests(unittest.TestCase):
             responses.POST, "https://ingest-somecluster.kusto.windows.net/v1/rest/mgmt", callback=request_callback, content_type="application/json"
         )
 
-        ingest_client = QueuedIngestClient("https://ingest-somecluster.kusto.windows.net")
+        ingest_client = KustoIngestClient("https://ingest-somecluster.kusto.windows.net")
         ingestion_properties = IngestionProperties(database="database", table="table", data_format=DataFormat.CSV)
 
         from pandas import DataFrame

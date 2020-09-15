@@ -9,6 +9,8 @@ from azure.kusto.data._models import KustoResultTable
 from azure.kusto.data.exceptions import KustoServiceError, KustoClientError
 
 _URI_FORMAT = re.compile("https://(\\w+).(queue|blob|table).(core.\\w+.\\w+)/([\\w,-]+)\\?(.*)")
+_SHOW_VERSION = ".show version"
+_SERVICE_TYPE_COLUMN_NAME = "ServiceType"
 
 
 class _ResourceUri:
@@ -64,9 +66,6 @@ class _IngestClientResources:
 
 
 class _ResourceManager:
-    _SHOW_VERSION = ".show version"
-    _SERVICE_TYPE_COLUMN_NAME = "ServiceType"
-
     def __init__(self, kusto_client: KustoClient):
         self._kusto_client = kusto_client
         self._refresh_period = timedelta(hours=1)
@@ -138,12 +137,12 @@ class _ResourceManager:
 
     def retrieve_service_type(self):
         try:
-            command_result = self._kusto_client.execute("NetDefaultDB", self._SHOW_VERSION)
+            command_result = self._kusto_client.execute("NetDefaultDB", _SHOW_VERSION)
         except KustoServiceError:
-            raise KustoServiceError("Couldn't retrieve ServiceType because of a service exception executing {0}".format(self._SHOW_VERSION), None)
+            raise KustoServiceError("Couldn't retrieve ServiceType because of a service exception executing {0}".format(_SHOW_VERSION), None)
         except KustoClientError:
-            raise KustoClientError("Couldn't retrieve ServiceType because of a client exception executing {0}".format(self._SHOW_VERSION))
+            raise KustoClientError("Couldn't retrieve ServiceType because of a client exception executing {0}".format(_SHOW_VERSION))
         try:
-            return command_result.primary_results[0][0][self._SERVICE_TYPE_COLUMN_NAME]
+            return command_result.primary_results[0][0][_SERVICE_TYPE_COLUMN_NAME]
         except (TypeError, KeyError):
-            raise KustoServiceError("Couldn't retrieve ServiceType because '{0}' didn't return any records".format(self._SHOW_VERSION))
+            raise KustoServiceError("Couldn't retrieve ServiceType because '{0}' didn't return any records".format(_SHOW_VERSION))
