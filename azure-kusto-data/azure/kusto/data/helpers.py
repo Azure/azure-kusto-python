@@ -33,6 +33,12 @@ def to_pandas_timedelta(raw_value, timedelta_value) -> "pandas.Timedelta":
     return pd.Timedelta(timedelta_value.total_seconds(), unit="ns")
 
 
+def to_decimal(raw_value, *args):
+    from decimal import Decimal
+
+    return Decimal(raw_value.strip(' "'))
+
+
 def dataframe_from_result_table(table: "KustoResultTable"):
     """Converts Kusto tables into pandas DataFrame.
     :param azure.kusto.data._models.KustoResultTable table: Table received from the response.

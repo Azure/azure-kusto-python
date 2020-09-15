@@ -18,7 +18,7 @@ except ImportError as e:
 
 # This part is outside the try/catch because a failure here should raise an error
 if HAS_PANDAS:
-    from .helpers import to_pandas_datetime, to_pandas_timedelta
+    from .helpers import to_pandas_datetime, to_pandas_timedelta, to_decimal
 
 
 class WellKnownDataSet(Enum):
@@ -36,7 +36,7 @@ class KustoResultRow:
     conversion_funcs = {"datetime": _converters.to_datetime, "timespan": _converters.to_timedelta, "decimal": Decimal}
 
     if HAS_PANDAS:
-        pandas_funcs = {"datetime": to_pandas_datetime, "timespan": to_pandas_timedelta}
+        pandas_funcs = {"datetime": to_pandas_datetime, "timespan": to_pandas_timedelta, "decimal": to_decimal}
 
     def __init__(self, columns, row):
         self._value_by_name = {}
