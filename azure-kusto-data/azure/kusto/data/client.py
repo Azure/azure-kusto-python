@@ -700,9 +700,21 @@ class KustoClient:
                 return KustoResponseDataSetV2(response.json())
             return KustoResponseDataSetV1(response.json())
 
+        if response.status_code == 404:
+            if payload:
+                raise KustoServiceError("The ingestion endpoint does not exist. Please enable streaming ingestion on your cluster.", response)
+            else:
+                raise KustoServiceError("The requested endpoint '{}' does not exist.".format(endpoint), response)
+
         if payload:
             raise KustoServiceError(
-                "An error occurred while trying to ingest: Status: {0.status_code}, Reason: {0.reason}, Text: {0.text}".format(response), response
+                "An error occurred while trying to ingest: Status: {0.status_code}, Reason: {0.reason}, Text: {0.text}.".format(response), response
             )
 
-        raise KustoServiceError([response.json()], response)
+        try:
+            raise KustoServiceError([response.json()], response)
+        except ValueError:
+            if response.text is not None:
+                raise KustoServiceError([response.text], response)
+            else:
+                raise KustoServiceError("Server error response contains no data.", response)
