@@ -714,7 +714,7 @@ class KustoClient:
         try:
             raise KustoServiceError([response.json()], response)
         except ValueError:
-            if response.text is not None:
+            if response.text:
                 raise KustoServiceError([response.text], response)
             else:
                 raise KustoServiceError("Server error response contains no data.", response)
