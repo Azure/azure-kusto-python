@@ -38,6 +38,8 @@ class KustoIngestClient:
             kcsb = KustoConnectionStringBuilder(kcsb)
         self._connection_datasource = kcsb.data_source
         self._resource_manager = _ResourceManager(KustoClient(kcsb))
+        self._endpoint_service_type = None
+        self._suggested_endpoint_uri = None
 
     def ingest_from_dataframe(self, df, ingestion_properties: IngestionProperties):
         """
@@ -127,14 +129,14 @@ class KustoIngestClient:
         queue_client.send_message(content=content)
 
     def _validate_endpoint_service_type(self):
-        if not hasattr(self, "_endpoint_service_type") or len(self._endpoint_service_type) == 0 or self._endpoint_service_type.isspace():
+        if self._endpoint_service_type is None or not self._endpoint_service_type.strip():
             self._endpoint_service_type = self._retrieve_service_type()
 
         if self._EXPECTED_SERVICE_TYPE != self._endpoint_service_type:
             has_endpoint = True
-            if not hasattr(self, "_suggested_endpoint_uri") or len(self._suggested_endpoint_uri) == 0 or self._suggested_endpoint_uri.isspace():
+            if self._suggested_endpoint_uri is None or not self._suggested_endpoint_uri.strip():
                 self._suggested_endpoint_uri = self._generate_endpoint_suggestion(self._connection_datasource)
-                if len(self._suggested_endpoint_uri) == 0 or self._suggested_endpoint_uri.isspace():
+                if not self._suggested_endpoint_uri.strip():
                     has_endpoint = False
             if has_endpoint:
                 raise KustoInvalidEndpointError(self._EXPECTED_SERVICE_TYPE, self._endpoint_service_type, self._suggested_endpoint_uri)
@@ -147,8 +149,15 @@ class KustoIngestClient:
     def _generate_endpoint_suggestion(self, datasource):
         """The default is not passing a suggestion to the exception String"""
         endpoint_uri_to_suggest_str = ""
-        if not len(datasource.strip()) == 0:
-            endpoint_uri_to_suggest = urlparse(datasource)  # Standardize URL formatting
-            endpoint_uri_to_suggest = urlparse(endpoint_uri_to_suggest.scheme + "://" + self._INGEST_PREFIX + endpoint_uri_to_suggest.hostname)
-            endpoint_uri_to_suggest_str = endpoint_uri_to_suggest.geturl()
+        if datasource.strip():
+            try:
+                endpoint_uri_to_suggest = urlparse(datasource)  # Standardize URL formatting
+                endpoint_uri_to_suggest = urlparse(endpoint_uri_to_suggest.scheme + "://" + self._INGEST_PREFIX + endpoint_uri_to_suggest.hostname)
+                endpoint_uri_to_suggest_str = endpoint_uri_to_suggest.geturl()
+            except Exception as ex:
+                print(
+                    "Couldn't generate suggested endpoint due to problem parsing datasource, with exception: {0}. The correct endpoint is usually the Engine endpoint with '{1}' prepended to the hostname.".format(
+                        ex, self._INGEST_PREFIX
+                    )
+                )
         return endpoint_uri_to_suggest_str
