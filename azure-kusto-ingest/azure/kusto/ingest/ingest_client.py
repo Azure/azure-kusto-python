@@ -160,6 +160,4 @@ class KustoIngestClient:
     def _hostname_starts_with_ingest(self, datasource):
         datasource_uri = urlparse(datasource)
         hostname = datasource_uri.hostname
-        if hostname and hostname.startswith(self._INGEST_PREFIX):
-            return True
-        return False
+        return hostname and hostname.startswith(self._INGEST_PREFIX)

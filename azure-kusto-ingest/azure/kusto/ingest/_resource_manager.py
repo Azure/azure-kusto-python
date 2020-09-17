@@ -136,8 +136,8 @@ class _ResourceManager:
         return self._authorization_context
 
     def retrieve_service_type(self):
-        command_result = self._kusto_client.execute("NetDefaultDB", _SHOW_VERSION)
         try:
+            command_result = self._kusto_client.execute("NetDefaultDB", _SHOW_VERSION)
             return command_result.primary_results[0][0][_SERVICE_TYPE_COLUMN_NAME]
         except (TypeError, KeyError):
             return ""
