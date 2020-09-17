@@ -129,13 +129,13 @@ class KustoIngestClient:
         queue_client.send_message(content=content)
 
     def _validate_endpoint_service_type(self):
-        if self._endpoint_service_type is None or not self._endpoint_service_type.strip():
+        if not self._endpoint_service_type:
             self._endpoint_service_type = self._retrieve_service_type()
 
         if self._EXPECTED_SERVICE_TYPE != self._endpoint_service_type:
-            if self._suggested_endpoint_uri is None or not self._suggested_endpoint_uri.strip():
+            if not self._suggested_endpoint_uri:
                 self._suggested_endpoint_uri = self._generate_endpoint_suggestion(self._connection_datasource)
-                if not self._suggested_endpoint_uri.strip():
+                if not self._suggested_endpoint_uri:
                     raise KustoInvalidEndpointError(self._EXPECTED_SERVICE_TYPE, self._endpoint_service_type)
             raise KustoInvalidEndpointError(self._EXPECTED_SERVICE_TYPE, self._endpoint_service_type, self._suggested_endpoint_uri)
 
@@ -144,16 +144,14 @@ class KustoIngestClient:
 
     def _generate_endpoint_suggestion(self, datasource):
         """The default is not passing a suggestion to the exception String"""
-        endpoint_uri_to_suggest_str = ""
+        endpoint_uri_to_suggest_str = None
         if datasource.strip():
             try:
                 endpoint_uri_to_suggest = urlparse(datasource)  # Standardize URL formatting
                 endpoint_uri_to_suggest = urlparse(endpoint_uri_to_suggest.scheme + "://" + self._INGEST_PREFIX + endpoint_uri_to_suggest.hostname)
                 endpoint_uri_to_suggest_str = endpoint_uri_to_suggest.geturl()
-            except Exception as ex:
-                print(
-                    "Couldn't generate suggested endpoint due to problem parsing datasource, with exception: {0}. The correct endpoint is usually the Engine endpoint with '{1}' prepended to the hostname.".format(
-                        ex, self._INGEST_PREFIX
-                    )
-                )
+            except Exception:
+                # TODO: Add logging infrastructure so we can tell the user as a warning:
+                #   "Couldn't generate suggested endpoint due to problem parsing datasource, with exception: {ex}. The correct endpoint is usually the Engine endpoint with '{self._INGEST_PREFIX}' prepended to the hostname."
+                pass
         return endpoint_uri_to_suggest_str
