@@ -129,15 +129,16 @@ class KustoIngestClient:
         queue_client.send_message(content=content)
 
     def _validate_endpoint_service_type(self):
-        if not self._endpoint_service_type:
-            self._endpoint_service_type = self._retrieve_service_type()
+        if not self._hostname_starts_with_ingest(self._connection_datasource):
+            if not self._endpoint_service_type:
+                self._endpoint_service_type = self._retrieve_service_type()
 
-        if self._EXPECTED_SERVICE_TYPE != self._endpoint_service_type:
-            if not self._suggested_endpoint_uri:
-                self._suggested_endpoint_uri = self._generate_endpoint_suggestion(self._connection_datasource)
+            if self._EXPECTED_SERVICE_TYPE != self._endpoint_service_type:
                 if not self._suggested_endpoint_uri:
-                    raise KustoInvalidEndpointError(self._EXPECTED_SERVICE_TYPE, self._endpoint_service_type)
-            raise KustoInvalidEndpointError(self._EXPECTED_SERVICE_TYPE, self._endpoint_service_type, self._suggested_endpoint_uri)
+                    self._suggested_endpoint_uri = self._generate_endpoint_suggestion(self._connection_datasource)
+                    if not self._suggested_endpoint_uri:
+                        raise KustoInvalidEndpointError(self._EXPECTED_SERVICE_TYPE, self._endpoint_service_type)
+                raise KustoInvalidEndpointError(self._EXPECTED_SERVICE_TYPE, self._endpoint_service_type, self._suggested_endpoint_uri)
 
     def _retrieve_service_type(self):
         return self._resource_manager.retrieve_service_type()
@@ -155,3 +156,10 @@ class KustoIngestClient:
                 #   "Couldn't generate suggested endpoint due to problem parsing datasource, with exception: {ex}. The correct endpoint is usually the Engine endpoint with '{self._INGEST_PREFIX}' prepended to the hostname."
                 pass
         return endpoint_uri_to_suggest_str
+
+    def _hostname_starts_with_ingest(self, datasource):
+        datasource_uri = urlparse(datasource)
+        hostname = datasource_uri.hostname
+        if hostname and hostname.startswith(self._INGEST_PREFIX):
+            return True
+        return False
