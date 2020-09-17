@@ -133,15 +133,11 @@ class KustoIngestClient:
             self._endpoint_service_type = self._retrieve_service_type()
 
         if self._EXPECTED_SERVICE_TYPE != self._endpoint_service_type:
-            has_endpoint = True
             if self._suggested_endpoint_uri is None or not self._suggested_endpoint_uri.strip():
                 self._suggested_endpoint_uri = self._generate_endpoint_suggestion(self._connection_datasource)
                 if not self._suggested_endpoint_uri.strip():
-                    has_endpoint = False
-            if has_endpoint:
-                raise KustoInvalidEndpointError(self._EXPECTED_SERVICE_TYPE, self._endpoint_service_type, self._suggested_endpoint_uri)
-            else:
-                raise KustoInvalidEndpointError(self._EXPECTED_SERVICE_TYPE, self._endpoint_service_type)
+                    raise KustoInvalidEndpointError(self._EXPECTED_SERVICE_TYPE, self._endpoint_service_type)
+            raise KustoInvalidEndpointError(self._EXPECTED_SERVICE_TYPE, self._endpoint_service_type, self._suggested_endpoint_uri)
 
     def _retrieve_service_type(self):
         return self._resource_manager.retrieve_service_type()
