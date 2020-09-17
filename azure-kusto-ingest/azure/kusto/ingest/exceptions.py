@@ -53,6 +53,6 @@ class KustoInvalidEndpointError(KustoClientError):
         message = "You are using '{0}' client type, but the provided endpoint is of ServiceType '{1}'. Initialize the client with the appropriate endpoint URI".format(
             expected_service_type, actual_service_type
         )
-        if not suggested_endpoint_url:
+        if suggested_endpoint_url:
             message = message + ": '" + suggested_endpoint_url + "'"
         super(KustoInvalidEndpointError, self).__init__(message)
