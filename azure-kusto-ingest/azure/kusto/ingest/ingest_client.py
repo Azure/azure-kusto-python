@@ -6,29 +6,40 @@ import tempfile
 import time
 import uuid
 from typing import Union
+from urllib.parse import urlparse
 
 from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
+from azure.kusto.data.exceptions import KustoServiceError
 from azure.storage.blob import BlobServiceClient
 from azure.storage.queue import QueueServiceClient, TextBase64EncodePolicy
 
 from ._ingestion_blob_info import _IngestionBlobInfo
 from ._resource_manager import _ResourceManager
 from .descriptors import BlobDescriptor, FileDescriptor
+from .exceptions import KustoInvalidEndpointError
 from .ingestion_properties import DataFormat, IngestionProperties
 
 
 class KustoIngestClient:
     """
-    Kusto ingest client provides methods to allow ingestion into kusto (ADX).
+    Kusto ingest client provides methods to allow queued ingestion into kusto (ADX).
     To learn more about the different types of ingestions and when to use each, visit:
     https://docs.microsoft.com/en-us/azure/data-explorer/ingest-data-overview#ingestion-methods
     """
+
+    _INGEST_PREFIX = "ingest-"
+    _EXPECTED_SERVICE_TYPE = "DataManagement"
 
     def __init__(self, kcsb: Union[str, KustoConnectionStringBuilder]):
         """Kusto Ingest Client constructor.
         :param kcsb: The connection string to initialize KustoClient.
         """
+        if not isinstance(kcsb, KustoConnectionStringBuilder):
+            kcsb = KustoConnectionStringBuilder(kcsb)
+        self._connection_datasource = kcsb.data_source
         self._resource_manager = _ResourceManager(KustoClient(kcsb))
+        self._endpoint_service_type = None
+        self._suggested_endpoint_uri = None
 
     def ingest_from_dataframe(self, df, ingestion_properties: IngestionProperties):
         """
@@ -63,7 +74,11 @@ class KustoIngestClient:
         :param file_descriptor: a FileDescriptor to be ingested.
         :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
         """
-        containers = self._resource_manager.get_containers()
+        try:
+            containers = self._resource_manager.get_containers()
+        except KustoServiceError as ex:
+            self._validate_endpoint_service_type()
+            raise ex
 
         if isinstance(file_descriptor, FileDescriptor):
             descriptor = file_descriptor
@@ -97,7 +112,11 @@ class KustoIngestClient:
         :param azure.kusto.ingest.BlobDescriptor blob_descriptor: An object that contains a description of the blob to be ingested.
         :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
         """
-        queues = self._resource_manager.get_ingestion_queues()
+        try:
+            queues = self._resource_manager.get_ingestion_queues()
+        except KustoServiceError as ex:
+            self._validate_endpoint_service_type()
+            raise ex
 
         random_queue = random.choice(queues)
         queue_service = QueueServiceClient(random_queue.account_uri)
@@ -108,3 +127,37 @@ class KustoIngestClient:
         content = ingestion_blob_info_json
         queue_client = queue_service.get_queue_client(queue=random_queue.object_name, message_encode_policy=TextBase64EncodePolicy())
         queue_client.send_message(content=content)
+
+    def _validate_endpoint_service_type(self):
+        if not self._hostname_starts_with_ingest(self._connection_datasource):
+            if not self._endpoint_service_type:
+                self._endpoint_service_type = self._retrieve_service_type()
+
+            if self._EXPECTED_SERVICE_TYPE != self._endpoint_service_type:
+                if not self._suggested_endpoint_uri:
+                    self._suggested_endpoint_uri = self._generate_endpoint_suggestion(self._connection_datasource)
+                    if not self._suggested_endpoint_uri:
+                        raise KustoInvalidEndpointError(self._EXPECTED_SERVICE_TYPE, self._endpoint_service_type)
+                raise KustoInvalidEndpointError(self._EXPECTED_SERVICE_TYPE, self._endpoint_service_type, self._suggested_endpoint_uri)
+
+    def _retrieve_service_type(self):
+        return self._resource_manager.retrieve_service_type()
+
+    def _generate_endpoint_suggestion(self, datasource):
+        """The default is not passing a suggestion to the exception String"""
+        endpoint_uri_to_suggest_str = None
+        if datasource.strip():
+            try:
+                endpoint_uri_to_suggest = urlparse(datasource)  # Standardize URL formatting
+                endpoint_uri_to_suggest = urlparse(endpoint_uri_to_suggest.scheme + "://" + self._INGEST_PREFIX + endpoint_uri_to_suggest.hostname)
+                endpoint_uri_to_suggest_str = endpoint_uri_to_suggest.geturl()
+            except Exception:
+                # TODO: Add logging infrastructure so we can tell the user as a warning:
+                #   "Couldn't generate suggested endpoint due to problem parsing datasource, with exception: {ex}. The correct endpoint is usually the Engine endpoint with '{self._INGEST_PREFIX}' prepended to the hostname."
+                pass
+        return endpoint_uri_to_suggest_str
+
+    def _hostname_starts_with_ingest(self, datasource):
+        datasource_uri = urlparse(datasource)
+        hostname = datasource_uri.hostname
+        return hostname and hostname.startswith(self._INGEST_PREFIX)

@@ -6,8 +6,11 @@ from typing import List
 
 from azure.kusto.data import KustoClient
 from azure.kusto.data._models import KustoResultTable
+from azure.kusto.data.exceptions import KustoServiceError, KustoClientError
 
 _URI_FORMAT = re.compile("https://(\\w+).(queue|blob|table).(core.\\w+.\\w+)/([\\w,-]+)\\?(.*)")
+_SHOW_VERSION = ".show version"
+_SERVICE_TYPE_COLUMN_NAME = "ServiceType"
 
 
 class _ResourceUri:
@@ -131,3 +134,10 @@ class _ResourceManager:
     def get_authorization_context(self):
         self._refresh_authorization_context()
         return self._authorization_context
+
+    def retrieve_service_type(self):
+        try:
+            command_result = self._kusto_client.execute("NetDefaultDB", _SHOW_VERSION)
+            return command_result.primary_results[0][0][_SERVICE_TYPE_COLUMN_NAME]
+        except (TypeError, KeyError):
+            return ""
