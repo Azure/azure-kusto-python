@@ -4,7 +4,7 @@ import io
 
 from azure.kusto.data import KustoConnectionStringBuilder
 from azure.kusto.ingest import (
-    KustoIngestClient,
+    QueuedIngestClient,
     IngestionProperties,
     FileDescriptor,
     BlobDescriptor,
@@ -67,7 +67,7 @@ kcsb = KustoConnectionStringBuilder.with_aad_user_password_authentication(cluste
 kcsb = KustoConnectionStringBuilder.with_aad_device_authentication(cluster)
 
 # The authentication method will be taken from the chosen KustoConnectionStringBuilder.
-client = KustoIngestClient(kcsb)
+client = QueuedIngestClient(kcsb)
 
 # there are more options for authenticating - see azure-kusto-data samples
 
