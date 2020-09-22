@@ -142,7 +142,7 @@ def get_file_path() -> str:
 test_db = os.environ.get("TEST_DATABASE")
 
 python_version = "_".join([str(v) for v in sys.version_info[:3]])
-test_table = "python_test_{0}_{1}_{2}".format(python_version, str(int(time.time())), random.randint(1,100000))
+test_table = "python_test_{0}_{1}_{2}".format(python_version, str(int(time.time())), random.randint(1, 100000))
 client = KustoClient(engine_kcsb_from_env())
 ingest_client = KustoIngestClient(dm_kcsb_from_env())
 streaming_ingest_client = KustoStreamingIngestClient(engine_kcsb_from_env())
