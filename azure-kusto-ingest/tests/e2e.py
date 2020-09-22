@@ -3,6 +3,7 @@
 import datetime
 import io
 import os
+import random
 import sys
 import time
 import uuid
@@ -29,9 +30,6 @@ CLEAR_DB_CACHE = ".clear database cache streamingingestion schema"
 
 class TestData:
     """A class to define mappings to deft table."""
-
-    def __init__(self):
-        pass
 
     @staticmethod
     def test_table_csv_mappings():
@@ -126,8 +124,8 @@ def dm_kcsb_from_env() -> KustoConnectionStringBuilder:
     return KustoConnectionStringBuilder.with_aad_application_key_authentication(dm_cs, app_id, app_key, auth_id)
 
 
-def clean_previous_tests(engine_client, database, table):
-    engine_client.execute(database, ".drop table {0} ifexists".format(table))
+def teardown_module():
+    client.execute(test_db, ".drop table {} ifexists".format(test_table))
 
 
 def get_file_path() -> str:
@@ -144,14 +142,13 @@ def get_file_path() -> str:
 test_db = os.environ.get("TEST_DATABASE")
 
 python_version = "_".join([str(v) for v in sys.version_info[:3]])
-test_table = "python_test_{0}_{1}".format(python_version, str(int(time.time())))
+test_table = "python_test_{0}_{1}_{2}".format(python_version, str(int(time.time())), random.randint(1,100000))
 client = KustoClient(engine_kcsb_from_env())
 ingest_client = KustoIngestClient(dm_kcsb_from_env())
 streaming_ingest_client = KustoStreamingIngestClient(engine_kcsb_from_env())
 
 start_time = datetime.datetime.now(datetime.timezone.utc)
 
-clean_previous_tests(client, test_db, test_table)
 input_folder_path = get_file_path()
 
 csv_file_path = os.path.join(input_folder_path, "dataset.csv")
@@ -391,7 +388,3 @@ def test_streaming_ingest_from_dataframe():
     ingest_client.ingest_from_dataframe(df, ingestion_properties)
 
     assert_rows_added(1, timeout=120)
-
-
-def pytest_sessionfinish(session, exitstatus):
-    client.execute(test_db, ".drop table {} ifexists".format(test_table))
