@@ -155,7 +155,7 @@ class IngestionProperties:
         report_level: ReportLevel = ReportLevel.DoNotReport,
         report_method: ReportMethod = ReportMethod.Queue,
         validation_policy: ValidationPolicy = None,
-        additional_properties: dict = None
+        additional_properties: dict = None,
     ):
 
         if ingestion_mapping is not None and ingestion_mapping_reference is not None:
