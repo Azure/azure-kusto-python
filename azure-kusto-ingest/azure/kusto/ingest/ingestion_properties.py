@@ -3,7 +3,7 @@
 from enum import Enum, IntEnum
 from typing import List
 
-from .exceptions import KustoDuplicateMappingReferenceError, KustoMappingAndMappingReferenceError
+from .exceptions import KustoMappingAndMappingReferenceError
 
 
 class DataFormat(Enum):
@@ -155,44 +155,24 @@ class IngestionProperties:
         report_level: ReportLevel = ReportLevel.DoNotReport,
         report_method: ReportMethod = ReportMethod.Queue,
         validation_policy: ValidationPolicy = None,
-        additional_properties: dict = None,
-        **kwargs
+        additional_properties: dict = None
     ):
 
-        # backward compat - will be removed in future versions
-        dataFormat = kwargs.get("dataFormat", None)
-        ingestionMapping = kwargs.get("ingestionMapping", None)
-        ingestionMappingType = kwargs.get("ingestionMappingType", None)
-        ingestionMappingReference = kwargs.get("ingestionMappingReference", None)
-        additionalTags = kwargs.get("additionalTags", None)
-        ingestIfNotExists = kwargs.get("ingestIfNotExists", None)
-        ingestByTags = kwargs.get("ingestByTags", None)
-        dropByTags = kwargs.get("dropByTags", None)
-        flushImmediately = kwargs.get("flushImmediately", None)
-        reportLevel = kwargs.get("reportLevel", None)
-        reportMethod = kwargs.get("reportMethod", None)
-        validationPolicy = kwargs.get("validationPolicy", None)
-        additionalProperties = kwargs.get("additionalProperties", None)
-
-        mapping_exists = ingestionMapping is not None or ingestion_mapping is not None
-        if mapping_exists and (ingestion_mapping_reference is not None or ingestionMappingReference is not None):
+        if ingestion_mapping is not None and ingestion_mapping_reference is not None:
             raise KustoMappingAndMappingReferenceError()
-
-        if ingestion_mapping_reference is not None and ingestionMappingReference is not None:
-            raise KustoDuplicateMappingReferenceError()
 
         self.database = database
         self.table = table
-        self.format = dataFormat or data_format
-        self.ingestion_mapping = ingestionMapping or ingestion_mapping
-        self.ingestion_mapping_type = ingestionMappingType or ingestion_mapping_type
-        self.ingestion_mapping_reference = ingestionMappingReference or ingestion_mapping_reference
-        self.additional_tags = additionalTags or additional_tags
-        self.ingest_if_not_exists = ingestIfNotExists or ingest_if_not_exists
-        self.ingest_by_tags = ingestByTags or ingest_by_tags
-        self.drop_by_tags = dropByTags or drop_by_tags
-        self.flush_immediately = flushImmediately or flush_immediately
-        self.report_level = reportLevel or report_level
-        self.report_method = reportMethod or report_method
-        self.validation_policy = validationPolicy or validation_policy
-        self.additional_properties = additionalProperties or additional_properties
+        self.format = data_format
+        self.ingestion_mapping = ingestion_mapping
+        self.ingestion_mapping_type = ingestion_mapping_type
+        self.ingestion_mapping_reference = ingestion_mapping_reference
+        self.additional_tags = additional_tags
+        self.ingest_if_not_exists = ingest_if_not_exists
+        self.ingest_by_tags = ingest_by_tags
+        self.drop_by_tags = drop_by_tags
+        self.flush_immediately = flush_immediately
+        self.report_level = report_level
+        self.report_method = report_method
+        self.validation_policy = validation_policy
+        self.additional_properties = additional_properties
