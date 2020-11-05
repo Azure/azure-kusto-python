@@ -694,7 +694,7 @@ class KustoClient:
             if properties.get_option(ClientRequestProperties.no_request_timeout_option_name, False):
                 timeout = KustoClient._mgmt_default_timeout
             else:
-                timeout = (properties.get_option(ClientRequestProperties.request_timeout_option_name, timeout))
+                timeout = properties.get_option(ClientRequestProperties.request_timeout_option_name, timeout)
 
         timeout = (timeout or KustoClient._mgmt_default_timeout) + KustoClient._client_server_delta
 
