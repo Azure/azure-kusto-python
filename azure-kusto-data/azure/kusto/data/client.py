@@ -566,8 +566,8 @@ class KustoClient:
     `execute_mgmt`: executes a KQL control command against the Kusto service.
     """
 
-    _mgmt_default_timeout = timedelta(hours=1, seconds=30)
-    _query_default_timeout = timedelta(minutes=4, seconds=30)
+    _mgmt_default_timeout = timedelta(hours=1)
+    _query_default_timeout = timedelta(minutes=4)
     _streaming_ingest_default_timeout = timedelta(minutes=10)
     _client_server_delta = timedelta(seconds=30)
 
