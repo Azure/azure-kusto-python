@@ -617,11 +617,35 @@ class KustoClient:
         INTERVAL_SECONDS = 180
         MAX_FAILED_KEEPALIVES = 20
 
-        if sys.platform == 'linux' and hasattr(socket, "SOL_SOCKET") and hasattr(socket, "SO_KEEPALIVE") and hasattr(socket, "TCP_KEEPIDLE") and hasattr(socket, "TCP_KEEPINTVL") and hasattr(socket, "TCP_KEEPCNT"):
-            return [(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1), (socket.IPPROTO_TCP, socket.TCP_KEEPIDLE, MAX_IDLE_SECONDS), (socket.IPPROTO_TCP, socket.TCP_KEEPINTVL, INTERVAL_SECONDS), (socket.IPPROTO_TCP, socket.TCP_KEEPCNT, MAX_FAILED_KEEPALIVES)]
-        if sys.platform == 'win32' and hasattr(socket, "SOL_SOCKET") and hasattr(socket, "SO_KEEPALIVE") and hasattr(socket, "TCP_KEEPIDLE") and hasattr(socket, "TCP_KEEPINTVL") and hasattr(socket, "TCP_KEEPCNT"):
-            return [(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1), (socket.IPPROTO_TCP, socket.TCP_KEEPIDLE, MAX_IDLE_SECONDS), (socket.IPPROTO_TCP, socket.TCP_KEEPINTVL, INTERVAL_SECONDS), (socket.IPPROTO_TCP, socket.TCP_KEEPCNT, MAX_FAILED_KEEPALIVES)]
-        if sys.platform == 'darwin' and hasattr(socket, "SOL_SOCKET") and hasattr(socket, "SO_KEEPALIVE") and hasattr(socket, "IPPROTO_TCP"):
+        if (
+            sys.platform == "linux"
+            and hasattr(socket, "SOL_SOCKET")
+            and hasattr(socket, "SO_KEEPALIVE")
+            and hasattr(socket, "TCP_KEEPIDLE")
+            and hasattr(socket, "TCP_KEEPINTVL")
+            and hasattr(socket, "TCP_KEEPCNT")
+        ):
+            return [
+                (socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1),
+                (socket.IPPROTO_TCP, socket.TCP_KEEPIDLE, MAX_IDLE_SECONDS),
+                (socket.IPPROTO_TCP, socket.TCP_KEEPINTVL, INTERVAL_SECONDS),
+                (socket.IPPROTO_TCP, socket.TCP_KEEPCNT, MAX_FAILED_KEEPALIVES),
+            ]
+        if (
+            sys.platform == "win32"
+            and hasattr(socket, "SOL_SOCKET")
+            and hasattr(socket, "SO_KEEPALIVE")
+            and hasattr(socket, "TCP_KEEPIDLE")
+            and hasattr(socket, "TCP_KEEPINTVL")
+            and hasattr(socket, "TCP_KEEPCNT")
+        ):
+            return [
+                (socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1),
+                (socket.IPPROTO_TCP, socket.TCP_KEEPIDLE, MAX_IDLE_SECONDS),
+                (socket.IPPROTO_TCP, socket.TCP_KEEPINTVL, INTERVAL_SECONDS),
+                (socket.IPPROTO_TCP, socket.TCP_KEEPCNT, MAX_FAILED_KEEPALIVES),
+            ]
+        if sys.platform == "darwin" and hasattr(socket, "SOL_SOCKET") and hasattr(socket, "SO_KEEPALIVE") and hasattr(socket, "IPPROTO_TCP"):
             TCP_KEEPALIVE = 0x10
             return [(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1), (socket.IPPROTO_TCP, TCP_KEEPALIVE, INTERVAL_SECONDS)]
 
