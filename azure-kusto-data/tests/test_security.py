@@ -40,10 +40,10 @@ def test_msi_auth():
     When version 1.4.1 is released and these parameters are supported enable the functionality and tests back 
     """
     kcsb = [
-        KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication("localhost", timeout=1),
-        KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication("localhost", client_id=client_guid, timeout=1),
-        # KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication("localhost", object_id=object_guid, timeout=1),
-        # KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication("localhost", msi_res_id=res_guid, timeout=1),
+        KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication("https://help.kusto.windows.net", timeout=1),
+        KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication("https://help.kusto.windows.net", client_id=client_guid, timeout=1),
+        # KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication("https://help.kusto.windows.net", object_id=object_guid, timeout=1),
+        # KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication("https://help.kusto.windows.net", msi_res_id=res_guid, timeout=1),
     ]
 
     helpers = [_AadHelper(i) for i in kcsb]
@@ -71,8 +71,8 @@ def test_token_provider_auth():
     valid_token_provider = lambda: "caller token"
     invalid_token_provider = lambda: 12345678
 
-    valid_kcsb = KustoConnectionStringBuilder.with_token_provider("localhost", valid_token_provider)
-    invalid_kcsb = KustoConnectionStringBuilder.with_token_provider("localhost", invalid_token_provider)
+    valid_kcsb = KustoConnectionStringBuilder.with_token_provider("https://help.kusto.windows.net", valid_token_provider)
+    invalid_kcsb = KustoConnectionStringBuilder.with_token_provider("https://help.kusto.windows.net", invalid_token_provider)
 
     valid_helper = _AadHelper(valid_kcsb)
     invalid_helper = _AadHelper(invalid_kcsb)
