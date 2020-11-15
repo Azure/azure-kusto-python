@@ -13,6 +13,7 @@ from azure.identity import ManagedIdentityCredential
 from azure.core.credentials import AccessToken
 
 from .exceptions import KustoClientError, KustoAuthenticationError
+from ._cloud_settings import CloudSettings, CloudInfo
 
 
 def _get_azure_cli_auth_token() -> dict:
@@ -67,9 +68,6 @@ class AuthenticationMethod(Enum):
     token_provider = "token_provider"
 
 
-CLOUD_LOGIN_URL = "https://login.microsoftonline.com/"
-
-
 class _AadHelper:
     authentication_method = None
     auth_context = None
@@ -89,9 +87,13 @@ class _AadHelper:
         self.kusto_uri = "{0.scheme}://{0.hostname}".format(urlparse(kcsb.data_source))
         self.username = None
 
+        cloud_info = CloudSettings.get_cloud_info(self.kusto_uri)
+        if cloud_info is None:
+            raise KustoClientError("Unable to detect cloud instance from DNS Suffix of Kusto Connection String [" + self.kusto_uri + "]")
+
         if all([kcsb.aad_user_id, kcsb.password]):
             self.authentication_method = AuthenticationMethod.aad_username_password
-            self.client_id = "db662dc1-0cfe-4e1c-a843-19a68e65be58"
+            self.client_id = cloud_info.kusto_client_app_id
             self.username = kcsb.aad_user_id
             self.password = kcsb.password
         elif all([kcsb.application_client_id, kcsb.application_key]):
@@ -124,10 +126,10 @@ class _AadHelper:
             self.token_provider = kcsb.token_provider
         else:
             self.authentication_method = AuthenticationMethod.aad_device_login
-            self.client_id = "db662dc1-0cfe-4e1c-a843-19a68e65be58"
+            self.client_id = cloud_info.kusto_client_app_id
 
         authority = kcsb.authority_id or "common"
-        aad_authority_uri = os.environ.get("AadAuthorityUri", CLOUD_LOGIN_URL)
+        aad_authority_uri = cloud_info.aad_authority_uri
         self.authority_uri = aad_authority_uri + authority if aad_authority_uri.endswith("/") else aad_authority_uri + "/" + authority
 
     def acquire_authorization_header(self):
