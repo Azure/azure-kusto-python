@@ -23,7 +23,7 @@ from ._token_providers import *
 @unique
 class AuthenticationMethod(Enum):
     """Enum representing all authentication methods available in Kusto with Python."""
-
+    # todo remove this 
     aad_username_password = "aad_username_password"
     aad_application_key = "aad_application_key"
     aad_application_certificate = "aad_application_certificate"
@@ -74,10 +74,14 @@ class _AadHelper:
             self.private_certificate = kcsb.application_certificate
             self.thumbprint = kcsb.application_certificate_thumbprint
             if all([kcsb.application_public_certificate]):
-                self.public_certificate = kcsb.application_public_certificate
                 self.authentication_method = AuthenticationMethod.aad_application_certificate_sni
+                self.token_provider = ApplicationCertificateTokenProvider(self.kusto_uri, self.authority_uri, kcsb.application_client_id,
+                                                                          kcsb.application_certificate, kcsb.application_certificate_thumbprint,
+                                                                          kcsb.application_public_certificate)
             else:
                 self.authentication_method = AuthenticationMethod.aad_application_certificate
+                self.token_provider = ApplicationCertificateTokenProvider(self.kusto_uri, self.authority_uri, kcsb.application_client_id,
+                                                                          kcsb.application_certificate, kcsb.application_certificate_thumbprint)
 
         elif kcsb.msi_authentication:
             self.authentication_method = AuthenticationMethod.managed_service_identity
@@ -96,9 +100,7 @@ class _AadHelper:
             self.token_provider = CallbackTokenProvider(kcsb.token_provider)
         else:
             self.authentication_method = AuthenticationMethod.aad_device_login
-            self.client_id = cloud_info.kusto_client_app_id
-
-
+            self.token_provider = DeviceLoginTokenProvider(self.kusto_uri, self.authority_uri)
 
     def acquire_authorization_header(self):
         """Acquire tokens from AAD."""
@@ -108,33 +110,9 @@ class _AadHelper:
             else:
                 return self._acquire_authorization_header()
         except (AdalError, KustoClientError) as error:
-            if self.authentication_method is AuthenticationMethod.aad_username_password:
-                kwargs = {"username": self.username, "client_id": self.client_id}
-            elif self.authentication_method is AuthenticationMethod.aad_application_key:
-                kwargs = {"client_id": self.client_id}
-            elif self.authentication_method is AuthenticationMethod.aad_device_login:
-                kwargs = {"client_id": self.client_id}
-            elif self.authentication_method in (AuthenticationMethod.aad_application_certificate, AuthenticationMethod.aad_application_certificate_sni):
-                kwargs = {"client_id": self.client_id, "thumbprint": self.thumbprint}
-            elif self.authentication_method is AuthenticationMethod.managed_service_identity:
-                kwargs = self.msi_params
-            elif self.authentication_method is AuthenticationMethod.token_provider_callback:
-                kwargs = {}
-            else:
-                raise error
-
+            kwargs = self.token_provider.context()
             kwargs["resource"] = self.kusto_uri
-
-            if self.authentication_method is AuthenticationMethod.managed_service_identity:
-                kwargs["authority"] = AuthenticationMethod.managed_service_identity.value
-            elif self.authentication_method is AuthenticationMethod.token_provider_callback:
-                kwargs["authority"] = AuthenticationMethod.token_provider_callback.value
-            elif self.authentication_method is AuthenticationMethod.az_cli_profile:
-                kwargs["authority"] = AuthenticationMethod.az_cli_profile.value
-            elif self.authority_uri is not None:
-                kwargs["authority"] = self.authority_uri
-
-            raise KustoAuthenticationError(self.authentication_method.value, error, **kwargs)
+            raise KustoAuthenticationError(self.token_provider.name(), error, **kwargs)
 
     def _acquire_authorization_header(self) -> str:
         # todo remove this
@@ -195,7 +173,7 @@ class _AadHelper:
             print(code[OAuth2DeviceCodeResponseParameters.MESSAGE])
             webbrowser.open(code[OAuth2DeviceCodeResponseParameters.VERIFICATION_URL])
             token = self.auth_context.acquire_token_with_device_code(self.kusto_uri, code, self.client_id)
-        elif self.authentication_method in (AuthenticationMethod.aad_application_certificate, AuthenticationMethod.aad_application_certificate_sni):
+        elif self.authentication_method in (AuthenticationMethod.aad_applicatioclienn_certificate, AuthenticationMethod.aad_application_certificate_sni):
             token = self.auth_context.acquire_token_with_client_certificate(
                 self.kusto_uri, self.client_id, self.private_certificate, self.thumbprint, self.public_certificate
             )
