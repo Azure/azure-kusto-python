@@ -16,12 +16,15 @@ from azure.core.credentials import AccessToken
 from .exceptions import KustoClientError, KustoAuthenticationError
 from ._cloud_settings import CloudSettings, CloudInfo
 
-AAD_TOKEN_TYPE = 'tokenType'
-AAD_ACCESS_TOKEN = 'accessToken'
-AAD_REFRESH_TOKEN = 'refreshToken'
-AAD_USER_ID = 'userId' # todo remove if not used in the end
-AAD_AUTHORITY = '_authority'
-AAD_CLIENT_ID = '_clientId'
+MSAL_TOKEN_TYPE = 'token_type'
+MSAL_ACCESS_TOKEN = 'access_token'
+MSAL_ERROR = "error"
+MSAL_ERROR_DESCRIPTION = "error_description"
+AZ_REFRESH_TOKEN = 'refreshToken'
+AZ_USER_ID = 'userId' # todo remove if not used in the end
+AZ_AUTHORITY = '_authority'
+AZ_CLIENT_ID = '_clientId'
+
 
 class TokenProviderBase(abc.ABC):
     """
@@ -65,6 +68,27 @@ class TokenProviderBase(abc.ABC):
         """ Implement cache checks here, return None if cache check fails """
         pass
 
+    @staticmethod
+    def _valid_token_or_none(token: dict) -> dict:
+        if token is None or MSAL_ERROR in token:
+            return None
+
+        return token
+
+    @staticmethod
+    def _valid_token_or_throw(token: dict, name: str) -> dict:
+        if token is None:
+            raise KustoClientError(name + " failed to obtain a token")
+
+        if MSAL_ERROR in token:
+            message = name + " failed to obtain a token: " + token[MSAL_ERROR]
+            if MSAL_ERROR_DESCRIPTION in token:
+                message = message + "\n" + token[MSAL_ERROR_DESCRIPTION]
+
+            raise KustoClientError(message)
+
+        return token
+
 
 class BasicTokenProvider(TokenProviderBase):
     """ Basic Token Provider keeps and returns a token received on construction """
@@ -76,7 +100,7 @@ class BasicTokenProvider(TokenProviderBase):
         pass
 
     def _get_token_impl(self) -> dict:
-        return {AAD_TOKEN_TYPE: "Bearer", AAD_ACCESS_TOKEN: self._token}
+        return {MSAL_TOKEN_TYPE: "Bearer", MSAL_ACCESS_TOKEN: self._token}
 
     def _get_token_silent_impl(self) -> dict:
         return self._get_token_impl()
@@ -96,7 +120,7 @@ class CallbackTokenProvider(TokenProviderBase):
         if not isinstance(caller_token, str):
             raise KustoClientError("Token provider returned something that is not a string [" + str(type(caller_token)) + "]")
 
-        return {AAD_TOKEN_TYPE: "Bearer", AAD_ACCESS_TOKEN: caller_token}
+        return {MSAL_TOKEN_TYPE: "Bearer", MSAL_ACCESS_TOKEN: caller_token}
 
     def _get_token_silent_impl(self) -> dict:
         return self._get_token_impl()
@@ -142,15 +166,16 @@ class AzCliTokenProvider(TokenProviderBase):
     def _get_token_impl(self) -> dict:
         # try and obtain the refresh token from AzCli
         refresh_token = None
+        token = None
         stored_token = self._get_azure_cli_auth_token()
         if (
-                AAD_REFRESH_TOKEN in stored_token
-                and AAD_CLIENT_ID in stored_token
-                and AAD_AUTHORITY in stored_token
+                AZ_REFRESH_TOKEN in stored_token
+                and AZ_CLIENT_ID in stored_token
+                and AZ_AUTHORITY in stored_token
         ):
-            refresh_token = stored_token[AAD_REFRESH_TOKEN]
-            self._client_id = stored_token[AAD_CLIENT_ID]
-            self._authority_uri = stored_token[AAD_AUTHORITY]
+            refresh_token = stored_token[AZ_REFRESH_TOKEN]
+            self._client_id = stored_token[AZ_CLIENT_ID]
+            self._authority_uri = stored_token[AZ_AUTHORITY]
             # todo delete if not used
             # username = stored_token[AAD_USER_ID]
         else:
@@ -160,12 +185,18 @@ class AzCliTokenProvider(TokenProviderBase):
             self._msal_client = PublicClientApplication(client_id=self._client_id, authority=self._authority_uri)
 
         if refresh_token is not None:
-            self._msal_client.acquire_token_by_refresh_token(refresh_token, self._scopes)
+            token = self._msal_client.acquire_token_by_refresh_token(refresh_token, self._scopes)
+
+        return self._valid_token_or_throw(token)
 
     def _get_token_silent_impl(self) -> dict:
+        token = None
         if self._msal_client is not None:
-            self._msal_client.acquire_token_silent(scopes=self._scopes, account=None, client_id=self._client_id, authority=self._authority_uri)
+            token = self._msal_client.acquire_token_silent(scopes=self._scopes, account=None, client_id=self._client_id, authority=self._authority_uri)
 
+        return self._valid_token_or_none(token)
+
+    @staticmethod
     def _get_azure_cli_auth_token(self) -> dict:
         """
         Try to get the az cli authenticated token
@@ -206,8 +237,30 @@ class AzCliTokenProvider(TokenProviderBase):
 class UserPassTokenProvider(TokenProviderBase):
     """ Acquire a token from MSAL with username and password """
 
+    def __init__(self, kusto_uri: str, authority_uri: str, username: str, password: str):
+        super().__init__(kusto_uri)
+        self._msal_client = None
+        self._auth = authority_uri
+        self._user = username
+        self._pass = password
+
+    def _init_impl(self):
+        self._msal_client = PublicClientApplication(client_id=self._cloud_info.kusto_client_app_id, authority=self._auth)
+
+    def _get_token_impl(self) -> dict:
+        token = self._msal_client.acquire_token_by_username_password(username=self._user, password=self._pass, scopes=self._scopes)
+        return self._valid_token_or_throw(token)
+
+    def _get_token_silent_impl(self) -> dict:
+        token = self._msal_client.acquire_token_silent(scopes=self._scopes, account=None)
+        return self._valid_token_or_none(token)
+
+
+class DeviceLoginTokenProvider(TokenProviderBase):
+    """ Acquire a token from MSAL with Device Login flow """
     def __init__(self, kusto_uri: str):
-        self._kusto_uri = kusto_uri
+        super().__init__(kusto_uri)
+        self._msal_client = None
 
     def _init_impl(self):
         pass
@@ -221,38 +274,30 @@ class UserPassTokenProvider(TokenProviderBase):
 
 class ApplicationKeyTokenProvider(TokenProviderBase):
     """ Acquire a token from MSAL with application Id and Key """
-    def __init__(self, kusto_uri: str):
-        self._kusto_uri = kusto_uri
+    def __init__(self, kusto_uri: str, authority_uri: str, app_client_id: str, app_key: str):
+        super().__init__(kusto_uri)
+        self._msal_client = None
+        self._app_client_id = app_client_id
+        self._app_key = app_key
+        self._auth = authority_uri
 
     def _init_impl(self):
-        pass
+        self._msal_client = ConfidentialClientApplication(client_id=self._app_client_id, client_credential=self._app_key, authority=self._auth)
 
     def _get_token_impl(self) -> dict:
-        pass
+        token = self._msal_client.acquire_token_for_client(scopes=self._scopes)
+        return self._valid_token_or_throw(token)
 
     def _get_token_silent_impl(self) -> dict:
-        pass
-
-
-class DeviceLoginTokenProvider(TokenProviderBase):
-    """ Acquire a token from MSAL with Device Login flow """
-    def __init__(self, kusto_uri: str):
-        self._kusto_uri = kusto_uri
-
-    def _init_impl(self):
-        pass
-
-    def _get_token_impl(self) -> dict:
-        pass
-
-    def _get_token_silent_impl(self) -> dict:
-        pass
+        token = self._msal_client.acquire_token_silent(scopes=self._scopes, account=None)
+        return self._valid_token_or_none(token)
 
 
 class ApplicationCertificateTokenProvider(TokenProviderBase):
     """ Acquire a token from MSAL using application certificate """
     def __init__(self, kusto_uri: str):
-        self._kusto_uri = kusto_uri
+        super().__init__(kusto_uri)
+        self._msal_client = None
 
     def _init_impl(self):
         pass
@@ -261,4 +306,5 @@ class ApplicationCertificateTokenProvider(TokenProviderBase):
         pass
 
     def _get_token_silent_impl(self) -> dict:
-        pass
+        token = self._msal_client.acquire_token_silent(scopes=self._scopes, account=None)
+        return self._valid_token_or_none(token)

@@ -59,15 +59,16 @@ class _AadHelper:
         if cloud_info is None:
             raise KustoClientError("Unable to detect cloud instance from DNS Suffix of Kusto Connection String [" + self.kusto_uri + "]")
 
+        authority = kcsb.authority_id or "common"
+        aad_authority_uri = cloud_info.aad_authority_uri
+        self.authority_uri = aad_authority_uri + authority if aad_authority_uri.endswith("/") else aad_authority_uri + "/" + authority
+
         if all([kcsb.aad_user_id, kcsb.password]):
             self.authentication_method = AuthenticationMethod.aad_username_password
-            self.client_id = cloud_info.kusto_client_app_id
-            self.username = kcsb.aad_user_id
-            self.password = kcsb.password
+            self.token_provider = UserPassTokenProvider(self.kusto_uri, self.authority_uri, kcsb.aad_user_id, kcsb.password)
         elif all([kcsb.application_client_id, kcsb.application_key]):
             self.authentication_method = AuthenticationMethod.aad_application_key
-            self.client_id = kcsb.application_client_id
-            self.client_secret = kcsb.application_key
+            self.token_provider = ApplicationKeyTokenProvider(self.kusto_uri, self.authority_uri, kcsb.application_client_id, kcsb.application_key)
         elif all([kcsb.application_client_id, kcsb.application_certificate, kcsb.application_certificate_thumbprint]):
             self.client_id = kcsb.application_client_id
             self.private_certificate = kcsb.application_certificate
@@ -97,9 +98,7 @@ class _AadHelper:
             self.authentication_method = AuthenticationMethod.aad_device_login
             self.client_id = cloud_info.kusto_client_app_id
 
-        authority = kcsb.authority_id or "common"
-        aad_authority_uri = cloud_info.aad_authority_uri
-        self.authority_uri = aad_authority_uri + authority if aad_authority_uri.endswith("/") else aad_authority_uri + "/" + authority
+
 
     def acquire_authorization_header(self):
         """Acquire tokens from AAD."""
