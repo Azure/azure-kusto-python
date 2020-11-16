@@ -49,7 +49,7 @@ class _AadHelper:
     private_certificate = None
     public_certificate = None
     msi_params = None
-    token_provider = None
+    token_provider: TokenProviderBase = None
 
     def __init__(self, kcsb: "KustoConnectionStringBuilder"):
         self.kusto_uri = "{0.scheme}://{0.hostname}".format(urlparse(kcsb.data_source))
@@ -104,7 +104,10 @@ class _AadHelper:
     def acquire_authorization_header(self):
         """Acquire tokens from AAD."""
         try:
-            return self._acquire_authorization_header()
+            if self.token_provider is not None:
+                return _get_header_from_dict(self.token_provider.get_token())
+            else:
+                return self._acquire_authorization_header()
         except (AdalError, KustoClientError) as error:
             if self.authentication_method is AuthenticationMethod.aad_username_password:
                 kwargs = {"username": self.username, "client_id": self.client_id}
@@ -135,26 +138,44 @@ class _AadHelper:
             raise KustoAuthenticationError(self.authentication_method.value, error, **kwargs)
 
     def _acquire_authorization_header(self) -> str:
-        # Token was provided by caller
+        # todo remove this
         if self.authentication_method is AuthenticationMethod.aad_token:
-            return _get_header("Bearer", self.token_provider.get_token())
+            return _get_header("Bearer", self.token)
 
-        # Token provider callback was provided by caller
-        if self.authentication_method is AuthenticationMethod.token_provider_callback:
-            return _get_header("Bearer", self.token_provider.get_token())
+        if self.authentication_method is AuthenticationMethod.token_provider:
+            caller_token = None # self.token_provider()
+            if not isinstance(caller_token, str):
+                raise KustoClientError("Token provider returned something that is not a string [" + str(type(caller_token)) + "]")
+
+            return _get_header("Bearer", caller_token)
 
         # Obtain token from MSI endpoint
         if self.authentication_method == AuthenticationMethod.managed_service_identity:
-            return _get_header("Bearer", self.token_provider.get_token())
+            msi_token = None # self.get_token_from_msi()
+            return _get_header("Bearer", msi_token.token)
 
-        # Obtain token from AzCli
+        refresh_token = None
+
         if self.authentication_method == AuthenticationMethod.az_cli_profile:
-            return _get_header_from_dict(self.token_provider.get_token())
+            stored_token = None #_get_azure_cli_auth_token()
 
-        if self.auth_context is None: # todo remove this
+            if (
+                TokenResponseFields.REFRESH_TOKEN in stored_token
+                and TokenResponseFields._CLIENT_ID in stored_token
+                and TokenResponseFields._AUTHORITY in stored_token
+            ):
+                self.client_id = stored_token[TokenResponseFields._CLIENT_ID]
+                self.username = stored_token[TokenResponseFields.USER_ID]
+                self.authority_uri = stored_token[TokenResponseFields._AUTHORITY]
+                refresh_token = stored_token[TokenResponseFields.REFRESH_TOKEN]
+
+        if self.auth_context is None:
             self.auth_context = AuthenticationContext(self.authority_uri)
 
-        token = self.auth_context.acquire_token(self.kusto_uri, self.username, self.client_id)
+        if refresh_token is not None:
+            token = self.auth_context.acquire_token_with_refresh_token(refresh_token, self.client_id, self.kusto_uri)
+        else:
+            token = self.auth_context.acquire_token(self.kusto_uri, self.username, self.client_id)
 
         if token is not None:
             expiration_date = dateutil.parser.parse(token[TokenResponseFields.EXPIRES_ON])
