@@ -86,6 +86,7 @@ class CloudSettings:
 
         cloud = cls._extract_dns_suffix(connection_string)
         if cloud is None:
-            return None
+            # Fallback to public cloud
+            cloud = cls.public_cloud_suffix
 
         return cls._cloud_info[cloud]
