@@ -49,10 +49,11 @@ class TokenProviderBase(abc.ABC):
         """ Get a token silently from cache or authenticate if cached token is not found """
         if not self._initialized:
             self._init_impl()
+            self._initialized = True
 
         token = self._get_token_silent_impl()
         if token is None:
-            self._get_token_impl()
+            token = self._get_token_impl()
 
         return token
 
@@ -118,10 +119,10 @@ class BasicTokenProvider(TokenProviderBase):
         pass
 
     def _get_token_impl(self) -> dict:
-        return {MSAL_TOKEN_TYPE: "Bearer", MSAL_ACCESS_TOKEN: self._token}
+        return self._get_token_silent_impl()
 
     def _get_token_silent_impl(self) -> dict:
-        return self._get_token_impl()
+        return {MSAL_TOKEN_TYPE: "Bearer", MSAL_ACCESS_TOKEN: self._token}
 
 
 class CallbackTokenProvider(TokenProviderBase):
@@ -140,14 +141,14 @@ class CallbackTokenProvider(TokenProviderBase):
         pass
 
     def _get_token_impl(self) -> dict:
+        return self._get_token_silent_impl()
+
+    def _get_token_silent_impl(self) -> dict:
         caller_token = self._token_callback()
         if not isinstance(caller_token, str):
             raise KustoClientError("Token provider returned something that is not a string [" + str(type(caller_token)) + "]")
 
         return {MSAL_TOKEN_TYPE: "Bearer", MSAL_ACCESS_TOKEN: caller_token}
-
-    def _get_token_silent_impl(self) -> dict:
-        return self._get_token_impl()
 
 
 class MsiTokenProvider(TokenProviderBase):
@@ -175,13 +176,13 @@ class MsiTokenProvider(TokenProviderBase):
             raise KustoClientError("Failed to initialize MSI ManagedIdentityCredential with [" + str(self._msi_params) + "]\n" + str(e))
 
     def _get_token_impl(self) -> dict:
+        return self._get_token_silent_impl()
+
+    def _get_token_silent_impl(self) -> dict:
         try:
             return self.msi_auth_context.get_token(self._kusto_uri)
         except Exception as e:
             raise KustoClientError("Failed to obtain MSI token for '" + self._kusto_uri + "' with [" + str(self._msi_params) + "]\n" + str(e))
-
-    def _get_token_silent_impl(self) -> dict:
-        return self._get_token_impl()
 
 
 class AzCliTokenProvider(TokenProviderBase):
@@ -191,6 +192,7 @@ class AzCliTokenProvider(TokenProviderBase):
         self._msal_client = None
         self._client_id = None
         self._authority_id = None
+        self._username = None
 
     def name(self) -> str:
         return "AzCliTokenProvider"
@@ -214,8 +216,7 @@ class AzCliTokenProvider(TokenProviderBase):
             refresh_token = stored_token[AZ_REFRESH_TOKEN]
             self._client_id = stored_token[AZ_CLIENT_ID]
             self._authority_uri = stored_token[AZ_AUTHORITY]
-            # todo delete if not used
-            # username = stored_token[AAD_USER_ID]
+            self._username = stored_token[AZ_USER_ID]
         else:
             raise KustoClientError("Unable to obtain a refresh token from Az-Cli")
 
@@ -230,12 +231,18 @@ class AzCliTokenProvider(TokenProviderBase):
     def _get_token_silent_impl(self) -> dict:
         token = None
         if self._msal_client is not None:
-            token = self._msal_client.acquire_token_silent(scopes=self._scopes, account=None, client_id=self._client_id, authority=self._authority_uri)
+            account = None
+            if self._username is not None:
+                accounts = self._msal_client.get_accounts(self._username)
+                if len(accounts) > 0:
+                    account = accounts[0]
+
+            token = self._msal_client.acquire_token_silent(scopes=self._scopes, account=account, client_id=self._client_id, authority=self._authority_uri)
 
         return self._valid_token_or_none(token)
 
     @staticmethod
-    def _get_azure_cli_auth_token(self) -> dict:
+    def _get_azure_cli_auth_token() -> dict:
         """
         Try to get the az cli authenticated token
         :return: refresh token
@@ -296,6 +303,12 @@ class UserPassTokenProvider(TokenProviderBase):
         return self._valid_token_or_throw(token)
 
     def _get_token_silent_impl(self) -> dict:
+        account = None
+        if self._user is not None:
+            accounts = self._msal_client.get_accounts(self._user)
+            if len(accounts) > 0:
+                account = accounts[0]
+
         token = self._msal_client.acquire_token_silent(scopes=self._scopes, account=None)
         return self._valid_token_or_none(token)
 
