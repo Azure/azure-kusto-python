@@ -86,3 +86,18 @@ def test_token_provider_auth():
     except KustoAuthenticationError as e:
         assert e.authentication_method == CallbackTokenProvider.name()
         assert str(e.exception).index(str(type(invalid_token_provider()))) > -1
+
+
+def test_user_app_token_auth():
+    token = "123456446"
+    user_kcsb = KustoConnectionStringBuilder.with_aad_user_token_authentication("https://help.kusto.windows.net", token)
+    app_kcsb = KustoConnectionStringBuilder.with_aad_application_token_authentication("https://help.kusto.windows.net", token)
+
+    user_helper = _AadHelper(user_kcsb)
+    app_helper = _AadHelper(app_kcsb)
+
+    auth_header = user_helper.acquire_authorization_header()
+    assert auth_header.index(token) > -1
+
+    auth_header = app_helper.acquire_authorization_header()
+    assert auth_header.index(token) > -1
