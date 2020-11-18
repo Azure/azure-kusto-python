@@ -1,34 +1,32 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
-import os
-import webbrowser
-from datetime import timedelta, datetime
-from enum import Enum, unique
-from urllib.parse import urlparse
-from typing import Callable
 import abc
-
-import dateutil.parser
+import webbrowser
+from typing import Callable
 from msal import ConfidentialClientApplication, PublicClientApplication
 from azure.identity import ManagedIdentityCredential
-from azure.core.credentials import AccessToken
+from .exceptions import KustoClientError
+from ._cloud_settings import CloudSettings
 
-from .exceptions import KustoClientError, KustoAuthenticationError
-from ._cloud_settings import CloudSettings, CloudInfo
 
-MSAL_TOKEN_TYPE = 'token_type'
-MSAL_ACCESS_TOKEN = 'access_token'
-MSAL_ERROR = "error"
-MSAL_ERROR_DESCRIPTION = "error_description"
-MSAL_PRIVATE_CERT = "private_key"
-MSAL_THUMBPRINT = "thumbprint"
-MSAL_PUBLIC_CERT = "public_certificate"
-MSAL_DEVICE_MSG = "message"
-MSAL_DEVICE_URI = "verification_uri"
-AZ_REFRESH_TOKEN = 'refreshToken'
-AZ_USER_ID = 'userId'
-AZ_AUTHORITY = '_authority'
-AZ_CLIENT_ID = '_clientId'
+# constant key names and values used throughout the code
+class TokenConstants:
+    BEARER_TYPE = "Bearer"
+    MSAL_TOKEN_TYPE = 'token_type'
+    MSAL_ACCESS_TOKEN = 'access_token'
+    MSAL_ERROR = "error"
+    MSAL_ERROR_DESCRIPTION = "error_description"
+    MSAL_PRIVATE_CERT = "private_key"
+    MSAL_THUMBPRINT = "thumbprint"
+    MSAL_PUBLIC_CERT = "public_certificate"
+    MSAL_DEVICE_MSG = "message"
+    MSAL_DEVICE_URI = "verification_uri"
+    AZ_TOKEN_TYPE = "tokenType"
+    AZ_ACCESS_TOKEN = "accessToken"
+    AZ_REFRESH_TOKEN = 'refreshToken'
+    AZ_USER_ID = 'userId'
+    AZ_AUTHORITY = '_authority'
+    AZ_CLIENT_ID = '_clientId'
 
 
 class TokenProviderBase(abc.ABC):
@@ -124,7 +122,7 @@ class BasicTokenProvider(TokenProviderBase):
         return None
 
     def _get_token_silent_impl(self) -> dict:
-        return {MSAL_TOKEN_TYPE: "Bearer", MSAL_ACCESS_TOKEN: self._token}
+        return {MSAL_TOKEN_TYPE: MSAL_BEARER, MSAL_ACCESS_TOKEN: self._token}
 
 
 class CallbackTokenProvider(TokenProviderBase):
@@ -150,7 +148,7 @@ class CallbackTokenProvider(TokenProviderBase):
         if not isinstance(caller_token, str):
             raise KustoClientError("Token provider returned something that is not a string [" + str(type(caller_token)) + "]")
 
-        return {MSAL_TOKEN_TYPE: "Bearer", MSAL_ACCESS_TOKEN: caller_token}
+        return {MSAL_TOKEN_TYPE: MSAL_BEARER, MSAL_ACCESS_TOKEN: caller_token}
 
 
 class MsiTokenProvider(TokenProviderBase):

@@ -1,54 +1,13 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
-import os
-import webbrowser
-from datetime import timedelta, datetime
-from enum import Enum, unique
 from urllib.parse import urlparse
-
-import dateutil.parser
-# Todo  remove Adal
-from adal import AuthenticationContext, AdalError
-from adal.constants import TokenResponseFields, OAuth2DeviceCodeResponseParameters, OAuth2ResponseParameters
-
-from msal import ConfidentialClientApplication, PublicClientApplication
-from azure.identity import ManagedIdentityCredential
-from azure.core.credentials import AccessToken
-
-from .exceptions import KustoClientError, KustoAuthenticationError
-from ._cloud_settings import CloudSettings, CloudInfo
+from .exceptions import KustoAuthenticationError
 from ._token_providers import *
 
 
-@unique
-class AuthenticationMethod(Enum):
-    """Enum representing all authentication methods available in Kusto with Python."""
-    # todo remove this
-    aad_username_password = "aad_username_password"
-    aad_application_key = "aad_application_key"
-    aad_application_certificate = "aad_application_certificate"
-    aad_application_certificate_sni = "aad_application_certificate_sni"
-    aad_device_login = "aad_device_login"
-    aad_token = "aad_token"
-    managed_service_identity = "managed_service_identity"
-    az_cli_profile = "az_cli_profile"
-    token_provider_callback = "token_provider_callback"
-
-
 class _AadHelper:
-    authentication_method = None
-    auth_context = None # Todo remove this
-    msi_auth_context = None
-    msal_client_application = None
-    username = None
     kusto_uri = None
     authority_uri = None
-    client_id = None
-    password = None
-    thumbprint = None
-    private_certificate = None
-    public_certificate = None
-    msi_params = None
     token_provider: TokenProviderBase = None
 
     def __init__(self, kcsb: "KustoConnectionStringBuilder"):
@@ -64,42 +23,27 @@ class _AadHelper:
         self.authority_uri = aad_authority_uri + authority if aad_authority_uri.endswith("/") else aad_authority_uri + "/" + authority
 
         if all([kcsb.aad_user_id, kcsb.password]):
-            self.authentication_method = AuthenticationMethod.aad_username_password
             self.token_provider = UserPassTokenProvider(self.kusto_uri, self.authority_uri, kcsb.aad_user_id, kcsb.password)
         elif all([kcsb.application_client_id, kcsb.application_key]):
-            self.authentication_method = AuthenticationMethod.aad_application_key
             self.token_provider = ApplicationKeyTokenProvider(self.kusto_uri, self.authority_uri, kcsb.application_client_id, kcsb.application_key)
         elif all([kcsb.application_client_id, kcsb.application_certificate, kcsb.application_certificate_thumbprint]):
-            self.client_id = kcsb.application_client_id
-            self.private_certificate = kcsb.application_certificate
-            self.thumbprint = kcsb.application_certificate_thumbprint
             if all([kcsb.application_public_certificate]):
-                self.authentication_method = AuthenticationMethod.aad_application_certificate_sni
                 self.token_provider = ApplicationCertificateTokenProvider(self.kusto_uri, self.authority_uri, kcsb.application_client_id,
                                                                           kcsb.application_certificate, kcsb.application_certificate_thumbprint,
                                                                           kcsb.application_public_certificate)
             else:
-                self.authentication_method = AuthenticationMethod.aad_application_certificate
                 self.token_provider = ApplicationCertificateTokenProvider(self.kusto_uri, self.authority_uri, kcsb.application_client_id,
                                                                           kcsb.application_certificate, kcsb.application_certificate_thumbprint)
 
         elif kcsb.msi_authentication:
-            self.authentication_method = AuthenticationMethod.managed_service_identity
             self.token_provider = MsiTokenProvider(self.kusto_uri, kcsb.msi_parameters)
-            return
         elif any([kcsb.user_token, kcsb.application_token]):
-            self.token_provider = BasicTokenProvider(kcsb.user_token or kcsb.application_token)
-            self.authentication_method = AuthenticationMethod.aad_token
-            return
+            self.token_provider = BasicTokenProvider(kcsb.user_token if kcsb.user_token is not None else kcsb.application_token)
         elif kcsb.az_cli:
-            self.authentication_method = AuthenticationMethod.az_cli_profile
             self.token_provider = AzCliTokenProvider(self.kusto_uri)
-            return
         elif kcsb.token_provider:
-            self.authentication_method = AuthenticationMethod.token_provider_callback
             self.token_provider = CallbackTokenProvider(kcsb.token_provider)
         else:
-            self.authentication_method = AuthenticationMethod.aad_device_login
             self.token_provider = DeviceLoginTokenProvider(self.kusto_uri, self.authority_uri)
 
     def acquire_authorization_header(self):
@@ -114,81 +58,12 @@ class _AadHelper:
             kwargs["resource"] = self.kusto_uri
             raise KustoAuthenticationError(self.token_provider.name(), error, **kwargs)
 
-    def _acquire_authorization_header(self) -> str:
-        # todo remove this
-        if self.authentication_method is AuthenticationMethod.aad_token:
-            return _get_header("Bearer", self.token)
-
-        if self.authentication_method is AuthenticationMethod.token_provider:
-            caller_token = None # self.token_provider()
-            if not isinstance(caller_token, str):
-                raise KustoClientError("Token provider returned something that is not a string [" + str(type(caller_token)) + "]")
-
-            return _get_header("Bearer", caller_token)
-
-        # Obtain token from MSI endpoint
-        if self.authentication_method == AuthenticationMethod.managed_service_identity:
-            msi_token = None # self.get_token_from_msi()
-            return _get_header("Bearer", msi_token.token)
-
-        refresh_token = None
-
-        if self.authentication_method == AuthenticationMethod.az_cli_profile:
-            stored_token = None #_get_azure_cli_auth_token()
-
-            if (
-                TokenResponseFields.REFRESH_TOKEN in stored_token
-                and TokenResponseFields._CLIENT_ID in stored_token
-                and TokenResponseFields._AUTHORITY in stored_token
-            ):
-                self.client_id = stored_token[TokenResponseFields._CLIENT_ID]
-                self.username = stored_token[TokenResponseFields.USER_ID]
-                self.authority_uri = stored_token[TokenResponseFields._AUTHORITY]
-                refresh_token = stored_token[TokenResponseFields.REFRESH_TOKEN]
-
-        if self.auth_context is None:
-            self.auth_context = AuthenticationContext(self.authority_uri)
-
-        if refresh_token is not None:
-            token = self.auth_context.acquire_token_with_refresh_token(refresh_token, self.client_id, self.kusto_uri)
-        else:
-            token = self.auth_context.acquire_token(self.kusto_uri, self.username, self.client_id)
-
-        if token is not None:
-            expiration_date = dateutil.parser.parse(token[TokenResponseFields.EXPIRES_ON])
-            if expiration_date > datetime.now() + timedelta(minutes=1):
-                return _get_header_from_dict(token)
-            if TokenResponseFields.REFRESH_TOKEN in token:
-                token = self.auth_context.acquire_token_with_refresh_token(token[TokenResponseFields.REFRESH_TOKEN], self.client_id, self.kusto_uri)
-                if token is not None:
-                    return _get_header_from_dict(token)
-
-        # obtain token from AAD
-        if self.authentication_method is AuthenticationMethod.aad_username_password:
-            token = self.auth_context.acquire_token_with_username_password(self.kusto_uri, self.username, self.password, self.client_id)
-        elif self.authentication_method is AuthenticationMethod.aad_application_key:
-            token = self.auth_context.acquire_token_with_client_credentials(self.kusto_uri, self.client_id, self.client_secret)
-        elif self.authentication_method is AuthenticationMethod.aad_device_login:
-            code = self.auth_context.acquire_user_code(self.kusto_uri, self.client_id)
-            print(code[OAuth2DeviceCodeResponseParameters.MESSAGE])
-            webbrowser.open(code[OAuth2DeviceCodeResponseParameters.VERIFICATION_URL])
-            token = self.auth_context.acquire_token_with_device_code(self.kusto_uri, code, self.client_id)
-        elif self.authentication_method in (AuthenticationMethod.aad_applicatioclienn_certificate, AuthenticationMethod.aad_application_certificate_sni):
-            token = self.auth_context.acquire_token_with_client_certificate(
-                self.kusto_uri, self.client_id, self.private_certificate, self.thumbprint, self.public_certificate
-            )
-        else:
-            raise KustoClientError("Please choose authentication method from azure.kusto.data.security.AuthenticationMethod")
-
-        return _get_header_from_dict(token)
-
 
 def _get_header_from_dict(token: dict):
-    if TokenResponseFields.TOKEN_TYPE in token:
-        return _get_header(token[TokenResponseFields.TOKEN_TYPE], token[TokenResponseFields.ACCESS_TOKEN])
-    elif OAuth2ResponseParameters.TOKEN_TYPE in token:
-        # Assume OAuth2 format (e.g. MSI Token)
-        return _get_header(token[OAuth2ResponseParameters.TOKEN_TYPE], token[OAuth2ResponseParameters.ACCESS_TOKEN])
+    if TokenConstants.MSAL_TOKEN_TYPE in token:
+        return _get_header(token[TokenConstants.MSAL_TOKEN_TYPE], token[TokenConstants.MSAL_ACCESS_TOKEN])
+    elif TokenConstants.AZ_TOKEN_TYPE in token:
+        return _get_header(token[TokenConstants.AZ_TOKEN_TYPE], token[TokenConstants.AZ_ACCESS_TOKEN])
     else:
         raise KustoClientError("Unable to determine the token type. Neither 'tokenType' nor 'token_type' property is present.")
 
