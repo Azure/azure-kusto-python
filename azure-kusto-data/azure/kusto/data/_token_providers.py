@@ -57,8 +57,9 @@ class TokenProviderBase(abc.ABC):
 
         return self._valid_token_or_throw(token)
 
+    @staticmethod
     @abc.abstractmethod
-    def name(self) -> str:
+    def name() -> str:
         """ return the provider class name """
         pass
 
@@ -84,7 +85,7 @@ class TokenProviderBase(abc.ABC):
 
     @staticmethod
     def _valid_token_or_none(token: dict) -> dict:
-        if token is None or MSAL_ERROR in token:
+        if token is None or TokenConstants.MSAL_ERROR in token:
             return None
 
         return token
@@ -93,10 +94,10 @@ class TokenProviderBase(abc.ABC):
         if token is None:
             raise KustoClientError(self.name() + " failed to obtain a token")
 
-        if MSAL_ERROR in token:
-            message = self.name() + " failed to obtain a token: " + token[MSAL_ERROR]
-            if MSAL_ERROR_DESCRIPTION in token:
-                message = message + "\n" + token[MSAL_ERROR_DESCRIPTION]
+        if TokenConstants.MSAL_ERROR in token:
+            message = self.name() + " failed to obtain a token: " + token[TokenConstants.MSAL_ERROR]
+            if TokenConstants.MSAL_ERROR_DESCRIPTION in token:
+                message = message + "\n" + token[TokenConstants.MSAL_ERROR_DESCRIPTION]
 
             raise KustoClientError(message)
 
@@ -109,7 +110,8 @@ class BasicTokenProvider(TokenProviderBase):
         super().__init__(None)
         self._token = token
 
-    def name(self) -> str:
+    @staticmethod
+    def name() -> str:
         return "BasicTokenProvider"
 
     def context(self) -> dict:
@@ -122,7 +124,7 @@ class BasicTokenProvider(TokenProviderBase):
         return None
 
     def _get_token_silent_impl(self) -> dict:
-        return {MSAL_TOKEN_TYPE: MSAL_BEARER, MSAL_ACCESS_TOKEN: self._token}
+        return {TokenConstants.MSAL_TOKEN_TYPE: TokenConstants.BEARER_TYPE, TokenConstants.MSAL_ACCESS_TOKEN: self._token}
 
 
 class CallbackTokenProvider(TokenProviderBase):
@@ -131,7 +133,8 @@ class CallbackTokenProvider(TokenProviderBase):
         super().__init__(None)
         self._token_callback = token_callback
 
-    def name(self) -> str:
+    @staticmethod
+    def name() -> str:
         return "CallbackTokenProvider"
 
     def context(self) -> dict:
@@ -148,7 +151,7 @@ class CallbackTokenProvider(TokenProviderBase):
         if not isinstance(caller_token, str):
             raise KustoClientError("Token provider returned something that is not a string [" + str(type(caller_token)) + "]")
 
-        return {MSAL_TOKEN_TYPE: MSAL_BEARER, MSAL_ACCESS_TOKEN: caller_token}
+        return {TokenConstants.MSAL_TOKEN_TYPE: TokenConstants.BEARER_TYPE, TokenConstants.MSAL_ACCESS_TOKEN: caller_token}
 
 
 class MsiTokenProvider(TokenProviderBase):
@@ -161,7 +164,8 @@ class MsiTokenProvider(TokenProviderBase):
         self._msi_args = msi_args
         self._msi_auth_context = None
 
-    def name(self) -> str:
+    @staticmethod
+    def name() -> str:
         return "MsiTokenProvider"
 
     def context(self) -> dict:
@@ -194,7 +198,8 @@ class AzCliTokenProvider(TokenProviderBase):
         self._authority_uri = None
         self._username = None
 
-    def name(self) -> str:
+    @staticmethod
+    def name() -> str:
         return "AzCliTokenProvider"
 
     def context(self) -> dict:
@@ -209,14 +214,14 @@ class AzCliTokenProvider(TokenProviderBase):
         token = None
         stored_token = self._get_azure_cli_auth_token()
         if (
-                AZ_REFRESH_TOKEN in stored_token
-                and AZ_CLIENT_ID in stored_token
-                and AZ_AUTHORITY in stored_token
+                TokenConstants.AZ_REFRESH_TOKEN in stored_token
+                and TokenConstants.AZ_CLIENT_ID in stored_token
+                and TokenConstants.AZ_AUTHORITY in stored_token
         ):
-            refresh_token = stored_token[AZ_REFRESH_TOKEN]
-            self._client_id = stored_token[AZ_CLIENT_ID]
-            self._authority_uri = stored_token[AZ_AUTHORITY]
-            self._username = stored_token[AZ_USER_ID]
+            refresh_token = stored_token[TokenConstants.AZ_REFRESH_TOKEN]
+            self._client_id = stored_token[TokenConstants.AZ_CLIENT_ID]
+            self._authority_uri = stored_token[TokenConstants.AZ_AUTHORITY]
+            self._username = stored_token[TokenConstants.AZ_USER_ID]
         else:
             raise KustoClientError("Unable to obtain a refresh token from Az-Cli")
 
@@ -289,7 +294,8 @@ class UserPassTokenProvider(TokenProviderBase):
         self._user = username
         self._pass = password
 
-    def name(self) -> str:
+    @staticmethod
+    def name() -> str:
         return "UserPassTokenProvider"
 
     def context(self) -> dict:
@@ -321,7 +327,8 @@ class DeviceLoginTokenProvider(TokenProviderBase):
         self._auth = authority_uri
         self._account = None
 
-    def name(self) -> str:
+    @staticmethod
+    def name() -> str:
         return "DeviceLoginTokenProvider"
 
     def context(self) -> dict:
@@ -333,8 +340,8 @@ class DeviceLoginTokenProvider(TokenProviderBase):
     def _get_token_impl(self) -> dict:
         flow = self._msal_client.initiate_device_flow(scopes=self._scopes)
         try:
-            print(flow[MSAL_DEVICE_MSG])
-            webbrowser.open(flow[MSAL_DEVICE_URI])
+            print(flow[TokenConstants.MSAL_DEVICE_MSG])
+            webbrowser.open(flow[TokenConstants.MSAL_DEVICE_URI])
         except KeyError:
             raise KustoClientError("Failed to initiate device code flow")
 
@@ -363,7 +370,8 @@ class ApplicationKeyTokenProvider(TokenProviderBase):
         self._app_key = app_key
         self._auth = authority_uri
 
-    def name(self) -> str:
+    @staticmethod
+    def name() -> str:
         return "ApplicationKeyTokenProvider"
 
     def context(self) -> dict:
@@ -391,15 +399,16 @@ class ApplicationCertificateTokenProvider(TokenProviderBase):
         self._msal_client = None
         self._auth = authority_uri
         self._client_id = client_id
-        self._cert_credentials = {MSAL_PUBLIC_CERT: private_cert, MSAL_THUMBPRINT: thumbprint}
+        self._cert_credentials = {TokenConstants.MSAL_PUBLIC_CERT: private_cert, TokenConstants.MSAL_THUMBPRINT: thumbprint}
         if public_cert is not None:
-            self._cert_credentials[MSAL_PUBLIC_CERT] = public_cert
+            self._cert_credentials[TokenConstants.MSAL_PUBLIC_CERT] = public_cert
 
-    def name(self) -> str:
+    @staticmethod
+    def name() -> str:
         return "ApplicationCertificateTokenProvider"
 
     def context(self) -> dict:
-        return {"authority": self._auth, "client_id": self._app_client_id, "thumbprint": self._cert_credentials[MSAL_THUMBPRINT]}
+        return {"authority": self._auth, "client_id": self._app_client_id, "thumbprint": self._cert_credentials[TokenConstants.MSAL_THUMBPRINT]}
 
     def _init_impl(self):
         self._msal_client = ConfidentialClientApplication(client_id=self._client_id, client_credential= self._cert_credentials, authority=self._auth)

@@ -3,7 +3,8 @@
 import pytest
 from azure.kusto.data.exceptions import KustoAuthenticationError
 from azure.kusto.data import KustoConnectionStringBuilder
-from azure.kusto.data.security import _AadHelper, AuthenticationMethod
+from azure.kusto.data.security import _AadHelper
+from azure.kusto.data._token_providers import *
 
 
 def test_unauthorized_exception():
@@ -16,7 +17,7 @@ def test_unauthorized_exception():
     try:
         aad_helper.acquire_authorization_header()
     except KustoAuthenticationError as error:
-        assert error.authentication_method == AuthenticationMethod.aad_username_password.value
+        assert error.authentication_method == UserPassTokenProvider.name()
         assert error.authority == "https://login.microsoftonline.com/authorityName"
         assert error.kusto_cluster == cluster
         assert error.kwargs["username"] == username
@@ -51,7 +52,7 @@ def test_msi_auth():
     try:
         helpers[0].acquire_authorization_header()
     except KustoAuthenticationError as e:
-        assert e.authentication_method == AuthenticationMethod.aad_msi.value
+        assert e.authentication_method == MsiTokenProvider.name()
         assert "client_id" not in e.kwargs
         assert "object_id" not in e.kwargs
         assert "msi_res_id" not in e.kwargs
@@ -59,7 +60,7 @@ def test_msi_auth():
     try:
         helpers[1].acquire_authorization_header()
     except KustoAuthenticationError as e:
-        assert e.authentication_method == AuthenticationMethod.aad_msi.value
+        assert e.authentication_method == MsiTokenProvider.name()
         assert e.kwargs["client_id"] == client_guid
         assert "object_id" not in e.kwargs
         assert "msi_res_id" not in e.kwargs
@@ -83,5 +84,5 @@ def test_token_provider_auth():
     try:
         invalid_helper.acquire_authorization_header()
     except KustoAuthenticationError as e:
-        assert e.authentication_method == AuthenticationMethod.token_provider.value
+        assert e.authentication_method == CallbackTokenProvider.name()
         assert str(e.exception).index(str(type(invalid_token_provider()))) > -1
