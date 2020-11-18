@@ -23,7 +23,7 @@ from ._token_providers import *
 @unique
 class AuthenticationMethod(Enum):
     """Enum representing all authentication methods available in Kusto with Python."""
-    # todo remove this 
+    # todo remove this
     aad_username_password = "aad_username_password"
     aad_application_key = "aad_application_key"
     aad_application_certificate = "aad_application_certificate"
@@ -109,7 +109,7 @@ class _AadHelper:
                 return _get_header_from_dict(self.token_provider.get_token())
             else:
                 return self._acquire_authorization_header()
-        except (AdalError, KustoClientError) as error:
+        except Exception as error:
             kwargs = self.token_provider.context()
             kwargs["resource"] = self.kusto_uri
             raise KustoAuthenticationError(self.token_provider.name(), error, **kwargs)

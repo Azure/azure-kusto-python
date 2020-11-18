@@ -23,8 +23,10 @@ MSAL_ERROR_DESCRIPTION = "error_description"
 MSAL_PRIVATE_CERT = "private_key"
 MSAL_THUMBPRINT = "thumbprint"
 MSAL_PUBLIC_CERT = "public_certificate"
+MSAL_DEVICE_MSG = "message"
+MSAL_DEVICE_URI = "verification_uri"
 AZ_REFRESH_TOKEN = 'refreshToken'
-AZ_USER_ID = 'userId' # todo remove if not used in the end
+AZ_USER_ID = 'userId'
 AZ_AUTHORITY = '_authority'
 AZ_CLIENT_ID = '_clientId'
 
@@ -55,7 +57,7 @@ class TokenProviderBase(abc.ABC):
         if token is None:
             token = self._get_token_impl()
 
-        return token
+        return self._valid_token_or_throw(token)
 
     @abc.abstractmethod
     def name(self) -> str:
@@ -119,7 +121,7 @@ class BasicTokenProvider(TokenProviderBase):
         pass
 
     def _get_token_impl(self) -> dict:
-        return self._get_token_silent_impl()
+        return None
 
     def _get_token_silent_impl(self) -> dict:
         return {MSAL_TOKEN_TYPE: "Bearer", MSAL_ACCESS_TOKEN: self._token}
@@ -141,7 +143,7 @@ class CallbackTokenProvider(TokenProviderBase):
         pass
 
     def _get_token_impl(self) -> dict:
-        return self._get_token_silent_impl()
+        return None
 
     def _get_token_silent_impl(self) -> dict:
         caller_token = self._token_callback()
@@ -176,7 +178,7 @@ class MsiTokenProvider(TokenProviderBase):
             raise KustoClientError("Failed to initialize MSI ManagedIdentityCredential with [" + str(self._msi_params) + "]\n" + str(e))
 
     def _get_token_impl(self) -> dict:
-        return self._get_token_silent_impl()
+        return None
 
     def _get_token_silent_impl(self) -> dict:
         try:
@@ -191,7 +193,7 @@ class AzCliTokenProvider(TokenProviderBase):
         super().__init__(kusto_uri)
         self._msal_client = None
         self._client_id = None
-        self._authority_id = None
+        self._authority_uri = None
         self._username = None
 
     def name(self) -> str:
@@ -319,6 +321,7 @@ class DeviceLoginTokenProvider(TokenProviderBase):
         super().__init__(kusto_uri)
         self._msal_client = None
         self._auth = authority_uri
+        self._account = None
 
     def name(self) -> str:
         return "DeviceLoginTokenProvider"
@@ -331,13 +334,24 @@ class DeviceLoginTokenProvider(TokenProviderBase):
 
     def _get_token_impl(self) -> dict:
         flow = self._msal_client.initiate_device_flow(scopes=self._scopes)
-        # todo need to check the message content to implement this
-        # print(code[OAuth2DeviceCodeResponseParameters.MESSAGE])
-        # webbrowser.open(code[OAuth2DeviceCodeResponseParameters.VERIFICATION_URL])
+        try:
+            print(flow[MSAL_DEVICE_MSG])
+            webbrowser.open(flow[MSAL_DEVICE_URI])
+        except KeyError:
+            raise KustoClientError("Failed to initiate device code flow")
+
         token = self._msal_client.acquire_token_by_device_flow(flow)
 
+        # Keep the account for slient login
+        if self._valid_token_or_none(token) is not None:
+            accounts = self._msal_client.get_accounts()
+            if len(accounts) == 1:
+                self._account = accounts[0]
+
+        return self._valid_token_or_throw(token)
+
     def _get_token_silent_impl(self) -> dict:
-        token = self._msal_client.acquire_token_silent(scopes=self._scopes, account=None)
+        token = self._msal_client.acquire_token_silent(scopes=self._scopes, account=self._account)
         return self._valid_token_or_none(token)
 
 
@@ -370,7 +384,10 @@ class ApplicationKeyTokenProvider(TokenProviderBase):
 
 
 class ApplicationCertificateTokenProvider(TokenProviderBase):
-    """ Acquire a token from MSAL using application certificate """
+    """
+    Acquire a token from MSAL using application certificate
+    Passing the public certificate is optional and will result in Subject Name & Issuer Authentication
+    """
     def __init__(self, kusto_uri: str, client_id: str, authority_uri: str, private_cert: str, thumbprint: str, public_cert: str = None):
         super().__init__(kusto_uri)
         self._msal_client = None
@@ -384,7 +401,7 @@ class ApplicationCertificateTokenProvider(TokenProviderBase):
         return "ApplicationCertificateTokenProvider"
 
     def context(self) -> dict:
-        return {"authority": self._auth, "client_id": self._app_client_id, "tumbprint": self._cert_credentials[MSAL_THUMBPRINT]}
+        return {"authority": self._auth, "client_id": self._app_client_id, "thumbprint": self._cert_credentials[MSAL_THUMBPRINT]}
 
     def _init_impl(self):
         self._msal_client = ConfidentialClientApplication(client_id=self._client_id, client_credential= self._cert_credentials, authority=self._auth)
