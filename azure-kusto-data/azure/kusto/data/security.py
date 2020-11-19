@@ -8,7 +8,7 @@ from ._token_providers import *
 class _AadHelper:
     kusto_uri = None
     authority_uri = None
-    token_provider: TokenProviderBase = None
+    token_provider = None
 
     def __init__(self, kcsb: "KustoConnectionStringBuilder"):
         self.kusto_uri = "{0.scheme}://{0.hostname}".format(urlparse(kcsb.data_source))
