@@ -12,8 +12,8 @@ from ._cloud_settings import CloudSettings
 # constant key names and values used throughout the code
 class TokenConstants:
     BEARER_TYPE = "Bearer"
-    MSAL_TOKEN_TYPE = 'token_type'
-    MSAL_ACCESS_TOKEN = 'access_token'
+    MSAL_TOKEN_TYPE = "token_type"
+    MSAL_ACCESS_TOKEN = "access_token"
     MSAL_ERROR = "error"
     MSAL_ERROR_DESCRIPTION = "error_description"
     MSAL_PRIVATE_CERT = "private_key"
@@ -23,10 +23,10 @@ class TokenConstants:
     MSAL_DEVICE_URI = "verification_uri"
     AZ_TOKEN_TYPE = "tokenType"
     AZ_ACCESS_TOKEN = "accessToken"
-    AZ_REFRESH_TOKEN = 'refreshToken'
-    AZ_USER_ID = 'userId'
-    AZ_AUTHORITY = '_authority'
-    AZ_CLIENT_ID = '_clientId'
+    AZ_REFRESH_TOKEN = "refreshToken"
+    AZ_USER_ID = "userId"
+    AZ_AUTHORITY = "_authority"
+    AZ_CLIENT_ID = "_clientId"
 
 
 class TokenProviderBase(abc.ABC):
@@ -34,6 +34,7 @@ class TokenProviderBase(abc.ABC):
     This base class abstracts token acquisition for all implementations.
     The class is build for Lazy initialization, so that the first call, take on instantiation of 'heavy' long-lived class members
     """
+
     _initialized = False
     _kusto_uri = None
     _cloud_info = None
@@ -106,6 +107,7 @@ class TokenProviderBase(abc.ABC):
 
 class BasicTokenProvider(TokenProviderBase):
     """ Basic Token Provider keeps and returns a token received on construction """
+
     def __init__(self, token: str):
         super().__init__(None)
         self._token = token
@@ -129,6 +131,7 @@ class BasicTokenProvider(TokenProviderBase):
 
 class CallbackTokenProvider(TokenProviderBase):
     """ Callback Token Provider generates a token based on a callback function provided by the caller """
+
     def __init__(self, token_callback: Callable[[], str]):
         super().__init__(None)
         self._token_callback = token_callback
@@ -159,6 +162,7 @@ class MsiTokenProvider(TokenProviderBase):
     MSI Token Provider obtains a token from the MSI endpoint
     The args parameter is a dictionary conforming with the ManagedIdentityCredential initializer API arguments
     """
+
     def __init__(self, kusto_uri: str, msi_args):
         super().__init__(kusto_uri)
         self._msi_args = msi_args
@@ -192,6 +196,7 @@ class MsiTokenProvider(TokenProviderBase):
 
 class AzCliTokenProvider(TokenProviderBase):
     """ AzCli Token Provider obtains a refresh token from the AzCli cache and uses it to authenticate with MSAL """
+
     def __init__(self, kusto_uri: str):
         super().__init__(kusto_uri)
         self._msal_client = None
@@ -214,11 +219,7 @@ class AzCliTokenProvider(TokenProviderBase):
         refresh_token = None
         token = None
         stored_token = self._get_azure_cli_auth_token()
-        if (
-                TokenConstants.AZ_REFRESH_TOKEN in stored_token
-                and TokenConstants.AZ_CLIENT_ID in stored_token
-                and TokenConstants.AZ_AUTHORITY in stored_token
-        ):
+        if TokenConstants.AZ_REFRESH_TOKEN in stored_token and TokenConstants.AZ_CLIENT_ID in stored_token and TokenConstants.AZ_AUTHORITY in stored_token:
             refresh_token = stored_token[TokenConstants.AZ_REFRESH_TOKEN]
             self._client_id = stored_token[TokenConstants.AZ_CLIENT_ID]
             self._authority_uri = stored_token[TokenConstants.AZ_AUTHORITY]
@@ -322,6 +323,7 @@ class UserPassTokenProvider(TokenProviderBase):
 
 class DeviceLoginTokenProvider(TokenProviderBase):
     """ Acquire a token from MSAL with Device Login flow """
+
     def __init__(self, kusto_uri: str, authority_uri):
         super().__init__(kusto_uri)
         self._msal_client = None
@@ -395,6 +397,7 @@ class ApplicationCertificateTokenProvider(TokenProviderBase):
     Acquire a token from MSAL using application certificate
     Passing the public certificate is optional and will result in Subject Name & Issuer Authentication
     """
+
     def __init__(self, kusto_uri: str, client_id: str, authority_uri: str, private_cert: str, thumbprint: str, public_cert: str = None):
         super().__init__(kusto_uri)
         self._msal_client = None
