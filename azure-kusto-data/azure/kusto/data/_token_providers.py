@@ -400,7 +400,7 @@ class ApplicationCertificateTokenProvider(TokenProviderBase):
         self._msal_client = None
         self._auth = authority_uri
         self._client_id = client_id
-        self._cert_credentials = {TokenConstants.MSAL_PUBLIC_CERT: private_cert, TokenConstants.MSAL_THUMBPRINT: thumbprint}
+        self._cert_credentials = {TokenConstants.MSAL_PRIVATE_CERT: private_cert, TokenConstants.MSAL_THUMBPRINT: thumbprint}
         if public_cert is not None:
             self._cert_credentials[TokenConstants.MSAL_PUBLIC_CERT] = public_cert
 
@@ -412,7 +412,7 @@ class ApplicationCertificateTokenProvider(TokenProviderBase):
         return {"authority": self._auth, "client_id": self._app_client_id, "thumbprint": self._cert_credentials[TokenConstants.MSAL_THUMBPRINT]}
 
     def _init_impl(self):
-        self._msal_client = ConfidentialClientApplication(client_id=self._client_id, client_credential= self._cert_credentials, authority=self._auth)
+        self._msal_client = ConfidentialClientApplication(client_id=self._client_id, client_credential=self._cert_credentials, authority=self._auth)
 
     def _get_token_impl(self) -> dict:
         token = self._msal_client.acquire_token_for_client(scopes=self._scopes)

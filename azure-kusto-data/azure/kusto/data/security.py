@@ -28,11 +28,11 @@ class _AadHelper:
             self.token_provider = ApplicationKeyTokenProvider(self.kusto_uri, self.authority_uri, kcsb.application_client_id, kcsb.application_key)
         elif all([kcsb.application_client_id, kcsb.application_certificate, kcsb.application_certificate_thumbprint]):
             if all([kcsb.application_public_certificate]):
-                self.token_provider = ApplicationCertificateTokenProvider(self.kusto_uri, self.authority_uri, kcsb.application_client_id,
+                self.token_provider = ApplicationCertificateTokenProvider(self.kusto_uri, kcsb.application_client_id, self.authority_uri,
                                                                           kcsb.application_certificate, kcsb.application_certificate_thumbprint,
                                                                           kcsb.application_public_certificate)
             else:
-                self.token_provider = ApplicationCertificateTokenProvider(self.kusto_uri, self.authority_uri, kcsb.application_client_id,
+                self.token_provider = ApplicationCertificateTokenProvider(self.kusto_uri, kcsb.application_client_id, self.authority_uri,
                                                                           kcsb.application_certificate, kcsb.application_certificate_thumbprint)
 
         elif kcsb.msi_authentication:
@@ -47,7 +47,6 @@ class _AadHelper:
             self.token_provider = DeviceLoginTokenProvider(self.kusto_uri, self.authority_uri)
 
     def acquire_authorization_header(self):
-        """Acquire tokens from AAD."""
         try:
             if self.token_provider is not None:
                 return _get_header_from_dict(self.token_provider.get_token())
