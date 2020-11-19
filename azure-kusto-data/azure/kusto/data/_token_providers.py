@@ -27,7 +27,6 @@ class TokenConstants:
     AZ_USER_ID = 'userId'
     AZ_AUTHORITY = '_authority'
     AZ_CLIENT_ID = '_clientId'
-    MSI_ACCESS_TOKEN = " token"
 
 
 class TokenProviderBase(abc.ABC):
@@ -185,7 +184,8 @@ class MsiTokenProvider(TokenProviderBase):
 
     def _get_token_silent_impl(self) -> dict:
         try:
-            return self.msi_auth_context.get_token(self._kusto_uri)
+            msi_token = self.msi_auth_context.get_token(self._kusto_uri)
+            return {TokenConstants.MSAL_TOKEN_TYPE: TokenConstants.BEARER_TYPE, TokenConstants.MSAL_ACCESS_TOKEN: msi_token.token}
         except Exception as e:
             raise KustoClientError("Failed to obtain MSI token for '" + self._kusto_uri + "' with [" + str(self._msi_params) + "]\n" + str(e))
 

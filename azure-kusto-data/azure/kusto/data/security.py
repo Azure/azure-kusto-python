@@ -64,8 +64,6 @@ def _get_header_from_dict(token: dict):
         return _get_header(token[TokenConstants.MSAL_TOKEN_TYPE], token[TokenConstants.MSAL_ACCESS_TOKEN])
     elif TokenConstants.AZ_ACCESS_TOKEN in token:
         return _get_header(token[TokenConstants.AZ_TOKEN_TYPE], token[TokenConstants.AZ_ACCESS_TOKEN])
-    elif TokenConstants.MSI_ACCESS_TOKEN in token:
-        return _get_header(TokenConstants.BEARER_TYPE, token[TokenConstants.MSI_ACCESS_TOKEN])
     else:
         raise KustoClientError("Unable to determine the token type. Neither 'tokenType' nor 'token_type' property is present.")
 
