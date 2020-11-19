@@ -7,8 +7,8 @@ class CloudInfo:
     def __init__(self, auth_endpoint: str, kusto_client_app_id: str, first_party_tenant_id: str, redirect_uri: str):
         self.aad_authority_uri = auth_endpoint
         self.kusto_client_app_id = kusto_client_app_id
-        self.first_party_tenant_id = first_party_tenant_id
-        self.login_redirect_uri = redirect_uri
+        self.first_party_tenant_id = first_party_tenant_id  # todo delete if not used
+        self.login_redirect_uri = redirect_uri  # will be used for interactive login
 
 
 class CloudSettings:

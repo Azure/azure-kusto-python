@@ -27,6 +27,7 @@ class TokenConstants:
     AZ_USER_ID = 'userId'
     AZ_AUTHORITY = '_authority'
     AZ_CLIENT_ID = '_clientId'
+    MSI_ACCESS_TOKEN = " token"
 
 
 class TokenProviderBase(abc.ABC):
