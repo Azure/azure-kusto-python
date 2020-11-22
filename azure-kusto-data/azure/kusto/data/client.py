@@ -517,6 +517,7 @@ class ClientRequestProperties:
 
     results_defer_partial_query_failures_option_name = "deferpartialqueryfailures"
     request_timeout_option_name = "servertimeout"
+    no_request_timeout_option_name = "norequesttimeout"
 
     def __init__(self):
         self._options = {}
@@ -580,9 +581,10 @@ class KustoClient:
     `execute_mgmt`: executes a KQL control command against the Kusto service.
     """
 
-    _mgmt_default_timeout = timedelta(hours=1, seconds=30)
-    _query_default_timeout = timedelta(minutes=4, seconds=30)
+    _mgmt_default_timeout = timedelta(hours=1)
+    _query_default_timeout = timedelta(minutes=4)
     _streaming_ingest_default_timeout = timedelta(minutes=10)
+    _client_server_delta = timedelta(seconds=30)
 
     # The maximum amount of connections to be able to operate in parallel
     _max_pool_size = 100
@@ -735,6 +737,9 @@ class KustoClient:
 
         request_headers["x-ms-client-request-id"] = client_request_id_prefix + str(uuid.uuid4())
 
+        if self._auth_provider:
+            request_headers["Authorization"] = self._auth_provider.acquire_authorization_header()
+
         if properties is not None:
             if properties.client_request_id is not None:
                 request_headers["x-ms-client-request-id"] = properties.client_request_id
@@ -742,12 +747,12 @@ class KustoClient:
                 request_headers["x-ms-app"] = properties.application
             if properties.user is not None:
                 request_headers["x-ms-user"] = properties.user
+            if properties.get_option(ClientRequestProperties.no_request_timeout_option_name, False):
+                timeout = KustoClient._mgmt_default_timeout
+            else:
+                timeout = properties.get_option(ClientRequestProperties.request_timeout_option_name, timeout)
 
-        if self._auth_provider:
-            request_headers["Authorization"] = self._auth_provider.acquire_authorization_header()
-
-        if properties:
-            timeout = properties.get_option(ClientRequestProperties.request_timeout_option_name, timeout)
+        timeout = (timeout or KustoClient._mgmt_default_timeout) + KustoClient._client_server_delta
 
         response = self._session.post(endpoint, headers=request_headers, data=payload, json=json_payload, timeout=timeout.seconds)
 
