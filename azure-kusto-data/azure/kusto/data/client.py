@@ -12,6 +12,7 @@ from typing import Union, Callable
 
 import requests
 from requests.adapters import HTTPAdapter
+from urllib3.connection import HTTPConnection
 
 from ._version import VERSION
 from .data_format import DataFormat
@@ -601,7 +602,7 @@ class KustoClient:
 
         # Create a session object for connection pooling
         self._session = requests.Session()
-        adapter = HTTPAdapterWithSocketOptions(socket_options=self.compose_socket_options(), pool_maxsize=self._max_pool_size, max_retries=retries)
+        adapter = HTTPAdapterWithSocketOptions(socket_options=HTTPConnection.default_socket_options + self.compose_socket_options(), pool_maxsize=self._max_pool_size, max_retries=retries)
         self._session.mount("http://", adapter)
         self._session.mount("https://", adapter)
 
