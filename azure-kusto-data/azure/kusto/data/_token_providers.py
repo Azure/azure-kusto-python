@@ -317,7 +317,7 @@ class UserPassTokenProvider(TokenProviderBase):
             if len(accounts) > 0:
                 account = accounts[0]
 
-        token = self._msal_client.acquire_token_silent(scopes=self._scopes, account=None)
+        token = self._msal_client.acquire_token_silent(scopes=self._scopes, account=account)
         return self._valid_token_or_none(token)
 
 
