@@ -602,7 +602,9 @@ class KustoClient:
 
         # Create a session object for connection pooling
         self._session = requests.Session()
-        adapter = HTTPAdapterWithSocketOptions(socket_options=HTTPConnection.default_socket_options + self.compose_socket_options(), pool_maxsize=self._max_pool_size, max_retries=retries)
+        adapter = HTTPAdapterWithSocketOptions(
+            socket_options=HTTPConnection.default_socket_options + self.compose_socket_options(), pool_maxsize=self._max_pool_size, max_retries=retries
+        )
         self._session.mount("http://", adapter)
         self._session.mount("https://", adapter)
 
