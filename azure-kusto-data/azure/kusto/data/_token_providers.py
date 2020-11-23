@@ -52,7 +52,7 @@ class TokenProviderBase(abc.ABC):
             self._init_impl()
             self._initialized = True
 
-        token = self._get_token_silent_impl()
+        token = self._get_token_from_cache_impl()
         if token is None:
             token = self._get_token_impl()
 
@@ -80,7 +80,7 @@ class TokenProviderBase(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def _get_token_silent_impl(self) -> dict:
+    def _get_token_from_cache_impl(self) -> dict:
         """ Implement cache checks here, return None if cache check fails """
         pass
 
@@ -125,7 +125,7 @@ class BasicTokenProvider(TokenProviderBase):
     def _get_token_impl(self) -> dict:
         return None
 
-    def _get_token_silent_impl(self) -> dict:
+    def _get_token_from_cache_impl(self) -> dict:
         return {TokenConstants.MSAL_TOKEN_TYPE: TokenConstants.BEARER_TYPE, TokenConstants.MSAL_ACCESS_TOKEN: self._token}
 
 
@@ -149,7 +149,7 @@ class CallbackTokenProvider(TokenProviderBase):
     def _get_token_impl(self) -> dict:
         return None
 
-    def _get_token_silent_impl(self) -> dict:
+    def _get_token_from_cache_impl(self) -> dict:
         caller_token = self._token_callback()
         if not isinstance(caller_token, str):
             raise KustoClientError("Token provider returned something that is not a string [" + str(type(caller_token)) + "]")
@@ -186,7 +186,7 @@ class MsiTokenProvider(TokenProviderBase):
     def _get_token_impl(self) -> dict:
         return None
 
-    def _get_token_silent_impl(self) -> dict:
+    def _get_token_from_cache_impl(self) -> dict:
         try:
             msi_token = self.msi_auth_context.get_token(self._kusto_uri)
             return {TokenConstants.MSAL_TOKEN_TYPE: TokenConstants.BEARER_TYPE, TokenConstants.MSAL_ACCESS_TOKEN: msi_token.token}
@@ -235,7 +235,7 @@ class AzCliTokenProvider(TokenProviderBase):
 
         return self._valid_token_or_throw(token)
 
-    def _get_token_silent_impl(self) -> dict:
+    def _get_token_from_cache_impl(self) -> dict:
         token = None
         if self._msal_client is not None:
             account = None
@@ -310,7 +310,7 @@ class UserPassTokenProvider(TokenProviderBase):
         token = self._msal_client.acquire_token_by_username_password(username=self._user, password=self._pass, scopes=self._scopes)
         return self._valid_token_or_throw(token)
 
-    def _get_token_silent_impl(self) -> dict:
+    def _get_token_from_cache_impl(self) -> dict:
         account = None
         if self._user is not None:
             accounts = self._msal_client.get_accounts(self._user)
@@ -358,7 +358,7 @@ class DeviceLoginTokenProvider(TokenProviderBase):
 
         return self._valid_token_or_throw(token)
 
-    def _get_token_silent_impl(self) -> dict:
+    def _get_token_from_cache_impl(self) -> dict:
         token = self._msal_client.acquire_token_silent(scopes=self._scopes, account=self._account)
         return self._valid_token_or_none(token)
 
@@ -387,7 +387,7 @@ class ApplicationKeyTokenProvider(TokenProviderBase):
         token = self._msal_client.acquire_token_for_client(scopes=self._scopes)
         return self._valid_token_or_throw(token)
 
-    def _get_token_silent_impl(self) -> dict:
+    def _get_token_from_cache_impl(self) -> dict:
         token = self._msal_client.acquire_token_silent(scopes=self._scopes, account=None)
         return self._valid_token_or_none(token)
 
@@ -421,6 +421,6 @@ class ApplicationCertificateTokenProvider(TokenProviderBase):
         token = self._msal_client.acquire_token_for_client(scopes=self._scopes)
         return self._valid_token_or_throw(token)
 
-    def _get_token_silent_impl(self) -> dict:
+    def _get_token_from_cache_impl(self) -> dict:
         token = self._msal_client.acquire_token_silent(scopes=self._scopes, account=None)
         return self._valid_token_or_none(token)

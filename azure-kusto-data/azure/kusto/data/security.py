@@ -27,24 +27,21 @@ class _AadHelper:
         elif all([kcsb.application_client_id, kcsb.application_key]):
             self.token_provider = ApplicationKeyTokenProvider(self.kusto_uri, self.authority_uri, kcsb.application_client_id, kcsb.application_key)
         elif all([kcsb.application_client_id, kcsb.application_certificate, kcsb.application_certificate_thumbprint]):
-            if all([kcsb.application_public_certificate]):
-                self.token_provider = ApplicationCertificateTokenProvider(
-                    self.kusto_uri,
-                    kcsb.application_client_id,
-                    self.authority_uri,
-                    kcsb.application_certificate,
-                    kcsb.application_certificate_thumbprint,
-                    kcsb.application_public_certificate,
-                )
-            else:
-                self.token_provider = ApplicationCertificateTokenProvider(
-                    self.kusto_uri, kcsb.application_client_id, self.authority_uri, kcsb.application_certificate, kcsb.application_certificate_thumbprint
-                )
-
+            # kcsb.application_public_certificate can be None if SNI is not used
+            self.token_provider = ApplicationCertificateTokenProvider(
+                self.kusto_uri,
+                kcsb.application_client_id,
+                self.authority_uri,
+                kcsb.application_certificate,
+                kcsb.application_certificate_thumbprint,
+                kcsb.application_public_certificate,
+            )
         elif kcsb.msi_authentication:
             self.token_provider = MsiTokenProvider(self.kusto_uri, kcsb.msi_parameters)
-        elif any([kcsb.user_token, kcsb.application_token]):
-            self.token_provider = BasicTokenProvider(kcsb.user_token if kcsb.user_token is not None else kcsb.application_token)
+        elif kcsb.user_token:
+            self.token_provider = BasicTokenProvider(kcsb.user_token)
+        elif kcsb.application_token:
+            self.token_provider = BasicTokenProvider(kcsb.application_token)
         elif kcsb.az_cli:
             self.token_provider = AzCliTokenProvider(self.kusto_uri)
         elif kcsb.token_provider:
