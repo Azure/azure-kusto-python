@@ -8,9 +8,11 @@ from azure.kusto.data._token_providers import *
 
 
 KUSTO_URI = "https://thisclusterdoesnotexist.kusto.windows.net"
+PUBLIC_AUTH_URI = "https://login.microsoftonline.com/"
 TOKEN_VALUE = "little miss sunshine"
 TEST_AZ_AUTH = False  # enable this in environments with az cli installed, and make sure to call 'az login' first
 TEST_MSI_AUTH = False  # enable this in environments with MSI enabled and make sure to set the relevant environment variables
+TEST_DEVICE_AUTH = True  # User interaction required, enable this when running test manually
 
 
 class MockProvider(TokenProviderBase, ABC):
@@ -161,3 +163,78 @@ class TokenProviderTests(unittest.TestCase):
             provider = MsiTokenProvider(KUSTO_URI, args)
             token = provider.get_token()
             assert TokenProviderTests.get_token_value(token) is not None
+
+    @staticmethod
+    def test_user_pass_provider():
+        username = os.environ.get("USER_NAME")
+        password = os.environ.get("USER_PASS")
+        auth = os.environ.get("USER_AUTH_ID")
+
+        if username and password and auth:
+            provider = UserPassTokenProvider(KUSTO_URI, auth, username, password)
+            token = provider.get_token()
+            assert TokenProviderTests.get_token_value(token) is not None
+
+            # Again through cache
+            token = provider.get_token()
+            assert TokenProviderTests.get_token_value(token) is not None
+
+    @staticmethod
+    def test_device_auth_provider():
+        if not TEST_DEVICE_AUTH:
+            return
+
+        provider = DeviceLoginTokenProvider(KUSTO_URI, PUBLIC_AUTH_URI + "organizations")
+        token = provider.get_token()
+        assert TokenProviderTests.get_token_value(token) is not None
+
+        # Again through cache
+        token = provider.get_token()
+        assert TokenProviderTests.get_token_value(token) is not None
+
+    @staticmethod
+    def test_app_key_provider():
+        app_id = os.environ.get("APP_ID")
+        app_key = os.environ.get("APP_KEY")
+        auth_id = os.environ.get("APP_AUTH_ID")
+
+        if app_id and app_key and auth_id:
+            provider = ApplicationKeyTokenProvider(KUSTO_URI, auth_id, app_id, app_key)
+            token = provider.get_token()
+            assert TokenProviderTests.get_token_value(token) is not None
+
+            # Again through cache
+            token = provider.get_token()
+            assert TokenProviderTests.get_token_value(token) is not None
+
+    @staticmethod
+    def test_app_cert_provider():
+        public_cert_path = os.environ.get("PUBLIC_CERT_PATH")
+        pem_key_path = os.environ.get("CERT_PEM_KEY_PATH")
+        thumbprint = os.environ.get("CERT_THUMBPRINT", "1D745ADBCECE9620AA5D3B5D64351262E0BA6CCB")
+        cert_app_id = os.environ.get("CERT_APP_ID", "b699d721-4f6f-4320-bc9a-88d578dfe68f")
+        cert_auth = os.environ.get("CERT_AUTH", "72f988bf-86f1-41af-91ab-2d7cd011db47")
+
+        if pem_key_path and thumbprint and cert_app_id:
+            with open(pem_key_path, "rb") as file:
+                pem_key = file.read()
+
+            provider = ApplicationCertificateTokenProvider(KUSTO_URI, cert_app_id, PUBLIC_AUTH_URI + cert_auth, pem_key, thumbprint)
+            token = provider.get_token()
+            assert TokenProviderTests.get_token_value(token) is not None
+
+            # Again through cache
+            token = provider.get_token()
+            assert TokenProviderTests.get_token_value(token) is not None
+
+            if public_cert_path:
+                with open(public_cert_path, "r") as file:
+                    public_cert = file.read()
+
+                provider = ApplicationCertificateTokenProvider(KUSTO_URI, cert_app_id, PUBLIC_AUTH_URI + cert_auth, pem_key, thumbprint, public_cert)
+                token = provider.get_token()
+                assert TokenProviderTests.get_token_value(token) is not None
+
+                # Again through cache
+                token = provider.get_token()
+                assert TokenProviderTests.get_token_value(token) is not None
