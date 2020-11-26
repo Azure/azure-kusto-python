@@ -590,7 +590,7 @@ class KustoClient:
     # The maximum amount of connections to be able to operate in parallel
     _max_pool_size = 100
 
-    def __init__(self, kcsb: Union[KustoConnectionStringBuilder, str], retries=0):
+    def __init__(self, kcsb: Union[KustoConnectionStringBuilder, str]):
         """
         Kusto Client constructor.
         :param kcsb: The connection string to initialize KustoClient.
@@ -603,7 +603,7 @@ class KustoClient:
         # Create a session object for connection pooling
         self._session = requests.Session()
         adapter = HTTPAdapterWithSocketOptions(
-            socket_options=HTTPConnection.default_socket_options + self.compose_socket_options(), pool_maxsize=self._max_pool_size, max_retries=retries
+            socket_options=HTTPConnection.default_socket_options + self.compose_socket_options(), pool_maxsize=self._max_pool_size
         )
         self._session.mount("http://", adapter)
         self._session.mount("https://", adapter)
@@ -614,6 +614,16 @@ class KustoClient:
         # notice that in this context, federated actually just stands for add auth, not aad federated auth (legacy code)
         self._auth_provider = _AadHelper(kcsb) if kcsb.aad_federated_security else None
         self._request_headers = {"Accept": "application/json", "Accept-Encoding": "gzip,deflate", "x-ms-client-version": "Kusto.Python.Client:" + VERSION}
+
+    def set_http_retries(self, max_retries):
+        """
+        Set the number of HTTP retries to attempt
+        """
+        adapter = HTTPAdapterWithSocketOptions(
+            socket_options=HTTPConnection.default_socket_options + self.compose_socket_options(), pool_maxsize=self._max_pool_size, max_retries=max_retries
+        )
+        self._session.mount("http://", adapter)
+        self._session.mount("https://", adapter)
 
     @staticmethod
     def compose_socket_options():
