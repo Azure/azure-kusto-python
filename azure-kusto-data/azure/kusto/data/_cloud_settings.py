@@ -36,7 +36,9 @@ class CloudSettings:
         )
 
         cls._cloud_info[cls.moon_cake_cloud_suffix] = CloudInfo(
-            "https://login.chinacloudapi.cn", "db662dc1-0cfe-4e1c-a843-19a68e65be58", "https://ChinaGovCloud.partner.onmschina.cn/kustoclient",
+            "https://login.chinacloudapi.cn",
+            "db662dc1-0cfe-4e1c-a843-19a68e65be58",
+            "https://ChinaGovCloud.partner.onmschina.cn/kustoclient",
         )
 
         cls._cloud_info[cls.black_forest_cloud_suffix] = CloudInfo(
@@ -48,11 +50,15 @@ class CloudSettings:
         )
 
         cls._cloud_info[cls.us_nat_cloud_suffix] = CloudInfo(
-            "https://login.microsoftonline.eaglex.ic.gov", "db662dc1-0cfe-4e1c-a843-19a68e65be58", "https://microsoft/kustoclient",
+            "https://login.microsoftonline.eaglex.ic.gov",
+            "db662dc1-0cfe-4e1c-a843-19a68e65be58",
+            "https://microsoft/kustoclient",
         )
 
         cls._cloud_info[cls.us_sec_cloud_suffix] = CloudInfo(
-            "https://login.microsoftonline.microsoft.scloud", "730ea9e6-1e1d-480c-9df6-0bb9a90e1a0f", "https://microsoft/kustoclient",
+            "https://login.microsoftonline.microsoft.scloud",
+            "730ea9e6-1e1d-480c-9df6-0bb9a90e1a0f",
+            "https://microsoft/kustoclient",
         )
 
     @classmethod
