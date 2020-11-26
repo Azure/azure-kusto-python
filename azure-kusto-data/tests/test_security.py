@@ -8,6 +8,7 @@ from azure.kusto.data._token_providers import *
 
 KUSTO_TEST_URI = "https://thisclusterdoesnotexist.kusto.windows.net"
 
+
 def test_unauthorized_exception():
     """Test the exception thrown when authorization fails."""
     cluster = "https://somecluster.kusto.windows.net"

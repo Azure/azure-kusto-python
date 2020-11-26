@@ -28,7 +28,7 @@ class MockProvider(TokenProviderBase, ABC):
         return "MockProvider"
 
     def context(self) -> dict:
-        return {'authority": '"MockProvider"}
+        return {"authority": "MockProvider"}
 
     def _init_impl(self):
         self.init_count = self.init_count + 1
@@ -222,8 +222,8 @@ class TokenProviderTests(unittest.TestCase):
         cert_app_id = os.environ.get("CERT_APP_ID", "b699d721-4f6f-4320-bc9a-88d578dfe68f")
         cert_auth = os.environ.get("CERT_AUTH", "72f988bf-86f1-41af-91ab-2d7cd011db47")
         thumbprint = os.environ.get("CERT_THUMBPRINT")
-        public_cert_path = os.environ.get("PUBLIC_CERT_PATH", )
-        pem_key_path = os.environ.get("CERT_PEM_KEY_PATH", )
+        public_cert_path = os.environ.get("PUBLIC_CERT_PATH")
+        pem_key_path = os.environ.get("CERT_PEM_KEY_PATH")
 
         if pem_key_path and thumbprint and cert_app_id:
             with open(pem_key_path, "rb") as file:
