@@ -629,7 +629,7 @@ class KustoClient:
     def compose_socket_options():
         # Sends TCP Keep-Alive after MAX_IDLE_SECONDS seconds of idleness, once every INTERVAL_SECONDS seconds, and closes the connection after MAX_FAILED_KEEPALIVES failed pings (e.g. 20 => 1:00:30)
         MAX_IDLE_SECONDS = 30
-        INTERVAL_SECONDS = 180
+        INTERVAL_SECONDS = 180 # Corresponds to Azure Load Balancer Service 4 minute timeout, with 1 minute of slack
         MAX_FAILED_KEEPALIVES = 20
 
         if (
@@ -651,13 +651,11 @@ class KustoClient:
             and hasattr(socket, "SOL_SOCKET")
             and hasattr(socket, "SO_KEEPALIVE")
             and hasattr(socket, "TCP_KEEPIDLE")
-            and hasattr(socket, "TCP_KEEPINTVL")
             and hasattr(socket, "TCP_KEEPCNT")
         ):
             return [
                 (socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1),
                 (socket.IPPROTO_TCP, socket.TCP_KEEPIDLE, MAX_IDLE_SECONDS),
-                (socket.IPPROTO_TCP, socket.TCP_KEEPINTVL, INTERVAL_SECONDS),
                 (socket.IPPROTO_TCP, socket.TCP_KEEPCNT, MAX_FAILED_KEEPALIVES),
             ]
         if sys.platform == "darwin" and hasattr(socket, "SOL_SOCKET") and hasattr(socket, "SO_KEEPALIVE") and hasattr(socket, "IPPROTO_TCP"):
