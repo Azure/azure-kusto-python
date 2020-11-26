@@ -174,9 +174,9 @@ class TokenProviderTests(unittest.TestCase):
 
     @staticmethod
     def test_user_pass_provider():
-        username = os.environ.get("USER_NAME", "yochai.gilad@outlook.com")
+        username = os.environ.get("USER_NAME")
         password = os.environ.get("USER_PASS")
-        auth = os.environ.get("USER_AUTH_ID", "9188040d-6c67-4c5b-b112-36a304b66dad")
+        auth = os.environ.get("USER_AUTH_ID", "organizations")
 
         if username and password and auth:
             provider = UserPassTokenProvider(KUSTO_URI, PUBLIC_AUTH_URI + auth, username, password)
