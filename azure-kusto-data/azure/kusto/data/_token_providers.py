@@ -324,11 +324,12 @@ class UserPassTokenProvider(TokenProviderBase):
 class DeviceLoginTokenProvider(TokenProviderBase):
     """ Acquire a token from MSAL with Device Login flow """
 
-    def __init__(self, kusto_uri: str, authority_uri):
+    def __init__(self, kusto_uri: str, authority_uri: str, device_code_callback = None):
         super().__init__(kusto_uri)
         self._msal_client = None
         self._auth = authority_uri
         self._account = None
+        self._device_code_callback = device_code_callback
 
     @staticmethod
     def name() -> str:
@@ -343,7 +344,11 @@ class DeviceLoginTokenProvider(TokenProviderBase):
     def _get_token_impl(self) -> dict:
         flow = self._msal_client.initiate_device_flow(scopes=self._scopes)
         try:
-            print(flow[TokenConstants.MSAL_DEVICE_MSG])
+            if self._device_code_callback:
+                self._device_code_callback(flow[TokenConstants.MSAL_DEVICE_MSG])
+            else:
+                print(flow[TokenConstants.MSAL_DEVICE_MSG])
+
             webbrowser.open(flow[TokenConstants.MSAL_DEVICE_URI])
         except KeyError:
             raise KustoClientError("Failed to initiate device code flow")

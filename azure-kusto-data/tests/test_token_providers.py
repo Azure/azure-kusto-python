@@ -1,7 +1,8 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
-import unittest
 import os
+import unittest
+import webbrowser
 from abc import ABC
 
 from azure.kusto.data._token_providers import *
@@ -10,9 +11,10 @@ from azure.kusto.data._token_providers import *
 KUSTO_URI = "https://thisclusterdoesnotexist.kusto.windows.net"
 PUBLIC_AUTH_URI = "https://login.microsoftonline.com/"
 TOKEN_VALUE = "little miss sunshine"
+
 TEST_AZ_AUTH = False  # enable this in environments with az cli installed, and make sure to call 'az login' first
 TEST_MSI_AUTH = False  # enable this in environments with MSI enabled and make sure to set the relevant environment variables
-TEST_DEVICE_AUTH = True  # User interaction required, enable this when running test manually
+TEST_DEVICE_AUTH = False  # User interaction required, enable this when running test manually
 
 
 class MockProvider(TokenProviderBase, ABC):
@@ -171,12 +173,12 @@ class TokenProviderTests(unittest.TestCase):
         auth = os.environ.get("USER_AUTH_ID")
 
         if username and password and auth:
-            provider = UserPassTokenProvider(KUSTO_URI, auth, username, password)
+            provider = UserPassTokenProvider(KUSTO_URI, PUBLIC_AUTH_URI + auth, username, password)
             token = provider.get_token()
             assert TokenProviderTests.get_token_value(token) is not None
 
             # Again through cache
-            token = provider.get_token()
+            token = provider._get_token_from_cache_impl()
             assert TokenProviderTests.get_token_value(token) is not None
 
     @staticmethod
@@ -184,36 +186,44 @@ class TokenProviderTests(unittest.TestCase):
         if not TEST_DEVICE_AUTH:
             return
 
-        provider = DeviceLoginTokenProvider(KUSTO_URI, PUBLIC_AUTH_URI + "organizations")
+        def callback(x):
+            # break here if you debug this test, and get the code from 'x'
+            print(x)
+
+        provider = DeviceLoginTokenProvider(KUSTO_URI, PUBLIC_AUTH_URI + "organizations", callback)
         token = provider.get_token()
         assert TokenProviderTests.get_token_value(token) is not None
 
         # Again through cache
-        token = provider.get_token()
+        token = provider._get_token_from_cache_impl()
         assert TokenProviderTests.get_token_value(token) is not None
 
     @staticmethod
     def test_app_key_provider():
-        app_id = os.environ.get("APP_ID")
+        # default details are for kusto-client-e2e-test-app
+        # to run the test, get the key from Azure portal
+        app_id = os.environ.get("APP_ID", "b699d721-4f6f-4320-bc9a-88d578dfe68f")
+        auth_id = os.environ.get("APP_AUTH_ID", "72f988bf-86f1-41af-91ab-2d7cd011db47")
         app_key = os.environ.get("APP_KEY")
-        auth_id = os.environ.get("APP_AUTH_ID")
 
         if app_id and app_key and auth_id:
-            provider = ApplicationKeyTokenProvider(KUSTO_URI, auth_id, app_id, app_key)
+            provider = ApplicationKeyTokenProvider(KUSTO_URI, PUBLIC_AUTH_URI + auth_id, app_id, app_key)
             token = provider.get_token()
             assert TokenProviderTests.get_token_value(token) is not None
 
             # Again through cache
-            token = provider.get_token()
+            token = provider._get_token_from_cache_impl()
             assert TokenProviderTests.get_token_value(token) is not None
 
     @staticmethod
     def test_app_cert_provider():
-        public_cert_path = os.environ.get("PUBLIC_CERT_PATH")
-        pem_key_path = os.environ.get("CERT_PEM_KEY_PATH")
-        thumbprint = os.environ.get("CERT_THUMBPRINT", "1D745ADBCECE9620AA5D3B5D64351262E0BA6CCB")
+        # default details are for kusto-client-e2e-test-app
+        # to run the test download the certs from Azure Portal
         cert_app_id = os.environ.get("CERT_APP_ID", "b699d721-4f6f-4320-bc9a-88d578dfe68f")
         cert_auth = os.environ.get("CERT_AUTH", "72f988bf-86f1-41af-91ab-2d7cd011db47")
+        thumbprint = os.environ.get("CERT_THUMBPRINT")
+        public_cert_path = os.environ.get("PUBLIC_CERT_PATH", )
+        pem_key_path = os.environ.get("CERT_PEM_KEY_PATH", )
 
         if pem_key_path and thumbprint and cert_app_id:
             with open(pem_key_path, "rb") as file:
@@ -224,7 +234,7 @@ class TokenProviderTests(unittest.TestCase):
             assert TokenProviderTests.get_token_value(token) is not None
 
             # Again through cache
-            token = provider.get_token()
+            token = provider._get_token_from_cache_impl()
             assert TokenProviderTests.get_token_value(token) is not None
 
             if public_cert_path:
@@ -236,5 +246,5 @@ class TokenProviderTests(unittest.TestCase):
                 assert TokenProviderTests.get_token_value(token) is not None
 
                 # Again through cache
-                token = provider.get_token()
+                token = provider._get_token_from_cache_impl()
                 assert TokenProviderTests.get_token_value(token) is not None
