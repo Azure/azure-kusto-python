@@ -130,6 +130,7 @@ class TokenProviderTests(unittest.TestCase):
     @staticmethod
     def test_az_provider():
         if not TEST_AZ_AUTH:
+            print(" *** Skipped Az-Cli Provider Test ***")
             return
 
         print("Note!\nThe test 'test_az_provider' will fail if 'az login' was not called.")
@@ -144,6 +145,7 @@ class TokenProviderTests(unittest.TestCase):
     @staticmethod
     def test_msi_provider():
         if not TEST_MSI_AUTH:
+            print(" *** Skipped MSI Provider Test ***")
             return
 
         user_msi_object_id = os.environ.get("MSI_OBJECT_ID")
@@ -159,18 +161,22 @@ class TokenProviderTests(unittest.TestCase):
             provider = MsiTokenProvider(KUSTO_URI, args)
             token = provider.get_token()
             assert TokenProviderTests.get_token_value(token) is not None
+        else:
+            print(" *** Skipped MSI Provider Client Id Test ***")
 
         if user_msi_client_id is not None:
             args = {"client_id": user_msi_client_id}
             provider = MsiTokenProvider(KUSTO_URI, args)
             token = provider.get_token()
             assert TokenProviderTests.get_token_value(token) is not None
+        else:
+            print(" *** Skipped MSI Provider Object Id Test ***")
 
     @staticmethod
     def test_user_pass_provider():
-        username = os.environ.get("USER_NAME")
+        username = os.environ.get("USER_NAME", "yochai.gilad@outlook.com")
         password = os.environ.get("USER_PASS")
-        auth = os.environ.get("USER_AUTH_ID")
+        auth = os.environ.get("USER_AUTH_ID", "9188040d-6c67-4c5b-b112-36a304b66dad")
 
         if username and password and auth:
             provider = UserPassTokenProvider(KUSTO_URI, PUBLIC_AUTH_URI + auth, username, password)
@@ -180,10 +186,13 @@ class TokenProviderTests(unittest.TestCase):
             # Again through cache
             token = provider._get_token_from_cache_impl()
             assert TokenProviderTests.get_token_value(token) is not None
+        else:
+            print(" *** Skipped User & Pass Provider Test ***")
 
     @staticmethod
     def test_device_auth_provider():
         if not TEST_DEVICE_AUTH:
+            print(" *** Skipped User Device Flow Test ***")
             return
 
         def callback(x):
@@ -214,6 +223,8 @@ class TokenProviderTests(unittest.TestCase):
             # Again through cache
             token = provider._get_token_from_cache_impl()
             assert TokenProviderTests.get_token_value(token) is not None
+        else:
+            print(" *** Skipped App Id & Key Provider Test ***")
 
     @staticmethod
     def test_app_cert_provider():
@@ -248,3 +259,8 @@ class TokenProviderTests(unittest.TestCase):
                 # Again through cache
                 token = provider._get_token_from_cache_impl()
                 assert TokenProviderTests.get_token_value(token) is not None
+            else:
+                print(" *** Skipped App Cert SNI Provider Test ***")
+
+        else:
+            print(" *** Skipped App Cert Provider Test ***")
