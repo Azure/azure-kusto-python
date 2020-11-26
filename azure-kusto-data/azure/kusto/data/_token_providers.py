@@ -324,7 +324,7 @@ class UserPassTokenProvider(TokenProviderBase):
 class DeviceLoginTokenProvider(TokenProviderBase):
     """ Acquire a token from MSAL with Device Login flow """
 
-    def __init__(self, kusto_uri: str, authority_uri: str, device_code_callback = None):
+    def __init__(self, kusto_uri: str, authority_uri: str, device_code_callback=None):
         super().__init__(kusto_uri)
         self._msal_client = None
         self._auth = authority_uri
