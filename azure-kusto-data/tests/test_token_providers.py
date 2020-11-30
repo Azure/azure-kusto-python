@@ -2,8 +2,6 @@
 # Licensed under the MIT License
 import os
 import unittest
-import webbrowser
-from abc import ABC
 
 from azure.kusto.data._token_providers import *
 
@@ -17,7 +15,7 @@ TEST_MSI_AUTH = False  # enable this in environments with MSI enabled and make s
 TEST_DEVICE_AUTH = False  # User interaction required, enable this when running test manually
 
 
-class MockProvider(TokenProviderBase, ABC):
+class MockProvider(TokenProviderBase):
     def __init__(self, uri: str):
         super().__init__(uri)
         self._silent_token = False
