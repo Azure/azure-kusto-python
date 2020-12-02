@@ -2,6 +2,8 @@
 # Licensed under the MIT License
 import io
 import json
+import socket
+import sys
 import uuid
 from copy import copy
 from datetime import timedelta
@@ -10,6 +12,7 @@ from typing import Union, Callable
 
 import requests
 from requests.adapters import HTTPAdapter
+from urllib3.connection import HTTPConnection
 
 from ._version import VERSION
 from .data_format import DataFormat
@@ -555,6 +558,19 @@ class ClientRequestProperties:
         return json.dumps({"Options": self._options, "Parameters": self._parameters}, default=str)
 
 
+class HTTPAdapterWithSocketOptions(requests.adapters.HTTPAdapter):
+    def __init__(self, *args, **kwargs):
+        self.socket_options = kwargs.pop("socket_options", None)
+        self.pool_maxsize = kwargs.pop("pool_maxsize", None)
+        self.max_retries = kwargs.pop("max_retries", None)
+        super(HTTPAdapterWithSocketOptions, self).__init__(*args, **kwargs)
+
+    def init_poolmanager(self, *args, **kwargs):
+        if self.socket_options is not None:
+            kwargs["socket_options"] = self.socket_options
+        super(HTTPAdapterWithSocketOptions, self).init_poolmanager(*args, **kwargs)
+
+
 class KustoClient:
     """
     Kusto client for Python.
@@ -586,14 +602,65 @@ class KustoClient:
 
         # Create a session object for connection pooling
         self._session = requests.Session()
-        self._session.mount("http://", HTTPAdapter(pool_maxsize=self._max_pool_size))
-        self._session.mount("https://", HTTPAdapter(pool_maxsize=self._max_pool_size))
+        adapter = HTTPAdapterWithSocketOptions(
+            socket_options=HTTPConnection.default_socket_options + self.compose_socket_options(), pool_maxsize=self._max_pool_size
+        )
+        self._session.mount("http://", adapter)
+        self._session.mount("https://", adapter)
+
         self._mgmt_endpoint = "{0}/v1/rest/mgmt".format(kusto_cluster)
         self._query_endpoint = "{0}/v2/rest/query".format(kusto_cluster)
         self._streaming_ingest_endpoint = "{0}/v1/rest/ingest/".format(kusto_cluster)
         # notice that in this context, federated actually just stands for add auth, not aad federated auth (legacy code)
         self._auth_provider = _AadHelper(kcsb) if kcsb.aad_federated_security else None
         self._request_headers = {"Accept": "application/json", "Accept-Encoding": "gzip,deflate", "x-ms-client-version": "Kusto.Python.Client:" + VERSION}
+
+    def set_http_retries(self, max_retries):
+        """
+        Set the number of HTTP retries to attempt
+        """
+        adapter = HTTPAdapterWithSocketOptions(
+            socket_options=HTTPConnection.default_socket_options + self.compose_socket_options(), pool_maxsize=self._max_pool_size, max_retries=max_retries
+        )
+        self._session.mount("http://", adapter)
+        self._session.mount("https://", adapter)
+
+    @staticmethod
+    def compose_socket_options():
+        # Sends TCP Keep-Alive after MAX_IDLE_SECONDS seconds of idleness, once every INTERVAL_SECONDS seconds, and closes the connection after MAX_FAILED_KEEPALIVES failed pings (e.g. 20 => 1:00:30)
+        MAX_IDLE_SECONDS = 30
+        INTERVAL_SECONDS = 180  # Corresponds to Azure Load Balancer Service 4 minute timeout, with 1 minute of slack
+        MAX_FAILED_KEEPALIVES = 20
+
+        if (
+            sys.platform == "linux"
+            and hasattr(socket, "SOL_SOCKET")
+            and hasattr(socket, "SO_KEEPALIVE")
+            and hasattr(socket, "TCP_KEEPIDLE")
+            and hasattr(socket, "TCP_KEEPINTVL")
+            and hasattr(socket, "TCP_KEEPCNT")
+        ):
+            return [
+                (socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1),
+                (socket.IPPROTO_TCP, socket.TCP_KEEPIDLE, MAX_IDLE_SECONDS),
+                (socket.IPPROTO_TCP, socket.TCP_KEEPINTVL, INTERVAL_SECONDS),
+                (socket.IPPROTO_TCP, socket.TCP_KEEPCNT, MAX_FAILED_KEEPALIVES),
+            ]
+        if (
+            sys.platform == "win32"
+            and hasattr(socket, "SOL_SOCKET")
+            and hasattr(socket, "SO_KEEPALIVE")
+            and hasattr(socket, "TCP_KEEPIDLE")
+            and hasattr(socket, "TCP_KEEPCNT")
+        ):
+            return [
+                (socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1),
+                (socket.IPPROTO_TCP, socket.TCP_KEEPIDLE, MAX_IDLE_SECONDS),
+                (socket.IPPROTO_TCP, socket.TCP_KEEPCNT, MAX_FAILED_KEEPALIVES),
+            ]
+        if sys.platform == "darwin" and hasattr(socket, "SOL_SOCKET") and hasattr(socket, "SO_KEEPALIVE") and hasattr(socket, "IPPROTO_TCP"):
+            TCP_KEEPALIVE = 0x10
+            return [(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1), (socket.IPPROTO_TCP, TCP_KEEPALIVE, INTERVAL_SECONDS)]
 
     def execute(self, database: str, query: str, properties: ClientRequestProperties = None) -> KustoResponseDataSet:
         """
