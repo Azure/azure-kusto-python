@@ -44,7 +44,7 @@ class TokenProviderBase(abc.ABC):
         self._kusto_uri = kusto_uri
         if kusto_uri is not None:
             self._scopes = [kusto_uri + ".defult" if kusto_uri.endswith("/") else kusto_uri + "/.default"]
-            self._cloud_info = CloudSettings.get_cloud_info(kusto_uri)
+            self._cloud_info = CloudSettings.get_cloud_info()
 
     def get_token(self):
         """ Get a token silently from cache or authenticate if cached token is not found """
