@@ -14,7 +14,7 @@ class _AadHelper:
         self.kusto_uri = "{0.scheme}://{0.hostname}".format(urlparse(kcsb.data_source))
         self.username = None
 
-        cloud_info = CloudSettings.get_cloud_info(self.kusto_uri)
+        cloud_info = CloudSettings.get_cloud_info()
         if cloud_info is None:
             raise KustoClientError("Unable to detect cloud instance from DNS Suffix of Kusto Connection String [" + self.kusto_uri + "]")
 
