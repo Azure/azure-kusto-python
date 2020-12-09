@@ -15,9 +15,6 @@ class _AadHelper:
         self.username = None
 
         cloud_info = CloudSettings.get_cloud_info()
-        if cloud_info is None:
-            raise KustoClientError("Unable to detect cloud instance from DNS Suffix of Kusto Connection String [" + self.kusto_uri + "]")
-
         authority = kcsb.authority_id or "organizations"
         aad_authority_uri = cloud_info.aad_authority_uri
         self.authority_uri = aad_authority_uri + authority if aad_authority_uri.endswith("/") else aad_authority_uri + "/" + authority
