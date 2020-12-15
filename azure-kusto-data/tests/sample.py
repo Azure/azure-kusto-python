@@ -53,7 +53,7 @@ user_assigned_client_id = "the AAD identity client id"
 kcsb = KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication(cluster, client_id=user_assigned_client_id)
 
 # In case you want to authenticate with Azure CLI.
-# First, run "az account get-access-token" to cache token locally
+# First, run "az account get-access-token" to cache token locally.
 kcsb = KustoConnectionStringBuilder.with_az_cli_authentication(cluster)
 
 # In case you want to authenticate with AAD username and password
