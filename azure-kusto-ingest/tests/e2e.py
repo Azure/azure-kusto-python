@@ -161,7 +161,9 @@ class TestE2E(unittest.TestCase):
                 cls.test_table
             ),
         )
-        cls.client.execute(cls.test_db, ".create table {0} ingestion json mapping 'JsonMapping' {1}".format(cls.test_table, cls.test_table_json_mapping_reference()))
+        cls.client.execute(
+            cls.test_db, ".create table {0} ingestion json mapping 'JsonMapping' {1}".format(cls.test_table, cls.test_table_json_mapping_reference())
+        )
 
     @classmethod
     def teardown_class(cls):
@@ -369,7 +371,9 @@ class TestE2E(unittest.TestCase):
             "xtextWithNulls",
             "xdynamicWithNulls",
         ]
-        rows = [[0, "00000000-0000-0000-0001-020304050607", 0.0, 0.0, 0, 0, 0, 0, 0, 0, 0, 0, "2014-01-01T01:01:01Z", "Zero", "Zero", "0", "00:00:00", None, ""]]
+        rows = [
+            [0, "00000000-0000-0000-0001-020304050607", 0.0, 0.0, 0, 0, 0, 0, 0, 0, 0, 0, "2014-01-01T01:01:01Z", "Zero", "Zero", "0", "00:00:00", None, ""]
+        ]
         df = DataFrame(data=rows, columns=fields)
         ingestion_properties = IngestionProperties(database=self.test_db, table=self.test_table, flush_immediately=True, data_format=DataFormat.CSV)
         self.ingest_client.ingest_from_dataframe(df, ingestion_properties)
