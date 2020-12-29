@@ -123,16 +123,29 @@ class KustoResultTable:
         if errors:
             raise KustoServiceError(errors[0]["OneApiErrors"][0]["error"]["@message"], json_table)
 
-        self.rows = [KustoResultRow(self.columns, row) for row in json_table["Rows"]]
+        self.raw_columns = json_table["Columns"]
+        self.raw_rows = json_table["Rows"]
+        self.kusto_result_rows = None
+
+    @property
+    def rows(self):
+        if self.kusto_result_rows:
+            return self.kusto_result_rows
+        self.kusto_result_rows = [KustoResultRow(self.columns, row) for row in self.raw_rows]
+        return self.kusto_result_rows
 
     @property
     def _rows(self) -> Iterator:
-        for row in self.rows:
-            yield row._hidden_values
+        for row_index, row in enumerate(self.raw_rows):
+            if self.kusto_result_rows:
+                yield self.kusto_result_rows[row_index]._hidden_values
+            else:
+                kusto_result_row = KustoResultRow(self.columns, row)
+                yield kusto_result_row._hidden_values
 
     @property
     def rows_count(self) -> int:
-        return len(self.rows)
+        return len(self.raw_rows)
 
     @property
     def columns_count(self) -> int:
@@ -146,8 +159,12 @@ class KustoResultTable:
         return self.rows_count
 
     def __iter__(self):
-        for row in self.rows:
-            yield row
+        for row_index, row in enumerate(self.raw_rows):
+            if self.kusto_result_rows:
+                yield self.kusto_result_rows[row_index]
+            else:
+                kusto_result_row = KustoResultRow(self.columns, row)
+                yield kusto_result_row
 
     def __getitem__(self, key):
         return self.rows[key]
