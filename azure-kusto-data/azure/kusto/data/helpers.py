@@ -55,7 +55,7 @@ def dataframe_from_result_table(table: "KustoResultTable"):
         raise TypeError("Expected KustoResultTable got {}".format(type(table).__name__))
 
     columns = [col.column_name for col in table.columns]
-    frame = pd.DataFrame(table._rows, columns=columns)
+    frame = pd.DataFrame(table.raw_rows, columns=columns)
 
     # fix types
     for col in table.columns:
