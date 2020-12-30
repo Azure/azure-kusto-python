@@ -13,11 +13,11 @@ def to_pandas_timedelta(raw_value) -> "pandas.Timedelta":
     if isinstance(raw_value, str):
         # The timespan format Kusto returns is 'd.hh.mm.ss.0000000'
         # Pandas expects 'd days hh.mm.ss.0000000'
-        parts = raw_value.split('.')
+        parts = raw_value.split(".")
         if len(parts) < 2:
             return pd.to_timedelta(raw_value)
         else:
-            formatted_value = raw_value.replace('.', ' days ', 1)
+            formatted_value = raw_value.replace(".", " days ", 1)
             return pd.to_timedelta(formatted_value)
 
 
