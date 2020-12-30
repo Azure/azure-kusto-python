@@ -99,6 +99,11 @@ class KustoResultRow:
         values = [repr(val) for val in self._value_by_name.values()]
         return "KustoResultRow(['{}'], [{}])".format("', '".join(self._value_by_name), ", ".join(values))
 
+    def __eq__(self, other):
+        if len(self) != len(other):
+            return False
+        return repr(self) == repr(other)
+
 
 class KustoResultColumn:
     def __init__(self, json_column: dict, ordinal: int):
@@ -167,7 +172,9 @@ class KustoResultTable:
                 yield kusto_result_row
 
     def __getitem__(self, key):
-        return self.rows[key]
+        if self.kusto_result_rows:
+            return self.kusto_result_rows[key]
+        return KustoResultRow(self.columns, self.raw_rows[key])
 
     def __str__(self):
         d = self.to_dict()
