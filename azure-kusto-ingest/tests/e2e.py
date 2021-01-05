@@ -12,7 +12,7 @@ import uuid
 from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
 from azure.kusto.data.exceptions import KustoServiceError
 from azure.kusto.ingest import (
-    KustoIngestClient,
+    QueuedIngestClient,
     KustoStreamingIngestClient,
     IngestionProperties,
     DataFormat,
@@ -142,7 +142,7 @@ class TestE2E(unittest.TestCase):
         python_version = "_".join([str(v) for v in sys.version_info[:3]])
         cls.test_table = "python_test_{0}_{1}_{2}".format(python_version, str(int(time.time())), random.randint(1, 100000))
         cls.client = KustoClient(cls.engine_kcsb_from_env())
-        cls.ingest_client = KustoIngestClient(cls.dm_kcsb_from_env())
+        cls.ingest_client = QueuedIngestClient(cls.dm_kcsb_from_env())
         cls.streaming_ingest_client = KustoStreamingIngestClient(cls.engine_kcsb_from_env())
 
         cls.input_folder_path = cls.get_file_path()
