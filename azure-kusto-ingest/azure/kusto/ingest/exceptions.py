@@ -25,16 +25,6 @@ class KustoDuplicateMappingError(KustoClientError):
         super(KustoDuplicateMappingError, self).__init__(message)
 
 
-class KustoDuplicateMappingReferenceError(KustoClientError):
-    """
-    Error to be raised when ingestion properties include two mapping references.
-    """
-
-    def __init__(self):
-        message = "Ingestion properties contain two mapping references."
-        super(KustoDuplicateMappingReferenceError, self).__init__(message)
-
-
 class KustoMissingMappingReferenceError(KustoClientError):
     """
     Error to be raised when ingestion properties has data format of Json, SingleJson, MultiJson or Avro

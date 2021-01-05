@@ -6,7 +6,7 @@ import json
 from uuid import UUID
 
 from azure.kusto.ingest._ingestion_blob_info import _IngestionBlobInfo
-from azure.kusto.ingest.exceptions import KustoDuplicateMappingError, KustoDuplicateMappingReferenceError, KustoMappingAndMappingReferenceError
+from azure.kusto.ingest.exceptions import KustoMappingAndMappingReferenceError
 from azure.kusto.ingest import (
     BlobDescriptor,
     IngestionProperties,
@@ -28,13 +28,13 @@ class IngestionBlobInfoTest(unittest.TestCase):
     def test_blob_info_csv_mapping(self):
         """Tests serialization of csv ingestion blob info."""
         validation_policy = ValidationPolicy(ValidationOptions.ValidateCsvInputConstantColumns, ValidationImplications.BestEffort)
-        columnMapping = ColumnMapping("ColumnName", "cslDataType", ordinal=1)
+        column_mapping = ColumnMapping("ColumnName", "cslDataType", ordinal=1)
 
         properties = IngestionProperties(
             database="database",
             table="table",
             data_format=DataFormat.CSV,
-            ingestion_mapping=[columnMapping],
+            ingestion_mapping=[column_mapping],
             additional_tags=["tag"],
             ingest_if_not_exists=["ingestIfNotExistTags"],
             ingest_by_tags=["ingestByTags"],
