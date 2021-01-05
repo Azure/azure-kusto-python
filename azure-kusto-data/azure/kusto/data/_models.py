@@ -139,9 +139,7 @@ class KustoResultTable:
                 yield KustoResultRow(self.columns, row)
 
     def __getitem__(self, key):
-        if self.kusto_result_rows:
-            return self.kusto_result_rows[key]
-        return KustoResultRow(self.columns, self.raw_rows[key])
+        return self.rows[key]
 
     def __str__(self):
         d = self.to_dict()
