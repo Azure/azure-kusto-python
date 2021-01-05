@@ -4,21 +4,9 @@
 import json
 from decimal import Decimal
 from enum import Enum
-from typing import Iterator
 
 from . import _converters
 from .exceptions import KustoServiceError
-
-HAS_PANDAS = True
-
-try:
-    import pandas
-except ImportError as e:
-    HAS_PANDAS = False
-
-# This part is outside the try/catch because a failure here should raise an error
-if HAS_PANDAS:
-    from .helpers import to_pandas_datetime, to_pandas_timedelta, to_decimal
 
 
 class WellKnownDataSet(Enum):
@@ -35,13 +23,9 @@ class KustoResultRow:
 
     conversion_funcs = {"datetime": _converters.to_datetime, "timespan": _converters.to_timedelta, "decimal": Decimal}
 
-    if HAS_PANDAS:
-        pandas_funcs = {"datetime": to_pandas_datetime, "timespan": to_pandas_timedelta, "decimal": to_decimal}
-
     def __init__(self, columns, row):
         self._value_by_name = {}
         self._value_by_index = []
-        self._hidden_values = []
 
         for i, value in enumerate(row):
             column = columns[i]
@@ -50,8 +34,6 @@ class KustoResultRow:
             except AttributeError:
                 self._value_by_index.append(value)
                 self._value_by_name[columns[i]] = value
-                if HAS_PANDAS:
-                    self._hidden_values.append(value)
                 continue
 
             # If you are here to read this, you probably hit some datetime/timedelta inconsistencies.
@@ -59,13 +41,6 @@ class KustoResultRow:
             # One example why one might want this precision, is when working with pandas.
             # In that case, use azure.kusto.data.helpers.dataframe_from_result_table which takes into account the original value.
             typed_value = KustoResultRow.conversion_funcs[column_type](value) if value is not None and column_type in KustoResultRow.conversion_funcs else value
-
-            # This is a special case where plain python will lose precision, so we keep the precise value hidden.
-            # When transforming to pandas, we can use the hidden value to convert to precise pandas/numpy types
-            if HAS_PANDAS:
-                self._hidden_values.append(
-                    KustoResultRow.pandas_funcs[column_type](value, typed_value) if value is not None and column_type in KustoResultRow.pandas_funcs else value
-                )
 
             self._value_by_index.append(typed_value)
             self._value_by_name[column.column_name] = typed_value
@@ -99,6 +74,14 @@ class KustoResultRow:
         values = [repr(val) for val in self._value_by_name.values()]
         return "KustoResultRow(['{}'], [{}])".format("', '".join(self._value_by_name), ", ".join(values))
 
+    def __eq__(self, other):
+        if len(self) != len(other):
+            return False
+        for value_index, value in enumerate(self):
+            if value != other[value_index]:
+                return False
+        return True
+
 
 class KustoResultColumn:
     def __init__(self, json_column: dict, ordinal: int):
@@ -123,16 +106,19 @@ class KustoResultTable:
         if errors:
             raise KustoServiceError(errors[0]["OneApiErrors"][0]["error"]["@message"], json_table)
 
-        self.rows = [KustoResultRow(self.columns, row) for row in json_table["Rows"]]
+        self.raw_columns = json_table["Columns"]
+        self.raw_rows = json_table["Rows"]
+        self.kusto_result_rows = None
 
     @property
-    def _rows(self) -> Iterator:
-        for row in self.rows:
-            yield row._hidden_values
+    def rows(self):
+        if not self.kusto_result_rows:
+            self.kusto_result_rows = [KustoResultRow(self.columns, row) for row in self.raw_rows]
+        return self.kusto_result_rows
 
     @property
     def rows_count(self) -> int:
-        return len(self.rows)
+        return len(self.raw_rows)
 
     @property
     def columns_count(self) -> int:
@@ -146,8 +132,11 @@ class KustoResultTable:
         return self.rows_count
 
     def __iter__(self):
-        for row in self.rows:
-            yield row
+        for row_index, row in enumerate(self.raw_rows):
+            if self.kusto_result_rows:
+                yield self.kusto_result_rows[row_index]
+            else:
+                yield KustoResultRow(self.columns, row)
 
     def __getitem__(self, key):
         return self.rows[key]
