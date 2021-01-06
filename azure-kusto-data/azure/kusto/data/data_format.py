@@ -19,3 +19,5 @@ class DataFormat(Enum):
     MULTIJSON = "multijson"
     ORC = "orc"
     TSVE = "tsve"
+    RAW = "raw"
+    W3CLOGFILE = "w3clogfile"
