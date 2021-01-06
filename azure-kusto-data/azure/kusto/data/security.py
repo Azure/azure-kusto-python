@@ -48,10 +48,7 @@ class _AadHelper:
 
     def acquire_authorization_header(self):
         try:
-            if self.token_provider is not None:
-                return _get_header_from_dict(self.token_provider.get_token())
-            else:
-                return self._acquire_authorization_header()
+            return _get_header_from_dict(self.token_provider.get_token())
         except Exception as error:
             kwargs = self.token_provider.context()
             kwargs["resource"] = self.kusto_uri

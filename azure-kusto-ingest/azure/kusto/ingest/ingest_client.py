@@ -20,9 +20,9 @@ from .exceptions import KustoInvalidEndpointError
 from .ingestion_properties import DataFormat, IngestionProperties
 
 
-class KustoIngestClient:
+class QueuedIngestClient:
     """
-    Kusto ingest client provides methods to allow queued ingestion into kusto (ADX).
+    Queued ingest client provides methods to allow queued ingestion into kusto (ADX).
     To learn more about the different types of ingestions and when to use each, visit:
     https://docs.microsoft.com/en-us/azure/data-explorer/ingest-data-overview#ingestion-methods
     """
