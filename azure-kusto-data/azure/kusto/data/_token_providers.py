@@ -91,12 +91,12 @@ class TokenProviderBase(abc.ABC):
 
         return token
 
-    def _valid_token_or_throw(self, token: dict) -> dict:
+    def _valid_token_or_throw(self, token: dict, context: str = "") -> dict:
         if token is None:
-            raise KustoClientError(self.name() + " failed to obtain a token")
+            raise KustoClientError(self.name() + " - failed to obtain a token. " + context)
 
         if TokenConstants.MSAL_ERROR in token:
-            message = self.name() + " failed to obtain a token: " + token[TokenConstants.MSAL_ERROR]
+            message = self.name() + " - failed to obtain a token. " + context + "\n" + token[TokenConstants.MSAL_ERROR]
             if TokenConstants.MSAL_ERROR_DESCRIPTION in token:
                 message = message + "\n" + token[TokenConstants.MSAL_ERROR_DESCRIPTION]
 
@@ -225,15 +225,17 @@ class AzCliTokenProvider(TokenProviderBase):
             self._authority_uri = stored_token[TokenConstants.AZ_AUTHORITY]
             self._username = stored_token[TokenConstants.AZ_USER_ID]
         else:
-            raise KustoClientError("Unable to obtain a refresh token from Az-Cli")
+            raise KustoClientError("Unable to obtain a refresh token from Az-Cli. Calling 'az login' may fix this issue.")
 
         if self._msal_client is None:
             self._msal_client = PublicClientApplication(client_id=self._client_id, authority=self._authority_uri)
 
-        if refresh_token is not None:
+        try:
             token = self._msal_client.acquire_token_by_refresh_token(refresh_token, self._scopes)
+        except Exception as ex:
+            raise KustoClientError("Unable to obtain with Az-Cli refresh token. Calling 'az login' may fix this issue.\n" + str(ex))
 
-        return self._valid_token_or_throw(token)
+        return self._valid_token_or_throw(token, "Calling 'az login' may fix this issue.")
 
     def _get_token_from_cache_impl(self) -> dict:
         token = None
