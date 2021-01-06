@@ -22,6 +22,8 @@ class DataFormat(Enum):
     MULTIJSON = "multijson"
     ORC = "orc"
     TSVE = "tsve"
+    RAW = "raw"
+    W3CLOGFILE = "w3clogfile"
 
 
 class IngestionMappingType(Enum):
@@ -30,6 +32,7 @@ class IngestionMappingType(Enum):
     AVRO = "Avro"
     PARQUET = "Parquet"
     ORC = "Orc"
+    W3CLOGFILE = "W3CLogFile"
 
 
 class ValidationOptions(IntEnum):
