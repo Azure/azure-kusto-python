@@ -12,7 +12,7 @@ Initialization is done the usual way, with a connection string KustoConnectionSt
 
 .. code-block:: python
 
-    from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
+    from azure.kusto.data import KustoConnectionStringBuilder
 
     cluster = "<insert here your cluster name>"
     client_id = "<insert here your AAD application id>"
@@ -20,7 +20,6 @@ Initialization is done the usual way, with a connection string KustoConnectionSt
     authority_id = "<insert here your AAD tenant id>"
 
     kcsb = KustoConnectionStringBuilder.with_aad_application_key_authentication(cluster, client_id, client_secret, authority_id)
-    client = KustoClient(kcsb)
 
 
 
