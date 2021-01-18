@@ -66,9 +66,40 @@ queues will also ensure that the performance of the caller is not blocked waitin
     logger.setLevel(logging.INFO)
 
 
+Table
+--------
+
+The following query will create the appropriate table in Kusto (just replace <table-name> with the appropriate name)
+
+.. code-block:: text
+
+    .create table <table-name> (
+        name:string,
+        msg:string,
+        args:string,
+        levelname:string,
+        levelno:int32,
+        pathname:string,
+        filename:string,
+        module:string,
+        exc_info:string,
+        exc_text:string,
+        stack_info:string,
+        lineno:int32,
+        funcName:string,
+        created:datetime,
+        msecs:real,
+        relativeCreated:datetime,
+        thread:long,
+        threadName:string,
+        processName:string,
+        process:long,
+        message:string,
+        asctime:datetime,
+        extra:dynamic
+    )
+
 
 * `How to install the package <https://github.com/Azure/azure-kusto-python#install>`_.
-
-* `Kusto query sample <https://github.com/Azure/azure-kusto-python/blob/master/azure-kusto-data/tests/sample.py>`_.
 
 * `GitHub Repository <https://github.com/Azure/azure-kusto-python/tree/master/azure-kusto-data>`_.
