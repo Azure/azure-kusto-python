@@ -27,7 +27,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r dev_requirements.txt
         pip install codecov coverage
-        pip install ./azure-kusto-data ./azure-kusto-ingest
+        pip install ./azure-kusto-data ./azure-kusto-ingest ./azure-kusto-logging
         pip freeze
     - name: Lint with black
       if: matrix.python-version == 3.6 # deploy is on 3.6 so black is needed only here

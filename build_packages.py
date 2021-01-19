@@ -10,7 +10,7 @@ except ImportError:  # Should not happen, but at worst in most case this is the 
     from pip._vendor.packaging.version import parse as Version, InvalidVersion
 
 DEFAULT_DESTINATION_FOLDER = os.path.join("..", "dist")
-package_list = ["azure-kusto-data", "azure-kusto-ingest"]
+package_list = ["azure-kusto-data", "azure-kusto-ingest", "azure-kusto-logging"]
 
 
 def create_package(name, dest_folder=DEFAULT_DESTINATION_FOLDER):
