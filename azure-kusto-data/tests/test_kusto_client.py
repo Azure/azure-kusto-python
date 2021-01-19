@@ -198,7 +198,7 @@ class KustoClientTests(unittest.TestCase):
         """Tests KustoResponse to pandas.DataFrame."""
 
         from pandas import DataFrame, Series
-        from pandas.util.testing import assert_frame_equal
+        from pandas.testing import assert_frame_equal
 
         client = KustoClient("https://somecluster.kusto.windows.net")
         data_frame = dataframe_from_result_table(client.execute_query("PythonTest", "Deft").primary_results[0])

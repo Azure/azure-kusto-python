@@ -52,7 +52,7 @@ class KustoConnectionStringBuilder:
         az_cli = "AZ CLI"
 
         @classmethod
-        def parse(cls, key: str) -> "ValidKeywords":
+        def parse(cls, key: str) -> "KustoConnectionStringBuilder.ValidKeywords":
             """Create a valid keyword."""
             key = key.lower().strip()
             if key in ["data source", "addr", "address", "network address", "server"]:

@@ -6,7 +6,6 @@ from typing import List
 
 from azure.kusto.data import KustoClient
 from azure.kusto.data._models import KustoResultTable
-from azure.kusto.data.exceptions import KustoServiceError, KustoClientError
 
 _URI_FORMAT = re.compile("https://(\\w+).(queue|blob|table).(core.\\w+.\\w+)/([\\w,-]+)\\?(.*)")
 _SHOW_VERSION = ".show version"
@@ -85,7 +84,8 @@ class _ResourceManager:
             self._ingest_client_resources = self._get_ingest_client_resources_from_service()
             self._ingest_client_resources_last_update = datetime.utcnow()
 
-    def _get_resource_by_name(self, table: KustoResultTable, resource_name: str):
+    @staticmethod
+    def _get_resource_by_name(table: KustoResultTable, resource_name: str):
         return [_ResourceUri.parse(row["StorageRoot"]) for row in table if row["ResourceTypeName"] == resource_name]
 
     def _get_ingest_client_resources_from_service(self):

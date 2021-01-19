@@ -1,8 +1,14 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
 from urllib.parse import urlparse
+
 from .exceptions import KustoAuthenticationError
 from ._token_providers import *
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from . import KustoConnectionStringBuilder
 
 
 class _AadHelper:

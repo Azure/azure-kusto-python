@@ -6,10 +6,8 @@ import struct
 import uuid
 from gzip import GzipFile
 from io import BytesIO, SEEK_END
-from typing import AnyStr, Union
+from typing import AnyStr, Union, IO
 from zipfile import ZipFile
-
-from typing.io import IO
 
 
 def assert_uuid4(maybe_uuid: str, error_message: str):

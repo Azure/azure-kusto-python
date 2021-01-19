@@ -3,6 +3,7 @@
 import io
 
 from azure.kusto.data import KustoConnectionStringBuilder
+
 from azure.kusto.ingest import (
     QueuedIngestClient,
     IngestionProperties,
@@ -10,8 +11,6 @@ from azure.kusto.ingest import (
     BlobDescriptor,
     StreamDescriptor,
     DataFormat,
-    ReportLevel,
-    IngestionMappingType,
     KustoStreamingIngestClient,
 )
 

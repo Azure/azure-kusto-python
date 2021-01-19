@@ -1,6 +1,5 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
-import datetime
 import io
 import os
 import random
@@ -8,6 +7,7 @@ import sys
 import time
 import unittest
 import uuid
+from typing import Optional
 
 from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
 from azure.kusto.data.exceptions import KustoServiceError
@@ -31,6 +31,16 @@ CLEAR_DB_CACHE = ".clear database cache streamingingestion schema"
 
 class TestE2E(unittest.TestCase):
     """A class to define mappings to deft table."""
+
+    engine_cs: Optional[str]
+    dm_cs: Optional[str]
+    app_id: Optional[str]
+    app_key: Optional[str]
+    auth_id: Optional[str]
+    test_db: Optional[str]
+    client: KustoClient
+    test_table: str
+    current_count: int
 
     @staticmethod
     def get_test_table_csv_mappings():

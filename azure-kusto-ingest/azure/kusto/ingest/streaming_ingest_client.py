@@ -6,8 +6,7 @@ import time
 import uuid
 from gzip import GzipFile
 from io import TextIOWrapper, BytesIO
-from typing import Union, AnyStr
-from typing.io import IO
+from typing import Union, AnyStr, IO
 
 from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
 

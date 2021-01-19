@@ -2,8 +2,8 @@
 # Licensed under the MIT License
 import abc
 import webbrowser
-from typing import Callable
-from msal import ConfidentialClientApplication, PublicClientApplication
+from typing import Callable, Optional
+from msal import ConfidentialClientApplication, PublicClientApplication, ClientApplication
 from azure.identity import ManagedIdentityCredential
 from .exceptions import KustoClientError
 from ._cloud_settings import CloudSettings
@@ -40,7 +40,7 @@ class TokenProviderBase(abc.ABC):
     _cloud_info = None
     _scopes = None
 
-    def __init__(self, kusto_uri: str):
+    def __init__(self, kusto_uri: Optional[str]):
         self._kusto_uri = kusto_uri
         if kusto_uri is not None:
             self._scopes = [kusto_uri + ".defult" if kusto_uri.endswith("/") else kusto_uri + "/.default"]
@@ -75,23 +75,23 @@ class TokenProviderBase(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def _get_token_impl(self) -> dict:
+    def _get_token_impl(self) -> Optional[dict]:
         """ implement actual token acquisition here """
         pass
 
     @abc.abstractmethod
-    def _get_token_from_cache_impl(self) -> dict:
+    def _get_token_from_cache_impl(self) -> Optional[dict]:
         """ Implement cache checks here, return None if cache check fails """
         pass
 
     @staticmethod
-    def _valid_token_or_none(token: dict) -> dict:
+    def _valid_token_or_none(token: dict) -> Optional[dict]:
         if token is None or TokenConstants.MSAL_ERROR in token:
             return None
 
         return token
 
-    def _valid_token_or_throw(self, token: dict, context: str = "") -> dict:
+    def _valid_token_or_throw(self, token: Optional[dict], context: str = "") -> dict:
         if token is None:
             raise KustoClientError(self.name() + " - failed to obtain a token. " + context)
 
@@ -122,7 +122,7 @@ class BasicTokenProvider(TokenProviderBase):
     def _init_impl(self):
         pass
 
-    def _get_token_impl(self) -> dict:
+    def _get_token_impl(self) -> Optional[dict]:
         return None
 
     def _get_token_from_cache_impl(self) -> dict:
@@ -146,7 +146,7 @@ class CallbackTokenProvider(TokenProviderBase):
     def _init_impl(self):
         pass
 
-    def _get_token_impl(self) -> dict:
+    def _get_token_impl(self) -> Optional[dict]:
         return None
 
     def _get_token_from_cache_impl(self) -> dict:
@@ -181,9 +181,9 @@ class MsiTokenProvider(TokenProviderBase):
         try:
             self.msi_auth_context = ManagedIdentityCredential(**self._msi_args)
         except Exception as e:
-            raise KustoClientError("Failed to initialize MSI ManagedIdentityCredential with [" + str(self._msi_params) + "]\n" + str(e))
+            raise KustoClientError("Failed to initialize MSI ManagedIdentityCredential with [" + str(self._msi_args) + "]\n" + str(e))
 
-    def _get_token_impl(self) -> dict:
+    def _get_token_impl(self) -> Optional[dict]:
         return None
 
     def _get_token_from_cache_impl(self) -> dict:
@@ -191,7 +191,7 @@ class MsiTokenProvider(TokenProviderBase):
             msi_token = self.msi_auth_context.get_token(self._kusto_uri)
             return {TokenConstants.MSAL_TOKEN_TYPE: TokenConstants.BEARER_TYPE, TokenConstants.MSAL_ACCESS_TOKEN: msi_token.token}
         except Exception as e:
-            raise KustoClientError("Failed to obtain MSI token for '" + self._kusto_uri + "' with [" + str(self._msi_params) + "]\n" + str(e))
+            raise KustoClientError("Failed to obtain MSI token for '" + self._kusto_uri + "' with [" + str(self._msi_args) + "]\n" + str(e))
 
 
 class AzCliTokenProvider(TokenProviderBase):
@@ -199,10 +199,10 @@ class AzCliTokenProvider(TokenProviderBase):
 
     def __init__(self, kusto_uri: str):
         super().__init__(kusto_uri)
-        self._msal_client = None
-        self._client_id = None
+        self._msal_client: Optional[ClientApplication] = None
+        self._client_id: Optional[str] = None
         self._authority_uri = None
-        self._username = None
+        self._username: Optional[str] = None
 
     @staticmethod
     def name() -> str:
@@ -214,10 +214,9 @@ class AzCliTokenProvider(TokenProviderBase):
     def _init_impl(self):
         pass
 
-    def _get_token_impl(self) -> dict:
+    def _get_token_impl(self) -> Optional[dict]:
         # try and obtain the refresh token from AzCli
         refresh_token = None
-        token = None
         stored_token = self._get_azure_cli_auth_token()
         if TokenConstants.AZ_REFRESH_TOKEN in stored_token and TokenConstants.AZ_CLIENT_ID in stored_token and TokenConstants.AZ_AUTHORITY in stored_token:
             refresh_token = stored_token[TokenConstants.AZ_REFRESH_TOKEN]
@@ -237,7 +236,7 @@ class AzCliTokenProvider(TokenProviderBase):
 
         return self._valid_token_or_throw(token, "Calling 'az login' may fix this issue.")
 
-    def _get_token_from_cache_impl(self) -> dict:
+    def _get_token_from_cache_impl(self) -> Optional[dict]:
         token = None
         if self._msal_client is not None:
             account = None
@@ -312,7 +311,7 @@ class UserPassTokenProvider(TokenProviderBase):
         token = self._msal_client.acquire_token_by_username_password(username=self._user, password=self._pass, scopes=self._scopes)
         return self._valid_token_or_throw(token)
 
-    def _get_token_from_cache_impl(self) -> dict:
+    def _get_token_from_cache_impl(self) -> Optional[dict]:
         account = None
         if self._user is not None:
             accounts = self._msal_client.get_accounts(self._user)
@@ -365,7 +364,7 @@ class DeviceLoginTokenProvider(TokenProviderBase):
 
         return self._valid_token_or_throw(token)
 
-    def _get_token_from_cache_impl(self) -> dict:
+    def _get_token_from_cache_impl(self) -> Optional[dict]:
         token = self._msal_client.acquire_token_silent(scopes=self._scopes, account=self._account)
         return self._valid_token_or_none(token)
 
@@ -390,11 +389,11 @@ class ApplicationKeyTokenProvider(TokenProviderBase):
     def _init_impl(self):
         self._msal_client = ConfidentialClientApplication(client_id=self._app_client_id, client_credential=self._app_key, authority=self._auth)
 
-    def _get_token_impl(self) -> dict:
+    def _get_token_impl(self) -> Optional[dict]:
         token = self._msal_client.acquire_token_for_client(scopes=self._scopes)
         return self._valid_token_or_throw(token)
 
-    def _get_token_from_cache_impl(self) -> dict:
+    def _get_token_from_cache_impl(self) -> Optional[dict]:
         token = self._msal_client.acquire_token_silent(scopes=self._scopes, account=None)
         return self._valid_token_or_none(token)
 
@@ -419,15 +418,15 @@ class ApplicationCertificateTokenProvider(TokenProviderBase):
         return "ApplicationCertificateTokenProvider"
 
     def context(self) -> dict:
-        return {"authority": self._auth, "client_id": self._app_client_id, "thumbprint": self._cert_credentials[TokenConstants.MSAL_THUMBPRINT]}
+        return {"authority": self._auth, "client_id": self._client_id, "thumbprint": self._cert_credentials[TokenConstants.MSAL_THUMBPRINT]}
 
     def _init_impl(self):
         self._msal_client = ConfidentialClientApplication(client_id=self._client_id, client_credential=self._cert_credentials, authority=self._auth)
 
-    def _get_token_impl(self) -> dict:
+    def _get_token_impl(self) -> Optional[dict]:
         token = self._msal_client.acquire_token_for_client(scopes=self._scopes)
         return self._valid_token_or_throw(token)
 
-    def _get_token_from_cache_impl(self) -> dict:
+    def _get_token_from_cache_impl(self) -> Optional[dict]:
         token = self._msal_client.acquire_token_silent(scopes=self._scopes, account=None)
         return self._valid_token_or_none(token)

@@ -35,7 +35,7 @@ class MockProvider(TokenProviderBase):
         self._silent_token = True
         return {TokenConstants.MSAL_ACCESS_TOKEN: "token"}
 
-    def _get_token_from_cache_impl(self) -> dict:
+    def _get_token_from_cache_impl(self) -> Optional[dict]:
         if self._silent_token:
             return {TokenConstants.MSAL_ACCESS_TOKEN: "token"}
 
