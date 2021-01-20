@@ -32,15 +32,15 @@ CLEAR_DB_CACHE = ".clear database cache streamingingestion schema"
 class TestE2E(unittest.TestCase):
     """A class to define mappings to deft table."""
 
-    engine_cs: Optional[str]
-    dm_cs: Optional[str]
-    app_id: Optional[str]
-    app_key: Optional[str]
-    auth_id: Optional[str]
-    test_db: Optional[str]
-    client: KustoClient
-    test_table: str
-    current_count: int
+    engine_cs = None  # type: Optional[str]
+    dm_cs = None  # type: Optional[str]
+    app_id = None  # type: Optional[str]
+    app_key = None  # type: Optional[str]
+    auth_id = None  # type: Optional[str]
+    test_db = None  # type: Optional[str]
+    client = None  # type: KustoClient
+    test_table = None  # type: str
+    current_count = None  # type: int
 
     @staticmethod
     def get_test_table_csv_mappings():
