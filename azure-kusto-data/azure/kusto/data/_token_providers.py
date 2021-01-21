@@ -13,6 +13,7 @@ from ._cloud_settings import CloudSettings
 try:
     from asgiref.sync import sync_to_async
 except ImportError:
+
     def sync_to_async(f):
         raise KustoAioSyntaxError()
 
@@ -184,6 +185,7 @@ class CallbackTokenProvider(TokenProviderBase):
 
         return {TokenConstants.MSAL_TOKEN_TYPE: TokenConstants.BEARER_TYPE, TokenConstants.MSAL_ACCESS_TOKEN: caller_token}
 
+
 class MsiTokenProvider(TokenProviderBase):
     """
     MSI Token Provider obtains a token from the MSI endpoint
@@ -230,6 +232,7 @@ class MsiTokenProvider(TokenProviderBase):
             return {TokenConstants.MSAL_TOKEN_TYPE: TokenConstants.BEARER_TYPE, TokenConstants.MSAL_ACCESS_TOKEN: msi_token.token}
         except Exception as e:
             raise KustoClientError("Failed to obtain MSI token for '" + self._kusto_uri + "' with [" + str(self._msi_args) + "]\n" + str(e))
+
 
 class AzCliTokenProvider(TokenProviderBase):
     """ AzCli Token Provider obtains a refresh token from the AzCli cache and uses it to authenticate with MSAL """

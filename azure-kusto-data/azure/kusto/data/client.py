@@ -166,7 +166,7 @@ class KustoConnectionStringBuilder:
 
     @classmethod
     def with_aad_user_password_authentication(
-            cls, connection_string: str, user_id: str, password: str, authority_id: str = "common"
+        cls, connection_string: str, user_id: str, password: str, authority_id: str = "common"
     ) -> "KustoConnectionStringBuilder":
         """
         Creates a KustoConnection string builder that will authenticate with AAD user name and
@@ -204,7 +204,7 @@ class KustoConnectionStringBuilder:
 
     @classmethod
     def with_aad_application_key_authentication(
-            cls, connection_string: str, aad_app_id: str, app_key: str, authority_id: str
+        cls, connection_string: str, aad_app_id: str, app_key: str, authority_id: str
     ) -> "KustoConnectionStringBuilder":
         """
         Creates a KustoConnection string builder that will authenticate with AAD application and key.
@@ -226,7 +226,7 @@ class KustoConnectionStringBuilder:
 
     @classmethod
     def with_aad_application_certificate_authentication(
-            cls, connection_string: str, aad_app_id: str, certificate: str, thumbprint: str, authority_id: str
+        cls, connection_string: str, aad_app_id: str, certificate: str, thumbprint: str, authority_id: str
     ) -> "KustoConnectionStringBuilder":
         """
         Creates a KustoConnection string builder that will authenticate with AAD application using
@@ -254,7 +254,7 @@ class KustoConnectionStringBuilder:
 
     @classmethod
     def with_aad_application_certificate_sni_authentication(
-            cls, connection_string: str, aad_app_id: str, private_certificate: str, public_certificate: str, thumbprint: str, authority_id: str
+        cls, connection_string: str, aad_app_id: str, private_certificate: str, public_certificate: str, thumbprint: str, authority_id: str
     ) -> "KustoConnectionStringBuilder":
         """
         Creates a KustoConnection string builder that will authenticate with AAD application using
@@ -328,7 +328,7 @@ class KustoConnectionStringBuilder:
 
     @classmethod
     def with_aad_managed_service_identity_authentication(
-            cls, connection_string: str, client_id: str = None, object_id: str = None, msi_res_id: str = None, timeout: int = None
+        cls, connection_string: str, client_id: str = None, object_id: str = None, msi_res_id: str = None, timeout: int = None
     ) -> "KustoConnectionStringBuilder":
         """
         Creates a KustoConnection string builder that will authenticate with AAD application, using
@@ -691,12 +691,12 @@ class KustoClient(_KustoClientBase):
         MAX_FAILED_KEEPALIVES = 20
 
         if (
-                sys.platform == "linux"
-                and hasattr(socket, "SOL_SOCKET")
-                and hasattr(socket, "SO_KEEPALIVE")
-                and hasattr(socket, "TCP_KEEPIDLE")
-                and hasattr(socket, "TCP_KEEPINTVL")
-                and hasattr(socket, "TCP_KEEPCNT")
+            sys.platform == "linux"
+            and hasattr(socket, "SOL_SOCKET")
+            and hasattr(socket, "SO_KEEPALIVE")
+            and hasattr(socket, "TCP_KEEPIDLE")
+            and hasattr(socket, "TCP_KEEPINTVL")
+            and hasattr(socket, "TCP_KEEPCNT")
         ):
             return [
                 (socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1),
@@ -705,11 +705,11 @@ class KustoClient(_KustoClientBase):
                 (socket.IPPROTO_TCP, socket.TCP_KEEPCNT, MAX_FAILED_KEEPALIVES),
             ]
         if (
-                sys.platform == "win32"
-                and hasattr(socket, "SOL_SOCKET")
-                and hasattr(socket, "SO_KEEPALIVE")
-                and hasattr(socket, "TCP_KEEPIDLE")
-                and hasattr(socket, "TCP_KEEPCNT")
+            sys.platform == "win32"
+            and hasattr(socket, "SOL_SOCKET")
+            and hasattr(socket, "SO_KEEPALIVE")
+            and hasattr(socket, "TCP_KEEPIDLE")
+            and hasattr(socket, "TCP_KEEPCNT")
         ):
             return [
                 (socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1),
@@ -765,13 +765,13 @@ class KustoClient(_KustoClientBase):
             raise KustoServiceError([e.response_json], e.response) from e
 
     def execute_streaming_ingest(
-            self,
-            database: str,
-            table: str,
-            stream: io.IOBase,
-            stream_format: Union[DataFormat, str],
-            properties: ClientRequestProperties = None,
-            mapping_name: str = None,
+        self,
+        database: str,
+        table: str,
+        stream: io.IOBase,
+        stream_format: Union[DataFormat, str],
+        properties: ClientRequestProperties = None,
+        mapping_name: str = None,
     ):
         """
         Execute streaming ingest against this client
@@ -797,8 +797,9 @@ class KustoClient(_KustoClientBase):
                 "An error occurred while trying to ingest: Status: {0.status_code}, Reason: {0.reason}, Text: {0.text}".format(e.response), e.response
             ) from e
 
-    def _execute(self, endpoint: str, database: str, query: Optional[str], payload: Optional[io.IOBase], timeout: timedelta,
-                 properties: ClientRequestProperties = None):
+    def _execute(
+        self, endpoint: str, database: str, query: Optional[str], payload: Optional[io.IOBase], timeout: timedelta, properties: ClientRequestProperties = None
+    ):
         """Executes given query against this client"""
         request_params = ExecuteRequestParams(database, payload, properties, query, timeout, self._request_headers)
         json_payload = request_params.json_payload
