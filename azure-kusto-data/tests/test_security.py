@@ -14,7 +14,7 @@ def test_unauthorized_exception():
     cluster = "https://somecluster.kusto.windows.net"
     username = "username@microsoft.com"
     kcsb = KustoConnectionStringBuilder.with_aad_user_password_authentication(cluster, username, "StrongestPasswordEver", "authorityName")
-    aad_helper = _AadHelper(kcsb)
+    aad_helper = _AadHelper(kcsb, False)
 
     try:
         aad_helper.acquire_authorization_header()
@@ -49,7 +49,7 @@ def test_msi_auth():
         # KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication(KUSTO_TEST_URI, msi_res_id=res_guid, timeout=1),
     ]
 
-    helpers = [_AadHelper(i) for i in kcsb]
+    helpers = [_AadHelper(i, False) for i in kcsb]
 
     try:
         helpers[0].acquire_authorization_header()
@@ -77,8 +77,8 @@ def test_token_provider_auth():
     valid_kcsb = KustoConnectionStringBuilder.with_token_provider(KUSTO_TEST_URI, valid_token_provider)
     invalid_kcsb = KustoConnectionStringBuilder.with_token_provider(KUSTO_TEST_URI, invalid_token_provider)
 
-    valid_helper = _AadHelper(valid_kcsb)
-    invalid_helper = _AadHelper(invalid_kcsb)
+    valid_helper = _AadHelper(valid_kcsb, False)
+    invalid_helper = _AadHelper(invalid_kcsb, False)
 
     auth_header = valid_helper.acquire_authorization_header()
     assert auth_header.index(valid_token_provider()) > -1
@@ -95,8 +95,8 @@ def test_user_app_token_auth():
     user_kcsb = KustoConnectionStringBuilder.with_aad_user_token_authentication(KUSTO_TEST_URI, token)
     app_kcsb = KustoConnectionStringBuilder.with_aad_application_token_authentication(KUSTO_TEST_URI, token)
 
-    user_helper = _AadHelper(user_kcsb)
-    app_helper = _AadHelper(app_kcsb)
+    user_helper = _AadHelper(user_kcsb, False)
+    app_helper = _AadHelper(app_kcsb, False)
 
     auth_header = user_helper.acquire_authorization_header()
     assert auth_header.index(token) > -1

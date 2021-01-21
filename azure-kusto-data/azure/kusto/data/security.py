@@ -10,7 +10,7 @@ class _AadHelper:
     authority_uri = None
     token_provider = None
 
-    def __init__(self, kcsb: "KustoConnectionStringBuilder"):
+    def __init__(self, kcsb: "KustoConnectionStringBuilder", is_async: bool):
         self.kusto_uri = "{0.scheme}://{0.hostname}".format(urlparse(kcsb.data_source))
         self.username = None
 
@@ -34,7 +34,7 @@ class _AadHelper:
                 kcsb.application_public_certificate,
             )
         elif kcsb.msi_authentication:
-            self.token_provider = MsiTokenProvider(self.kusto_uri, kcsb.msi_parameters)
+            self.token_provider = MsiTokenProvider(is_async, self.kusto_uri, kcsb.msi_parameters)
         elif kcsb.user_token:
             self.token_provider = BasicTokenProvider(kcsb.user_token)
         elif kcsb.application_token:
@@ -49,6 +49,14 @@ class _AadHelper:
     def acquire_authorization_header(self):
         try:
             return _get_header_from_dict(self.token_provider.get_token())
+        except Exception as error:
+            kwargs = self.token_provider.context()
+            kwargs["resource"] = self.kusto_uri
+            raise KustoAuthenticationError(self.token_provider.name(), error, **kwargs)
+
+    async def acquire_authorization_header_async(self):
+        try:
+            return _get_header_from_dict(await self.token_provider.get_token_async())
         except Exception as error:
             kwargs = self.token_provider.context()
             kwargs["resource"] = self.kusto_uri

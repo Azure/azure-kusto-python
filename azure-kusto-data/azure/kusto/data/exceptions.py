@@ -40,6 +40,15 @@ class KustoClientError(KustoError):
     """Raised when a Kusto client is unable to send or complete a request."""
 
 
+class KustoRequestException(KustoError):
+    """Raised when a Kusto request fails"""
+
+    def __init__(self, response, response_json):
+        super().__init__()
+        self.response = response
+        self.response_json = response_json
+
+
 class KustoAuthenticationError(KustoClientError):
     """Raised when authentication fails."""
 
@@ -58,3 +67,10 @@ class KustoAuthenticationError(KustoClientError):
 
     def __repr__(self):
         return "KustoAuthenticationError('{}', '{}', '{}')".format(self.authentication_method, repr(self.exception), self.kwargs)
+
+
+class KustoAioSyntaxError(SyntaxError):
+    """Raised when trying to use aio syntax without installing the needed modules"""
+
+    def __init__(self):
+        super().__init__("Aio modules not installed, run 'pip install azure-kusto-data[aio]' to leverage aio capabilities")
