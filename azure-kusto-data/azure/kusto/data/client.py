@@ -671,7 +671,7 @@ class KustoClient(_KustoClientBase):
         self._query_endpoint = "{0}/v2/rest/query".format(self._kusto_cluster)
         self._streaming_ingest_endpoint = "{0}/v1/rest/ingest/".format(self._kusto_cluster)
         # notice that in this context, federated actually just stands for add auth, not aad federated auth (legacy code)
-        self._auth_provider = _AadHelper(kcsb, False) if kcsb.aad_federated_security else None
+        self._auth_provider = _AadHelper(self._kcsb, False) if self._kcsb.aad_federated_security else None
 
     def set_http_retries(self, max_retries):
         """

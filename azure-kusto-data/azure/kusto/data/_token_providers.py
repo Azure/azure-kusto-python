@@ -67,7 +67,7 @@ class TokenProviderBase(abc.ABC):
 
         return self._valid_token_or_throw(token)
 
-    def get_token_async(self):
+    async def get_token_async(self):
         """ Get a token asynchronously silently from cache or authenticate if cached token is not found """
         if not self._initialized:
             self._init_impl()
