@@ -1,6 +1,7 @@
 """Tests for KustoClient."""
 import json
 import sys
+import unittest
 
 import pytest
 from azure.kusto.data._decorators import aio_documented_by
@@ -35,7 +36,7 @@ if sys.version_info < (3, 6):
 
 @pytest.mark.skipif(not run_aio_tests, reason="requires aio")
 @aio_documented_by(KustoClientTestsSync)
-class KustoClientTests(KustoClientTestsMixin):
+class KustoClientTests(KustoClientTestsMixin, unittest.TestCase):
     @staticmethod
     def _mock_callback(url, **kwargs):
         body = json.dumps(mocked_requests_post(str(url), **kwargs).json())
