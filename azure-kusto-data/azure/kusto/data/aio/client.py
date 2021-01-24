@@ -27,6 +27,9 @@ class KustoClient(_KustoClientBase):
         self._auth_provider = _AadHelper(self._kcsb, True) if self._kcsb.aad_federated_security else None
         self._session = ClientSession()
 
+    async def __aenter__(self) -> "KustoClient":
+        return self
+
     def __aexit__(self, exc_type, exc_val, exc_tb):
         self._session.__aexit__(exc_type, exc_val, exc_tb)
 
@@ -62,20 +65,11 @@ class KustoClient(_KustoClientBase):
 
         await self._execute(endpoint, database, None, stream, self._streaming_ingest_default_timeout, properties)
 
-    async def _query(self, endpoint: str, **kwargs) -> list:
-        raw_response = await self._run_request(endpoint, **kwargs)
-        response = raw_response.response
-        response_json = raw_response.response_json
-
-        if response.status != 200:
-            raise KustoServiceError([response_json], response)
-
-        return response_json
-
     @aio_documented_by(KustoClientSync._execute)
     async def _execute(
         self, endpoint: str, database: str, query: Optional[str], payload: Optional[io.IOBase], timeout: timedelta, properties: ClientRequestProperties = None
     ) -> KustoResponseDataSet:
+
         request_params = ExecuteRequestParams(database, payload, properties, query, timeout, self._request_headers)
         json_payload = request_params.json_payload
         request_headers = request_params.request_headers
@@ -84,12 +78,10 @@ class KustoClient(_KustoClientBase):
         if self._auth_provider:
             request_headers["Authorization"] = await self._auth_provider.acquire_authorization_header_async()
 
-        response_json = await self._query(endpoint, headers=request_headers, data=payload, json=json_payload, timeout=timeout.seconds)
-
-        return self._kusto_parse_by_endpoint(endpoint, response_json)
-
-    async def _run_request(self, endpoint: str, **kwargs) -> ResponseTuple:
-        async with self._session.post(endpoint, **kwargs) as response:
+        async with self._session.post(endpoint, headers=request_headers, data=payload, json=json_payload, timeout=timeout.seconds) as response:
             response_json = await response.json()
 
-            return ResponseTuple(response, response_json)
+            if response.status != 200:
+                raise KustoServiceError([response_json], response)
+
+        return self._kusto_parse_by_endpoint(endpoint, response_json)

@@ -17,7 +17,7 @@ from urllib3.connection import HTTPConnection
 
 from ._version import VERSION
 from .data_format import DataFormat
-from .exceptions import KustoServiceError, KustoRequestException
+from .exceptions import KustoServiceError
 from .response import KustoResponseDataSetV1, KustoResponseDataSetV2, KustoResponseDataSet
 from .security import _AadHelper
 
@@ -623,6 +623,7 @@ class _KustoClientBase:
         # Create a session object for connection pooling
         self._mgmt_endpoint = "{0}/v1/rest/mgmt".format(self._kusto_cluster)
         self._query_endpoint = "{0}/v2/rest/query".format(self._kusto_cluster)
+        self._streaming_ingest_endpoint = "{0}/v1/rest/ingest/".format(self._kusto_cluster)
         self._request_headers = {"Accept": "application/json", "Accept-Encoding": "gzip,deflate", "x-ms-client-version": "Kusto.Python.Client:" + VERSION}
 
     @staticmethod
@@ -667,9 +668,6 @@ class KustoClient(_KustoClientBase):
         self._session.mount("http://", adapter)
         self._session.mount("https://", adapter)
 
-        self._mgmt_endpoint = "{0}/v1/rest/mgmt".format(self._kusto_cluster)
-        self._query_endpoint = "{0}/v2/rest/query".format(self._kusto_cluster)
-        self._streaming_ingest_endpoint = "{0}/v1/rest/ingest/".format(self._kusto_cluster)
         # notice that in this context, federated actually just stands for add auth, not aad federated auth (legacy code)
         self._auth_provider = _AadHelper(self._kcsb, False) if self._kcsb.aad_federated_security else None
 
@@ -744,10 +742,7 @@ class KustoClient(_KustoClientBase):
         :return: Kusto response data set.
         :rtype: azure.kusto.data.response.KustoResponseDataSet
         """
-        try:
-            return self._execute(self._query_endpoint, database, query, None, self._query_default_timeout, properties)
-        except KustoRequestException as e:
-            raise KustoServiceError([e.response_json], e.response) from e
+        return self._execute(self._query_endpoint, database, query, None, self._query_default_timeout, properties)
 
     def execute_mgmt(self, database: str, query: str, properties: ClientRequestProperties = None) -> KustoResponseDataSet:
         """
@@ -759,10 +754,7 @@ class KustoClient(_KustoClientBase):
         :return: Kusto response data set.
         :rtype: azure.kusto.data.response.KustoResponseDataSet
         """
-        try:
-            return self._execute(self._mgmt_endpoint, database, query, None, self._mgmt_default_timeout, properties)
-        except KustoRequestException as e:
-            raise KustoServiceError([e.response_json], e.response) from e
+        return self._execute(self._mgmt_endpoint, database, query, None, self._mgmt_default_timeout, properties)
 
     def execute_streaming_ingest(
         self,
@@ -790,12 +782,7 @@ class KustoClient(_KustoClientBase):
         if mapping_name is not None:
             endpoint = endpoint + "&mappingName=" + mapping_name
 
-        try:
-            self._execute(endpoint, database, None, stream, self._streaming_ingest_default_timeout, properties)
-        except KustoRequestException as e:
-            raise KustoServiceError(
-                "An error occurred while trying to ingest: Status: {0.status_code}, Reason: {0.reason}, Text: {0.text}".format(e.response), e.response
-            ) from e
+        self._execute(endpoint, database, None, stream, self._streaming_ingest_default_timeout, properties)
 
     def _execute(
         self, endpoint: str, database: str, query: Optional[str], payload: Optional[io.IOBase], timeout: timedelta, properties: ClientRequestProperties = None
@@ -814,6 +801,6 @@ class KustoClient(_KustoClientBase):
         try:
             response.raise_for_status()
         except HTTPError as e:
-            raise KustoRequestException(response, response_json) from e
+            raise KustoServiceError(response_json, response) from e
 
         return self._kusto_parse_by_endpoint(endpoint, response_json)

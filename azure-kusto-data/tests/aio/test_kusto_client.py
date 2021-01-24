@@ -7,7 +7,6 @@ from azure.kusto.data.exceptions import KustoServiceError
 from azure.kusto.data.helpers import dataframe_from_result_table
 from azure.kusto.data.client import ClientRequestProperties
 
-from .case import TestCase
 from ..kusto_client_common import KustoClientTestsMixin, mocked_requests_post
 from ..test_kusto_client import KustoClientTests as KustoClientTestsSync
 
@@ -32,7 +31,7 @@ except:
 
 @pytest.mark.skipif(not aio_installed, reason="requires aio")
 @aio_documented_by(KustoClientTestsSync)
-class KustoClientTests(TestCase, KustoClientTestsMixin):
+class KustoClientTests(KustoClientTestsMixin):
     @staticmethod
     def _mock_callback(url, **kwargs):
         body = json.dumps(mocked_requests_post(str(url), **kwargs).json())
@@ -47,7 +46,8 @@ class KustoClientTests(TestCase, KustoClientTestsMixin):
         aioresponses_mock.post(url, callback=self._mock_callback)
 
     @aio_documented_by(KustoClientTestsSync.test_sanity_query)
-    def test_sanity_query(self):
+    @pytest.mark.asyncio
+    async def test_sanity_query(self):
         with aioresponses() as aioresponses_mock:
             self._mock_query(aioresponses_mock)
             client = KustoClient(self.HOST)
@@ -55,7 +55,8 @@ class KustoClientTests(TestCase, KustoClientTestsMixin):
         self._assert_sanity_query_response(response)
 
     @aio_documented_by(KustoClientTestsSync.test_sanity_control_command)
-    def test_sanity_control_command(self):
+    @pytest.mark.asyncio
+    async def test_sanity_control_command(self):
         with aioresponses() as aioresponses_mock:
             self._mock_mgmt(aioresponses_mock)
             client = KustoClient(self.HOST)
@@ -64,7 +65,8 @@ class KustoClientTests(TestCase, KustoClientTestsMixin):
 
     @pytest.mark.skipif(not PANDAS, reason="requires pandas")
     @aio_documented_by(KustoClientTestsSync.test_sanity_data_frame)
-    def test_sanity_data_frame(self):
+    @pytest.mark.asyncio
+    async def test_sanity_data_frame(self):
         with aioresponses() as aioresponses_mock:
             self._mock_query(aioresponses_mock)
             client = KustoClient(self.HOST)
@@ -73,7 +75,8 @@ class KustoClientTests(TestCase, KustoClientTestsMixin):
         self._assert_sanity_data_frame_response(data_frame)
 
     @aio_documented_by(KustoClientTestsSync.test_partial_results)
-    def test_partial_results(self):
+    @pytest.mark.asyncio
+    async def test_partial_results(self):
         client = KustoClient(self.HOST)
         query = """set truncationmaxrecords = 5;
 range x from 1 to 10 step 1"""
@@ -89,7 +92,8 @@ range x from 1 to 10 step 1"""
         self._assert_partial_results_response(response)
 
     @aio_documented_by(KustoClientTestsSync.test_admin_then_query)
-    def test_admin_then_query(self):
+    @pytest.mark.asyncio
+    async def test_admin_then_query(self):
         with aioresponses() as aioresponses_mock:
             self._mock_mgmt(aioresponses_mock)
             client = KustoClient(self.HOST)
@@ -98,7 +102,8 @@ range x from 1 to 10 step 1"""
         self._assert_admin_then_query_response(response)
 
     @aio_documented_by(KustoClientTestsSync.test_dynamic)
-    def test_dynamic(self):
+    @pytest.mark.asyncio
+    async def test_dynamic(self):
         with aioresponses() as aioresponses_mock:
             self._mock_query(aioresponses_mock)
             client = KustoClient(self.HOST)
@@ -109,7 +114,8 @@ range x from 1 to 10 step 1"""
         self._assert_dynamic_response(row)
 
     @aio_documented_by(KustoClientTestsSync.test_empty_result)
-    def test_empty_result(self):
+    @pytest.mark.asyncio
+    async def test_empty_result(self):
         with aioresponses() as aioresponses_mock:
             self._mock_query(aioresponses_mock)
             client = KustoClient(self.HOST)
@@ -118,7 +124,8 @@ range x from 1 to 10 step 1"""
         assert response.primary_results[0]
 
     @aio_documented_by(KustoClientTestsSync.test_null_values_in_data)
-    def test_null_values_in_data(self):
+    @pytest.mark.asyncio
+    async def test_null_values_in_data(self):
         with aioresponses() as aioresponses_mock:
             self._mock_query(aioresponses_mock)
             client = KustoClient(self.HOST)

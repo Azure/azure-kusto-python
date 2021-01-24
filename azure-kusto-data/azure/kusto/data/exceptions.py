@@ -1,7 +1,14 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
-from typing import List, Union
+from typing import List, Union, TYPE_CHECKING
 import requests
+
+if TYPE_CHECKING:
+    try:
+        from aiohttp import ClientResponse
+    except ImportError:
+        # No aio installed, ignore
+        pass
 
 
 class KustoError(Exception):
@@ -11,7 +18,7 @@ class KustoError(Exception):
 class KustoServiceError(KustoError):
     """Raised when the Kusto service was unable to process a request."""
 
-    def __init__(self, messages: Union[str, List[dict]], http_response: requests.Response = None, kusto_response=None):
+    def __init__(self, messages: Union[str, List[dict]], http_response: "Union[requests.Response, ClientResponse, None]" = None, kusto_response=None):
         super().__init__(messages)
         self.http_response = http_response
         self.kusto_response = kusto_response
@@ -38,15 +45,6 @@ class KustoServiceError(KustoError):
 
 class KustoClientError(KustoError):
     """Raised when a Kusto client is unable to send or complete a request."""
-
-
-class KustoRequestException(KustoError):
-    """Raised when a Kusto request fails"""
-
-    def __init__(self, response, response_json):
-        super().__init__()
-        self.response = response
-        self.response_json = response_json
 
 
 class KustoAuthenticationError(KustoClientError):

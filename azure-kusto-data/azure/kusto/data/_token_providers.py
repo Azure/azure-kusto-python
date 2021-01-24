@@ -2,13 +2,15 @@
 # Licensed under the MIT License
 import abc
 import webbrowser
-from typing import Callable, Optional, Coroutine, Any
+from threading import Lock
+from typing import Callable, Optional
 
-from azure.identity.aio import ManagedIdentityCredential as AsyncManagedIdentityCredential
 from azure.identity import ManagedIdentityCredential
+from azure.identity.aio import ManagedIdentityCredential as AsyncManagedIdentityCredential
 from msal import ConfidentialClientApplication, PublicClientApplication
-from .exceptions import KustoClientError, KustoAioSyntaxError
+
 from ._cloud_settings import CloudSettings
+from .exceptions import KustoClientError, KustoAioSyntaxError
 
 try:
     from asgiref.sync import sync_to_async
@@ -48,6 +50,7 @@ class TokenProviderBase(abc.ABC):
     _kusto_uri = None
     _cloud_info = None
     _scopes = None
+    lock = Lock()
 
     def __init__(self, kusto_uri: str, is_async: bool = False):
         self.is_async = is_async
@@ -58,9 +61,11 @@ class TokenProviderBase(abc.ABC):
 
     def get_token(self):
         """ Get a token silently from cache or authenticate if cached token is not found """
-        if not self._initialized:
-            self._init_impl()
-            self._initialized = True
+
+        with TokenProviderBase.lock:
+            if not self._initialized:
+                self._init_impl()
+                self._initialized = True
 
         token = self._get_token_from_cache_impl()
         if token is None:

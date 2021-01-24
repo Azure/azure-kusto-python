@@ -23,12 +23,13 @@ def mocked_requests_post(*args, **kwargs):
     class MockResponse:
         """Mock class for KustoResponse."""
 
-        def __init__(self, json_data, status_code):
+        def __init__(self, json_data, status_code, url):
             self.json_data = json_data
             self.text = str(json_data)
             self.status_code = status_code
             self.headers = None
             self.reason = ""
+            self.url = url
 
         def json(self):
             """Get json data from response."""
@@ -58,7 +59,8 @@ def mocked_requests_post(*args, **kwargs):
             if http_error_msg:
                 raise HTTPError(http_error_msg, response=self)
 
-    if args[0] == "https://somecluster.kusto.windows.net/v2/rest/query":
+    url = args[0]
+    if url == "https://somecluster.kusto.windows.net/v2/rest/query":
         if "truncationmaxrecords" in kwargs["json"]["csl"]:
             if json.loads(kwargs["json"]["properties"])["Options"]["deferpartialqueryfailures"]:
                 file_name = "query_partial_results_defer_is_true.json"
@@ -72,21 +74,23 @@ def mocked_requests_post(*args, **kwargs):
             file_name = "zero_results.json"
         elif "PrimaryResultName" in kwargs["json"]["csl"]:
             file_name = "null_values.json"
+        else:
+            raise Exception("Invalid file name")
 
         with open(os.path.join(os.path.dirname(__file__), "input", file_name), "r") as response_file:
             data = response_file.read()
-        return MockResponse(json.loads(data), 200)
+        return MockResponse(json.loads(data), 200, url)
 
-    elif args[0] == "https://somecluster.kusto.windows.net/v1/rest/mgmt":
+    elif url == "https://somecluster.kusto.windows.net/v1/rest/mgmt":
         if kwargs["json"]["csl"] == ".show version":
             file_name = "versionshowcommandresult.json"
         else:
             file_name = "adminthenquery.json"
         with open(os.path.join(os.path.dirname(__file__), "input", file_name), "r") as response_file:
             data = response_file.read()
-        return MockResponse(json.loads(data), 200)
+        return MockResponse(json.loads(data), 200, url)
 
-    return MockResponse(None, 404)
+    return MockResponse(None, 404, url)
 
 
 DIGIT_WORDS = [str("Zero"), str("One"), str("Two"), str("Three"), str("Four"), str("Five"), str("Six"), str("Seven"), str("Eight"), str("Nine"), str("ten")]
@@ -207,9 +211,9 @@ class KustoClientTestsMixin:
 
     def _assert_sanity_data_frame_response(self, data_frame):
         from pandas import DataFrame, Series
-        from pandas.util.testing import assert_frame_equal
+        from pandas.testing import assert_frame_equal
 
-        self.assertEqual(len(data_frame.columns), 19)
+        assert len(data_frame.columns) == 19
         expected_dict = {
             "rownumber": Series([None, 0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0]),
             "rowguid": Series(
@@ -261,13 +265,13 @@ class KustoClientTestsMixin:
                     "NaT",
                     0,
                     "1 days 00:00:01.0010001",
-                    "-3 days 23:59:57.9979998",
+                    "-2 days 00:00:02.0020002",
                     "3 days 00:00:03.0030003",
-                    "-5 days 23:59:55.9959996",
+                    "-4 days 00:00:04.0040004",
                     "5 days 00:00:05.0050005",
-                    "-7 days 23:59:53.9939994",
+                    "-6 days 00:00:06.0060006",
                     "7 days 00:00:07.0070007",
-                    "-9 days 23:59:51.9919992",
+                    "-8 days 00:00:08.0080008",
                     "9 days 00:00:09.0090009",
                 ],
                 dtype="timedelta64[ns]",
