@@ -1,5 +1,6 @@
 """Tests for KustoClient."""
 import json
+import sys
 
 import pytest
 from azure.kusto.data._decorators import aio_documented_by
@@ -18,18 +19,21 @@ try:
 except:
     pass
 
-aio_installed = False
+run_aio_tests = False
 try:
     from azure.kusto.data.aio.client import KustoClient
     from aioresponses import aioresponses, CallbackResult
     import asgiref
 
-    aio_installed = True
+    run_aio_tests = True
 except:
     pass
 
+if sys.version_info < (3, 6):
+    run_aio_tests = False
 
-@pytest.mark.skipif(not aio_installed, reason="requires aio")
+
+@pytest.mark.skipif(not run_aio_tests, reason="requires aio")
 @aio_documented_by(KustoClientTestsSync)
 class KustoClientTests(KustoClientTestsMixin):
     @staticmethod
