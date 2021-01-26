@@ -52,8 +52,7 @@ class TokenProviderBase(abc.ABC):
     _scopes = None
     lock = Lock()
 
-    def __init__(self, kusto_uri: str, is_async: bool = False):
-        self.is_async = is_async
+    def __init__(self, kusto_uri: str):
         self._kusto_uri = kusto_uri
         if kusto_uri is not None:
             self._scopes = [kusto_uri + ".defult" if kusto_uri.endswith("/") else kusto_uri + "/.default"]
@@ -69,19 +68,23 @@ class TokenProviderBase(abc.ABC):
 
         token = self._get_token_from_cache_impl()
         if token is None:
-            token = self._get_token_impl()
+            with TokenProviderBase.lock:
+                token = self._get_token_impl()
 
         return self._valid_token_or_throw(token)
 
     async def get_token_async(self):
         """ Get a token asynchronously silently from cache or authenticate if cached token is not found """
-        if not self._initialized:
-            self._init_impl()
-            self._initialized = True
+        with TokenProviderBase.lock:
+            if not self._initialized:
+                self._init_impl()
+                self._initialized = True
 
         token = await self._get_token_from_cache_impl_async()
+
         if token is None:
-            token = await self._get_token_impl_async()
+            with TokenProviderBase.lock:
+                token = await self._get_token_impl_async()
 
         return self._valid_token_or_throw(token)
 
@@ -143,7 +146,7 @@ class BasicTokenProvider(TokenProviderBase):
     """ Basic Token Provider keeps and returns a token received on construction """
 
     def __init__(self, token: str):
-        super().__init__(None, False)
+        super().__init__(None)
         self._token = token
 
     @staticmethod
@@ -167,7 +170,7 @@ class CallbackTokenProvider(TokenProviderBase):
     """ Callback Token Provider generates a token based on a callback function provided by the caller """
 
     def __init__(self, token_callback: Callable[[], str]):
-        super().__init__(None, False)
+        super().__init__(None)
         self._token_callback = token_callback
 
     @staticmethod
@@ -181,14 +184,14 @@ class CallbackTokenProvider(TokenProviderBase):
         pass
 
     def _get_token_impl(self) -> dict:
-        return None
-
-    def _get_token_from_cache_impl(self) -> dict:
         caller_token = self._token_callback()
         if not isinstance(caller_token, str):
             raise KustoClientError("Token provider returned something that is not a string [" + str(type(caller_token)) + "]")
 
         return {TokenConstants.MSAL_TOKEN_TYPE: TokenConstants.BEARER_TYPE, TokenConstants.MSAL_ACCESS_TOKEN: caller_token}
+
+    def _get_token_from_cache_impl(self) -> dict:
+        return None
 
 
 class MsiTokenProvider(TokenProviderBase):
@@ -197,8 +200,8 @@ class MsiTokenProvider(TokenProviderBase):
     The args parameter is a dictionary conforming with the ManagedIdentityCredential initializer API arguments
     """
 
-    def __init__(self, is_async: bool, kusto_uri: str, msi_args):
-        super().__init__(kusto_uri, is_async)
+    def __init__(self, kusto_uri: str, msi_args):
+        super().__init__(kusto_uri)
         self._msi_args = msi_args
         self._msi_auth_context = None
         self._msi_auth_context_async = None
@@ -213,30 +216,39 @@ class MsiTokenProvider(TokenProviderBase):
         return context
 
     def _init_impl(self):
-        try:
-            if self.is_async:
-                self._msi_auth_context_async = AsyncManagedIdentityCredential(**self._msi_args)
-            else:
-                self._msi_auth_context = ManagedIdentityCredential(**self._msi_args)
-        except Exception as e:
-            raise KustoClientError("Failed to initialize MSI ManagedIdentityCredential with [" + str(self._msi_args) + "]\n" + str(e))
+        pass
 
     def _get_token_impl(self) -> dict:
-        return None
-
-    def _get_token_from_cache_impl(self) -> dict:
         try:
+            try:
+                if self._msi_auth_context is None:
+                    self._msi_auth_context = ManagedIdentityCredential(**self._msi_args)
+            except Exception as e:
+                raise KustoClientError("Failed to initialize MSI ManagedIdentityCredential with [" + str(self._msi_args) + "]\n" + str(e))
+
             msi_token = self._msi_auth_context.get_token(self._kusto_uri)
             return {TokenConstants.MSAL_TOKEN_TYPE: TokenConstants.BEARER_TYPE, TokenConstants.MSAL_ACCESS_TOKEN: msi_token.token}
         except Exception as e:
             raise KustoClientError("Failed to obtain MSI token for '" + self._kusto_uri + "' with [" + str(self._msi_args) + "]\n" + str(e))
 
-    async def _get_token_from_cache_impl_async(self) -> Optional[dict]:
+    async def _get_token_impl_async(self) -> Optional[dict]:
         try:
+            try:
+                if self._msi_auth_context_async is None:
+                    self._msi_auth_context_async = AsyncManagedIdentityCredential(**self._msi_args)
+            except Exception as e:
+                raise KustoClientError("Failed to initialize MSI async ManagedIdentityCredential with [" + str(self._msi_args) + "]\n" + str(e))
+
             msi_token = await self._msi_auth_context_async.get_token(self._kusto_uri)
             return {TokenConstants.MSAL_TOKEN_TYPE: TokenConstants.BEARER_TYPE, TokenConstants.MSAL_ACCESS_TOKEN: msi_token.token}
         except Exception as e:
             raise KustoClientError("Failed to obtain MSI token for '" + self._kusto_uri + "' with [" + str(self._msi_args) + "]\n" + str(e))
+
+    def _get_token_from_cache_impl(self) -> dict:
+        return None
+
+    async def _get_token_from_cache_impl_async(self) -> Optional[dict]:
+        return None
 
 
 class AzCliTokenProvider(TokenProviderBase):

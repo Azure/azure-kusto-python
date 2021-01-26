@@ -24,7 +24,7 @@ class KustoClient(_KustoClientBase):
     def __init__(self, kcsb: Union[KustoConnectionStringBuilder, str]):
         super().__init__(kcsb)
         # notice that in this context, federated actually just stands for add auth, not aad federated auth (legacy code)
-        self._auth_provider = _AadHelper(self._kcsb, True) if self._kcsb.aad_federated_security else None
+        self._auth_provider = _AadHelper(self._kcsb) if self._kcsb.aad_federated_security else None
         self._session = ClientSession()
 
     async def __aenter__(self) -> "KustoClient":

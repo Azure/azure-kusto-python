@@ -10,7 +10,7 @@ class _AadHelper:
     authority_uri = None
     token_provider = None
 
-    def __init__(self, kcsb: "KustoConnectionStringBuilder", is_async: bool):
+    def __init__(self, kcsb: "KustoConnectionStringBuilder"):
         self.kusto_uri = "{0.scheme}://{0.hostname}".format(urlparse(kcsb.data_source))
         self.username = None
 
@@ -34,7 +34,7 @@ class _AadHelper:
                 kcsb.application_public_certificate,
             )
         elif kcsb.msi_authentication:
-            self.token_provider = MsiTokenProvider(is_async, self.kusto_uri, kcsb.msi_parameters)
+            self.token_provider = MsiTokenProvider(self.kusto_uri, kcsb.msi_parameters)
         elif kcsb.user_token:
             self.token_provider = BasicTokenProvider(kcsb.user_token)
         elif kcsb.application_token:

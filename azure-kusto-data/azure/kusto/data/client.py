@@ -8,7 +8,7 @@ import uuid
 from copy import copy
 from datetime import timedelta
 from enum import Enum, unique
-from typing import Union, Callable, List, Optional
+from typing import Union, Callable, Optional
 
 import requests
 from requests.adapters import HTTPAdapter
@@ -669,7 +669,7 @@ class KustoClient(_KustoClientBase):
         self._session.mount("https://", adapter)
 
         # notice that in this context, federated actually just stands for add auth, not aad federated auth (legacy code)
-        self._auth_provider = _AadHelper(self._kcsb, False) if self._kcsb.aad_federated_security else None
+        self._auth_provider = _AadHelper(self._kcsb) if self._kcsb.aad_federated_security else None
 
     def set_http_retries(self, max_retries):
         """
