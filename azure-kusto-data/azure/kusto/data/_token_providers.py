@@ -61,10 +61,11 @@ class TokenProviderBase(abc.ABC):
     def get_token(self):
         """ Get a token silently from cache or authenticate if cached token is not found """
 
-        with TokenProviderBase.lock:
-            if not self._initialized:
-                self._init_impl()
-                self._initialized = True
+        if not self._initialized:
+            with TokenProviderBase.lock:
+                if not self._initialized:
+                    self._init_impl()
+                    self._initialized = True
 
         token = self._get_token_from_cache_impl()
         if token is None:
