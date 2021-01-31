@@ -5,6 +5,7 @@ import webbrowser
 from threading import Lock
 from typing import Callable, Optional
 
+from azure.core.exceptions import ClientAuthenticationError
 from azure.identity import ManagedIdentityCredential
 from azure.identity.aio import ManagedIdentityCredential as AsyncManagedIdentityCredential
 from msal import ConfidentialClientApplication, PublicClientApplication
@@ -224,7 +225,7 @@ class MsiTokenProvider(TokenProviderBase):
             try:
                 if self._msi_auth_context is None:
                     self._msi_auth_context = ManagedIdentityCredential(**self._msi_args)
-            except Exception as e:
+            except ClientAuthenticationError as e:
                 raise KustoClientError("Failed to initialize MSI ManagedIdentityCredential with [" + str(self._msi_args) + "]\n" + str(e))
 
             msi_token = self._msi_auth_context.get_token(self._kusto_uri)
@@ -237,7 +238,7 @@ class MsiTokenProvider(TokenProviderBase):
             try:
                 if self._msi_auth_context_async is None:
                     self._msi_auth_context_async = AsyncManagedIdentityCredential(**self._msi_args)
-            except Exception as e:
+            except ClientAuthenticationError as e:
                 raise KustoClientError("Failed to initialize MSI async ManagedIdentityCredential with [" + str(self._msi_args) + "]\n" + str(e))
 
             msi_token = await self._msi_auth_context_async.get_token(self._kusto_uri)

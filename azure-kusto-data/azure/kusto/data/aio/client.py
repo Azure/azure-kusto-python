@@ -3,6 +3,8 @@ from collections import namedtuple
 from datetime import timedelta
 from typing import Union, Optional
 
+from aiohttp.web_exceptions import HTTPError
+
 from .._decorators import documented_by, aio_documented_by
 from ..data_format import DataFormat
 from ..exceptions import KustoAioSyntaxError, KustoServiceError
@@ -14,8 +16,6 @@ try:
     from aiohttp import ClientResponse, ClientSession
 except ImportError:
     raise KustoAioSyntaxError()
-
-ResponseTuple = namedtuple("ResponseTuple", ["response", "response_json"])
 
 
 @documented_by(KustoClientSync)
@@ -81,7 +81,9 @@ class KustoClient(_KustoClientBase):
         async with self._session.post(endpoint, headers=request_headers, data=payload, json=json_payload, timeout=timeout.seconds) as response:
             response_json = await response.json()
 
-            if response.status != 200:
-                raise KustoServiceError([response_json], response)
+            try:
+                response.raise_for_status()
+            except HTTPError as e:
+                raise KustoServiceError(response_json, response) from e
 
         return self._kusto_parse_by_endpoint(endpoint, response_json)
