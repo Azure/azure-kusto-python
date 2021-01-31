@@ -36,7 +36,7 @@ if sys.version_info < (3, 6):
 
 @pytest.mark.skipif(not run_aio_tests, reason="requires aio")
 @aio_documented_by(KustoClientTestsSync)
-class KustoClientTests(KustoClientTestsMixin, unittest.TestCase):
+class TestKustoClient(KustoClientTestsMixin):
     @staticmethod
     def _mock_callback(url, **kwargs):
         body = json.dumps(mocked_requests_post(str(url), **kwargs).json())
@@ -56,7 +56,7 @@ class KustoClientTests(KustoClientTestsMixin, unittest.TestCase):
         with aioresponses() as aioresponses_mock:
             self._mock_query(aioresponses_mock)
             client = KustoClient(self.HOST)
-            response = self.loop.run_until_complete(client.execute_query("PythonTest", "Deft"))
+            response = await client.execute_query("PythonTest", "Deft")
         self._assert_sanity_query_response(response)
 
     @aio_documented_by(KustoClientTestsSync.test_sanity_control_command)
@@ -65,7 +65,7 @@ class KustoClientTests(KustoClientTestsMixin, unittest.TestCase):
         with aioresponses() as aioresponses_mock:
             self._mock_mgmt(aioresponses_mock)
             client = KustoClient(self.HOST)
-            response = self.loop.run_until_complete(client.execute_mgmt("NetDefaultDB", ".show version"))
+            response = await client.execute_mgmt("NetDefaultDB", ".show version")
         self._assert_sanity_control_command_response(response)
 
     @pytest.mark.skipif(not PANDAS, reason="requires pandas")
@@ -75,7 +75,7 @@ class KustoClientTests(KustoClientTestsMixin, unittest.TestCase):
         with aioresponses() as aioresponses_mock:
             self._mock_query(aioresponses_mock)
             client = KustoClient(self.HOST)
-            response = self.loop.run_until_complete(client.execute_query("PythonTest", "Deft"))
+            response = await client.execute_query("PythonTest", "Deft")
         data_frame = dataframe_from_result_table(response.primary_results[0])
         self._assert_sanity_data_frame_response(data_frame)
 
@@ -89,11 +89,11 @@ range x from 1 to 10 step 1"""
         properties.set_option(ClientRequestProperties.results_defer_partial_query_failures_option_name, False)
         with aioresponses() as aioresponses_mock:
             self._mock_query(aioresponses_mock)
-            with self.assertRaises(KustoServiceError):
-                self.loop.run_until_complete(client.execute_query("PythonTest", query, properties))
+            with pytest.raises(KustoServiceError):
+                await client.execute_query("PythonTest", query, properties)
             properties.set_option(ClientRequestProperties.results_defer_partial_query_failures_option_name, True)
             self._mock_query(aioresponses_mock)
-            response = self.loop.run_until_complete(client.execute_query("PythonTest", query, properties))
+            response = await client.execute_query("PythonTest", query, properties)
         self._assert_partial_results_response(response)
 
     @aio_documented_by(KustoClientTestsSync.test_admin_then_query)
@@ -103,7 +103,7 @@ range x from 1 to 10 step 1"""
             self._mock_mgmt(aioresponses_mock)
             client = KustoClient(self.HOST)
             query = ".show tables | project DatabaseName, TableName"
-            response = self.loop.run_until_complete(client.execute_mgmt("PythonTest", query))
+            response = await client.execute_mgmt("PythonTest", query)
         self._assert_admin_then_query_response(response)
 
     @aio_documented_by(KustoClientTestsSync.test_dynamic)
@@ -114,7 +114,7 @@ range x from 1 to 10 step 1"""
             client = KustoClient(self.HOST)
             query = """print dynamic(123), dynamic("123"), dynamic("test bad json"),"""
             """ dynamic(null), dynamic('{"rowId":2,"arr":[0,2]}'), dynamic({"rowId":2,"arr":[0,2]})"""
-            response = self.loop.run_until_complete(client.execute_query("PythonTest", query))
+            response = await client.execute_query("PythonTest", query)
         row = response.primary_results[0].rows[0]
         self._assert_dynamic_response(row)
 
@@ -125,7 +125,7 @@ range x from 1 to 10 step 1"""
             self._mock_query(aioresponses_mock)
             client = KustoClient(self.HOST)
             query = """print 'a' | take 0"""
-            response = self.loop.run_until_complete(client.execute_query("PythonTest", query))
+            response = await client.execute_query("PythonTest", query)
         assert response.primary_results[0]
 
     @aio_documented_by(KustoClientTestsSync.test_null_values_in_data)
@@ -135,5 +135,5 @@ range x from 1 to 10 step 1"""
             self._mock_query(aioresponses_mock)
             client = KustoClient(self.HOST)
             query = "PrimaryResultName"
-            response = self.loop.run_until_complete(client.execute_query("PythonTest", query))
+            response = await client.execute_query("PythonTest", query)
         assert response is not None
