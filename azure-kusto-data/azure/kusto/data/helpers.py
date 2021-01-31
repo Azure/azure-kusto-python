@@ -1,6 +1,9 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
-from azure.kusto.data._models import KustoResultTable
+
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from azure.kusto.data._models import KustoResultTable
 
 
 def to_pandas_timedelta(raw_value) -> "pandas.Timedelta":

@@ -7,7 +7,10 @@ import sys
 import time
 import unittest
 import uuid
-from typing import Optional
+
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from typing import Optional
 
 from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
 from azure.kusto.data.exceptions import KustoServiceError
