@@ -2,6 +2,7 @@
 # Licensed under the MIT License
 
 from typing import TYPE_CHECKING
+
 if TYPE_CHECKING:
     from azure.kusto.data._models import KustoResultTable
 
