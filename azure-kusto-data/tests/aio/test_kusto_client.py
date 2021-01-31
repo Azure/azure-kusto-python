@@ -24,7 +24,6 @@ run_aio_tests = False
 try:
     from azure.kusto.data.aio.client import KustoClient
     from aioresponses import aioresponses, CallbackResult
-    import asgiref
 
     run_aio_tests = True
 except:
