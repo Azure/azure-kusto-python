@@ -222,29 +222,27 @@ class MsiTokenProvider(TokenProviderBase):
 
     def _get_token_impl(self) -> dict:
         try:
-            try:
-                if self._msi_auth_context is None:
-                    self._msi_auth_context = ManagedIdentityCredential(**self._msi_args)
-            except ClientAuthenticationError as e:
-                raise KustoClientError("Failed to initialize MSI ManagedIdentityCredential with [" + str(self._msi_args) + "]\n" + str(e))
+            if self._msi_auth_context is None:
+                self._msi_auth_context = ManagedIdentityCredential(**self._msi_args)
 
             msi_token = self._msi_auth_context.get_token(self._kusto_uri)
             return {TokenConstants.MSAL_TOKEN_TYPE: TokenConstants.BEARER_TYPE, TokenConstants.MSAL_ACCESS_TOKEN: msi_token.token}
+        except ClientAuthenticationError as e:
+            raise KustoClientError("Failed to initialize MSI ManagedIdentityCredential with [{0}]\n{1}".format(self._msi_args, e))
         except Exception as e:
-            raise KustoClientError("Failed to obtain MSI token for '" + self._kusto_uri + "' with [" + str(self._msi_args) + "]\n" + str(e))
+            raise KustoClientError("Failed to obtain MSI token for '{0}' with [{1}]\n{2}".format(self._kusto_uri, self._msi_args, e))
 
     async def _get_token_impl_async(self) -> Optional[dict]:
         try:
-            try:
-                if self._msi_auth_context_async is None:
-                    self._msi_auth_context_async = AsyncManagedIdentityCredential(**self._msi_args)
-            except ClientAuthenticationError as e:
-                raise KustoClientError("Failed to initialize MSI async ManagedIdentityCredential with [" + str(self._msi_args) + "]\n" + str(e))
+            if self._msi_auth_context_async is None:
+                self._msi_auth_context_async = AsyncManagedIdentityCredential(**self._msi_args)
 
             msi_token = await self._msi_auth_context_async.get_token(self._kusto_uri)
             return {TokenConstants.MSAL_TOKEN_TYPE: TokenConstants.BEARER_TYPE, TokenConstants.MSAL_ACCESS_TOKEN: msi_token.token}
+        except ClientAuthenticationError as e:
+            raise KustoClientError("Failed to initialize MSI async ManagedIdentityCredential with [{0}]\n{1}".format(self._msi_args, e))
         except Exception as e:
-            raise KustoClientError("Failed to obtain MSI token for '" + self._kusto_uri + "' with [" + str(self._msi_args) + "]\n" + str(e))
+            raise KustoClientError("Failed to obtain MSI token for '{0}' with [{1}]\n{2}".format(self._kusto_uri, self._msi_args, e))
 
     def _get_token_from_cache_impl(self) -> dict:
         return None
