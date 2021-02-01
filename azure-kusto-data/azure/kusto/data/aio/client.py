@@ -2,8 +2,6 @@ import io
 from datetime import timedelta
 from typing import Union, Optional
 
-from aiohttp.web_exceptions import HTTPError
-
 from .._decorators import documented_by, aio_documented_by
 from ..client import KustoClient as KustoClientSync, _KustoClientBase, KustoConnectionStringBuilder, ClientRequestProperties, ExecuteRequestParams
 from ..data_format import DataFormat
@@ -78,15 +76,11 @@ class KustoClient(_KustoClientBase):
             request_headers["Authorization"] = await self._auth_provider.acquire_authorization_header_async()
 
         async with self._session.post(endpoint, headers=request_headers, data=payload, json=json_payload, timeout=timeout.seconds) as response:
+            response_json = None
             try:
                 response_json = await response.json()
-            except ValueError:
-                response_json = None
-
-            try:
                 response.raise_for_status()
-            except HTTPError as e:
-                response_text = await response.text()
-                await self._handle_http_error(e, endpoint, payload, response, response_json, response_text)
+            except Exception as e:
+                self._handle_http_error(e, endpoint, payload, response, response_json, await response.text())
 
-        return self._kusto_parse_by_endpoint(endpoint, response_json)
+            return self._kusto_parse_by_endpoint(endpoint, response_json)

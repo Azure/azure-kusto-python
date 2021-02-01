@@ -13,7 +13,6 @@ from typing import TYPE_CHECKING, Union, Callable, Optional, Any, NoReturn
 import requests
 from requests import Response
 from requests.adapters import HTTPAdapter
-from requests.exceptions import HTTPError
 from urllib3.connection import HTTPConnection
 
 from ._version import VERSION
@@ -639,7 +638,7 @@ class _KustoClientBase:
 
     @staticmethod
     def _handle_http_error(
-        exception: "Union[HTTPError, aiohttp.web_exceptions.HTTPError]",
+        exception: Exception,
         endpoint: Optional[str],
         payload: Optional[io.IOBase],
         response: "Union[Response, aiohttp.ClientResponse]",
@@ -830,14 +829,12 @@ class KustoClient(_KustoClientBase):
             request_headers["Authorization"] = self._auth_provider.acquire_authorization_header()
 
         response = self._session.post(endpoint, headers=request_headers, data=payload, json=json_payload, timeout=timeout.seconds)
+
+        response_json = None
         try:
             response_json = response.json()
-        except ValueError:
-            response_json = None
-        try:
             response.raise_for_status()
-        except HTTPError as e:
-            response_text = response.text
-            self._handle_http_error(e, endpoint, payload, response, response_json, response_text)
+        except Exception as e:
+            self._handle_http_error(e, endpoint, payload, response, response_json, response.text)
 
         return self._kusto_parse_by_endpoint(endpoint, response_json)
