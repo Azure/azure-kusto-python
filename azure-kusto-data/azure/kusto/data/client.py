@@ -8,9 +8,10 @@ import uuid
 from copy import copy
 from datetime import timedelta
 from enum import Enum, unique
-from typing import Union, Callable, Optional
+from typing import TYPE_CHECKING, Union, Callable, Optional, Any, NoReturn
 
 import requests
+from requests import Response
 from requests.adapters import HTTPAdapter
 from requests.exceptions import HTTPError
 from urllib3.connection import HTTPConnection
@@ -20,6 +21,10 @@ from .data_format import DataFormat
 from .exceptions import KustoServiceError
 from .response import KustoResponseDataSetV1, KustoResponseDataSetV2, KustoResponseDataSet
 from .security import _AadHelper
+
+if TYPE_CHECKING:
+    import aiohttp
+    import aiohttp.web_exceptions
 
 
 class KustoConnectionStringBuilder:
@@ -627,10 +632,36 @@ class _KustoClientBase:
         self._request_headers = {"Accept": "application/json", "Accept-Encoding": "gzip,deflate", "x-ms-client-version": "Kusto.Python.Client:" + VERSION}
 
     @staticmethod
-    def _kusto_parse_by_endpoint(endpoint: str, response_json) -> KustoResponseDataSet:
+    def _kusto_parse_by_endpoint(endpoint: str, response_json: Any) -> KustoResponseDataSet:
         if endpoint.endswith("v2/rest/query"):
             return KustoResponseDataSetV2(response_json)
         return KustoResponseDataSetV1(response_json)
+
+    @staticmethod
+    def _handle_http_error(
+        exception: "Union[HTTPError, aiohttp.web_exceptions.HTTPError]",
+        endpoint: Optional[str],
+        payload: Optional[io.IOBase],
+        response: "Union[Response, aiohttp.ClientResponse]",
+        response_json: Any,
+        response_text: Optional[str],
+    ) -> NoReturn:
+        if response.status_code == 404:
+            if payload:
+                raise KustoServiceError("The ingestion endpoint does not exist. Please enable streaming ingestion on your cluster.", response) from exception
+            else:
+                raise KustoServiceError("The requested endpoint '{}' does not exist.".format(endpoint), response) from exception
+        if payload:
+            raise KustoServiceError(
+                "An error occurred while trying to ingest: Status: {0.status_code}, Reason: {0.reason}, Text: {1}.".format(response, response_text), response
+            ) from exception
+        try:
+            raise KustoServiceError([response_json], response) from exception
+        except ValueError:
+            if response_text:
+                raise KustoServiceError(response_text, response) from exception
+            else:
+                raise KustoServiceError("Server error response contains no data.", response) from exception
 
 
 class KustoClient(_KustoClientBase):
@@ -801,6 +832,7 @@ class KustoClient(_KustoClientBase):
         try:
             response.raise_for_status()
         except HTTPError as e:
-            raise KustoServiceError(response_json, response) from e
+            response_text = response.text
+            self._handle_http_error(e, endpoint, payload, response, response_json, response_text)
 
         return self._kusto_parse_by_endpoint(endpoint, response_json)
