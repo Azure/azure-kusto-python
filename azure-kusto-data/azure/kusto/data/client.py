@@ -649,19 +649,21 @@ class _KustoClientBase:
         if response.status_code == 404:
             if payload:
                 raise KustoServiceError("The ingestion endpoint does not exist. Please enable streaming ingestion on your cluster.", response) from exception
-            else:
-                raise KustoServiceError("The requested endpoint '{}' does not exist.".format(endpoint), response) from exception
+
+            raise KustoServiceError("The requested endpoint '{}' does not exist.".format(endpoint), response) from exception
+
         if payload:
             raise KustoServiceError(
                 "An error occurred while trying to ingest: Status: {0.status_code}, Reason: {0.reason}, Text: {1}.".format(response, response_text), response
             ) from exception
+
         if response_json:
             raise KustoServiceError([response_json], response) from exception
-        else:
-            if response_text:
-                raise KustoServiceError(response_text, response) from exception
-            else:
-                raise KustoServiceError("Server error response contains no data.", response) from exception
+
+        if response_text:
+            raise KustoServiceError(response_text, response) from exception
+
+        raise KustoServiceError("Server error response contains no data.", response) from exception
 
 
 class KustoClient(_KustoClientBase):
