@@ -118,11 +118,11 @@ class TokenProviderBase(abc.ABC):
 
     async def _get_token_from_cache_impl_async(self) -> Optional[dict]:
         """ Implement cache checks here, return None if cache check fails """
-        return await sync_to_async(self._get_token_from_cache_impl())
+        return await sync_to_async(self._get_token_from_cache_impl)()
 
     async def _get_token_impl_async(self) -> Optional[dict]:
         """ implement actual token acquisition here """
-        return await sync_to_async(self._get_token_impl())
+        return await sync_to_async(self._get_token_impl)()
 
     @staticmethod
     def _valid_token_or_none(token: dict) -> Optional[dict]:
@@ -202,7 +202,7 @@ class MsiTokenProvider(TokenProviderBase):
     The args parameter is a dictionary conforming with the ManagedIdentityCredential initializer API arguments
     """
 
-    def __init__(self, kusto_uri: str, msi_args):
+    def __init__(self, kusto_uri: str, msi_args: dict = None):
         super().__init__(kusto_uri)
         self._msi_args = msi_args
         self._msi_auth_context = None
