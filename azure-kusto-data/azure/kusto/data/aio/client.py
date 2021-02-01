@@ -78,7 +78,11 @@ class KustoClient(_KustoClientBase):
             request_headers["Authorization"] = await self._auth_provider.acquire_authorization_header_async()
 
         async with self._session.post(endpoint, headers=request_headers, data=payload, json=json_payload, timeout=timeout.seconds) as response:
-            response_json = await response.json()
+            try:
+                response_json = await response.json()
+            except ValueError:
+                response_json = None
+
             try:
                 response.raise_for_status()
             except HTTPError as e:

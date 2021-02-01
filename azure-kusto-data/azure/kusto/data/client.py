@@ -655,9 +655,9 @@ class _KustoClientBase:
             raise KustoServiceError(
                 "An error occurred while trying to ingest: Status: {0.status_code}, Reason: {0.reason}, Text: {1}.".format(response, response_text), response
             ) from exception
-        try:
+        if response_json:
             raise KustoServiceError([response_json], response) from exception
-        except ValueError:
+        else:
             if response_text:
                 raise KustoServiceError(response_text, response) from exception
             else:
@@ -828,7 +828,10 @@ class KustoClient(_KustoClientBase):
             request_headers["Authorization"] = self._auth_provider.acquire_authorization_header()
 
         response = self._session.post(endpoint, headers=request_headers, data=payload, json=json_payload, timeout=timeout.seconds)
-        response_json = response.json()
+        try:
+            response_json = response.json()
+        except ValueError:
+            response_json = None
         try:
             response.raise_for_status()
         except HTTPError as e:
