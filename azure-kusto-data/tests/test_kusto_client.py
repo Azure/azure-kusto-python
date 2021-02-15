@@ -1,5 +1,6 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
+import sys
 import json
 import os
 import unittest
@@ -381,3 +382,21 @@ range x from 1 to 10 step 1"""
         response = client.execute_query("PythonTest", query)
 
         assert response is not None
+
+    @patch("requests.Session.post", side_effect=mocked_requests_post)
+    def test_unidentifiable_os(self, mock_post):
+        """Tests unidentifiable OS doesn't fail when composing its socket options"""
+        with patch.object(sys, "platform", "win3.1"):
+            client = KustoClient("https://somecluster.kusto.windows.net")
+            query = """print dynamic(123)"""
+            row = client.execute_query("PythonTest", query).primary_results[0].rows[0]
+            assert isinstance(row[0], int)
+
+    @patch("requests.Session.post", side_effect=mocked_requests_post)
+    def test_identifiable_os(self, mock_post):
+        """Tests identifiable OS doesn't fail when composing its socket options"""
+        with patch.object(sys, "platform", "win32"):
+            client = KustoClient("https://somecluster.kusto.windows.net")
+            query = """print dynamic(123)"""
+            row = client.execute_query("PythonTest", query).primary_results[0].rows[0]
+            assert isinstance(row[0], int)
