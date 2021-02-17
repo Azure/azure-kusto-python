@@ -40,9 +40,8 @@ class KustoInvalidEndpointError(KustoClientError):
     """Raised when trying to ingest to invalid cluster type."""
 
     def __init__(self, expected_service_type, actual_service_type, suggested_endpoint_url=None):
-        message = "You are using '{}' client type, but the provided endpoint is of ServiceType '{}'. Initialize the client with the appropriate endpoint URI".format(
-            expected_service_type, actual_service_type
-        )
+        message = f"You are using '{expected_service_type}' client type, but the provided endpoint is of ServiceType '{actual_service_type}'. Initialize the client with the appropriate endpoint URI"
+
         if suggested_endpoint_url:
             message = message + ": '" + suggested_endpoint_url + "'"
         super().__init__(message)

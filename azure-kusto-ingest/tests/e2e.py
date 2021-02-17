@@ -175,9 +175,7 @@ class TestE2E(unittest.TestCase):
                 cls.test_table
             ),
         )
-        cls.client.execute(
-            cls.test_db, f".create table {cls.test_table} ingestion json mapping 'JsonMapping' {cls.test_table_json_mapping_reference()}"
-        )
+        cls.client.execute(cls.test_db, f".create table {cls.test_table} ingestion json mapping 'JsonMapping' {cls.test_table_json_mapping_reference()}")
 
     @classmethod
     def teardown_class(cls):

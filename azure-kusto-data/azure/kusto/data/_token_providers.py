@@ -199,10 +199,10 @@ class AzCliTokenProvider(TokenProviderBase):
 
     def __init__(self, kusto_uri: str):
         super().__init__(kusto_uri)
-        self._msal_client = None  # type: Optional[ClientApplication]
-        self._client_id = None  # type: Optional[str]
+        self._msal_client: Optional[ClientApplication] = None
+        self._client_id: Optional[str] = None
         self._authority_uri = None
-        self._username = None  # type: Optional[str]
+        self._username: Optional[str] = None
 
     @staticmethod
     def name() -> str:

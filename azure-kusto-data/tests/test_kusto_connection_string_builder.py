@@ -37,9 +37,7 @@ class KustoConnectionStringBuilderTests(unittest.TestCase):
         key = "key of application"
         kcsbs = [
             KustoConnectionStringBuilder(
-                "localhost;Application client Id={};application Key={};Authority Id={} ; aad federated security = {}".format(
-                    uuid, key, "microsoft.com", True
-                )
+                "localhost;Application client Id={};application Key={};Authority Id={} ; aad federated security = {}".format(uuid, key, "microsoft.com", True)
             ),
             KustoConnectionStringBuilder(
                 "Data Source=localhost ; Application Client Id={}; Appkey ={};Authority Id= {} ; aad federated security = {}".format(

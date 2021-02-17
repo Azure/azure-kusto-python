@@ -70,9 +70,7 @@ class KustoResponseDataSet(metaclass=ABCMeta):
         result = []
         for row in query_status_table:
             if row[self._error_column] < 4:
-                result.append(
-                    "Please provide the following data to Kusto: CRID='{}' Description:'{}'".format(row[self._crid_column], row[self._status_column])
-                )
+                result.append(f"Please provide the following data to Kusto: CRID='{row[self._crid_column]}' Description:'{row[self._status_column]}'")
         return result
 
     def __iter__(self):
