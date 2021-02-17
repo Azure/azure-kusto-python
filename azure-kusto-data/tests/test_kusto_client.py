@@ -12,7 +12,7 @@ from azure.kusto.data.helpers import dataframe_from_result_table
 from azure.kusto.data import KustoClient, ClientRequestProperties
 from azure.kusto.data.response import WellKnownDataSet
 from dateutil.tz import UTC
-from mock import patch
+from unittest.mock import patch
 
 PANDAS = False
 try:
@@ -54,7 +54,7 @@ def mocked_requests_post(*args, **kwargs):
         elif "PrimaryResultName" in kwargs["json"]["csl"]:
             file_name = "null_values.json"
 
-        with open(os.path.join(os.path.dirname(__file__), "input", file_name), "r") as response_file:
+        with open(os.path.join(os.path.dirname(__file__), "input", file_name)) as response_file:
             data = response_file.read()
         return MockResponse(json.loads(data), 200)
 
@@ -63,14 +63,14 @@ def mocked_requests_post(*args, **kwargs):
             file_name = "versionshowcommandresult.json"
         else:
             file_name = "adminthenquery.json"
-        with open(os.path.join(os.path.dirname(__file__), "input", file_name), "r") as response_file:
+        with open(os.path.join(os.path.dirname(__file__), "input", file_name)) as response_file:
             data = response_file.read()
         return MockResponse(json.loads(data), 200)
 
     return MockResponse(None, 404)
 
 
-DIGIT_WORDS = [str("Zero"), str("One"), str("Two"), str("Three"), str("Four"), str("Five"), str("Six"), str("Seven"), str("Eight"), str("Nine"), str("ten")]
+DIGIT_WORDS = ["Zero", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "ten"]
 
 
 class KustoClientTests(unittest.TestCase):
@@ -83,7 +83,7 @@ class KustoClientTests(unittest.TestCase):
         response = client.execute_query("PythonTest", "Deft")
         expected = {
             "rownumber": None,
-            "rowguid": str(""),
+            "rowguid": "",
             "xdouble": None,
             "xfloat": None,
             "xbool": None,
@@ -95,12 +95,12 @@ class KustoClientTests(unittest.TestCase):
             "xuint32": None,
             "xuint64": None,
             "xdate": None,
-            "xsmalltext": str(""),
-            "xtext": str(""),
-            "xnumberAsText": str(""),
+            "xsmalltext": "",
+            "xtext": "",
+            "xnumberAsText": "",
             "xtime": None,
-            "xtextWithNulls": str(""),
-            "xdynamicWithNulls": str(""),
+            "xtextWithNulls": "",
+            "xdynamicWithNulls": "",
         }
 
         for row in response.primary_results[0]:
@@ -145,7 +145,7 @@ class KustoClientTests(unittest.TestCase):
             assert isinstance(row["xdynamicWithNulls"], type(expected["xdynamicWithNulls"]))
 
             expected["rownumber"] = 0 if expected["rownumber"] is None else expected["rownumber"] + 1
-            expected["rowguid"] = str("0000000{0}-0000-0000-0001-020304050607".format(expected["rownumber"]))
+            expected["rowguid"] = str("0000000{}-0000-0000-0001-020304050607".format(expected["rownumber"]))
             expected["xdouble"] = round(float(0) if expected["xdouble"] is None else expected["xdouble"] + 1.0001, 4)
             expected["xfloat"] = round(float(0) if expected["xfloat"] is None else expected["xfloat"] + 1.01, 2)
             expected["xbool"] = False if expected["xbool"] is None else not expected["xbool"]
@@ -269,8 +269,8 @@ class KustoClientTests(unittest.TestCase):
             "xtextWithNulls": Series(["", "", "", "", "", "", "", "", "", "", ""], dtype=object),
             "xdynamicWithNulls": Series(
                 [
-                    str(""),
-                    str(""),
+                    "",
+                    "",
                     {"rowId": 1, "arr": [0, 1]},
                     {"rowId": 2, "arr": [0, 2]},
                     {"rowId": 3, "arr": [0, 3]},

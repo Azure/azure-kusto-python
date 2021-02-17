@@ -247,7 +247,7 @@ class TokenProviderTests(unittest.TestCase):
             assert TokenProviderTests.get_token_value(token) is not None
 
             if public_cert_path:
-                with open(public_cert_path, "r") as file:
+                with open(public_cert_path) as file:
                     public_cert = file.read()
 
                 provider = ApplicationCertificateTokenProvider(KUSTO_URI, cert_app_id, PUBLIC_AUTH_URI + cert_auth, pem_key, thumbprint, public_cert)

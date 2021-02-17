@@ -30,7 +30,7 @@ kcsb = KustoConnectionStringBuilder.with_aad_application_key_authentication(clus
 
 # In case you want to authenticate with AAD application certificate.
 filename = "path to a PEM certificate"
-with open(filename, "r") as pem_file:
+with open(filename) as pem_file:
     PEM = pem_file.read()
 
 thumbprint = "certificate's thumbprint"
@@ -38,11 +38,11 @@ kcsb = KustoConnectionStringBuilder.with_aad_application_certificate_authenticat
 
 # In case you want to authenticate with AAD application certificate Subject Name & Issuer
 filename = "path to a PEM certificate"
-with open(filename, "r") as pem_file:
+with open(filename) as pem_file:
     PEM = pem_file.read()
 
 filename = "path to a public certificate"
-with open(filename, "r") as cert_file:
+with open(filename) as cert_file:
     public_certificate = cert_file.read()
 
 thumbprint = "certificate's thumbprint"
@@ -137,7 +137,7 @@ while True:
     if qs.success.is_empty() and qs.failure.is_empty():
         time.sleep(backoff)
         backoff = min(backoff * 2, MAX_BACKOFF)
-        print("No new messages. backing off for {} seconds".format(backoff))
+        print(f"No new messages. backing off for {backoff} seconds")
         continue
 
     backoff = 1
@@ -145,8 +145,8 @@ while True:
     success_messages = qs.success.pop(10)
     failure_messages = qs.failure.pop(10)
 
-    pprint.pprint("SUCCESS : {}".format(success_messages))
-    pprint.pprint("FAILURE : {}".format(failure_messages))
+    pprint.pprint(f"SUCCESS : {success_messages}")
+    pprint.pprint(f"FAILURE : {failure_messages}")
 
     # you can of course separate them and dump them into a file for follow up investigations
     with open("successes.log", "w+") as sf:
@@ -191,6 +191,6 @@ client.ingest_from_stream(bytes_stream, ingestion_properties=ingestion_propertie
 stream_descriptor = StreamDescriptor(bytes_stream)
 client.ingest_from_stream(stream_descriptor, ingestion_properties=ingestion_properties)
 
-str_sequence = u"57,57,57"
+str_sequence = "57,57,57"
 str_stream = io.StringIO(str_sequence)
 client.ingest_from_stream(str_stream, ingestion_properties=ingestion_properties)

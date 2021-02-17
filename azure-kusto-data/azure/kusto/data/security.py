@@ -71,4 +71,4 @@ def _get_header_from_dict(token: dict):
 
 
 def _get_header(token_type: str, access_token: str) -> str:
-    return "{0} {1}".format(token_type, access_token)
+    return f"{token_type} {access_token}"

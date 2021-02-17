@@ -503,7 +503,7 @@ class KustoConnectionStringBuilder:
         return self._build_connection_string(self._internal_dict)
 
     def _build_connection_string(self, kcsb_as_dict) -> str:
-        return ";".join(["{0}={1}".format(word.value, kcsb_as_dict[word]) for word in self.ValidKeywords if word in kcsb_as_dict])
+        return ";".join(["{}={}".format(word.value, kcsb_as_dict[word]) for word in self.ValidKeywords if word in kcsb_as_dict])
 
 
 def _assert_value_is_valid(value):
@@ -563,12 +563,12 @@ class HTTPAdapterWithSocketOptions(requests.adapters.HTTPAdapter):
         self.socket_options = kwargs.pop("socket_options", None)
         self.pool_maxsize = kwargs.pop("pool_maxsize", None)
         self.max_retries = kwargs.pop("max_retries", None)
-        super(HTTPAdapterWithSocketOptions, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def init_poolmanager(self, *args, **kwargs):
         if self.socket_options is not None:
             kwargs["socket_options"] = self.socket_options
-        super(HTTPAdapterWithSocketOptions, self).init_poolmanager(*args, **kwargs)
+        super().init_poolmanager(*args, **kwargs)
 
 
 class KustoClient:
@@ -608,9 +608,9 @@ class KustoClient:
         self._session.mount("http://", adapter)
         self._session.mount("https://", adapter)
 
-        self._mgmt_endpoint = "{0}/v1/rest/mgmt".format(kusto_cluster)
-        self._query_endpoint = "{0}/v2/rest/query".format(kusto_cluster)
-        self._streaming_ingest_endpoint = "{0}/v1/rest/ingest/".format(kusto_cluster)
+        self._mgmt_endpoint = f"{kusto_cluster}/v1/rest/mgmt"
+        self._query_endpoint = f"{kusto_cluster}/v2/rest/query"
+        self._streaming_ingest_endpoint = f"{kusto_cluster}/v1/rest/ingest/"
         # notice that in this context, federated actually just stands for add auth, not aad federated auth (legacy code)
         self._auth_provider = _AadHelper(kcsb) if kcsb.aad_federated_security else None
         self._request_headers = {"Accept": "application/json", "Accept-Encoding": "gzip,deflate", "x-ms-client-version": "Kusto.Python.Client:" + VERSION}
@@ -778,7 +778,7 @@ class KustoClient:
             if payload:
                 raise KustoServiceError("The ingestion endpoint does not exist. Please enable streaming ingestion on your cluster.", response)
             else:
-                raise KustoServiceError("The requested endpoint '{}' does not exist.".format(endpoint), response)
+                raise KustoServiceError(f"The requested endpoint '{endpoint}' does not exist.", response)
 
         if payload:
             raise KustoServiceError(

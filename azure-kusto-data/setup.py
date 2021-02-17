@@ -13,7 +13,7 @@ PACKAGE_FOLDER_PATH = PACKAGE_NAME.replace("-", path.sep)
 # a-b-c => a.b.c
 NAMESPACE_NAME = PACKAGE_NAME.replace("-", ".")
 
-with open(path.join(PACKAGE_FOLDER_PATH, "_version.py"), "r") as fd:
+with open(path.join(PACKAGE_FOLDER_PATH, "_version.py")) as fd:
     VERSION = re.search(r'^VERSION\s*=\s*[\'"]([^\'"]*)[\'"]', fd.read(), re.MULTILINE).group(1)
 
 if not VERSION:
@@ -24,7 +24,7 @@ setup(
     name=PACKAGE_NAME,
     version=VERSION,
     description="Kusto Data Client",
-    long_description=open("README.rst", "r").read(),
+    long_description=open("README.rst").read(),
     url="https://github.com/Azure/azure-kusto-python",
     author="Microsoft Corporation",
     author_email="kustalk@microsoft.com",

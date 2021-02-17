@@ -15,7 +15,7 @@ def assert_uuid4(maybe_uuid: str, error_message: str):
     if maybe_uuid is None:
         return
 
-    maybe_uuid = uuid.UUID("{}".format(maybe_uuid)) if maybe_uuid is not None else None
+    maybe_uuid = uuid.UUID(f"{maybe_uuid}") if maybe_uuid is not None else None
     if maybe_uuid and maybe_uuid.version != 4:
         raise ValueError(error_message)
 

@@ -12,7 +12,7 @@ PACKAGE_FOLDER_PATH = PACKAGE_NAME.replace("-", path.sep)
 # a-b-c => a.b.c
 NAMESPACE_NAME = PACKAGE_NAME.replace("-", ".")
 
-with open(path.join(PACKAGE_FOLDER_PATH, "_version.py"), "r") as fd:
+with open(path.join(PACKAGE_FOLDER_PATH, "_version.py")) as fd:
     VERSION = re.search(r'^VERSION\s*=\s*[\'"]([^\'"]*)[\'"]', fd.read(), re.MULTILINE).group(1)
 
 if not VERSION:
@@ -23,7 +23,7 @@ setup(
     name=PACKAGE_NAME,
     version=VERSION,
     description="Kusto Ingest Client",
-    long_description=open("README.rst", "r").read(),
+    long_description=open("README.rst").read(),
     license="MIT",
     author="Microsoft Corporation",
     author_email="kustalk@microsoft.com",
@@ -40,6 +40,6 @@ setup(
         "License :: OSI Approved :: MIT License",
     ],
     packages=find_packages(exclude=["azure", "tests"]),
-    install_requires=["azure-kusto-data=={}".format(VERSION), "azure-storage-blob>=12,<13", "azure-storage-queue>=12,<13"],
+    install_requires=[f"azure-kusto-data=={VERSION}", "azure-storage-blob>=12,<13", "azure-storage-queue>=12,<13"],
     extras_require={"pandas": ["pandas"]},
 )

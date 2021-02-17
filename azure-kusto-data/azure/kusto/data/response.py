@@ -71,7 +71,7 @@ class KustoResponseDataSet(metaclass=ABCMeta):
         for row in query_status_table:
             if row[self._error_column] < 4:
                 result.append(
-                    "Please provide the following data to Kusto: CRID='{0}' Description:'{1}'".format(row[self._crid_column], row[self._status_column])
+                    "Please provide the following data to Kusto: CRID='{}' Description:'{}'".format(row[self._crid_column], row[self._status_column])
                 )
         return result
 
@@ -107,7 +107,7 @@ class KustoResponseDataSetV1(KustoResponseDataSet):
     }
 
     def __init__(self, json_response: dict):
-        super(KustoResponseDataSetV1, self).__init__(json_response["Tables"])
+        super().__init__(json_response["Tables"])
         if self.tables_count <= 2:
             self.tables[0].table_kind = WellKnownDataSet.PrimaryResult
             self.tables[0].table_id = 0
@@ -137,4 +137,4 @@ class KustoResponseDataSetV2(KustoResponseDataSet):
     _crid_column = "ClientRequestId"
 
     def __init__(self, json_response: dict):
-        super(KustoResponseDataSetV2, self).__init__([t for t in json_response if t["FrameType"] == "DataTable"])
+        super().__init__([t for t in json_response if t["FrameType"] == "DataTable"])

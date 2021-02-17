@@ -27,7 +27,7 @@ kcsb = KustoConnectionStringBuilder.with_aad_application_key_authentication(clus
 
 # In case you want to authenticate with AAD application certificate.
 filename = "path to a PEM certificate"
-with open(filename, "r") as pem_file:
+with open(filename) as pem_file:
     PEM = pem_file.read()
 
 thumbprint = "certificate's thumbprint"
@@ -35,11 +35,11 @@ kcsb = KustoConnectionStringBuilder.with_aad_application_certificate_authenticat
 
 # In case you want to authenticate with AAD application certificate Subject Name & Issuer
 filename = "path to a PEM certificate"
-with open(filename, "r") as pem_file:
+with open(filename) as pem_file:
     PEM = pem_file.read()
 
 filename = "path to a public certificate"
-with open(filename, "r") as cert_file:
+with open(filename) as cert_file:
     public_certificate = cert_file.read()
 
 thumbprint = "certificate's thumbprint"

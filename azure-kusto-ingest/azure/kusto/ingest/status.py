@@ -28,7 +28,7 @@ class StatusMessage:
                     pass
 
     def __str__(self):
-        return "{}".format(self._raw)
+        return f"{self._raw}"
 
     def __repr__(self):
         return "{0.__class__.__name__}({0._raw})".format(self)

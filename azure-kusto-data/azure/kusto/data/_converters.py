@@ -29,4 +29,4 @@ def to_timedelta(value):
             factor = 1
         return factor * timedelta(days=int(match.group("d") or 0), hours=int(match.group("h")), minutes=int(match.group("m")), seconds=float(match.group("s")))
     else:
-        raise ValueError("Timespan value '{}' cannot be decoded".format(value))
+        raise ValueError(f"Timespan value '{value}' cannot be decoded")

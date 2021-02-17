@@ -14,7 +14,7 @@ class ResourceUriTests(unittest.TestCase):
         endpoint_suffix = "core.windows.net"
         container_sas = "somesas"
 
-        uri = "https://{}.blob.{}/{}?{}".format(storage_name, endpoint_suffix, container_name, container_sas)
+        uri = f"https://{storage_name}.blob.{endpoint_suffix}/{container_name}?{container_sas}"
         connection_string = _ResourceUri.parse(uri)
         assert connection_string.storage_account_name == storage_name
         assert connection_string.object_type == "blob"
@@ -29,7 +29,7 @@ class ResourceUriTests(unittest.TestCase):
         endpoint_suffix = "core.windows.net"
         queue_sas = "somesas"
 
-        uri = "https://{}.queue.{}/{}?{}".format(storage_name, endpoint_suffix, queue_name, queue_sas)
+        uri = f"https://{storage_name}.queue.{endpoint_suffix}/{queue_name}?{queue_sas}"
         connection_string = _ResourceUri.parse(uri)
         assert connection_string.storage_account_name == storage_name
         assert connection_string.object_type == "queue"

@@ -14,7 +14,7 @@ class QueueDetails:
         self.service = service
 
     def __str__(self):
-        return "QueueDetails({0.name})".format(self)
+        return f"QueueDetails({self.name})"
 
 
 class StatusQueue:

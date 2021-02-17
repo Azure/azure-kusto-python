@@ -36,15 +36,15 @@ CLEAR_DB_CACHE = ".clear database cache streamingingestion schema"
 class TestE2E(unittest.TestCase):
     """A class to define mappings to deft table."""
 
-    engine_cs = None  # type: Optional[str]
-    dm_cs = None  # type: Optional[str]
-    app_id = None  # type: Optional[str]
-    app_key = None  # type: Optional[str]
-    auth_id = None  # type: Optional[str]
-    test_db = None  # type: Optional[str]
-    client = None  # type: KustoClient
-    test_table = None  # type: str
-    current_count = None  # type: int
+    engine_cs: Optional[str] = None
+    dm_cs: Optional[str] = None
+    app_id: Optional[str] = None
+    app_key: Optional[str] = None
+    auth_id: Optional[str] = None
+    test_db: Optional[str] = None
+    client: KustoClient = None
+    test_table: str = None
+    current_count: int = None
 
     @staticmethod
     def get_test_table_csv_mappings():
@@ -154,7 +154,7 @@ class TestE2E(unittest.TestCase):
 
         # Init clients
         python_version = "_".join([str(v) for v in sys.version_info[:3]])
-        cls.test_table = "python_test_{0}_{1}_{2}".format(python_version, str(int(time.time())), random.randint(1, 100000))
+        cls.test_table = "python_test_{}_{}_{}".format(python_version, str(int(time.time())), random.randint(1, 100000))
         cls.client = KustoClient(cls.engine_kcsb_from_env())
         cls.ingest_client = QueuedIngestClient(cls.dm_kcsb_from_env())
         cls.streaming_ingest_client = KustoStreamingIngestClient(cls.engine_kcsb_from_env())
@@ -171,17 +171,17 @@ class TestE2E(unittest.TestCase):
 
         cls.client.execute(
             cls.test_db,
-            ".create table {0} (rownumber: int, rowguid: string, xdouble: real, xfloat: real, xbool: bool, xint16: int, xint32: int, xint64: long, xuint8: long, xuint16: long, xuint32: long, xuint64: long, xdate: datetime, xsmalltext: string, xtext: string, xnumberAsText: string, xtime: timespan, xtextWithNulls: string, xdynamicWithNulls: dynamic)".format(
+            ".create table {} (rownumber: int, rowguid: string, xdouble: real, xfloat: real, xbool: bool, xint16: int, xint32: int, xint64: long, xuint8: long, xuint16: long, xuint32: long, xuint64: long, xdate: datetime, xsmalltext: string, xtext: string, xnumberAsText: string, xtime: timespan, xtextWithNulls: string, xdynamicWithNulls: dynamic)".format(
                 cls.test_table
             ),
         )
         cls.client.execute(
-            cls.test_db, ".create table {0} ingestion json mapping 'JsonMapping' {1}".format(cls.test_table, cls.test_table_json_mapping_reference())
+            cls.test_db, f".create table {cls.test_table} ingestion json mapping 'JsonMapping' {cls.test_table_json_mapping_reference()}"
         )
 
     @classmethod
     def teardown_class(cls):
-        cls.client.execute(cls.test_db, ".drop table {} ifexists".format(cls.test_table))
+        cls.client.execute(cls.test_db, f".drop table {cls.test_table} ifexists")
 
     # assertions
     @classmethod
@@ -192,7 +192,7 @@ class TestE2E(unittest.TestCase):
             timeout -= 1
 
             try:
-                response = cls.client.execute(cls.test_db, "{} | count".format(cls.test_table))
+                response = cls.client.execute(cls.test_db, f"{cls.test_table} | count")
             except KustoServiceError:
                 continue
 
@@ -204,7 +204,7 @@ class TestE2E(unittest.TestCase):
                     break
 
         cls.current_count += actual
-        assert actual == expected, "Row count expected = {0}, while actual row count = {1}".format(expected, actual)
+        assert actual == expected, f"Row count expected = {expected}, while actual row count = {actual}"
 
     def test_csv_ingest_existing_table(self):
         csv_ingest_props = IngestionProperties(
@@ -298,7 +298,7 @@ class TestE2E(unittest.TestCase):
         self.client.execute(self.test_db, CLEAR_DB_CACHE)
         ingestion_properties = IngestionProperties(database=self.test_db, table=self.test_table, data_format=DataFormat.CSV)
 
-        with open(self.csv_file_path, "r") as stream:
+        with open(self.csv_file_path) as stream:
             self.streaming_ingest_client.ingest_from_stream(stream, ingestion_properties=ingestion_properties)
 
         self.assert_rows_added(10, timeout=120)

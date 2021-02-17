@@ -37,20 +37,20 @@ class KustoConnectionStringBuilderTests(unittest.TestCase):
         key = "key of application"
         kcsbs = [
             KustoConnectionStringBuilder(
-                "localhost;Application client Id={0};application Key={1};Authority Id={2} ; aad federated security = {3}".format(
+                "localhost;Application client Id={};application Key={};Authority Id={} ; aad federated security = {}".format(
                     uuid, key, "microsoft.com", True
                 )
             ),
             KustoConnectionStringBuilder(
-                "Data Source=localhost ; Application Client Id={0}; Appkey ={1};Authority Id= {2} ; aad federated security = {3}".format(
+                "Data Source=localhost ; Application Client Id={}; Appkey ={};Authority Id= {} ; aad federated security = {}".format(
                     uuid, key, "microsoft.com", True
                 )
             ),
             KustoConnectionStringBuilder(
-                " Addr = localhost ; AppClientId = {0} ; AppKey ={1}; Authority Id={2} ; aad federated security = {3}".format(uuid, key, "microsoft.com", True)
+                " Addr = localhost ; AppClientId = {} ; AppKey ={}; Authority Id={} ; aad federated security = {}".format(uuid, key, "microsoft.com", True)
             ),
             KustoConnectionStringBuilder(
-                "Network Address = localhost; AppClientId = {0} ; AppKey ={1};AuthorityId={2} ; aad federated security = {3}".format(
+                "Network Address = localhost; AppClientId = {} ; AppKey ={};AuthorityId={} ; aad federated security = {}".format(
                     uuid, key, "microsoft.com", True
                 )
             ),
@@ -85,11 +85,11 @@ class KustoConnectionStringBuilderTests(unittest.TestCase):
             assert kcsb.application_client_id == uuid
             assert kcsb.application_key == key
             assert kcsb.authority_id == "microsoft.com"
-            assert repr(kcsb) == "Data Source=localhost;AAD Federated Security=True;Application Client Id={0};Application Key={1};Authority Id={2}".format(
+            assert repr(kcsb) == "Data Source=localhost;AAD Federated Security=True;Application Client Id={};Application Key={};Authority Id={}".format(
                 uuid, key, "microsoft.com"
             )
 
-            assert str(kcsb) == "Data Source=localhost;AAD Federated Security=True;Application Client Id={0};Application Key={1};Authority Id={2}".format(
+            assert str(kcsb) == "Data Source=localhost;AAD Federated Security=True;Application Client Id={};Application Key={};Authority Id={}".format(
                 uuid, self.PASSWORDS_REPLACEMENT, "microsoft.com"
             )
 
@@ -98,10 +98,10 @@ class KustoConnectionStringBuilderTests(unittest.TestCase):
         user = "test"
         password = "Pa$$w0rd"
         kcsbs = [
-            KustoConnectionStringBuilder("localhost;AAD User ID={0};password={1} ;AAD Federated Security=True ".format(user, password)),
-            KustoConnectionStringBuilder("Data Source=localhost ; AaD User ID={0}; Password ={1} ;AAD Federated Security=True".format(user, password)),
-            KustoConnectionStringBuilder(" Addr = localhost ; AAD User ID = {0} ; Pwd ={1} ;AAD Federated Security=True".format(user, password)),
-            KustoConnectionStringBuilder("Network Address = localhost; AAD User iD = {0} ; Pwd = {1} ;AAD Federated Security= True  ".format(user, password)),
+            KustoConnectionStringBuilder(f"localhost;AAD User ID={user};password={password} ;AAD Federated Security=True "),
+            KustoConnectionStringBuilder(f"Data Source=localhost ; AaD User ID={user}; Password ={password} ;AAD Federated Security=True"),
+            KustoConnectionStringBuilder(f" Addr = localhost ; AAD User ID = {user} ; Pwd ={password} ;AAD Federated Security=True"),
+            KustoConnectionStringBuilder(f"Network Address = localhost; AAD User iD = {user} ; Pwd = {password} ;AAD Federated Security= True  "),
             KustoConnectionStringBuilder.with_aad_user_password_authentication("localhost", user, password),
         ]
 
@@ -125,8 +125,8 @@ class KustoConnectionStringBuilderTests(unittest.TestCase):
             assert kcsb.application_client_id is None
             assert kcsb.application_key is None
             assert kcsb.authority_id == "common"
-            assert repr(kcsb) == "Data Source=localhost;AAD Federated Security=True;AAD User ID={0};Password={1};Authority Id=common".format(user, password)
-            assert str(kcsb) == "Data Source=localhost;AAD Federated Security=True;AAD User ID={0};Password={1};Authority Id=common".format(
+            assert repr(kcsb) == f"Data Source=localhost;AAD Federated Security=True;AAD User ID={user};Password={password};Authority Id=common"
+            assert str(kcsb) == "Data Source=localhost;AAD Federated Security=True;AAD User ID={};Password={};Authority Id=common".format(
                 user, self.PASSWORDS_REPLACEMENT
             )
 
@@ -145,8 +145,8 @@ class KustoConnectionStringBuilderTests(unittest.TestCase):
         assert kcsb.application_client_id is None
         assert kcsb.application_key is None
         assert kcsb.authority_id == authority_id
-        assert repr(kcsb) == "Data Source=localhost;AAD Federated Security=True;AAD User ID={0};Password={1};Authority Id=13456".format(user, password)
-        assert str(kcsb) == "Data Source=localhost;AAD Federated Security=True;AAD User ID={0};Password={1};Authority Id=13456".format(
+        assert repr(kcsb) == f"Data Source=localhost;AAD Federated Security=True;AAD User ID={user};Password={password};Authority Id=13456"
+        assert str(kcsb) == "Data Source=localhost;AAD Federated Security=True;AAD User ID={};Password={};Authority Id=13456".format(
             user, self.PASSWORDS_REPLACEMENT
         )
 

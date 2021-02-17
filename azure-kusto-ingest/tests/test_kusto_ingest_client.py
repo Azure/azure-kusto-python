@@ -9,7 +9,7 @@ import pytest
 import responses
 from azure.kusto.ingest import QueuedIngestClient, IngestionProperties, DataFormat
 from azure.kusto.ingest.exceptions import KustoInvalidEndpointError
-from mock import patch
+from unittest.mock import patch
 
 pandas_installed = False
 try:
@@ -246,7 +246,7 @@ class QueuedIngestClientTests(unittest.TestCase):
         put_message_in_queue_mock_kwargs = mock_put_message_in_queue.call_args_list[0][1]
 
         queued_message_json = json.loads(put_message_in_queue_mock_kwargs["content"])
-        expected_url = "https://storageaccount.blob.core.windows.net/tempstorage/database__table__1111-111111-111111-1111__df_{0}_100_1111-111111-111111-1111.csv.gz?".format(
+        expected_url = "https://storageaccount.blob.core.windows.net/tempstorage/database__table__1111-111111-111111-1111__df_{}_100_1111-111111-111111-1111.csv.gz?".format(
             id(df)
         )
         # mock_upload_blob_from_stream

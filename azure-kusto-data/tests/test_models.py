@@ -7,7 +7,7 @@ from azure.kusto.data._models import KustoResultTable
 
 
 def test_str_and_dates_smoke():
-    with open(os.path.join(os.path.dirname(__file__), "input", "deft.json"), "r") as f:
+    with open(os.path.join(os.path.dirname(__file__), "input", "deft.json")) as f:
         data = f.read()
     json_table = json.loads(data)[2]
 

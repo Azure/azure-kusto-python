@@ -21,8 +21,8 @@ class ClientRequestPropertiesTests(unittest.TestCase):
 
         result = crp.to_json()
 
-        assert '"{0}": false'.format(crp.results_defer_partial_query_failures_option_name) in result
-        assert '"{0}": "0:00:10"'.format(ClientRequestProperties.request_timeout_option_name) in result
+        assert f'"{crp.results_defer_partial_query_failures_option_name}": false' in result
+        assert f'"{ClientRequestProperties.request_timeout_option_name}": "0:00:10"' in result
 
         assert crp.client_request_id is None
         assert crp.application is None
