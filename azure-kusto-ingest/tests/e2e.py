@@ -8,10 +8,7 @@ import time
 import unittest
 import uuid
 
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from typing import Optional
+from typing import Optional
 
 from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
 from azure.kusto.data.exceptions import KustoServiceError
@@ -36,13 +33,13 @@ CLEAR_DB_CACHE = ".clear database cache streamingingestion schema"
 class TestE2E(unittest.TestCase):
     """A class to define mappings to deft table."""
 
-    engine_cs: "Optional[str]" = None
-    dm_cs: "Optional[str]" = None
-    app_id: "Optional[str]" = None
-    app_key: "Optional[str]" = None
-    auth_id: "Optional[str]" = None
-    test_db: "Optional[str]" = None
-    client: "KustoClient" = None
+    engine_cs: Optional[str] = None
+    dm_cs: Optional[str] = None
+    app_id: Optional[str] = None
+    app_key: Optional[str] = None
+    auth_id: Optional[str] = None
+    test_db: Optional[str] = None
+    client: KustoClient = None
     test_table: str = None
     current_count: int = None
 
