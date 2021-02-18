@@ -43,7 +43,7 @@ class TokenProviderBase(abc.ABC):
     def __init__(self, kusto_uri: str):
         self._kusto_uri = kusto_uri
         if kusto_uri is not None:
-            self._scopes = [kusto_uri + ".defult" if kusto_uri.endswith("/") else kusto_uri + "/.default"]
+            self._scopes = [kusto_uri + ".default" if kusto_uri.endswith("/") else kusto_uri + "/.default"]
             self._cloud_info = CloudSettings.get_cloud_info()
 
     def get_token(self):
@@ -357,7 +357,7 @@ class DeviceLoginTokenProvider(TokenProviderBase):
 
         token = self._msal_client.acquire_token_by_device_flow(flow)
 
-        # Keep the account for slient login
+        # Keep the account for silent login
         if self._valid_token_or_none(token) is not None:
             accounts = self._msal_client.get_accounts()
             if len(accounts) == 1:
