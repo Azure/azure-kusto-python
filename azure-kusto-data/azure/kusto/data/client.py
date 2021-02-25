@@ -408,6 +408,8 @@ class KustoConnectionStringBuilder:
         if domain_hint is not None:
             kcsb[kcsb.ValidKeywords.domain_hint] = domain_hint
 
+        return kcsb
+
     @property
     def data_source(self) -> str:
         """The URI specifying the Kusto service endpoint.

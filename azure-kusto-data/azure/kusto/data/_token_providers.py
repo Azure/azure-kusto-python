@@ -399,10 +399,9 @@ class InteractiveLoginTokenProvider(TokenProviderBase):
 
     def _get_token_from_cache_impl(self) -> dict:
         account = None
-        if self._login_hint is not None:
-            accounts = self._msal_client.get_accounts(self._login_hint)
-            if len(accounts) > 0:
-                account = accounts[0]
+        accounts = self._msal_client.get_accounts(self._login_hint)
+        if len(accounts) > 0:
+            account = accounts[0]
 
         token = self._msal_client.acquire_token_silent(scopes=self._scopes, account=account)
         return self._valid_token_or_none(token)
