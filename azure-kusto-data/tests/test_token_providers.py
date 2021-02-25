@@ -208,6 +208,10 @@ class TokenProviderTests(unittest.TestCase):
 
     @staticmethod
     def test_interactive_login():
+        if not TEST_INTERACTIVE_AUTH:
+            print(" *** Skipped interactive login Test ***")
+            return
+
         auth_id = os.environ.get("APP_AUTH_ID", "72f988bf-86f1-41af-91ab-2d7cd011db47")
         provider = InteractiveLoginTokenProvider(KUSTO_URI, PUBLIC_AUTH_URI + auth_id)
         token = provider.get_token()
