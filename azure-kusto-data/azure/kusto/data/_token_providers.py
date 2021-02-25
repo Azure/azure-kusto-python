@@ -370,6 +370,43 @@ class DeviceLoginTokenProvider(TokenProviderBase):
         return self._valid_token_or_none(token)
 
 
+class InteractiveLoginTokenProvider(TokenProviderBase):
+    """ Acquire a token from MSAL with Device Login flow """
+
+    def __init__(self, kusto_uri: str, authority_uri: str, login_hint: str = None, domain_hint: str = None):
+        super().__init__(kusto_uri)
+        self._msal_client = None
+        self._auth = authority_uri
+        self._login_hint = login_hint
+        self._domain_hint = domain_hint
+        self._account = None
+
+    @staticmethod
+    def name() -> str:
+        return "DeviceLoginTokenProvider"
+
+    def context(self) -> dict:
+        return {"authority": self._auth, "client_id": self._cloud_info.kusto_client_app_id}
+
+    def _init_impl(self):
+        self._msal_client = PublicClientApplication(client_id=self._cloud_info.kusto_client_app_id, authority=self._auth)
+
+    def _get_token_impl(self) -> dict:
+        token = self._msal_client.acquire_token_interactive(scopes=self._scopes, prompt="select_account", login_hint=self._login_hint,
+                                                            domain_hint=self._domain_hint)
+        return self._valid_token_or_throw(token)
+
+    def _get_token_from_cache_impl(self) -> dict:
+        account = None
+        if self._login_hint is not None:
+            accounts = self._msal_client.get_accounts(self._login_hint)
+            if len(accounts) > 0:
+                account = accounts[0]
+
+        token = self._msal_client.acquire_token_silent(scopes=self._scopes, account=account)
+        return self._valid_token_or_none(token)
+
+
 class ApplicationKeyTokenProvider(TokenProviderBase):
     """ Acquire a token from MSAL with application Id and Key """
 

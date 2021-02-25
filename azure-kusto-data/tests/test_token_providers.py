@@ -13,6 +13,7 @@ TOKEN_VALUE = "little miss sunshine"
 TEST_AZ_AUTH = False  # enable this in environments with az cli installed, and make sure to call 'az login' first
 TEST_MSI_AUTH = False  # enable this in environments with MSI enabled and make sure to set the relevant environment variables
 TEST_DEVICE_AUTH = False  # User interaction required, enable this when running test manually
+TEST_INTERACTIVE_AUTH = False  # User interaction required, enable this when running test manually
 
 
 class MockProvider(TokenProviderBase):
@@ -198,6 +199,17 @@ class TokenProviderTests(unittest.TestCase):
             print(x)
 
         provider = DeviceLoginTokenProvider(KUSTO_URI, PUBLIC_AUTH_URI + "organizations", callback)
+        token = provider.get_token()
+        assert TokenProviderTests.get_token_value(token) is not None
+
+        # Again through cache
+        token = provider._get_token_from_cache_impl()
+        assert TokenProviderTests.get_token_value(token) is not None
+
+    @staticmethod
+    def test_interactive_login():
+        auth_id = os.environ.get("APP_AUTH_ID", "72f988bf-86f1-41af-91ab-2d7cd011db47")
+        provider = InteractiveLoginTokenProvider(KUSTO_URI, PUBLIC_AUTH_URI + auth_id)
         token = provider.get_token()
         assert TokenProviderTests.get_token_value(token) is not None
 
