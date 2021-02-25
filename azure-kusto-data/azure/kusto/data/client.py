@@ -107,7 +107,7 @@ class KustoConnectionStringBuilder:
                 self.application_token,
                 self.user_token,
                 self.login_hint,
-                self.domain_hint
+                self.domain_hint,
             ]
 
         def is_dict_type(self) -> bool:
@@ -397,7 +397,9 @@ class KustoConnectionStringBuilder:
         return kcsb
 
     @classmethod
-    def with_interactive_login(cls, connection_string: str, login_hint: Optional[str] = None, domain_hint: Optional[str] = None) -> "KustoConnectionStringBuilder":
+    def with_interactive_login(
+        cls, connection_string: str, login_hint: Optional[str] = None, domain_hint: Optional[str] = None
+    ) -> "KustoConnectionStringBuilder":
         kcsb = cls(connection_string)
         kcsb[kcsb.ValidKeywords.interactive_login] = True
         if login_hint is not None:

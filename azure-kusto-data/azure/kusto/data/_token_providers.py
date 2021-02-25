@@ -392,8 +392,9 @@ class InteractiveLoginTokenProvider(TokenProviderBase):
         self._msal_client = PublicClientApplication(client_id=self._cloud_info.kusto_client_app_id, authority=self._auth)
 
     def _get_token_impl(self) -> dict:
-        token = self._msal_client.acquire_token_interactive(scopes=self._scopes, prompt="select_account", login_hint=self._login_hint,
-                                                            domain_hint=self._domain_hint)
+        token = self._msal_client.acquire_token_interactive(
+            scopes=self._scopes, prompt="select_account", login_hint=self._login_hint, domain_hint=self._domain_hint
+        )
         return self._valid_token_or_throw(token)
 
     def _get_token_from_cache_impl(self) -> dict:

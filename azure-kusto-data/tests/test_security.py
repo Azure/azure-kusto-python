@@ -105,6 +105,7 @@ def test_user_app_token_auth():
     auth_header = app_helper.acquire_authorization_header()
     assert auth_header.index(token) > -1
 
+
 def test_interactive_login():
     kcsb = KustoConnectionStringBuilder.with_interactive_login(KUSTO_TEST_URI)
     aad_helper = _AadHelper(kcsb)
