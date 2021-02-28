@@ -119,11 +119,17 @@ class TestE2E(unittest.TestCase):
 
     @classmethod
     def engine_kcsb_from_env(cls) -> KustoConnectionStringBuilder:
-        return KustoConnectionStringBuilder.with_aad_application_key_authentication(cls.engine_cs, cls.app_id, cls.app_key, cls.auth_id)
+        if all([cls.app_id, cls.app_key, cls.auth_id]):
+            return KustoConnectionStringBuilder.with_aad_application_key_authentication(cls.engine_cs, cls.app_id, cls.app_key, cls.auth_id)
+        else:
+            return KustoConnectionStringBuilder.with_interactive_login(cls.engine_cs)
 
     @classmethod
     def dm_kcsb_from_env(cls) -> KustoConnectionStringBuilder:
-        return KustoConnectionStringBuilder.with_aad_application_key_authentication(cls.dm_cs, cls.app_id, cls.app_key, cls.auth_id)
+        if all([cls.app_id, cls.app_key, cls.auth_id]):
+            return KustoConnectionStringBuilder.with_aad_application_key_authentication(cls.dm_cs, cls.app_id, cls.app_key, cls.auth_id)
+        else:
+            return KustoConnectionStringBuilder.with_interactive_login(cls.dm_cs)
 
     @classmethod
     def setup_class(cls):
@@ -135,7 +141,7 @@ class TestE2E(unittest.TestCase):
         cls.auth_id = os.environ.get("AUTH_ID")
         cls.test_db = os.environ.get("TEST_DATABASE")
 
-        if not all([cls.engine_cs, cls.dm_cs, cls.app_id, cls.app_key, cls.auth_id, cls.test_db]):
+        if not all([cls.engine_cs, cls.dm_cs, cls.test_db]):
             raise unittest.SkipTest("E2E environment is missing")
 
         # Init clients

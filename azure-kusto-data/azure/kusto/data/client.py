@@ -402,6 +402,7 @@ class KustoConnectionStringBuilder:
     ) -> "KustoConnectionStringBuilder":
         kcsb = cls(connection_string)
         kcsb[kcsb.ValidKeywords.interactive_login] = True
+        kcsb[kcsb.ValidKeywords.aad_federated_security] = True
         if login_hint is not None:
             kcsb[kcsb.ValidKeywords.login_hint] = login_hint
 
