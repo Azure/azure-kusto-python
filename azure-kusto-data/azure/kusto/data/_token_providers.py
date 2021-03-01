@@ -383,7 +383,7 @@ class InteractiveLoginTokenProvider(TokenProviderBase):
 
     @staticmethod
     def name() -> str:
-        return "DeviceLoginTokenProvider"
+        return "InteractiveLoginTokenProvider"
 
     def context(self) -> dict:
         return {"authority": self._auth, "client_id": self._cloud_info.kusto_client_app_id}
