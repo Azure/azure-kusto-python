@@ -53,7 +53,7 @@ class _AadHelper:
             return _get_header_from_dict(self.token_provider.get_token())
         except Exception as error:
             kwargs = self.token_provider.context()
-            kwargs["resource"] = self.kusto_uri
+            kwargs["kusto_uri"] = self.kusto_uri
             raise KustoAuthenticationError(self.token_provider.name(), error, **kwargs)
 
 
