@@ -181,7 +181,7 @@ class MsiTokenProvider(TokenProviderBase):
         try:
             self.msi_auth_context = ManagedIdentityCredential(**self._msi_args)
         except Exception as e:
-            raise KustoClientError("Failed to initialize MSI ManagedIdentityCredential with [" + str(self._msi_params) + "]\n" + str(e))
+            raise KustoClientError("Failed to initialize MSI ManagedIdentityCredential with [" + str(self._msi_args) + "]\n" + str(e))
 
     def _get_token_impl(self) -> dict:
         return None
@@ -191,7 +191,7 @@ class MsiTokenProvider(TokenProviderBase):
             msi_token = self.msi_auth_context.get_token(self._kusto_uri)
             return {TokenConstants.MSAL_TOKEN_TYPE: TokenConstants.BEARER_TYPE, TokenConstants.MSAL_ACCESS_TOKEN: msi_token.token}
         except Exception as e:
-            raise KustoClientError("Failed to obtain MSI token for '" + self._kusto_uri + "' with [" + str(self._msi_params) + "]\n" + str(e))
+            raise KustoClientError("Failed to obtain MSI token for '" + self._kusto_uri + "' with [" + str(self._msi_args) + "]\n" + str(e))
 
 
 class AzCliTokenProvider(TokenProviderBase):
