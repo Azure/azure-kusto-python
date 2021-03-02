@@ -513,16 +513,16 @@ class KustoConnectionStringBuilder:
         return self._token_provider
 
     @property
-    def interactive_login(self):
+    def interactive_login(self) -> bool:
         val = self._internal_dict.get(self.ValidKeywords.interactive_login)
         return val is not None and val
 
     @property
-    def login_hint(self):
+    def login_hint(self) -> Optional[str]:
         return self._internal_dict.get(self.ValidKeywords.login_hint)
 
     @property
-    def domain_hint(self):
+    def domain_hint(self) -> Optional[str]:
         return self._internal_dict.get(self.ValidKeywords.domain_hint)
 
     def __str__(self):

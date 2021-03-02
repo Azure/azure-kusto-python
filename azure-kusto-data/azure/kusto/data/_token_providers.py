@@ -2,7 +2,7 @@
 # Licensed under the MIT License
 import abc
 import webbrowser
-from typing import Callable
+from typing import Callable, Optional
 from msal import ConfidentialClientApplication, PublicClientApplication
 from azure.identity import ManagedIdentityCredential
 from .exceptions import KustoClientError
@@ -21,6 +21,7 @@ class TokenConstants:
     MSAL_PUBLIC_CERT = "public_certificate"
     MSAL_DEVICE_MSG = "message"
     MSAL_DEVICE_URI = "verification_uri"
+    MSAL_INTERACTIVE_PROMPT = "select_account"
     AZ_TOKEN_TYPE = "tokenType"
     AZ_ACCESS_TOKEN = "accessToken"
     AZ_REFRESH_TOKEN = "refreshToken"
@@ -373,7 +374,7 @@ class DeviceLoginTokenProvider(TokenProviderBase):
 class InteractiveLoginTokenProvider(TokenProviderBase):
     """ Acquire a token from MSAL with Device Login flow """
 
-    def __init__(self, kusto_uri: str, authority_uri: str, login_hint: str = None, domain_hint: str = None):
+    def __init__(self, kusto_uri: str, authority_uri: str, login_hint: Optional[str] = None, domain_hint: Optional[str] = None):
         super().__init__(kusto_uri)
         self._msal_client = None
         self._auth = authority_uri
@@ -393,7 +394,7 @@ class InteractiveLoginTokenProvider(TokenProviderBase):
 
     def _get_token_impl(self) -> dict:
         token = self._msal_client.acquire_token_interactive(
-            scopes=self._scopes, prompt="select_account", login_hint=self._login_hint, domain_hint=self._domain_hint
+            scopes=self._scopes, prompt=TokenConstants.MSAL_INTERACTIVE_PROMPT, login_hint=self._login_hint, domain_hint=self._domain_hint
         )
         return self._valid_token_or_throw(token)
 
