@@ -19,7 +19,9 @@ class _AadHelper:
         aad_authority_uri = cloud_info.aad_authority_uri
         self.authority_uri = aad_authority_uri + authority if aad_authority_uri.endswith("/") else aad_authority_uri + "/" + authority
 
-        if all([kcsb.aad_user_id, kcsb.password]):
+        if kcsb.interactive_login:
+            self.token_provider = InteractiveLoginTokenProvider(self.kusto_uri, self.authority_uri, kcsb.login_hint, kcsb.domain_hint)
+        elif all([kcsb.aad_user_id, kcsb.password]):
             self.token_provider = UserPassTokenProvider(self.kusto_uri, self.authority_uri, kcsb.aad_user_id, kcsb.password)
         elif all([kcsb.application_client_id, kcsb.application_key]):
             self.token_provider = ApplicationKeyTokenProvider(self.kusto_uri, self.authority_uri, kcsb.application_client_id, kcsb.application_key)
@@ -51,7 +53,7 @@ class _AadHelper:
             return _get_header_from_dict(self.token_provider.get_token())
         except Exception as error:
             kwargs = self.token_provider.context()
-            kwargs["resource"] = self.kusto_uri
+            kwargs["kusto_uri"] = self.kusto_uri
             raise KustoAuthenticationError(self.token_provider.name(), error, **kwargs)
 
 

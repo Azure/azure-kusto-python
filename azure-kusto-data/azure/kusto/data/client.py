@@ -8,7 +8,7 @@ import uuid
 from copy import copy
 from datetime import timedelta
 from enum import Enum, unique
-from typing import Union, Callable
+from typing import Union, Callable, Optional
 
 import requests
 from requests.adapters import HTTPAdapter
@@ -50,6 +50,9 @@ class KustoConnectionStringBuilder:
         msi_auth = "MSI Authentication"
         msi_params = "MSI Params"
         az_cli = "AZ CLI"
+        interactive_login = "Interactive Login"
+        login_hint = "Login Hint"
+        domain_hint = "Domain Hint"
 
         @classmethod
         def parse(cls, key: str) -> "ValidKeywords":
@@ -103,6 +106,8 @@ class KustoConnectionStringBuilder:
                 self.authority_id,
                 self.application_token,
                 self.user_token,
+                self.login_hint,
+                self.domain_hint,
             ]
 
         def is_dict_type(self) -> bool:
@@ -110,7 +115,7 @@ class KustoConnectionStringBuilder:
 
         def is_bool_type(self) -> bool:
             """States whether a word is of type bool or not."""
-            return self in [self.aad_federated_security, self.msi_auth, self.az_cli]
+            return self in [self.aad_federated_security, self.msi_auth, self.az_cli, self.interactive_login]
 
     def __init__(self, connection_string: str):
         """
@@ -391,6 +396,21 @@ class KustoConnectionStringBuilder:
 
         return kcsb
 
+    @classmethod
+    def with_interactive_login(
+        cls, connection_string: str, login_hint: Optional[str] = None, domain_hint: Optional[str] = None
+    ) -> "KustoConnectionStringBuilder":
+        kcsb = cls(connection_string)
+        kcsb[kcsb.ValidKeywords.interactive_login] = True
+        kcsb[kcsb.ValidKeywords.aad_federated_security] = True
+        if login_hint is not None:
+            kcsb[kcsb.ValidKeywords.login_hint] = login_hint
+
+        if domain_hint is not None:
+            kcsb[kcsb.ValidKeywords.domain_hint] = domain_hint
+
+        return kcsb
+
     @property
     def data_source(self) -> str:
         """The URI specifying the Kusto service endpoint.
@@ -491,6 +511,19 @@ class KustoConnectionStringBuilder:
     @property
     def token_provider(self):
         return self._token_provider
+
+    @property
+    def interactive_login(self) -> bool:
+        val = self._internal_dict.get(self.ValidKeywords.interactive_login)
+        return val is not None and val
+
+    @property
+    def login_hint(self) -> Optional[str]:
+        return self._internal_dict.get(self.ValidKeywords.login_hint)
+
+    @property
+    def domain_hint(self) -> Optional[str]:
+        return self._internal_dict.get(self.ValidKeywords.domain_hint)
 
     def __str__(self):
         dict_copy = self._internal_dict.copy()

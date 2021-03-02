@@ -2,7 +2,7 @@
 # Licensed under the MIT License
 import abc
 import webbrowser
-from typing import Callable
+from typing import Callable, Optional
 from msal import ConfidentialClientApplication, PublicClientApplication
 from azure.identity import ManagedIdentityCredential
 from .exceptions import KustoClientError
@@ -21,6 +21,7 @@ class TokenConstants:
     MSAL_PUBLIC_CERT = "public_certificate"
     MSAL_DEVICE_MSG = "message"
     MSAL_DEVICE_URI = "verification_uri"
+    MSAL_INTERACTIVE_PROMPT = "select_account"
     AZ_TOKEN_TYPE = "tokenType"
     AZ_ACCESS_TOKEN = "accessToken"
     AZ_REFRESH_TOKEN = "refreshToken"
@@ -181,7 +182,7 @@ class MsiTokenProvider(TokenProviderBase):
         try:
             self.msi_auth_context = ManagedIdentityCredential(**self._msi_args)
         except Exception as e:
-            raise KustoClientError("Failed to initialize MSI ManagedIdentityCredential with [" + str(self._msi_params) + "]\n" + str(e))
+            raise KustoClientError("Failed to initialize MSI ManagedIdentityCredential with [" + str(self._msi_args) + "]\n" + str(e))
 
     def _get_token_impl(self) -> dict:
         return None
@@ -191,7 +192,7 @@ class MsiTokenProvider(TokenProviderBase):
             msi_token = self.msi_auth_context.get_token(self._kusto_uri)
             return {TokenConstants.MSAL_TOKEN_TYPE: TokenConstants.BEARER_TYPE, TokenConstants.MSAL_ACCESS_TOKEN: msi_token.token}
         except Exception as e:
-            raise KustoClientError("Failed to obtain MSI token for '" + self._kusto_uri + "' with [" + str(self._msi_params) + "]\n" + str(e))
+            raise KustoClientError("Failed to obtain MSI token for '" + self._kusto_uri + "' with [" + str(self._msi_args) + "]\n" + str(e))
 
 
 class AzCliTokenProvider(TokenProviderBase):
@@ -367,6 +368,43 @@ class DeviceLoginTokenProvider(TokenProviderBase):
 
     def _get_token_from_cache_impl(self) -> dict:
         token = self._msal_client.acquire_token_silent(scopes=self._scopes, account=self._account)
+        return self._valid_token_or_none(token)
+
+
+class InteractiveLoginTokenProvider(TokenProviderBase):
+    """ Acquire a token from MSAL with Device Login flow """
+
+    def __init__(self, kusto_uri: str, authority_uri: str, login_hint: Optional[str] = None, domain_hint: Optional[str] = None):
+        super().__init__(kusto_uri)
+        self._msal_client = None
+        self._auth = authority_uri
+        self._login_hint = login_hint
+        self._domain_hint = domain_hint
+        self._account = None
+
+    @staticmethod
+    def name() -> str:
+        return "InteractiveLoginTokenProvider"
+
+    def context(self) -> dict:
+        return {"authority": self._auth, "client_id": self._cloud_info.kusto_client_app_id}
+
+    def _init_impl(self):
+        self._msal_client = PublicClientApplication(client_id=self._cloud_info.kusto_client_app_id, authority=self._auth)
+
+    def _get_token_impl(self) -> dict:
+        token = self._msal_client.acquire_token_interactive(
+            scopes=self._scopes, prompt=TokenConstants.MSAL_INTERACTIVE_PROMPT, login_hint=self._login_hint, domain_hint=self._domain_hint
+        )
+        return self._valid_token_or_throw(token)
+
+    def _get_token_from_cache_impl(self) -> dict:
+        account = None
+        accounts = self._msal_client.get_accounts(self._login_hint)
+        if len(accounts) > 0:
+            account = accounts[0]
+
+        token = self._msal_client.acquire_token_silent(scopes=self._scopes, account=account)
         return self._valid_token_or_none(token)
 
 
