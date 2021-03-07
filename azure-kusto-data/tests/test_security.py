@@ -7,6 +7,7 @@ from azure.kusto.data.security import _AadHelper
 from azure.kusto.data._token_providers import *
 
 KUSTO_TEST_URI = "https://thisclusterdoesnotexist.kusto.windows.net"
+TEST_INTERACTIVE_AUTH = False  # User interaction required, enable this when running test manually
 
 
 def test_unauthorized_exception():
@@ -103,3 +104,20 @@ def test_user_app_token_auth():
 
     auth_header = app_helper.acquire_authorization_header()
     assert auth_header.index(token) > -1
+
+
+def test_interactive_login():
+    if not TEST_INTERACTIVE_AUTH:
+        print(" *** Skipped interactive login Test ***")
+        return
+
+    kcsb = KustoConnectionStringBuilder.with_interactive_login(KUSTO_TEST_URI)
+    aad_helper = _AadHelper(kcsb)
+
+    # should prompt
+    header = aad_helper.acquire_authorization_header()
+    assert header is not None
+
+    # should not prompt
+    header = aad_helper.acquire_authorization_header()
+    assert header is not None
