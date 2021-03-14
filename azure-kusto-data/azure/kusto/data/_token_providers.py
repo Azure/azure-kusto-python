@@ -2,11 +2,23 @@
 # Licensed under the MIT License
 import abc
 import webbrowser
+from threading import Lock
 from typing import Callable, Optional
-from msal import ConfidentialClientApplication, PublicClientApplication
+
+from azure.core.exceptions import ClientAuthenticationError
 from azure.identity import ManagedIdentityCredential
-from .exceptions import KustoClientError
+from azure.identity.aio import ManagedIdentityCredential as AsyncManagedIdentityCredential
+from msal import ConfidentialClientApplication, PublicClientApplication
+
 from ._cloud_settings import CloudSettings
+from .exceptions import KustoClientError, KustoAioSyntaxError
+
+try:
+    from asgiref.sync import sync_to_async
+except ImportError:
+
+    def sync_to_async(f):
+        raise KustoAioSyntaxError()
 
 
 # constant key names and values used throughout the code
@@ -40,6 +52,7 @@ class TokenProviderBase(abc.ABC):
     _kusto_uri = None
     _cloud_info = None
     _scopes = None
+    lock = Lock()
 
     def __init__(self, kusto_uri: str):
         self._kusto_uri = kusto_uri
@@ -49,13 +62,32 @@ class TokenProviderBase(abc.ABC):
 
     def get_token(self):
         """ Get a token silently from cache or authenticate if cached token is not found """
+
         if not self._initialized:
-            self._init_impl()
-            self._initialized = True
+            with TokenProviderBase.lock:
+                if not self._initialized:
+                    self._init_impl()
+                    self._initialized = True
 
         token = self._get_token_from_cache_impl()
         if token is None:
-            token = self._get_token_impl()
+            with TokenProviderBase.lock:
+                token = self._get_token_impl()
+
+        return self._valid_token_or_throw(token)
+
+    async def get_token_async(self):
+        """ Get a token asynchronously silently from cache or authenticate if cached token is not found """
+        with TokenProviderBase.lock:
+            if not self._initialized:
+                self._init_impl()
+                self._initialized = True
+
+        token = await self._get_token_from_cache_impl_async()
+
+        if token is None:
+            with TokenProviderBase.lock:
+                token = await self._get_token_impl_async()
 
         return self._valid_token_or_throw(token)
 
@@ -76,20 +108,27 @@ class TokenProviderBase(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def _get_token_impl(self) -> dict:
+    def _get_token_impl(self) -> Optional[dict]:
         """ implement actual token acquisition here """
         pass
 
     @abc.abstractmethod
-    def _get_token_from_cache_impl(self) -> dict:
+    def _get_token_from_cache_impl(self) -> Optional[dict]:
         """ Implement cache checks here, return None if cache check fails """
         pass
 
+    async def _get_token_from_cache_impl_async(self) -> Optional[dict]:
+        """ Implement cache checks here, return None if cache check fails """
+        return await sync_to_async(self._get_token_from_cache_impl)()
+
+    async def _get_token_impl_async(self) -> Optional[dict]:
+        """ implement actual token acquisition here """
+        return await sync_to_async(self._get_token_impl)()
+
     @staticmethod
-    def _valid_token_or_none(token: dict) -> dict:
+    def _valid_token_or_none(token: dict) -> Optional[dict]:
         if token is None or TokenConstants.MSAL_ERROR in token:
             return None
-
         return token
 
     def _valid_token_or_throw(self, token: dict, context: str = "") -> dict:
@@ -148,14 +187,14 @@ class CallbackTokenProvider(TokenProviderBase):
         pass
 
     def _get_token_impl(self) -> dict:
-        return None
-
-    def _get_token_from_cache_impl(self) -> dict:
         caller_token = self._token_callback()
         if not isinstance(caller_token, str):
             raise KustoClientError("Token provider returned something that is not a string [" + str(type(caller_token)) + "]")
 
         return {TokenConstants.MSAL_TOKEN_TYPE: TokenConstants.BEARER_TYPE, TokenConstants.MSAL_ACCESS_TOKEN: caller_token}
+
+    def _get_token_from_cache_impl(self) -> dict:
+        return None
 
 
 class MsiTokenProvider(TokenProviderBase):
@@ -164,10 +203,11 @@ class MsiTokenProvider(TokenProviderBase):
     The args parameter is a dictionary conforming with the ManagedIdentityCredential initializer API arguments
     """
 
-    def __init__(self, kusto_uri: str, msi_args):
+    def __init__(self, kusto_uri: str, msi_args: dict = None):
         super().__init__(kusto_uri)
         self._msi_args = msi_args
         self._msi_auth_context = None
+        self._msi_auth_context_async = None
 
     @staticmethod
     def name() -> str:
@@ -179,20 +219,37 @@ class MsiTokenProvider(TokenProviderBase):
         return context
 
     def _init_impl(self):
-        try:
-            self.msi_auth_context = ManagedIdentityCredential(**self._msi_args)
-        except Exception as e:
-            raise KustoClientError("Failed to initialize MSI ManagedIdentityCredential with [" + str(self._msi_args) + "]\n" + str(e))
+        pass
 
     def _get_token_impl(self) -> dict:
-        return None
+        try:
+            if self._msi_auth_context is None:
+                self._msi_auth_context = ManagedIdentityCredential(**self._msi_args)
+
+            msi_token = self._msi_auth_context.get_token(self._kusto_uri)
+            return {TokenConstants.MSAL_TOKEN_TYPE: TokenConstants.BEARER_TYPE, TokenConstants.MSAL_ACCESS_TOKEN: msi_token.token}
+        except ClientAuthenticationError as e:
+            raise KustoClientError("Failed to initialize MSI ManagedIdentityCredential with [{0}]\n{1}".format(self._msi_args, e))
+        except Exception as e:
+            raise KustoClientError("Failed to obtain MSI token for '{0}' with [{1}]\n{2}".format(self._kusto_uri, self._msi_args, e))
+
+    async def _get_token_impl_async(self) -> Optional[dict]:
+        try:
+            if self._msi_auth_context_async is None:
+                self._msi_auth_context_async = AsyncManagedIdentityCredential(**self._msi_args)
+
+            msi_token = await self._msi_auth_context_async.get_token(self._kusto_uri)
+            return {TokenConstants.MSAL_TOKEN_TYPE: TokenConstants.BEARER_TYPE, TokenConstants.MSAL_ACCESS_TOKEN: msi_token.token}
+        except ClientAuthenticationError as e:
+            raise KustoClientError("Failed to initialize MSI async ManagedIdentityCredential with [{0}]\n{1}".format(self._msi_args, e))
+        except Exception as e:
+            raise KustoClientError("Failed to obtain MSI token for '{0}' with [{1}]\n{2}".format(self._kusto_uri, self._msi_args, e))
 
     def _get_token_from_cache_impl(self) -> dict:
-        try:
-            msi_token = self.msi_auth_context.get_token(self._kusto_uri)
-            return {TokenConstants.MSAL_TOKEN_TYPE: TokenConstants.BEARER_TYPE, TokenConstants.MSAL_ACCESS_TOKEN: msi_token.token}
-        except Exception as e:
-            raise KustoClientError("Failed to obtain MSI token for '" + self._kusto_uri + "' with [" + str(self._msi_args) + "]\n" + str(e))
+        return None
+
+    async def _get_token_from_cache_impl_async(self) -> Optional[dict]:
+        return None
 
 
 class AzCliTokenProvider(TokenProviderBase):
@@ -457,7 +514,7 @@ class ApplicationCertificateTokenProvider(TokenProviderBase):
         return "ApplicationCertificateTokenProvider"
 
     def context(self) -> dict:
-        return {"authority": self._auth, "client_id": self._app_client_id, "thumbprint": self._cert_credentials[TokenConstants.MSAL_THUMBPRINT]}
+        return {"authority": self._auth, "client_id": self._client_id, "thumbprint": self._cert_credentials[TokenConstants.MSAL_THUMBPRINT]}
 
     def _init_impl(self):
         self._msal_client = ConfidentialClientApplication(client_id=self._client_id, client_credential=self._cert_credentials, authority=self._auth)

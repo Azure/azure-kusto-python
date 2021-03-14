@@ -1,5 +1,6 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
+import asyncio
 import datetime
 import io
 import os
@@ -9,7 +10,9 @@ import time
 import unittest
 import uuid
 
+import pytest
 from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
+from azure.kusto.data.aio import KustoClient as AsyncKustoClient
 from azure.kusto.data.exceptions import KustoServiceError
 from azure.kusto.ingest import (
     QueuedIngestClient,
@@ -29,7 +32,7 @@ from azure.kusto.ingest import (
 CLEAR_DB_CACHE = ".clear database cache streamingingestion schema"
 
 
-class TestE2E(unittest.TestCase):
+class TestE2E:
     """A class to define mappings to deft table."""
 
     @staticmethod
@@ -150,6 +153,9 @@ class TestE2E(unittest.TestCase):
         cls.client = KustoClient(cls.engine_kcsb_from_env())
         cls.ingest_client = QueuedIngestClient(cls.dm_kcsb_from_env())
         cls.streaming_ingest_client = KustoStreamingIngestClient(cls.engine_kcsb_from_env())
+        cls.async_client_lock = asyncio.Lock()
+        cls.async_client = None  # async client needs to be initialized in an async context, so instead of
+        # initializing it here we use a lazy function get_async_client
 
         cls.input_folder_path = cls.get_file_path()
 
@@ -175,30 +181,45 @@ class TestE2E(unittest.TestCase):
     def teardown_class(cls):
         cls.client.execute(cls.test_db, ".drop table {} ifexists".format(cls.test_table))
 
+    @classmethod
+    async def get_async_client(cls) -> AsyncKustoClient:
+        async with cls.async_client_lock:
+            if cls.async_client:
+                return cls.async_client
+            return AsyncKustoClient(cls.engine_kcsb_from_env())
+
     # assertions
     @classmethod
-    def assert_rows_added(cls, expected: int, timeout=60):
+    async def assert_rows_added(cls, expected: int, timeout=60):
         actual = 0
         while timeout > 0:
             time.sleep(1)
             timeout -= 1
 
             try:
-                response = cls.client.execute(cls.test_db, "{} | count".format(cls.test_table))
+                command = "{} | count".format(cls.test_table)
+                response = cls.client.execute(cls.test_db, command)
+                async_client = await cls.get_async_client()
+                response_from_async = await async_client.execute(cls.test_db, command)
             except KustoServiceError:
                 continue
 
             if response is not None:
                 row = response.primary_results[0][0]
+                row_async = response_from_async.primary_results[0][0]
                 actual = int(row["Count"]) - cls.current_count
                 # this is done to allow for data to arrive properly
                 if actual >= expected:
+                    assert row_async == row, "Mismatch answers between async('{0}') and sync('{1}') clients".format(
+                        row_async.primary_results, row.primary_results
+                    )
                     break
 
         cls.current_count += actual
         assert actual == expected, "Row count expected = {0}, while actual row count = {1}".format(expected, actual)
 
-    def test_csv_ingest_existing_table(self):
+    @pytest.mark.asyncio
+    async def test_csv_ingest_existing_table(self):
         csv_ingest_props = IngestionProperties(
             self.test_db,
             self.test_table,
@@ -211,9 +232,10 @@ class TestE2E(unittest.TestCase):
         for f in [self.csv_file_path, self.zipped_csv_file_path]:
             self.ingest_client.ingest_from_file(f, csv_ingest_props)
 
-        self.assert_rows_added(20)
+        await self.assert_rows_added(20)
 
-    def test_json_ingest_existing_table(self):
+    @pytest.mark.asyncio
+    async def test_json_ingest_existing_table(self):
         json_ingestion_props = IngestionProperties(
             self.test_db,
             self.test_table,
@@ -226,9 +248,10 @@ class TestE2E(unittest.TestCase):
         for f in [self.json_file_path, self.zipped_json_file_path]:
             self.ingest_client.ingest_from_file(f, json_ingestion_props)
 
-        self.assert_rows_added(4)
+        await self.assert_rows_added(4)
 
-    def test_ingest_complicated_props(self):
+    @pytest.mark.asyncio
+    async def test_ingest_complicated_props(self):
         validation_policy = ValidationPolicy(
             validation_options=ValidationOptions.ValidateCsvInputConstantColumns, validation_implications=ValidationImplications.Fail
         )
@@ -253,9 +276,10 @@ class TestE2E(unittest.TestCase):
         for fd in fds:
             self.ingest_client.ingest_from_file(fd, json_ingestion_props)
 
-        self.assert_rows_added(4)
+        await self.assert_rows_added(4)
 
-    def test_json_ingestion_ingest_by_tag(self):
+    @pytest.mark.asyncio
+    async def test_json_ingestion_ingest_by_tag(self):
         json_ingestion_props = IngestionProperties(
             self.test_db,
             self.test_table,
@@ -270,9 +294,10 @@ class TestE2E(unittest.TestCase):
         for f in [self.json_file_path, self.zipped_json_file_path]:
             self.ingest_client.ingest_from_file(f, json_ingestion_props)
 
-        self.assert_rows_added(0)
+        await self.assert_rows_added(0)
 
-    def test_tsv_ingestion_csv_mapping(self):
+    @pytest.mark.asyncio
+    async def test_tsv_ingestion_csv_mapping(self):
         tsv_ingestion_props = IngestionProperties(
             self.test_db,
             self.test_table,
@@ -284,27 +309,30 @@ class TestE2E(unittest.TestCase):
 
         self.ingest_client.ingest_from_file(self.tsv_file_path, tsv_ingestion_props)
 
-        self.assert_rows_added(10)
+        await self.assert_rows_added(10)
 
-    def test_streaming_ingest_from_opened_file(self):
+    @pytest.mark.asyncio
+    async def test_streaming_ingest_from_opened_file(self):
         self.client.execute(self.test_db, CLEAR_DB_CACHE)
         ingestion_properties = IngestionProperties(database=self.test_db, table=self.test_table, data_format=DataFormat.CSV)
 
         with open(self.csv_file_path, "r") as stream:
             self.streaming_ingest_client.ingest_from_stream(stream, ingestion_properties=ingestion_properties)
 
-        self.assert_rows_added(10, timeout=120)
+        await self.assert_rows_added(10, timeout=120)
 
-    def test_streaming_ingest_from_csv_file(self):
+    @pytest.mark.asyncio
+    async def test_streaming_ingest_from_csv_file(self):
         self.client.execute(self.test_db, CLEAR_DB_CACHE)
         ingestion_properties = IngestionProperties(database=self.test_db, table=self.test_table, flush_immediately=True, data_format=DataFormat.CSV)
 
         for f in [self.csv_file_path, self.zipped_csv_file_path]:
             self.streaming_ingest_client.ingest_from_file(f, ingestion_properties=ingestion_properties)
 
-        self.assert_rows_added(20, timeout=120)
+        await self.assert_rows_added(20, timeout=120)
 
-    def test_streaming_ingest_from_json_file(self):
+    @pytest.mark.asyncio
+    async def test_streaming_ingest_from_json_file(self):
         self.client.execute(self.test_db, CLEAR_DB_CACHE)
         ingestion_properties = IngestionProperties(
             database=self.test_db,
@@ -318,9 +346,10 @@ class TestE2E(unittest.TestCase):
         for f in [self.json_file_path, self.zipped_json_file_path]:
             self.streaming_ingest_client.ingest_from_file(f, ingestion_properties=ingestion_properties)
 
-        self.assert_rows_added(4, timeout=120)
+        await self.assert_rows_added(4, timeout=120)
 
-    def test_streaming_ingest_from_csv_io_streams(self):
+    @pytest.mark.asyncio
+    async def test_streaming_ingest_from_csv_io_streams(self):
         self.client.execute(self.test_db, CLEAR_DB_CACHE)
         ingestion_properties = IngestionProperties(database=self.test_db, table=self.test_table, data_format=DataFormat.CSV)
         byte_sequence = b'0,00000000-0000-0000-0001-020304050607,0,0,0,0,0,0,0,0,0,0,2014-01-01T01:01:01.0000000Z,Zero,"Zero",0,00:00:00,,null'
@@ -331,9 +360,10 @@ class TestE2E(unittest.TestCase):
         str_stream = io.StringIO(str_sequence)
         self.streaming_ingest_client.ingest_from_stream(str_stream, ingestion_properties=ingestion_properties)
 
-        self.assert_rows_added(2, timeout=120)
+        await self.assert_rows_added(2, timeout=120)
 
-    def test_streaming_ingest_from_json_io_streams(self):
+    @pytest.mark.asyncio
+    async def test_streaming_ingest_from_json_io_streams(self):
         ingestion_properties = IngestionProperties(
             database=self.test_db,
             table=self.test_table,
@@ -351,9 +381,10 @@ class TestE2E(unittest.TestCase):
         str_stream = io.StringIO(str_sequence)
         self.streaming_ingest_client.ingest_from_stream(str_stream, ingestion_properties=ingestion_properties)
 
-        self.assert_rows_added(2, timeout=120)
+        await self.assert_rows_added(2, timeout=120)
 
-    def test_streaming_ingest_from_dataframe(self):
+    @pytest.mark.asyncio
+    async def test_streaming_ingest_from_dataframe(self):
         from pandas import DataFrame
 
         fields = [
@@ -384,4 +415,4 @@ class TestE2E(unittest.TestCase):
         ingestion_properties = IngestionProperties(database=self.test_db, table=self.test_table, flush_immediately=True, data_format=DataFormat.CSV)
         self.ingest_client.ingest_from_dataframe(df, ingestion_properties)
 
-        self.assert_rows_added(1, timeout=120)
+        await self.assert_rows_added(1, timeout=120)

@@ -56,6 +56,14 @@ class _AadHelper:
             kwargs["kusto_uri"] = self.kusto_uri
             raise KustoAuthenticationError(self.token_provider.name(), error, **kwargs)
 
+    async def acquire_authorization_header_async(self):
+        try:
+            return _get_header_from_dict(await self.token_provider.get_token_async())
+        except Exception as error:
+            kwargs = self.token_provider.context()
+            kwargs["resource"] = self.kusto_uri
+            raise KustoAuthenticationError(self.token_provider.name(), error, **kwargs)
+
 
 def _get_header_from_dict(token: dict):
     if TokenConstants.MSAL_ACCESS_TOKEN in token:

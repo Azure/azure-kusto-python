@@ -41,5 +41,5 @@ setup(
     ],
     packages=find_packages(exclude=["azure", "tests"]),
     install_requires=["azure-kusto-data=={}".format(VERSION), "azure-storage-blob>=12,<13", "azure-storage-queue>=12,<13"],
-    extras_require={"pandas": ["pandas"]},
+    extras_require={"pandas": ["pandas"], "aio": []},
 )

@@ -136,5 +136,5 @@ class KustoResponseDataSetV2(KustoResponseDataSet):
     _error_column = "Level"
     _crid_column = "ClientRequestId"
 
-    def __init__(self, json_response: dict):
+    def __init__(self, json_response: List[dict]):
         super(KustoResponseDataSetV2, self).__init__([t for t in json_response if t["FrameType"] == "DataTable"])
