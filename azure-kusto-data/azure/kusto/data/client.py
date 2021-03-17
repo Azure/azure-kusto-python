@@ -741,7 +741,9 @@ class KustoClient(_KustoClientBase):
         Set the number of HTTP retries to attempt
         """
         adapter = HTTPAdapterWithSocketOptions(
-            socket_options=(HTTPConnection.default_socket_options or []) + self.compose_socket_options(), pool_maxsize=self._max_pool_size, max_retries=max_retries
+            socket_options=(HTTPConnection.default_socket_options or []) + self.compose_socket_options(),
+            pool_maxsize=self._max_pool_size,
+            max_retries=max_retries,
         )
         self._session.mount("http://", adapter)
         self._session.mount("https://", adapter)
