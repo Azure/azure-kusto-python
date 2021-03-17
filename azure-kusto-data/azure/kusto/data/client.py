@@ -728,7 +728,7 @@ class KustoClient(_KustoClientBase):
         # Create a session object for connection pooling
         self._session = requests.Session()
         adapter = HTTPAdapterWithSocketOptions(
-            socket_options=HTTPConnection.default_socket_options + self.compose_socket_options(), pool_maxsize=self._max_pool_size
+            socket_options=(HTTPConnection.default_socket_options or []) + self.compose_socket_options(), pool_maxsize=self._max_pool_size
         )
         self._session.mount("http://", adapter)
         self._session.mount("https://", adapter)
@@ -741,7 +741,9 @@ class KustoClient(_KustoClientBase):
         Set the number of HTTP retries to attempt
         """
         adapter = HTTPAdapterWithSocketOptions(
-            socket_options=HTTPConnection.default_socket_options + self.compose_socket_options(), pool_maxsize=self._max_pool_size, max_retries=max_retries
+            socket_options=(HTTPConnection.default_socket_options or []) + self.compose_socket_options(),
+            pool_maxsize=self._max_pool_size,
+            max_retries=max_retries,
         )
         self._session.mount("http://", adapter)
         self._session.mount("https://", adapter)
