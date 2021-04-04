@@ -15,12 +15,14 @@ from .exceptions import KustoClientError, KustoAioSyntaxError
 try:
     from asgiref.sync import sync_to_async
 except ImportError:
+
     def sync_to_async(f):
         raise KustoAioSyntaxError()
 
 try:
     from azure.identity.aio import ManagedIdentityCredential as AsyncManagedIdentityCredential
 except ImportError:
+
     class AsyncManagedIdentityCredential:
         def __init__(self):
             raise KustoAioSyntaxError()
