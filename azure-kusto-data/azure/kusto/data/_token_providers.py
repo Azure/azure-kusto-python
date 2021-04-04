@@ -19,6 +19,7 @@ except ImportError:
     def sync_to_async(f):
         raise KustoAioSyntaxError()
 
+
 try:
     from azure.identity.aio import ManagedIdentityCredential as AsyncManagedIdentityCredential
 except ImportError:
