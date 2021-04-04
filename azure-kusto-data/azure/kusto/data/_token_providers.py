@@ -7,7 +7,6 @@ from typing import Callable, Optional
 
 from azure.core.exceptions import ClientAuthenticationError
 from azure.identity import ManagedIdentityCredential
-from azure.identity.aio import ManagedIdentityCredential as AsyncManagedIdentityCredential
 from msal import ConfidentialClientApplication, PublicClientApplication
 
 from ._cloud_settings import CloudSettings
@@ -19,6 +18,15 @@ except ImportError:
 
     def sync_to_async(f):
         raise KustoAioSyntaxError()
+
+
+try:
+    from azure.identity.aio import ManagedIdentityCredential as AsyncManagedIdentityCredential
+except ImportError:
+
+    class AsyncManagedIdentityCredential:
+        def __init__(self):
+            raise KustoAioSyntaxError()
 
 
 # constant key names and values used throughout the code
