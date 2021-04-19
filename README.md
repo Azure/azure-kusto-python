@@ -69,7 +69,7 @@ There is also a feature request for the adal team to work on implementing IWA (I
 - [Node](https://github.com/azure/azure-kusto-node)
 - [Java](https://github.com/azure/azure-kusto-java)
 - [.NET](https://docs.microsoft.com/en-us/azure/kusto/api/netfx/about-the-sdk)
-
+- [Go](https://github.com/Azure/azure-kusto-go)
 
 # Contribute
 
