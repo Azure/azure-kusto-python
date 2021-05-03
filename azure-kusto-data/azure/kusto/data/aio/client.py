@@ -62,20 +62,51 @@ class KustoClient(_KustoClientBase):
 
         await self._execute(endpoint, database, None, stream, self._streaming_ingest_default_timeout, properties)
 
+    async def execute_streaming_query(
+        self, database: str, query: str, timeout: timedelta = _KustoClientBase._query_default_timeout, properties: ClientRequestProperties = None
+    ) -> ClientResponse:
+        """
+        Query directly from Kusto database using streaming output.</p>
+        This method queries the Kusto database into an asyncio stream.
+
+        example usage::
+
+            my_file = open("some_file", "wb")
+            async with client.execute_streaming_query(...) as response:
+                async for chunk in response.content.iter_chunks():
+                    file.write(chunk)
+
+        :return: a ClientResponse object of the response
+        """
+        response = await self._retrieve_response(self._query_endpoint, database, properties, query, timeout)
+
+        try:
+            response.raise_for_status()
+        except Exception as e:
+            self._handle_http_error(e, self._query_endpoint, None, response, await response.json(), await response.text())
+
+        return response
+
+    async def _retrieve_response(self, endpoint: str, database: str, properties: Optional[ClientRequestProperties], query: str, timeout: timedelta):
+        """
+        Common code between _execute and  execute_streaming_query
+        """
+        request_params = ExecuteRequestParams(database, None, properties, query, timeout, self._request_headers)
+        json_payload = request_params.json_payload
+        request_headers = request_params.request_headers
+        timeout = request_params.timeout
+        if self._auth_provider:
+            request_headers["Authorization"] = self._auth_provider.acquire_authorization_header()
+
+        return await self._session.post(endpoint, headers=request_headers, json=json_payload, timeout=timeout.seconds)
+
     @aio_documented_by(KustoClientSync._execute)
     async def _execute(
         self, endpoint: str, database: str, query: Optional[str], payload: Optional[io.IOBase], timeout: timedelta, properties: ClientRequestProperties = None
     ) -> KustoResponseDataSet:
+        """Executes given query against this client"""
 
-        request_params = ExecuteRequestParams(database, payload, properties, query, timeout, self._request_headers)
-        json_payload = request_params.json_payload
-        request_headers = request_params.request_headers
-        timeout = request_params.timeout
-
-        if self._auth_provider:
-            request_headers["Authorization"] = await self._auth_provider.acquire_authorization_header_async()
-
-        async with self._session.post(endpoint, headers=request_headers, data=payload, json=json_payload, timeout=timeout.seconds) as response:
+        async with (await self._retrieve_response(endpoint, database, properties, query, timeout)) as response:
             response_json = None
             try:
                 response_json = await response.json()

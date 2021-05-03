@@ -1,9 +1,9 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
 import asyncio
-import datetime
 import io
 import os
+import pathlib
 import random
 import sys
 import time
@@ -14,6 +14,7 @@ import pytest
 from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
 from azure.kusto.data.aio import KustoClient as AsyncKustoClient
 from azure.kusto.data.exceptions import KustoServiceError
+
 from azure.kusto.ingest import (
     QueuedIngestClient,
     KustoStreamingIngestClient,
@@ -34,6 +35,8 @@ CLEAR_DB_CACHE = ".clear database cache streamingingestion schema"
 
 class TestE2E:
     """A class to define mappings to deft table."""
+
+    CHUNK_SIZE = 1024
 
     @staticmethod
     def get_test_table_csv_mappings():
@@ -150,6 +153,8 @@ class TestE2E:
         # Init clients
         python_version = "_".join([str(v) for v in sys.version_info[:3]])
         cls.test_table = "python_test_{0}_{1}_{2}".format(python_version, str(int(time.time())), random.randint(1, 100000))
+        cls.streaming_test_table = "BigChunkus"
+        cls.streaming_test_table_query = cls.streaming_test_table + " | top 1000000 by Period"
         cls.client = KustoClient(cls.engine_kcsb_from_env())
         cls.ingest_client = QueuedIngestClient(cls.dm_kcsb_from_env())
         cls.streaming_ingest_client = KustoStreamingIngestClient(cls.engine_kcsb_from_env())
@@ -164,6 +169,7 @@ class TestE2E:
         cls.zipped_csv_file_path = os.path.join(cls.input_folder_path, "dataset.csv.gz")
         cls.json_file_path = os.path.join(cls.input_folder_path, "dataset.json")
         cls.zipped_json_file_path = os.path.join(cls.input_folder_path, "dataset.jsonz.gz")
+        cls.table_chunk_file_path = os.path.join(cls.input_folder_path, "table_chunk.json")
 
         cls.current_count = 0
 
@@ -217,6 +223,28 @@ class TestE2E:
 
         cls.current_count += actual
         assert actual == expected, "Row count expected = {0}, while actual row count = {1}".format(expected, actual)
+
+    def test_streaming_query(self):
+        with pytest.raises(KustoServiceError):
+            self.client.execute_query(self.test_db, self.streaming_test_table_query)
+
+        with self.client.execute_streaming_query(self.test_db, self.streaming_test_table_query) as response:
+            iterator = response.iter_content(chunk_size=self.CHUNK_SIZE)
+            combined_chunks = next(iterator) + next(iterator)
+            # In the non async API, iter_content can return more than the provided chunk_size (but not less), so we limit it
+            assert pathlib.Path(self.table_chunk_file_path).read_bytes() == combined_chunks[:self.CHUNK_SIZE * 2]
+
+    @pytest.mark.asyncio
+    async def test_streaming_query_async(self):
+        client = await self.get_async_client()
+
+        with pytest.raises(KustoServiceError):
+            await client.execute_query(self.test_db, self.streaming_test_table_query)
+
+        async with (await client.execute_streaming_query(self.test_db, self.streaming_test_table_query)) as response:
+            iterator = response.content.iter_chunked(self.CHUNK_SIZE)
+            combined_chunks = (await iterator.__anext__()) + (await iterator.__anext__())
+            assert pathlib.Path(self.table_chunk_file_path).read_bytes() == combined_chunks
 
     @pytest.mark.asyncio
     async def test_csv_ingest_existing_table(self):

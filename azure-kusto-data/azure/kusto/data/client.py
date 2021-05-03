@@ -597,7 +597,7 @@ class ClientRequestProperties:
 
 
 class ExecuteRequestParams:
-    def __init__(self, database: str, payload: io.IOBase, properties: ClientRequestProperties, query: str, timeout: timedelta, request_headers: dict):
+    def __init__(self, database: str, payload: Optional[io.IOBase], properties: ClientRequestProperties, query: str, timeout: timedelta, request_headers: dict):
         request_headers = copy(request_headers)
         json_payload = None
         if not payload:
@@ -787,7 +787,7 @@ class KustoClient(_KustoClientBase):
         else:
             return []
 
-    def execute(self, database: str, query: str, properties: ClientRequestProperties = None) -> KustoResponseDataSet:
+    def execute(self, database: str, query: str, properties: Optional[ClientRequestProperties] = None) -> KustoResponseDataSet:
         """
         Executes a query or management command.
         :param str database: Database against query will be executed.
@@ -801,7 +801,7 @@ class KustoClient(_KustoClientBase):
             return self.execute_mgmt(database, query, properties)
         return self.execute_query(database, query, properties)
 
-    def execute_query(self, database: str, query: str, properties: ClientRequestProperties = None) -> KustoResponseDataSet:
+    def execute_query(self, database: str, query: str, properties: Optional[ClientRequestProperties] = None) -> KustoResponseDataSet:
         """
         Execute a KQL query.
         To learn more about KQL go to https://docs.microsoft.com/en-us/azure/kusto/query/
@@ -813,7 +813,7 @@ class KustoClient(_KustoClientBase):
         """
         return self._execute(self._query_endpoint, database, query, None, self._query_default_timeout, properties)
 
-    def execute_mgmt(self, database: str, query: str, properties: ClientRequestProperties = None) -> KustoResponseDataSet:
+    def execute_mgmt(self, database: str, query: str, properties: Optional[ClientRequestProperties] = None) -> KustoResponseDataSet:
         """
         Execute a KQL control command.
         To learn more about KQL control commands go to  https://docs.microsoft.com/en-us/azure/kusto/management/
@@ -831,7 +831,7 @@ class KustoClient(_KustoClientBase):
         table: str,
         stream: io.IOBase,
         stream_format: Union[DataFormat, str],
-        properties: ClientRequestProperties = None,
+        properties: Optional[ClientRequestProperties] = None,
         mapping_name: str = None,
     ):
         """
@@ -853,19 +853,52 @@ class KustoClient(_KustoClientBase):
 
         self._execute(endpoint, database, None, stream, self._streaming_ingest_default_timeout, properties)
 
-    def _execute(
-        self, endpoint: str, database: str, query: Optional[str], payload: Optional[io.IOBase], timeout: timedelta, properties: ClientRequestProperties = None
-    ):
-        """Executes given query against this client"""
-        request_params = ExecuteRequestParams(database, payload, properties, query, timeout, self._request_headers)
+    def execute_streaming_query(
+        self, database: str, query: str, timeout: timedelta = _KustoClientBase._query_default_timeout, properties: Optional[ClientRequestProperties] = None
+    ) -> Response:
+        """
+        Query directly from Kusto database using streaming output.</p>
+        This method queries the Kusto database into an asyncio stream.
+
+        example usage::
+
+            my_file = open("some_file", "wb")
+            with client.execute_streaming_query(...) as response:
+                for chunk in response.iter_content(1024):
+                    file.write(chunk)
+
+        :return: a Response that can be read as chunks
+        """
+        response = self._retrieve_response(self._query_endpoint, database, properties, query, timeout, stream=True)
+
+        try:
+            response.raise_for_status()
+        except Exception as e:
+            self._handle_http_error(e, self._query_endpoint, None, response, response.json(), response.text)
+
+        return response
+
+    def _retrieve_response(self, endpoint: str, database: str, properties: Optional[ClientRequestProperties], query: str, timeout: timedelta, stream: bool):
+        request_params = ExecuteRequestParams(database, None, properties, query, timeout, self._request_headers)
         json_payload = request_params.json_payload
         request_headers = request_params.request_headers
         timeout = request_params.timeout
-
         if self._auth_provider:
             request_headers["Authorization"] = self._auth_provider.acquire_authorization_header()
+        response = self._session.post(endpoint, headers=request_headers, json=json_payload, timeout=timeout.seconds, stream=stream)
+        return response
 
-        response = self._session.post(endpoint, headers=request_headers, data=payload, json=json_payload, timeout=timeout.seconds)
+    def _execute(
+        self,
+        endpoint: str,
+        database: str,
+        query: Optional[str],
+        payload: Optional[io.IOBase],
+        timeout: timedelta,
+        properties: Optional[ClientRequestProperties] = None,
+    ):
+        """Executes given query against this client"""
+        response = self._retrieve_response(endpoint, database, properties, query, timeout, stream=False)
 
         response_json = None
         try:
