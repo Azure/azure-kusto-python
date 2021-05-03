@@ -232,7 +232,7 @@ class TestE2E:
             iterator = response.iter_content(chunk_size=self.CHUNK_SIZE)
             combined_chunks = next(iterator) + next(iterator)
             # In the non async API, iter_content can return more than the provided chunk_size (but not less), so we limit it
-            assert pathlib.Path(self.table_chunk_file_path).read_bytes() == combined_chunks[:self.CHUNK_SIZE * 2]
+            assert pathlib.Path(self.table_chunk_file_path).read_bytes() == combined_chunks[: self.CHUNK_SIZE * 2]
 
     @pytest.mark.asyncio
     async def test_streaming_query_async(self):
