@@ -45,9 +45,9 @@ class ConverterTests(unittest.TestCase):
         self.assertRaises(ValueError, to_timedelta, "03.00:00:00.111a")
 
     def test_to_datetime(self):
-        """ Tests datetime read by KustoResultIter """
+        """Tests datetime read by KustoResultIter"""
         assert to_datetime("2016-06-07T16:00:00Z") is not None
 
     def test_to_datetime_fail(self):
-        """ Tests that invalid strings fails to convert to datetime """
+        """Tests that invalid strings fails to convert to datetime"""
         self.assertRaises(ValueError, to_datetime, "invalid")
