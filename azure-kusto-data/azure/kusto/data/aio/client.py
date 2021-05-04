@@ -78,7 +78,7 @@ class KustoClient(_KustoClientBase):
 
         :return: a ClientResponse object of the response
         """
-        response = await self._retrieve_response(self._query_endpoint, database, properties, query, timeout)
+        response = await self._retrieve_response(self._query_endpoint, database, properties, query, None, timeout)
 
         try:
             response.raise_for_status()
@@ -87,18 +87,20 @@ class KustoClient(_KustoClientBase):
 
         return response
 
-    async def _retrieve_response(self, endpoint: str, database: str, properties: Optional[ClientRequestProperties], query: str, timeout: timedelta):
+    async def _retrieve_response(
+        self, endpoint: str, database: str, properties: Optional[ClientRequestProperties], query: str, payload: Optional[io.IOBase], timeout: timedelta
+    ):
         """
         Common code between _execute and  execute_streaming_query
         """
-        request_params = ExecuteRequestParams(database, None, properties, query, timeout, self._request_headers)
+        request_params = ExecuteRequestParams(database, payload, properties, query, timeout, self._request_headers)
         json_payload = request_params.json_payload
         request_headers = request_params.request_headers
         timeout = request_params.timeout
         if self._auth_provider:
             request_headers["Authorization"] = self._auth_provider.acquire_authorization_header()
 
-        return await self._session.post(endpoint, headers=request_headers, json=json_payload, timeout=timeout.seconds)
+        return await self._session.post(endpoint, headers=request_headers, data=payload, json=json_payload, timeout=timeout.seconds)
 
     @aio_documented_by(KustoClientSync._execute)
     async def _execute(
@@ -106,7 +108,7 @@ class KustoClient(_KustoClientBase):
     ) -> KustoResponseDataSet:
         """Executes given query against this client"""
 
-        async with (await self._retrieve_response(endpoint, database, properties, query, timeout)) as response:
+        async with (await self._retrieve_response(endpoint, database, properties, query, payload, timeout)) as response:
             response_json = None
             try:
                 response_json = await response.json()

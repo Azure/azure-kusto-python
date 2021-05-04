@@ -869,7 +869,7 @@ class KustoClient(_KustoClientBase):
 
         :return: a Response that can be read as chunks
         """
-        response = self._retrieve_response(self._query_endpoint, database, properties, query, timeout, stream=True)
+        response = self._retrieve_response(self._query_endpoint, database, properties, query, None, timeout, stream=True)
 
         try:
             response.raise_for_status()
@@ -878,14 +878,23 @@ class KustoClient(_KustoClientBase):
 
         return response
 
-    def _retrieve_response(self, endpoint: str, database: str, properties: Optional[ClientRequestProperties], query: str, timeout: timedelta, stream: bool):
-        request_params = ExecuteRequestParams(database, None, properties, query, timeout, self._request_headers)
+    def _retrieve_response(
+        self,
+        endpoint: str,
+        database: str,
+        properties: Optional[ClientRequestProperties],
+        query: str,
+        payload: Optional[io.IOBase],
+        timeout: timedelta,
+        stream: bool,
+    ):
+        request_params = ExecuteRequestParams(database, payload, properties, query, timeout, self._request_headers)
         json_payload = request_params.json_payload
         request_headers = request_params.request_headers
         timeout = request_params.timeout
         if self._auth_provider:
             request_headers["Authorization"] = self._auth_provider.acquire_authorization_header()
-        response = self._session.post(endpoint, headers=request_headers, json=json_payload, timeout=timeout.seconds, stream=stream)
+        response = self._session.post(endpoint, headers=request_headers, json=json_payload, data=payload, timeout=timeout.seconds, stream=stream)
         return response
 
     def _execute(
@@ -898,7 +907,7 @@ class KustoClient(_KustoClientBase):
         properties: Optional[ClientRequestProperties] = None,
     ):
         """Executes given query against this client"""
-        response = self._retrieve_response(endpoint, database, properties, query, timeout, stream=False)
+        response = self._retrieve_response(endpoint, database, properties, query, payload, timeout, stream=False)
 
         response_json = None
         try:
