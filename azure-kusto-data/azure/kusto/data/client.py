@@ -869,7 +869,7 @@ class KustoClient(_KustoClientBase):
 
         :return: a Response that can be read as chunks
         """
-        response = self._retrieve_response(self._query_endpoint, database, properties, query, None, timeout, stream=True)
+        response = self._retrieve_response(self._query_endpoint, database, query, None, timeout, properties, stream=True)
 
         try:
             response.raise_for_status()
@@ -882,10 +882,10 @@ class KustoClient(_KustoClientBase):
         self,
         endpoint: str,
         database: str,
-        properties: Optional[ClientRequestProperties],
         query: str,
         payload: Optional[io.IOBase],
         timeout: timedelta,
+        properties: Optional[ClientRequestProperties],
         stream: bool,
     ):
         request_params = ExecuteRequestParams(database, payload, properties, query, timeout, self._request_headers)
@@ -907,7 +907,7 @@ class KustoClient(_KustoClientBase):
         properties: Optional[ClientRequestProperties] = None,
     ):
         """Executes given query against this client"""
-        response = self._retrieve_response(endpoint, database, properties, query, payload, timeout, stream=False)
+        response = self._retrieve_response(endpoint, database, query, payload, timeout, properties, stream=False)
 
         response_json = None
         try:

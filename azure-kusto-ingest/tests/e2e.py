@@ -226,6 +226,8 @@ class TestE2E:
 
     def test_streaming_query(self):
         with pytest.raises(KustoServiceError):
+            # This query attempts to retrieve the data of a big table (10,000,000 lines). It will fail due to size limits,
+            # while the streaming query which doesn't fetch the data will succeed
             self.client.execute_query(self.test_db, self.streaming_test_table_query)
 
         with self.client.execute_streaming_query(self.test_db, self.streaming_test_table_query) as response:
@@ -239,6 +241,8 @@ class TestE2E:
         client = await self.get_async_client()
 
         with pytest.raises(KustoServiceError):
+            # This query attempts to retrieve the data of a big table (10,000,000 lines). It will fail due to size limits,
+            # while the streaming query which doesn't fetch the data will succeed
             await client.execute_query(self.test_db, self.streaming_test_table_query)
 
         async with (await client.execute_streaming_query(self.test_db, self.streaming_test_table_query)) as response:

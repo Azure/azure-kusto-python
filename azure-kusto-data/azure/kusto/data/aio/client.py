@@ -78,7 +78,7 @@ class KustoClient(_KustoClientBase):
 
         :return: a ClientResponse object of the response
         """
-        response = await self._retrieve_response(self._query_endpoint, database, properties, query, None, timeout)
+        response = await self._retrieve_response(self._query_endpoint, database, query, None, timeout, properties)
 
         try:
             response.raise_for_status()
@@ -88,7 +88,7 @@ class KustoClient(_KustoClientBase):
         return response
 
     async def _retrieve_response(
-        self, endpoint: str, database: str, properties: Optional[ClientRequestProperties], query: str, payload: Optional[io.IOBase], timeout: timedelta
+        self, endpoint: str, database: str, query: str, payload: Optional[io.IOBase], timeout: timedelta, properties: Optional[ClientRequestProperties]
     ):
         """
         Common code between _execute and  execute_streaming_query
@@ -108,7 +108,7 @@ class KustoClient(_KustoClientBase):
     ) -> KustoResponseDataSet:
         """Executes given query against this client"""
 
-        async with (await self._retrieve_response(endpoint, database, properties, query, payload, timeout)) as response:
+        async with (await self._retrieve_response(endpoint, database, query, payload, timeout, properties)) as response:
             response_json = None
             try:
                 response_json = await response.json()
