@@ -46,6 +46,7 @@ class TokenConstants:
     AZ_TOKEN_TYPE = "tokenType"
     AZ_ACCESS_TOKEN = "accessToken"
 
+
 class TokenProviderBase(abc.ABC):
     """
     This base class abstracts token acquisition for all implementations.
@@ -293,7 +294,9 @@ class AzCliTokenProvider(TokenProviderBase):
             self._az_token = await self._az_auth_context_async.get_token(self._kusto_uri, self._az_kwargs)
             return {TokenConstants.AZ_TOKEN_TYPE: TokenConstants.BEARER_TYPE, TokenConstants.AZ_ACCESS_TOKEN: self._az_token.token}
         except Exception as e:
-            raise KustoClientError("Failed to obtain Az Cli token for '{0}'.\nPlease be sure to use AzCli version 2.3.0 and above.\n{1}".format(self._kusto_uri, e))
+            raise KustoClientError(
+                "Failed to obtain Az Cli token for '{0}'.\nPlease be sure to use AzCli version 2.3.0 and above.\n{1}".format(self._kusto_uri, e)
+            )
 
     def _get_token_from_cache_impl(self) -> dict:
         if self._az_token is not None:
@@ -306,8 +309,6 @@ class AzCliTokenProvider(TokenProviderBase):
 
     async def _get_token_from_cache_impl_async(self) -> Optional[dict]:
         return self._get_token_from_cache_impl()
-
-
 
 
 class UserPassTokenProvider(TokenProviderBase):
