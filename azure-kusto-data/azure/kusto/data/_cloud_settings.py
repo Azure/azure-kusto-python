@@ -6,7 +6,7 @@ PUBLIC_LOGIN_URL = "https://login.microsoftonline.com"
 
 
 class CloudInfo:
-    """ This class holds the data for a specific cloud instance. """
+    """This class holds the data for a specific cloud instance."""
 
     def __init__(self, auth_endpoint: str, kusto_client_app_id: str, redirect_uri: str):
         self.aad_authority_uri = auth_endpoint
@@ -15,7 +15,7 @@ class CloudInfo:
 
 
 class CloudSettings:
-    """ This class holds data for all cloud instances, and returns the specific data instance by parsing the dns suffix from a URL """
+    """This class holds data for all cloud instances, and returns the specific data instance by parsing the dns suffix from a URL"""
 
     _cloud_info = None
 
@@ -30,6 +30,6 @@ class CloudSettings:
 
     @classmethod
     def get_cloud_info(cls) -> CloudInfo:
-        """ Get the details of a cloud according to the DNS suffix of the provided connection string """
+        """Get the details of a cloud according to the DNS suffix of the provided connection string"""
         cls._init_once()
         return cls._cloud_info

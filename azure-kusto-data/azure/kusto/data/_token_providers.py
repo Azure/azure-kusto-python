@@ -66,7 +66,7 @@ class TokenProviderBase(abc.ABC):
             self._cloud_info = CloudSettings.get_cloud_info()
 
     def get_token(self):
-        """ Get a token silently from cache or authenticate if cached token is not found """
+        """Get a token silently from cache or authenticate if cached token is not found"""
 
         if not self._initialized:
             with TokenProviderBase.lock:
@@ -82,7 +82,7 @@ class TokenProviderBase(abc.ABC):
         return self._valid_token_or_throw(token)
 
     async def get_token_async(self):
-        """ Get a token asynchronously silently from cache or authenticate if cached token is not found """
+        """Get a token asynchronously silently from cache or authenticate if cached token is not found"""
         with TokenProviderBase.lock:
             if not self._initialized:
                 self._init_impl()
@@ -99,35 +99,35 @@ class TokenProviderBase(abc.ABC):
     @staticmethod
     @abc.abstractmethod
     def name() -> str:
-        """ return the provider class name """
+        """return the provider class name"""
         pass
 
     @abc.abstractmethod
     def context(self) -> dict:
-        """ return a secret-free context for error reporting """
+        """return a secret-free context for error reporting"""
         pass
 
     @abc.abstractmethod
     def _init_impl(self):
-        """ Implement any "heavy" first time initializations here """
+        """Implement any "heavy" first time initializations here"""
         pass
 
     @abc.abstractmethod
     def _get_token_impl(self) -> Optional[dict]:
-        """ implement actual token acquisition here """
+        """implement actual token acquisition here"""
         pass
 
     @abc.abstractmethod
     def _get_token_from_cache_impl(self) -> Optional[dict]:
-        """ Implement cache checks here, return None if cache check fails """
+        """Implement cache checks here, return None if cache check fails"""
         pass
 
     async def _get_token_from_cache_impl_async(self) -> Optional[dict]:
-        """ Implement cache checks here, return None if cache check fails """
+        """Implement cache checks here, return None if cache check fails"""
         return await sync_to_async(self._get_token_from_cache_impl)()
 
     async def _get_token_impl_async(self) -> Optional[dict]:
-        """ implement actual token acquisition here """
+        """implement actual token acquisition here"""
         return await sync_to_async(self._get_token_impl)()
 
     @staticmethod
@@ -151,7 +151,7 @@ class TokenProviderBase(abc.ABC):
 
 
 class BasicTokenProvider(TokenProviderBase):
-    """ Basic Token Provider keeps and returns a token received on construction """
+    """Basic Token Provider keeps and returns a token received on construction"""
 
     def __init__(self, token: str):
         super().__init__(None)
@@ -175,7 +175,7 @@ class BasicTokenProvider(TokenProviderBase):
 
 
 class CallbackTokenProvider(TokenProviderBase):
-    """ Callback Token Provider generates a token based on a callback function provided by the caller """
+    """Callback Token Provider generates a token based on a callback function provided by the caller"""
 
     def __init__(self, token_callback: Callable[[], str]):
         super().__init__(None)
@@ -258,7 +258,7 @@ class MsiTokenProvider(TokenProviderBase):
 
 
 class AzCliTokenProvider(TokenProviderBase):
-    """ AzCli Token Provider obtains a refresh token from the AzCli cache and uses it to authenticate with MSAL """
+    """AzCli Token Provider obtains a refresh token from the AzCli cache and uses it to authenticate with MSAL"""
 
     def __init__(self, kusto_uri: str):
         super().__init__(kusto_uri)
@@ -312,7 +312,7 @@ class AzCliTokenProvider(TokenProviderBase):
 
 
 class UserPassTokenProvider(TokenProviderBase):
-    """ Acquire a token from MSAL with username and password """
+    """Acquire a token from MSAL with username and password"""
 
     def __init__(self, kusto_uri: str, authority_uri: str, username: str, password: str):
         super().__init__(kusto_uri)
@@ -347,7 +347,7 @@ class UserPassTokenProvider(TokenProviderBase):
 
 
 class DeviceLoginTokenProvider(TokenProviderBase):
-    """ Acquire a token from MSAL with Device Login flow """
+    """Acquire a token from MSAL with Device Login flow"""
 
     def __init__(self, kusto_uri: str, authority_uri: str, device_code_callback=None):
         super().__init__(kusto_uri)
@@ -394,7 +394,7 @@ class DeviceLoginTokenProvider(TokenProviderBase):
 
 
 class InteractiveLoginTokenProvider(TokenProviderBase):
-    """ Acquire a token from MSAL with Device Login flow """
+    """Acquire a token from MSAL with Device Login flow"""
 
     def __init__(self, kusto_uri: str, authority_uri: str, login_hint: Optional[str] = None, domain_hint: Optional[str] = None):
         super().__init__(kusto_uri)
@@ -431,7 +431,7 @@ class InteractiveLoginTokenProvider(TokenProviderBase):
 
 
 class ApplicationKeyTokenProvider(TokenProviderBase):
-    """ Acquire a token from MSAL with application Id and Key """
+    """Acquire a token from MSAL with application Id and Key"""
 
     def __init__(self, kusto_uri: str, authority_uri: str, app_client_id: str, app_key: str):
         super().__init__(kusto_uri)
