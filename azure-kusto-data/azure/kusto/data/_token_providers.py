@@ -284,7 +284,9 @@ class AzCliTokenProvider(TokenProviderBase):
             self._az_token = self._az_auth_context.get_token(self._kusto_uri)
             return {TokenConstants.AZ_TOKEN_TYPE: TokenConstants.BEARER_TYPE, TokenConstants.AZ_ACCESS_TOKEN: self._az_token.token}
         except Exception as e:
-            raise KustoClientError("Failed to obtain Az Cli token for '{0}'\n{1}".format(self._kusto_uri, e))
+            raise KustoClientError(
+                "Failed to obtain Az Cli token for '{0}'.\nPlease be sure AzCli version 2.3.0 and above is intalled.\n{1}".format(self._kusto_uri, e)
+            )
 
     async def _get_token_impl_async(self) -> Optional[dict]:
         try:
@@ -295,7 +297,7 @@ class AzCliTokenProvider(TokenProviderBase):
             return {TokenConstants.AZ_TOKEN_TYPE: TokenConstants.BEARER_TYPE, TokenConstants.AZ_ACCESS_TOKEN: self._az_token.token}
         except Exception as e:
             raise KustoClientError(
-                "Failed to obtain Az Cli token for '{0}'.\nPlease be sure to use AzCli version 2.3.0 and above.\n{1}".format(self._kusto_uri, e)
+                "Failed to obtain Az Cli token for '{0}'.\nPlease be sure AzCli version 2.3.0 and above is installed.\n{1}".format(self._kusto_uri, e)
             )
 
     def _get_token_from_cache_impl(self) -> dict:
