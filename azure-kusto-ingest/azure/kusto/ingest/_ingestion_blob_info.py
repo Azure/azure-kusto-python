@@ -53,15 +53,15 @@ class _IngestionBlobInfo:
             self.properties["AdditionalProperties"] = additional_properties
 
     def to_json(self):
-        """ Converts this object to a json string """
+        """Converts this object to a json string"""
         return _convert_list_to_json(self.properties)
 
 
 def _convert_list_to_json(array):
-    """ Converts array to a json string """
+    """Converts array to a json string"""
     return json.dumps(array, skipkeys=False, allow_nan=False, indent=None, separators=(",", ":"))
 
 
 def _convert_dict_to_json(array):
-    """ Converts array to a json string """
+    """Converts array to a json string"""
     return json.dumps(array, skipkeys=False, allow_nan=False, indent=None, separators=(",", ":"), sort_keys=True, default=lambda o: o.__dict__)
