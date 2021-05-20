@@ -88,7 +88,7 @@ class TokenProviderBase(abc.ABC):
                 self._init_impl()
                 self._initialized = True
 
-        token = await self._get_token_from_cache_impl_async()
+        token = self._get_token_from_cache_impl()
 
         if token is None:
             with TokenProviderBase.lock:
@@ -117,18 +117,14 @@ class TokenProviderBase(abc.ABC):
         """implement actual token acquisition here"""
         pass
 
+    async def _get_token_impl_async(self) -> Optional[dict]:
+        """implement actual token acquisition here"""
+        return await sync_to_async(self._get_token_impl)()
+
     @abc.abstractmethod
     def _get_token_from_cache_impl(self) -> Optional[dict]:
         """Implement cache checks here, return None if cache check fails"""
         pass
-
-    async def _get_token_from_cache_impl_async(self) -> Optional[dict]:
-        """Implement cache checks here, return None if cache check fails"""
-        return await sync_to_async(self._get_token_from_cache_impl)()
-
-    async def _get_token_impl_async(self) -> Optional[dict]:
-        """implement actual token acquisition here"""
-        return await sync_to_async(self._get_token_impl)()
 
     @staticmethod
     def _valid_token_or_none(token: dict) -> Optional[dict]:
@@ -253,9 +249,6 @@ class MsiTokenProvider(TokenProviderBase):
     def _get_token_from_cache_impl(self) -> dict:
         return None
 
-    async def _get_token_from_cache_impl_async(self) -> Optional[dict]:
-        return None
-
 
 class AzCliTokenProvider(TokenProviderBase):
     """AzCli Token Provider obtains a refresh token from the AzCli cache and uses it to authenticate with MSAL"""
@@ -308,9 +301,6 @@ class AzCliTokenProvider(TokenProviderBase):
                 return {TokenConstants.MSAL_TOKEN_TYPE: TokenConstants.BEARER_TYPE, TokenConstants.MSAL_ACCESS_TOKEN: self._az_token.token}
 
         return None
-
-    async def _get_token_from_cache_impl_async(self) -> Optional[dict]:
-        return self._get_token_from_cache_impl()
 
 
 class UserPassTokenProvider(TokenProviderBase):
