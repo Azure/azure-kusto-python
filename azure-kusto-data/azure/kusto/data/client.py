@@ -501,12 +501,12 @@ class KustoConnectionStringBuilder:
 
     @property
     def msi_authentication(self):
-        """ A value stating the MSI identity type to obtain """
+        """A value stating the MSI identity type to obtain"""
         return self._internal_dict.get(self.ValidKeywords.msi_auth)
 
     @property
     def msi_parameters(self):
-        """ A user assigned MSI ID to be obtained """
+        """A user assigned MSI ID to be obtained"""
         return self._internal_dict.get(self.ValidKeywords.msi_params)
 
     @property
