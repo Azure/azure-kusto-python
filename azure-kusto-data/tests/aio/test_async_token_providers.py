@@ -48,7 +48,7 @@ class TestTokenProvider:
         # Test provider with URI, No silent token
         provider = MockProvider(KUSTO_URI)
 
-        token = await provider._get_token_from_cache_impl_async()
+        token = provider._get_token_from_cache_impl()
         assert provider.init_count == 0
         assert token is None
 
@@ -56,7 +56,7 @@ class TestTokenProvider:
         assert provider.init_count == 1
         assert TokenConstants.MSAL_ACCESS_TOKEN in token
 
-        token = await provider._get_token_from_cache_impl_async()
+        token = provider._get_token_from_cache_impl()
         assert TokenConstants.MSAL_ACCESS_TOKEN in token
 
         token = await provider.get_token_async()
