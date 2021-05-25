@@ -28,7 +28,7 @@ class KustoClient(_KustoClientBase):
         return self
 
     def __aexit__(self, exc_type, exc_val, exc_tb):
-        self._session.__aexit__(exc_type, exc_val, exc_tb)
+        return self._session.__aexit__(exc_type, exc_val, exc_tb)
 
     @aio_documented_by(KustoClientSync.execute)
     async def execute(self, database: str, query: str, properties: ClientRequestProperties = None) -> KustoResponseDataSet:
