@@ -18,7 +18,7 @@ from azure.kusto.ingest import (
 ##################################################################
 ##                              AUTH                            ##
 ##################################################################
-cluster = "https://ingest-{cluster_name}.kusto.windows.net"
+cluster = "https://ingest-{cluster_name}.kusto.windows.net/"
 
 # In case you want to authenticate with AAD application.
 client_id = "<insert here your AAD application id>"
