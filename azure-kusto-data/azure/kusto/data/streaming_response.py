@@ -56,7 +56,7 @@ class JsonTokenReader:
         elif prev_token.token_type.startswith("start"):
             while True:
                 potential_end_token = self.read_next_token_or_throw()
-                if potential_end_token.token_path == prev_token and potential_end_token.token_type.startswith("end"):
+                if potential_end_token.token_path == prev_token.token_path and potential_end_token.token_type.startswith("end"):
                     break
 
     def skip_until_property_name(self, name: str):
@@ -136,8 +136,6 @@ class ProgressiveDataSetEnumerator:
             props = self.extract_props(frame_type, ("TableId", "number"), ("TableKind", "string"), ("TableName", "string"), ("Columns", "array"))
             self.reader.skip_until_property_name("Rows")
             props["Rows"] = self.row_iterator(props["Columns"])
-            if props["TableKind"] != "PrimaryResult" or True:
-                props["Rows"] = list(props["Rows"])
             return props
         elif frame_type == FrameType.DataSetCompletion:
             res = self.extract_props(frame_type, ("HasErrors", "boolean"), ("Cancelled", "boolean"))
