@@ -8,7 +8,7 @@ import uuid
 from copy import copy
 from datetime import timedelta
 from enum import Enum, unique
-from typing import TYPE_CHECKING, Union, Callable, Optional, Any, NoReturn
+from typing import TYPE_CHECKING, Union, Callable, Optional, Any, NoReturn, Iterator
 
 import requests
 from requests import Response
@@ -20,6 +20,7 @@ from .data_format import DataFormat
 from .exceptions import KustoServiceError
 from .response import KustoResponseDataSetV1, KustoResponseDataSetV2, KustoResponseDataSet
 from .security import _AadHelper
+from .streaming_response import ProgressiveDataSetEnumerator, JsonTokenReader
 
 if TYPE_CHECKING:
     import aiohttp
@@ -855,7 +856,7 @@ class KustoClient(_KustoClientBase):
 
     def execute_streaming_query(
         self, database: str, query: str, timeout: timedelta = _KustoClientBase._query_default_timeout, properties: Optional[ClientRequestProperties] = None
-    ) -> Response:
+    ) -> Iterator:
         """
         Query directly from Kusto database using streaming output.</p>
         This method queries the Kusto database into an asyncio stream.
@@ -869,33 +870,9 @@ class KustoClient(_KustoClientBase):
 
         :return: a Response that can be read as chunks
         """
-        response = self._retrieve_response(self._query_endpoint, database, query, None, timeout, properties, stream=True)
-
-        try:
-            response.raise_for_status()
-        except Exception as e:
-            self._handle_http_error(e, self._query_endpoint, None, response, response.json(), response.text)
-
-        return response
-
-    def _retrieve_response(
-        self,
-        endpoint: str,
-        database: str,
-        query: str,
-        payload: Optional[io.IOBase],
-        timeout: timedelta,
-        properties: Optional[ClientRequestProperties],
-        stream: bool,
-    ):
-        request_params = ExecuteRequestParams(database, payload, properties, query, timeout, self._request_headers)
-        json_payload = request_params.json_payload
-        request_headers = request_params.request_headers
-        timeout = request_params.timeout
-        if self._auth_provider:
-            request_headers["Authorization"] = self._auth_provider.acquire_authorization_header()
-        response = self._session.post(endpoint, headers=request_headers, json=json_payload, data=payload, timeout=timeout.seconds, stream=stream)
-        return response
+        response = self._execute(self._query_endpoint, database, query, None, timeout, properties, stream_response=True)
+        response.raw.decode_content = True
+        return iter(ProgressiveDataSetEnumerator(JsonTokenReader(response.raw)))
 
     def _execute(
         self,
@@ -905,9 +882,23 @@ class KustoClient(_KustoClientBase):
         payload: Optional[io.IOBase],
         timeout: timedelta,
         properties: Optional[ClientRequestProperties] = None,
-    ):
+        stream_response: bool = False
+    ) -> Union[KustoResponseDataSet, Response]:
         """Executes given query against this client"""
-        response = self._retrieve_response(endpoint, database, query, payload, timeout, properties, stream=False)
+        request_params = ExecuteRequestParams(database, payload, properties, query, timeout, self._request_headers)
+        json_payload = request_params.json_payload
+        request_headers = request_params.request_headers
+        timeout = request_params.timeout
+        if self._auth_provider:
+            request_headers["Authorization"] = self._auth_provider.acquire_authorization_header()
+        response = self._session.post(endpoint, headers=request_headers, json=json_payload, data=payload, timeout=timeout.seconds, stream=stream_response)
+
+        if stream_response:
+            try:
+                response.raise_for_status()
+            except Exception as e:
+                self._handle_http_error(e, self._query_endpoint, None, response, response.json(), response.text)
+            return response
 
         response_json = None
         try:

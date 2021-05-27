@@ -4,6 +4,8 @@ from typing import Optional, Any, Tuple, Dict
 
 import ijson
 
+from azure.kusto.data._models import WellKnownDataSet
+
 
 class JsonTokenType(Enum):
     NULL = 0
@@ -44,8 +46,7 @@ class JsonToken:
 
 class JsonTokenReader:
     def __init__(self, stream: io.RawIOBase):
-        self.reader = io.BufferedReader(stream)
-        self.json_iter = ijson.parse(self.reader)
+        self.json_iter = ijson.parse(stream)
 
     def read_next_token_or_throw(self) -> JsonToken:
         next_item = next(self.json_iter)
@@ -119,6 +120,13 @@ class JsonTokenReader:
                 return token
             self.skip_children(token)
 
+    def skip_until_token_with_paths(self, *tokens: (JsonTokenType, str)):
+        while True:
+            token = self.read_next_token_or_throw()
+            if any((token.token_type == t_type and token.token_path == t_path) for (t_type, t_path) in tokens):
+                return token
+            self.skip_children(token)
+
     def skip_until_end_object(self):
         self.skip_until_token(JsonTokenType.END_MAP)
 
@@ -136,7 +144,7 @@ class ProgressiveDataSetEnumerator:
         if self.done:
             raise StopIteration()
 
-        token = self.reader.skip_until_token(JsonTokenType.START_MAP, JsonTokenType.END_ARRAY)
+        token = self.reader.skip_until_token_with_paths((JsonTokenType.START_MAP, "item"), (JsonTokenType.END_ARRAY, ""))
         if token == JsonTokenType.END_ARRAY:
             self.done = True
             raise StopIteration()
@@ -159,13 +167,15 @@ class ProgressiveDataSetEnumerator:
             props = self.extract_props(frame_type, ("TableId", JsonTokenType.NUMBER), ("TableKind", JsonTokenType.STRING), ("TableName", JsonTokenType.STRING),
                                        ("Columns", JsonTokenType.START_ARRAY))
             self.reader.skip_until_property_name("Rows")
-            props["Rows"] = list(self.row_iterator(props["Columns"]))
+            props["Rows"] = self.row_iterator(props["Columns"])
+            if props["TableKind"] != WellKnownDataSet.PrimaryResult.value:
+                props["Rows"] = list(props["Rows"])
             return props
         elif frame_type == FrameType.DataSetCompletion:
             res = self.extract_props(frame_type, ("HasErrors", JsonTokenType.BOOLEAN), ("Cancelled", JsonTokenType.BOOLEAN))
             token = self.reader.skip_until_property_name_or_end_object("OneApiErrors")
             if token.token_type != JsonTokenType.END_MAP:
-                res["OneApiErrors"] = self.parse_array(skip_start=True)
+                res["OneApiErrors"] = self.parse_array(skip_start=False)
             return res
 
     def row_iterator(self, columns):
