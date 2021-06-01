@@ -286,7 +286,7 @@ class AzCliTokenProvider(TokenProviderBase):
             if self._az_auth_context_async is None:
                 self._az_auth_context_async = AsyncAzureCliCredential()
 
-            self._az_token = await self._az_auth_context_async.get_token(self._kusto_uri, self._az_kwargs)
+            self._az_token = await self._az_auth_context_async.get_token(self._kusto_uri)
             return {TokenConstants.AZ_TOKEN_TYPE: TokenConstants.BEARER_TYPE, TokenConstants.AZ_ACCESS_TOKEN: self._az_token.token}
         except Exception as e:
             raise KustoClientError(
