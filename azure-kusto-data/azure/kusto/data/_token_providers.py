@@ -448,7 +448,9 @@ class ApplicationKeyTokenProvider(TokenProviderBase):
         return {"authority": self._cloud_info.authority_uri(self._auth), "client_id": self._app_client_id}
 
     def _init_impl(self):
-        self._msal_client = ConfidentialClientApplication(client_id=self._app_client_id, client_credential=self._app_key, authority=self._cloud_info.authority_uri(self._auth))
+        self._msal_client = ConfidentialClientApplication(
+            client_id=self._app_client_id, client_credential=self._app_key, authority=self._cloud_info.authority_uri(self._auth)
+        )
 
     def _get_token_impl(self) -> dict:
         token = self._msal_client.acquire_token_for_client(scopes=self._scopes)
@@ -479,10 +481,16 @@ class ApplicationCertificateTokenProvider(TokenProviderBase):
         return "ApplicationCertificateTokenProvider"
 
     def context(self) -> dict:
-        return {"authority": self._cloud_info.authority_uri(self._auth), "client_id": self._client_id, "thumbprint": self._cert_credentials[TokenConstants.MSAL_THUMBPRINT]}
+        return {
+            "authority": self._cloud_info.authority_uri(self._auth),
+            "client_id": self._client_id,
+            "thumbprint": self._cert_credentials[TokenConstants.MSAL_THUMBPRINT],
+        }
 
     def _init_impl(self):
-        self._msal_client = ConfidentialClientApplication(client_id=self._client_id, client_credential=self._cert_credentials, authority=self._cloud_info.authority_uri(self._auth))
+        self._msal_client = ConfidentialClientApplication(
+            client_id=self._client_id, client_credential=self._cert_credentials, authority=self._cloud_info.authority_uri(self._auth)
+        )
 
     def _get_token_impl(self) -> dict:
         token = self._msal_client.acquire_token_for_client(scopes=self._scopes)

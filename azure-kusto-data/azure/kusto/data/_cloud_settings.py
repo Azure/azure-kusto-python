@@ -18,8 +18,15 @@ FIRST_PARTY_AUTHORITY_URL = "https://login.microsoftonline.com/f8cdef31-a31e-4b4
 class CloudInfo:
     """This class holds the data for a specific cloud instance."""
 
-    def __init__(self, login_endpoint: str, login_mfa_required: bool, kusto_client_app_id: str, kusto_client_redirect_uri: str, kusto_service_resource_id: str,
-                 first_party_authority_url: str):
+    def __init__(
+        self,
+        login_endpoint: str,
+        login_mfa_required: bool,
+        kusto_client_app_id: str,
+        kusto_client_redirect_uri: str,
+        kusto_service_resource_id: str,
+        first_party_authority_url: str,
+    ):
         self.login_endpoint = login_endpoint
         self.login_mfa_required = login_mfa_required
         self.kusto_client_app_id = kusto_client_app_id
@@ -44,7 +51,7 @@ class CloudSettings:
         kusto_client_app_id=KUSTO_CLIENT_APP_ID,
         kusto_client_redirect_uri=REDIRECT_URI,
         kusto_service_resource_id=KUSTO_SERVICE_RESOURCE_ID,
-        first_party_authority_url=FIRST_PARTY_AUTHORITY_URL
+        first_party_authority_url=FIRST_PARTY_AUTHORITY_URL,
     )
 
     @classmethod
