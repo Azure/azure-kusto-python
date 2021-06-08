@@ -246,7 +246,7 @@ class TestE2E:
         assert primary_result["frame_type"] == FrameType.DataTable
         assert primary_result["TableKind"] == WellKnownDataSet.PrimaryResult.value
         assert type(primary_result["Columns"]) == list
-        assert type(primary_result["Rows"]) == list
+        assert type(primary_result["Rows"]) != list
 
         row = next(primary_result["Rows"])
         assert list(row.keys()) == [column["ColumnName"] for column in primary_result["Columns"]]
