@@ -92,7 +92,7 @@ class TokenProviderBase(abc.ABC):
         """Get a token asynchronously silently from cache or authenticate if cached token is not found"""
         with TokenProviderBase.lock:
             if not self._initialized:
-                await sync_to_async(self.init_cloud())
+                await (sync_to_async(self.init_cloud())())
                 self._init_impl()
                 self._initialized = True
 
