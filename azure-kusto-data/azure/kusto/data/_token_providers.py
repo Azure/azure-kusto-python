@@ -61,9 +61,15 @@ class TokenProviderBase(abc.ABC):
 
     def __init__(self, kusto_uri: str):
         self._kusto_uri = kusto_uri
-        if kusto_uri is not None:
-            self._scopes = [kusto_uri + ".default" if kusto_uri.endswith("/") else kusto_uri + "/.default"]
-            self._cloud_info = CloudSettings.get_cloud_info()
+
+    def init_cloud(self):
+        if self._kusto_uri is not None:
+            self._cloud_info = CloudSettings.get_cloud_info_for_cluster(self._kusto_uri)
+            resource_uri = self._cloud_info.kusto_service_resource_id
+            if self._cloud_info.login_mfa_required:
+                resource_uri = resource_uri.replace(".kusto.", ".kustomfa.")
+
+            self._scopes = [resource_uri + "/.default"]
 
     def get_token(self):
         """Get a token silently from cache or authenticate if cached token is not found"""
@@ -71,6 +77,7 @@ class TokenProviderBase(abc.ABC):
         if not self._initialized:
             with TokenProviderBase.lock:
                 if not self._initialized:
+                    self.init_cloud()
                     self._init_impl()
                     self._initialized = True
 
@@ -85,6 +92,7 @@ class TokenProviderBase(abc.ABC):
         """Get a token asynchronously silently from cache or authenticate if cached token is not found"""
         with TokenProviderBase.lock:
             if not self._initialized:
+                await sync_to_async(self.init_cloud())
                 self._init_impl()
                 self._initialized = True
 
@@ -306,10 +314,10 @@ class AzCliTokenProvider(TokenProviderBase):
 class UserPassTokenProvider(TokenProviderBase):
     """Acquire a token from MSAL with username and password"""
 
-    def __init__(self, kusto_uri: str, authority_uri: str, username: str, password: str):
+    def __init__(self, kusto_uri: str, authority_id: str, username: str, password: str):
         super().__init__(kusto_uri)
         self._msal_client = None
-        self._auth = authority_uri
+        self._auth = authority_id
         self._user = username
         self._pass = password
 
@@ -318,10 +326,10 @@ class UserPassTokenProvider(TokenProviderBase):
         return "UserPassTokenProvider"
 
     def context(self) -> dict:
-        return {"authority": self._auth, "client_id": self._cloud_info.kusto_client_app_id, "username": self._user}
+        return {"authority": self._cloud_info.authority_uri(self._auth), "client_id": self._cloud_info.kusto_client_app_id, "username": self._user}
 
     def _init_impl(self):
-        self._msal_client = PublicClientApplication(client_id=self._cloud_info.kusto_client_app_id, authority=self._auth)
+        self._msal_client = PublicClientApplication(client_id=self._cloud_info.kusto_client_app_id, authority=self._cloud_info.authority_uri(self._auth))
 
     def _get_token_impl(self) -> dict:
         token = self._msal_client.acquire_token_by_username_password(username=self._user, password=self._pass, scopes=self._scopes)
@@ -341,10 +349,10 @@ class UserPassTokenProvider(TokenProviderBase):
 class DeviceLoginTokenProvider(TokenProviderBase):
     """Acquire a token from MSAL with Device Login flow"""
 
-    def __init__(self, kusto_uri: str, authority_uri: str, device_code_callback=None):
+    def __init__(self, kusto_uri: str, authority_id: str, device_code_callback=None):
         super().__init__(kusto_uri)
         self._msal_client = None
-        self._auth = authority_uri
+        self._auth = authority_id
         self._account = None
         self._device_code_callback = device_code_callback
 
@@ -353,10 +361,10 @@ class DeviceLoginTokenProvider(TokenProviderBase):
         return "DeviceLoginTokenProvider"
 
     def context(self) -> dict:
-        return {"authority": self._auth, "client_id": self._cloud_info.kusto_client_app_id}
+        return {"authority": self._cloud_info.authority_uri(self._auth), "client_id": self._cloud_info.kusto_client_app_id}
 
     def _init_impl(self):
-        self._msal_client = PublicClientApplication(client_id=self._cloud_info.kusto_client_app_id, authority=self._auth)
+        self._msal_client = PublicClientApplication(client_id=self._cloud_info.kusto_client_app_id, authority=self._cloud_info.authority_uri(self._auth))
 
     def _get_token_impl(self) -> dict:
         flow = self._msal_client.initiate_device_flow(scopes=self._scopes)
@@ -388,10 +396,10 @@ class DeviceLoginTokenProvider(TokenProviderBase):
 class InteractiveLoginTokenProvider(TokenProviderBase):
     """Acquire a token from MSAL with Device Login flow"""
 
-    def __init__(self, kusto_uri: str, authority_uri: str, login_hint: Optional[str] = None, domain_hint: Optional[str] = None):
+    def __init__(self, kusto_uri: str, authority_id: str, login_hint: Optional[str] = None, domain_hint: Optional[str] = None):
         super().__init__(kusto_uri)
         self._msal_client = None
-        self._auth = authority_uri
+        self._auth = authority_id
         self._login_hint = login_hint
         self._domain_hint = domain_hint
         self._account = None
@@ -401,10 +409,10 @@ class InteractiveLoginTokenProvider(TokenProviderBase):
         return "InteractiveLoginTokenProvider"
 
     def context(self) -> dict:
-        return {"authority": self._auth, "client_id": self._cloud_info.kusto_client_app_id}
+        return {"authority": self._cloud_info.authority_uri(self._auth), "client_id": self._cloud_info.kusto_client_app_id}
 
     def _init_impl(self):
-        self._msal_client = PublicClientApplication(client_id=self._cloud_info.kusto_client_app_id, authority=self._auth)
+        self._msal_client = PublicClientApplication(client_id=self._cloud_info.kusto_client_app_id, authority=self._cloud_info.authority_uri(self._auth))
 
     def _get_token_impl(self) -> dict:
         token = self._msal_client.acquire_token_interactive(
@@ -425,22 +433,22 @@ class InteractiveLoginTokenProvider(TokenProviderBase):
 class ApplicationKeyTokenProvider(TokenProviderBase):
     """Acquire a token from MSAL with application Id and Key"""
 
-    def __init__(self, kusto_uri: str, authority_uri: str, app_client_id: str, app_key: str):
+    def __init__(self, kusto_uri: str, authority_id: str, app_client_id: str, app_key: str):
         super().__init__(kusto_uri)
         self._msal_client = None
         self._app_client_id = app_client_id
         self._app_key = app_key
-        self._auth = authority_uri
+        self._auth = authority_id
 
     @staticmethod
     def name() -> str:
         return "ApplicationKeyTokenProvider"
 
     def context(self) -> dict:
-        return {"authority": self._auth, "client_id": self._app_client_id}
+        return {"authority": self._cloud_info.authority_uri(self._auth), "client_id": self._app_client_id}
 
     def _init_impl(self):
-        self._msal_client = ConfidentialClientApplication(client_id=self._app_client_id, client_credential=self._app_key, authority=self._auth)
+        self._msal_client = ConfidentialClientApplication(client_id=self._app_client_id, client_credential=self._app_key, authority=self._cloud_info.authority_uri(self._auth))
 
     def _get_token_impl(self) -> dict:
         token = self._msal_client.acquire_token_for_client(scopes=self._scopes)
@@ -457,10 +465,10 @@ class ApplicationCertificateTokenProvider(TokenProviderBase):
     Passing the public certificate is optional and will result in Subject Name & Issuer Authentication
     """
 
-    def __init__(self, kusto_uri: str, client_id: str, authority_uri: str, private_cert: str, thumbprint: str, public_cert: str = None):
+    def __init__(self, kusto_uri: str, client_id: str, authority_id: str, private_cert: str, thumbprint: str, public_cert: str = None):
         super().__init__(kusto_uri)
         self._msal_client = None
-        self._auth = authority_uri
+        self._auth = authority_id
         self._client_id = client_id
         self._cert_credentials = {TokenConstants.MSAL_PRIVATE_CERT: private_cert, TokenConstants.MSAL_THUMBPRINT: thumbprint}
         if public_cert is not None:
@@ -471,10 +479,10 @@ class ApplicationCertificateTokenProvider(TokenProviderBase):
         return "ApplicationCertificateTokenProvider"
 
     def context(self) -> dict:
-        return {"authority": self._auth, "client_id": self._client_id, "thumbprint": self._cert_credentials[TokenConstants.MSAL_THUMBPRINT]}
+        return {"authority": self._cloud_info.authority_uri(self._auth), "client_id": self._client_id, "thumbprint": self._cert_credentials[TokenConstants.MSAL_THUMBPRINT]}
 
     def _init_impl(self):
-        self._msal_client = ConfidentialClientApplication(client_id=self._client_id, client_credential=self._cert_credentials, authority=self._auth)
+        self._msal_client = ConfidentialClientApplication(client_id=self._client_id, client_credential=self._cert_credentials, authority=self._cloud_info.authority_uri(self._auth))
 
     def _get_token_impl(self) -> dict:
         token = self._msal_client.acquire_token_for_client(scopes=self._scopes)

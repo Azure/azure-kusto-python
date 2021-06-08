@@ -1,12 +1,13 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
 import os
+
 import pytest
 
 from azure.kusto.data._decorators import aio_documented_by
 from azure.kusto.data._token_providers import *
 from .test_kusto_client import run_aio_tests
-from ..test_token_providers import KUSTO_URI, PUBLIC_AUTH_URI, TOKEN_VALUE, TEST_AZ_AUTH, TEST_MSI_AUTH, TEST_DEVICE_AUTH, TokenProviderTests
+from ..test_token_providers import KUSTO_URI, TOKEN_VALUE, TEST_AZ_AUTH, TEST_MSI_AUTH, TEST_DEVICE_AUTH, TokenProviderTests
 
 
 class MockProvider(TokenProviderBase):
@@ -179,7 +180,7 @@ class TestTokenProvider:
         auth = os.environ.get("USER_AUTH_ID", "organizations")
 
         if username and password and auth:
-            provider = UserPassTokenProvider(KUSTO_URI, PUBLIC_AUTH_URI + auth, username, password)
+            provider = UserPassTokenProvider(KUSTO_URI, auth, username, password)
             token = await provider.get_token_async()
             assert self.get_token_value(token) is not None
 
@@ -200,7 +201,7 @@ class TestTokenProvider:
             # break here if you debug this test, and get the code from 'x'
             print(x)
 
-        provider = DeviceLoginTokenProvider(KUSTO_URI, PUBLIC_AUTH_URI + "organizations", callback)
+        provider = DeviceLoginTokenProvider(KUSTO_URI, "organizations", callback)
         token = await provider.get_token_async()
         assert self.get_token_value(token) is not None
 
@@ -218,7 +219,7 @@ class TestTokenProvider:
         app_key = os.environ.get("APP_KEY")
 
         if app_id and app_key and auth_id:
-            provider = ApplicationKeyTokenProvider(KUSTO_URI, PUBLIC_AUTH_URI + auth_id, app_id, app_key)
+            provider = ApplicationKeyTokenProvider(KUSTO_URI, auth_id, app_id, app_key)
             token = await provider.get_token_async()
             assert self.get_token_value(token) is not None
 
@@ -243,7 +244,7 @@ class TestTokenProvider:
             with open(pem_key_path, "rb") as file:
                 pem_key = file.read()
 
-            provider = ApplicationCertificateTokenProvider(KUSTO_URI, cert_app_id, PUBLIC_AUTH_URI + cert_auth, pem_key, thumbprint)
+            provider = ApplicationCertificateTokenProvider(KUSTO_URI, cert_app_id, cert_auth, pem_key, thumbprint)
             token = await provider.get_token_async()
             assert self.get_token_value(token) is not None
 
@@ -255,7 +256,7 @@ class TestTokenProvider:
                 with open(public_cert_path, "r") as file:
                     public_cert = file.read()
 
-                provider = ApplicationCertificateTokenProvider(KUSTO_URI, cert_app_id, PUBLIC_AUTH_URI + cert_auth, pem_key, thumbprint, public_cert)
+                provider = ApplicationCertificateTokenProvider(KUSTO_URI, cert_app_id, cert_auth, pem_key, thumbprint, public_cert)
                 token = await provider.get_token_async()
                 assert self.get_token_value(token) is not None
 

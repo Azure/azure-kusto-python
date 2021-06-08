@@ -5,9 +5,7 @@ import unittest
 
 from azure.kusto.data._token_providers import *
 
-
-KUSTO_URI = "https://thisclusterdoesnotexist.kusto.windows.net"
-PUBLIC_AUTH_URI = "https://login.microsoftonline.com/"
+KUSTO_URI = "https://sdkse2etest.eastus.kusto.windows.net"
 TOKEN_VALUE = "little miss sunshine"
 
 TEST_AZ_AUTH = False  # enable this in environments with az cli installed, and make sure to call 'az login' first
@@ -178,7 +176,7 @@ class TokenProviderTests(unittest.TestCase):
         auth = os.environ.get("USER_AUTH_ID", "organizations")
 
         if username and password and auth:
-            provider = UserPassTokenProvider(KUSTO_URI, PUBLIC_AUTH_URI + auth, username, password)
+            provider = UserPassTokenProvider(KUSTO_URI, auth, username, password)
             token = provider.get_token()
             assert TokenProviderTests.get_token_value(token) is not None
 
@@ -198,7 +196,7 @@ class TokenProviderTests(unittest.TestCase):
             # break here if you debug this test, and get the code from 'x'
             print(x)
 
-        provider = DeviceLoginTokenProvider(KUSTO_URI, PUBLIC_AUTH_URI + "organizations", callback)
+        provider = DeviceLoginTokenProvider(KUSTO_URI, "organizations", callback)
         token = provider.get_token()
         assert TokenProviderTests.get_token_value(token) is not None
 
@@ -213,7 +211,7 @@ class TokenProviderTests(unittest.TestCase):
             return
 
         auth_id = os.environ.get("APP_AUTH_ID", "72f988bf-86f1-41af-91ab-2d7cd011db47")
-        provider = InteractiveLoginTokenProvider(KUSTO_URI, PUBLIC_AUTH_URI + auth_id)
+        provider = InteractiveLoginTokenProvider(KUSTO_URI, auth_id)
         token = provider.get_token()
         assert TokenProviderTests.get_token_value(token) is not None
 
@@ -230,7 +228,7 @@ class TokenProviderTests(unittest.TestCase):
         app_key = os.environ.get("APP_KEY")
 
         if app_id and app_key and auth_id:
-            provider = ApplicationKeyTokenProvider(KUSTO_URI, PUBLIC_AUTH_URI + auth_id, app_id, app_key)
+            provider = ApplicationKeyTokenProvider(KUSTO_URI, auth_id, app_id, app_key)
             token = provider.get_token()
             assert TokenProviderTests.get_token_value(token) is not None
 
@@ -254,7 +252,7 @@ class TokenProviderTests(unittest.TestCase):
             with open(pem_key_path, "rb") as file:
                 pem_key = file.read()
 
-            provider = ApplicationCertificateTokenProvider(KUSTO_URI, cert_app_id, PUBLIC_AUTH_URI + cert_auth, pem_key, thumbprint)
+            provider = ApplicationCertificateTokenProvider(KUSTO_URI, cert_app_id, cert_auth, pem_key, thumbprint)
             token = provider.get_token()
             assert TokenProviderTests.get_token_value(token) is not None
 
@@ -266,7 +264,7 @@ class TokenProviderTests(unittest.TestCase):
                 with open(public_cert_path, "r") as file:
                     public_cert = file.read()
 
-                provider = ApplicationCertificateTokenProvider(KUSTO_URI, cert_app_id, PUBLIC_AUTH_URI + cert_auth, pem_key, thumbprint, public_cert)
+                provider = ApplicationCertificateTokenProvider(KUSTO_URI, cert_app_id, cert_auth, pem_key, thumbprint, public_cert)
                 token = provider.get_token()
                 assert TokenProviderTests.get_token_value(token) is not None
 
