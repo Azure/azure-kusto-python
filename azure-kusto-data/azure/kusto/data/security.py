@@ -7,9 +7,9 @@ from .exceptions import KustoAuthenticationError
 
 
 class _AadHelper:
-    kusto_uri = None
-    authority_uri = None
-    token_provider = None
+    kusto_uri = None  # type: str
+    authority_uri = None  # type: str
+    token_provider = None  # type: TokenProviderBase
 
     def __init__(self, kcsb: "KustoConnectionStringBuilder"):
         self.kusto_uri = "{0.scheme}://{0.hostname}".format(urlparse(kcsb.data_source))
