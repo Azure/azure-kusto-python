@@ -54,6 +54,7 @@ class TokenProviderBase(abc.ABC):
     """
 
     _initialized = False
+    _cloud_initialized = False
     _kusto_uri = None
     _cloud_info = None
     _scopes = None
@@ -61,6 +62,32 @@ class TokenProviderBase(abc.ABC):
 
     def __init__(self, kusto_uri: str):
         self._kusto_uri = kusto_uri
+
+    def init_once(self, init_only_cloud=False):
+        if not self._initialized:
+            with TokenProviderBase.lock:
+                if self._initialized:
+                    return
+
+                if not self._cloud_initialized:
+                    self.init_cloud()
+                    self._cloud_initialized = True
+
+                if init_only_cloud:
+                    return
+
+                self._init_impl()
+                self._initialized = True
+
+    async def init_once_async(self):
+        if not self._initialized:
+            with TokenProviderBase.lock:
+                if not self._initialized:
+                    if not self._cloud_initialized:
+                        await (sync_to_async(self.init_cloud)())
+                        self._cloud_initialized = True
+                    self._init_impl()
+                    self._initialized = True
 
     def init_cloud(self):
         if self._kusto_uri is not None:
@@ -73,13 +100,7 @@ class TokenProviderBase(abc.ABC):
 
     def get_token(self):
         """Get a token silently from cache or authenticate if cached token is not found"""
-
-        if not self._initialized:
-            with TokenProviderBase.lock:
-                if not self._initialized:
-                    self.init_cloud()
-                    self._init_impl()
-                    self._initialized = True
+        self.init_once()
 
         token = self._get_token_from_cache_impl()
         if token is None:
@@ -88,13 +109,13 @@ class TokenProviderBase(abc.ABC):
 
         return self._valid_token_or_throw(token)
 
+    def context(self) -> dict:
+        self.init_once(init_only_cloud=True)
+        return self._context_impl()
+
     async def get_token_async(self):
         """Get a token asynchronously silently from cache or authenticate if cached token is not found"""
-        with TokenProviderBase.lock:
-            if not self._initialized:
-                await (sync_to_async(self.init_cloud)())
-                self._init_impl()
-                self._initialized = True
+        await self.init_once_async()
 
         token = self._get_token_from_cache_impl()
 
@@ -111,7 +132,7 @@ class TokenProviderBase(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def context(self) -> dict:
+    def _context_impl(self) -> dict:
         """return a secret-free context for error reporting"""
         pass
 
@@ -165,7 +186,7 @@ class BasicTokenProvider(TokenProviderBase):
     def name() -> str:
         return "BasicTokenProvider"
 
-    def context(self) -> dict:
+    def _context_impl(self) -> dict:
         return {"authority": self.name()}
 
     def _init_impl(self):
@@ -189,7 +210,7 @@ class CallbackTokenProvider(TokenProviderBase):
     def name() -> str:
         return "CallbackTokenProvider"
 
-    def context(self) -> dict:
+    def _context_impl(self) -> dict:
         return {"authority": self.name()}
 
     def _init_impl(self):
@@ -222,7 +243,7 @@ class MsiTokenProvider(TokenProviderBase):
     def name() -> str:
         return "MsiTokenProvider"
 
-    def context(self) -> dict:
+    def _context_impl(self) -> dict:
         context = self._msi_args.copy()
         context["authority"] = self.name()
         return context
@@ -271,7 +292,7 @@ class AzCliTokenProvider(TokenProviderBase):
     def name() -> str:
         return "AzCliTokenProvider"
 
-    def context(self) -> dict:
+    def _context_impl(self) -> dict:
         return {"authority:": self.name()}
 
     def _init_impl(self):
@@ -325,7 +346,7 @@ class UserPassTokenProvider(TokenProviderBase):
     def name() -> str:
         return "UserPassTokenProvider"
 
-    def context(self) -> dict:
+    def _context_impl(self) -> dict:
         return {"authority": self._cloud_info.authority_uri(self._auth), "client_id": self._cloud_info.kusto_client_app_id, "username": self._user}
 
     def _init_impl(self):
@@ -360,7 +381,7 @@ class DeviceLoginTokenProvider(TokenProviderBase):
     def name() -> str:
         return "DeviceLoginTokenProvider"
 
-    def context(self) -> dict:
+    def _context_impl(self) -> dict:
         return {"authority": self._cloud_info.authority_uri(self._auth), "client_id": self._cloud_info.kusto_client_app_id}
 
     def _init_impl(self):
@@ -408,7 +429,7 @@ class InteractiveLoginTokenProvider(TokenProviderBase):
     def name() -> str:
         return "InteractiveLoginTokenProvider"
 
-    def context(self) -> dict:
+    def _context_impl(self) -> dict:
         return {"authority": self._cloud_info.authority_uri(self._auth), "client_id": self._cloud_info.kusto_client_app_id}
 
     def _init_impl(self):
@@ -444,7 +465,7 @@ class ApplicationKeyTokenProvider(TokenProviderBase):
     def name() -> str:
         return "ApplicationKeyTokenProvider"
 
-    def context(self) -> dict:
+    def _context_impl(self) -> dict:
         return {"authority": self._cloud_info.authority_uri(self._auth), "client_id": self._app_client_id}
 
     def _init_impl(self):
@@ -480,7 +501,7 @@ class ApplicationCertificateTokenProvider(TokenProviderBase):
     def name() -> str:
         return "ApplicationCertificateTokenProvider"
 
-    def context(self) -> dict:
+    def _context_impl(self) -> dict:
         return {
             "authority": self._cloud_info.authority_uri(self._auth),
             "client_id": self._client_id,

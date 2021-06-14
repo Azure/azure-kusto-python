@@ -20,7 +20,7 @@ class MockProvider(TokenProviderBase):
     def name() -> str:
         return "MockProvider"
 
-    def context(self) -> dict:
+    def _context_impl(self) -> dict:
         return {"authority": "MockProvider"}
 
     def _init_impl(self):
