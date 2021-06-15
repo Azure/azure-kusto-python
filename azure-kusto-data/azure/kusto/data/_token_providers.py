@@ -63,14 +63,14 @@ class TokenProviderBase(abc.ABC):
     def __init__(self, kusto_uri: str):
         self._kusto_uri = kusto_uri
 
-    def init_once(self, init_only_cloud=False):
+    def _init_once(self, init_only_cloud=False):
         if not self._initialized:
             with TokenProviderBase.lock:
                 if self._initialized:
                     return
 
                 if not self._cloud_initialized:
-                    self.init_cloud()
+                    self._init_cloud()
                     self._cloud_initialized = True
 
                 if init_only_cloud:
@@ -79,17 +79,17 @@ class TokenProviderBase(abc.ABC):
                 self._init_impl()
                 self._initialized = True
 
-    async def init_once_async(self):
+    async def _init_once_async(self):
         if not self._initialized:
             with TokenProviderBase.lock:
                 if not self._initialized:
                     if not self._cloud_initialized:
-                        await (sync_to_async(self.init_cloud)())
+                        await (sync_to_async(self._init_cloud)())
                         self._cloud_initialized = True
                     self._init_impl()
                     self._initialized = True
 
-    def init_cloud(self):
+    def _init_cloud(self):
         if self._kusto_uri is not None:
             self._cloud_info = CloudSettings.get_cloud_info_for_cluster(self._kusto_uri)
             resource_uri = self._cloud_info.kusto_service_resource_id
@@ -100,7 +100,7 @@ class TokenProviderBase(abc.ABC):
 
     def get_token(self):
         """Get a token silently from cache or authenticate if cached token is not found"""
-        self.init_once()
+        self._init_once()
 
         token = self._get_token_from_cache_impl()
         if token is None:
@@ -110,12 +110,12 @@ class TokenProviderBase(abc.ABC):
         return self._valid_token_or_throw(token)
 
     def context(self) -> dict:
-        self.init_once(init_only_cloud=True)
+        self._init_once(init_only_cloud=True)
         return self._context_impl()
 
     async def get_token_async(self):
         """Get a token asynchronously silently from cache or authenticate if cached token is not found"""
-        await self.init_once_async()
+        await self._init_once_async()
 
         token = self._get_token_from_cache_impl()
 
