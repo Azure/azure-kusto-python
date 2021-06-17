@@ -3,6 +3,7 @@
 import os
 import unittest
 
+from azure.kusto.data._cloud_settings import CloudInfo
 from azure.kusto.data._token_providers import *
 
 KUSTO_URI = "https://sdkse2etest.eastus.kusto.windows.net"
@@ -276,3 +277,45 @@ class TokenProviderTests(unittest.TestCase):
 
         else:
             print(" *** Skipped App Cert Provider Test ***")
+
+    @staticmethod
+    def test_cloud_mfa_off():
+        FAKE_URI = "https://fake_cluster_for_login_mfa_test.kusto.windows.net"
+        cloud = CloudInfo(
+            login_endpoint="https://login_endpoint",
+            login_mfa_required=False,
+            kusto_client_app_id="1234",
+            kusto_client_redirect_uri="",
+            kusto_service_resource_id="https://fakeurl.kusto.windows.net",
+            first_party_authority_url=""
+        )
+        CloudSettings._cloud_cache[FAKE_URI] = cloud
+        authority = "auth_test"
+
+        provider = UserPassTokenProvider(FAKE_URI, authority, "a", "b")
+        provider._init_once(init_only_cloud=True)
+        context = provider.context()
+        assert context["authority"] == "https://login_endpoint/auth_test"
+        assert context["client_id"] == cloud.kusto_client_app_id
+        assert provider._scopes == ["https://fakeurl.kusto.windows.net/.default"]
+
+    @staticmethod
+    def test_cloud_mfa_on():
+        FAKE_URI = "https://fake_cluster_for_login_mfa_test.kusto.windows.net"
+        cloud = CloudInfo(
+            login_endpoint="https://login_endpoint",
+            login_mfa_required=True,
+            kusto_client_app_id="1234",
+            kusto_client_redirect_uri="",
+            kusto_service_resource_id="https://fakeurl.kusto.windows.net",
+            first_party_authority_url=""
+        )
+        CloudSettings._cloud_cache[FAKE_URI] = cloud
+        authority = "auth_test"
+
+        provider = UserPassTokenProvider(FAKE_URI, authority, "a", "b")
+        provider._init_once(init_only_cloud=True)
+        context = provider.context()
+        assert context["authority"] == "https://login_endpoint/auth_test"
+        assert context["client_id"] == "1234"
+        assert provider._scopes == ["https://fakeurl.kustomfa.windows.net/.default"]

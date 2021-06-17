@@ -64,30 +64,40 @@ class TokenProviderBase(abc.ABC):
         self._kusto_uri = kusto_uri
 
     def _init_once(self, init_only_cloud=False):
-        if not self._initialized:
-            with TokenProviderBase.lock:
-                if self._initialized:
-                    return
+        if self._initialized:
+            return
 
-                if not self._cloud_initialized:
-                    self._init_cloud()
-                    self._cloud_initialized = True
+        with TokenProviderBase.lock:
+            if self._initialized:
+                return
 
-                if init_only_cloud:
-                    return
+            if not self._cloud_initialized:
+                self._init_cloud()
+                self._cloud_initialized = True
 
-                self._init_impl()
-                self._initialized = True
+            if init_only_cloud:
+                return
 
-    async def _init_once_async(self):
-        if not self._initialized:
-            with TokenProviderBase.lock:
-                if not self._initialized:
-                    if not self._cloud_initialized:
-                        await (sync_to_async(self._init_cloud)())
-                        self._cloud_initialized = True
-                    self._init_impl()
-                    self._initialized = True
+            self._init_impl()
+            self._initialized = True
+
+    async def _init_once_async(self, init_only_cloud=False):
+        if self._initialized:
+            return
+
+        with TokenProviderBase.lock:
+            if self._initialized:
+                return
+
+            if not self._cloud_initialized:
+                await (sync_to_async(self._init_cloud)())
+                self._cloud_initialized = True
+
+            if init_only_cloud:
+                return
+
+            self._init_impl()
+            self._initialized = True
 
     def _init_cloud(self):
         if self._kusto_uri is not None:

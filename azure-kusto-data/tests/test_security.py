@@ -29,6 +29,7 @@ def test_unauthorized_exception():
         assert error.authority == "https://login.microsoftonline.com/authorityName"
         assert error.kusto_cluster == cluster
         assert error.kwargs["username"] == username
+        assert error.kwargs["client_id"] == CloudSettings.DEFAULT_CLOUD.kusto_client_app_id
 
 
 # TODO: remove this once we can control the timeout

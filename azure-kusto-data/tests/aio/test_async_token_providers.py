@@ -4,6 +4,7 @@ import os
 
 import pytest
 
+from azure.kusto.data._cloud_settings import CloudInfo
 from azure.kusto.data._decorators import aio_documented_by
 from azure.kusto.data._token_providers import *
 from .test_kusto_client import run_aio_tests
@@ -268,3 +269,47 @@ class TestTokenProvider:
 
         else:
             print(" *** Skipped App Cert Provider Test ***")
+
+    @aio_documented_by(TokenProviderTests.test_cloud_mfa_off)
+    @pytest.mark.asyncio
+    async def test_cloud_mfa_off(self):
+        FAKE_URI = "https://fake_cluster_for_login_mfa_test.kusto.windows.net"
+        cloud = CloudInfo(
+            login_endpoint="https://login_endpoint",
+            login_mfa_required=False,
+            kusto_client_app_id="1234",
+            kusto_client_redirect_uri="",
+            kusto_service_resource_id="https://fakeurl.kusto.windows.net",
+            first_party_authority_url=""
+        )
+        CloudSettings._cloud_cache[FAKE_URI] = cloud
+        authority = "auth_test"
+
+        provider = UserPassTokenProvider(FAKE_URI, authority, "a", "b")
+        await provider._init_once_async(init_only_cloud=True)
+        context = provider.context()
+        assert context["authority"] == "https://login_endpoint/auth_test"
+        assert context["client_id"] == "1234"
+        assert provider._scopes == ["https://fakeurl.kusto.windows.net/.default"]
+
+    @aio_documented_by(TokenProviderTests.test_cloud_mfa_off)
+    @pytest.mark.asyncio
+    async def test_cloud_mfa_on(self):
+        FAKE_URI = "https://fake_cluster_for_login_mfa_test.kusto.windows.net"
+        cloud = CloudInfo(
+            login_endpoint="https://login_endpoint",
+            login_mfa_required=True,
+            kusto_client_app_id="1234",
+            kusto_client_redirect_uri="",
+            kusto_service_resource_id="https://fakeurl.kusto.windows.net",
+            first_party_authority_url=""
+        )
+        CloudSettings._cloud_cache[FAKE_URI] = cloud
+        authority = "auth_test"
+
+        provider = UserPassTokenProvider(FAKE_URI, authority, "a", "b")
+        await provider._init_once_async(init_only_cloud=True)
+        context = provider.context()
+        assert context["authority"] == "https://login_endpoint/auth_test"
+        assert context["client_id"] == "1234"
+        assert provider._scopes == ["https://fakeurl.kustomfa.windows.net/.default"]
