@@ -675,10 +675,11 @@ class _KustoClientBase:
         endpoint: Optional[str],
         payload: Optional[io.IOBase],
         response: "Union[Response, aiohttp.ClientResponse]",
+        status: int,
         response_json: Any,
         response_text: Optional[str],
     ) -> NoReturn:
-        if response.status_code == 404:
+        if status == 404:
             if payload:
                 raise KustoServiceError("The ingestion endpoint does not exist. Please enable streaming ingestion on your cluster.", response) from exception
 
@@ -872,6 +873,6 @@ class KustoClient(_KustoClientBase):
             response_json = response.json()
             response.raise_for_status()
         except Exception as e:
-            self._handle_http_error(e, endpoint, payload, response, response_json, response.text)
+            self._handle_http_error(e, endpoint, payload, response, response.status_code, response_json, response.text)
 
         return self._kusto_parse_by_endpoint(endpoint, response_json)
