@@ -280,7 +280,7 @@ class TestTokenProvider:
             kusto_client_app_id="1234",
             kusto_client_redirect_uri="",
             kusto_service_resource_id="https://fakeurl.kusto.windows.net",
-            first_party_authority_url=""
+            first_party_authority_url="",
         )
         CloudSettings._cloud_cache[FAKE_URI] = cloud
         authority = "auth_test"
@@ -302,7 +302,7 @@ class TestTokenProvider:
             kusto_client_app_id="1234",
             kusto_client_redirect_uri="",
             kusto_service_resource_id="https://fakeurl.kusto.windows.net",
-            first_party_authority_url=""
+            first_party_authority_url="",
         )
         CloudSettings._cloud_cache[FAKE_URI] = cloud
         authority = "auth_test"
