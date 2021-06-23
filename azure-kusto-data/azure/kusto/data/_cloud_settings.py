@@ -1,7 +1,7 @@
 import os
+from threading import Lock
 from typing import Optional
 from urllib.parse import urljoin
-from threading import Lock
 
 import requests
 
@@ -73,14 +73,16 @@ class CloudSettings:
                 if content is None or content == {}:
                     raise KustoServiceError("Kusto returned an invalid cloud metadata response", result)
                 root = content["AzureAD"]
-                cls._cloud_cache[kusto_uri] = CloudInfo(
-                    login_endpoint=root["LoginEndpoint"],
-                    login_mfa_required=root["LoginMfaRequired"],
-                    kusto_client_app_id=root["KustoClientAppId"],
-                    kusto_client_redirect_uri=root["KustoClientRedirectUri"],
-                    kusto_service_resource_id=root["KustoServiceResourceId"],
-                    first_party_authority_url=root["FirstPartyAuthorityUrl"],
-                )
+                if root is not None:
+                    cls._cloud_cache[kusto_uri] = CloudInfo(
+                        login_endpoint=root["LoginEndpoint"],
+                        login_mfa_required=root["LoginMfaRequired"],
+                        kusto_client_app_id=root["KustoClientAppId"],
+                        kusto_client_redirect_uri=root["KustoClientRedirectUri"],
+                        kusto_service_resource_id=root["KustoServiceResourceId"],
+                        first_party_authority_url=root["FirstPartyAuthorityUrl"],)
+                else:
+                    cls._cloud_cache[kusto_uri] = cls.DEFAULT_CLOUD
             elif result.status_code == 404:
                 # For now as long not all proxies implement the metadata endpoint, if no endpoint exists return public cloud data
                 cls._cloud_cache[kusto_uri] = cls.DEFAULT_CLOUD
