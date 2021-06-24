@@ -39,6 +39,18 @@ class CloudInfo:
     def authority_uri(self, authority_id: Optional[str]):
         return self.login_endpoint + "/" + (authority_id or "organizations")
 
+    def __eq__(self, other):
+        if not isinstance(other, self.__class__):
+            return False
+        return (
+            self.login_endpoint == other.login_endpoint
+            and self.login_mfa_required == other.login_mfa_required
+            and self.kusto_client_app_id == other.kusto_client_app_id
+            and self.kusto_client_redirect_uri == other.kusto_client_redirect_uri
+            and self.kusto_service_resource_id == other.kusto_service_resource_id
+            and self.first_party_authority_url == other.first_party_authority_url
+        )
+
 
 class CloudSettings:
     """This class holds data for all cloud instances, and returns the specific data instance by parsing the dns suffix from a URL"""
@@ -80,7 +92,8 @@ class CloudSettings:
                         kusto_client_app_id=root["KustoClientAppId"],
                         kusto_client_redirect_uri=root["KustoClientRedirectUri"],
                         kusto_service_resource_id=root["KustoServiceResourceId"],
-                        first_party_authority_url=root["FirstPartyAuthorityUrl"],)
+                        first_party_authority_url=root["FirstPartyAuthorityUrl"],
+                    )
                 else:
                     cls._cloud_cache[kusto_uri] = cls.DEFAULT_CLOUD
             elif result.status_code == 404:
