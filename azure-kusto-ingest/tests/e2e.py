@@ -1,7 +1,6 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
 import asyncio
-import datetime
 import io
 import os
 import random
@@ -12,8 +11,10 @@ import uuid
 
 import pytest
 from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
+from azure.kusto.data._cloud_settings import CloudSettings
 from azure.kusto.data.aio import KustoClient as AsyncKustoClient
 from azure.kusto.data.exceptions import KustoServiceError
+
 from azure.kusto.ingest import (
     QueuedIngestClient,
     KustoStreamingIngestClient,
@@ -416,3 +417,13 @@ class TestE2E:
         self.ingest_client.ingest_from_dataframe(df, ingestion_properties)
 
         await self.assert_rows_added(1, timeout=120)
+
+    def test_cloud_info(self):
+        cloud_info = CloudSettings.get_cloud_info_for_cluster(self.engine_cs)
+        assert cloud_info is not CloudSettings.DEFAULT_CLOUD
+        assert cloud_info == CloudSettings.DEFAULT_CLOUD
+        assert cloud_info is CloudSettings.get_cloud_info_for_cluster(self.engine_cs)
+
+    def test_cloud_info_404(self):
+        cloud_info = CloudSettings.get_cloud_info_for_cluster("https://www.microsoft.com")
+        assert cloud_info is CloudSettings.DEFAULT_CLOUD

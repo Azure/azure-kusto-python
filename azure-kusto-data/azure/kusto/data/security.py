@@ -1,36 +1,32 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
 from urllib.parse import urlparse
-from .exceptions import KustoAuthenticationError
+
 from ._token_providers import *
+from .exceptions import KustoAuthenticationError
 
 
 class _AadHelper:
-    kusto_uri = None
-    authority_uri = None
-    token_provider = None
+    kusto_uri = None  # type: str
+    authority_uri = None  # type: str
+    token_provider = None  # type: TokenProviderBase
 
     def __init__(self, kcsb: "KustoConnectionStringBuilder"):
         self.kusto_uri = "{0.scheme}://{0.hostname}".format(urlparse(kcsb.data_source))
         self.username = None
 
-        cloud_info = CloudSettings.get_cloud_info()
-        authority = kcsb.authority_id or "organizations"
-        aad_authority_uri = cloud_info.aad_authority_uri
-        self.authority_uri = aad_authority_uri + authority if aad_authority_uri.endswith("/") else aad_authority_uri + "/" + authority
-
         if kcsb.interactive_login:
-            self.token_provider = InteractiveLoginTokenProvider(self.kusto_uri, self.authority_uri, kcsb.login_hint, kcsb.domain_hint)
+            self.token_provider = InteractiveLoginTokenProvider(self.kusto_uri, kcsb.authority_id, kcsb.login_hint, kcsb.domain_hint)
         elif all([kcsb.aad_user_id, kcsb.password]):
-            self.token_provider = UserPassTokenProvider(self.kusto_uri, self.authority_uri, kcsb.aad_user_id, kcsb.password)
+            self.token_provider = UserPassTokenProvider(self.kusto_uri, kcsb.authority_id, kcsb.aad_user_id, kcsb.password)
         elif all([kcsb.application_client_id, kcsb.application_key]):
-            self.token_provider = ApplicationKeyTokenProvider(self.kusto_uri, self.authority_uri, kcsb.application_client_id, kcsb.application_key)
+            self.token_provider = ApplicationKeyTokenProvider(self.kusto_uri, kcsb.authority_id, kcsb.application_client_id, kcsb.application_key)
         elif all([kcsb.application_client_id, kcsb.application_certificate, kcsb.application_certificate_thumbprint]):
             # kcsb.application_public_certificate can be None if SNI is not used
             self.token_provider = ApplicationCertificateTokenProvider(
                 self.kusto_uri,
                 kcsb.application_client_id,
-                self.authority_uri,
+                kcsb.authority_id,
                 kcsb.application_certificate,
                 kcsb.application_certificate_thumbprint,
                 kcsb.application_public_certificate,
@@ -46,7 +42,7 @@ class _AadHelper:
         elif kcsb.token_provider:
             self.token_provider = CallbackTokenProvider(kcsb.token_provider)
         else:
-            self.token_provider = DeviceLoginTokenProvider(self.kusto_uri, self.authority_uri)
+            self.token_provider = DeviceLoginTokenProvider(self.kusto_uri, kcsb.authority_id)
 
     def acquire_authorization_header(self):
         try:
