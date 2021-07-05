@@ -1,13 +1,17 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
 import pytest
-from azure.kusto.data.exceptions import KustoAuthenticationError
+
 from azure.kusto.data import KustoConnectionStringBuilder
-from azure.kusto.data.security import _AadHelper
 from azure.kusto.data._token_providers import *
+from azure.kusto.data.exceptions import KustoAuthenticationError
+from azure.kusto.data.security import _AadHelper
 
 KUSTO_TEST_URI = "https://thisclusterdoesnotexist.kusto.windows.net"
 TEST_INTERACTIVE_AUTH = False  # User interaction required, enable this when running test manually
+
+CloudSettings._cloud_cache[KUSTO_TEST_URI] = CloudSettings.DEFAULT_CLOUD
+CloudSettings._cloud_cache["https://somecluster.kusto.windows.net"] = CloudSettings.DEFAULT_CLOUD
 
 
 def test_unauthorized_exception():
@@ -16,6 +20,7 @@ def test_unauthorized_exception():
     username = "username@microsoft.com"
     kcsb = KustoConnectionStringBuilder.with_aad_user_password_authentication(cluster, username, "StrongestPasswordEver", "authorityName")
     aad_helper = _AadHelper(kcsb)
+    aad_helper.token_provider._init_cloud()
 
     try:
         aad_helper.acquire_authorization_header()
@@ -24,6 +29,7 @@ def test_unauthorized_exception():
         assert error.authority == "https://login.microsoftonline.com/authorityName"
         assert error.kusto_cluster == cluster
         assert error.kwargs["username"] == username
+        assert error.kwargs["client_id"] == CloudSettings.DEFAULT_CLOUD.kusto_client_app_id
 
 
 # TODO: remove this once we can control the timeout
@@ -52,6 +58,9 @@ def test_msi_auth():
 
     helpers = [_AadHelper(i) for i in kcsb]
 
+    for h in helpers:
+        h.token_provider._init_cloud()
+
     try:
         helpers[0].acquire_authorization_header()
     except KustoAuthenticationError as e:
@@ -79,7 +88,9 @@ def test_token_provider_auth():
     invalid_kcsb = KustoConnectionStringBuilder.with_token_provider(KUSTO_TEST_URI, invalid_token_provider)
 
     valid_helper = _AadHelper(valid_kcsb)
+    valid_helper.token_provider._init_cloud()
     invalid_helper = _AadHelper(invalid_kcsb)
+    invalid_helper.token_provider._init_cloud()
 
     auth_header = valid_helper.acquire_authorization_header()
     assert auth_header.index(valid_token_provider()) > -1
@@ -98,6 +109,8 @@ def test_user_app_token_auth():
 
     user_helper = _AadHelper(user_kcsb)
     app_helper = _AadHelper(app_kcsb)
+    user_helper.token_provider._init_cloud()
+    app_helper.token_provider._init_cloud()
 
     auth_header = user_helper.acquire_authorization_header()
     assert auth_header.index(token) > -1
