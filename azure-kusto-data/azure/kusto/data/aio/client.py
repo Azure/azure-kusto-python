@@ -3,6 +3,7 @@ from datetime import timedelta
 from typing import Union, Optional
 
 from .._decorators import documented_by, aio_documented_by
+from ..aio.streaming_response import ProgressiveDataSetEnumerator, JsonTokenReader
 from ..client import KustoClient as KustoClientSync, _KustoClientBase, KustoConnectionStringBuilder, ClientRequestProperties, ExecuteRequestParams
 from ..data_format import DataFormat
 from ..exceptions import KustoAioSyntaxError
@@ -63,29 +64,14 @@ class KustoClient(_KustoClientBase):
         await self._execute(endpoint, database, None, stream, self._streaming_ingest_default_timeout, properties)
 
     async def execute_streaming_query(
-        self, database: str, query: str, timeout: timedelta = _KustoClientBase._query_default_timeout, properties: ClientRequestProperties = None
-    ) -> ClientResponse:
+        self, database: str, query: str, timeout: timedelta = _KustoClientBase._query_default_timeout, properties: Optional[ClientRequestProperties] = None
+    ) -> ProgressiveDataSetEnumerator:
         """
-        Query directly from Kusto database using streaming output.</p>
-        This method queries the Kusto database into an asyncio stream.
-
-        example usage::
-
-            my_file = open("some_file", "wb")
-            async with client.execute_streaming_query(...) as response:
-                async for chunk in response.content.iter_chunks():
-                    file.write(chunk)
-
-        :return: a ClientResponse object of the response
+        Todo
         """
         response = await self._retrieve_response(self._query_endpoint, database, query, None, timeout, properties)
 
-        try:
-            response.raise_for_status()
-        except Exception as e:
-            self._handle_http_error(e, self._query_endpoint, None, response, await response.json(), await response.text())
-
-        return response
+        return ProgressiveDataSetEnumerator(JsonTokenReader(response.content))
 
     async def _retrieve_response(
         self, endpoint: str, database: str, query: str, payload: Optional[io.IOBase], timeout: timedelta, properties: Optional[ClientRequestProperties]

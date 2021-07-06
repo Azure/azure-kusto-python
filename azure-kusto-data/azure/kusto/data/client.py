@@ -859,17 +859,7 @@ class KustoClient(_KustoClientBase):
         self, database: str, query: str, timeout: timedelta = _KustoClientBase._query_default_timeout, properties: Optional[ClientRequestProperties] = None
     ) -> Iterator:
         """
-        Query directly from Kusto database using streaming output.</p>
-        This method queries the Kusto database into an asyncio stream.
-
-        example usage::
-
-            my_file = open("some_file", "wb")
-            with client.execute_streaming_query(...) as response:
-                for chunk in response.iter_content(1024):
-                    file.write(chunk)
-
-        :return: a Response that can be read as chunks
+        Todo
         """
         response = self._execute(self._query_endpoint, database, query, None, timeout, properties, stream_response=True)
         response.raw.decode_content = True
@@ -883,7 +873,7 @@ class KustoClient(_KustoClientBase):
         payload: Optional[io.IOBase],
         timeout: timedelta,
         properties: Optional[ClientRequestProperties] = None,
-        stream_response: bool = False
+        stream_response: bool = False,
     ) -> Union[KustoResponseDataSet, Response]:
         """Executes given query against this client"""
         request_params = ExecuteRequestParams(database, payload, properties, query, timeout, self._request_headers)

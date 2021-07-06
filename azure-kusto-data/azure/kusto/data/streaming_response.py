@@ -60,7 +60,8 @@ class JsonTokenReader:
         token = self.read_next_token_or_throw()
         if token.token_type not in token_types:
             raise Exception(
-                f"Expected one the following types: '{','.join(t.name for t in token_types)}' , got type {token.token_type}")  # todo - better exception
+                f"Expected one the following types: '{','.join(t.name for t in token_types)}' , got type {token.token_type}"
+            )  # todo - better exception
         return token
 
     def read_start_object(self) -> JsonToken:
@@ -154,18 +155,29 @@ class ProgressiveDataSetEnumerator:
         if frame_type == FrameType.DataSetHeader:
             return self.extract_props(frame_type, ("IsProgressive", JsonTokenType.BOOLEAN), ("Version", JsonTokenType.STRING))
         elif frame_type == FrameType.TableHeader:
-            return self.extract_props(frame_type, ("TableId", JsonTokenType.NUMBER), ("TableKind", JsonTokenType.STRING), ("TableName", JsonTokenType.STRING),
-                                      ("Columns", JsonTokenType.START_ARRAY))
+            return self.extract_props(
+                frame_type,
+                ("TableId", JsonTokenType.NUMBER),
+                ("TableKind", JsonTokenType.STRING),
+                ("TableName", JsonTokenType.STRING),
+                ("Columns", JsonTokenType.START_ARRAY),
+            )
         elif frame_type == FrameType.TableFragment:
-            return self.extract_props(frame_type, ("TableFragmentType", JsonTokenType.STRING), ("TableId", JsonTokenType.NUMBER),
-                                      ("Rows", JsonTokenType.START_ARRAY))
+            return self.extract_props(
+                frame_type, ("TableFragmentType", JsonTokenType.STRING), ("TableId", JsonTokenType.NUMBER), ("Rows", JsonTokenType.START_ARRAY)
+            )
         elif frame_type == FrameType.TableCompletion:
             return self.extract_props(frame_type, ("TableId", JsonTokenType.NUMBER), ("RowCount", JsonTokenType.NUMBER))
         elif frame_type == FrameType.TableProgress:
             return self.extract_props(frame_type, ("TableId", JsonTokenType.NUMBER), ("TableProgress", JsonTokenType.NUMBER))
         elif frame_type == FrameType.DataTable:
-            props = self.extract_props(frame_type, ("TableId", JsonTokenType.NUMBER), ("TableKind", JsonTokenType.STRING), ("TableName", JsonTokenType.STRING),
-                                       ("Columns", JsonTokenType.START_ARRAY))
+            props = self.extract_props(
+                frame_type,
+                ("TableId", JsonTokenType.NUMBER),
+                ("TableKind", JsonTokenType.STRING),
+                ("TableName", JsonTokenType.STRING),
+                ("Columns", JsonTokenType.START_ARRAY),
+            )
             self.reader.skip_until_property_name("Rows")
             props["Rows"] = self.row_iterator(props["Columns"])
             if props["TableKind"] != WellKnownDataSet.PrimaryResult.value:
@@ -202,8 +214,15 @@ class ProgressiveDataSetEnumerator:
         arr = []
 
         while True:
-            token = self.reader.read_token_of_type(JsonTokenType.NULL, JsonTokenType.BOOLEAN, JsonTokenType.NUMBER, JsonTokenType.STRING,
-                                                   JsonTokenType.START_MAP, JsonTokenType.START_ARRAY, JsonTokenType.END_ARRAY)
+            token = self.reader.read_token_of_type(
+                JsonTokenType.NULL,
+                JsonTokenType.BOOLEAN,
+                JsonTokenType.NUMBER,
+                JsonTokenType.STRING,
+                JsonTokenType.START_MAP,
+                JsonTokenType.START_ARRAY,
+                JsonTokenType.END_ARRAY,
+            )
 
             if token.token_type == JsonTokenType.END_ARRAY:
                 return arr
@@ -226,8 +245,9 @@ class ProgressiveDataSetEnumerator:
                 return obj
             prop_name = token_prop_name.token_value
 
-            token = self.reader.read_token_of_type(JsonTokenType.NULL, JsonTokenType.BOOLEAN, JsonTokenType.NUMBER, JsonTokenType.STRING,
-                                                   JsonTokenType.START_MAP, JsonTokenType.START_ARRAY)
+            token = self.reader.read_token_of_type(
+                JsonTokenType.NULL, JsonTokenType.BOOLEAN, JsonTokenType.NUMBER, JsonTokenType.STRING, JsonTokenType.START_MAP, JsonTokenType.START_ARRAY
+            )
 
             if token.token_type == JsonTokenType.START_MAP:
                 obj[prop_name] = self.parse_object(skip_start=True)

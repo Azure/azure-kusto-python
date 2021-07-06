@@ -18,7 +18,6 @@ from azure.kusto.data.aio import KustoClient as AsyncKustoClient
 from azure.kusto.data.exceptions import KustoServiceError
 from azure.kusto.data.streaming_response import FrameType
 
-
 from azure.kusto.ingest import (
     QueuedIngestClient,
     KustoStreamingIngestClient,
@@ -252,7 +251,6 @@ class TestE2E:
 
         row = next(primary_result["Rows"])
         assert list(row.keys()) == [column["ColumnName"] for column in primary_result["Columns"]]
-
 
     @pytest.mark.asyncio
     async def test_streaming_query_async(self):
