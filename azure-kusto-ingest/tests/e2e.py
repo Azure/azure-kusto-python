@@ -3,7 +3,6 @@
 import asyncio
 import io
 import os
-import pathlib
 import random
 import sys
 import time
@@ -254,17 +253,31 @@ class TestE2E:
 
     @pytest.mark.asyncio
     async def test_streaming_query_async(self):
-        client = await self.get_async_client()
+        async with await self.get_async_client() as client:
+            frames = await client.execute_streaming_query(self.test_db, self.streaming_test_table_query)
+            await frames.__aiter__()
+            initial_frame = await frames.__anext__()
+            expected_initial_frame = {
+                "frame_type": FrameType.DataSetHeader,
+                "IsProgressive": False,
+                "Version": "v2.0",
+            }
+            assert initial_frame == expected_initial_frame
+            query_props = await frames.__anext__()
+            assert query_props["frame_type"] == FrameType.DataTable
+            assert query_props["TableKind"] == WellKnownDataSet.QueryProperties.value
+            assert type(query_props["Columns"]) == list
+            assert type(query_props["Rows"]) == list
+            assert list(query_props["Rows"][0].keys()) == [column["ColumnName"] for column in query_props["Columns"]]
 
-        with pytest.raises(KustoServiceError):
-            # This query attempts to retrieve the data of a big table (10,000,000 lines). It will fail due to size limits,
-            # while the streaming query which doesn't fetch the data will succeed
-            await client.execute_query(self.test_db, self.streaming_test_table_query)
+            primary_result = await frames.__anext__()
+            assert primary_result["frame_type"] == FrameType.DataTable
+            assert primary_result["TableKind"] == WellKnownDataSet.PrimaryResult.value
+            assert type(primary_result["Columns"]) == list
+            assert type(primary_result["Rows"]) != list
 
-        async with (await client.execute_streaming_query(self.test_db, self.streaming_test_table_query)) as response:
-            iterator = response.content.iter_chunked(self.CHUNK_SIZE)
-            combined_chunks = (await iterator.__anext__()) + (await iterator.__anext__())
-            assert pathlib.Path(self.table_chunk_file_path).read_bytes() == combined_chunks
+            row = await primary_result["Rows"].__anext__()
+            assert list(row.keys()) == [column["ColumnName"] for column in primary_result["Columns"]]
 
     @pytest.mark.asyncio
     async def test_csv_ingest_existing_table(self):
