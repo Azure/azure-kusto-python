@@ -63,6 +63,14 @@ class JsonTokenReader:
 
             await self.skip_children(token)
 
+    async def skip_until_any_property_name(self, *names: str):
+        while True:
+            token = await self.read_token_of_type(JsonTokenType.MAP_KEY)
+            if token.token_value in names:
+                return token
+
+            await self.skip_children(token)
+
     async def skip_until_property_name_or_end_object(self, *names: str) -> JsonToken:
         while True:
             token = await self.read_next_token_or_throw()
@@ -223,12 +231,15 @@ class ProgressiveDataSetEnumerator:
 
     async def extract_props(self, frame_type, *props: Tuple[str, JsonTokenType]) -> Dict[str, Any]:
         result = {"frame_type": frame_type}
-        for (name, type) in props:
-            await self.reader.skip_until_property_name(name)
-            if type == JsonTokenType.START_ARRAY:
+        props_dict = dict(props)
+        while props_dict:
+            name = (await self.reader.skip_until_any_property_name(*props_dict.keys())).token_value
+            if props_dict[name] == JsonTokenType.START_ARRAY:
                 result[name] = await self.parse_array(skip_start=False)
             else:
-                result[name] = (await self.reader.read_token_of_type(type)).token_value
+                result[name] = (await self.reader.read_token_of_type(props_dict[name])).token_value
+            props_dict.pop(name)
+
         return result
 
     async def read_frame_type(self) -> FrameType:
