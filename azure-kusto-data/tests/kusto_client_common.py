@@ -4,9 +4,10 @@ import json
 import os
 from datetime import datetime, timedelta
 
-from azure.kusto.data.response import WellKnownDataSet
 from dateutil.tz import UTC
 from requests import HTTPError
+
+from azure.kusto.data.response import WellKnownDataSet
 
 PANDAS = False
 try:
@@ -100,7 +101,7 @@ class KustoClientTestsMixin:
     HOST = "https://somecluster.kusto.windows.net"
 
     @staticmethod
-    def _assert_sanity_query_response(response):
+    def _assert_sanity_query_primary_results(results):
         expected = {
             "rownumber": None,
             "rowguid": str(""),
@@ -122,7 +123,7 @@ class KustoClientTestsMixin:
             "xtextWithNulls": str(""),
             "xdynamicWithNulls": str(""),
         }
-        for row in response.primary_results[0]:
+        for row in results:
             assert row["rownumber"] == expected["rownumber"]
             assert row["rowguid"] == expected["rowguid"]
             assert row["xdouble"] == expected["xdouble"]
@@ -194,6 +195,10 @@ class KustoClientTestsMixin:
             expected["xtime"] = next_time
             if expected["xint16"] > 0:
                 expected["xdynamicWithNulls"] = {"rowId": expected["xint16"], "arr": [0, expected["xint16"]]}
+
+    @staticmethod
+    def _assert_sanity_query_response(response):
+        KustoClientTestsMixin._assert_sanity_query_primary_results(response.primary_results[0])
 
     @staticmethod
     def _assert_sanity_control_command_response(response):

@@ -40,10 +40,14 @@ class KustoResultRow:
             # Azure-Data-Explorer(Kusto) supports 7 decimal digits, while the corresponding python types supports only 6.
             # One example why one might want this precision, is when working with pandas.
             # In that case, use azure.kusto.data.helpers.dataframe_from_result_table which takes into account the original value.
-            typed_value = KustoResultRow.conversion_funcs[column_type](value) if value is not None and column_type in KustoResultRow.conversion_funcs else value
+            typed_value = self.get_typed_value(column_type, value)
 
             self._value_by_index.append(typed_value)
             self._value_by_name[column.column_name] = typed_value
+
+    @staticmethod
+    def get_typed_value(column_type, value):
+        return KustoResultRow.conversion_funcs[column_type](value) if value is not None and column_type in KustoResultRow.conversion_funcs else value
 
     @property
     def columns_count(self) -> int:

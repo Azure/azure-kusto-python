@@ -230,20 +230,20 @@ class TestE2E:
         frames = self.client.execute_streaming_query(self.test_db, self.streaming_test_table_query)
         initial_frame = next(frames)
         expected_initial_frame = {
-            "frame_type": FrameType.DataSetHeader,
+            "FrameType": FrameType.DataSetHeader,
             "IsProgressive": False,
             "Version": "v2.0",
         }
         assert initial_frame == expected_initial_frame
         query_props = next(frames)
-        assert query_props["frame_type"] == FrameType.DataTable
+        assert query_props["FrameType"] == FrameType.DataTable
         assert query_props["TableKind"] == WellKnownDataSet.QueryProperties.value
         assert type(query_props["Columns"]) == list
         assert type(query_props["Rows"]) == list
         assert list(query_props["Rows"][0].keys()) == [column["ColumnName"] for column in query_props["Columns"]]
 
         primary_result = next(frames)
-        assert primary_result["frame_type"] == FrameType.DataTable
+        assert primary_result["FrameType"] == FrameType.DataTable
         assert primary_result["TableKind"] == WellKnownDataSet.PrimaryResult.value
         assert type(primary_result["Columns"]) == list
         assert type(primary_result["Rows"]) != list
@@ -258,20 +258,20 @@ class TestE2E:
             await frames.__aiter__()
             initial_frame = await frames.__anext__()
             expected_initial_frame = {
-                "frame_type": FrameType.DataSetHeader,
+                "FrameType": FrameType.DataSetHeader,
                 "IsProgressive": False,
                 "Version": "v2.0",
             }
             assert initial_frame == expected_initial_frame
             query_props = await frames.__anext__()
-            assert query_props["frame_type"] == FrameType.DataTable
+            assert query_props["FrameType"] == FrameType.DataTable
             assert query_props["TableKind"] == WellKnownDataSet.QueryProperties.value
             assert type(query_props["Columns"]) == list
             assert type(query_props["Rows"]) == list
             assert list(query_props["Rows"][0].keys()) == [column["ColumnName"] for column in query_props["Columns"]]
 
             primary_result = await frames.__anext__()
-            assert primary_result["frame_type"] == FrameType.DataTable
+            assert primary_result["FrameType"] == FrameType.DataTable
             assert primary_result["TableKind"] == WellKnownDataSet.PrimaryResult.value
             assert type(primary_result["Columns"]) == list
             assert type(primary_result["Rows"]) != list

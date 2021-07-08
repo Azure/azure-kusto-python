@@ -4,7 +4,7 @@ from typing import Optional, Any, Tuple, Dict
 
 import ijson
 
-from azure.kusto.data._models import WellKnownDataSet
+from azure.kusto.data._models import WellKnownDataSet, KustoResultRow
 
 
 class JsonTokenType(Enum):
@@ -46,7 +46,7 @@ class JsonToken:
 
 class JsonTokenReader:
     def __init__(self, stream: io.RawIOBase):
-        self.json_iter = ijson.parse(stream)
+        self.json_iter = ijson.parse(stream, use_float=True)
 
     def read_next_token_or_throw(self) -> JsonToken:
         next_item = next(self.json_iter)
@@ -214,7 +214,7 @@ class ProgressiveDataSetEnumerator:
                 elif token.token_type == JsonTokenType.START_ARRAY:
                     row[columns[i]["ColumnName"]] = self.parse_array(skip_start=True)
                 else:
-                    row[columns[i]["ColumnName"]] = token.token_value
+                    row[columns[i]["ColumnName"]] = KustoResultRow.get_typed_value(columns[i]["ColumnType"], token.token_value)
             self.reader.read_token_of_type(JsonTokenType.END_ARRAY)
             yield row
 
@@ -267,7 +267,7 @@ class ProgressiveDataSetEnumerator:
                 obj[prop_name] = token.token_value
 
     def extract_props(self, frame_type, *props: Tuple[str, JsonTokenType]) -> Dict[str, Any]:
-        result = {"frame_type": frame_type}
+        result = {"FrameType": frame_type}
         props_dict = dict(props)
         while props_dict:
             name = self.reader.skip_until_any_property_name(*props_dict.keys()).token_value

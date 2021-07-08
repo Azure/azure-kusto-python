@@ -3,13 +3,13 @@ from typing import Any, Tuple, Dict
 import aiohttp
 import ijson
 
-from azure.kusto.data._models import WellKnownDataSet
+from azure.kusto.data._models import WellKnownDataSet, KustoResultRow
 from azure.kusto.data.streaming_response import JsonTokenType, FrameType, JsonToken
 
 
 class JsonTokenReader:
     def __init__(self, stream: aiohttp.StreamReader):
-        self.json_iter = ijson.parse_async(stream)
+        self.json_iter = ijson.parse_async(stream, use_float=True)
 
     async def read_next_token_or_throw(self) -> JsonToken:
         next_item = await self.json_iter.__anext__()
@@ -177,7 +177,7 @@ class ProgressiveDataSetEnumerator:
                 elif token.token_type == JsonTokenType.START_ARRAY:
                     row[columns[i]["ColumnName"]] = await self.parse_array(skip_start=True)
                 else:
-                    row[columns[i]["ColumnName"]] = token.token_value
+                    row[columns[i]["ColumnName"]] = KustoResultRow.get_typed_value(columns[i]["ColumnType"], token.token_value)
             await self.reader.read_token_of_type(JsonTokenType.END_ARRAY)
             yield row
 
@@ -230,7 +230,7 @@ class ProgressiveDataSetEnumerator:
                 obj[prop_name] = token.token_value
 
     async def extract_props(self, frame_type, *props: Tuple[str, JsonTokenType]) -> Dict[str, Any]:
-        result = {"frame_type": frame_type}
+        result = {"FrameType": frame_type}
         props_dict = dict(props)
         while props_dict:
             name = (await self.reader.skip_until_any_property_name(*props_dict.keys())).token_value

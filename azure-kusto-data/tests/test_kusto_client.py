@@ -1,19 +1,14 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
 import sys
-import json
-import os
 import unittest
-from datetime import datetime, timedelta
 
 import pytest
-from azure.kusto.data.exceptions import KustoServiceError
-from azure.kusto.data.helpers import dataframe_from_result_table
-from azure.kusto.data import KustoClient, ClientRequestProperties
-from azure.kusto.data.response import WellKnownDataSet
-from dateutil.tz import UTC
 from mock import patch
 
+from azure.kusto.data import KustoClient, ClientRequestProperties
+from azure.kusto.data.exceptions import KustoServiceError
+from azure.kusto.data.helpers import dataframe_from_result_table
 from tests.kusto_client_common import KustoClientTestsMixin, mocked_requests_post
 
 PANDAS = False
