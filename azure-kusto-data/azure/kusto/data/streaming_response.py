@@ -193,7 +193,9 @@ class ProgressiveDataSetEnumerator:
     def row_iterator(self, columns):
         self.reader.read_token_of_type(JsonTokenType.START_ARRAY)
         while True:
-            token = self.reader.read_token_of_type(JsonTokenType.START_ARRAY, JsonTokenType.END_ARRAY)
+            token = self.reader.read_token_of_type(JsonTokenType.START_ARRAY, JsonTokenType.END_ARRAY, JsonTokenType.START_MAP)
+            if token.token_type == JsonTokenType.START_MAP:
+                raise Exception("Received error in data: {}", self.parse_object(skip_start=True))
             if token.token_type == JsonTokenType.END_ARRAY:
                 return
             row = {}
