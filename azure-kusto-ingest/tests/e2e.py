@@ -255,7 +255,7 @@ class TestE2E:
     async def test_streaming_query_async(self):
         async with await self.get_async_client() as client:
             frames = await client.execute_streaming_query(self.test_db, self.streaming_test_table_query)
-            await frames.__aiter__()
+            frames.__aiter__()
             initial_frame = await frames.__anext__()
             expected_initial_frame = {
                 "FrameType": FrameType.DataSetHeader,
