@@ -1,6 +1,7 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
 import abc
+import asyncio
 import time
 import webbrowser
 from threading import Lock
@@ -58,7 +59,12 @@ class TokenProviderBase(abc.ABC):
     _kusto_uri = None
     _cloud_info = None
     _scopes = None
+
+    # There are different locks for sync and async operations, since using a sync lock in an async context may cause a deadlock.
+    # This means that theoretically, if get_token() and get_token_async() were to be called at the same time, then there might be a race condition.
+    # Since this class is private, and the usage within the clients is limited to one type of function, this is ok to do.
     lock = Lock()
+    async_lock = asyncio.Lock()
 
     def __init__(self, kusto_uri: str):
         self._kusto_uri = kusto_uri
@@ -85,7 +91,7 @@ class TokenProviderBase(abc.ABC):
         if self._initialized:
             return
 
-        with TokenProviderBase.lock:
+        async with TokenProviderBase.async_lock:
             if self._initialized:
                 return
 
@@ -130,7 +136,7 @@ class TokenProviderBase(abc.ABC):
         token = self._get_token_from_cache_impl()
 
         if token is None:
-            with TokenProviderBase.lock:
+            async with TokenProviderBase.async_lock:
                 token = await self._get_token_impl_async()
 
         return self._valid_token_or_throw(token)
