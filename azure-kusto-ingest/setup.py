@@ -3,6 +3,7 @@
 
 import re
 from os import path
+
 from setuptools import setup, find_packages
 
 PACKAGE_NAME = "azure-kusto-ingest"
@@ -33,7 +34,6 @@ setup(
         # 5 - Production/Stable depends on multi-threading / aio / perf
         "Development Status :: 4 - Beta",
         "Programming Language :: Python",
-        "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
