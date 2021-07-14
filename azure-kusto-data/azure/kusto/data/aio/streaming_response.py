@@ -106,15 +106,19 @@ class JsonTokenReader:
 class ProgressiveDataSetEnumerator:
     def __init__(self, reader: JsonTokenReader):
         self.reader = reader
-
-    async def __aiter__(self):
+        self.started = False
         self.done = False
-        await self.reader.read_start_array()
+
+    def __aiter__(self):
         return self
 
     async def __anext__(self):
         if self.done:
             raise StopIteration()
+
+        if not self.started:
+            await self.reader.read_start_array()
+            self.started = True
 
         token = await self.reader.skip_until_token_with_paths((JsonTokenType.START_MAP, "item"), (JsonTokenType.END_ARRAY, ""))
         if token == JsonTokenType.END_ARRAY:
