@@ -11,6 +11,7 @@ from tests.kusto_client_common import KustoClientTestsMixin
 # todo:
 #  - WellKnownDataSet
 
+
 class MockAioFile:
     def __init__(self, filename):
         self.filename = filename

@@ -23,7 +23,7 @@ class JsonTokenReader:
         token = await self.read_next_token_or_throw()
         if token.token_type not in token_types:
             raise Exception(
-                f"Expected one the following types: '{','.join(t.name for t in token_types)}' , got type {token.token_type}"
+                "Expected one the following types: '{}', got type '{}'".format(",".join(t.name for t in token_types), token.token_type)
             )  # todo - better exception
         return token
 
@@ -83,7 +83,7 @@ class JsonTokenReader:
 
                 await self.skip_children(token)
 
-            raise Exception(f"Unexpected token {token}")
+            raise Exception("Unexpected token {}".format(token))
 
     async def skip_until_token(self, *tokens: JsonTokenType):
         while True:
