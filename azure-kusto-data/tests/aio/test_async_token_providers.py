@@ -313,3 +313,25 @@ class TestTokenProvider:
         assert context["authority"] == "https://login_endpoint/auth_test"
         assert context["client_id"] == "1234"
         assert provider._scopes == ["https://fakeurl.kustomfa.windows.net/.default"]
+
+    def test_async_lock(self):
+        """
+        This test makes sure that the lock inside of a TokenProvider, is created within the correct event loop.
+        Before this, the Lock was created once per class.
+        This meant that if someone created a new event loop, and created a provider in it, awaiting on the lock would cause an exception because it belongs to
+        a different loop.
+        Now the lock is instantiated for every class instance, avoiding this issue.
+        """
+
+        async def start():
+            provider = MockProvider(KUSTO_URI)
+
+            async def inner():
+                async with provider.async_lock:
+                    await asyncio.sleep(0.1)
+
+            await asyncio.gather(inner(), inner(), inner())
+
+        loop = asyncio.events.new_event_loop()
+        asyncio.events.set_event_loop(loop)
+        loop.run_until_complete(start())

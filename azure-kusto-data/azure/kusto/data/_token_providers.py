@@ -60,20 +60,20 @@ class TokenProviderBase(abc.ABC):
     _cloud_info = None
     _scopes = None
 
-    # There are different locks for sync and async operations, since using a sync lock in an async context may cause a deadlock.
-    # This means that theoretically, if get_token() and get_token_async() were to be called at the same time, then there might be a race condition.
-    # Since this class is private, and the usage within the clients is limited to one type of function, this is ok to do.
-    lock = Lock()
-    async_lock = asyncio.Lock()
-
     def __init__(self, kusto_uri: str):
         self._kusto_uri = kusto_uri
+
+        # There are different locks for sync and async operations, since using a sync lock in an async context may cause a deadlock.
+        # This means that theoretically, if get_token() and get_token_async() were to be called at the same time, then there might be a race condition.
+        # Since this class is private, and the usage within the clients is limited to one type of function, this is ok to do.
+        self.async_lock = asyncio.Lock()
+        self.lock = Lock()
 
     def _init_once(self, init_only_cloud=False):
         if self._initialized:
             return
 
-        with TokenProviderBase.lock:
+        with self.lock:
             if self._initialized:
                 return
 
@@ -91,7 +91,7 @@ class TokenProviderBase(abc.ABC):
         if self._initialized:
             return
 
-        async with TokenProviderBase.async_lock:
+        async with self.async_lock:
             if self._initialized:
                 return
 
@@ -120,7 +120,7 @@ class TokenProviderBase(abc.ABC):
 
         token = self._get_token_from_cache_impl()
         if token is None:
-            with TokenProviderBase.lock:
+            with self.lock:
                 token = self._get_token_impl()
 
         return self._valid_token_or_throw(token)
@@ -136,7 +136,7 @@ class TokenProviderBase(abc.ABC):
         token = self._get_token_from_cache_impl()
 
         if token is None:
-            async with TokenProviderBase.async_lock:
+            async with self.async_lock:
                 token = await self._get_token_impl_async()
 
         return self._valid_token_or_throw(token)
