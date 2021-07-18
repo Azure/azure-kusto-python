@@ -5,7 +5,7 @@ import asyncio
 import time
 import webbrowser
 from threading import Lock
-from typing import Callable, Optional
+from typing import Callable, Optional, Coroutine
 
 from azure.core.exceptions import ClientAuthenticationError
 from azure.identity import ManagedIdentityCredential, AzureCliCredential
@@ -60,20 +60,20 @@ class TokenProviderBase(abc.ABC):
     _cloud_info = None
     _scopes = None
 
-    # There are different locks for sync and async operations, since using a sync lock in an async context may cause a deadlock.
-    # This means that theoretically, if get_token() and get_token_async() were to be called at the same time, then there might be a race condition.
-    # Since this class is private, and the usage within the clients is limited to one type of function, this is ok to do.
-    lock = Lock()
-    async_lock = asyncio.Lock()
-
     def __init__(self, kusto_uri: str):
         self._kusto_uri = kusto_uri
+
+        # There are different locks for sync and async operations, since using a sync lock in an async context may cause a deadlock.
+        # This means that theoretically, if get_token() and get_token_async() were to be called at the same time, then there might be a race condition.
+        # Since this class is private, and the usage within the clients is limited to one type of function, this is ok to do.
+        self._async_lock = asyncio.Lock()
+        self._lock = Lock()
 
     def _init_once(self, init_only_cloud=False):
         if self._initialized:
             return
 
-        with TokenProviderBase.lock:
+        with self._lock:
             if self._initialized:
                 return
 
@@ -91,7 +91,7 @@ class TokenProviderBase(abc.ABC):
         if self._initialized:
             return
 
-        async with TokenProviderBase.async_lock:
+        async with self._async_lock:
             if self._initialized:
                 return
 
@@ -120,7 +120,7 @@ class TokenProviderBase(abc.ABC):
 
         token = self._get_token_from_cache_impl()
         if token is None:
-            with TokenProviderBase.lock:
+            with self._lock:
                 token = self._get_token_impl()
 
         return self._valid_token_or_throw(token)
@@ -136,7 +136,7 @@ class TokenProviderBase(abc.ABC):
         token = self._get_token_from_cache_impl()
 
         if token is None:
-            async with TokenProviderBase.async_lock:
+            async with self._async_lock:
                 token = await self._get_token_impl_async()
 
         return self._valid_token_or_throw(token)
@@ -218,9 +218,10 @@ class BasicTokenProvider(TokenProviderBase):
 class CallbackTokenProvider(TokenProviderBase):
     """Callback Token Provider generates a token based on a callback function provided by the caller"""
 
-    def __init__(self, token_callback: Callable[[], str]):
+    def __init__(self, token_callback: Optional[Callable[[], str]], async_token_callback: Optional[Callable[[], Coroutine[None, None, str]]]):
         super().__init__(None)
         self._token_callback = token_callback
+        self._async_token_callback = async_token_callback
 
     @staticmethod
     def name() -> str:
@@ -232,12 +233,22 @@ class CallbackTokenProvider(TokenProviderBase):
     def _init_impl(self):
         pass
 
-    def _get_token_impl(self) -> dict:
-        caller_token = self._token_callback()
+    @staticmethod
+    def _build_response(caller_token) -> dict:
         if not isinstance(caller_token, str):
             raise KustoClientError("Token provider returned something that is not a string [" + str(type(caller_token)) + "]")
 
         return {TokenConstants.MSAL_TOKEN_TYPE: TokenConstants.BEARER_TYPE, TokenConstants.MSAL_ACCESS_TOKEN: caller_token}
+
+    def _get_token_impl(self) -> dict:
+        if self._token_callback is None:
+            raise KustoClientError("token_callback is None, can't retrieve token")
+        return self._build_response(self._token_callback())
+
+    async def _get_token_impl_async(self) -> Optional[dict]:
+        if self._async_token_callback is None:
+            return await super()._get_token_impl_async()
+        return self._build_response(await self._async_token_callback())
 
     def _get_token_from_cache_impl(self) -> dict:
         return None

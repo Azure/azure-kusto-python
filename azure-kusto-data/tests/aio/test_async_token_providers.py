@@ -113,11 +113,32 @@ class TestTokenProvider:
     @aio_documented_by(TokenProviderTests.test_callback_token_provider)
     @pytest.mark.asyncio
     async def test_callback_token_provider(self):
-        provider = CallbackTokenProvider(lambda: TOKEN_VALUE)
+        provider = CallbackTokenProvider(token_callback=lambda: TOKEN_VALUE, async_token_callback=None)
         token = await provider.get_token_async()
         assert self.get_token_value(token) == TOKEN_VALUE
 
-        provider = CallbackTokenProvider(lambda: 0)  # token is not a string
+        provider = CallbackTokenProvider(token_callback=lambda: 0, async_token_callback=None)  # token is not a string
+        exception_occurred = False
+        try:
+            await provider.get_token_async()
+        except KustoClientError:
+            exception_occurred = True
+        finally:
+            assert exception_occurred
+
+    @pytest.mark.asyncio
+    async def test_callback_token_provider_with_async_method(self):
+        async def callback():
+            return TOKEN_VALUE
+
+        provider = CallbackTokenProvider(token_callback=None, async_token_callback=callback)
+        token = await provider.get_token_async()
+        assert self.get_token_value(token) == TOKEN_VALUE
+
+        async def fail_callback():
+            return 0
+
+        provider = CallbackTokenProvider(token_callback=None, async_token_callback=fail_callback)  # token is not a string
         exception_occurred = False
         try:
             await provider.get_token_async()
@@ -313,3 +334,25 @@ class TestTokenProvider:
         assert context["authority"] == "https://login_endpoint/auth_test"
         assert context["client_id"] == "1234"
         assert provider._scopes == ["https://fakeurl.kustomfa.windows.net/.default"]
+
+    def test_async_lock(self):
+        """
+        This test makes sure that the lock inside of a TokenProvider, is created within the correct event loop.
+        Before this, the Lock was created once per class.
+        This meant that if someone created a new event loop, and created a provider in it, awaiting on the lock would cause an exception because it belongs to
+        a different loop.
+        Now the lock is instantiated for every class instance, avoiding this issue.
+        """
+
+        async def start():
+            async def inner():
+                await asyncio.sleep(0.1)
+                return ""
+
+            provider = CallbackTokenProvider(token_callback=None, async_token_callback=inner)
+
+            await asyncio.gather(provider.get_token_async(), provider.get_token_async(), provider.get_token_async())
+
+        loop = asyncio.events.new_event_loop()
+        asyncio.events.set_event_loop(loop)
+        loop.run_until_complete(start())

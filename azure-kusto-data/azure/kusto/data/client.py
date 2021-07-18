@@ -8,7 +8,7 @@ import uuid
 from copy import copy
 from datetime import timedelta
 from enum import Enum, unique
-from typing import TYPE_CHECKING, Union, Callable, Optional, Any, NoReturn
+from typing import TYPE_CHECKING, Union, Callable, Optional, Any, NoReturn, Coroutine
 
 import requests
 from requests import Response
@@ -133,6 +133,7 @@ class KustoConnectionStringBuilder:
         _assert_value_is_valid(connection_string)
         self._internal_dict = {}
         self._token_provider = None
+        self._async_token_provider = None
         if connection_string is not None and "=" not in connection_string.partition(";")[0]:
             connection_string = "Data Source=" + connection_string
 
@@ -402,6 +403,26 @@ class KustoConnectionStringBuilder:
         return kcsb
 
     @classmethod
+    def with_async_token_provider(
+        cls,
+        connection_string: str,
+        async_token_provider: Callable[[], Coroutine[None, None, str]],
+    ) -> "KustoConnectionStringBuilder":
+        """
+        Create a KustoConnectionStringBuilder that uses an async callback function to obtain a connection token
+        :param str connection_string: Kusto connection string should by of the format: https://<clusterName>.kusto.windows.net
+        :param async_token_provider: a parameterless function that after awaiting returns a valid bearer token for the relevant kusto resource as a string
+        """
+
+        assert callable(async_token_provider)
+
+        kcsb = cls(connection_string)
+        kcsb[kcsb.ValidKeywords.aad_federated_security] = True
+        kcsb._async_token_provider = async_token_provider
+
+        return kcsb
+
+    @classmethod
     def with_interactive_login(
         cls, connection_string: str, login_hint: Optional[str] = None, domain_hint: Optional[str] = None
     ) -> "KustoConnectionStringBuilder":
@@ -516,6 +537,10 @@ class KustoConnectionStringBuilder:
     @property
     def token_provider(self):
         return self._token_provider
+
+    @property
+    def async_token_provider(self):
+        return self._async_token_provider
 
     @property
     def interactive_login(self) -> bool:
