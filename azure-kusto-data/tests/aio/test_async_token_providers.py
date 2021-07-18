@@ -113,11 +113,11 @@ class TestTokenProvider:
     @aio_documented_by(TokenProviderTests.test_callback_token_provider)
     @pytest.mark.asyncio
     async def test_callback_token_provider(self):
-        provider = CallbackTokenProvider(lambda: TOKEN_VALUE)
+        provider = CallbackTokenProvider(token_callback=lambda: TOKEN_VALUE, async_token_callback=None)
         token = await provider.get_token_async()
         assert self.get_token_value(token) == TOKEN_VALUE
 
-        provider = CallbackTokenProvider(lambda: 0)  # token is not a string
+        provider = CallbackTokenProvider(token_callback=lambda: 0, async_token_callback=None)  # token is not a string
         exception_occurred = False
         try:
             await provider.get_token_async()
@@ -131,14 +131,14 @@ class TestTokenProvider:
         async def callback():
             return TOKEN_VALUE
 
-        provider = CallbackTokenProvider(None, callback)
+        provider = CallbackTokenProvider(token_callback=None, async_token_callback=callback)
         token = await provider.get_token_async()
         assert self.get_token_value(token) == TOKEN_VALUE
 
         async def fail_callback():
             return 0
 
-        provider = CallbackTokenProvider(fail_callback)  # token is not a string
+        provider = CallbackTokenProvider(token_callback=None, async_token_callback=fail_callback)  # token is not a string
         exception_occurred = False
         try:
             await provider.get_token_async()
@@ -349,7 +349,7 @@ class TestTokenProvider:
                 await asyncio.sleep(0.1)
                 return ""
 
-            provider = CallbackTokenProvider(None, inner)
+            provider = CallbackTokenProvider(token_callback=None, async_token_callback=inner)
 
             await asyncio.gather(provider.get_token_async(), provider.get_token_async(), provider.get_token_async())
 

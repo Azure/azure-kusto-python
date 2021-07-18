@@ -112,11 +112,11 @@ class TokenProviderTests(unittest.TestCase):
 
     @staticmethod
     def test_callback_token_provider():
-        provider = CallbackTokenProvider(lambda: TOKEN_VALUE)
+        provider = CallbackTokenProvider(token_callback=lambda: TOKEN_VALUE, async_token_callback=None)
         token = provider.get_token()
         assert TokenProviderTests.get_token_value(token) == TOKEN_VALUE
 
-        provider = CallbackTokenProvider(lambda: 0)  # token is not a string
+        provider = CallbackTokenProvider(token_callback=lambda: 0, async_token_callback=None)  # token is not a string
         exception_occurred = False
         try:
             provider.get_token()

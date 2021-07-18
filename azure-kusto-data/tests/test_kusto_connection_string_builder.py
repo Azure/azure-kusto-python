@@ -265,9 +265,6 @@ class KustoConnectionStringBuilderTests(unittest.TestCase):
         caller_token = "caller token"
         token_provider = lambda: caller_token
 
-        async def async_token_provider():
-            return caller_token
-
         kscb = KustoConnectionStringBuilder.with_token_provider("localhost", token_provider)
 
         assert kscb.token_provider() == caller_token
@@ -280,20 +277,19 @@ class KustoConnectionStringBuilderTests(unittest.TestCase):
         finally:
             assert exception_occurred
 
-        kscb = KustoConnectionStringBuilder.with_token_provider("localhost", None, async_token_provider)
+    def test_add_async_token_provider(self):
+        caller_token = "caller token"
+
+        async def async_token_provider():
+            return caller_token
+
+        kscb = KustoConnectionStringBuilder.with_async_token_provider("localhost", async_token_provider)
 
         assert kscb.async_token_provider() is not None
 
         exception_occurred = False
         try:
-            kscb = KustoConnectionStringBuilder.with_token_provider("localhost", None, caller_token)
-        except AssertionError as ex:
-            exception_occurred = True
-        finally:
-            assert exception_occurred
-
-        try:
-            kscb = KustoConnectionStringBuilder.with_token_provider("localhost", None, None)
+            kscb = KustoConnectionStringBuilder.with_async_token_provider("localhost", caller_token)
         except AssertionError as ex:
             exception_occurred = True
         finally:

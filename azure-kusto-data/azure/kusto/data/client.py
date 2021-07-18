@@ -387,30 +387,37 @@ class KustoConnectionStringBuilder:
         return kcsb
 
     @classmethod
-    def with_token_provider(
-        cls,
-        connection_string: str,
-        token_provider: Optional[Callable[[], str]],
-        async_token_provider: Optional[Callable[[], Coroutine[None, None, str]]] = None,
-    ) -> "KustoConnectionStringBuilder":
+    def with_token_provider(cls, connection_string: str, token_provider: Callable[[], str]) -> "KustoConnectionStringBuilder":
         """
         Create a KustoConnectionStringBuilder that uses a callback function to obtain a connection token
         :param str connection_string: Kusto connection string should by of the format: https://<clusterName>.kusto.windows.net
         :param token_provider: a parameterless function that returns a valid bearer token for the relevant kusto resource as a string
-        :param async_token_provider: Optional callback that can be used with the asynchronous kusto client. If not specified, token_provider will be used.
         """
 
-        assert (token_provider is not None) or (async_token_provider is not None), "Must specify at least one token provider"
-
-        if token_provider is not None:
-            assert callable(token_provider)
-
-        if async_token_provider is not None:
-            assert callable(async_token_provider)
+        assert callable(token_provider)
 
         kcsb = cls(connection_string)
         kcsb[kcsb.ValidKeywords.aad_federated_security] = True
         kcsb._token_provider = token_provider
+
+        return kcsb
+
+    @classmethod
+    def with_async_token_provider(
+        cls,
+        connection_string: str,
+        async_token_provider: Callable[[], Coroutine[None, None, str]],
+    ) -> "KustoConnectionStringBuilder":
+        """
+        Create a KustoConnectionStringBuilder that uses an async callback function to obtain a connection token
+        :param str connection_string: Kusto connection string should by of the format: https://<clusterName>.kusto.windows.net
+        :param async_token_provider: a parameterless function that after awaiting returns a valid bearer token for the relevant kusto resource as a string
+        """
+
+        assert callable(async_token_provider)
+
+        kcsb = cls(connection_string)
+        kcsb[kcsb.ValidKeywords.aad_federated_security] = True
         kcsb._async_token_provider = async_token_provider
 
         return kcsb
