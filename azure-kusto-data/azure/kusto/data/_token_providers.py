@@ -242,7 +242,7 @@ class CallbackTokenProvider(TokenProviderBase):
 
     def _get_token_impl(self) -> dict:
         if self._token_callback is None:
-            raise Exception("token_callback is None, can't retrieve token")
+            raise KustoClientError("token_callback is None, can't retrieve token")
         return self._build_response(self._token_callback())
 
     async def _get_token_impl_async(self) -> Optional[dict]:
