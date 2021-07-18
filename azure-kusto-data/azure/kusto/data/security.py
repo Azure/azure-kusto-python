@@ -40,7 +40,7 @@ class _AadHelper:
         elif kcsb.az_cli:
             self.token_provider = AzCliTokenProvider(self.kusto_uri)
         elif kcsb.token_provider:
-            self.token_provider = CallbackTokenProvider(kcsb.token_provider)
+            self.token_provider = CallbackTokenProvider(kcsb.token_provider, kcsb.async_token_provider)
         else:
             self.token_provider = DeviceLoginTokenProvider(self.kusto_uri, kcsb.authority_id)
 

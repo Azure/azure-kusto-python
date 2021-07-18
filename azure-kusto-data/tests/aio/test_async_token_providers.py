@@ -126,6 +126,27 @@ class TestTokenProvider:
         finally:
             assert exception_occurred
 
+    @pytest.mark.asyncio
+    async def test_callback_token_provider_with_async_method(self):
+        async def callback():
+            return TOKEN_VALUE
+
+        provider = CallbackTokenProvider(None, callback)
+        token = await provider.get_token_async()
+        assert self.get_token_value(token) == TOKEN_VALUE
+
+        async def fail_callback():
+            return 0
+
+        provider = CallbackTokenProvider(fail_callback)  # token is not a string
+        exception_occurred = False
+        try:
+            await provider.get_token_async()
+        except KustoClientError:
+            exception_occurred = True
+        finally:
+            assert exception_occurred
+
     @aio_documented_by(TokenProviderTests.test_az_provider)
     @pytest.mark.asyncio
     async def test_az_provider(self):
@@ -324,13 +345,13 @@ class TestTokenProvider:
         """
 
         async def start():
-            provider = MockProvider(KUSTO_URI)
-
             async def inner():
-                async with provider.async_lock:
-                    await asyncio.sleep(0.1)
+                await asyncio.sleep(0.1)
+                return ""
 
-            await asyncio.gather(inner(), inner(), inner())
+            provider = CallbackTokenProvider(None, inner)
+
+            await asyncio.gather(provider.get_token_async(), provider.get_token_async(), provider.get_token_async())
 
         loop = asyncio.events.new_event_loop()
         asyncio.events.set_event_loop(loop)

@@ -8,7 +8,7 @@ import uuid
 from copy import copy
 from datetime import timedelta
 from enum import Enum, unique
-from typing import TYPE_CHECKING, Union, Callable, Optional, Any, NoReturn
+from typing import TYPE_CHECKING, Union, Callable, Optional, Any, NoReturn, Coroutine
 
 import requests
 from requests import Response
@@ -133,6 +133,7 @@ class KustoConnectionStringBuilder:
         _assert_value_is_valid(connection_string)
         self._internal_dict = {}
         self._token_provider = None
+        self._async_token_provider = None
         if connection_string is not None and "=" not in connection_string.partition(";")[0]:
             connection_string = "Data Source=" + connection_string
 
@@ -386,18 +387,31 @@ class KustoConnectionStringBuilder:
         return kcsb
 
     @classmethod
-    def with_token_provider(cls, connection_string: str, token_provider: Callable[[], str]) -> "KustoConnectionStringBuilder":
+    def with_token_provider(
+        cls,
+        connection_string: str,
+        token_provider: Optional[Callable[[], str]],
+        async_token_provider: Optional[Callable[[], Coroutine[None, None, str]]] = None,
+    ) -> "KustoConnectionStringBuilder":
         """
         Create a KustoConnectionStringBuilder that uses a callback function to obtain a connection token
         :param str connection_string: Kusto connection string should by of the format: https://<clusterName>.kusto.windows.net
         :param token_provider: a parameterless function that returns a valid bearer token for the relevant kusto resource as a string
+        :param async_token_provider: Optional callback that can be used with the asynchronous kusto client. If not specified, token_provider will be used.
         """
 
-        assert callable(token_provider)
+        assert (token_provider is not None) or (async_token_provider is not None), "Must specify at least one token provider"
+
+        if token_provider is not None:
+            assert callable(token_provider)
+
+        if async_token_provider is not None:
+            assert callable(async_token_provider)
 
         kcsb = cls(connection_string)
         kcsb[kcsb.ValidKeywords.aad_federated_security] = True
         kcsb._token_provider = token_provider
+        kcsb._async_token_provider = async_token_provider
 
         return kcsb
 
@@ -516,6 +530,10 @@ class KustoConnectionStringBuilder:
     @property
     def token_provider(self):
         return self._token_provider
+
+    @property
+    def async_token_provider(self):
+        return self._async_token_provider
 
     @property
     def interactive_login(self) -> bool:
