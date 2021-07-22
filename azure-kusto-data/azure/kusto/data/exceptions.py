@@ -74,6 +74,7 @@ class KustoAioSyntaxError(SyntaxError):
     def __init__(self):
         super().__init__("Aio modules not installed, run 'pip install azure-kusto-data[aio]' to leverage aio capabilities")
 
+
 class KustoAsyncUsageError(Exception):
     """Raised when trying to use async methods on a sync object, and vice-versa"""
 

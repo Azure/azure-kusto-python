@@ -23,7 +23,8 @@ class _AadHelper:
             self.token_provider = ApplicationKeyTokenProvider(is_async, self.kusto_uri, kcsb.authority_id, kcsb.application_client_id, kcsb.application_key)
         elif all([kcsb.application_client_id, kcsb.application_certificate, kcsb.application_certificate_thumbprint]):
             # kcsb.application_public_certificate can be None if SNI is not used
-            self.token_provider = ApplicationCertificateTokenProvider(is_async,
+            self.token_provider = ApplicationCertificateTokenProvider(
+                is_async,
                 self.kusto_uri,
                 kcsb.application_client_id,
                 kcsb.authority_id,
