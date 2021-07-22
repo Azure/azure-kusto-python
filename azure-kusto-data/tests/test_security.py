@@ -19,7 +19,7 @@ def test_unauthorized_exception():
     cluster = "https://somecluster.kusto.windows.net"
     username = "username@microsoft.com"
     kcsb = KustoConnectionStringBuilder.with_aad_user_password_authentication(cluster, username, "StrongestPasswordEver", "authorityName")
-    aad_helper = _AadHelper(kcsb)
+    aad_helper = _AadHelper(kcsb, False)
     aad_helper.token_provider._init_cloud()
 
     try:
@@ -56,7 +56,7 @@ def test_msi_auth():
         # KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication(KUSTO_TEST_URI, msi_res_id=res_guid, timeout=1),
     ]
 
-    helpers = [_AadHelper(i) for i in kcsb]
+    helpers = [_AadHelper(i, False) for i in kcsb]
 
     for h in helpers:
         h.token_provider._init_cloud()
@@ -87,9 +87,9 @@ def test_token_provider_auth():
     valid_kcsb = KustoConnectionStringBuilder.with_token_provider(KUSTO_TEST_URI, valid_token_provider)
     invalid_kcsb = KustoConnectionStringBuilder.with_token_provider(KUSTO_TEST_URI, invalid_token_provider)
 
-    valid_helper = _AadHelper(valid_kcsb)
+    valid_helper = _AadHelper(valid_kcsb, False)
     valid_helper.token_provider._init_cloud()
-    invalid_helper = _AadHelper(invalid_kcsb)
+    invalid_helper = _AadHelper(invalid_kcsb, False)
     invalid_helper.token_provider._init_cloud()
 
     auth_header = valid_helper.acquire_authorization_header()
@@ -107,8 +107,8 @@ def test_user_app_token_auth():
     user_kcsb = KustoConnectionStringBuilder.with_aad_user_token_authentication(KUSTO_TEST_URI, token)
     app_kcsb = KustoConnectionStringBuilder.with_aad_application_token_authentication(KUSTO_TEST_URI, token)
 
-    user_helper = _AadHelper(user_kcsb)
-    app_helper = _AadHelper(app_kcsb)
+    user_helper = _AadHelper(user_kcsb, False)
+    app_helper = _AadHelper(app_kcsb, False)
     user_helper.token_provider._init_cloud()
     app_helper.token_provider._init_cloud()
 
@@ -125,7 +125,7 @@ def test_interactive_login():
         return
 
     kcsb = KustoConnectionStringBuilder.with_interactive_login(KUSTO_TEST_URI)
-    aad_helper = _AadHelper(kcsb)
+    aad_helper = _AadHelper(kcsb, False)
 
     # should prompt
     header = aad_helper.acquire_authorization_header()

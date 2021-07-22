@@ -11,19 +11,19 @@ class _AadHelper:
     authority_uri = None  # type: str
     token_provider = None  # type: TokenProviderBase
 
-    def __init__(self, kcsb: "KustoConnectionStringBuilder"):
+    def __init__(self, kcsb: "KustoConnectionStringBuilder", is_async: bool):
         self.kusto_uri = "{0.scheme}://{0.hostname}".format(urlparse(kcsb.data_source))
         self.username = None
 
         if kcsb.interactive_login:
-            self.token_provider = InteractiveLoginTokenProvider(self.kusto_uri, kcsb.authority_id, kcsb.login_hint, kcsb.domain_hint)
+            self.token_provider = InteractiveLoginTokenProvider(is_async, self.kusto_uri, kcsb.authority_id, kcsb.login_hint, kcsb.domain_hint)
         elif all([kcsb.aad_user_id, kcsb.password]):
-            self.token_provider = UserPassTokenProvider(self.kusto_uri, kcsb.authority_id, kcsb.aad_user_id, kcsb.password)
+            self.token_provider = UserPassTokenProvider(is_async, self.kusto_uri, kcsb.authority_id, kcsb.aad_user_id, kcsb.password)
         elif all([kcsb.application_client_id, kcsb.application_key]):
-            self.token_provider = ApplicationKeyTokenProvider(self.kusto_uri, kcsb.authority_id, kcsb.application_client_id, kcsb.application_key)
+            self.token_provider = ApplicationKeyTokenProvider(is_async, self.kusto_uri, kcsb.authority_id, kcsb.application_client_id, kcsb.application_key)
         elif all([kcsb.application_client_id, kcsb.application_certificate, kcsb.application_certificate_thumbprint]):
             # kcsb.application_public_certificate can be None if SNI is not used
-            self.token_provider = ApplicationCertificateTokenProvider(
+            self.token_provider = ApplicationCertificateTokenProvider(is_async,
                 self.kusto_uri,
                 kcsb.application_client_id,
                 kcsb.authority_id,
@@ -32,17 +32,17 @@ class _AadHelper:
                 kcsb.application_public_certificate,
             )
         elif kcsb.msi_authentication:
-            self.token_provider = MsiTokenProvider(self.kusto_uri, kcsb.msi_parameters)
+            self.token_provider = MsiTokenProvider(is_async, self.kusto_uri, kcsb.msi_parameters)
         elif kcsb.user_token:
-            self.token_provider = BasicTokenProvider(kcsb.user_token)
+            self.token_provider = BasicTokenProvider(is_async, kcsb.user_token)
         elif kcsb.application_token:
-            self.token_provider = BasicTokenProvider(kcsb.application_token)
+            self.token_provider = BasicTokenProvider(is_async, kcsb.application_token)
         elif kcsb.az_cli:
-            self.token_provider = AzCliTokenProvider(self.kusto_uri)
+            self.token_provider = AzCliTokenProvider(is_async, self.kusto_uri)
         elif kcsb.token_provider or kcsb.async_token_provider:
-            self.token_provider = CallbackTokenProvider(token_callback=kcsb.token_provider, async_token_callback=kcsb.async_token_provider)
+            self.token_provider = CallbackTokenProvider(is_async, token_callback=kcsb.token_provider, async_token_callback=kcsb.async_token_provider)
         else:
-            self.token_provider = DeviceLoginTokenProvider(self.kusto_uri, kcsb.authority_id)
+            self.token_provider = DeviceLoginTokenProvider(is_async, self.kusto_uri, kcsb.authority_id)
 
     def acquire_authorization_header(self):
         try:
@@ -56,7 +56,7 @@ class _AadHelper:
         try:
             return _get_header_from_dict(await self.token_provider.get_token_async())
         except Exception as error:
-            kwargs = self.token_provider.context()
+            kwargs = await self.token_provider.context_async()
             kwargs["resource"] = self.kusto_uri
             raise KustoAuthenticationError(self.token_provider.name(), error, **kwargs)
 
