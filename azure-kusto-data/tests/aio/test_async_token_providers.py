@@ -103,6 +103,20 @@ class TestTokenProvider:
         else:
             assert False
 
+    @staticmethod
+    def test_fail_async_call():
+        provider = BasicTokenProvider(True, token=TOKEN_VALUE)
+        try:
+            provider.get_token()
+            assert False, "Expected KustoAsyncUsageError to occur"
+        except KustoAsyncUsageError as e:
+            assert str(e) == "Method get_token can't be called from an asynchronous client"
+        try:
+            provider.context()
+            assert False, "Expected KustoAsyncUsageError to occur"
+        except KustoAsyncUsageError as e:
+            assert str(e) == "Method context can't be called from an asynchronous client"
+
     @aio_documented_by(TokenProviderTests.test_basic_provider)
     @pytest.mark.asyncio
     async def test_basic_provider(self):

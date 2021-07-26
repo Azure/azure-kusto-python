@@ -4,6 +4,8 @@ import os
 import unittest
 from threading import Thread
 
+from asgiref.sync import async_to_sync
+
 from azure.kusto.data._cloud_settings import CloudInfo
 from azure.kusto.data._token_providers import *
 
@@ -104,6 +106,20 @@ class TokenProviderTests(unittest.TestCase):
             return token[TokenConstants.AZ_ACCESS_TOKEN]
         else:
             assert False
+
+    @staticmethod
+    def test_fail_async_call():
+        provider = BasicTokenProvider(False, token=TOKEN_VALUE)
+        try:
+            async_to_sync(provider.get_token_async)()
+            assert False, "Expected KustoAsyncUsageError to occur"
+        except KustoAsyncUsageError as e:
+            assert str(e) == "Method get_token_async can't be called from a synchronous client"
+        try:
+            async_to_sync(provider.context_async)()
+            assert False, "Expected KustoAsyncUsageError to occur"
+        except KustoAsyncUsageError as e:
+            assert str(e) == "Method context_async can't be called from a synchronous client"
 
     @staticmethod
     def test_basic_provider():

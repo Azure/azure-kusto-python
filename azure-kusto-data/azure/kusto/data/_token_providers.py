@@ -117,7 +117,7 @@ class TokenProviderBase(abc.ABC):
     def get_token(self):
         """Get a token silently from cache or authenticate if cached token is not found"""
         if self.is_async:
-            raise KustoAsyncUsageError("Method get_token can't be called on an asynchronous client")
+            raise KustoAsyncUsageError("get_token", self.is_async)
         self._init_once()
 
         token = self._get_token_from_cache_impl()
@@ -129,13 +129,13 @@ class TokenProviderBase(abc.ABC):
 
     def context(self) -> dict:
         if self.is_async:
-            raise KustoAsyncUsageError("Method context can't be called on an asynchronous client")
+            raise KustoAsyncUsageError("context", self.is_async)
         self._init_once(init_only_cloud=True)
         return self._context_impl()
 
     async def context_async(self) -> dict:
         if not self.is_async:
-            raise KustoAsyncUsageError("Method context_async can't be called on a synchronous client")
+            raise KustoAsyncUsageError("context_async", self.is_async)
 
         await self._init_once_async(init_only_cloud=True)
         return self._context_impl()
@@ -144,7 +144,7 @@ class TokenProviderBase(abc.ABC):
         """Get a token asynchronously silently from cache or authenticate if cached token is not found"""
 
         if not self.is_async:
-            raise KustoAsyncUsageError("Method get_token_async can't be called on a synchronous client")
+            raise KustoAsyncUsageError("get_token_async", self.is_async)
 
         await self._init_once_async()
 
