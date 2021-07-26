@@ -60,7 +60,7 @@ class TokenProviderBase(abc.ABC):
     _cloud_info = None
     _scopes = None
 
-    def __init__(self, is_async: bool, kusto_uri: str):
+    def __init__(self, kusto_uri: str, is_async: bool = False):
         self.is_async = is_async
         self._kusto_uri = kusto_uri
 
@@ -209,8 +209,8 @@ class TokenProviderBase(abc.ABC):
 class BasicTokenProvider(TokenProviderBase):
     """Basic Token Provider keeps and returns a token received on construction"""
 
-    def __init__(self, is_async: bool, token: str):
-        super().__init__(is_async, None)
+    def __init__(self, token: str, is_async: bool = False):
+        super().__init__(None, is_async)
         self._token = token
 
     @staticmethod
@@ -233,8 +233,8 @@ class BasicTokenProvider(TokenProviderBase):
 class CallbackTokenProvider(TokenProviderBase):
     """Callback Token Provider generates a token based on a callback function provided by the caller"""
 
-    def __init__(self, is_async: bool, token_callback: Optional[Callable[[], str]], async_token_callback: Optional[Callable[[], Coroutine[None, None, str]]]):
-        super().__init__(is_async, None)
+    def __init__(self, token_callback: Optional[Callable[[], str]], async_token_callback: Optional[Callable[[], Coroutine[None, None, str]]], is_async: bool = False):
+        super().__init__(None, is_async)
         self._token_callback = token_callback
         self._async_token_callback = async_token_callback
 
@@ -275,8 +275,8 @@ class MsiTokenProvider(TokenProviderBase):
     The args parameter is a dictionary conforming with the ManagedIdentityCredential initializer API arguments
     """
 
-    def __init__(self, is_async: bool, kusto_uri: str, msi_args: dict = None):
-        super().__init__(is_async, kusto_uri)
+    def __init__(self, kusto_uri: str, msi_args: dict = None, is_async: bool = False):
+        super().__init__(kusto_uri, is_async)
         self._msi_args = msi_args
         self._msi_auth_context = None
         self._msi_auth_context_async = None
@@ -324,8 +324,8 @@ class MsiTokenProvider(TokenProviderBase):
 class AzCliTokenProvider(TokenProviderBase):
     """AzCli Token Provider obtains a refresh token from the AzCli cache and uses it to authenticate with MSAL"""
 
-    def __init__(self, is_async: bool, kusto_uri: str):
-        super().__init__(is_async, kusto_uri)
+    def __init__(self, kusto_uri: str, is_async: bool = False):
+        super().__init__(kusto_uri, is_async)
         self._az_auth_context = None
         self._az_auth_context_async = None
         self._az_token = None
@@ -377,8 +377,8 @@ class AzCliTokenProvider(TokenProviderBase):
 class UserPassTokenProvider(TokenProviderBase):
     """Acquire a token from MSAL with username and password"""
 
-    def __init__(self, is_async: bool, kusto_uri: str, authority_id: str, username: str, password: str):
-        super().__init__(is_async, kusto_uri)
+    def __init__(self, kusto_uri: str, authority_id: str, username: str, password: str, is_async: bool = False):
+        super().__init__(kusto_uri, is_async)
         self._msal_client = None
         self._auth = authority_id
         self._user = username
@@ -412,8 +412,8 @@ class UserPassTokenProvider(TokenProviderBase):
 class DeviceLoginTokenProvider(TokenProviderBase):
     """Acquire a token from MSAL with Device Login flow"""
 
-    def __init__(self, is_async: bool, kusto_uri: str, authority_id: str, device_code_callback=None):
-        super().__init__(is_async, kusto_uri)
+    def __init__(self, kusto_uri: str, authority_id: str, device_code_callback=None, is_async: bool = False):
+        super().__init__(kusto_uri, is_async)
         self._msal_client = None
         self._auth = authority_id
         self._account = None
@@ -459,8 +459,8 @@ class DeviceLoginTokenProvider(TokenProviderBase):
 class InteractiveLoginTokenProvider(TokenProviderBase):
     """Acquire a token from MSAL with Device Login flow"""
 
-    def __init__(self, is_async: bool, kusto_uri: str, authority_id: str, login_hint: Optional[str] = None, domain_hint: Optional[str] = None):
-        super().__init__(is_async, kusto_uri)
+    def __init__(self, kusto_uri: str, authority_id: str, login_hint: Optional[str] = None, domain_hint: Optional[str] = None, is_async: bool = False):
+        super().__init__(kusto_uri, is_async)
         self._msal_client = None
         self._auth = authority_id
         self._login_hint = login_hint
@@ -496,8 +496,8 @@ class InteractiveLoginTokenProvider(TokenProviderBase):
 class ApplicationKeyTokenProvider(TokenProviderBase):
     """Acquire a token from MSAL with application Id and Key"""
 
-    def __init__(self, is_async: bool, kusto_uri: str, authority_id: str, app_client_id: str, app_key: str):
-        super().__init__(is_async, kusto_uri)
+    def __init__(self, kusto_uri: str, authority_id: str, app_client_id: str, app_key: str, is_async: bool = False):
+        super().__init__(kusto_uri, is_async)
         self._msal_client = None
         self._app_client_id = app_client_id
         self._app_key = app_key
@@ -530,8 +530,8 @@ class ApplicationCertificateTokenProvider(TokenProviderBase):
     Passing the public certificate is optional and will result in Subject Name & Issuer Authentication
     """
 
-    def __init__(self, is_async: bool, kusto_uri: str, client_id: str, authority_id: str, private_cert: str, thumbprint: str, public_cert: str = None):
-        super().__init__(is_async, kusto_uri)
+    def __init__(self, kusto_uri: str, client_id: str, authority_id: str, private_cert: str, thumbprint: str, public_cert: str = None, is_async: bool = False):
+        super().__init__(kusto_uri, is_async)
         self._msal_client = None
         self._auth = authority_id
         self._client_id = client_id
