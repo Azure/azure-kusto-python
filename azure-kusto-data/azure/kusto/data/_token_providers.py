@@ -233,7 +233,9 @@ class BasicTokenProvider(TokenProviderBase):
 class CallbackTokenProvider(TokenProviderBase):
     """Callback Token Provider generates a token based on a callback function provided by the caller"""
 
-    def __init__(self, token_callback: Optional[Callable[[], str]], async_token_callback: Optional[Callable[[], Coroutine[None, None, str]]], is_async: bool = False):
+    def __init__(
+        self, token_callback: Optional[Callable[[], str]], async_token_callback: Optional[Callable[[], Coroutine[None, None, str]]], is_async: bool = False
+    ):
         super().__init__(None, is_async)
         self._token_callback = token_callback
         self._async_token_callback = async_token_callback

@@ -20,7 +20,9 @@ class _AadHelper:
         elif all([kcsb.aad_user_id, kcsb.password]):
             self.token_provider = UserPassTokenProvider(self.kusto_uri, kcsb.authority_id, kcsb.aad_user_id, kcsb.password, is_async=is_async)
         elif all([kcsb.application_client_id, kcsb.application_key]):
-            self.token_provider = ApplicationKeyTokenProvider(self.kusto_uri, kcsb.authority_id, kcsb.application_client_id, kcsb.application_key, is_async=is_async)
+            self.token_provider = ApplicationKeyTokenProvider(
+                self.kusto_uri, kcsb.authority_id, kcsb.application_client_id, kcsb.application_key, is_async=is_async
+            )
         elif all([kcsb.application_client_id, kcsb.application_certificate, kcsb.application_certificate_thumbprint]):
             # kcsb.application_public_certificate can be None if SNI is not used
             self.token_provider = ApplicationCertificateTokenProvider(
@@ -30,7 +32,7 @@ class _AadHelper:
                 kcsb.application_certificate,
                 kcsb.application_certificate_thumbprint,
                 kcsb.application_public_certificate,
-                is_async=is_async
+                is_async=is_async,
             )
         elif kcsb.msi_authentication:
             self.token_provider = MsiTokenProvider(self.kusto_uri, kcsb.msi_parameters, is_async=is_async)
