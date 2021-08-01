@@ -760,7 +760,7 @@ class KustoClient(_KustoClientBase):
         self._session.mount("https://", adapter)
 
         # notice that in this context, federated actually just stands for add auth, not aad federated auth (legacy code)
-        self._auth_provider = _AadHelper(self._kcsb) if self._kcsb.aad_federated_security else None
+        self._auth_provider = _AadHelper(self._kcsb, is_async=False) if self._kcsb.aad_federated_security else None
 
     def set_http_retries(self, max_retries):
         """

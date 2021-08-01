@@ -2,6 +2,9 @@
 # Licensed under the MIT License
 import os
 import unittest
+from threading import Thread
+
+from asgiref.sync import async_to_sync
 
 from azure.kusto.data._cloud_settings import CloudInfo
 from azure.kusto.data._token_providers import *
@@ -16,8 +19,8 @@ TEST_INTERACTIVE_AUTH = False  # User interaction required, enable this when run
 
 
 class MockProvider(TokenProviderBase):
-    def __init__(self, uri: str):
-        super().__init__(uri)
+    def __init__(self, uri: str, is_async: bool = False):
+        super().__init__(uri, is_async)
         self._silent_token = False
         self.init_count = 0
 
@@ -105,10 +108,41 @@ class TokenProviderTests(unittest.TestCase):
             assert False
 
     @staticmethod
+    def test_fail_async_call():
+        provider = BasicTokenProvider(token=TOKEN_VALUE)
+        try:
+            async_to_sync(provider.get_token_async)()
+            assert False, "Expected KustoAsyncUsageError to occur"
+        except KustoAsyncUsageError as e:
+            assert str(e) == "Method get_token_async can't be called from a synchronous client"
+        try:
+            async_to_sync(provider.context_async)()
+            assert False, "Expected KustoAsyncUsageError to occur"
+        except KustoAsyncUsageError as e:
+            assert str(e) == "Method context_async can't be called from a synchronous client"
+
+    @staticmethod
     def test_basic_provider():
         provider = BasicTokenProvider(token=TOKEN_VALUE)
         token = provider.get_token()
         assert TokenProviderTests.get_token_value(token) == TOKEN_VALUE
+
+    @staticmethod
+    def test_basic_provider_in_thread():
+        exc = []
+
+        def inner(exc):
+            try:
+                TokenProviderTests.test_basic_provider()
+            except Exception as e:
+                exc.append(e)
+
+        pass
+        t = Thread(target=inner, args=(exc,))
+        t.start()
+        t.join()
+        if exc:
+            raise exc[0]
 
     @staticmethod
     def test_callback_token_provider():

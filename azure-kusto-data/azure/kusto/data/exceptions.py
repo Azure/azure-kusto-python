@@ -1,6 +1,7 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
 from typing import List, Union, TYPE_CHECKING
+
 import requests
 
 if TYPE_CHECKING:
@@ -72,3 +73,10 @@ class KustoAioSyntaxError(SyntaxError):
 
     def __init__(self):
         super().__init__("Aio modules not installed, run 'pip install azure-kusto-data[aio]' to leverage aio capabilities")
+
+
+class KustoAsyncUsageError(Exception):
+    """Raised when trying to use async methods on a sync object, and vice-versa"""
+
+    def __init__(self, method: str, is_client_async: bool):
+        super().__init__("Method {} can't be called from {} client".format(method, "an asynchronous" if is_client_async else "a synchronous"))
