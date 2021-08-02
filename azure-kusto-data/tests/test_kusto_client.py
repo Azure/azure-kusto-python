@@ -1,19 +1,14 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
 import sys
-import json
-import os
 import unittest
-from datetime import datetime, timedelta
 
 import pytest
-from azure.kusto.data.exceptions import KustoServiceError
-from azure.kusto.data.helpers import dataframe_from_result_table
-from azure.kusto.data import KustoClient, ClientRequestProperties
-from azure.kusto.data.response import WellKnownDataSet
-from dateutil.tz import UTC
 from mock import patch
 
+from azure.kusto.data import KustoClient, ClientRequestProperties
+from azure.kusto.data.exceptions import KustoApiError
+from azure.kusto.data.helpers import dataframe_from_result_table
 from tests.kusto_client_common import KustoClientTestsMixin, mocked_requests_post
 
 PANDAS = False
@@ -59,7 +54,7 @@ class KustoClientTests(unittest.TestCase, KustoClientTestsMixin):
 range x from 1 to 10 step 1"""
         properties = ClientRequestProperties()
         properties.set_option(ClientRequestProperties.results_defer_partial_query_failures_option_name, False)
-        self.assertRaises(KustoServiceError, client.execute_query, "PythonTest", query, properties)
+        self.assertRaises(KustoApiError, client.execute_query, "PythonTest", query, properties)
         properties.set_option(ClientRequestProperties.results_defer_partial_query_failures_option_name, True)
         response = client.execute_query("PythonTest", query, properties)
         self._assert_partial_results_response(response)

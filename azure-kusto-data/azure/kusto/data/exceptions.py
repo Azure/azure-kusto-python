@@ -44,6 +44,56 @@ class KustoServiceError(KustoError):
         return self.kusto_response
 
 
+class OneApiError:
+    code = None  # type: str
+    message = None  # type: str
+    type = None  # type: str
+    description = None  # type: str
+    context = None  # type: dict
+    permanent = None  # type: bool
+
+    def __init__(self, code: str, message: str, type: str, description: str, context: dict, permanent: bool) -> None:
+        self.code = code
+        self.message = message
+        self.type = type
+        self.description = description
+        self.context = context
+        self.permanent = permanent
+
+    @staticmethod
+    def from_dict(obj: dict) -> 'OneApiError':
+        code = obj["code"]
+        message = obj["message"]
+        type = obj["@type"]
+        description = obj["@message"]
+        context = obj["@context"]
+        permanent = obj["@permanent"]
+        return OneApiError(code, message, type, description, context, permanent)
+
+
+class KustoApiError(KustoServiceError):
+    def __init__(self, errors: List[dict]):
+        self.errors = KustoApiError.parse_errors(errors)
+        messages = [error.description for error in self.errors]
+        super().__init__(messages[0] if len(self.errors) == 1 else messages)
+
+    def get_api_errors(self) -> List[OneApiError]:
+        return self.errors
+
+    @staticmethod
+    def parse_errors(errors: List[dict]) -> List[OneApiError]:
+        parsed_errors = []
+        for error_block in errors:
+            one_api_errors = error_block.get("OneApiErrors", None)
+            if not one_api_errors:
+                continue
+            for inner_error in one_api_errors:
+                error_dict = inner_error.get("error", None)
+                if error_dict:
+                    parsed_errors.append(OneApiError.from_dict(error_dict))
+        return parsed_errors
+
+
 class KustoClientError(KustoError):
     """Raised when a Kusto client is unable to send or complete a request."""
 
