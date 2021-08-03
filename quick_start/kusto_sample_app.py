@@ -2,6 +2,7 @@
 # !!! README !!!
 # ==============
 
+# Todo:
 # 1) Run setup.bat to install necessary dependencies.
 # 2) Follow the To-Do comments and fill in any necessary mandatory and optional arguments depending on your scenario
 # 3) run the script
@@ -59,6 +60,7 @@ def main():
     kusto_client = KustoClient(kusto_connection_string)
     ingest_client = QueuedIngestClient(ingest_connection_string)
 
+    print("")
     print(f"Creating table '{databaseName}.{tableName}' if needed:")
     # Todo what's the table creation command
     command = ".show version"
@@ -79,7 +81,7 @@ def main():
     run_query(kusto_client, databaseName, f"{tableName} | summarize count()")
 
 
-def create_connection_string(cluster:str, auth_mode:str) -> KustoConnectionStringBuilder:
+def create_connection_string(cluster: str, auth_mode: str) -> KustoConnectionStringBuilder:
     if auth_mode == "deviceCode":
         # prompt user for credentials with device code auth
         return KustoConnectionStringBuilder.with_aad_device_authentication(cluster)
@@ -104,14 +106,39 @@ def create_connection_string(cluster:str, auth_mode:str) -> KustoConnectionStrin
 
     elif auth_mode == "AppCertificate":
         # Todo Config (Optional): App Id & tenant, and certificate to authenticate with
-        # Todo implement cert based auth
-        raise Exception("AppCertificate auth mode is not implemented")
+        # In case you want to authenticate with AAD application certificate Subject Name & Issuer
+        app_id = os.environ.get("APP_ID")
+        app_tenant = os.environ.get("APP_TENANT")
+        pem_file_path = os.environ.get("PEM_FILE_PATH")
+        thumbprint = os.environ.get("CERT_THUMBPRINT")
+        public_cert_path = os.environ.get("PUBLIC_CERT_FILE_PATH")  # Only used on Subject Name and Issuer Auth
+        public_certificate = None
+        pem_certificate = None
+
+        try:
+            with open(pem_file_path, "r") as pem_file:
+                pem_certificate = pem_file.read()
+        except Exception as ex:
+            die(f"Failed to load PEM file from {pem_file_path}", ex)
+
+        if public_cert_path is None:
+            try:
+                with open(public_cert_path, "r") as cert_file:
+                    public_certificate = cert_file.read()
+            except Exception as ex:
+                die(f"Failed to load public certificate file from {public_cert_path}", ex)
+
+            return KustoConnectionStringBuilder.with_aad_application_certificate_authentication(cluster, app_id, pem_certificate, thumbprint, app_tenant)
+        else:
+            return KustoConnectionStringBuilder.with_aad_application_certificate_sni_authentication(
+                cluster, app_id, pem_certificate, public_certificate, thumbprint, app_tenant
+            )
 
     else:
-        raise Exception(f"Unexpected Auth mode: '{auth_mode}'")
+        die(f"Unexpected Auth mode: '{auth_mode}'")
 
 
-def run_control_command(client:KustoClient, db:str, command:str) -> bool:
+def run_control_command(client: KustoClient, db: str, command: str) -> bool:
     try:
         res = client.execute_mgmt(db, command)
         for row in res.primary_results[0]:
@@ -120,21 +147,18 @@ def run_control_command(client:KustoClient, db:str, command:str) -> bool:
         return True
 
     except KustoClientError as ex:
-        print(f"Client error while trying to execute command '{command}' on database '{db}'")
-        print(ex)
+        die(f"Client error while trying to execute command '{command}' on database '{db}'", ex)
 
     except KustoServiceError as ex:
-        print(f"Server error while trying to execute command '{command}' on database '{db}'")
-        print(ex)
+        die(f"Server error while trying to execute command '{command}' on database '{db}'", ex)
 
     except Exception as ex:
-        print(f"Unknown error while trying to execute command '{command}' on database '{db}'")
-        print(ex)
+        die(f"Unknown error while trying to execute command '{command}' on database '{db}'", ex)
 
     return False
 
 
-def run_query(client:KustoClient, db:str, query:str):
+def run_query(client: KustoClient, db: str, query: str):
     try:
         res = client.execute_query(db, query)
         for row in res.primary_results[0]:
@@ -143,26 +167,31 @@ def run_query(client:KustoClient, db:str, query:str):
         return True
 
     except KustoClientError as ex:
-        print(f"Client error while trying to execute query '{query}' on database '{db}'")
-        print(ex)
+        die(f"Client error while trying to execute query '{query}' on database '{db}'", ex)
 
     except KustoServiceError as ex:
-        print(f"Server error while trying to execute query '{query}' on database '{db}'")
-        print(ex)
+        die(f"Server error while trying to execute query '{query}' on database '{db}'", ex)
 
     except Exception as ex:
-        print(f"Unknown error while trying to execute query '{query}' on database '{db}'")
-        print(ex)
+        die(f"Unknown error while trying to execute query '{query}' on database '{db}'", ex)
 
     return False
 
 
-def ingest_data_from_folder(client:QueuedIngestClient, db:str, table:str, folder_path:str):
+def ingest_data_from_folder(client: QueuedIngestClient, db: str, table: str, folder_path: str):
     print("nothing to ingest")
     # todo iterate over all files of the folder and queue them for ingestion
     # todo demonstrate use of Flush immediately option
     # todo demonstrate ingestion of json and csv files
     pass
+
+
+def die(error: str, ex: Exception = None):
+    print(error)
+    if ex is not None:
+        print(ex)
+
+    exit(-1)
 
 
 main()
