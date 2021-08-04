@@ -10,13 +10,13 @@ import unittest
 import uuid
 
 import pytest
+
 from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
 from azure.kusto.data._cloud_settings import CloudSettings
 from azure.kusto.data._models import WellKnownDataSet
 from azure.kusto.data.aio import KustoClient as AsyncKustoClient
 from azure.kusto.data.exceptions import KustoServiceError
 from azure.kusto.data.streaming_response import FrameType
-
 from azure.kusto.ingest import (
     QueuedIngestClient,
     KustoStreamingIngestClient,
@@ -227,7 +227,8 @@ class TestE2E:
         assert actual == expected, "Row count expected = {0}, while actual row count = {1}".format(expected, actual)
 
     def test_streaming_query(self):
-        frames = self.client.execute_streaming_query(self.test_db, self.streaming_test_table_query)
+        frames = self.client._execute_streaming_query_parsed(self.test_db, self.streaming_test_table_query)
+
         initial_frame = next(frames)
         expected_initial_frame = {
             "FrameType": FrameType.DataSetHeader,
@@ -240,7 +241,7 @@ class TestE2E:
         assert query_props["TableKind"] == WellKnownDataSet.QueryProperties.value
         assert type(query_props["Columns"]) == list
         assert type(query_props["Rows"]) == list
-        assert list(query_props["Rows"][0].keys()) == [column["ColumnName"] for column in query_props["Columns"]]
+        assert len(query_props["Rows"][0]) == len(query_props["Columns"])
 
         primary_result = next(frames)
         assert primary_result["FrameType"] == FrameType.DataTable
@@ -249,7 +250,7 @@ class TestE2E:
         assert type(primary_result["Rows"]) != list
 
         row = next(primary_result["Rows"])
-        assert list(row.keys()) == [column["ColumnName"] for column in primary_result["Columns"]]
+        assert len(row) == len(primary_result["Columns"])
 
     @pytest.mark.asyncio
     async def test_streaming_query_async(self):

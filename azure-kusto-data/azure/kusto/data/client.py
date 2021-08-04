@@ -8,7 +8,7 @@ import uuid
 from copy import copy
 from datetime import timedelta
 from enum import Enum, unique
-from typing import TYPE_CHECKING, Union, Callable, Optional, Any, NoReturn, Iterator, Coroutine
+from typing import TYPE_CHECKING, Union, Callable, Optional, Any, NoReturn, Coroutine
 
 import requests
 from requests import Response
@@ -880,25 +880,25 @@ class KustoClient(_KustoClientBase):
 
         self._execute(endpoint, database, None, stream, self._streaming_ingest_default_timeout, properties)
 
-    def execute_streaming_query(
-        self, database: str, query: str, timeout: timedelta = _KustoClientBase._query_default_timeout, properties: Optional[ClientRequestProperties] = None
-    ) -> Iterator:
+    def _execute_streaming_query_parsed(
+            self, database: str, query: str, timeout: timedelta = _KustoClientBase._query_default_timeout, properties: Optional[ClientRequestProperties] = None
+    ) -> ProgressiveDataSetEnumerator:
         """
         Todo
         """
         response = self._execute(self._query_endpoint, database, query, None, timeout, properties, stream_response=True)
         response.raw.decode_content = True
-        return iter(ProgressiveDataSetEnumerator(JsonTokenReader(response.raw)))
+        return ProgressiveDataSetEnumerator(JsonTokenReader(response.raw))
 
     def _execute(
-        self,
-        endpoint: str,
-        database: str,
-        query: Optional[str],
-        payload: Optional[io.IOBase],
-        timeout: timedelta,
-        properties: Optional[ClientRequestProperties] = None,
-        stream_response: bool = False,
+            self,
+            endpoint: str,
+            database: str,
+            query: Optional[str],
+            payload: Optional[io.IOBase],
+            timeout: timedelta,
+            properties: Optional[ClientRequestProperties] = None,
+            stream_response: bool = False,
     ) -> Union[KustoResponseDataSet, Response]:
         """Executes given query against this client"""
         request_params = ExecuteRequestParams(database, payload, properties, query, timeout, self._request_headers)

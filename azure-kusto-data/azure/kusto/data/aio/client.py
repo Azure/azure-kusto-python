@@ -84,7 +84,7 @@ class KustoClient(_KustoClientBase):
         request_headers = request_params.request_headers
         timeout = request_params.timeout
         if self._auth_provider:
-            request_headers["Authorization"] = self._auth_provider.acquire_authorization_header()
+            request_headers["Authorization"] = await self._auth_provider.acquire_authorization_header_async()
 
         return await self._session.post(endpoint, headers=request_headers, data=payload, json=json_payload, timeout=timeout.seconds)
 

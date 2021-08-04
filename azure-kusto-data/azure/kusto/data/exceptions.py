@@ -16,6 +16,11 @@ class KustoError(Exception):
     """Base class for all exceptions raised by the Kusto Python Client Libraries."""
 
 
+class KustoStreamingError(KustoError):
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)
+
+
 class KustoServiceError(KustoError):
     """Raised when the Kusto service was unable to process a request."""
 

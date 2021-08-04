@@ -1,10 +1,10 @@
-import io
 from enum import Enum
-from typing import Optional, Any, Tuple, Dict
+from typing import Optional, Any, Tuple, Dict, AnyStr, IO
 
 import ijson
 
-from azure.kusto.data._models import WellKnownDataSet, KustoResultRow
+from azure.kusto.data._models import WellKnownDataSet
+from azure.kusto.data.exceptions import KustoServiceError
 
 
 class JsonTokenType(Enum):
@@ -45,7 +45,7 @@ class JsonToken:
 
 
 class JsonTokenReader:
-    def __init__(self, stream: io.RawIOBase):
+    def __init__(self, stream: IO[AnyStr]):
         self.json_iter = ijson.parse(stream, use_float=True)
 
     def read_next_token_or_throw(self) -> JsonToken:
@@ -145,6 +145,8 @@ class ProgressiveDataSetEnumerator:
         self.reader = reader
         self.done = False
         self.started = False
+        self.started_primary_results = False
+        self.finished_primary_results = False
 
     def __iter__(self):
         return self
@@ -163,7 +165,16 @@ class ProgressiveDataSetEnumerator:
             raise StopIteration()
 
         frame_type = self.read_frame_type()
+        parsed_frame = self.parse_frame(frame_type)
+        is_primary_result = parsed_frame["FrameType"] == FrameType.DataTable and parsed_frame["TableKind"] == WellKnownDataSet.PrimaryResult.value
+        if is_primary_result:
+            self.started_primary_results = True
+        elif self.started_primary_results and not is_primary_result:
+            self.finished_primary_results = True
 
+        return parsed_frame
+
+    def parse_frame(self, frame_type):
         if frame_type == FrameType.DataSetHeader:
             return self.extract_props(frame_type, ("IsProgressive", JsonTokenType.BOOLEAN), ("Version", JsonTokenType.STRING))
         elif frame_type == FrameType.TableHeader:
@@ -191,7 +202,7 @@ class ProgressiveDataSetEnumerator:
                 ("Columns", JsonTokenType.START_ARRAY),
             )
             self.reader.skip_until_property_name("Rows")
-            props["Rows"] = self.row_iterator(props["Columns"])
+            props["Rows"] = self.row_iterator()
             if props["TableKind"] != WellKnownDataSet.PrimaryResult.value:
                 props["Rows"] = list(props["Rows"])
             return props
@@ -202,25 +213,15 @@ class ProgressiveDataSetEnumerator:
                 res["OneApiErrors"] = self.parse_array(skip_start=False)
             return res
 
-    def row_iterator(self, columns):
+    def row_iterator(self):
         self.reader.read_token_of_type(JsonTokenType.START_ARRAY)
         while True:
             token = self.reader.read_token_of_type(JsonTokenType.START_ARRAY, JsonTokenType.END_ARRAY, JsonTokenType.START_MAP)
             if token.token_type == JsonTokenType.START_MAP:
-                raise Exception("Received error in data: {}", self.parse_object(skip_start=True))
+                raise KustoServiceError("Received error in data: " + str(self.parse_object(skip_start=True)))  # Todo - good error
             if token.token_type == JsonTokenType.END_ARRAY:
                 return
-            row = {}
-            for i in range(len(columns)):
-                token = self.reader.read_next_token_or_throw()
-                if token.token_type == JsonTokenType.START_MAP:
-                    row[columns[i]["ColumnName"]] = self.parse_object(skip_start=True)
-                elif token.token_type == JsonTokenType.START_ARRAY:
-                    row[columns[i]["ColumnName"]] = self.parse_array(skip_start=True)
-                else:
-                    row[columns[i]["ColumnName"]] = KustoResultRow.get_typed_value(columns[i]["ColumnType"], token.token_value)
-            self.reader.read_token_of_type(JsonTokenType.END_ARRAY)
-            yield row
+            yield self.parse_array(skip_start=True)
 
     def parse_array(self, skip_start):
         if not skip_start:

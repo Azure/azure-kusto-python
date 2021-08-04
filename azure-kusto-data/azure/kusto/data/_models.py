@@ -6,7 +6,7 @@ from decimal import Decimal
 from enum import Enum
 
 from . import _converters
-from .exceptions import KustoServiceError
+from .exceptions import KustoServiceError, KustoStreamingError
 
 
 class WellKnownDataSet(Enum):
@@ -150,6 +150,56 @@ class KustoResultTable:
         # enum is not serializable, using value instead
         d["kind"] = d["kind"].value
         return json.dumps(d, default=str)
+
+    def __bool__(self):
+        return any(self.columns)
+
+    __nonzero__ = __bool__
+
+
+class KustoStreamingResultTable:
+    """Iterator over a Kusto result table."""
+
+    def __init__(self, json_table: dict):
+        self.table_name = json_table.get("TableName")
+        self.table_id = json_table.get("TableId")
+        self.table_kind = WellKnownDataSet[json_table["TableKind"]] if "TableKind" in json_table else None
+        self.columns = [KustoResultColumn(column, index) for index, column in enumerate(json_table["Columns"])]
+
+        # TODO - errors
+
+        self.raw_columns = json_table["Columns"]
+        self.raw_rows = json_table["Rows"]
+        self.kusto_result_rows = None
+
+        self.finished = False
+        self.row_count = 0
+
+    @property
+    def rows_count(self) -> int:
+        if not self.finished:
+            raise KustoStreamingError("Can't retrieve rows count before the iteration is finished")
+        return self.row_count
+
+    @property
+    def columns_count(self) -> int:
+        return len(self.columns)
+
+    def to_dict(self):
+        """Converts the table to a dict."""
+        return {"name": self.table_name, "kind": self.table_kind}
+
+    def __len__(self):
+        return self.rows_count
+
+    def __iter__(self):
+        while True:
+            row = next(self.raw_rows, None)
+            if row is None:
+                self.finished = True
+                break
+            self.row_count += 1
+            yield KustoResultRow(self.columns, row)
 
     def __bool__(self):
         return any(self.columns)

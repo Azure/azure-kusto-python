@@ -2,7 +2,7 @@ import os
 
 import pytest
 
-from azure.kusto.data._models import WellKnownDataSet
+from azure.kusto.data._models import WellKnownDataSet, KustoResultRow, KustoResultColumn
 from azure.kusto.data.aio.streaming_response import JsonTokenReader as AsyncJsonTokenReader, ProgressiveDataSetEnumerator as AsyncProgressiveDataSetEnumerator
 from azure.kusto.data.streaming_response import JsonTokenReader, ProgressiveDataSetEnumerator, FrameType
 from tests.kusto_client_common import KustoClientTestsMixin
@@ -44,7 +44,8 @@ class TestStreamingQuery(KustoClientTestsMixin):
 
             for i in reader:
                 if i["FrameType"] == FrameType.DataTable and i["TableKind"] == WellKnownDataSet.PrimaryResult.value:
-                    self._assert_sanity_query_primary_results(i["Rows"])
+                    columns = [KustoResultColumn(column, index) for index, column in enumerate(i["Columns"])]
+                    self._assert_sanity_query_primary_results(KustoResultRow(columns, r) for r in i["Rows"])
 
     def test_dynamic(self):
         with self.open_json_file("dynamic.json") as f:
@@ -53,7 +54,7 @@ class TestStreamingQuery(KustoClientTestsMixin):
             for i in reader:
                 if i["FrameType"] == FrameType.DataTable and i["TableKind"] == WellKnownDataSet.PrimaryResult.value:
                     row = next(i["Rows"])
-                    self._assert_dynamic_response(list(row.values()))
+                    self._assert_dynamic_response(row)
 
     @pytest.mark.asyncio
     async def test_sanity_async(self):
