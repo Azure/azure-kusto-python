@@ -703,7 +703,8 @@ class _KustoClientBase:
         status: int,
         response_json: Any,
         response_text: Optional[str],
-    ):  # TODO: This method return type should be "NoReturn". Re-add when the minimum python version is increased
+    ):  # TODO: This method return type should be "NoReturn". Re-add when the minimum python version is increased (3.6.2 or higher)
+
         if status == 404:
             if payload:
                 raise KustoServiceError("The ingestion endpoint does not exist. Please enable streaming ingestion on your cluster.", response) from exception
