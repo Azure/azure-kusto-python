@@ -1,11 +1,8 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
-import os
 import random
-import tempfile
-import time
 import uuid
-from typing import Union
+from typing import Union, AnyStr, IO
 from urllib.parse import urlparse
 
 from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
@@ -15,12 +12,13 @@ from azure.storage.queue import QueueServiceClient, TextBase64EncodePolicy
 
 from ._ingestion_blob_info import _IngestionBlobInfo
 from ._resource_manager import _ResourceManager
-from .descriptors import BlobDescriptor, FileDescriptor
+from .base_ingest_client import BaseIngestClient
+from .descriptors import BlobDescriptor, FileDescriptor, StreamDescriptor
 from .exceptions import KustoInvalidEndpointError
 from .ingestion_properties import DataFormat, IngestionProperties
 
 
-class QueuedIngestClient:
+class QueuedIngestClient(BaseIngestClient):
     """
     Queued ingest client provides methods to allow queued ingestion into kusto (ADX).
     To learn more about the different types of ingestions and when to use each, visit:
@@ -41,32 +39,6 @@ class QueuedIngestClient:
         self._endpoint_service_type = None
         self._suggested_endpoint_uri = None
 
-    def ingest_from_dataframe(self, df, ingestion_properties: IngestionProperties):
-        """
-        Enqueue an ingest command from local files.
-        To learn more about ingestion methods go to:
-        https://docs.microsoft.com/en-us/azure/data-explorer/ingest-data-overview#ingestion-methods
-        :param pandas.DataFrame df: input dataframe to ingest.
-        :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
-        """
-
-        from pandas import DataFrame
-
-        if not isinstance(df, DataFrame):
-            raise ValueError("Expected DataFrame instance, found {}".format(type(df)))
-
-        file_name = "df_{id}_{timestamp}_{uid}.csv.gz".format(id=id(df), timestamp=int(time.time()), uid=uuid.uuid4())
-        temp_file_path = os.path.join(tempfile.gettempdir(), file_name)
-
-        df.to_csv(temp_file_path, index=False, encoding="utf-8", header=False, compression="gzip")
-
-        ingestion_properties.format = DataFormat.CSV
-
-        try:
-            self.ingest_from_file(temp_file_path, ingestion_properties)
-        finally:
-            os.unlink(temp_file_path)
-
     def ingest_from_file(self, file_descriptor: Union[FileDescriptor, str], ingestion_properties: IngestionProperties):
         """
         Enqueue an ingest command from local files.
@@ -86,6 +58,7 @@ class QueuedIngestClient:
         else:
             descriptor = FileDescriptor(file_descriptor)
 
+        #TODO: should we add this logic to all ingestions?
         should_compress = not (
             ingestion_properties.format in [DataFormat.AVRO, DataFormat.ORC, DataFormat.PARQUET]
             or descriptor.path.endswith(".gz")
@@ -104,6 +77,29 @@ class QueuedIngestClient:
             blob_client.upload_blob(data=stream)
 
             self.ingest_from_blob(BlobDescriptor(blob_client.url, descriptor.size, descriptor.source_id), ingestion_properties=ingestion_properties)
+
+    def ingest_from_stream(self, stream_descriptor: Union[IO[AnyStr], StreamDescriptor], ingestion_properties: IngestionProperties):
+        try:
+            containers = self._resource_manager.get_containers()
+        except KustoServiceError as ex:
+            self._validate_endpoint_service_type()
+            raise ex
+
+        if not isinstance(stream_descriptor, StreamDescriptor):
+            stream_descriptor = StreamDescriptor(stream_descriptor)
+
+        stream = self._prepare_stream(stream_descriptor, ingestion_properties)
+        #TODO: currently we always assume that streams are gz compressed, should we expand that?
+        blob_name = "{db}__{table}__{guid}.gz".format(
+            db=ingestion_properties.database, table=ingestion_properties.table, guid=stream_descriptor.source_id or uuid.uuid4())
+
+        random_container = random.choice(containers)
+
+        blob_service = BlobServiceClient(random_container.account_uri)
+        blob_client = blob_service.get_blob_client(container=random_container.object_name, blob=blob_name)
+        blob_client.upload_blob(data=stream)
+
+        self.ingest_from_blob(BlobDescriptor(blob_client.url, 0, stream_descriptor.source_id), ingestion_properties=ingestion_properties)
 
     def ingest_from_blob(self, blob_descriptor: BlobDescriptor, ingestion_properties: IngestionProperties):
         """

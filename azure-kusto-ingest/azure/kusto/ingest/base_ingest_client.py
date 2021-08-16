@@ -1,0 +1,81 @@
+import os
+import tempfile
+import time
+import uuid
+from abc import ABCMeta, abstractmethod
+from gzip import GzipFile
+from io import TextIOWrapper, BytesIO
+from typing import TYPE_CHECKING, Union, IO, AnyStr
+
+from .exceptions import KustoMissingMappingReferenceError
+from .descriptors import FileDescriptor, StreamDescriptor
+from .ingestion_properties import DataFormat, IngestionProperties
+
+if TYPE_CHECKING:
+    import pandas
+
+class BaseIngestClient(metaclass=ABCMeta):
+    _mapping_required_formats = {DataFormat.JSON, DataFormat.SINGLEJSON, DataFormat.AVRO, DataFormat.MULTIJSON}
+
+    @abstractmethod
+    def ingest_from_file(self, file_descriptor: Union[FileDescriptor, str], ingestion_properties: IngestionProperties):
+        """Ingest from local files.
+        :param file_descriptor: a FileDescriptor to be ingested.
+        :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
+        """
+        pass
+
+    @abstractmethod
+    def ingest_from_stream(self, stream_descriptor: Union[IO[AnyStr], StreamDescriptor], ingestion_properties: IngestionProperties):
+        """Ingest from io streams.
+        :param azure.kusto.ingest.StreamDescriptor stream_descriptor: An object that contains a description of the stream to
+               be ingested.
+        :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
+        """
+        pass
+
+    def ingest_from_dataframe(self, df: "pandas.DataFrame", ingestion_properties: IngestionProperties):
+        """
+        Enqueue an ingest command from local files.
+        To learn more about ingestion methods go to:
+        https://docs.microsoft.com/en-us/azure/data-explorer/ingest-data-overview#ingestion-methods
+        :param pandas.DataFrame df: input dataframe to ingest.
+        :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
+        """
+
+        from pandas import DataFrame
+
+        if not isinstance(df, DataFrame):
+            raise ValueError("Expected DataFrame instance, found {}".format(type(df)))
+
+        file_name = "df_{id}_{timestamp}_{uid}.csv.gz".format(id=id(df), timestamp=int(time.time()), uid=uuid.uuid4())
+        temp_file_path = os.path.join(tempfile.gettempdir(), file_name)
+
+        df.to_csv(temp_file_path, index=False, encoding="utf-8", header=False, compression="gzip")
+
+        ingestion_properties.format = DataFormat.CSV
+
+        try:
+            self.ingest_from_file(temp_file_path, ingestion_properties)
+        finally:
+            os.unlink(temp_file_path)
+
+    def _prepare_stream(self, stream_descriptor: StreamDescriptor, ingestion_properties: IngestionProperties) -> BytesIO:
+        if isinstance(stream_descriptor.stream, TextIOWrapper):
+            stream = stream_descriptor.stream.buffer
+        else:
+            stream = stream_descriptor.stream
+        if ingestion_properties.format in self._mapping_required_formats and ingestion_properties.ingestion_mapping_reference is None:
+            raise KustoMissingMappingReferenceError()
+        if not stream_descriptor.is_compressed:
+            zipped_stream = BytesIO()
+            buffer = stream.read()
+            with GzipFile(filename="data", fileobj=zipped_stream, mode="wb") as f_out:
+                if isinstance(buffer, str):
+                    data = bytes(buffer, "utf-8")
+                    f_out.write(data)
+                else:
+                    f_out.write(buffer)
+            zipped_stream.seek(0)
+            stream = zipped_stream
+        return stream
