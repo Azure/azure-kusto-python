@@ -190,6 +190,8 @@ class KustoStreamingResultTable:
         return {"name": self.table_name, "kind": self.table_kind}
 
     def __len__(self):
+        if not self.finished:
+            return None
         return self.rows_count
 
     def __iter__(self):

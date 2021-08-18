@@ -3,11 +3,14 @@
 import json
 import os
 from datetime import datetime, timedelta
+from io import StringIO
+from typing import Optional
 
 from dateutil.tz import UTC
 from requests import HTTPError
 
-from azure.kusto.data.response import WellKnownDataSet
+from azure.kusto.data._models import KustoStreamingResultTable
+from azure.kusto.data.response import WellKnownDataSet, KustoStreamingResponseDataSet
 
 PANDAS = False
 try:
@@ -21,6 +24,11 @@ except:
 def mocked_requests_post(*args, **kwargs):
     """Mock to replace requests.Session.post"""
 
+    class Raw(StringIO):
+        def __init__(self, initial_value: Optional[str]) -> None:
+            super().__init__(initial_value, None)
+            self.decode_content = False
+
     class MockResponse:
         """Mock class for KustoResponse."""
 
@@ -31,6 +39,7 @@ def mocked_requests_post(*args, **kwargs):
             self.headers = None
             self.reason = ""
             self.url = url
+            self.raw = Raw(json.dumps(json_data))
 
         def json(self):
             """Get json data from response."""
@@ -95,6 +104,20 @@ def mocked_requests_post(*args, **kwargs):
 
 
 DIGIT_WORDS = [str("Zero"), str("One"), str("Two"), str("Three"), str("Four"), str("Five"), str("Six"), str("Seven"), str("Eight"), str("Nine"), str("ten")]
+
+
+def get_response_first_primary_result(response):
+    if type(response) == KustoStreamingResponseDataSet:
+        return response.get_current_primary_results_table()
+    else:
+        return response.primary_results[0]
+
+
+def get_table_first_row(table):
+    if type(table) == KustoStreamingResultTable:
+        return next(iter(table))
+    else:
+        return table.rows[0]
 
 
 class KustoClientTestsMixin:
@@ -198,12 +221,12 @@ class KustoClientTestsMixin:
 
     @staticmethod
     def _assert_sanity_query_response(response):
-        KustoClientTestsMixin._assert_sanity_query_primary_results(response.primary_results[0])
+        KustoClientTestsMixin._assert_sanity_query_primary_results(get_response_first_primary_result(response))
 
     @staticmethod
     def _assert_sanity_control_command_response(response):
         assert len(response) == 1
-        primary_table = response.primary_results[0]
+        primary_table = get_response_first_primary_result(response)
         row_count = 0
         for _ in primary_table:
             row_count += 1
@@ -325,18 +348,21 @@ class KustoClientTestsMixin:
 
     @staticmethod
     def _assert_partial_results_response(response):
+        results = list(get_response_first_primary_result(response))
+        assert len(results) == 5
+        assert results[0]["x"] == 1
+
+        if type(response) == KustoStreamingResponseDataSet:
+            response.read_rest_of_tables(ensure_primary_tables_finished=False)
         assert response.errors_count == 1
         assert "E_QUERY_RESULT_SET_TOO_LARGE" in response.get_exceptions()[0]
         assert len(response) == 3
-        results = list(response.primary_results[0])
-        assert len(results) == 5
-        assert results[0]["x"] == 1
 
     @staticmethod
     def _assert_admin_then_query_response(response):
         assert response.errors_count == 0
         assert len(response) == 4
-        results = list(response.primary_results[0])
+        results = list(get_response_first_primary_result(response))
         assert len(results) == 2
         assert response[0].table_kind == WellKnownDataSet.PrimaryResult
         assert response[1].table_kind == WellKnownDataSet.QueryProperties

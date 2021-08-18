@@ -160,6 +160,7 @@ class KustoStreamingResponseDataSet(KustoResponseDataSet):
                 self.tables.append(KustoResultTable(table))
 
     def __init__(self, streamed_data: ProgressiveDataSetEnumerator):
+        super().__init__([])
         self.tables = []
         self.streamed_data = streamed_data
         self.have_read_rest_of_tables = False
@@ -214,3 +215,14 @@ class KustoStreamingResponseDataSet(KustoResponseDataSet):
             raise KustoStreamingError(
                 "Unable to get errors count before reading all of the tables. Advance `next_primary_results_table` to the end, or use `read_rest_of_tables`")
         return super().get_exceptions()
+
+    def __getitem__(self, key) -> KustoResultTable:
+        if isinstance(key, int):
+            return self.tables[key]
+        try:
+            return next(t for t in self.tables if t.table_name == key)
+        except StopIteration:
+            raise LookupError(key)
+
+    def __len__(self) -> int:
+        return len(self.tables)

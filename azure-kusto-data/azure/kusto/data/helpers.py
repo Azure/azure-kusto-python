@@ -1,3 +1,10 @@
+from typing import TYPE_CHECKING, Union
+
+if TYPE_CHECKING:
+    import pandas
+    from azure.kusto.data._models import KustoResultTable, KustoStreamingResultTable
+
+
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
 def to_pandas_timedelta(raw_value) -> "pandas.Timedelta":
@@ -21,7 +28,7 @@ def to_pandas_timedelta(raw_value) -> "pandas.Timedelta":
             return pd.to_timedelta(formatted_value)
 
 
-def dataframe_from_result_table(table: "KustoResultTable"):
+def dataframe_from_result_table(table: "Union[KustoResultTable, KustoStreamingResultTable]"):
     """Converts Kusto tables into pandas DataFrame.
     :param azure.kusto.data._models.KustoResultTable table: Table received from the response.
     :return: pandas DataFrame.
@@ -31,10 +38,10 @@ def dataframe_from_result_table(table: "KustoResultTable"):
     if not table:
         raise ValueError()
 
-    from azure.kusto.data._models import KustoResultTable
+    from azure.kusto.data._models import KustoResultTable, KustoStreamingResultTable
 
-    if not isinstance(table, KustoResultTable):
-        raise TypeError("Expected KustoResultTable got {}".format(type(table).__name__))
+    if not isinstance(table, KustoResultTable) and not isinstance(table, KustoStreamingResultTable):
+        raise TypeError("Expected KustoResultTable or KustoStreamingResultTable got {}".format(type(table).__name__))
 
     columns = [col.column_name for col in table.columns]
     frame = pd.DataFrame(table.raw_rows, columns=columns)
