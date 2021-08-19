@@ -9,10 +9,6 @@ from azure.kusto.data.streaming_response import JsonTokenReader, ProgressiveData
 from tests.kusto_client_common import KustoClientTestsMixin
 
 
-# todo:
-#  - WellKnownDataSet
-
-
 class MockAioFile:
     def __init__(self, filename):
         self.filename = filename
@@ -71,7 +67,8 @@ class TestStreamingQuery(KustoClientTestsMixin):
 
             async for i in reader:
                 if i["FrameType"] == FrameType.DataTable and i["TableKind"] == WellKnownDataSet.PrimaryResult.value:
-                    rows = [x async for x in i["Rows"]]
+                    columns = [KustoResultColumn(column, index) for index, column in enumerate(i["Columns"])]
+                    rows = [KustoResultRow(columns, r) async for r in i["Rows"]]
                     self._assert_sanity_query_primary_results(rows)
 
     @pytest.mark.asyncio
@@ -81,4 +78,4 @@ class TestStreamingQuery(KustoClientTestsMixin):
             async for i in reader:
                 if i["FrameType"] == FrameType.DataTable and i["TableKind"] == WellKnownDataSet.PrimaryResult.value:
                     row = await i["Rows"].__anext__()
-                    self._assert_dynamic_response(list(row.values()))
+                    self._assert_dynamic_response(row)

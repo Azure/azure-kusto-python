@@ -176,6 +176,12 @@ class KustoStreamingResultTable:
         self.row_count = 0
 
     @property
+    def rows(self):
+        if self.finished:
+            raise KustoStreamingError("Can't retrieve rows after iteration is finished")
+        return iter(self)
+
+    @property
     def rows_count(self) -> int:
         if not self.finished:
             raise KustoStreamingError("Can't retrieve rows count before the iteration is finished")

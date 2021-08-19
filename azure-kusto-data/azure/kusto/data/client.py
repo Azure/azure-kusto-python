@@ -883,9 +883,6 @@ class KustoClient(_KustoClientBase):
     def _execute_streaming_query_parsed(
             self, database: str, query: str, timeout: timedelta = _KustoClientBase._query_default_timeout, properties: Optional[ClientRequestProperties] = None
     ) -> ProgressiveDataSetEnumerator:
-        """
-        Todo
-        """
         response = self._execute(self._query_endpoint, database, query, None, timeout, properties, stream_response=True)
         response.raw.decode_content = True
         return ProgressiveDataSetEnumerator(JsonTokenReader(response.raw))

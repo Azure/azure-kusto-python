@@ -4,7 +4,7 @@ from typing import Optional, Any, Tuple, Dict, AnyStr, IO
 import ijson
 
 from azure.kusto.data._models import WellKnownDataSet
-from azure.kusto.data.exceptions import KustoServiceError
+from azure.kusto.data.exceptions import KustoServiceError, KustoTokenParsingError
 
 
 class JsonTokenType(Enum):
@@ -51,7 +51,7 @@ class JsonTokenReader:
     def read_next_token_or_throw(self) -> JsonToken:
         next_item = next(self.json_iter)
         if next_item is None:
-            raise Exception("Unexpected end of stream")  # todo - better exception
+            raise KustoTokenParsingError("Unexpected end of stream")
         (token_path, token_type, token_value) = next_item
 
         return JsonToken(token_path, JsonTokenType[token_type.upper()], token_value)
@@ -59,9 +59,7 @@ class JsonTokenReader:
     def read_token_of_type(self, *token_types: JsonTokenType) -> JsonToken:
         token = self.read_next_token_or_throw()
         if token.token_type not in token_types:
-            raise Exception(
-                f"Expected one the following types: '{','.join(t.name for t in token_types)}' , got type {token.token_type}"
-            )  # todo - better exception
+            raise KustoTokenParsingError(f"Expected one the following types: '{','.join(t.name for t in token_types)}' , got type {token.token_type}")
         return token
 
     def read_start_object(self) -> JsonToken:
@@ -80,7 +78,7 @@ class JsonTokenReader:
         return self.read_token_of_type(JsonTokenType.NUMBER).token_value
 
     def skip_to_end(self):
-        for i in self.json_iter:
+        for _ in self.json_iter:
             pass
 
     def skip_children(self, prev_token: JsonToken):
@@ -287,29 +285,3 @@ class ProgressiveDataSetEnumerator:
     def read_frame_type(self) -> FrameType:
         self.reader.skip_until_property_name("FrameType")
         return FrameType[self.reader.read_string()]
-
-
-class KustoJsonDataStreamReader:
-    def __init__(self, reader):
-        self.reader: JsonTokenReader = reader
-
-    def read_preamble(self) -> bool:
-        # {
-        self.reader.read_start_object()
-
-        # "Version" : "X.Y -- Optional
-        token = self.reader.skip_until_property_name_or_end_object("Version", "Tables", "error")
-        if token.token_type == JsonTokenType.END_MAP:
-            raise Exception("There is no table in the stream")
-
-        if token.token_value == "Version":
-            version = self.reader.read_string()
-            if not version.startswith("1."):
-                raise Exception("Unexpected version")
-            self.reader.skip_until_property_name_or_end_object("Tables")
-        elif token.token_value == "error":
-            self.reader.read_start_object()
-            return False
-
-        self.reader.read_start_array()
-        return True

@@ -175,7 +175,8 @@ class KustoStreamingResponseDataSet(KustoResponseDataSet):
             return None
         if ensure_current_finished and not self.get_current_primary_results_table().finished:
             raise KustoStreamingError(
-                "Tried retrieving a new primary_result table before the old one was finished. To override pass `ensure_current_finished=False`")
+                "Tried retrieving a new primary_result table before the old one was finished. To override pass `ensure_current_finished=False`"
+            )
 
         table = next(self.streamed_data)
         if self.streamed_data.finished_primary_results:
@@ -193,7 +194,8 @@ class KustoStreamingResponseDataSet(KustoResponseDataSet):
 
         if ensure_primary_tables_finished and not self.streamed_data.finished_primary_results:
             raise KustoStreamingError(
-                "Tried retrieving all of the tables before the primary_results are finished. To override pass `ensure_primary_tables_finished=False`")
+                "Tried retrieving all of the tables before the primary_results are finished. To override pass `ensure_primary_tables_finished=False`"
+            )
 
         self.tables.extend(KustoResultTable(t) for t in self.streamed_data if t["FrameType"] == FrameType.DataTable)
         self.have_read_rest_of_tables = True
@@ -201,19 +203,22 @@ class KustoStreamingResponseDataSet(KustoResponseDataSet):
     def primary_results(self) -> List[KustoResultTable]:
         # Todo - making a method from the base class unavailable is a code smell. Maybe we need to restructure the hierarchy
         raise KustoStreamingError(
-            "KustoStreamingResponseDataSet does not support listing all of the primary results in memory. use `get_current_primary_results_table` and `next_primary_results_table`")
+            "KustoStreamingResponseDataSet does not support listing all of the primary results in memory. use `get_current_primary_results_table` and `next_primary_results_table`"
+        )
 
     @property
     def errors_count(self) -> int:
         if not self.have_read_rest_of_tables:
             raise KustoStreamingError(
-                "Unable to get errors count before reading all of the tables. Advance `next_primary_results_table` to the end, or use `read_rest_of_tables`")
+                "Unable to get errors count before reading all of the tables. Advance `next_primary_results_table` to the end, or use `read_rest_of_tables`"
+            )
         return super().errors_count
 
     def get_exceptions(self) -> List[str]:
         if not self.have_read_rest_of_tables:
             raise KustoStreamingError(
-                "Unable to get errors count before reading all of the tables. Advance `next_primary_results_table` to the end, or use `read_rest_of_tables`")
+                "Unable to get errors count before reading all of the tables. Advance `next_primary_results_table` to the end, or use `read_rest_of_tables`"
+            )
         return super().get_exceptions()
 
     def __getitem__(self, key) -> KustoResultTable:

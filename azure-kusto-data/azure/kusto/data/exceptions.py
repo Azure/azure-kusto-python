@@ -21,6 +21,11 @@ class KustoStreamingError(KustoError):
         super().__init__(*args)
 
 
+class KustoTokenParsingError(KustoStreamingError):
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)
+
+
 class KustoServiceError(KustoError):
     """Raised when the Kusto service was unable to process a request."""
 
