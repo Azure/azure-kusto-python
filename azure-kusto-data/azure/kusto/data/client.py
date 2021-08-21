@@ -881,26 +881,26 @@ class KustoClient(_KustoClientBase):
         self._execute(endpoint, database, None, stream, self._streaming_ingest_default_timeout, properties)
 
     def _execute_streaming_query_parsed(
-            self, database: str, query: str, timeout: timedelta = _KustoClientBase._query_default_timeout, properties: Optional[ClientRequestProperties] = None
+        self, database: str, query: str, timeout: timedelta = _KustoClientBase._query_default_timeout, properties: Optional[ClientRequestProperties] = None
     ) -> ProgressiveDataSetEnumerator:
         response = self._execute(self._query_endpoint, database, query, None, timeout, properties, stream_response=True)
         response.raw.decode_content = True
         return ProgressiveDataSetEnumerator(JsonTokenReader(response.raw))
 
     def execute_streaming_query(
-            self, database: str, query: str, timeout: timedelta = _KustoClientBase._query_default_timeout, properties: Optional[ClientRequestProperties] = None
+        self, database: str, query: str, timeout: timedelta = _KustoClientBase._query_default_timeout, properties: Optional[ClientRequestProperties] = None
     ):
         return KustoStreamingResponseDataSet(self._execute_streaming_query_parsed(database, query, timeout, properties))
 
     def _execute(
-            self,
-            endpoint: str,
-            database: str,
-            query: Optional[str],
-            payload: Optional[io.IOBase],
-            timeout: timedelta,
-            properties: Optional[ClientRequestProperties] = None,
-            stream_response: bool = False,
+        self,
+        endpoint: str,
+        database: str,
+        query: Optional[str],
+        payload: Optional[io.IOBase],
+        timeout: timedelta,
+        properties: Optional[ClientRequestProperties] = None,
+        stream_response: bool = False,
     ) -> Union[KustoResponseDataSet, Response]:
         """Executes given query against this client"""
         request_params = ExecuteRequestParams(database, payload, properties, query, timeout, self._request_headers)

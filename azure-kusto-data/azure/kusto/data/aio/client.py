@@ -49,13 +49,13 @@ class KustoClient(_KustoClientBase):
 
     @aio_documented_by(KustoClientSync.execute_streaming_ingest)
     async def execute_streaming_ingest(
-            self,
-            database: str,
-            table: str,
-            stream: io.IOBase,
-            stream_format: Union[DataFormat, str],
-            properties: ClientRequestProperties = None,
-            mapping_name: str = None,
+        self,
+        database: str,
+        table: str,
+        stream: io.IOBase,
+        stream_format: Union[DataFormat, str],
+        properties: ClientRequestProperties = None,
+        mapping_name: str = None,
     ):
         stream_format = stream_format.value if isinstance(stream_format, DataFormat) else DataFormat(stream_format.lower()).value
         endpoint = self._streaming_ingest_endpoint + database + "/" + table + "?streamFormat=" + stream_format
@@ -66,27 +66,27 @@ class KustoClient(_KustoClientBase):
 
     @aio_documented_by(KustoClientSync._execute_streaming_query_parsed)
     async def _execute_streaming_query_parsed(
-            self, database: str, query: str, timeout: timedelta = _KustoClientBase._query_default_timeout, properties: Optional[ClientRequestProperties] = None
+        self, database: str, query: str, timeout: timedelta = _KustoClientBase._query_default_timeout, properties: Optional[ClientRequestProperties] = None
     ) -> ProgressiveDataSetEnumerator:
         response = await self._execute(self._query_endpoint, database, query, None, timeout, properties, stream_response=True)
         return ProgressiveDataSetEnumerator(JsonTokenReader(response.content))
 
     @aio_documented_by(KustoClientSync.execute_streaming_query)
     async def execute_streaming_query(
-            self, database: str, query: str, timeout: timedelta = _KustoClientBase._query_default_timeout, properties: Optional[ClientRequestProperties] = None
+        self, database: str, query: str, timeout: timedelta = _KustoClientBase._query_default_timeout, properties: Optional[ClientRequestProperties] = None
     ):
         return await KustoStreamingResponseDataSet.create(await self._execute_streaming_query_parsed(database, query, timeout, properties))
 
     @aio_documented_by(KustoClientSync._execute)
     async def _execute(
-            self,
-            endpoint: str,
-            database: str,
-            query: Optional[str],
-            payload: Optional[io.IOBase],
-            timeout: timedelta,
-            properties: ClientRequestProperties = None,
-            stream_response: bool = False,
+        self,
+        endpoint: str,
+        database: str,
+        query: Optional[str],
+        payload: Optional[io.IOBase],
+        timeout: timedelta,
+        properties: ClientRequestProperties = None,
+        stream_response: bool = False,
     ) -> Union[KustoResponseDataSet, ClientResponse]:
         """Executes given query against this client"""
         request_params = ExecuteRequestParams(database, payload, properties, query, timeout, self._request_headers)
