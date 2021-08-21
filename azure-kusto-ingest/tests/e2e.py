@@ -13,10 +13,8 @@ import pytest
 
 from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
 from azure.kusto.data._cloud_settings import CloudSettings
-from azure.kusto.data._models import WellKnownDataSet
 from azure.kusto.data.aio import KustoClient as AsyncKustoClient
 from azure.kusto.data.exceptions import KustoServiceError
-from azure.kusto.data.streaming_response import FrameType
 from azure.kusto.ingest import (
     QueuedIngestClient,
     KustoStreamingIngestClient,
@@ -225,60 +223,6 @@ class TestE2E:
 
         cls.current_count += actual
         assert actual == expected, "Row count expected = {0}, while actual row count = {1}".format(expected, actual)
-
-    def test_streaming_query(self):
-        frames = self.client._execute_streaming_query_parsed(self.test_db, self.streaming_test_table_query)
-
-        initial_frame = next(frames)
-        expected_initial_frame = {
-            "FrameType": FrameType.DataSetHeader,
-            "IsProgressive": False,
-            "Version": "v2.0",
-        }
-        assert initial_frame == expected_initial_frame
-        query_props = next(frames)
-        assert query_props["FrameType"] == FrameType.DataTable
-        assert query_props["TableKind"] == WellKnownDataSet.QueryProperties.value
-        assert type(query_props["Columns"]) == list
-        assert type(query_props["Rows"]) == list
-        assert len(query_props["Rows"][0]) == len(query_props["Columns"])
-
-        primary_result = next(frames)
-        assert primary_result["FrameType"] == FrameType.DataTable
-        assert primary_result["TableKind"] == WellKnownDataSet.PrimaryResult.value
-        assert type(primary_result["Columns"]) == list
-        assert type(primary_result["Rows"]) != list
-
-        row = next(primary_result["Rows"])
-        assert len(row) == len(primary_result["Columns"])
-
-    @pytest.mark.asyncio
-    async def test_streaming_query_async(self):
-        async with await self.get_async_client() as client:
-            frames = await client.execute_streaming_query(self.test_db, self.streaming_test_table_query)
-            frames.__aiter__()
-            initial_frame = await frames.__anext__()
-            expected_initial_frame = {
-                "FrameType": FrameType.DataSetHeader,
-                "IsProgressive": False,
-                "Version": "v2.0",
-            }
-            assert initial_frame == expected_initial_frame
-            query_props = await frames.__anext__()
-            assert query_props["FrameType"] == FrameType.DataTable
-            assert query_props["TableKind"] == WellKnownDataSet.QueryProperties.value
-            assert type(query_props["Columns"]) == list
-            assert type(query_props["Rows"]) == list
-            assert list(query_props["Rows"][0].keys()) == [column["ColumnName"] for column in query_props["Columns"]]
-
-            primary_result = await frames.__anext__()
-            assert primary_result["FrameType"] == FrameType.DataTable
-            assert primary_result["TableKind"] == WellKnownDataSet.PrimaryResult.value
-            assert type(primary_result["Columns"]) == list
-            assert type(primary_result["Rows"]) != list
-
-            row = await primary_result["Rows"].__anext__()
-            assert list(row.keys()) == [column["ColumnName"] for column in primary_result["Columns"]]
 
     @pytest.mark.asyncio
     async def test_csv_ingest_existing_table(self):
