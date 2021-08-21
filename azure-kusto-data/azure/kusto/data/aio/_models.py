@@ -3,7 +3,7 @@ from typing import Optional, List
 from azure.kusto.data._models import WellKnownDataSet, KustoResultColumn, KustoResultRow, KustoResultTable
 from azure.kusto.data.aio.streaming_response import ProgressiveDataSetEnumerator
 from azure.kusto.data.exceptions import KustoStreamingError
-from azure.kusto.data.response import KustoResponseDataSet, KustoStreamingResponseDataSet as SyncKustoStreamingResponseDataSet
+from azure.kusto.data.response import KustoResponseDataSet
 from azure.kusto.data.streaming_response import FrameType
 
 
@@ -69,6 +69,8 @@ class KustoStreamingResponseDataSet(KustoResponseDataSet):
     _error_column = "Level"
     _crid_column = "ClientRequestId"
 
+    current_primary_results_table: KustoStreamingResultTable
+
     async def extract_tables_until_primary_result(self):
         while True:
             table = await self.streamed_data.__anext__()
@@ -88,19 +90,14 @@ class KustoStreamingResponseDataSet(KustoResponseDataSet):
         return data_set
 
     def __init__(self, streamed_data: ProgressiveDataSetEnumerator):
-        super().__init__([])
         self.tables = []
         self.streamed_data = streamed_data
         self.have_read_rest_of_tables = False
-        self.current_primary_results_table = None
-
-    def get_current_primary_results_table(self) -> KustoStreamingResultTable:
-        return self.current_primary_results_table
 
     async def next_primary_results_table(self, ensure_current_finished=True) -> Optional[KustoStreamingResultTable]:
         if self.have_read_rest_of_tables:
             return None
-        if ensure_current_finished and not self.get_current_primary_results_table().finished:
+        if ensure_current_finished and not self.current_primary_results_table.finished:
             raise KustoStreamingError(
                 "Tried retrieving a new primary_result table before the old one was finished. To override pass `ensure_current_finished=False`"
             )
@@ -127,12 +124,6 @@ class KustoStreamingResponseDataSet(KustoResponseDataSet):
         table = [KustoResultTable(t) async for t in self.streamed_data if t["FrameType"] == FrameType.DataTable]
         self.tables.extend(table)
         self.have_read_rest_of_tables = True
-
-    def primary_results(self) -> List[KustoResultTable]:
-        # Todo - making a method from the base class unavailable is a code smell. Maybe we need to restructure the hierarchy
-        raise KustoStreamingError(
-            "KustoStreamingResponseDataSet does not support listing all of the primary results in memory. use `get_current_primary_results_table` and `next_primary_results_table`"
-        )
 
     @property
     def errors_count(self) -> int:

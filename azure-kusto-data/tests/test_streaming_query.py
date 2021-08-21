@@ -60,14 +60,14 @@ class TestStreamingQuery(KustoClientTestsMixin):
             reader = ProgressiveDataSetEnumerator(JsonTokenReader(f))
 
             response = KustoStreamingResponseDataSet(reader)
-            self._assert_sanity_query_primary_results(response.get_current_primary_results_table())
+            self._assert_sanity_query_primary_results(response.current_primary_results_table)
 
     def test_exception_in_row(self):
         with self.open_json_file("query_partial_results_defer_is_false.json") as f:
             reader = ProgressiveDataSetEnumerator(JsonTokenReader(f))
 
             response = KustoStreamingResponseDataSet(reader)
-            table = response.get_current_primary_results_table()
+            table = response.current_primary_results_table
             with pytest.raises(KustoServiceError):
                 rows = [r for r in table.rows]
 
@@ -97,7 +97,7 @@ class TestStreamingQuery(KustoClientTestsMixin):
             reader = AsyncProgressiveDataSetEnumerator(AsyncJsonTokenReader(f))
 
             response = await AsyncKustoStreamingResponseDataSet.create(reader)
-            self._assert_sanity_query_primary_results([x async for x in response.get_current_primary_results_table()])
+            self._assert_sanity_query_primary_results([x async for x in response.current_primary_results_table])
 
     @pytest.mark.asyncio
     async def test_exception_in_row_async(self):
@@ -105,6 +105,6 @@ class TestStreamingQuery(KustoClientTestsMixin):
             reader = AsyncProgressiveDataSetEnumerator(AsyncJsonTokenReader(f))
 
             response = await AsyncKustoStreamingResponseDataSet.create(reader)
-            table = response.get_current_primary_results_table()
+            table = response.current_primary_results_table
             with pytest.raises(KustoServiceError):
                 rows = [r async for r in table.rows]

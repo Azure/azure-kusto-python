@@ -108,7 +108,7 @@ DIGIT_WORDS = [str("Zero"), str("One"), str("Two"), str("Three"), str("Four"), s
 
 def get_response_first_primary_result(response):
     if type(response) == KustoStreamingResponseDataSet:
-        return response.get_current_primary_results_table()
+        return response.current_primary_results_table
     else:
         return response.primary_results[0]
 

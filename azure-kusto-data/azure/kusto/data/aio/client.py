@@ -49,11 +49,11 @@ class KustoClient(_KustoClientBase):
 
     @aio_documented_by(KustoClientSync.execute_streaming_ingest)
     async def execute_streaming_ingest(
-        self,
-        database: str,
-        table: str,
-        stream: io.IOBase,
-        stream_format: Union[DataFormat, str],
+            self,
+            database: str,
+            table: str,
+            stream: io.IOBase,
+            stream_format: Union[DataFormat, str],
             properties: ClientRequestProperties = None,
             mapping_name: str = None,
     ):

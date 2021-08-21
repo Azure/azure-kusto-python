@@ -17,10 +17,9 @@ class KustoResponseDataSet(metaclass=ABCMeta):
         It can contain more than one table when [`fork`](https://docs.microsoft.com/en-us/azure/kusto/query/forkoperator) is used.
     """
 
-    def __init__(self, json_response):
-        self.tables = [KustoResultTable(t) for t in json_response]
-        self.tables_count = len(self.tables)
-        self.tables_names = [t.table_name for t in self.tables]
+    tables: list
+    tables_count: int
+    tables_names: list
 
     @property
     @abstractmethod
@@ -36,15 +35,6 @@ class KustoResponseDataSet(metaclass=ABCMeta):
     @abstractmethod
     def _status_column(self):
         raise NotImplementedError
-
-    @property
-    def primary_results(self) -> List[KustoResultTable]:
-        """Returns primary results. If there is more than one returns a list."""
-        if self.tables_count == 1:
-            return self.tables
-        primary = list(filter(lambda x: x.table_kind == WellKnownDataSet.PrimaryResult, self.tables))
-
-        return primary
 
     @property
     def errors_count(self) -> int:
@@ -92,7 +82,23 @@ class KustoResponseDataSet(metaclass=ABCMeta):
         return self.tables_count
 
 
-class KustoResponseDataSetV1(KustoResponseDataSet):
+class KustoCompleteDataSet(KustoResponseDataSet, metaclass=ABCMeta):
+    def __init__(self, json_response):
+        self.tables = [KustoResultTable(t) for t in json_response]
+        self.tables_count = len(self.tables)
+        self.tables_names = [t.table_name for t in self.tables]
+
+    @property
+    def primary_results(self) -> List[KustoResultTable]:
+        """Returns primary results. If there is more than one returns a list."""
+        if self.tables_count == 1:
+            return self.tables
+        primary = list(filter(lambda x: x.table_kind == WellKnownDataSet.PrimaryResult, self.tables))
+
+        return primary
+
+
+class KustoResponseDataSetV1(KustoCompleteDataSet):
     """
     KustoResponseDataSetV1 is a wrapper for a V1 Kusto response.
     It parses V1 response into a convenient KustoResponseDataSet.
@@ -127,7 +133,7 @@ class KustoResponseDataSetV1(KustoResponseDataSet):
                 self.tables[i].table_kind = self._tables_kinds[toc[i]["Kind"]]
 
 
-class KustoResponseDataSetV2(KustoResponseDataSet):
+class KustoResponseDataSetV2(KustoCompleteDataSet):
     """
     KustoResponseDataSetV2 is a wrapper for a V2 Kusto response.
     It parses V2 response into a convenient KustoResponseDataSet.
@@ -147,6 +153,8 @@ class KustoStreamingResponseDataSet(KustoResponseDataSet):
     _error_column = "Level"
     _crid_column = "ClientRequestId"
 
+    current_primary_results_table: KustoStreamingResultTable
+
     def extract_tables_until_primary_result(self):
         while True:
             table = next(self.streamed_data)
@@ -160,20 +168,15 @@ class KustoStreamingResponseDataSet(KustoResponseDataSet):
                 self.tables.append(KustoResultTable(table))
 
     def __init__(self, streamed_data: ProgressiveDataSetEnumerator):
-        super().__init__([])
         self.tables = []
         self.streamed_data = streamed_data
         self.have_read_rest_of_tables = False
-        self.current_primary_results_table = None
         self.extract_tables_until_primary_result()
-
-    def get_current_primary_results_table(self) -> KustoStreamingResultTable:
-        return self.current_primary_results_table
 
     def next_primary_results_table(self, ensure_current_finished=True) -> Optional[KustoStreamingResultTable]:
         if self.have_read_rest_of_tables:
             return None
-        if ensure_current_finished and not self.get_current_primary_results_table().finished:
+        if ensure_current_finished and not self.current_primary_results_table.finished:
             raise KustoStreamingError(
                 "Tried retrieving a new primary_result table before the old one was finished. To override pass `ensure_current_finished=False`"
             )
@@ -199,12 +202,6 @@ class KustoStreamingResponseDataSet(KustoResponseDataSet):
 
         self.tables.extend(KustoResultTable(t) for t in self.streamed_data if t["FrameType"] == FrameType.DataTable)
         self.have_read_rest_of_tables = True
-
-    def primary_results(self) -> List[KustoResultTable]:
-        # Todo - making a method from the base class unavailable is a code smell. Maybe we need to restructure the hierarchy
-        raise KustoStreamingError(
-            "KustoStreamingResponseDataSet does not support listing all of the primary results in memory. use `get_current_primary_results_table` and `next_primary_results_table`"
-        )
 
     @property
     def errors_count(self) -> int:
