@@ -180,7 +180,9 @@ class ProgressiveDataSetEnumerator:
         while True:
             token = await self.reader.read_token_of_type(JsonTokenType.START_ARRAY, JsonTokenType.END_ARRAY, JsonTokenType.START_MAP)
             if token.token_type == JsonTokenType.START_MAP:
-                raise KustoServiceError("Received error in data: " + str(self.parse_object(skip_start=True)))  # Todo - good error
+                raise KustoServiceError(
+                    "Received error in data: " + str(self.parse_object(skip_start=True))
+                )  # Todo - replace this with a better error once managed streaming ingest is merged
             if token.token_type == JsonTokenType.END_ARRAY:
                 return
             yield await self.parse_array(skip_start=True)

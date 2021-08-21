@@ -216,7 +216,11 @@ class ProgressiveDataSetEnumerator:
         while True:
             token = self.reader.read_token_of_type(JsonTokenType.START_ARRAY, JsonTokenType.END_ARRAY, JsonTokenType.START_MAP)
             if token.token_type == JsonTokenType.START_MAP:
-                raise KustoServiceError("Received error in data: " + str(self.parse_object(skip_start=True)))  # Todo - good error
+                # Todo - this method of error handling may be problematic, since after raising an error the iteration stops.
+                #  This means that if there are more data or even more errors, we can't read them
+                raise KustoServiceError(
+                    "Received error in data: " + str(self.parse_object(skip_start=True))
+                )  # Todo - replace this with a better error once managed streaming ingest is merged
             if token.token_type == JsonTokenType.END_ARRAY:
                 return
             yield self.parse_array(skip_start=True)

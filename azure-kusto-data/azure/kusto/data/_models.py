@@ -166,8 +166,6 @@ class KustoStreamingResultTable:
         self.table_kind = WellKnownDataSet[json_table["TableKind"]] if "TableKind" in json_table else None
         self.columns = [KustoResultColumn(column, index) for index, column in enumerate(json_table["Columns"])]
 
-        # TODO - errors
-
         self.raw_columns = json_table["Columns"]
         self.raw_rows = json_table["Rows"]
         self.kusto_result_rows = None
