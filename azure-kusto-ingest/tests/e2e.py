@@ -37,6 +37,7 @@ CLEAR_DB_CACHE = ".clear database cache streamingingestion schema"
 
 class TestE2E:
     """A class to define mappings to deft table."""
+
     input_folder_path: str
     streaming_test_table: str
     engine_cs: Optional[str]
