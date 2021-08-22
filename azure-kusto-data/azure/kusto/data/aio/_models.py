@@ -3,7 +3,7 @@ from typing import Optional, List
 from azure.kusto.data._models import WellKnownDataSet, KustoResultColumn, KustoResultRow, KustoResultTable
 from azure.kusto.data.aio.streaming_response import ProgressiveDataSetEnumerator
 from azure.kusto.data.exceptions import KustoStreamingError
-from azure.kusto.data.response import KustoResponseDataSet
+from azure.kusto.data.response import BaseKustoResponseDataSet
 from azure.kusto.data.streaming_response import FrameType
 
 
@@ -64,7 +64,7 @@ class KustoStreamingResultTable:
     __nonzero__ = __bool__
 
 
-class KustoStreamingResponseDataSet(KustoResponseDataSet):
+class KustoStreamingResponseDataSet(BaseKustoResponseDataSet):
     _status_column = "Payload"
     _error_column = "Level"
     _crid_column = "ClientRequestId"

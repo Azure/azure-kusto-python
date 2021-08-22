@@ -18,7 +18,7 @@ from urllib3.connection import HTTPConnection
 from ._version import VERSION
 from .data_format import DataFormat
 from .exceptions import KustoServiceError
-from .response import KustoResponseDataSetV1, KustoResponseDataSetV2, KustoResponseDataSet, KustoStreamingResponseDataSet
+from .response import KustoResponseDataSetV1, KustoResponseDataSetV2, KustoStreamingResponseDataSet, KustoResponseDataSet
 from .security import _AadHelper
 from .streaming_response import ProgressiveDataSetEnumerator, JsonTokenReader
 
@@ -889,7 +889,7 @@ class KustoClient(_KustoClientBase):
 
     def execute_streaming_query(
         self, database: str, query: str, timeout: timedelta = _KustoClientBase._query_default_timeout, properties: Optional[ClientRequestProperties] = None
-    ):
+    ) -> KustoStreamingResponseDataSet:
         return KustoStreamingResponseDataSet(self._execute_streaming_query_parsed(database, query, timeout, properties))
 
     def _execute(

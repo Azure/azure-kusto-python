@@ -8,15 +8,7 @@ from .exceptions import KustoStreamingError
 from .streaming_response import ProgressiveDataSetEnumerator, FrameType
 
 
-class KustoResponseDataSet(metaclass=ABCMeta):
-    """
-    `KustoResponseDataSet` Represents the parsed data set carried by the response to a Kusto request.
-    `KustoResponseDataSet` provides convenient methods to work with the returned result.
-    The result table(s) are accessable via the @primary_results property.
-    @primary_results returns a collection of `KustoResultTable`.
-        It can contain more than one table when [`fork`](https://docs.microsoft.com/en-us/azure/kusto/query/forkoperator) is used.
-    """
-
+class BaseKustoResponseDataSet(metaclass=ABCMeta):
     tables: list
     tables_count: int
     tables_names: list
@@ -82,7 +74,15 @@ class KustoResponseDataSet(metaclass=ABCMeta):
         return self.tables_count
 
 
-class KustoCompleteDataSet(KustoResponseDataSet, metaclass=ABCMeta):
+class KustoResponseDataSet(BaseKustoResponseDataSet, metaclass=ABCMeta):
+    """
+    `KustoResponseDataSet` Represents the parsed data set carried by the response to a Kusto request.
+    `KustoResponseDataSet` provides convenient methods to work with the returned result.
+    The result table(s) are accessable via the @primary_results property.
+    @primary_results returns a collection of `KustoResultTable`.
+        It can contain more than one table when [`fork`](https://docs.microsoft.com/en-us/azure/kusto/query/forkoperator) is used.
+    """
+
     def __init__(self, json_response):
         self.tables = [KustoResultTable(t) for t in json_response]
         self.tables_count = len(self.tables)
@@ -98,7 +98,7 @@ class KustoCompleteDataSet(KustoResponseDataSet, metaclass=ABCMeta):
         return primary
 
 
-class KustoResponseDataSetV1(KustoCompleteDataSet):
+class KustoResponseDataSetV1(KustoResponseDataSet):
     """
     KustoResponseDataSetV1 is a wrapper for a V1 Kusto response.
     It parses V1 response into a convenient KustoResponseDataSet.
@@ -133,7 +133,7 @@ class KustoResponseDataSetV1(KustoCompleteDataSet):
                 self.tables[i].table_kind = self._tables_kinds[toc[i]["Kind"]]
 
 
-class KustoResponseDataSetV2(KustoCompleteDataSet):
+class KustoResponseDataSetV2(KustoResponseDataSet):
     """
     KustoResponseDataSetV2 is a wrapper for a V2 Kusto response.
     It parses V2 response into a convenient KustoResponseDataSet.
@@ -148,7 +148,7 @@ class KustoResponseDataSetV2(KustoCompleteDataSet):
         super(KustoResponseDataSetV2, self).__init__([t for t in json_response if t["FrameType"] == "DataTable"])
 
 
-class KustoStreamingResponseDataSet(KustoResponseDataSet):
+class KustoStreamingResponseDataSet(BaseKustoResponseDataSet):
     _status_column = "Payload"
     _error_column = "Level"
     _crid_column = "ClientRequestId"
