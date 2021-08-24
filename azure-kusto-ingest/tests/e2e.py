@@ -1,12 +1,14 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
 import io
+import json
 import os
 import random
 import sys
 import time
 import unittest
 import uuid
+from datetime import datetime
 from typing import Optional
 
 import pytest
@@ -40,6 +42,7 @@ class TestE2E:
 
     input_folder_path: str
     streaming_test_table: str
+    test_streaming_data: list
     engine_cs: Optional[str]
     dm_cs: Optional[str]
     app_id: Optional[str]
@@ -168,7 +171,8 @@ class TestE2E:
         python_version = "_".join([str(v) for v in sys.version_info[:3]])
         cls.test_table = "python_test_{0}_{1}_{2}".format(python_version, str(int(time.time())), random.randint(1, 100000))
         cls.streaming_test_table = "BigChunkus"
-        cls.streaming_test_table_query = cls.streaming_test_table + " | top 1000000 by Period"
+        cls.streaming_test_table_query = cls.streaming_test_table + " | order by timestamp"
+
         cls.client = KustoClient(cls.engine_kcsb_from_env())
         cls.ingest_client = QueuedIngestClient(cls.dm_kcsb_from_env())
         cls.streaming_ingest_client = KustoStreamingIngestClient(cls.engine_kcsb_from_env())
@@ -182,6 +186,8 @@ class TestE2E:
         cls.zipped_json_file_path = os.path.join(cls.input_folder_path, "dataset.jsonz.gz")
         cls.table_chunk_file_path = os.path.join(cls.input_folder_path, "table_chunk.json")
 
+        with open(os.path.join(cls.input_folder_path, "big.json")) as f:
+            cls.test_streaming_data = json.load(f)
         cls.current_count = 0
 
         cls.client.execute(
@@ -232,7 +238,61 @@ class TestE2E:
         cls.current_count += actual
         assert actual == expected, "Row count expected = {0}, while actual row count = {1}".format(expected, actual)
 
+    @staticmethod
+    def normalize_row(row):
+        result = []
+        for r in row:
+            if type(r) == bool:
+                result.append(int(r))
+            elif type(r) == datetime:
+                result.append(r.strftime("%Y-%m-%dT%H:%M:%SZ"))
+            else:
+                result.append(r)
+        return result
+
     def test_streaming_query(self):
+        result = self.client.execute_streaming_query(self.test_db, self.streaming_test_table_query + ";" + self.streaming_test_table_query)
+        primary = result.current_primary_results_table
+        rows = primary.rows
+        for row in self.test_streaming_data:
+            assert row == self.normalize_row(next(rows).to_list())
+
+        primary = result.next_primary_results_table(ensure_current_finished=False)
+        rows = primary.rows
+        for row in self.test_streaming_data:
+            assert row == self.normalize_row(next(rows).to_list())
+
+        assert result.next_primary_results_table(ensure_current_finished=False) is None
+        assert result.errors_count == 0
+        assert result.get_exceptions() == []
+
+    @pytest.mark.asyncio
+    async def test_streaming_query_async(self):
+        async with await self.get_async_client() as client:
+            result = await client.execute_streaming_query(self.test_db, self.streaming_test_table_query + ";" + self.streaming_test_table_query)
+            primary = result.current_primary_results_table
+            streaming_data_iter = iter(self.test_streaming_data)
+            async for row in primary.rows:
+                expected_row = next(streaming_data_iter, None)
+                if expected_row is None:
+                    break
+
+                assert expected_row == self.normalize_row(row.to_list())
+
+            primary = await result.next_primary_results_table(ensure_current_finished=False)
+            streaming_data_iter = iter(self.test_streaming_data)
+            async for row in primary.rows:
+                expected_row = next(streaming_data_iter, None)
+                if expected_row is None:
+                    break
+
+                assert expected_row == self.normalize_row(row.to_list())
+
+            assert (await result.next_primary_results_table(ensure_current_finished=False)) is None
+            assert result.errors_count == 0
+            assert result.get_exceptions() == []
+
+    def test_streaming_query_internal(self):
         frames = self.client._execute_streaming_query_parsed(self.test_db, self.streaming_test_table_query)
 
         initial_frame = next(frames)
@@ -259,7 +319,7 @@ class TestE2E:
         assert len(row) == len(primary_result["Columns"])
 
     @pytest.mark.asyncio
-    async def test_streaming_query_async(self):
+    async def test_streaming_query_internal_async(self):
         async with await self.get_async_client() as client:
             frames = await client._execute_streaming_query_parsed(self.test_db, self.streaming_test_table_query)
             frames.__aiter__()

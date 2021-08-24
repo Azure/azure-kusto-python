@@ -4,6 +4,7 @@
 import json
 from decimal import Decimal
 from enum import Enum
+from typing import Iterator
 
 from . import _converters
 from .exceptions import KustoServiceError, KustoStreamingError
@@ -158,7 +159,10 @@ class KustoResultTable:
 
 
 class KustoStreamingResultTable:
-    """Iterator over a Kusto result table."""
+    """
+    Iterator over a Kusto result table in streaming.
+    This class can be iterated only once.
+    """
 
     def __init__(self, json_table: dict):
         self.table_name = json_table.get("TableName")
@@ -174,7 +178,7 @@ class KustoStreamingResultTable:
         self.row_count = 0
 
     @property
-    def rows(self):
+    def rows(self) -> Iterator[KustoResultRow]:
         if self.finished:
             raise KustoStreamingError("Can't retrieve rows after iteration is finished")
         return iter(self)

@@ -5,7 +5,7 @@ import pytest
 from azure.kusto.data._models import WellKnownDataSet, KustoResultRow, KustoResultColumn
 from azure.kusto.data.aio._models import KustoStreamingResponseDataSet as AsyncKustoStreamingResponseDataSet
 from azure.kusto.data.aio.streaming_response import JsonTokenReader as AsyncJsonTokenReader, ProgressiveDataSetEnumerator as AsyncProgressiveDataSetEnumerator
-from azure.kusto.data.exceptions import KustoServiceError
+from azure.kusto.data.exceptions import KustoServiceError, KustoStreamingError
 from azure.kusto.data.response import KustoStreamingResponseDataSet
 from azure.kusto.data.streaming_response import JsonTokenReader, ProgressiveDataSetEnumerator, FrameType
 from tests.kusto_client_common import KustoClientTestsMixin
@@ -60,7 +60,24 @@ class TestStreamingQuery(KustoClientTestsMixin):
             reader = ProgressiveDataSetEnumerator(JsonTokenReader(f))
 
             response = KustoStreamingResponseDataSet(reader)
+
+            # Before reading all of the tables these results won't be available
+            with pytest.raises(KustoStreamingError):
+                errors_count = response.errors_count
+            with pytest.raises(KustoStreamingError):
+                exceptions = response.get_exceptions()
+            # Can't advance by default until current table is finished
+            with pytest.raises(KustoStreamingError):
+                response.next_primary_results_table()
+
             self._assert_sanity_query_primary_results(response.current_primary_results_table)
+
+            assert response.next_primary_results_table() is None
+            assert response.errors_count == 0
+            assert response.get_exceptions() == []
+
+            # After we finish the tables we're left with None
+            assert response.next_primary_results_table() is None
 
     def test_exception_in_row(self):
         with self.open_json_file("query_partial_results_defer_is_false.json") as f:
@@ -97,7 +114,24 @@ class TestStreamingQuery(KustoClientTestsMixin):
             reader = AsyncProgressiveDataSetEnumerator(AsyncJsonTokenReader(f))
 
             response = await AsyncKustoStreamingResponseDataSet.create(reader)
+
+            # Before reading all of the tables these results won't be available
+            with pytest.raises(KustoStreamingError):
+                errors_count = response.errors_count
+            with pytest.raises(KustoStreamingError):
+                exceptions = response.get_exceptions()
+            # Can't advance by default until current table is finished
+            with pytest.raises(KustoStreamingError):
+                await response.next_primary_results_table()
+
             self._assert_sanity_query_primary_results([x async for x in response.current_primary_results_table])
+
+            assert (await response.next_primary_results_table()) is None
+            assert response.errors_count == 0
+            assert response.get_exceptions() == []
+
+            # After we finish the tables we're left with None
+            assert (await response.next_primary_results_table()) is None
 
     @pytest.mark.asyncio
     async def test_exception_in_row_async(self):

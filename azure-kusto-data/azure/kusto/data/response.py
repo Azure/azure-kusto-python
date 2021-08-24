@@ -154,6 +154,10 @@ class KustoStreamingResponseDataSet(BaseKustoResponseDataSet):
     _crid_column = "ClientRequestId"
 
     current_primary_results_table: KustoStreamingResultTable
+    """
+       The current primary results table which provides an interface to stream its rows.
+       Becomes invalidated after a successful call to `next_primary_results_table` or `read_rest_of_tables` 
+    """
 
     def extract_tables_until_primary_result(self):
         while True:

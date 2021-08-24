@@ -890,6 +890,16 @@ class KustoClient(_KustoClientBase):
     def execute_streaming_query(
         self, database: str, query: str, timeout: timedelta = _KustoClientBase._query_default_timeout, properties: Optional[ClientRequestProperties] = None
     ) -> KustoStreamingResponseDataSet:
+        """
+        Execute a KQL query without reading it all to memory.
+        The resulting KustoStreamingResponseDataSet will stream one table at a time, and the rows can be retrieved sequentially.
+
+        :param str database: Database against query will be executed.
+        :param str query: Query to be executed.
+        :param timedelta timeout: timeout for the query to be executed
+        :param azure.kusto.data.ClientRequestProperties properties: Optional additional properties.
+        :return KustoStreamingResponseDataSet:
+        """
         return KustoStreamingResponseDataSet(self._execute_streaming_query_parsed(database, query, timeout, properties))
 
     def _execute(
