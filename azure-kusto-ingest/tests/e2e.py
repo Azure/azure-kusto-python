@@ -184,7 +184,6 @@ class TestE2E:
         cls.zipped_csv_file_path = os.path.join(cls.input_folder_path, "dataset.csv.gz")
         cls.json_file_path = os.path.join(cls.input_folder_path, "dataset.json")
         cls.zipped_json_file_path = os.path.join(cls.input_folder_path, "dataset.jsonz.gz")
-        cls.table_chunk_file_path = os.path.join(cls.input_folder_path, "table_chunk.json")
 
         with open(os.path.join(cls.input_folder_path, "big.json")) as f:
             cls.test_streaming_data = json.load(f)
