@@ -1,11 +1,7 @@
-# ==============
-# !!! README !!!
-# ==============
-
-# Todo:
-# 1) Run setup.bat to install necessary dependencies.
-# 2) Follow the To-Do comments and fill in any necessary mandatory and optional arguments depending on your scenario
-# 3) run the script
+# Todo - Start Here:
+#  1) Run setup.bat to install necessary dependencies.
+#  2) Follow the To-Do comments for instructions, tips and reference material
+#  3) run the script
 
 # Todo (Yochai) cleanup the import section when done
 import io
@@ -30,39 +26,40 @@ from azure.kusto.ingest import (
     KustoStreamingIngestClient,
 )
 
-# Todo Config (AutoFill):
+# Todo - Config (Auto-Filled properties):
 kustoUri = "https://sdkse2etest.eastus.kusto.windows.net"
 ingestUri = "https://ingest-sdkse2etest.eastus.kusto.windows.net"
 databaseName = "e2e"
 tableName = "aa"
 tableSchema = ""
-fileFormat = "csv"  # choose between: (csv|json)
+# Todo - Learn More: For additional information about supported data formats, see
+#  https://docs.microsoft.com/en-us/azure/data-explorer/ingestion-supported-formats
+fileFormat = DataFormat.CSV
 
-# Todo Config (Mandatory):
-ingestionDirectory = None
-
-# Todo Config (Optional): Change the authentication method
-# Note!
-# Some of the auth modes require additional environment variables to be set in order to work (check the use below)
+# Todo - Config (Optional): Change the authentication method from Device Code (User Prompt) to one of the other options
+#  Some of the auth modes require additional environment variables to be set in order to work (check the use below)
+#  Managed Identity Authentication only works when running as an Azure service (webapp, function, etc.)
 authenticationMode = "deviceCode"  # choose between: (deviceCode|managedIdentity|AppKey|AppCertificate)
 
 
 def main():
     print("kusto sample app is starting")
 
-    # Todo - for information on how to authorize users and apps on Kusto Database see:
+    # Todo - Learn More: For additional information on how to authorize users and apps on Kusto Database see:
     #  https://docs.microsoft.com/en-us/azure/data-explorer/manage-database-permissions
     if authenticationMode == "deviceCode":
         print("During the run you will be prompted by the browser to enter a device code.")
         print("Return to the console of the sample app and copy the code to provide from it.")
         input("Press enter to continue...")
 
+    # Todo - Tip: Avoid creating a new Kusto Client for each use.
+    #  Create the clients once and use them as long as possible.
     kusto_connection_string = create_connection_string(kustoUri, authenticationMode)
     ingest_connection_string = create_connection_string(ingestUri, authenticationMode)
     kusto_client = KustoClient(kusto_connection_string)
     ingest_client = QueuedIngestClient(ingest_connection_string)
 
-    # Todo - for more information on how to create tables see: https://docs.microsoft.com/en-us/azure/data-explorer/one-click-table
+    # Todo - Learn More: For additional information on how to create tables see: https://docs.microsoft.com/en-us/azure/data-explorer/one-click-table
     print("")
     print(f"Creating table '{databaseName}.{tableName}' if needed:")
     # Todo (Yochai) what's the table creation command
@@ -71,15 +68,33 @@ def main():
         print("Failed to create or validate table exists.")
         exit(-1)
 
-    # Todo - for more information on how to query Kusto see: https://docs.microsoft.com/en-us/azure/data-explorer/write-queries
+    # Todo - Learn More: For additional information on Kusto Query Language see: https://docs.microsoft.com/en-us/azure/data-explorer/write-queries
     print("")
     print(f"Initial row count for '{databaseName}.{tableName}' is:")
     run_query(kusto_client, databaseName, f"{tableName} | summarize count()")
 
-    # Todo - for more information on how to ingest data to Kusto in Python see: https://docs.microsoft.com/en-us/azure/data-explorer/python-ingest-data
+    # Todo - Learn More:
+    #  Kusto batches data for ingestion efficiency. The default batching policy ingests data when one of the following conditions are met:
+    #   1) more then a 1000 files were queued for ingestion for the same table by the same user
+    #   2) more then 1GB of data was queued for ingestion for the same table by the same user
+    #   3) More then 5 minutes have passed since the first file was queued for ingestion for the same table by the same user
+    #  In order to speed up this sample app, we attempt to modify the default ingestion policy to ingest data after 10 seconds have passed
+    #  For additional information on customizing the ingestion batching policy see:
+    #   https://docs.microsoft.com/en-us/azure/data-explorer/kusto/management/batchingpolicy
+    #  You may also skip the batching for some files using the FlushImmediatly property, though this option should be used with care as it is inefficient
+    batching_policy = '{ "MaximumBatchingTimeSpan": "00:05:00", "MaximumNumberOfItems": 500, "MaximumRawDataSizeMB": 1024 }'
+    command = f".alter table {tableName} policy ingestionbatching @'{batching_policy}'"
+    if not run_control_command(kusto_client, databaseName, command):
+        print("Failed to alter the ingestion policy!")
+        print("This could be the result of insufficient permissions.")
+        print("The sample will still run, though ingestion will be delayed for 5 minutes")
+
+    # Todo - Learn More: For additional information on how to ingest data to Kusto in Python see:
+    #  https://docs.microsoft.com/en-us/azure/data-explorer/python-ingest-data
     print("")
-    print(f"Ingesting all files from '{ingestionDirectory}'")
-    ingest_data_from_folder(ingest_client, databaseName, tableName, ingestionDirectory)
+    ingest_file = input("Please enter a directory of files to ingest from:")
+    print(f"Attempting to ingest '{ingest_file}'")
+    ingest_data_from_file(ingest_client, databaseName, tableName, ingest_file)
 
     print("")
     print(f"Post ingestion row count for '{databaseName}.{tableName}' is:")
@@ -126,12 +141,28 @@ def run_query(client: KustoClient, db: str, query: str):
     return False
 
 
-def ingest_data_from_folder(client: QueuedIngestClient, db: str, table: str, folder_path: str):
-    print("nothing to ingest")
-    # todo (yochai) iterate over all files of the folder and queue them for ingestion
-    # todo (yochai) demonstrate use of Flush immediately option
-    # todo (yochai) demonstrate ingestion of json and csv files
-    pass
+def ingest_data_from_file(client: QueuedIngestClient, db: str, table: str, file_path: str):
+    ingestion_props = IngestionProperties(
+        database=f"{databaseName}",
+        table=f"{tableName}",
+        data_format=fileFormat,
+
+        # Todo - Tip: in case you wish to skip ingestion batching uncomment the below line, though mind it is far less efficient to ingest
+        #  many files in this way
+        # flush_immediately=True,
+
+        # Todo - Tip: in case a mapping is required provide either a mapping or a mapping reference for a pre-configured mapping
+        # ingestion_mapping_type=IngestionMappingType.JSON
+        # ingestion_mapping=
+        # ingestion_mapping_reference="{json_mapping_that_already_exists_on_table}"
+    )
+
+    # Todo - Tip: for optimal ingestion batching it's best to specify the uncompressed data size in the file descriptor
+    file_descriptor = FileDescriptor(f"{file_path}")
+    client.ingest_from_file(file_descriptor, ingestion_properties=ingestion_props)
+
+    # Todo - Tip: Kusto can also ingest data from blobs, open streams and pandas dataframes.
+    #  See the python SDK azure.kusto.ingest samples for additional references.
 
 
 def create_connection_string(cluster: str, auth_mode: str) -> KustoConnectionStringBuilder:
@@ -158,7 +189,7 @@ def create_device_code_connection_string(cluster: str) -> KustoConnectionStringB
 
 def create_managed_identity_connection_string(cluster: str) -> KustoConnectionStringBuilder:
     # Connect using the system or user provided managed identity (azure service only)
-    # Todo Config (Optional): Managed identity client id if you are using a User Assigned Managed Id
+    # Todo - Config (Optional): Managed identity client id if you are using a User Assigned Managed Id
     client_id = os.environ.get("MANAGED_IDENTITY_CLIENT_ID")
 
     if client_id is None:
@@ -168,8 +199,9 @@ def create_managed_identity_connection_string(cluster: str) -> KustoConnectionSt
 
 
 def create_app_key_connection_string(cluster: str) -> KustoConnectionStringBuilder:
-    # Todo - for information on how to procure an AAD Application in Azure see: https://docs.microsoft.com/en-us/azure/data-explorer/provision-azure-ad-app
-    # Todo Config (Optional): App Id & tenant, and App Key to authenticate with
+    # Todo - Config (Optional): App Id & tenant, and App Key to authenticate with
+    # Todo Learn More: For information on how to procure an AAD Application in Azure see:
+    #  https://docs.microsoft.com/en-us/azure/data-explorer/provision-azure-ad-app
     app_id = os.environ.get("APP_ID")
     app_tenant = os.environ.get("APP_TENANT")
     app_key = os.environ.get("APP_KEY")
@@ -178,8 +210,9 @@ def create_app_key_connection_string(cluster: str) -> KustoConnectionStringBuild
 
 
 def create_app_cert_connection_string(cluster: str) -> KustoConnectionStringBuilder:
-    # Todo - for information on how to procure an AAD Application in Azure see: https://docs.microsoft.com/en-us/azure/data-explorer/provision-azure-ad-app
-    # Todo Config (Optional): App Id & tenant, and certificate to authenticate with
+    # Todo - Config (Optional): App Id & tenant, and certificate to authenticate with
+    # Todo Learn More: For information on how to procure an AAD Application in Azure see:
+    #  https://docs.microsoft.com/en-us/azure/data-explorer/provision-azure-ad-app
     app_id = os.environ.get("APP_ID")
     app_tenant = os.environ.get("APP_TENANT")
     pem_file_path = os.environ.get("PEM_FILE_PATH")
