@@ -3,13 +3,9 @@
 #  2) Follow the To-Do comments for instructions, tips and reference material
 #  3) run the script
 
-# Todo (Yochai) cleanup the import section when done
-import io
 import os
 import time
 import typing
-
-from datetime import timedelta
 
 from azure.kusto.data.exceptions import KustoClientError, KustoServiceError
 from azure.kusto.data.helpers import dataframe_from_result_table
@@ -32,7 +28,10 @@ kustoUri = "https://yogiladadx.westeurope.dev.kusto.windows.net"
 ingestUri = "https://ingest-yogiladadx.westeurope.dev.kusto.windows.net"
 databaseName = "e2e"
 tableName = "SampleTable"
-tableSchema = "SampleTable_schema"
+tableSchema = "(rownumber:int, rowguid:string, xdouble:real, xfloat:real, xbool:bool, xint16:int, xint32:int, xint64:long, xuint8:long, xuint16:long, " \
+              "xuint32:long, xuint64:long, xdate:datetime, xsmalltext:string, xtext:string, xnumberAsText:string, xtime:timespan, xtextWithNulls:string, " \
+              "xdynamicWithNulls:dynamic)"
+tableMappingRef = "SampleTable_schema"
 # Todo - Learn More: For additional information about supported data formats, see
 #  https://docs.microsoft.com/en-us/azure/data-explorer/ingestion-supported-formats
 fileFormat = DataFormat.CSV
@@ -64,7 +63,7 @@ def main():
     print("")
     print(f"Creating table '{databaseName}.{tableName}' if needed:")
     # Todo (Yochai) what's the table creation command
-    command = ".show version"
+    command = f".create table {tableName} {tableSchema}"
     if not run_control_command(kusto_client, databaseName, command):
         print("Failed to create or validate table exists.")
         exit(-1)
