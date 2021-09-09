@@ -6,6 +6,7 @@
 # Todo (Yochai) cleanup the import section when done
 import io
 import os
+import time
 import typing
 
 from datetime import timedelta
@@ -27,11 +28,11 @@ from azure.kusto.ingest import (
 )
 
 # Todo - Config (Auto-Filled properties):
-kustoUri = "https://sdkse2etest.eastus.kusto.windows.net"
-ingestUri = "https://ingest-sdkse2etest.eastus.kusto.windows.net"
+kustoUri = "https://yogiladadx.westeurope.dev.kusto.windows.net"
+ingestUri = "https://ingest-yogiladadx.westeurope.dev.kusto.windows.net"
 databaseName = "e2e"
-tableName = "aa"
-tableSchema = ""
+tableName = "SampleTable"
+tableSchema = "SampleTable_schema"
 # Todo - Learn More: For additional information about supported data formats, see
 #  https://docs.microsoft.com/en-us/azure/data-explorer/ingestion-supported-formats
 fileFormat = DataFormat.CSV
@@ -82,7 +83,9 @@ def main():
     #  For additional information on customizing the ingestion batching policy see:
     #   https://docs.microsoft.com/en-us/azure/data-explorer/kusto/management/batchingpolicy
     #  You may also skip the batching for some files using the FlushImmediatly property, though this option should be used with care as it is inefficient
-    batching_policy = '{ "MaximumBatchingTimeSpan": "00:05:00", "MaximumNumberOfItems": 500, "MaximumRawDataSizeMB": 1024 }'
+    print("")
+    print(f"Altering the batching policy for '{tableName}'")
+    batching_policy = '{ "MaximumBatchingTimeSpan": "00:00:10", "MaximumNumberOfItems": 500, "MaximumRawDataSizeMB": 1024 }'
     command = f".alter table {tableName} policy ingestionbatching @'{batching_policy}'"
     if not run_control_command(kusto_client, databaseName, command):
         print("Failed to alter the ingestion policy!")
@@ -95,6 +98,11 @@ def main():
     ingest_file = input("Please enter a directory of files to ingest from:")
     print(f"Attempting to ingest '{ingest_file}'")
     ingest_data_from_file(ingest_client, databaseName, tableName, ingest_file)
+
+    print("")
+    print("Sleeping for a few seconds to make sure queued ingestion has completed")
+    print("Mind, this may take longer dependeing on the file size and ingestion policy")
+    time.sleep(20)
 
     print("")
     print(f"Post ingestion row count for '{databaseName}.{tableName}' is:")
@@ -147,9 +155,10 @@ def ingest_data_from_file(client: QueuedIngestClient, db: str, table: str, file_
         table=f"{tableName}",
         data_format=fileFormat,
 
-        # Todo - Tip: in case you wish to skip ingestion batching uncomment the below line, though mind it is far less efficient to ingest
-        #  many files in this way
-        # flush_immediately=True,
+        # Todo - Configure: Setting the ingestion batching policy takes up to 5 minutes to have an effect.
+        #  For the sake of the sample we set Flush-Immediately, but in practice it should not be commonly used.
+        #  Comment the below line after running the sample for the first few times!
+        flush_immediately=True,
 
         # Todo - Tip: in case a mapping is required provide either a mapping or a mapping reference for a pre-configured mapping
         # ingestion_mapping_type=IngestionMappingType.JSON
