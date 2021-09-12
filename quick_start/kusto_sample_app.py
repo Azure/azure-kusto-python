@@ -25,7 +25,9 @@ from azure.kusto.ingest import (
     KustoStreamingIngestClient,
 )
 
-# Todo - Config (Auto-Filled when downloading from OneClick):
+# Todo - Config:
+#  If the sample was download from OneClick it should be pre-populated with your cluster's details:
+#  If the sample was taken from GitHub, edit the cluster name and database to point to your cluster.
 kustoUri = "https://sdkse2etest.eastus.kusto.windows.net"
 ingestUri = "https://ingest-sdkse2etest.eastus.kusto.windows.net"
 databaseName = "e2e"
