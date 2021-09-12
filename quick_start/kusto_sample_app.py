@@ -29,9 +29,11 @@ kustoUri = "https://yogiladadx.westeurope.dev.kusto.windows.net"
 ingestUri = "https://ingest-yogiladadx.westeurope.dev.kusto.windows.net"
 databaseName = "e2e"
 tableName = "SampleTable"
-tableSchema = "(rownumber:int, rowguid:string, xdouble:real, xfloat:real, xbool:bool, xint16:int, xint32:int, xint64:long, xuint8:long, xuint16:long, " \
-              "xuint32:long, xuint64:long, xdate:datetime, xsmalltext:string, xtext:string, xnumberAsText:string, xtime:timespan, xtextWithNulls:string, " \
-              "xdynamicWithNulls:dynamic)"
+tableSchema = (
+    "(rownumber:int, rowguid:string, xdouble:real, xfloat:real, xbool:bool, xint16:int, xint32:int, xint64:long, xuint8:long, xuint16:long, "
+    "xuint32:long, xuint64:long, xdate:datetime, xsmalltext:string, xtext:string, xnumberAsText:string, xtime:timespan, xtextWithNulls:string, "
+    "xdynamicWithNulls:dynamic)"
+)
 tableMappingRef = "SampleTable_schema"
 # Todo - Learn More: For additional information about supported data formats, see
 #  https://docs.microsoft.com/en-us/azure/data-explorer/ingestion-supported-formats
@@ -156,12 +158,10 @@ def ingest_data_from_file(client: QueuedIngestClient, db: str, table: str, file_
         database=f"{databaseName}",
         table=f"{tableName}",
         data_format=fileFormat,
-
         # Todo - Config: Setting the ingestion batching policy takes up to 5 minutes to have an effect.
         #  For the sake of the sample we set Flush-Immediately, but in practice it should not be commonly used.
         #  Comment the below line after running the sample for the first few times!
         flush_immediately=True,
-
         # Todo - Tip: in case a mapping is required provide either a mapping or a mapping reference for a pre-configured mapping
         # ingestion_mapping_type=IngestionMappingType.JSON
         # ingestion_mapping=
@@ -260,5 +260,5 @@ def die(error: str, ex: Exception = None):
     exit(-1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
