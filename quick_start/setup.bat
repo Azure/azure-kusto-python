@@ -1,1 +1,0 @@
-pip install azure-kusto-data azure-kusto-ingest

@@ -1,7 +1,8 @@
 # Todo - Start Here:
-#  1) Run setup.bat to install necessary dependencies.
-#  2) Follow the To-Do comments for instructions, tips and reference material
-#  3) run the script
+#  1) Run 'pip install azure-kusto-data azure-kusto-ingest'
+#  2) Fill in or edit the sections commented as 'Config'
+#  3) Follow the To-Do comments for instructions, tips and reference material
+#  4) run the script
 
 import os
 import time
@@ -23,7 +24,7 @@ from azure.kusto.ingest import (
     KustoStreamingIngestClient,
 )
 
-# Todo - Config (Auto-Filled properties):
+# Todo - Config (Auto-Filled when downloading from OneClick):
 kustoUri = "https://yogiladadx.westeurope.dev.kusto.windows.net"
 ingestUri = "https://ingest-yogiladadx.westeurope.dev.kusto.windows.net"
 databaseName = "e2e"
@@ -39,7 +40,7 @@ fileFormat = DataFormat.CSV
 # Todo - Config (Optional): Change the authentication method from Device Code (User Prompt) to one of the other options
 #  Some of the auth modes require additional environment variables to be set in order to work (check the use below)
 #  Managed Identity Authentication only works when running as an Azure service (webapp, function, etc.)
-authenticationMode = "deviceCode"  # choose between: (deviceCode|managedIdentity|AppKey|AppCertificate)
+authenticationMode = "userPrompt"  # choose between: (userPrompt|managedIdentity|AppKey|AppCertificate)
 
 
 def main():
@@ -61,7 +62,7 @@ def main():
 
     # Todo - Learn More: For additional information on how to create tables see: https://docs.microsoft.com/en-us/azure/data-explorer/one-click-table
     print("")
-    print(f"Creating table '{databaseName}.{tableName}' if needed:")
+    print(f"Creating table '{databaseName}.{tableName}' if it does not exist:")
     # Todo (Yochai) what's the table creation command
     command = f".create table {tableName} {tableSchema}"
     if not run_control_command(kusto_client, databaseName, command):
@@ -94,14 +95,16 @@ def main():
     # Todo - Learn More: For additional information on how to ingest data to Kusto in Python see:
     #  https://docs.microsoft.com/en-us/azure/data-explorer/python-ingest-data
     print("")
-    ingest_file = input("Please enter a directory of files to ingest from:")
+    ingest_file = input("Please enter a file to ingest:")
     print(f"Attempting to ingest '{ingest_file}'")
     ingest_data_from_file(ingest_client, databaseName, tableName, ingest_file)
 
     print("")
     print("Sleeping for a few seconds to make sure queued ingestion has completed")
     print("Mind, this may take longer dependeing on the file size and ingestion policy")
-    time.sleep(20)
+    for x in range(20, 0, -1):
+        print(f"{x} ", end="\r")
+        time.sleep(1)
 
     print("")
     print(f"Post ingestion row count for '{databaseName}.{tableName}' is:")
@@ -154,7 +157,7 @@ def ingest_data_from_file(client: QueuedIngestClient, db: str, table: str, file_
         table=f"{tableName}",
         data_format=fileFormat,
 
-        # Todo - Configure: Setting the ingestion batching policy takes up to 5 minutes to have an effect.
+        # Todo - Config: Setting the ingestion batching policy takes up to 5 minutes to have an effect.
         #  For the sake of the sample we set Flush-Immediately, but in practice it should not be commonly used.
         #  Comment the below line after running the sample for the first few times!
         flush_immediately=True,
@@ -174,8 +177,8 @@ def ingest_data_from_file(client: QueuedIngestClient, db: str, table: str, file_
 
 
 def create_connection_string(cluster: str, auth_mode: str) -> KustoConnectionStringBuilder:
-    if auth_mode == "deviceCode":
-        return create_device_code_connection_string(cluster)
+    if auth_mode == "userPrompt":
+        return create_interactive_auth_connection_string(cluster)
 
     elif auth_mode == "managedIdentity":
         return create_managed_identity_connection_string(cluster)
@@ -190,9 +193,9 @@ def create_connection_string(cluster: str, auth_mode: str) -> KustoConnectionStr
         die(f"Unexpected Auth mode: '{auth_mode}'")
 
 
-def create_device_code_connection_string(cluster: str) -> KustoConnectionStringBuilder:
+def create_interactive_auth_connection_string(cluster: str) -> KustoConnectionStringBuilder:
     # prompt user for credentials with device code auth
-    return KustoConnectionStringBuilder.with_aad_device_authentication(cluster)
+    return KustoConnectionStringBuilder.with_interactive_login(cluster)
 
 
 def create_managed_identity_connection_string(cluster: str) -> KustoConnectionStringBuilder:
@@ -257,4 +260,5 @@ def die(error: str, ex: Exception = None):
     exit(-1)
 
 
-main()
+if __name__ == '__main__':
+    main()
