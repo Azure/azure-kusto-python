@@ -1,8 +1,9 @@
 # Todo - Start Here:
-#  1) Run 'pip install azure-kusto-data azure-kusto-ingest'
-#  2) Fill in or edit the sections commented as 'Config'
-#  3) Follow the To-Do comments for instructions, tips and reference material
-#  4) run the script
+#  1) Run: pip install azure-kusto-data azure-kusto-ingest
+#  2) Fill in or edit the sections commented as 'To Do - Config'
+#  3) Run the script
+#  4) Follow additional To-Do comments for tips and reference material
+
 
 import os
 import time
@@ -25,8 +26,8 @@ from azure.kusto.ingest import (
 )
 
 # Todo - Config (Auto-Filled when downloading from OneClick):
-kustoUri = "https://yogiladadx.westeurope.dev.kusto.windows.net"
-ingestUri = "https://ingest-yogiladadx.westeurope.dev.kusto.windows.net"
+kustoUri = "https://sdkse2etest.eastus.kusto.windows.net"
+ingestUri = "https://ingest-sdkse2etest.eastus.kusto.windows.net"
 databaseName = "e2e"
 tableName = "SampleTable"
 tableSchema = (
@@ -34,26 +35,45 @@ tableSchema = (
     "xuint32:long, xuint64:long, xdate:datetime, xsmalltext:string, xtext:string, xnumberAsText:string, xtime:timespan, xtextWithNulls:string, "
     "xdynamicWithNulls:dynamic)"
 )
-tableMappingRef = "SampleTable_schema"
-# Todo - Learn More: For additional information about supported data formats, see
-#  https://docs.microsoft.com/en-us/azure/data-explorer/ingestion-supported-formats
-fileFormat = DataFormat.CSV
+jsonMappingRef = "SampleTableMapping"
+jsonMapping = (
+    '[{"Properties":{"Path":"$.rownumber"},"column":"rownumber","datatype":"int"},'
+    '{"Properties":{"Path":"$.rowguid"},"column":"rowguid","datatype":"string"},'
+    '{"Properties":{"Path":"$.xdouble"},"column":"xdouble","datatype":"real"},'
+    '{"Properties":{"Path":"$.xfloat"},"column":"xfloat","datatype":"real"},'
+    '{"Properties":{"Path":"$.xbool"},"column":"xbool","datatype":"bool"},'
+    '{"Properties":{"Path":"$.xint16"},"column":"xint16","datatype":"int"},'
+    '{"Properties":{"Path":"$.xint32"},"column":"xint32","datatype":"int"},'
+    '{"Properties":{"Path":"$.xint64"},"column":"xint64","datatype":"long"},'
+    '{"Properties":{"Path":"$.xuint8"},"column":"xuint8","datatype":"long"},'
+    '{"Properties":{"Path":"$.xuint16"},"column":"xuint16","datatype":"long"},'
+    '{"Properties":{"Path":"$.xuint32"},"column":"xuint32","datatype":"long"},'
+    '{"Properties":{"Path":"$.xuint64"},"column":"xuint64","datatype":"long"},'
+    '{"Properties":{"Path":"$.xdate"},"column":"xdate","datatype":"datetime"},'
+    '{"Properties":{"Path":"$.xsmalltext"},"column":"xsmalltext","datatype":"string"},'
+    '{"Properties":{"Path":"$.xtext"},"column":"xtext","datatype":"string"},'
+    '{"Properties":{"Path":"$.rowguid"},"column":"xnumberAsText","datatype":"string"},'
+    '{"Properties":{"Path":"$.xtime"},"column":"xtime","datatype":"timespan"},'
+    '{"Properties":{"Path":"$.xtextWithNulls"},"column":"xtextWithNulls","datatype":"string"},'
+    '{"Properties":{"Path":"$.xdynamicWithNulls"},"column":"xdynamicWithNulls","datatype":"dynamic"}]'
+)
+csvSample = "dataset.csv"
+jsonSample = "dataset.json"
 
 # Todo - Config (Optional): Change the authentication method from Device Code (User Prompt) to one of the other options
 #  Some of the auth modes require additional environment variables to be set in order to work (check the use below)
 #  Managed Identity Authentication only works when running as an Azure service (webapp, function, etc.)
 authenticationMode = "userPrompt"  # choose between: (userPrompt|managedIdentity|AppKey|AppCertificate)
+waitForUser = True
 
 
 def main():
-    print("kusto sample app is starting")
-
-    # Todo - Learn More: For additional information on how to authorize users and apps on Kusto Database see:
-    #  https://docs.microsoft.com/en-us/azure/data-explorer/manage-database-permissions
-    if authenticationMode == "deviceCode":
-        print("During the run you will be prompted by the browser to enter a device code.")
-        print("Return to the console of the sample app and copy the code to provide from it.")
-        input("Press enter to continue...")
+    print("Kusto sample app is starting...")
+    if authenticationMode == "userPrompt":
+        print("")
+        print("You will be prompted for credentials during this script.")
+        print("Please, return to the console after authenticating.")
+        wait_for_user()
 
     # Todo - Tip: Avoid creating a new Kusto Client for each use.
     #  Create the clients once and use them as long as possible.
@@ -62,19 +82,26 @@ def main():
     kusto_client = KustoClient(kusto_connection_string)
     ingest_client = QueuedIngestClient(ingest_connection_string)
 
-    # Todo - Learn More: For additional information on how to create tables see: https://docs.microsoft.com/en-us/azure/data-explorer/one-click-table
     print("")
     print(f"Creating table '{databaseName}.{tableName}' if it does not exist:")
-    # Todo (Yochai) what's the table creation command
+    # Todo - Tip: this is commonly a one-time command
+    # Todo - Learn More: For additional information on how to create tables see: https://docs.microsoft.com/en-us/azure/data-explorer/one-click-table
     command = f".create table {tableName} {tableSchema}"
     if not run_control_command(kusto_client, databaseName, command):
         print("Failed to create or validate table exists.")
         exit(-1)
 
-    # Todo - Learn More: For additional information on Kusto Query Language see: https://docs.microsoft.com/en-us/azure/data-explorer/write-queries
+    wait_for_user()
+
     print("")
-    print(f"Initial row count for '{databaseName}.{tableName}' is:")
-    run_query(kusto_client, databaseName, f"{tableName} | summarize count()")
+    print(f"Altering the batching policy for '{tableName}'")
+    # Todo - Tip: this is commonly a one-time command
+    batching_policy = '{ "MaximumBatchingTimeSpan": "00:00:10", "MaximumNumberOfItems": 500, "MaximumRawDataSizeMB": 1024 }'
+    command = f".alter table {tableName} policy ingestionbatching @'{batching_policy}'"
+    if not run_control_command(kusto_client, databaseName, command):
+        print("Failed to alter the ingestion policy!")
+        print("This could be the result of insufficient permissions.")
+        print("The sample will still run, though ingestion will be delayed for 5 minutes")
 
     # Todo - Learn More:
     #  Kusto batches data for ingestion efficiency. The default batching policy ingests data when one of the following conditions are met:
@@ -85,25 +112,46 @@ def main():
     #  For additional information on customizing the ingestion batching policy see:
     #   https://docs.microsoft.com/en-us/azure/data-explorer/kusto/management/batchingpolicy
     #  You may also skip the batching for some files using the FlushImmediatly property, though this option should be used with care as it is inefficient
+    wait_for_user()
+
+    # Todo - Learn More: For additional information on Kusto Query Language see: https://docs.microsoft.com/en-us/azure/data-explorer/write-queries
     print("")
-    print(f"Altering the batching policy for '{tableName}'")
-    batching_policy = '{ "MaximumBatchingTimeSpan": "00:00:10", "MaximumNumberOfItems": 500, "MaximumRawDataSizeMB": 1024 }'
-    command = f".alter table {tableName} policy ingestionbatching @'{batching_policy}'"
-    if not run_control_command(kusto_client, databaseName, command):
-        print("Failed to alter the ingestion policy!")
-        print("This could be the result of insufficient permissions.")
-        print("The sample will still run, though ingestion will be delayed for 5 minutes")
+    print(f"Initial row count for '{databaseName}.{tableName}' is:")
+    run_query(kusto_client, databaseName, f"{tableName} | summarize count()")
+    wait_for_user()
 
     # Todo - Learn More: For additional information on how to ingest data to Kusto in Python see:
     #  https://docs.microsoft.com/en-us/azure/data-explorer/python-ingest-data
-    print("")
-    ingest_file = input("Please enter a file to ingest:")
-    print(f"Attempting to ingest '{ingest_file}'")
-    ingest_data_from_file(ingest_client, databaseName, tableName, ingest_file)
+    if csvSample is not None:
+        print("")
+        print(f"Attempting to ingest '{csvSample}'")
+        ingest_data_from_file(ingest_client, databaseName, tableName, csvSample, DataFormat.CSV)
+        wait_for_user()
+
+    if jsonSample is not None:
+        print("")
+        print(f"Attempting to create a json mapping reference named '{jsonMappingRef}'")
+        # Todo - Tip: this is commonly a one-time command
+        mapping_command = f".create-or-alter table {tableName} ingestion json mapping '{jsonMappingRef}' '{jsonMapping}'"
+        mapping_exists = run_control_command(kusto_client, databaseName, mapping_command)
+        if not mapping_exists:
+            print(f"failed to create a json  mapping reference named {jsonMappingRef}")
+            print(f"skipping json ingestion")
+
+        # Todo - learn more:  for more information about providing inline mappings or mapping references see:
+        #  https://docs.microsoft.com/en-us/azure/data-explorer/kusto/management/mappings
+
+        wait_for_user()
+
+        if mapping_exists:
+            print("")
+            print(f"Attempting to ingest '{jsonSample}'")
+            ingest_data_from_file(ingest_client, databaseName, tableName, jsonSample, DataFormat.MULTIJSON, jsonMappingRef)
+            wait_for_user()
 
     print("")
     print("Sleeping for a few seconds to make sure queued ingestion has completed")
-    print("Mind, this may take longer dependeing on the file size and ingestion policy")
+    print("Mind, this may take longer depending on the file size and ingestion policy")
     for x in range(20, 0, -1):
         print(f"{x} ", end="\r")
         time.sleep(1)
@@ -116,19 +164,24 @@ def main():
 def run_control_command(client: KustoClient, db: str, command: str) -> bool:
     try:
         res = client.execute_mgmt(db, command)
+        print("")
+        print("Response:")
         for row in res.primary_results[0]:
             print(row.to_list())
 
         return True
 
     except KustoClientError as ex:
-        die(f"Client error while trying to execute command '{command}' on database '{db}'", ex)
+        print(f"Client error while trying to execute command '{command}' on database '{db}'")
+        print(ex)
 
     except KustoServiceError as ex:
-        die(f"Server error while trying to execute command '{command}' on database '{db}'", ex)
+        print(f"Server error while trying to execute command '{command}' on database '{db}'")
+        print(ex)
 
     except Exception as ex:
-        die(f"Unknown error while trying to execute command '{command}' on database '{db}'", ex)
+        print(f"Unknown error while trying to execute command '{command}' on database '{db}'")
+        print(ex)
 
     return False
 
@@ -142,30 +195,32 @@ def run_query(client: KustoClient, db: str, query: str):
         return True
 
     except KustoClientError as ex:
-        die(f"Client error while trying to execute query '{query}' on database '{db}'", ex)
+        print(f"Client error while trying to execute query '{query}' on database '{db}'")
+        print(ex)
 
     except KustoServiceError as ex:
-        die(f"Server error while trying to execute query '{query}' on database '{db}'", ex)
+        print(f"Server error while trying to execute query '{query}' on database '{db}'")
+        print(ex)
 
     except Exception as ex:
-        die(f"Unknown error while trying to execute query '{query}' on database '{db}'", ex)
+        print(f"Unknown error while trying to execute query '{query}' on database '{db}'")
+        print(ex)
 
     return False
 
 
-def ingest_data_from_file(client: QueuedIngestClient, db: str, table: str, file_path: str):
+def ingest_data_from_file(client: QueuedIngestClient, db: str, table: str, file_path: str, file_format: str, mapping_ref: str = None):
     ingestion_props = IngestionProperties(
-        database=f"{databaseName}",
-        table=f"{tableName}",
-        data_format=fileFormat,
+        database=f"{db}",
+        table=f"{table}",
+        # Todo - Learn More: For additional information about supported data formats, see
+        #  https://docs.microsoft.com/en-us/azure/data-explorer/ingestion-supported-formats
+        data_format=file_format,
         # Todo - Config: Setting the ingestion batching policy takes up to 5 minutes to have an effect.
         #  For the sake of the sample we set Flush-Immediately, but in practice it should not be commonly used.
         #  Comment the below line after running the sample for the first few times!
         flush_immediately=True,
-        # Todo - Tip: in case a mapping is required provide either a mapping or a mapping reference for a pre-configured mapping
-        # ingestion_mapping_type=IngestionMappingType.JSON
-        # ingestion_mapping=
-        # ingestion_mapping_reference="{json_mapping_that_already_exists_on_table}"
+        ingestion_mapping_reference=mapping_ref,
     )
 
     # Todo - Tip: for optimal ingestion batching it's best to specify the uncompressed data size in the file descriptor
@@ -177,6 +232,8 @@ def ingest_data_from_file(client: QueuedIngestClient, db: str, table: str, file_
 
 
 def create_connection_string(cluster: str, auth_mode: str) -> KustoConnectionStringBuilder:
+    # Todo - Learn More: For additional information on how to authorize users and apps on Kusto Database see:
+    #  https://docs.microsoft.com/en-us/azure/data-explorer/manage-database-permissions
     if auth_mode == "userPrompt":
         return create_interactive_auth_connection_string(cluster)
 
@@ -253,11 +310,18 @@ def create_app_cert_connection_string(cluster: str) -> KustoConnectionStringBuil
 
 
 def die(error: str, ex: Exception = None):
+    print("")
+    print("Script failed:")
     print(error)
     if ex is not None:
         print(ex)
 
     exit(-1)
+
+
+def wait_for_user():
+    if waitForUser:
+        input("Press Enter to continue...")
 
 
 if __name__ == "__main__":
