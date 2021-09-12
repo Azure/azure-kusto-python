@@ -162,6 +162,10 @@ def main():
     print(f"Post ingestion row count for '{databaseName}.{tableName}' is:")
     run_query(kusto_client, databaseName, f"{tableName} | summarize count()")
 
+    print("")
+    print(f"Post ingestion sample data query:")
+    run_query(kusto_client, databaseName, f"{tableName} | take 2")
+
 
 def run_control_command(client: KustoClient, db: str, command: str) -> bool:
     try:
