@@ -1,8 +1,8 @@
-# Todo - Start Here:
+# Todo - README:
 #  1) Run: pip install azure-kusto-data azure-kusto-ingest
-#  2) Fill in or edit the sections commented as 'To Do - Config'
+#  2) Fill in or edit the sections commented as 'To Do'
 #  3) Run the script
-#  4) Follow additional To-Do comments for tips and reference material
+#  4) Read additional comments for tips and reference material
 
 
 import os
@@ -77,8 +77,7 @@ def main():
         print("Please, return to the console after authenticating.")
         wait_for_user()
 
-    # Todo - Tip: Avoid creating a new Kusto Client for each use.
-    #  Create the clients once and use them as long as possible.
+    # Tip: Avoid creating a new Kusto Client for each use. Instead, create the clients once and use them as long as possible.
     kusto_connection_string = create_connection_string(kustoUri, authenticationMode)
     ingest_connection_string = create_connection_string(ingestUri, authenticationMode)
     kusto_client = KustoClient(kusto_connection_string)
@@ -86,8 +85,8 @@ def main():
 
     print("")
     print(f"Creating table '{databaseName}.{tableName}' if it does not exist:")
-    # Todo - Tip: this is commonly a one-time command
-    # Todo - Learn More: For additional information on how to create tables see: https://docs.microsoft.com/en-us/azure/data-explorer/one-click-table
+    # Tip: This is commonly a one-time configuration to make
+    # Learn More: For additional information on how to create tables see: https://docs.microsoft.com/en-us/azure/data-explorer/one-click-table
     command = f".create table {tableName} {tableSchema}"
     if not run_control_command(kusto_client, databaseName, command):
         print("Failed to create or validate table exists.")
@@ -97,7 +96,7 @@ def main():
 
     print("")
     print(f"Altering the batching policy for '{tableName}'")
-    # Todo - Tip: this is commonly a one-time command
+    # Tip: This is commonly a one-time configuration to make
     batching_policy = '{ "MaximumBatchingTimeSpan": "00:00:10", "MaximumNumberOfItems": 500, "MaximumRawDataSizeMB": 1024 }'
     command = f".alter table {tableName} policy ingestionbatching @'{batching_policy}'"
     if not run_control_command(kusto_client, databaseName, command):
@@ -105,7 +104,7 @@ def main():
         print("This could be the result of insufficient permissions.")
         print("The sample will still run, though ingestion will be delayed for 5 minutes")
 
-    # Todo - Learn More:
+    # Learn More:
     #  Kusto batches data for ingestion efficiency. The default batching policy ingests data when one of the following conditions are met:
     #   1) more then a 1000 files were queued for ingestion for the same table by the same user
     #   2) more then 1GB of data was queued for ingestion for the same table by the same user
@@ -113,16 +112,16 @@ def main():
     #  In order to speed up this sample app, we attempt to modify the default ingestion policy to ingest data after 10 seconds have passed
     #  For additional information on customizing the ingestion batching policy see:
     #   https://docs.microsoft.com/en-us/azure/data-explorer/kusto/management/batchingpolicy
-    #  You may also skip the batching for some files using the FlushImmediatly property, though this option should be used with care as it is inefficient
+    #  You may also skip the batching for some files using the Flush-Immediately property, though this option should be used with care as it is inefficient
     wait_for_user()
 
-    # Todo - Learn More: For additional information on Kusto Query Language see: https://docs.microsoft.com/en-us/azure/data-explorer/write-queries
+    # Learn More: For additional information on Kusto Query Language see: https://docs.microsoft.com/en-us/azure/data-explorer/write-queries
     print("")
     print(f"Initial row count for '{databaseName}.{tableName}' is:")
     run_query(kusto_client, databaseName, f"{tableName} | summarize count()")
     wait_for_user()
 
-    # Todo - Learn More: For additional information on how to ingest data to Kusto in Python see:
+    # Learn More: For additional information on how to ingest data to Kusto in Python see:
     #  https://docs.microsoft.com/en-us/azure/data-explorer/python-ingest-data
     if csvSample is not None:
         print("")
@@ -133,14 +132,14 @@ def main():
     if jsonSample is not None:
         print("")
         print(f"Attempting to create a json mapping reference named '{jsonMappingRef}'")
-        # Todo - Tip: this is commonly a one-time command
+        # Tip: This is commonly a one-time configuration to make
         mapping_command = f".create-or-alter table {tableName} ingestion json mapping '{jsonMappingRef}' '{jsonMapping}'"
         mapping_exists = run_control_command(kusto_client, databaseName, mapping_command)
         if not mapping_exists:
             print(f"failed to create a json  mapping reference named {jsonMappingRef}")
             print(f"skipping json ingestion")
 
-        # Todo - learn more:  for more information about providing inline mappings or mapping references see:
+        # learn More: For more information about providing inline mappings or mapping references see:
         #  https://docs.microsoft.com/en-us/azure/data-explorer/kusto/management/mappings
 
         wait_for_user()
@@ -215,30 +214,30 @@ def run_query(client: KustoClient, db: str, query: str):
     return False
 
 
-def ingest_data_from_file(client: QueuedIngestClient, db: str, table: str, file_path: str, file_format: str, mapping_ref: str = None):
+def ingest_data_from_file(client: QueuedIngestClient, db: str, table: str, file_path: str, file_format: DataFormat, mapping_ref: str = None):
     ingestion_props = IngestionProperties(
         database=f"{db}",
         table=f"{table}",
-        # Todo - Learn More: For additional information about supported data formats, see
+        ingestion_mapping_reference=mapping_ref,
+        # Learn More: For additional information about supported data formats, see
         #  https://docs.microsoft.com/en-us/azure/data-explorer/ingestion-supported-formats
         data_format=file_format,
         # Todo - Config: Setting the ingestion batching policy takes up to 5 minutes to have an effect.
         #  For the sake of the sample we set Flush-Immediately, but in practice it should not be commonly used.
         #  Comment the below line after running the sample for the first few times!
         flush_immediately=True,
-        ingestion_mapping_reference=mapping_ref,
     )
 
-    # Todo - Tip: for optimal ingestion batching it's best to specify the uncompressed data size in the file descriptor
+    # Tip: For optimal ingestion batching it's best to specify the uncompressed data size in the file descriptor
     file_descriptor = FileDescriptor(f"{file_path}")
     client.ingest_from_file(file_descriptor, ingestion_properties=ingestion_props)
 
-    # Todo - Tip: Kusto can also ingest data from blobs, open streams and pandas dataframes.
+    # Tip: Kusto can also ingest data from blobs, open streams and pandas dataframes.
     #  See the python SDK azure.kusto.ingest samples for additional references.
 
 
 def create_connection_string(cluster: str, auth_mode: str) -> KustoConnectionStringBuilder:
-    # Todo - Learn More: For additional information on how to authorize users and apps on Kusto Database see:
+    # Learn More: For additional information on how to authorize users and apps on Kusto Database see:
     #  https://docs.microsoft.com/en-us/azure/data-explorer/manage-database-permissions
     if auth_mode == "userPrompt":
         return create_interactive_auth_connection_string(cluster)
@@ -274,19 +273,17 @@ def create_managed_identity_connection_string(cluster: str) -> KustoConnectionSt
 
 def create_app_key_connection_string(cluster: str) -> KustoConnectionStringBuilder:
     # Todo - Config (Optional): App Id & tenant, and App Key to authenticate with
-    # Todo Learn More: For information on how to procure an AAD Application in Azure see:
-    #  https://docs.microsoft.com/en-us/azure/data-explorer/provision-azure-ad-app
     app_id = os.environ.get("APP_ID")
     app_tenant = os.environ.get("APP_TENANT")
     app_key = os.environ.get("APP_KEY")
 
+    # Learn More: For information on how to procure an AAD Application in Azure see:
+    #  https://docs.microsoft.com/en-us/azure/data-explorer/provision-azure-ad-app
     return KustoConnectionStringBuilder.with_aad_application_key_authentication(cluster, app_id, app_key, app_tenant)
 
 
 def create_app_cert_connection_string(cluster: str) -> KustoConnectionStringBuilder:
     # Todo - Config (Optional): App Id & tenant, and certificate to authenticate with
-    # Todo Learn More: For information on how to procure an AAD Application in Azure see:
-    #  https://docs.microsoft.com/en-us/azure/data-explorer/provision-azure-ad-app
     app_id = os.environ.get("APP_ID")
     app_tenant = os.environ.get("APP_TENANT")
     pem_file_path = os.environ.get("PEM_FILE_PATH")
@@ -295,6 +292,8 @@ def create_app_cert_connection_string(cluster: str) -> KustoConnectionStringBuil
     public_certificate = None
     pem_certificate = None
 
+    # Learn More: For information on how to procure an AAD Application in Azure see:
+    #  https://docs.microsoft.com/en-us/azure/data-explorer/provision-azure-ad-app
     try:
         with open(pem_file_path, "r") as pem_file:
             pem_certificate = pem_file.read()
@@ -308,11 +307,11 @@ def create_app_cert_connection_string(cluster: str) -> KustoConnectionStringBuil
         except Exception as ex:
             die(f"Failed to load public certificate file from {public_cert_path}", ex)
 
-        return KustoConnectionStringBuilder.with_aad_application_certificate_authentication(cluster, app_id, pem_certificate, thumbprint, app_tenant)
-    else:
         return KustoConnectionStringBuilder.with_aad_application_certificate_sni_authentication(
             cluster, app_id, pem_certificate, public_certificate, thumbprint, app_tenant
         )
+    else:
+        return KustoConnectionStringBuilder.with_aad_application_certificate_authentication(cluster, app_id, pem_certificate, thumbprint, app_tenant)
 
 
 def die(error: str, ex: Exception = None):
