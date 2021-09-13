@@ -5,6 +5,7 @@
 #  4) Read additional comments for tips and reference material
 
 
+import json
 import os
 import time
 import typing
@@ -26,41 +27,9 @@ from azure.kusto.ingest import (
 )
 
 # Todo - Config:
-#  If the sample was download from OneClick it should be pre-populated with your cluster's details:
-#  If the sample was taken from GitHub, edit the cluster name and database to point to your cluster.
-kustoUri = "https://sdkse2etest.eastus.kusto.windows.net"
-ingestUri = "https://ingest-sdkse2etest.eastus.kusto.windows.net"
-databaseName = "e2e"
-tableName = "SampleTable"
-tableSchema = (
-    "(rownumber:int, rowguid:string, xdouble:real, xfloat:real, xbool:bool, xint16:int, xint32:int, xint64:long, xuint8:long, xuint16:long, "
-    "xuint32:long, xuint64:long, xdate:datetime, xsmalltext:string, xtext:string, xnumberAsText:string, xtime:timespan, xtextWithNulls:string, "
-    "xdynamicWithNulls:dynamic)"
-)
-jsonMappingRef = "SampleTableMapping"
-jsonMapping = (
-    '[{"Properties":{"Path":"$.rownumber"},"column":"rownumber","datatype":"int"},'
-    '{"Properties":{"Path":"$.rowguid"},"column":"rowguid","datatype":"string"},'
-    '{"Properties":{"Path":"$.xdouble"},"column":"xdouble","datatype":"real"},'
-    '{"Properties":{"Path":"$.xfloat"},"column":"xfloat","datatype":"real"},'
-    '{"Properties":{"Path":"$.xbool"},"column":"xbool","datatype":"bool"},'
-    '{"Properties":{"Path":"$.xint16"},"column":"xint16","datatype":"int"},'
-    '{"Properties":{"Path":"$.xint32"},"column":"xint32","datatype":"int"},'
-    '{"Properties":{"Path":"$.xint64"},"column":"xint64","datatype":"long"},'
-    '{"Properties":{"Path":"$.xuint8"},"column":"xuint8","datatype":"long"},'
-    '{"Properties":{"Path":"$.xuint16"},"column":"xuint16","datatype":"long"},'
-    '{"Properties":{"Path":"$.xuint32"},"column":"xuint32","datatype":"long"},'
-    '{"Properties":{"Path":"$.xuint64"},"column":"xuint64","datatype":"long"},'
-    '{"Properties":{"Path":"$.xdate"},"column":"xdate","datatype":"datetime"},'
-    '{"Properties":{"Path":"$.xsmalltext"},"column":"xsmalltext","datatype":"string"},'
-    '{"Properties":{"Path":"$.xtext"},"column":"xtext","datatype":"string"},'
-    '{"Properties":{"Path":"$.rowguid"},"column":"xnumberAsText","datatype":"string"},'
-    '{"Properties":{"Path":"$.xtime"},"column":"xtime","datatype":"timespan"},'
-    '{"Properties":{"Path":"$.xtextWithNulls"},"column":"xtextWithNulls","datatype":"string"},'
-    '{"Properties":{"Path":"$.xdynamicWithNulls"},"column":"xdynamicWithNulls","datatype":"dynamic"}]'
-)
-csvSample = "dataset.csv"
-jsonSample = "dataset.json"
+#  If the sample was download from OneClick it, kusto_sample_config.json should be pre-populated with your cluster's details:
+#  If the sample was taken from GitHub, open kusto_sample_config.json and edit the cluster name and database to point to your cluster.
+configFileName = "kusto_sample_config.json"
 
 # Todo - Config (Optional): Change the authentication method from Device Code (User Prompt) to one of the other options
 #  Some of the auth modes require additional environment variables to be set in order to work (check the use below)
@@ -71,6 +40,18 @@ waitForUser = True
 
 def main():
     print("Kusto sample app is starting...")
+    config = read_config(configFileName)
+
+    kusto_uri = config["KustoUri"]
+    ingest_uri = config["IngestUri"]
+    database_name = config["DatabaseName"]
+    table_name = config["TableName"]
+    table_schema = config["TableSchema"]
+    csv_sample = config["CsvSample"] if "CsvSample" in config else None
+    json_sample = config["JsonSample"] if "JsonSample" in config else None
+    json_mapping = config["JsonMapping"] if "JsonMapping" in config else None
+    json_mapping_ref = config["JsonMappingRef"] if "JsonMappingRef" in config else None
+
     if authenticationMode == "userPrompt":
         print("")
         print("You will be prompted for credentials during this script.")
@@ -78,28 +59,28 @@ def main():
         wait_for_user()
 
     # Tip: Avoid creating a new Kusto Client for each use. Instead, create the clients once and use them as long as possible.
-    kusto_connection_string = create_connection_string(kustoUri, authenticationMode)
-    ingest_connection_string = create_connection_string(ingestUri, authenticationMode)
+    kusto_connection_string = create_connection_string(kusto_uri, authenticationMode)
+    ingest_connection_string = create_connection_string(ingest_uri, authenticationMode)
     kusto_client = KustoClient(kusto_connection_string)
     ingest_client = QueuedIngestClient(ingest_connection_string)
 
     print("")
-    print(f"Creating table '{databaseName}.{tableName}' if it does not exist:")
+    print(f"Creating table '{database_name}.{table_name}' if it does not exist:")
     # Tip: This is commonly a one-time configuration to make
     # Learn More: For additional information on how to create tables see: https://docs.microsoft.com/en-us/azure/data-explorer/one-click-table
-    command = f".create table {tableName} {tableSchema}"
-    if not run_control_command(kusto_client, databaseName, command):
+    command = f".create table {table_name} {table_schema}"
+    if not run_control_command(kusto_client, database_name, command):
         print("Failed to create or validate table exists.")
         exit(-1)
 
     wait_for_user()
 
     print("")
-    print(f"Altering the batching policy for '{tableName}'")
+    print(f"Altering the batching policy for '{table_name}'")
     # Tip: This is commonly a one-time configuration to make
     batching_policy = '{ "MaximumBatchingTimeSpan": "00:00:10", "MaximumNumberOfItems": 500, "MaximumRawDataSizeMB": 1024 }'
-    command = f".alter table {tableName} policy ingestionbatching @'{batching_policy}'"
-    if not run_control_command(kusto_client, databaseName, command):
+    command = f".alter table {table_name} policy ingestionbatching @'{batching_policy}'"
+    if not run_control_command(kusto_client, database_name, command):
         print("Failed to alter the ingestion policy!")
         print("This could be the result of insufficient permissions.")
         print("The sample will still run, though ingestion will be delayed for 5 minutes")
@@ -117,26 +98,26 @@ def main():
 
     # Learn More: For additional information on Kusto Query Language see: https://docs.microsoft.com/en-us/azure/data-explorer/write-queries
     print("")
-    print(f"Initial row count for '{databaseName}.{tableName}' is:")
-    run_query(kusto_client, databaseName, f"{tableName} | summarize count()")
+    print(f"Initial row count for '{database_name}.{table_name}' is:")
+    run_query(kusto_client, database_name, f"{table_name} | summarize count()")
     wait_for_user()
 
     # Learn More: For additional information on how to ingest data to Kusto in Python see:
     #  https://docs.microsoft.com/en-us/azure/data-explorer/python-ingest-data
-    if csvSample is not None:
+    if csv_sample is not None:
         print("")
-        print(f"Attempting to ingest '{csvSample}'")
-        ingest_data_from_file(ingest_client, databaseName, tableName, csvSample, DataFormat.CSV)
+        print(f"Attempting to ingest '{csv_sample}'")
+        ingest_data_from_file(ingest_client, database_name, table_name, csv_sample, DataFormat.CSV)
         wait_for_user()
 
-    if jsonSample is not None:
+    if json_sample is not None:
         print("")
-        print(f"Attempting to create a json mapping reference named '{jsonMappingRef}'")
+        print(f"Attempting to create a json mapping reference named '{json_mapping_ref}'")
         # Tip: This is commonly a one-time configuration to make
-        mapping_command = f".create-or-alter table {tableName} ingestion json mapping '{jsonMappingRef}' '{jsonMapping}'"
-        mapping_exists = run_control_command(kusto_client, databaseName, mapping_command)
+        mapping_command = f".create-or-alter table {table_name} ingestion json mapping '{json_mapping_ref}' '{json_mapping}'"
+        mapping_exists = run_control_command(kusto_client, database_name, mapping_command)
         if not mapping_exists:
-            print(f"failed to create a json  mapping reference named {jsonMappingRef}")
+            print(f"failed to create a json  mapping reference named {json_mapping_ref}")
             print(f"skipping json ingestion")
 
         # learn More: For more information about providing inline mappings or mapping references see:
@@ -146,8 +127,8 @@ def main():
 
         if mapping_exists:
             print("")
-            print(f"Attempting to ingest '{jsonSample}'")
-            ingest_data_from_file(ingest_client, databaseName, tableName, jsonSample, DataFormat.MULTIJSON, jsonMappingRef)
+            print(f"Attempting to ingest '{json_sample}'")
+            ingest_data_from_file(ingest_client, database_name, table_name, json_sample, DataFormat.MULTIJSON, json_mapping_ref)
             wait_for_user()
 
     print("")
@@ -158,12 +139,12 @@ def main():
         time.sleep(1)
 
     print("")
-    print(f"Post ingestion row count for '{databaseName}.{tableName}' is:")
-    run_query(kusto_client, databaseName, f"{tableName} | summarize count()")
+    print(f"Post ingestion row count for '{database_name}.{table_name}' is:")
+    run_query(kusto_client, database_name, f"{table_name} | summarize count()")
 
     print("")
     print(f"Post ingestion sample data query:")
-    run_query(kusto_client, databaseName, f"{tableName} | take 2")
+    run_query(kusto_client, database_name, f"{table_name} | take 2")
 
 
 def run_control_command(client: KustoClient, db: str, command: str) -> bool:
@@ -312,6 +293,15 @@ def create_app_cert_connection_string(cluster: str) -> KustoConnectionStringBuil
         )
     else:
         return KustoConnectionStringBuilder.with_aad_application_certificate_authentication(cluster, app_id, pem_certificate, thumbprint, app_tenant)
+
+
+def read_config(config_file: str) -> dict:
+    try:
+        with open(config_file, "r") as config_file:
+            config = json.load(config_file)
+            return config
+    except Exception as ex:
+        die(f"Failed to load config file from {config_file}", ex)
 
 
 def die(error: str, ex: Exception = None):
