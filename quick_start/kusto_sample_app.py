@@ -67,7 +67,7 @@ def main():
     print("")
     print(f"Creating table '{database_name}.{table_name}' if it does not exist:")
     # Tip: This is commonly a one-time configuration to make
-    # Learn More: For additional information on how to create tables see: https://docs.microsoft.com/en-us/azure/data-explorer/one-click-table
+    # Learn More: For additional information on how to create tables see: https://docs.microsoft.com/azure/data-explorer/one-click-table
     command = f".create table {table_name} {table_schema}"
     if not run_control_command(kusto_client, database_name, command):
         print("Failed to create or validate table exists.")
@@ -92,18 +92,18 @@ def main():
     #   3) More then 5 minutes have passed since the first file was queued for ingestion for the same table by the same user
     #  In order to speed up this sample app, we attempt to modify the default ingestion policy to ingest data after 10 seconds have passed
     #  For additional information on customizing the ingestion batching policy see:
-    #   https://docs.microsoft.com/en-us/azure/data-explorer/kusto/management/batchingpolicy
+    #   https://docs.microsoft.com/azure/data-explorer/kusto/management/batchingpolicy
     #  You may also skip the batching for some files using the Flush-Immediately property, though this option should be used with care as it is inefficient
     wait_for_user()
 
-    # Learn More: For additional information on Kusto Query Language see: https://docs.microsoft.com/en-us/azure/data-explorer/write-queries
+    # Learn More: For additional information on Kusto Query Language see: https://docs.microsoft.com/azure/data-explorer/write-queries
     print("")
     print(f"Initial row count for '{database_name}.{table_name}' is:")
     run_query(kusto_client, database_name, f"{table_name} | summarize count()")
     wait_for_user()
 
     # Learn More: For additional information on how to ingest data to Kusto in Python see:
-    #  https://docs.microsoft.com/en-us/azure/data-explorer/python-ingest-data
+    #  https://docs.microsoft.com/azure/data-explorer/python-ingest-data
     if csv_sample is not None:
         print("")
         print(f"Attempting to ingest '{csv_sample}'")
@@ -121,13 +121,15 @@ def main():
             print(f"skipping json ingestion")
 
         # learn More: For more information about providing inline mappings or mapping references see:
-        #  https://docs.microsoft.com/en-us/azure/data-explorer/kusto/management/mappings
+        #  https://docs.microsoft.com/azure/data-explorer/kusto/management/mappings
 
         wait_for_user()
 
         if mapping_exists:
             print("")
             print(f"Attempting to ingest '{json_sample}'")
+            # Tip: When ingesting json files, if a each row is represented by a single line json, use MULTIJSON format even if the file only includes one line.
+            # When the json contains whitespace formatting, use SINGLEJSON. IN this case only one row/json per file is allowed.
             ingest_data_from_file(ingest_client, database_name, table_name, json_sample, DataFormat.MULTIJSON, json_mapping_ref)
             wait_for_user()
 
@@ -201,7 +203,7 @@ def ingest_data_from_file(client: QueuedIngestClient, db: str, table: str, file_
         table=f"{table}",
         ingestion_mapping_reference=mapping_ref,
         # Learn More: For additional information about supported data formats, see
-        #  https://docs.microsoft.com/en-us/azure/data-explorer/ingestion-supported-formats
+        #  https://docs.microsoft.com/azure/data-explorer/ingestion-supported-formats
         data_format=file_format,
         # Todo - Config: Setting the ingestion batching policy takes up to 5 minutes to have an effect.
         #  For the sake of the sample we set Flush-Immediately, but in practice it should not be commonly used.
@@ -219,7 +221,7 @@ def ingest_data_from_file(client: QueuedIngestClient, db: str, table: str, file_
 
 def create_connection_string(cluster: str, auth_mode: str) -> KustoConnectionStringBuilder:
     # Learn More: For additional information on how to authorize users and apps on Kusto Database see:
-    #  https://docs.microsoft.com/en-us/azure/data-explorer/manage-database-permissions
+    #  https://docs.microsoft.com/azure/data-explorer/manage-database-permissions
     if auth_mode == "userPrompt":
         return create_interactive_auth_connection_string(cluster)
 
@@ -259,7 +261,7 @@ def create_app_key_connection_string(cluster: str) -> KustoConnectionStringBuild
     app_key = os.environ.get("APP_KEY")
 
     # Learn More: For information on how to procure an AAD Application in Azure see:
-    #  https://docs.microsoft.com/en-us/azure/data-explorer/provision-azure-ad-app
+    #  https://docs.microsoft.com/azure/data-explorer/provision-azure-ad-app
     return KustoConnectionStringBuilder.with_aad_application_key_authentication(cluster, app_id, app_key, app_tenant)
 
 
@@ -274,7 +276,7 @@ def create_app_cert_connection_string(cluster: str) -> KustoConnectionStringBuil
     pem_certificate = None
 
     # Learn More: For information on how to procure an AAD Application in Azure see:
-    #  https://docs.microsoft.com/en-us/azure/data-explorer/provision-azure-ad-app
+    #  https://docs.microsoft.com/azure/data-explorer/provision-azure-ad-app
     try:
         with open(pem_file_path, "r") as pem_file:
             pem_certificate = pem_file.read()
