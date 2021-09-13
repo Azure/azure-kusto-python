@@ -924,9 +924,9 @@ class KustoClient(_KustoClientBase):
         if stream_response:
             try:
                 response.raise_for_status()
+                return response
             except Exception as e:
                 self._handle_http_error(e, self._query_endpoint, None, response, response.json(), response.text)
-            return response
 
         response_json = None
         try:

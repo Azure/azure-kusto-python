@@ -7,7 +7,7 @@ from enum import Enum
 from typing import Iterator
 
 from . import _converters
-from .exceptions import KustoServiceError, KustoStreamingError
+from .exceptions import KustoServiceError, KustoStreamingQueryError
 
 
 class WellKnownDataSet(Enum):
@@ -180,22 +180,18 @@ class KustoStreamingResultTable:
     @property
     def rows(self) -> Iterator[KustoResultRow]:
         if self.finished:
-            raise KustoStreamingError("Can't retrieve rows after iteration is finished")
+            raise KustoStreamingQueryError("Can't retrieve rows after iteration is finished")
         return iter(self)
 
     @property
     def rows_count(self) -> int:
         if not self.finished:
-            raise KustoStreamingError("Can't retrieve rows count before the iteration is finished")
+            raise KustoStreamingQueryError("Can't retrieve rows count before the iteration is finished")
         return self.row_count
 
     @property
     def columns_count(self) -> int:
         return len(self.columns)
-
-    def to_dict(self):
-        """Converts the table to a dict."""
-        return {"name": self.table_name, "kind": self.table_kind}
 
     def __len__(self):
         if not self.finished:
@@ -203,13 +199,13 @@ class KustoStreamingResultTable:
         return self.rows_count
 
     def __iter__(self):
-        while True:
+        while not self.finished:
             row = next(self.raw_rows, None)
             if row is None:
                 self.finished = True
-                break
-            self.row_count += 1
-            yield KustoResultRow(self.columns, row)
+            else:
+                self.row_count += 1
+                yield KustoResultRow(self.columns, row)
 
     def __bool__(self):
         return any(self.columns)

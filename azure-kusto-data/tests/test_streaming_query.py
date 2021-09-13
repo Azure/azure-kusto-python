@@ -1,13 +1,14 @@
 import os
+from io import StringIO
 
 import pytest
 
 from azure.kusto.data._models import WellKnownDataSet, KustoResultRow, KustoResultColumn
 from azure.kusto.data.aio._models import KustoStreamingResponseDataSet as AsyncKustoStreamingResponseDataSet
 from azure.kusto.data.aio.streaming_response import JsonTokenReader as AsyncJsonTokenReader, ProgressiveDataSetEnumerator as AsyncProgressiveDataSetEnumerator
-from azure.kusto.data.exceptions import KustoServiceError, KustoStreamingError
+from azure.kusto.data.exceptions import KustoServiceError, KustoStreamingQueryError, KustoTokenParsingError
 from azure.kusto.data.response import KustoStreamingResponseDataSet
-from azure.kusto.data.streaming_response import JsonTokenReader, ProgressiveDataSetEnumerator, FrameType
+from azure.kusto.data.streaming_response import JsonTokenReader, ProgressiveDataSetEnumerator, FrameType, JsonTokenType
 from tests.kusto_client_common import KustoClientTestsMixin
 
 
@@ -24,6 +25,14 @@ class MockAioFile:
 
     async def read(self, n=-1):
         return self.file.read(n)
+
+
+class AsyncStringIO:
+    def __init__(self, string):
+        self.string_io = StringIO(string)
+
+    async def read(self, n=-1):
+        return self.string_io.read(n)
 
 
 class TestStreamingQuery(KustoClientTestsMixin):
@@ -62,12 +71,12 @@ class TestStreamingQuery(KustoClientTestsMixin):
             response = KustoStreamingResponseDataSet(reader)
 
             # Before reading all of the tables these results won't be available
-            with pytest.raises(KustoStreamingError):
+            with pytest.raises(KustoStreamingQueryError):
                 errors_count = response.errors_count
-            with pytest.raises(KustoStreamingError):
+            with pytest.raises(KustoStreamingQueryError):
                 exceptions = response.get_exceptions()
             # Can't advance by default until current table is finished
-            with pytest.raises(KustoStreamingError):
+            with pytest.raises(KustoStreamingQueryError):
                 response.next_primary_results_table()
 
             self._assert_sanity_query_primary_results(response.current_primary_results_table)
@@ -116,12 +125,12 @@ class TestStreamingQuery(KustoClientTestsMixin):
             response = await AsyncKustoStreamingResponseDataSet.create(reader)
 
             # Before reading all of the tables these results won't be available
-            with pytest.raises(KustoStreamingError):
+            with pytest.raises(KustoStreamingQueryError):
                 errors_count = response.errors_count
-            with pytest.raises(KustoStreamingError):
+            with pytest.raises(KustoStreamingQueryError):
                 exceptions = response.get_exceptions()
             # Can't advance by default until current table is finished
-            with pytest.raises(KustoStreamingError):
+            with pytest.raises(KustoStreamingQueryError):
                 await response.next_primary_results_table()
 
             self._assert_sanity_query_primary_results([x async for x in response.current_primary_results_table])
@@ -142,3 +151,43 @@ class TestStreamingQuery(KustoClientTestsMixin):
             table = response.current_primary_results_table
             with pytest.raises(KustoServiceError):
                 rows = [r async for r in table.rows]
+
+
+class TestJsonTokenReader:
+    def get_reader(self, data) -> JsonTokenReader:
+        return JsonTokenReader(StringIO(data))
+
+    def get_async_reader(self, data) -> AsyncJsonTokenReader:
+        return AsyncJsonTokenReader(AsyncStringIO(data))
+
+    def test_reading_token(self):
+        reader = self.get_reader("{")
+        assert reader.read_next_token_or_throw().token_type == JsonTokenType.START_MAP
+        with pytest.raises(KustoTokenParsingError):
+            reader.read_next_token_or_throw()
+
+    def test_types(self):
+        reader = self.get_reader('{"junk": [[[]]], "key": ["a",false,3.63]}')
+        assert reader.read_start_object().token_type == JsonTokenType.START_MAP
+        assert reader.skip_until_property_name("key").token_type == JsonTokenType.MAP_KEY
+        assert reader.read_start_array().token_type == JsonTokenType.START_ARRAY
+        assert reader.read_string() == "a"
+        assert reader.read_boolean() is False
+        assert reader.read_number() == 3.63
+
+    @pytest.mark.asyncio
+    async def test_reading_token_async(self):
+        reader = self.get_async_reader("{")
+        assert (await reader.read_next_token_or_throw()).token_type == JsonTokenType.START_MAP
+        with pytest.raises(KustoTokenParsingError):
+            await reader.read_next_token_or_throw()
+
+    @pytest.mark.asyncio
+    async def test_types_async(self):
+        reader = self.get_async_reader('{"junk": [[[]]], "key": ["a",false,3.63]}')
+        assert (await reader.read_start_object()).token_type == JsonTokenType.START_MAP
+        assert (await reader.skip_until_property_name("key")).token_type == JsonTokenType.MAP_KEY
+        assert (await reader.read_start_array()).token_type == JsonTokenType.START_ARRAY
+        assert (await reader.read_string()) == "a"
+        assert (await reader.read_boolean()) is False
+        assert (await reader.read_number()) == 3.63

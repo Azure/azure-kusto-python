@@ -2,6 +2,7 @@ from typing import Any, Tuple, Dict
 
 import aiohttp
 import ijson
+from ijson import IncompleteJSONError
 
 from azure.kusto.data._models import WellKnownDataSet
 from azure.kusto.data.exceptions import KustoTokenParsingError, KustoServiceError
@@ -13,7 +14,10 @@ class JsonTokenReader:
         self.json_iter = ijson.parse_async(stream, use_float=True)
 
     async def read_next_token_or_throw(self) -> JsonToken:
-        next_item = await self.json_iter.__anext__()
+        try:
+            next_item = await self.json_iter.__anext__()
+        except IncompleteJSONError:
+            next_item = None
         if next_item is None:
             raise KustoTokenParsingError("Unexpected end of stream")
         (token_path, token_type, token_value) = next_item
@@ -47,7 +51,8 @@ class JsonTokenReader:
 
     async def skip_children(self, prev_token: JsonToken):
         if prev_token.token_type == JsonTokenType.MAP_KEY:
-            await self.read_next_token_or_throw()
+            child_token = await self.read_next_token_or_throw()
+            await self.skip_children(child_token)
         elif prev_token.token_type in JsonTokenType.start_tokens():
             while True:
                 potential_end_token = await self.read_next_token_or_throw()
@@ -81,6 +86,7 @@ class JsonTokenReader:
                     return token
 
                 await self.skip_children(token)
+                continue
 
             raise Exception(f"Unexpected token {token}")
 

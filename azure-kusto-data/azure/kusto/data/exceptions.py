@@ -16,12 +16,12 @@ class KustoError(Exception):
     """Base class for all exceptions raised by the Kusto Python Client Libraries."""
 
 
-class KustoStreamingError(KustoError):
+class KustoStreamingQueryError(KustoError):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
 
 
-class KustoTokenParsingError(KustoStreamingError):
+class KustoTokenParsingError(KustoStreamingQueryError):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
 

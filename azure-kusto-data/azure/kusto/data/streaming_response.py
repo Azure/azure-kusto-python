@@ -2,6 +2,7 @@ from enum import Enum
 from typing import Optional, Any, Tuple, Dict, AnyStr, IO
 
 import ijson
+from ijson import IncompleteJSONError
 
 from azure.kusto.data._models import WellKnownDataSet
 from azure.kusto.data.exceptions import KustoServiceError, KustoTokenParsingError
@@ -49,7 +50,10 @@ class JsonTokenReader:
         self.json_iter = ijson.parse(stream, use_float=True)
 
     def read_next_token_or_throw(self) -> JsonToken:
-        next_item = next(self.json_iter)
+        try:
+            next_item = next(self.json_iter)
+        except IncompleteJSONError:
+            next_item = None
         if next_item is None:
             raise KustoTokenParsingError("Unexpected end of stream")
         (token_path, token_type, token_value) = next_item
@@ -83,7 +87,7 @@ class JsonTokenReader:
 
     def skip_children(self, prev_token: JsonToken):
         if prev_token.token_type == JsonTokenType.MAP_KEY:
-            self.read_next_token_or_throw()
+            self.skip_children(self.read_next_token_or_throw())
         elif prev_token.token_type in JsonTokenType.start_tokens():
             while True:
                 potential_end_token = self.read_next_token_or_throw()
@@ -117,6 +121,7 @@ class JsonTokenReader:
                     return token
 
                 self.skip_children(token)
+                continue
 
             raise Exception(f"Unexpected token {token}")
 

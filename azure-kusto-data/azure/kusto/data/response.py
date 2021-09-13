@@ -4,7 +4,7 @@ from abc import ABCMeta, abstractmethod
 from typing import List, Optional
 
 from ._models import KustoResultTable, WellKnownDataSet, KustoStreamingResultTable
-from .exceptions import KustoStreamingError
+from .exceptions import KustoStreamingQueryError
 from .streaming_response import ProgressiveDataSetEnumerator, FrameType
 
 
@@ -181,7 +181,7 @@ class KustoStreamingResponseDataSet(BaseKustoResponseDataSet):
         if self.have_read_rest_of_tables:
             return None
         if ensure_current_finished and not self.current_primary_results_table.finished:
-            raise KustoStreamingError(
+            raise KustoStreamingQueryError(
                 "Tried retrieving a new primary_result table before the old one was finished. To override pass `ensure_current_finished=False`"
             )
 
@@ -200,7 +200,7 @@ class KustoStreamingResponseDataSet(BaseKustoResponseDataSet):
             return
 
         if ensure_primary_tables_finished and not self.streamed_data.finished_primary_results:
-            raise KustoStreamingError(
+            raise KustoStreamingQueryError(
                 "Tried retrieving all of the tables before the primary_results are finished. To override pass `ensure_primary_tables_finished=False`"
             )
 
@@ -210,14 +210,14 @@ class KustoStreamingResponseDataSet(BaseKustoResponseDataSet):
     @property
     def errors_count(self) -> int:
         if not self.have_read_rest_of_tables:
-            raise KustoStreamingError(
+            raise KustoStreamingQueryError(
                 "Unable to get errors count before reading all of the tables. Advance `next_primary_results_table` to the end, or use `read_rest_of_tables`"
             )
         return super().errors_count
 
     def get_exceptions(self) -> List[str]:
         if not self.have_read_rest_of_tables:
-            raise KustoStreamingError(
+            raise KustoStreamingQueryError(
                 "Unable to get errors count before reading all of the tables. Advance `next_primary_results_table` to the end, or use `read_rest_of_tables`"
             )
         return super().get_exceptions()

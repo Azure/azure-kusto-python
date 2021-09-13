@@ -75,7 +75,8 @@ class KustoClient(_KustoClientBase):
     async def execute_streaming_query(
         self, database: str, query: str, timeout: timedelta = _KustoClientBase._query_default_timeout, properties: Optional[ClientRequestProperties] = None
     ) -> KustoStreamingResponseDataSet:
-        return await KustoStreamingResponseDataSet.create(await self._execute_streaming_query_parsed(database, query, timeout, properties))
+        response = await self._execute_streaming_query_parsed(database, query, timeout, properties)
+        return await KustoStreamingResponseDataSet.create(response)
 
     @aio_documented_by(KustoClientSync._execute)
     async def _execute(
