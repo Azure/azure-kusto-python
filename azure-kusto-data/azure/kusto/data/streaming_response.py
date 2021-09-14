@@ -49,6 +49,12 @@ class JsonTokenReader:
     def __init__(self, stream: IO[AnyStr]):
         self.json_iter = ijson.parse(stream, use_float=True)
 
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        return self.read_next_token_or_throw()
+
     def read_next_token_or_throw(self) -> JsonToken:
         try:
             next_item = next(self.json_iter)
@@ -81,16 +87,11 @@ class JsonTokenReader:
     def read_number(self) -> float:
         return self.read_token_of_type(JsonTokenType.NUMBER).token_value
 
-    def skip_to_end(self):
-        for _ in self.json_iter:
-            pass
-
     def skip_children(self, prev_token: JsonToken):
         if prev_token.token_type == JsonTokenType.MAP_KEY:
             self.skip_children(self.read_next_token_or_throw())
         elif prev_token.token_type in JsonTokenType.start_tokens():
-            while True:
-                potential_end_token = self.read_next_token_or_throw()
+            for potential_end_token in self:
                 if potential_end_token.token_path == prev_token.token_path and potential_end_token.token_type in JsonTokenType.end_tokens():
                     break
 
@@ -111,8 +112,7 @@ class JsonTokenReader:
             self.skip_children(token)
 
     def skip_until_property_name_or_end_object(self, *names: str) -> JsonToken:
-        while True:
-            token = self.read_next_token_or_throw()
+        for token in self:
             if token.token_type == JsonTokenType.END_MAP:
                 return token
 
@@ -125,22 +125,11 @@ class JsonTokenReader:
 
             raise Exception(f"Unexpected token {token}")
 
-    def skip_until_token(self, *tokens: JsonTokenType):
-        while True:
-            token = self.read_next_token_or_throw()
-            if token.token_type in tokens:
-                return token
-            self.skip_children(token)
-
     def skip_until_token_with_paths(self, *tokens: (JsonTokenType, str)):
-        while True:
-            token = self.read_next_token_or_throw()
+        for token in self:
             if any((token.token_type == t_type and token.token_path == t_path) for (t_type, t_path) in tokens):
                 return token
             self.skip_children(token)
-
-    def skip_until_end_object(self):
-        self.skip_until_token(JsonTokenType.END_MAP)
 
 
 class ProgressiveDataSetEnumerator:
@@ -180,7 +169,7 @@ class ProgressiveDataSetEnumerator:
     def parse_frame(self, frame_type):
         if frame_type == FrameType.DataSetHeader:
             return self.extract_props(frame_type, ("IsProgressive", JsonTokenType.BOOLEAN), ("Version", JsonTokenType.STRING))
-        elif frame_type == FrameType.TableHeader:
+        if frame_type == FrameType.TableHeader:
             return self.extract_props(
                 frame_type,
                 ("TableId", JsonTokenType.NUMBER),
@@ -188,15 +177,15 @@ class ProgressiveDataSetEnumerator:
                 ("TableName", JsonTokenType.STRING),
                 ("Columns", JsonTokenType.START_ARRAY),
             )
-        elif frame_type == FrameType.TableFragment:
+        if frame_type == FrameType.TableFragment:
             return self.extract_props(
                 frame_type, ("TableFragmentType", JsonTokenType.STRING), ("TableId", JsonTokenType.NUMBER), ("Rows", JsonTokenType.START_ARRAY)
             )
-        elif frame_type == FrameType.TableCompletion:
+        if frame_type == FrameType.TableCompletion:
             return self.extract_props(frame_type, ("TableId", JsonTokenType.NUMBER), ("RowCount", JsonTokenType.NUMBER))
-        elif frame_type == FrameType.TableProgress:
+        if frame_type == FrameType.TableProgress:
             return self.extract_props(frame_type, ("TableId", JsonTokenType.NUMBER), ("TableProgress", JsonTokenType.NUMBER))
-        elif frame_type == FrameType.DataTable:
+        if frame_type == FrameType.DataTable:
             props = self.extract_props(
                 frame_type,
                 ("TableId", JsonTokenType.NUMBER),
@@ -209,7 +198,7 @@ class ProgressiveDataSetEnumerator:
             if props["TableKind"] != WellKnownDataSet.PrimaryResult.value:
                 props["Rows"] = list(props["Rows"])
             return props
-        elif frame_type == FrameType.DataSetCompletion:
+        if frame_type == FrameType.DataSetCompletion:
             res = self.extract_props(frame_type, ("HasErrors", JsonTokenType.BOOLEAN), ("Cancelled", JsonTokenType.BOOLEAN))
             token = self.reader.skip_until_property_name_or_end_object("OneApiErrors")
             if token.token_type != JsonTokenType.END_MAP:

@@ -68,8 +68,7 @@ class KustoStreamingResponseDataSet(BaseKustoResponseDataSet):
     current_primary_results_table: KustoStreamingResultTable
 
     async def extract_tables_until_primary_result(self):
-        while True:
-            table = await self.streamed_data.__anext__()
+        async for table in self.streamed_data:
             if table["FrameType"] != FrameType.DataTable:
                 continue
             if self.streamed_data.started_primary_results:

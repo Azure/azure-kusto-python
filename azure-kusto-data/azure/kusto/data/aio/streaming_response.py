@@ -13,6 +13,12 @@ class JsonTokenReader:
     def __init__(self, stream: aiohttp.StreamReader):
         self.json_iter = ijson.parse_async(stream, use_float=True)
 
+    def __aiter__(self):
+        return self
+
+    def __anext__(self) -> JsonToken:
+        return self.read_next_token_or_throw()
+
     async def read_next_token_or_throw(self) -> JsonToken:
         try:
             next_item = await self.json_iter.__anext__()
@@ -45,17 +51,12 @@ class JsonTokenReader:
     async def read_number(self) -> float:
         return (await self.read_token_of_type(JsonTokenType.NUMBER)).token_value
 
-    async def skip_to_end(self):
-        async for _ in self.json_iter:
-            pass
-
     async def skip_children(self, prev_token: JsonToken):
         if prev_token.token_type == JsonTokenType.MAP_KEY:
             child_token = await self.read_next_token_or_throw()
             await self.skip_children(child_token)
         elif prev_token.token_type in JsonTokenType.start_tokens():
-            while True:
-                potential_end_token = await self.read_next_token_or_throw()
+            async for potential_end_token in self:
                 if potential_end_token.token_path == prev_token.token_path and potential_end_token.token_type in JsonTokenType.end_tokens():
                     break
 
@@ -76,8 +77,7 @@ class JsonTokenReader:
             await self.skip_children(token)
 
     async def skip_until_property_name_or_end_object(self, *names: str) -> JsonToken:
-        while True:
-            token = await self.read_next_token_or_throw()
+        async for token in self:
             if token.token_type == JsonTokenType.END_MAP:
                 return token
 
@@ -90,22 +90,11 @@ class JsonTokenReader:
 
             raise Exception(f"Unexpected token {token}")
 
-    async def skip_until_token(self, *tokens: JsonTokenType):
-        while True:
-            token = await self.read_next_token_or_throw()
-            if token.token_type in tokens:
-                return token
-            await self.skip_children(token)
-
     async def skip_until_token_with_paths(self, *tokens: (JsonTokenType, str)):
-        while True:
-            token = await self.read_next_token_or_throw()
+        async for token in self:
             if any((token.token_type == t_type and token.token_path == t_path) for (t_type, t_path) in tokens):
                 return token
             await self.skip_children(token)
-
-    async def skip_until_end_object(self):
-        await self.skip_until_token(JsonTokenType.END_MAP)
 
 
 class ProgressiveDataSetEnumerator:

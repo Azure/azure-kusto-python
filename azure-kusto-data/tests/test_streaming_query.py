@@ -166,6 +166,12 @@ class TestJsonTokenReader:
         with pytest.raises(KustoTokenParsingError):
             reader.read_next_token_or_throw()
 
+    def test_read_token_of_type(self):
+        reader = self.get_reader("{}")
+        assert reader.read_token_of_type(JsonTokenType.START_MAP).token_type == JsonTokenType.START_MAP
+        with pytest.raises(KustoTokenParsingError):
+            reader.read_token_of_type(JsonTokenType.START_MAP)
+
     def test_types(self):
         reader = self.get_reader('{"junk": [[[]]], "key": ["a",false,3.63]}')
         assert reader.read_start_object().token_type == JsonTokenType.START_MAP
@@ -175,12 +181,31 @@ class TestJsonTokenReader:
         assert reader.read_boolean() is False
         assert reader.read_number() == 3.63
 
+    def test_skip(self):
+        reader = self.get_reader('{"junk": [[[]]], "key": "a", "junk2": {"key2": "aaaaa"}, "key2": "www"}')
+        assert reader.read_start_object().token_type == JsonTokenType.START_MAP
+        key = reader.skip_until_any_property_name("key", "junk2")
+        assert key.token_type == JsonTokenType.MAP_KEY
+        assert reader.read_string() == "a"
+        key2 = reader.skip_until_property_name_or_end_object("key2")
+        assert key2.token_type == JsonTokenType.MAP_KEY
+        assert key2.token_path == ""
+        assert reader.read_string() == "www"
+        assert reader.skip_until_property_name_or_end_object().token_type == JsonTokenType.END_MAP
+
     @pytest.mark.asyncio
     async def test_reading_token_async(self):
         reader = self.get_async_reader("{")
         assert (await reader.read_next_token_or_throw()).token_type == JsonTokenType.START_MAP
         with pytest.raises(KustoTokenParsingError):
             await reader.read_next_token_or_throw()
+
+    @pytest.mark.asyncio
+    async def test_read_token_of_type_async(self):
+        reader = self.get_async_reader("{}")
+        assert (await reader.read_token_of_type(JsonTokenType.START_MAP)).token_type == JsonTokenType.START_MAP
+        with pytest.raises(KustoTokenParsingError):
+            await reader.read_token_of_type(JsonTokenType.START_MAP)
 
     @pytest.mark.asyncio
     async def test_types_async(self):
@@ -191,3 +216,16 @@ class TestJsonTokenReader:
         assert (await reader.read_string()) == "a"
         assert (await reader.read_boolean()) is False
         assert (await reader.read_number()) == 3.63
+
+    @pytest.mark.asyncio
+    async def test_skip_async(self):
+        reader = self.get_async_reader('{"junk": [[[]]], "key": "a", "junk2": {"key2": "aaaaa"}, "key2": "www" }')
+        assert (await reader.read_start_object()).token_type == JsonTokenType.START_MAP
+        key = await reader.skip_until_any_property_name("key", "junk2")
+        assert key.token_type == JsonTokenType.MAP_KEY
+        assert (await reader.read_string()) == "a"
+        key2 = await reader.skip_until_property_name_or_end_object("key2")
+        assert key2.token_type == JsonTokenType.MAP_KEY
+        assert key2.token_path == ""
+        assert (await reader.read_string()) == "www"
+        assert (await reader.skip_until_property_name_or_end_object()).token_type == JsonTokenType.END_MAP
