@@ -134,7 +134,7 @@ class ProgressiveDataSetEnumerator:
     async def parse_frame(self, frame_type):
         if frame_type == FrameType.DataSetHeader:
             return await self.extract_props(frame_type, ("IsProgressive", JsonTokenType.BOOLEAN), ("Version", JsonTokenType.STRING))
-        elif frame_type == FrameType.TableHeader:
+        if frame_type == FrameType.TableHeader:
             return await self.extract_props(
                 frame_type,
                 ("TableId", JsonTokenType.NUMBER),
@@ -142,15 +142,15 @@ class ProgressiveDataSetEnumerator:
                 ("TableName", JsonTokenType.STRING),
                 ("Columns", JsonTokenType.START_ARRAY),
             )
-        elif frame_type == FrameType.TableFragment:
+        if frame_type == FrameType.TableFragment:
             return await self.extract_props(
                 frame_type, ("TableFragmentType", JsonTokenType.STRING), ("TableId", JsonTokenType.NUMBER), ("Rows", JsonTokenType.START_ARRAY)
             )
-        elif frame_type == FrameType.TableCompletion:
+        if frame_type == FrameType.TableCompletion:
             return await self.extract_props(frame_type, ("TableId", JsonTokenType.NUMBER), ("RowCount", JsonTokenType.NUMBER))
-        elif frame_type == FrameType.TableProgress:
+        if frame_type == FrameType.TableProgress:
             return await self.extract_props(frame_type, ("TableId", JsonTokenType.NUMBER), ("TableProgress", JsonTokenType.NUMBER))
-        elif frame_type == FrameType.DataTable:
+        if frame_type == FrameType.DataTable:
             props = await self.extract_props(
                 frame_type,
                 ("TableId", JsonTokenType.NUMBER),
@@ -163,7 +163,7 @@ class ProgressiveDataSetEnumerator:
             if props["TableKind"] != WellKnownDataSet.PrimaryResult.value:
                 props["Rows"] = [r async for r in props["Rows"]]
             return props
-        elif frame_type == FrameType.DataSetCompletion:
+        if frame_type == FrameType.DataSetCompletion:
             res = await self.extract_props(frame_type, ("HasErrors", JsonTokenType.BOOLEAN), ("Cancelled", JsonTokenType.BOOLEAN))
             token = await self.reader.skip_until_property_name_or_end_object("OneApiErrors")
             if token.token_type != JsonTokenType.END_MAP:
