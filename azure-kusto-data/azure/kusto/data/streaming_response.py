@@ -132,7 +132,7 @@ class JsonTokenReader:
             self.skip_children(token)
 
 
-class ProgressiveDataSetEnumerator:
+class StreamingDataSetEnumerator:
     def __init__(self, reader: JsonTokenReader):
         self.reader = reader
         self.done = False

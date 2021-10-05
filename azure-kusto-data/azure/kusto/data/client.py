@@ -20,7 +20,7 @@ from .data_format import DataFormat
 from .exceptions import KustoServiceError
 from .response import KustoResponseDataSetV1, KustoResponseDataSetV2, KustoStreamingResponseDataSet, KustoResponseDataSet
 from .security import _AadHelper
-from .streaming_response import ProgressiveDataSetEnumerator, JsonTokenReader
+from .streaming_response import StreamingDataSetEnumerator, JsonTokenReader
 
 if TYPE_CHECKING:
     import aiohttp
@@ -882,10 +882,10 @@ class KustoClient(_KustoClientBase):
 
     def _execute_streaming_query_parsed(
         self, database: str, query: str, timeout: timedelta = _KustoClientBase._query_default_timeout, properties: Optional[ClientRequestProperties] = None
-    ) -> ProgressiveDataSetEnumerator:
+    ) -> StreamingDataSetEnumerator:
         response = self._execute(self._query_endpoint, database, query, None, timeout, properties, stream_response=True)
         response.raw.decode_content = True
-        return ProgressiveDataSetEnumerator(JsonTokenReader(response.raw))
+        return StreamingDataSetEnumerator(JsonTokenReader(response.raw))
 
     def execute_streaming_query(
         self, database: str, query: str, timeout: timedelta = _KustoClientBase._query_default_timeout, properties: Optional[ClientRequestProperties] = None

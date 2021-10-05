@@ -17,13 +17,11 @@ class KustoError(Exception):
 
 
 class KustoStreamingQueryError(KustoError):
-    def __init__(self, *args: object) -> None:
-        super().__init__(*args)
+    ...
 
 
 class KustoTokenParsingError(KustoStreamingQueryError):
-    def __init__(self, *args: object) -> None:
-        super().__init__(*args)
+    ...
 
 
 class KustoServiceError(KustoError):

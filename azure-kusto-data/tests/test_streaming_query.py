@@ -8,7 +8,7 @@ from azure.kusto.data.aio._models import KustoStreamingResponseDataSet as AsyncK
 from azure.kusto.data.aio.streaming_response import JsonTokenReader as AsyncJsonTokenReader, ProgressiveDataSetEnumerator as AsyncProgressiveDataSetEnumerator
 from azure.kusto.data.exceptions import KustoServiceError, KustoStreamingQueryError, KustoTokenParsingError
 from azure.kusto.data.response import KustoStreamingResponseDataSet
-from azure.kusto.data.streaming_response import JsonTokenReader, ProgressiveDataSetEnumerator, FrameType, JsonTokenType
+from azure.kusto.data.streaming_response import JsonTokenReader, StreamingDataSetEnumerator, FrameType, JsonTokenType
 from tests.kusto_client_common import KustoClientTestsMixin
 
 
@@ -48,7 +48,7 @@ class TestStreamingQuery(KustoClientTestsMixin):
 
     def test_sanity(self):
         with self.open_json_file("deft.json") as f:
-            reader = ProgressiveDataSetEnumerator(JsonTokenReader(f))
+            reader = StreamingDataSetEnumerator(JsonTokenReader(f))
 
             for i in reader:
                 if i["FrameType"] == FrameType.DataTable and i["TableKind"] == WellKnownDataSet.PrimaryResult.value:
@@ -57,7 +57,7 @@ class TestStreamingQuery(KustoClientTestsMixin):
 
     def test_dynamic(self):
         with self.open_json_file("dynamic.json") as f:
-            reader = ProgressiveDataSetEnumerator(JsonTokenReader(f))
+            reader = StreamingDataSetEnumerator(JsonTokenReader(f))
 
             for i in reader:
                 if i["FrameType"] == FrameType.DataTable and i["TableKind"] == WellKnownDataSet.PrimaryResult.value:
@@ -66,7 +66,7 @@ class TestStreamingQuery(KustoClientTestsMixin):
 
     def test_sanity_kusto_streaming_response_dataset(self):
         with self.open_json_file("deft.json") as f:
-            reader = ProgressiveDataSetEnumerator(JsonTokenReader(f))
+            reader = StreamingDataSetEnumerator(JsonTokenReader(f))
 
             response = KustoStreamingResponseDataSet(reader)
 
@@ -90,7 +90,7 @@ class TestStreamingQuery(KustoClientTestsMixin):
 
     def test_exception_in_row(self):
         with self.open_json_file("query_partial_results_defer_is_false.json") as f:
-            reader = ProgressiveDataSetEnumerator(JsonTokenReader(f))
+            reader = StreamingDataSetEnumerator(JsonTokenReader(f))
 
             response = KustoStreamingResponseDataSet(reader)
             table = response.current_primary_results_table

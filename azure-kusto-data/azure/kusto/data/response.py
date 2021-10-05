@@ -5,7 +5,7 @@ from typing import List, Optional
 
 from ._models import KustoResultTable, WellKnownDataSet, KustoStreamingResultTable
 from .exceptions import KustoStreamingQueryError
-from .streaming_response import ProgressiveDataSetEnumerator, FrameType
+from .streaming_response import StreamingDataSetEnumerator, FrameType
 
 
 class BaseKustoResponseDataSet(metaclass=ABCMeta):
@@ -93,7 +93,7 @@ class KustoResponseDataSet(BaseKustoResponseDataSet, metaclass=ABCMeta):
         """Returns primary results. If there is more than one returns a list."""
         if self.tables_count == 1:
             return self.tables
-        primary = list(filter(lambda x: x.table_kind == WellKnownDataSet.PrimaryResult, self.tables))
+        primary = [x for x in self.tables if x.table_kind == WellKnownDataSet.PrimaryResult]
 
         return primary
 
@@ -159,6 +159,12 @@ class KustoStreamingResponseDataSet(BaseKustoResponseDataSet):
        Becomes invalidated after a successful call to `next_primary_results_table` or `read_rest_of_tables` 
     """
 
+    def __init__(self, streamed_data: StreamingDataSetEnumerator):
+        self.tables = []
+        self.streamed_data = streamed_data
+        self.have_read_rest_of_tables = False
+        self.extract_tables_until_primary_result()
+
     def extract_tables_until_primary_result(self):
         for table in self.streamed_data:
             if table["FrameType"] != FrameType.DataTable:
@@ -169,12 +175,6 @@ class KustoStreamingResponseDataSet(BaseKustoResponseDataSet):
                 break
             else:
                 self.tables.append(KustoResultTable(table))
-
-    def __init__(self, streamed_data: ProgressiveDataSetEnumerator):
-        self.tables = []
-        self.streamed_data = streamed_data
-        self.have_read_rest_of_tables = False
-        self.extract_tables_until_primary_result()
 
     def next_primary_results_table(self, ensure_current_finished=True) -> Optional[KustoStreamingResultTable]:
         if self.have_read_rest_of_tables:
