@@ -58,7 +58,7 @@ class QueuedIngestClient(BaseIngestClient):
         else:
             descriptor = FileDescriptor(file_descriptor)
 
-        #TODO: should we add this logic to all ingestions?
+        # TODO: should we add this logic to all ingestions?
         should_compress = not (
             ingestion_properties.format in [DataFormat.AVRO, DataFormat.ORC, DataFormat.PARQUET]
             or descriptor.path.endswith(".gz")
@@ -89,9 +89,10 @@ class QueuedIngestClient(BaseIngestClient):
             stream_descriptor = StreamDescriptor(stream_descriptor)
 
         stream = self._prepare_stream(stream_descriptor, ingestion_properties)
-        #TODO: currently we always assume that streams are gz compressed, should we expand that?
+        # TODO: currently we always assume that streams are gz compressed, should we expand that?
         blob_name = "{db}__{table}__{guid}.gz".format(
-            db=ingestion_properties.database, table=ingestion_properties.table, guid=stream_descriptor.source_id or uuid.uuid4())
+            db=ingestion_properties.database, table=ingestion_properties.table, guid=stream_descriptor.source_id or uuid.uuid4()
+        )
 
         random_container = random.choice(containers)
 

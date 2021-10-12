@@ -61,7 +61,7 @@ class OneApiError:
         self.permanent = permanent
 
     @staticmethod
-    def from_dict(obj: dict) -> 'OneApiError':
+    def from_dict(obj: dict) -> "OneApiError":
         code = obj["code"]
         message = obj["message"]
         type = obj["@type"]
@@ -71,9 +71,13 @@ class OneApiError:
         return OneApiError(code, message, type, description, context, permanent)
 
 
-class KustoApiError(KustoServiceError):
+class KustoMultiApiError(KustoServiceError):
+    """
+    todo
+    """
+
     def __init__(self, errors: List[dict]):
-        self.errors = KustoApiError.parse_errors(errors)
+        self.errors = KustoMultiApiError.parse_errors(errors)
         messages = [error.description for error in self.errors]
         super().__init__(messages[0] if len(self.errors) == 1 else messages)
 
@@ -92,6 +96,19 @@ class KustoApiError(KustoServiceError):
                 if error_dict:
                     parsed_errors.append(OneApiError.from_dict(error_dict))
         return parsed_errors
+
+
+class KustoApiError(KustoServiceError):
+    """
+    todo
+    """
+
+    def __init__(self, error_dict: dict, message: str = None, http_response: "Union[requests.Response, ClientResponse, None]" = None, kusto_response=None):
+        self.error = OneApiError.from_dict(error_dict["error"])
+        super().__init__(message or self.error.description, http_response, kusto_response)
+
+    def get_api_error(self) -> OneApiError:
+        return self.error
 
 
 class KustoClientError(KustoError):

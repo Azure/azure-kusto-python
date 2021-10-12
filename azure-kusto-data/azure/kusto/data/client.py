@@ -17,7 +17,7 @@ from urllib3.connection import HTTPConnection
 
 from ._version import VERSION
 from .data_format import DataFormat
-from .exceptions import KustoServiceError
+from .exceptions import KustoServiceError, KustoApiError
 from .response import KustoResponseDataSetV1, KustoResponseDataSetV2, KustoResponseDataSet
 from .security import _AadHelper
 
@@ -712,12 +712,14 @@ class _KustoClientBase:
             raise KustoServiceError("The requested endpoint '{}' does not exist.".format(endpoint), response) from exception
 
         if payload:
-            raise KustoServiceError(
-                "An error occurred while trying to ingest: Status: {0.status_code}, Reason: {0.reason}, Text: {1}.".format(response, response_text), response
-            ) from exception
+            message = "An error occurred while trying to ingest: Status: {}, Reason: {}, Text: {}.".format(status, response.reason, response_text)
+            if response_json:
+                raise KustoApiError(response_json, message, response) from exception
+
+            raise KustoServiceError(message, response) from exception
 
         if response_json:
-            raise KustoServiceError([response_json], response) from exception
+            raise KustoApiError(response_json, http_response=response) from exception
 
         if response_text:
             raise KustoServiceError(response_text, response) from exception

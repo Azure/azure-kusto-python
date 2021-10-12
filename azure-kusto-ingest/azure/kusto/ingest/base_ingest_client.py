@@ -14,6 +14,7 @@ from .ingestion_properties import DataFormat, IngestionProperties
 if TYPE_CHECKING:
     import pandas
 
+
 class BaseIngestClient(metaclass=ABCMeta):
     _mapping_required_formats = {DataFormat.JSON, DataFormat.SINGLEJSON, DataFormat.AVRO, DataFormat.MULTIJSON}
 
@@ -79,3 +80,13 @@ class BaseIngestClient(metaclass=ABCMeta):
             zipped_stream.seek(0)
             stream = zipped_stream
         return stream
+
+    def _prepare_stream_descriptor_from_file(self, file_descriptor):
+        if isinstance(file_descriptor, FileDescriptor):
+            descriptor = file_descriptor
+        else:
+            descriptor = FileDescriptor(file_descriptor)
+        stream = open(descriptor.path, "rb")
+        is_compressed = descriptor.path.endswith(".gz") or descriptor.path.endswith(".zip")
+        stream_descriptor = StreamDescriptor(stream, descriptor.source_id, is_compressed)
+        return stream, stream_descriptor

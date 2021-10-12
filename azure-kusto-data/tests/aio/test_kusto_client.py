@@ -6,7 +6,7 @@ import pytest
 
 from azure.kusto.data._decorators import aio_documented_by
 from azure.kusto.data.client import ClientRequestProperties
-from azure.kusto.data.exceptions import KustoApiError
+from azure.kusto.data.exceptions import KustoMultiApiError
 from azure.kusto.data.helpers import dataframe_from_result_table
 from ..kusto_client_common import KustoClientTestsMixin, mocked_requests_post
 from ..test_kusto_client import KustoClientTests as KustoClientTestsSync
@@ -87,7 +87,7 @@ range x from 1 to 10 step 1"""
             properties.set_option(ClientRequestProperties.results_defer_partial_query_failures_option_name, False)
             with aioresponses() as aioresponses_mock:
                 self._mock_query(aioresponses_mock)
-                with pytest.raises(KustoApiError):
+                with pytest.raises(KustoMultiApiError):
                     await client.execute_query("PythonTest", query, properties)
                 properties.set_option(ClientRequestProperties.results_defer_partial_query_failures_option_name, True)
                 self._mock_query(aioresponses_mock)

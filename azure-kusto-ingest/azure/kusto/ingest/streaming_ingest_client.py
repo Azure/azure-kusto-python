@@ -29,15 +29,7 @@ class KustoStreamingIngestClient(BaseIngestClient):
         :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
         """
 
-        if isinstance(file_descriptor, FileDescriptor):
-            descriptor = file_descriptor
-        else:
-            descriptor = FileDescriptor(file_descriptor)
-
-        stream = open(descriptor.path, "rb")
-
-        is_compressed = descriptor.path.endswith(".gz") or descriptor.path.endswith(".zip")
-        stream_descriptor = StreamDescriptor(stream, descriptor.source_id, is_compressed)
+        stream, stream_descriptor = self._prepare_stream_descriptor_from_file(file_descriptor)
 
         self.ingest_from_stream(stream_descriptor, ingestion_properties)
 

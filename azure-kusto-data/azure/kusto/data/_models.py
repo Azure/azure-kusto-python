@@ -6,7 +6,7 @@ from decimal import Decimal
 from enum import Enum
 
 from . import _converters
-from .exceptions import KustoApiError
+from .exceptions import KustoMultiApiError
 
 
 class WellKnownDataSet(Enum):
@@ -104,7 +104,7 @@ class KustoResultTable:
 
         errors = [row for row in json_table["Rows"] if isinstance(row, dict)]
         if errors:
-            raise KustoApiError(errors)
+            raise KustoMultiApiError(errors)
 
         self.raw_columns = json_table["Columns"]
         self.raw_rows = json_table["Rows"]
