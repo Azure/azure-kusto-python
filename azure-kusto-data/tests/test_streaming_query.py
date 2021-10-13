@@ -55,6 +55,15 @@ class TestStreamingQuery(KustoClientTestsMixin):
                     columns = [KustoResultColumn(column, index) for index, column in enumerate(i["Columns"])]
                     self._assert_sanity_query_primary_results(KustoResultRow(columns, r) for r in i["Rows"])
 
+    def test_alternative_order(self):
+        with self.open_json_file("alternative_order.json") as f:
+            reader = StreamingDataSetEnumerator(JsonTokenReader(f))
+
+            for i in reader:
+                if i["FrameType"] == FrameType.DataTable and i["TableKind"] == WellKnownDataSet.PrimaryResult.value:
+                    columns = [KustoResultColumn(column, index) for index, column in enumerate(i["Columns"])]
+                    self._assert_sanity_query_primary_results(KustoResultRow(columns, r) for r in i["Rows"])
+
     def test_dynamic(self):
         with self.open_json_file("dynamic.json") as f:
             reader = StreamingDataSetEnumerator(JsonTokenReader(f))
@@ -100,6 +109,17 @@ class TestStreamingQuery(KustoClientTestsMixin):
     @pytest.mark.asyncio
     async def test_sanity_async(self):
         with self.open_async_json_file("deft.json") as f:
+            reader = AsyncProgressiveDataSetEnumerator(AsyncJsonTokenReader(f))
+
+            async for i in reader:
+                if i["FrameType"] == FrameType.DataTable and i["TableKind"] == WellKnownDataSet.PrimaryResult.value:
+                    columns = [KustoResultColumn(column, index) for index, column in enumerate(i["Columns"])]
+                    rows = [KustoResultRow(columns, r) async for r in i["Rows"]]
+                    self._assert_sanity_query_primary_results(rows)
+
+    @pytest.mark.asyncio
+    async def test_alternative_order_async(self):
+        with self.open_async_json_file("alternative_order.json") as f:
             reader = AsyncProgressiveDataSetEnumerator(AsyncJsonTokenReader(f))
 
             async for i in reader:

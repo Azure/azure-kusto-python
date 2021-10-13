@@ -673,6 +673,8 @@ class HTTPAdapterWithSocketOptions(requests.adapters.HTTPAdapter):
 
 
 class _KustoClientBase:
+    API_VERSION = "2019-02-13"
+
     _mgmt_default_timeout = timedelta(hours=1, seconds=30)
     _query_default_timeout = timedelta(minutes=4, seconds=30)
     _streaming_ingest_default_timeout = timedelta(minutes=10)
@@ -687,7 +689,12 @@ class _KustoClientBase:
         self._mgmt_endpoint = "{0}/v1/rest/mgmt".format(self._kusto_cluster)
         self._query_endpoint = "{0}/v2/rest/query".format(self._kusto_cluster)
         self._streaming_ingest_endpoint = "{0}/v1/rest/ingest/".format(self._kusto_cluster)
-        self._request_headers = {"Accept": "application/json", "Accept-Encoding": "gzip,deflate", "x-ms-client-version": "Kusto.Python.Client:" + VERSION}
+        self._request_headers = {
+            "Accept": "application/json",
+            "Accept-Encoding": "gzip,deflate",
+            "x-ms-client-version": "Kusto.Python.Client:" + VERSION,
+            "x-ms-version": self.API_VERSION,
+        }
 
     @staticmethod
     def _kusto_parse_by_endpoint(endpoint: str, response_json: Any) -> KustoResponseDataSet:

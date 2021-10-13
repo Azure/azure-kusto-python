@@ -1,0 +1,496 @@
+[
+  {
+    "FrameType": "DataSetHeader",
+    "Version": "v2.0",
+    "IsProgressive": false
+  },
+  {
+    "FrameType": "DataTable",
+    "TableId": 0,
+    "TableName": "@ExtendedProperties",
+    "Columns": [
+      {
+        "ColumnName": "TableId",
+        "ColumnType": "int"
+      },
+      {
+        "ColumnName": "Key",
+        "ColumnType": "string"
+      },
+      {
+        "ColumnName": "Value",
+        "ColumnType": "dynamic"
+      }
+    ],
+    "TableKind": "QueryProperties",
+    "Rows": [
+      [
+        1,
+        "Visualization",
+        "{\"Visualization\":null,\"Title\":null,\"XColumn\":null,\"Series\":null,\"YColumns\":null,\"XTitle\":null,\"YTitle\":null,\"XAxis\":null,\"YAxis\":null,\"Legend\":null,\"YSplit\":null,\"Accumulate\":false,\"IsQuerySorted\":false,\"Kind\":null}"
+      ]
+    ]
+  },
+  {
+    "FrameType": "DataTable",
+    "Columns": [
+      {
+        "ColumnName": "rownumber",
+        "ColumnType": "int"
+      },
+      {
+        "ColumnName": "rowguid",
+        "ColumnType": "string"
+      },
+      {
+        "ColumnName": "xdouble",
+        "ColumnType": "real"
+      },
+      {
+        "ColumnName": "xfloat",
+        "ColumnType": "real"
+      },
+      {
+        "ColumnName": "xbool",
+        "ColumnType": "bool"
+      },
+      {
+        "ColumnName": "xint16",
+        "ColumnType": "int"
+      },
+      {
+        "ColumnName": "xint32",
+        "ColumnType": "int"
+      },
+      {
+        "ColumnName": "xint64",
+        "ColumnType": "long"
+      },
+      {
+        "ColumnName": "xuint8",
+        "ColumnType": "long"
+      },
+      {
+        "ColumnName": "xuint16",
+        "ColumnType": "long"
+      },
+      {
+        "ColumnName": "xuint32",
+        "ColumnType": "long"
+      },
+      {
+        "ColumnName": "xuint64",
+        "ColumnType": "long"
+      },
+      {
+        "ColumnName": "xdate",
+        "ColumnType": "datetime"
+      },
+      {
+        "ColumnName": "xsmalltext",
+        "ColumnType": "string"
+      },
+      {
+        "ColumnName": "xtext",
+        "ColumnType": "string"
+      },
+      {
+        "ColumnName": "xnumberAsText",
+        "ColumnType": "string"
+      },
+      {
+        "ColumnName": "xtime",
+        "ColumnType": "timespan"
+      },
+      {
+        "ColumnName": "xtextWithNulls",
+        "ColumnType": "string"
+      },
+      {
+        "ColumnName": "xdynamicWithNulls",
+        "ColumnType": "dynamic"
+      }
+    ],
+    "TableId": 1,
+    "TableKind": "PrimaryResult",
+    "TableName": "Deft",
+    "Rows": [
+      [
+        null,
+        "",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        "",
+        "",
+        "",
+        null,
+        "",
+        ""
+      ],
+      [
+        0,
+        "00000000-0000-0000-0001-020304050607",
+        0.0,
+        0.0,
+        false,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        "2014-01-01T01:01:01.0000000Z",
+        "Zero",
+        "Zero",
+        "0",
+        "00:00:00",
+        "",
+        ""
+      ],
+      [
+        1,
+        "00000001-0000-0000-0001-020304050607",
+        1.0001,
+        1.01,
+        true,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        "2015-01-01T01:01:01.0000001Z",
+        "One",
+        "One",
+        "1",
+        "1.00:00:01.0010001",
+        "",
+        {
+          "rowId": 1,
+          "arr": [
+            0,
+            1
+          ]
+        }
+      ],
+      [
+        2,
+        "00000002-0000-0000-0001-020304050607",
+        2.0002,
+        2.02,
+        false,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        "2016-01-01T01:01:01.0000002Z",
+        "Two",
+        "Two",
+        "2",
+        "-2.00:00:02.0020002",
+        "",
+        {
+          "rowId": 2,
+          "arr": [
+            0,
+            2
+          ]
+        }
+      ],
+      [
+        3,
+        "00000003-0000-0000-0001-020304050607",
+        3.0003,
+        3.03,
+        true,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        "2017-01-01T01:01:01.0000003Z",
+        "Three",
+        "Three",
+        "3",
+        "3.00:00:03.0030003",
+        "",
+        {
+          "rowId": 3,
+          "arr": [
+            0,
+            3
+          ]
+        }
+      ],
+      [
+        4,
+        "00000004-0000-0000-0001-020304050607",
+        4.0004,
+        4.04,
+        false,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        "2018-01-01T01:01:01.0000004Z",
+        "Four",
+        "Four",
+        "4",
+        "-4.00:00:04.0040004",
+        "",
+        {
+          "rowId": 4,
+          "arr": [
+            0,
+            4
+          ]
+        }
+      ],
+      [
+        5,
+        "00000005-0000-0000-0001-020304050607",
+        5.0005,
+        5.05,
+        true,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        "2019-01-01T01:01:01.0000005Z",
+        "Five",
+        "Five",
+        "5",
+        "5.00:00:05.0050005",
+        "",
+        {
+          "rowId": 5,
+          "arr": [
+            0,
+            5
+          ]
+        }
+      ],
+      [
+        6,
+        "00000006-0000-0000-0001-020304050607",
+        6.0006,
+        6.06,
+        false,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        "2020-01-01T01:01:01.0000006Z",
+        "Six",
+        "Six",
+        "6",
+        "-6.00:00:06.0060006",
+        "",
+        {
+          "rowId": 6,
+          "arr": [
+            0,
+            6
+          ]
+        }
+      ],
+      [
+        7,
+        "00000007-0000-0000-0001-020304050607",
+        7.0007,
+        7.07,
+        true,
+        7,
+        7,
+        7,
+        7,
+        7,
+        7,
+        7,
+        "2021-01-01T01:01:01.0000007Z",
+        "Seven",
+        "Seven",
+        "7",
+        "7.00:00:07.0070007",
+        "",
+        {
+          "rowId": 7,
+          "arr": [
+            0,
+            7
+          ]
+        }
+      ],
+      [
+        8,
+        "00000008-0000-0000-0001-020304050607",
+        8.0008,
+        8.08,
+        false,
+        8,
+        8,
+        8,
+        8,
+        8,
+        8,
+        8,
+        "2022-01-01T01:01:01.0000008Z",
+        "Eight",
+        "Eight",
+        "8",
+        "-8.00:00:08.0080008",
+        "",
+        {
+          "rowId": 8,
+          "arr": [
+            0,
+            8
+          ]
+        }
+      ],
+      [
+        9,
+        "00000009-0000-0000-0001-020304050607",
+        9.0009,
+        9.09,
+        true,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        "2023-01-01T01:01:01.0000009Z",
+        "Nine",
+        "Nine",
+        "9",
+        "9.00:00:09.0090009",
+        "",
+        {
+          "rowId": 9,
+          "arr": [
+            0,
+            9
+          ]
+        }
+      ]
+    ]
+  },
+  {
+    "FrameType": "DataTable",
+    "Columns": [
+      {
+        "ColumnName": "Timestamp",
+        "ColumnType": "datetime"
+      },
+      {
+        "ColumnName": "ClientRequestId",
+        "ColumnType": "string"
+      },
+      {
+        "ColumnName": "ActivityId",
+        "ColumnType": "guid"
+      },
+      {
+        "ColumnName": "SubActivityId",
+        "ColumnType": "guid"
+      },
+      {
+        "ColumnName": "ParentActivityId",
+        "ColumnType": "guid"
+      },
+      {
+        "ColumnName": "Level",
+        "ColumnType": "int"
+      },
+      {
+        "ColumnName": "LevelName",
+        "ColumnType": "string"
+      },
+      {
+        "ColumnName": "StatusCode",
+        "ColumnType": "int"
+      },
+      {
+        "ColumnName": "StatusCodeName",
+        "ColumnType": "string"
+      },
+      {
+        "ColumnName": "EventType",
+        "ColumnType": "int"
+      },
+      {
+        "ColumnName": "EventTypeName",
+        "ColumnType": "string"
+      },
+      {
+        "ColumnName": "Payload",
+        "ColumnType": "string"
+      }
+    ],
+    "TableId": 2,
+    "TableName": "QueryCompletionInformation",
+    "TableKind": "QueryCompletionInformation",
+    "Rows": [
+      [
+        "2018-04-30T12:25:11.0778067Z",
+        "unspecified;cc5ee2b9-9b77-4509-9a61-84ec8f0159c2",
+        "eeac049e-8a7d-4188-b797-6b5f2c9f9526",
+        "c6fb9714-5183-4092-8a02-825bd7aa1aee",
+        "df0aaeb0-4c8a-4d77-bc77-f714a4484a6b",
+        4,
+        "Info",
+        0,
+        "S_OK (0)",
+        4,
+        "QueryInfo",
+        "{\"Count\":1,\"Text\":\"Query completed successfully\"}"
+      ],
+      [
+        "2018-04-30T12:25:11.0778067Z",
+        "unspecified;cc5ee2b9-9b77-4509-9a61-84ec8f0159c2",
+        "eeac049e-8a7d-4188-b797-6b5f2c9f9526",
+        "c6fb9714-5183-4092-8a02-825bd7aa1aee",
+        "df0aaeb0-4c8a-4d77-bc77-f714a4484a6b",
+        6,
+        "Stats",
+        0,
+        "S_OK (0)",
+        0,
+        "QueryResourceConsumption",
+        "{\"ExecutionTime\":0.0156154,\"resource_usage\":{\"cache\":{\"memory\":{\"hits\":40,\"misses\":0,\"total\":40},\"disk\":{\"hits\":0,\"misses\":0,\"total\":0}},\"cpu\":{\"user\":\"00:00:00\",\"kernel\":\"00:00:00\",\"total cpu\":\"00:00:00\"},\"memory\":{\"peak_per_node\":0}},\"dataset_statistics\":[{\"table_row_count\":11,\"table_size\":2444}]}"
+      ]
+    ]
+  },
+  {
+    "FrameType": "DataSetCompletion",
+    "HasErrors": false,
+    "Cancelled": false
+  }
+]
