@@ -5,7 +5,7 @@ import ijson
 from ijson import IncompleteJSONError
 
 from azure.kusto.data._models import WellKnownDataSet
-from azure.kusto.data.exceptions import KustoServiceError, KustoTokenParsingError
+from azure.kusto.data.exceptions import KustoServiceError, KustoTokenParsingError, KustoUnsupportedApiError
 
 
 class JsonTokenType(Enum):
@@ -89,8 +89,9 @@ class JsonTokenReader:
 
     def skip_children(self, prev_token: JsonToken):
         if prev_token.token_type == JsonTokenType.MAP_KEY:
-            self.skip_children(self.read_next_token_or_throw())
-        elif prev_token.token_type in JsonTokenType.start_tokens():
+            prev_token = self.read_next_token_or_throw()
+
+        if prev_token.token_type in JsonTokenType.start_tokens():
             for potential_end_token in self:
                 if potential_end_token.token_path == prev_token.token_path and potential_end_token.token_type in JsonTokenType.end_tokens():
                     break
@@ -161,30 +162,19 @@ class StreamingDataSetEnumerator:
         is_primary_result = parsed_frame["FrameType"] == FrameType.DataTable and parsed_frame["TableKind"] == WellKnownDataSet.PrimaryResult.value
         if is_primary_result:
             self.started_primary_results = True
-        elif self.started_primary_results and not is_primary_result:
+        elif self.started_primary_results:
             self.finished_primary_results = True
 
         return parsed_frame
 
     def parse_frame(self, frame_type):
         if frame_type == FrameType.DataSetHeader:
-            return self.extract_props(frame_type, ("IsProgressive", JsonTokenType.BOOLEAN), ("Version", JsonTokenType.STRING))
-        if frame_type == FrameType.TableHeader:
-            return self.extract_props(
-                frame_type,
-                ("TableId", JsonTokenType.NUMBER),
-                ("TableKind", JsonTokenType.STRING),
-                ("TableName", JsonTokenType.STRING),
-                ("Columns", JsonTokenType.START_ARRAY),
-            )
-        if frame_type == FrameType.TableFragment:
-            return self.extract_props(
-                frame_type, ("TableFragmentType", JsonTokenType.STRING), ("TableId", JsonTokenType.NUMBER), ("Rows", JsonTokenType.START_ARRAY)
-            )
-        if frame_type == FrameType.TableCompletion:
-            return self.extract_props(frame_type, ("TableId", JsonTokenType.NUMBER), ("RowCount", JsonTokenType.NUMBER))
-        if frame_type == FrameType.TableProgress:
-            return self.extract_props(frame_type, ("TableId", JsonTokenType.NUMBER), ("TableProgress", JsonTokenType.NUMBER))
+            frame = self.extract_props(frame_type, ("IsProgressive", JsonTokenType.BOOLEAN), ("Version", JsonTokenType.STRING))
+            if frame["IsProgressive"]:
+                raise KustoUnsupportedApiError.progressive_api_unsupported()
+            return frame
+        if frame_type in [FrameType.TableHeader, FrameType.TableFragment, FrameType.TableCompletion, FrameType.TableProgress]:
+            raise KustoUnsupportedApiError.progressive_api_unsupported()
         if frame_type == FrameType.DataTable:
             props = self.extract_props(
                 frame_type,

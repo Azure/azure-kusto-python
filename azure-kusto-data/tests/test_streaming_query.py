@@ -5,8 +5,8 @@ import pytest
 
 from azure.kusto.data._models import WellKnownDataSet, KustoResultRow, KustoResultColumn
 from azure.kusto.data.aio._models import KustoStreamingResponseDataSet as AsyncKustoStreamingResponseDataSet
-from azure.kusto.data.aio.streaming_response import JsonTokenReader as AsyncJsonTokenReader, ProgressiveDataSetEnumerator as AsyncProgressiveDataSetEnumerator
-from azure.kusto.data.exceptions import KustoServiceError, KustoStreamingQueryError, KustoTokenParsingError
+from azure.kusto.data.aio.streaming_response import JsonTokenReader as AsyncJsonTokenReader, StreamingDataSetEnumerator as AsyncProgressiveDataSetEnumerator
+from azure.kusto.data.exceptions import KustoServiceError, KustoStreamingQueryError, KustoTokenParsingError, KustoUnsupportedApiError
 from azure.kusto.data.response import KustoStreamingResponseDataSet
 from azure.kusto.data.streaming_response import JsonTokenReader, StreamingDataSetEnumerator, FrameType, JsonTokenType
 from tests.kusto_client_common import KustoClientTestsMixin
@@ -63,6 +63,21 @@ class TestStreamingQuery(KustoClientTestsMixin):
                 if i["FrameType"] == FrameType.DataTable and i["TableKind"] == WellKnownDataSet.PrimaryResult.value:
                     columns = [KustoResultColumn(column, index) for index, column in enumerate(i["Columns"])]
                     self._assert_sanity_query_primary_results(KustoResultRow(columns, r) for r in i["Rows"])
+
+    def test_progressive_unsupported(self):
+        with self.open_json_file("progressive_result.json") as f:
+            reader = StreamingDataSetEnumerator(JsonTokenReader(f))
+
+            with pytest.raises(KustoUnsupportedApiError):
+                for _ in reader:
+                    pass
+
+        with self.open_json_file("deft_with_progressive_result.json") as f:
+            reader = StreamingDataSetEnumerator(JsonTokenReader(f))
+
+            with pytest.raises(KustoUnsupportedApiError):
+                for _ in reader:
+                    pass
 
     def test_dynamic(self):
         with self.open_json_file("dynamic.json") as f:
@@ -127,6 +142,22 @@ class TestStreamingQuery(KustoClientTestsMixin):
                     columns = [KustoResultColumn(column, index) for index, column in enumerate(i["Columns"])]
                     rows = [KustoResultRow(columns, r) async for r in i["Rows"]]
                     self._assert_sanity_query_primary_results(rows)
+
+    @pytest.mark.asyncio
+    async def test_progressive_unsupported_async(self):
+        with self.open_async_json_file("progressive_result.json") as f:
+            reader = AsyncProgressiveDataSetEnumerator(AsyncJsonTokenReader(f))
+
+            with pytest.raises(KustoUnsupportedApiError):
+                async for _ in reader:
+                    pass
+
+        with self.open_async_json_file("deft_with_progressive_result.json") as f:
+            reader = AsyncProgressiveDataSetEnumerator(AsyncJsonTokenReader(f))
+
+            with pytest.raises(KustoUnsupportedApiError):
+                async for _ in reader:
+                    pass
 
     @pytest.mark.asyncio
     async def test_dynamic_async(self):

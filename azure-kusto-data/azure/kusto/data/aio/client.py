@@ -4,7 +4,7 @@ from typing import Union, Optional
 
 from ._models import KustoStreamingResponseDataSet
 from .._decorators import documented_by, aio_documented_by
-from ..aio.streaming_response import ProgressiveDataSetEnumerator, JsonTokenReader
+from ..aio.streaming_response import StreamingDataSetEnumerator, JsonTokenReader
 from ..client import KustoClient as KustoClientSync, _KustoClientBase, KustoConnectionStringBuilder, ClientRequestProperties, ExecuteRequestParams
 from ..data_format import DataFormat
 from ..exceptions import KustoAioSyntaxError
@@ -67,9 +67,9 @@ class KustoClient(_KustoClientBase):
     @aio_documented_by(KustoClientSync._execute_streaming_query_parsed)
     async def _execute_streaming_query_parsed(
         self, database: str, query: str, timeout: timedelta = _KustoClientBase._query_default_timeout, properties: Optional[ClientRequestProperties] = None
-    ) -> ProgressiveDataSetEnumerator:
+    ) -> StreamingDataSetEnumerator:
         response = await self._execute(self._query_endpoint, database, query, None, timeout, properties, stream_response=True)
-        return ProgressiveDataSetEnumerator(JsonTokenReader(response.content))
+        return StreamingDataSetEnumerator(JsonTokenReader(response.content))
 
     @aio_documented_by(KustoClientSync.execute_streaming_query)
     async def execute_streaming_query(

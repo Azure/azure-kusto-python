@@ -56,6 +56,14 @@ class KustoClientError(KustoError):
     """Raised when a Kusto client is unable to send or complete a request."""
 
 
+class KustoUnsupportedApiError(KustoError):
+    """Raised when a Kusto client is unable to send or complete a request."""
+
+    @staticmethod
+    def progressive_api_unsupported() -> "KustoUnsupportedApiError":
+        return KustoUnsupportedApiError("Progressive API is unsupported - to resolve, set results_progressive_enabled=false")
+
+
 class KustoAuthenticationError(KustoClientError):
     """Raised when authentication fails."""
 

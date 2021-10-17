@@ -1,7 +1,7 @@
 from typing import Optional, List
 
 from azure.kusto.data._models import WellKnownDataSet, KustoResultColumn, KustoResultRow, KustoResultTable
-from azure.kusto.data.aio.streaming_response import ProgressiveDataSetEnumerator
+from azure.kusto.data.aio.streaming_response import StreamingDataSetEnumerator
 from azure.kusto.data.exceptions import KustoStreamingQueryError
 from azure.kusto.data.response import BaseKustoResponseDataSet
 from azure.kusto.data.streaming_response import FrameType
@@ -79,12 +79,12 @@ class KustoStreamingResponseDataSet(BaseKustoResponseDataSet):
                 self.tables.append(KustoResultTable(table))
 
     @staticmethod
-    async def create(streamed_data: ProgressiveDataSetEnumerator) -> "KustoStreamingResponseDataSet":
+    async def create(streamed_data: StreamingDataSetEnumerator) -> "KustoStreamingResponseDataSet":
         data_set = KustoStreamingResponseDataSet(streamed_data)
         await data_set.extract_tables_until_primary_result()
         return data_set
 
-    def __init__(self, streamed_data: ProgressiveDataSetEnumerator):
+    def __init__(self, streamed_data: StreamingDataSetEnumerator):
         self.tables = []
         self.streamed_data = streamed_data
         self.have_read_rest_of_tables = False
