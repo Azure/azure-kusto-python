@@ -5,11 +5,11 @@ import uuid
 from typing import Union, AnyStr, IO
 from urllib.parse import urlparse
 
-from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
-from azure.kusto.data.exceptions import KustoServiceError
 from azure.storage.blob import BlobServiceClient
 from azure.storage.queue import QueueServiceClient, TextBase64EncodePolicy
 
+from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
+from azure.kusto.data.exceptions import KustoServiceError
 from ._ingestion_blob_info import _IngestionBlobInfo
 from ._resource_manager import _ResourceManager
 from .base_ingest_client import BaseIngestClient
@@ -47,11 +47,7 @@ class QueuedIngestClient(BaseIngestClient):
         :param file_descriptor: a FileDescriptor to be ingested.
         :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
         """
-        try:
-            containers = self._resource_manager.get_containers()
-        except KustoServiceError as ex:
-            self._validate_endpoint_service_type()
-            raise ex
+        containers = self._get_containers()
 
         if isinstance(file_descriptor, FileDescriptor):
             descriptor = file_descriptor
@@ -66,41 +62,16 @@ class QueuedIngestClient(BaseIngestClient):
         )
 
         with descriptor.open(should_compress) as stream:
-            blob_name = "{db}__{table}__{guid}__{file}".format(
-                db=ingestion_properties.database, table=ingestion_properties.table, guid=descriptor.source_id or uuid.uuid4(), file=descriptor.stream_name
-            )
-
-            random_container = random.choice(containers)
-
-            blob_service = BlobServiceClient(random_container.account_uri)
-            blob_client = blob_service.get_blob_client(container=random_container.object_name, blob=blob_name)
-            blob_client.upload_blob(data=stream)
-
-            self.ingest_from_blob(BlobDescriptor(blob_client.url, descriptor.size, descriptor.source_id), ingestion_properties=ingestion_properties)
+            self._upload_blob(containers, descriptor, ingestion_properties, stream)
 
     def ingest_from_stream(self, stream_descriptor: Union[IO[AnyStr], StreamDescriptor], ingestion_properties: IngestionProperties):
-        try:
-            containers = self._resource_manager.get_containers()
-        except KustoServiceError as ex:
-            self._validate_endpoint_service_type()
-            raise ex
+        containers = self._get_containers()
 
         if not isinstance(stream_descriptor, StreamDescriptor):
             stream_descriptor = StreamDescriptor(stream_descriptor)
 
         stream = self._prepare_stream(stream_descriptor, ingestion_properties)
-        # TODO: currently we always assume that streams are gz compressed, should we expand that?
-        blob_name = "{db}__{table}__{guid}.gz".format(
-            db=ingestion_properties.database, table=ingestion_properties.table, guid=stream_descriptor.source_id or uuid.uuid4()
-        )
-
-        random_container = random.choice(containers)
-
-        blob_service = BlobServiceClient(random_container.account_uri)
-        blob_client = blob_service.get_blob_client(container=random_container.object_name, blob=blob_name)
-        blob_client.upload_blob(data=stream)
-
-        self.ingest_from_blob(BlobDescriptor(blob_client.url, 0, stream_descriptor.source_id), ingestion_properties=ingestion_properties)
+        self._upload_blob(containers, stream_descriptor, ingestion_properties, stream)
 
     def ingest_from_blob(self, blob_descriptor: BlobDescriptor, ingestion_properties: IngestionProperties):
         """
@@ -125,6 +96,30 @@ class QueuedIngestClient(BaseIngestClient):
         content = ingestion_blob_info_json
         queue_client = queue_service.get_queue_client(queue=random_queue.object_name, message_encode_policy=TextBase64EncodePolicy())
         queue_client.send_message(content=content)
+
+    def _get_containers(self):
+        try:
+            containers = self._resource_manager.get_containers()
+        except KustoServiceError as ex:
+            self._validate_endpoint_service_type()
+            raise ex
+        return containers
+
+    def _upload_blob(
+        self,
+        containers: "List[_ResourceUri]",
+        descriptor: Union[FileDescriptor, StreamDescriptor],
+        ingestion_properties: IngestionProperties,
+        stream: IO[AnyStr],
+    ):
+        blob_name = "{db}__{table}__{guid}__{file}".format(
+            db=ingestion_properties.database, table=ingestion_properties.table, guid=descriptor.source_id or uuid.uuid4(), file=descriptor.stream_name
+        )
+        random_container = random.choice(containers)
+        blob_service = BlobServiceClient(random_container.account_uri)
+        blob_client = blob_service.get_blob_client(container=random_container.object_name, blob=blob_name)
+        blob_client.upload_blob(data=stream)
+        self.ingest_from_blob(BlobDescriptor(blob_client.url, descriptor.size, descriptor.source_id), ingestion_properties=ingestion_properties)
 
     def _validate_endpoint_service_type(self):
         if not self._hostname_starts_with_ingest(self._connection_datasource):

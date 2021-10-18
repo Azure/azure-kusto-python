@@ -4,6 +4,7 @@ import io
 import json
 import os
 import unittest
+from pathlib import Path
 
 import pytest
 import responses
@@ -115,18 +116,31 @@ def request_error_callback(request):
 
     if ".get ingestion resources" in body["csl"]:
         response_status = 400
-        response_body = {'error': {'code': 'BadRequest', 'message': 'Request is invalid and cannot be executed.',
-                                   '@type': 'Kusto.Common.Svc.Exceptions.AdminCommandWrongEndpointException',
-                                   '@message': "Cannot get ingestion resources from this service endpoint. The appropriate endpoint is most likely "
-                                               "'https://ingest-somecluster.kusto.windows.net/'.",
-                                   '@context': {'timestamp': '2021-10-12T06:05:35.6602087Z', 'serviceAlias': 'SomeCluster', 'machineName': 'KEngine000000',
-                                                'processName': 'Kusto.WinSvc.Svc', 'processId': 2648, 'threadId': 472, 'appDomainName': 'Kusto.WinSvc.Svc.exe',
-                                                'clientRequestId': 'KPC.execute;a3dfb878-9d2b-49d6-89a5-e9b3a9f1f674',
-                                                'activityId': '87eb8fc9-78b3-4580-bcc8-6c90482f9118', 'subActivityId': 'bbfb038b-4467-4f96-afd4-945904fc6278',
-                                                'activityType': 'DN.AdminCommand.IngestionResourcesGetCommand',
-                                                'parentActivityId': '00e678e9-4204-4143-8c94-6afd94c27430',
-                                                'activityStack': '(Activity stack: CRID=KPC.execute;a3dfb878-9d2b-49d6-89a5-e9b3a9f1f674 ARID=87eb8fc9-78b3-4580-bcc8-6c90482f9118 > DN.Admin.Client.ExecuteControlCommand/833dfb85-5d67-44b7-882d-eb2283e65780 > P.WCF.Service.ExecuteControlCommand..IInterNodeCommunicationAdminContract/3784e74f-1d89-4c15-adef-0a360c4c431e > DN.FE.ExecuteControlCommand/00e678e9-4204-4143-8c94-6afd94c27430 > DN.AdminCommand.IngestionResourcesGetCommand/bbfb038b-4467-4f96-afd4-945904fc6278)'},
-                                   '@permanent': True}}
+        response_body = {
+            "error": {
+                "code": "BadRequest",
+                "message": "Request is invalid and cannot be executed.",
+                "@type": "Kusto.Common.Svc.Exceptions.AdminCommandWrongEndpointException",
+                "@message": "Cannot get ingestion resources from this service endpoint. The appropriate endpoint is most likely "
+                "'https://ingest-somecluster.kusto.windows.net/'.",
+                "@context": {
+                    "timestamp": "2021-10-12T06:05:35.6602087Z",
+                    "serviceAlias": "SomeCluster",
+                    "machineName": "KEngine000000",
+                    "processName": "Kusto.WinSvc.Svc",
+                    "processId": 2648,
+                    "threadId": 472,
+                    "appDomainName": "Kusto.WinSvc.Svc.exe",
+                    "clientRequestId": "KPC.execute;a3dfb878-9d2b-49d6-89a5-e9b3a9f1f674",
+                    "activityId": "87eb8fc9-78b3-4580-bcc8-6c90482f9118",
+                    "subActivityId": "bbfb038b-4467-4f96-afd4-945904fc6278",
+                    "activityType": "DN.AdminCommand.IngestionResourcesGetCommand",
+                    "parentActivityId": "00e678e9-4204-4143-8c94-6afd94c27430",
+                    "activityStack": "(Activity stack: CRID=KPC.execute;a3dfb878-9d2b-49d6-89a5-e9b3a9f1f674 ARID=87eb8fc9-78b3-4580-bcc8-6c90482f9118 > DN.Admin.Client.ExecuteControlCommand/833dfb85-5d67-44b7-882d-eb2283e65780 > P.WCF.Service.ExecuteControlCommand..IInterNodeCommunicationAdminContract/3784e74f-1d89-4c15-adef-0a360c4c431e > DN.FE.ExecuteControlCommand/00e678e9-4204-4143-8c94-6afd94c27430 > DN.AdminCommand.IngestionResourcesGetCommand/bbfb038b-4467-4f96-afd4-945904fc6278)",
+                },
+                "@permanent": True,
+            }
+        }
 
     if ".show version" in body["csl"]:
         response_status = 200
@@ -178,28 +192,12 @@ class QueuedIngestClientTests(unittest.TestCase):
 
         ingest_client.ingest_from_file(file_path, ingestion_properties=ingestion_properties)
 
-        # mock_put_message_in_queue
-        assert mock_put_message_in_queue.call_count == 1
-
-        put_message_in_queue_mock_kwargs = mock_put_message_in_queue.call_args_list[0][1]
-
-        queued_message_json = json.loads(put_message_in_queue_mock_kwargs["content"])
-        expected_url = "https://storageaccount.blob.core.windows.net/tempstorage/database__table__1111-111111-111111-1111__dataset.csv.gz?"
-        # mock_upload_blob_from_stream
-        # not checking the query string because it can change order, just checking it's there
-        assert queued_message_json["BlobPath"].startswith(expected_url) is True
-        assert len(queued_message_json["BlobPath"]) > len(expected_url)
-        assert queued_message_json["DatabaseName"] == "database"
-        assert queued_message_json["IgnoreSizeLimit"] is False
-        assert queued_message_json["AdditionalProperties"]["format"] == "csv"
-        assert queued_message_json["FlushImmediately"] is False
-        assert queued_message_json["TableName"] == "table"
-        assert queued_message_json["RawDataSize"] > 0
-        assert queued_message_json["RetainBlobOnSuccess"] is True
-
-        upload_blob_kwargs = mock_upload_blob_from_stream.call_args_list[0][1]
-
-        assert type(upload_blob_kwargs["data"]) == io.BytesIO
+        self._assert_upload(
+            mock_put_message_in_queue,
+            mock_upload_blob_from_stream,
+            "https://storageaccount.blob.core.windows.net/tempstorage/database__table__1111-111111-111111-1111__dataset.csv.gz?",
+            io.BytesIO,
+        )
 
     @responses.activate
     def test_ingest_from_file_wrong_endpoint(self):
@@ -250,15 +248,54 @@ class QueuedIngestClientTests(unittest.TestCase):
 
         ingest_client.ingest_from_dataframe(df, ingestion_properties=ingestion_properties)
 
+        expected_url = "https://storageaccount.blob.core.windows.net/tempstorage/database__table__1111-111111-111111-1111__df_{0}_100_1111-111111-111111-1111.csv.gz?".format(
+            id(df)
+        )
+
+        self._assert_upload(mock_put_message_in_queue, mock_upload_blob_from_stream, expected_url, io.BufferedReader)
+
+    @responses.activate
+    @patch("azure.kusto.data.security._AadHelper.acquire_authorization_header", return_value=None)
+    @patch("azure.storage.blob.BlobClient.upload_blob")
+    @patch("azure.storage.queue.QueueClient.send_message")
+    @patch("uuid.uuid4", return_value=MOCKED_UUID_4)
+    def test_sanity_ingest_from_stream(self, mock_uuid, mock_put_message_in_queue, mock_upload_blob_from_stream, mock_aad):
+        responses.add_callback(
+            responses.POST, "https://ingest-somecluster.kusto.windows.net/v1/rest/mgmt", callback=request_callback, content_type="application/json"
+        )
+
+        ingest_client = QueuedIngestClient("https://ingest-somecluster.kusto.windows.net")
+        ingestion_properties = IngestionProperties(database="database", table="table", data_format=DataFormat.CSV)
+
+        # ensure test can work when executed from within directories
+        current_dir = os.getcwd()
+        path_parts = ["azure-kusto-ingest", "tests", "input", "dataset.csv"]
+        missing_path_parts = []
+
+        for path_part in path_parts:
+            if path_part not in current_dir:
+                missing_path_parts.append(path_part)
+
+        file_path = os.path.join(current_dir, *missing_path_parts)
+
+        ingest_client.ingest_from_stream(io.StringIO(Path(file_path).read_text()), ingestion_properties=ingestion_properties)
+
+        self._assert_upload(
+            mock_put_message_in_queue,
+            mock_upload_blob_from_stream,
+            "https://storageaccount.blob.core.windows.net/tempstorage/database__table__1111-111111-111111-1111__stream.gz?",
+            io.BytesIO,
+            check_raw_data=False,
+        )
+
+    def _assert_upload(self, mock_put_message_in_queue, mock_upload_blob_from_stream, expected_url: str, expected_type: type, check_raw_data: bool = True):
         # mock_put_message_in_queue
         assert mock_put_message_in_queue.call_count == 1
 
         put_message_in_queue_mock_kwargs = mock_put_message_in_queue.call_args_list[0][1]
 
         queued_message_json = json.loads(put_message_in_queue_mock_kwargs["content"])
-        expected_url = "https://storageaccount.blob.core.windows.net/tempstorage/database__table__1111-111111-111111-1111__df_{0}_100_1111-111111-111111-1111.csv.gz?".format(
-            id(df)
-        )
+
         # mock_upload_blob_from_stream
         # not checking the query string because it can change order, just checking it's there
         assert queued_message_json["BlobPath"].startswith(expected_url) is True
@@ -268,9 +305,8 @@ class QueuedIngestClientTests(unittest.TestCase):
         assert queued_message_json["AdditionalProperties"]["format"] == "csv"
         assert queued_message_json["FlushImmediately"] is False
         assert queued_message_json["TableName"] == "table"
-        assert queued_message_json["RawDataSize"] > 0
+        if check_raw_data:
+            assert queued_message_json["RawDataSize"] > 0
         assert queued_message_json["RetainBlobOnSuccess"] is True
-
         upload_blob_kwargs = mock_upload_blob_from_stream.call_args_list[0][1]
-
-        assert type(upload_blob_kwargs["data"]) == io.BufferedReader
+        assert type(upload_blob_kwargs["data"]) == expected_type

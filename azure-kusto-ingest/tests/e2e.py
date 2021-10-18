@@ -3,6 +3,7 @@
 import asyncio
 import io
 import os
+import pathlib
 import random
 import sys
 import time
@@ -28,6 +29,7 @@ from azure.kusto.ingest import (
     ReportLevel,
     ReportMethod,
     FileDescriptor,
+    StreamDescriptor,
 )
 
 CLEAR_DB_CACHE = ".clear database cache streamingingestion schema"
@@ -276,6 +278,33 @@ class TestE2E:
 
         for fd in fds:
             self.ingest_client.ingest_from_file(fd, json_ingestion_props)
+
+        await self.assert_rows_added(4)
+
+    @pytest.mark.asyncio
+    async def test_ingest_from_stream(self):
+        validation_policy = ValidationPolicy(
+            validation_options=ValidationOptions.ValidateCsvInputConstantColumns, validation_implications=ValidationImplications.Fail
+        )
+        json_ingestion_props = IngestionProperties(
+            self.test_db,
+            self.test_table,
+            data_format=DataFormat.JSON,
+            ingestion_mapping=self.test_table_json_mappings(),
+            additional_tags=["a", "b"],
+            ingest_if_not_exists=["aaaa", "bbbb"],
+            ingest_by_tags=["ingestByTag"],
+            drop_by_tags=["drop", "drop-by"],
+            flush_immediately=False,
+            report_level=ReportLevel.FailuresAndSuccesses,
+            report_method=ReportMethod.Queue,
+            validation_policy=validation_policy,
+        )
+        text = io.StringIO(pathlib.Path(self.json_file_path).read_text())
+        zipped = io.BytesIO(pathlib.Path(self.zipped_json_file_path).read_bytes())
+
+        self.ingest_client.ingest_from_stream(text, json_ingestion_props)
+        self.ingest_client.ingest_from_stream(StreamDescriptor(zipped, is_compressed=True), json_ingestion_props)
 
         await self.assert_rows_added(4)
 

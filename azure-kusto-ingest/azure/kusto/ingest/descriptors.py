@@ -29,7 +29,7 @@ class FileDescriptor:
     GZIP_MAX_DISK_SIZE_FOR_DETECTION = int(4 * 1024 * 1024 * 1024 / 40)
     DEFAULT_COMPRESSION_RATIO = 11
 
-    def __init__(self, path: str, size: int = 0, source_id: Optional[str] = None):
+    def __init__(self, path: str, size: int = 0, source_id: Optional[Union[str, uuid.UUID]] = None):
         """
         :param path: file path.
         :type path: str.
@@ -128,3 +128,7 @@ class StreamDescriptor:
         assert_uuid4(source_id, "source_id must be a valid uuid4")
         self.source_id = source_id
         self.is_compressed = is_compressed
+        # TODO - do want to expose these outwards?
+        self.size = 0
+        # TODO: currently we always assume that streams are gz compressed (will get compressed before sending), should we expand that?
+        self.stream_name = "stream.gz"
