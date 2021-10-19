@@ -2,7 +2,18 @@
 # Licensed under the MIT License
 from urllib.parse import urlparse
 
-from ._token_providers import *
+from ._token_providers import (
+    TokenProviderBase,
+    BasicTokenProvider,
+    CallbackTokenProvider,
+    MsiTokenProvider,
+    AzCliTokenProvider,
+    UserPassTokenProvider,
+    DeviceLoginTokenProvider,
+    InteractiveLoginTokenProvider,
+    ApplicationKeyTokenProvider,
+    ApplicationCertificateTokenProvider
+)
 from .exceptions import KustoAuthenticationError
 
 
