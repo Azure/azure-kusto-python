@@ -12,9 +12,10 @@ from ._token_providers import (
     DeviceLoginTokenProvider,
     InteractiveLoginTokenProvider,
     ApplicationKeyTokenProvider,
-    ApplicationCertificateTokenProvider
+    ApplicationCertificateTokenProvider,
+    TokenConstants,
 )
-from .exceptions import KustoAuthenticationError
+from .exceptions import KustoAuthenticationError, KustoClientError
 
 
 class _AadHelper:
