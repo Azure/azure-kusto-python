@@ -198,16 +198,12 @@ class KustoStreamingResponseDataSet(BaseKustoResponseDataSet):
     @property
     def errors_count(self) -> int:
         if not self.finished:
-            raise KustoStreamingQueryError(
-                "Unable to get errors count before reading all of the tables."
-            )
+            raise KustoStreamingQueryError("Unable to get errors count before reading all of the tables.")
         return super().errors_count
 
     def get_exceptions(self) -> List[str]:
         if not self.finished:
-            raise KustoStreamingQueryError(
-                "Unable to get errors count before reading all of the tables."
-            )
+            raise KustoStreamingQueryError("Unable to get errors count before reading all of the tables.")
         return super().get_exceptions()
 
     def __getitem__(self, key) -> KustoResultTable:
