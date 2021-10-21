@@ -1,9 +1,9 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
 from abc import ABCMeta, abstractmethod
-from typing import List
+from typing import List, Iterator
 
-from ._models import KustoResultTable, WellKnownDataSet, KustoStreamingResultTable
+from ._models import KustoResultTable, WellKnownDataSet, KustoStreamingResultTable, BaseKustoResultTable
 from .exceptions import KustoStreamingQueryError
 from .streaming_response import StreamingDataSetEnumerator, FrameType
 
@@ -163,10 +163,10 @@ class KustoStreamingResponseDataSet(BaseKustoResponseDataSet):
     def iter_primary_results(self) -> "PrimaryResultsIterator":
         return PrimaryResultsIterator(self)
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[BaseKustoResultTable]:
         return self
 
-    def __next__(self):
+    def __next__(self) -> BaseKustoResultTable:
         if self.finished:
             raise StopIteration
 
@@ -223,10 +223,10 @@ class PrimaryResultsIterator:
     def __init__(self, dataset: KustoStreamingResponseDataSet):
         self.dataset = dataset
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[KustoStreamingResultTable]:
         return self
 
-    def __next__(self):
+    def __next__(self) -> KustoStreamingResultTable:
         while True:
             table = next(self.dataset)
             if type(table) is KustoStreamingResultTable:

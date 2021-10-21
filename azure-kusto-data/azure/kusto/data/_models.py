@@ -2,6 +2,7 @@
 # Licensed under the MIT License.
 
 import json
+from abc import ABCMeta, abstractmethod
 from decimal import Decimal
 from enum import Enum
 from typing import Iterator
@@ -98,22 +99,66 @@ class KustoResultColumn:
         return "KustoResultColumn({},{})".format(json.dumps({"ColumnName": self.column_name, "ColumnType": self.column_type}), self.ordinal)
 
 
-class KustoResultTable:
-    """Iterator over a Kusto result table."""
-
+class BaseKustoResultTable(metaclass=ABCMeta):
     def __init__(self, json_table: dict):
         self.table_name = json_table.get("TableName")
         self.table_id = json_table.get("TableId")
         self.table_kind = WellKnownDataSet[json_table["TableKind"]] if "TableKind" in json_table else None
         self.columns = [KustoResultColumn(column, index) for index, column in enumerate(json_table["Columns"])]
 
-        errors = [row for row in json_table["Rows"] if isinstance(row, dict)]
-        if errors:
-            raise KustoServiceError(errors[0]["OneApiErrors"][0]["error"]["@message"], json_table)
-
         self.raw_columns = json_table["Columns"]
         self.raw_rows = json_table["Rows"]
         self.kusto_result_rows = None
+
+    def __bool__(self):
+        return any(self.columns)
+
+    __nonzero__ = __bool__
+
+    @property
+    def columns_count(self) -> int:
+        return len(self.columns)
+
+    @abstractmethod
+    def __len__(self):
+        pass
+
+    @property
+    @abstractmethod
+    def rows_count(self) -> int:
+        pass
+
+
+class BaseStreamingKustoResultTable(BaseKustoResultTable):
+    def __init__(self, json_table: dict):
+        super().__init__(json_table)
+
+        self.finished = False
+        self.row_count = 0
+
+    @property
+    def rows_count(self) -> int:
+        if not self.finished:
+            raise KustoStreamingQueryError("Can't retrieve rows count before the iteration is finished")
+        return self.row_count
+
+    def __len__(self):
+        if not self.finished:
+            return None  # We return None here instead of an exception, because otherwise calling list() on the object will throw
+        return self.rows_count
+
+    def iter_rows(self):
+        return self
+
+
+class KustoResultTable(BaseKustoResultTable):
+    """Iterator over a Kusto result table."""
+
+    def __init__(self, json_table: dict):
+        super().__init__(json_table)
+        errors = [row for row in json_table["Rows"] if isinstance(row, dict)]
+        if errors:
+            raise KustoServiceError(errors[0]["OneApiErrors"][0]["error"]["@message"], json_table)
 
     @property
     def rows(self):
@@ -121,17 +166,13 @@ class KustoResultTable:
             self.kusto_result_rows = [KustoResultRow(self.columns, row) for row in self.raw_rows]
         return self.kusto_result_rows
 
-    @property
-    def rows_count(self) -> int:
-        return len(self.raw_rows)
-
-    @property
-    def columns_count(self) -> int:
-        return len(self.columns)
-
     def to_dict(self):
         """Converts the table to a dict."""
         return {"name": self.table_name, "kind": self.table_kind, "data": [r.to_dict() for r in self]}
+
+    @property
+    def rows_count(self) -> int:
+        return len(self.raw_rows)
 
     def __len__(self):
         return self.rows_count
@@ -152,62 +193,21 @@ class KustoResultTable:
         d["kind"] = d["kind"].value
         return json.dumps(d, default=str)
 
-    def __bool__(self):
-        return any(self.columns)
 
-    __nonzero__ = __bool__
-
-
-class KustoStreamingResultTable:
+class KustoStreamingResultTable(BaseStreamingKustoResultTable):
     """
     Iterator over a Kusto result table in streaming.
     This class can be iterated only once.
     """
 
-    def __init__(self, json_table: dict):
-        self.table_name = json_table.get("TableName")
-        self.table_id = json_table.get("TableId")
-        self.table_kind = WellKnownDataSet[json_table["TableKind"]] if "TableKind" in json_table else None
-        self.columns = [KustoResultColumn(column, index) for index, column in enumerate(json_table["Columns"])]
+    def __next__(self) -> KustoResultRow:
+        try:
+            row = next(self.raw_rows)
+        except StopIteration:
+            self.finished = True
+            raise
+        self.row_count += 1
+        return KustoResultRow(self.columns, row)
 
-        self.raw_columns = json_table["Columns"]
-        self.raw_rows = json_table["Rows"]
-        self.kusto_result_rows = None
-
-        self.finished = False
-        self.row_count = 0
-
-    @property
-    def rows(self) -> Iterator[KustoResultRow]:
-        if self.finished:
-            raise KustoStreamingQueryError("Can't retrieve rows after iteration is finished")
-        return iter(self)
-
-    @property
-    def rows_count(self) -> int:
-        if not self.finished:
-            raise KustoStreamingQueryError("Can't retrieve rows count before the iteration is finished")
-        return self.row_count
-
-    @property
-    def columns_count(self) -> int:
-        return len(self.columns)
-
-    def __len__(self):
-        if not self.finished:
-            return None
-        return self.rows_count
-
-    def __iter__(self):
-        while not self.finished:
-            row = next(self.raw_rows, None)
-            if row is None:
-                self.finished = True
-            else:
-                self.row_count += 1
-                yield KustoResultRow(self.columns, row)
-
-    def __bool__(self):
-        return any(self.columns)
-
-    __nonzero__ = __bool__
+    def __iter__(self) -> Iterator[KustoResultRow]:
+        return self

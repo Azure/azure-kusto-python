@@ -122,7 +122,7 @@ class TestStreamingQuery(KustoClientTestsMixin):
             response = KustoStreamingResponseDataSet(reader)
             table = next(response.iter_primary_results())
             with pytest.raises(KustoServiceError):
-                rows = [r for r in table.rows]
+                rows = [r for r in table]
 
     @pytest.mark.asyncio
     async def test_sanity_async(self):
@@ -208,7 +208,7 @@ class TestStreamingQuery(KustoClientTestsMixin):
             response = AsyncKustoStreamingResponseDataSet(reader)
             table = await response.iter_primary_results().__anext__()
             with pytest.raises(KustoServiceError):
-                rows = [r async for r in table.rows]
+                rows = [r async for r in table]
 
 
 class TestJsonTokenReader:

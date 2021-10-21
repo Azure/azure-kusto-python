@@ -116,7 +116,7 @@ for row in first_table:
 
 # Read next table
 second_table = next(tables_iter)
-print(next(second_table.rows))
+print(next(second_table))
 
 # You can always access the table's properties, even after it's exhausted
 print(first_table.columns, first_table.table_kind, first_table.table_name)

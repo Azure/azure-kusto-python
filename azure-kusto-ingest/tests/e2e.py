@@ -256,9 +256,8 @@ class TestE2E:
         result.set_skip_incomplete_tables(True)
         for primary in result.iter_primary_results():
             counter += 1
-            rows = primary.rows
             for row in self.test_streaming_data:
-                assert row == self.normalize_row(next(rows).to_list())
+                assert row == self.normalize_row(next(primary).to_list())
 
         assert counter == 2
 
@@ -276,7 +275,7 @@ class TestE2E:
             async for primary in result.iter_primary_results():
                 counter += 1
                 streaming_data_iter = iter(self.test_streaming_data)
-                async for row in primary.rows:
+                async for row in primary:
                     expected_row = next(streaming_data_iter, None)
                     if expected_row is None:
                         break

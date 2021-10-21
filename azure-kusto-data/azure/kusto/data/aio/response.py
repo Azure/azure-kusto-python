@@ -1,6 +1,6 @@
-from typing import List
+from typing import List, AsyncIterator
 
-from azure.kusto.data._models import WellKnownDataSet, KustoResultTable
+from azure.kusto.data._models import WellKnownDataSet, KustoResultTable, BaseKustoResultTable
 from azure.kusto.data.aio._models import KustoStreamingResultTable
 from azure.kusto.data.aio.streaming_response import StreamingDataSetEnumerator
 from azure.kusto.data.exceptions import KustoStreamingQueryError
@@ -23,10 +23,10 @@ class KustoStreamingResponseDataSet(BaseKustoResponseDataSet):
     def iter_primary_results(self) -> "PrimaryResultsIterator":
         return PrimaryResultsIterator(self)
 
-    def __aiter__(self):
+    def __aiter__(self) -> AsyncIterator[BaseKustoResultTable]:
         return self
 
-    async def __anext__(self):
+    async def __anext__(self) -> BaseKustoResultTable:
         if self.finished:
             raise StopAsyncIteration()
 
@@ -83,10 +83,10 @@ class PrimaryResultsIterator:
     def __init__(self, dataset: KustoStreamingResponseDataSet):
         self.dataset = dataset
 
-    def __aiter__(self):
+    def __aiter__(self) -> AsyncIterator[KustoStreamingResultTable]:
         return self
 
-    async def __anext__(self):
+    async def __anext__(self) -> KustoStreamingResultTable:
         while True:
             table = await self.dataset.__anext__()
             if type(table) is KustoStreamingResultTable:
