@@ -2,7 +2,7 @@ import io
 from datetime import timedelta
 from typing import Union, Optional
 
-from ._models import KustoStreamingResponseDataSet
+from .response import KustoStreamingResponseDataSet
 from .._decorators import documented_by, aio_documented_by
 from ..aio.streaming_response import StreamingDataSetEnumerator, JsonTokenReader
 from ..client import KustoClient as KustoClientSync, _KustoClientBase, KustoConnectionStringBuilder, ClientRequestProperties, ExecuteRequestParams
@@ -76,7 +76,7 @@ class KustoClient(_KustoClientBase):
         self, database: str, query: str, timeout: timedelta = _KustoClientBase._query_default_timeout, properties: Optional[ClientRequestProperties] = None
     ) -> KustoStreamingResponseDataSet:
         response = await self._execute_streaming_query_parsed(database, query, timeout, properties)
-        return await KustoStreamingResponseDataSet.create(response)
+        return KustoStreamingResponseDataSet(response)
 
     @aio_documented_by(KustoClientSync._execute)
     async def _execute(

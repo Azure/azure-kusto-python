@@ -251,17 +251,18 @@ class TestE2E:
 
     def test_streaming_query(self):
         result = self.client.execute_streaming_query(self.test_db, self.streaming_test_table_query + ";" + self.streaming_test_table_query)
-        primary = result.current_primary_results_table
-        rows = primary.rows
-        for row in self.test_streaming_data:
-            assert row == self.normalize_row(next(rows).to_list())
+        counter = 0
 
-        primary = result.next_primary_results_table(ensure_current_finished=False)
-        rows = primary.rows
-        for row in self.test_streaming_data:
-            assert row == self.normalize_row(next(rows).to_list())
+        result.set_skip_incomplete_tables(True)
+        for primary in result.iter_primary_results():
+            counter += 1
+            rows = primary.rows
+            for row in self.test_streaming_data:
+                assert row == self.normalize_row(next(rows).to_list())
 
-        assert result.next_primary_results_table(ensure_current_finished=False) is None
+        assert counter == 2
+
+        assert result.finished
         assert result.errors_count == 0
         assert result.get_exceptions() == []
 
@@ -269,25 +270,21 @@ class TestE2E:
     async def test_streaming_query_async(self):
         async with await self.get_async_client() as client:
             result = await client.execute_streaming_query(self.test_db, self.streaming_test_table_query + ";" + self.streaming_test_table_query)
-            primary = result.current_primary_results_table
-            streaming_data_iter = iter(self.test_streaming_data)
-            async for row in primary.rows:
-                expected_row = next(streaming_data_iter, None)
-                if expected_row is None:
-                    break
+            counter = 0
 
-                assert expected_row == self.normalize_row(row.to_list())
+            result.set_skip_incomplete_tables(True)
+            async for primary in result.iter_primary_results():
+                counter += 1
+                streaming_data_iter = iter(self.test_streaming_data)
+                async for row in primary.rows:
+                    expected_row = next(streaming_data_iter, None)
+                    if expected_row is None:
+                        break
 
-            primary = await result.next_primary_results_table(ensure_current_finished=False)
-            streaming_data_iter = iter(self.test_streaming_data)
-            async for row in primary.rows:
-                expected_row = next(streaming_data_iter, None)
-                if expected_row is None:
-                    break
+                    assert expected_row == self.normalize_row(row.to_list())
 
-                assert expected_row == self.normalize_row(row.to_list())
-
-            assert (await result.next_primary_results_table(ensure_current_finished=False)) is None
+            assert counter == 2
+            assert result.finished
             assert result.errors_count == 0
             assert result.get_exceptions() == []
 

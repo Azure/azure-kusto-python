@@ -1,7 +1,7 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
 from abc import ABCMeta, abstractmethod
-from typing import List, Optional
+from typing import List
 
 from ._models import KustoResultTable, WellKnownDataSet, KustoStreamingResultTable
 from .exceptions import KustoStreamingQueryError
@@ -153,71 +153,60 @@ class KustoStreamingResponseDataSet(BaseKustoResponseDataSet):
     _error_column = "Level"
     _crid_column = "ClientRequestId"
 
-    current_primary_results_table: KustoStreamingResultTable
-    """
-       The current primary results table which provides an interface to stream its rows.
-       Becomes invalidated after a successful call to `next_primary_results_table` or `read_rest_of_tables` 
-    """
-
     def __init__(self, streamed_data: StreamingDataSetEnumerator):
+        self._current_table = None
+        self._skip_incomplete_tables = False
         self.tables = []
         self.streamed_data = streamed_data
-        self.have_read_rest_of_tables = False
-        self.extract_tables_until_primary_result()
+        self.finished = False
 
-    def extract_tables_until_primary_result(self):
-        for table in self.streamed_data:
-            if table["FrameType"] != FrameType.DataTable:
-                continue
-            if self.streamed_data.started_primary_results:
-                self.current_primary_results_table = KustoStreamingResultTable(table)
-                self.tables.append(self.current_primary_results_table)
-                break
-            else:
-                self.tables.append(KustoResultTable(table))
+    def iter_primary_results(self) -> "PrimaryResultsIterator":
+        return PrimaryResultsIterator(self)
 
-    def next_primary_results_table(self, ensure_current_finished=True) -> Optional[KustoStreamingResultTable]:
-        if self.have_read_rest_of_tables:
-            return None
-        if ensure_current_finished and not self.current_primary_results_table.finished:
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        if self.finished:
+            raise StopIteration
+
+        if type(self._current_table) is KustoStreamingResultTable and not self._current_table.finished and not self._skip_incomplete_tables:
             raise KustoStreamingQueryError(
-                "Tried retrieving a new primary_result table before the old one was finished. To override pass `ensure_current_finished=False`"
+                "Tried retrieving a new primary_result table before the old one was finished. To override call `set_skip_incomplete_tables(True)`"
             )
 
-        table = next(self.streamed_data)
-        if self.streamed_data.finished_primary_results:
-            # If we're finished with primary results, we want to retrieve the rest of the tables
+        while True:
+            try:
+                table = next(self.streamed_data)
+            except StopIteration:
+                self.finished = True
+                raise
             if table["FrameType"] == FrameType.DataTable:
-                self.tables.append(KustoResultTable(table))
-            self.read_rest_of_tables()
+                break
+
+        if table["TableKind"] == WellKnownDataSet.PrimaryResult.value:
+            self._current_table = KustoStreamingResultTable(table)
         else:
-            self.current_primary_results_table = KustoStreamingResultTable(table)
-            return self.current_primary_results_table
+            self._current_table = KustoResultTable(table)
 
-    def read_rest_of_tables(self, ensure_primary_tables_finished=True):
-        if self.have_read_rest_of_tables:
-            return
+        self.tables.append(self._current_table)
+        return self._current_table
 
-        if ensure_primary_tables_finished and not self.streamed_data.finished_primary_results:
-            raise KustoStreamingQueryError(
-                "Tried retrieving all of the tables before the primary_results are finished. To override pass `ensure_primary_tables_finished=False`"
-            )
-
-        self.tables.extend(KustoResultTable(t) for t in self.streamed_data if t["FrameType"] == FrameType.DataTable)
-        self.have_read_rest_of_tables = True
+    def set_skip_incomplete_tables(self, value: bool):
+        self._skip_incomplete_tables = value
 
     @property
     def errors_count(self) -> int:
-        if not self.have_read_rest_of_tables:
+        if not self.finished:
             raise KustoStreamingQueryError(
-                "Unable to get errors count before reading all of the tables. Advance `next_primary_results_table` to the end, or use `read_rest_of_tables`"
+                "Unable to get errors count before reading all of the tables."
             )
         return super().errors_count
 
     def get_exceptions(self) -> List[str]:
-        if not self.have_read_rest_of_tables:
+        if not self.finished:
             raise KustoStreamingQueryError(
-                "Unable to get errors count before reading all of the tables. Advance `next_primary_results_table` to the end, or use `read_rest_of_tables`"
+                "Unable to get errors count before reading all of the tables."
             )
         return super().get_exceptions()
 
@@ -231,3 +220,18 @@ class KustoStreamingResponseDataSet(BaseKustoResponseDataSet):
 
     def __len__(self) -> int:
         return len(self.tables)
+
+
+class PrimaryResultsIterator:
+    # This class exists because you can't raise exception from an generator and keep working
+    def __init__(self, dataset: KustoStreamingResponseDataSet):
+        self.dataset = dataset
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        while True:
+            table = next(self.dataset)
+            if type(table) is KustoStreamingResultTable:
+                return table

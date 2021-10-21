@@ -108,7 +108,7 @@ DIGIT_WORDS = [str("Zero"), str("One"), str("Two"), str("Three"), str("Four"), s
 
 def get_response_first_primary_result(response):
     if type(response) == KustoStreamingResponseDataSet:
-        return response.current_primary_results_table
+        return next(response.iter_primary_results())
     else:
         return response.primary_results[0]
 
@@ -353,7 +353,7 @@ class KustoClientTestsMixin:
         assert results[0]["x"] == 1
 
         if type(response) == KustoStreamingResponseDataSet:
-            response.read_rest_of_tables(ensure_primary_tables_finished=False)
+            _ = [t for t in response]  # Read rest of tables
         assert response.errors_count == 1
         assert "E_QUERY_RESULT_SET_TOO_LARGE" in response.get_exceptions()[0]
         assert len(response) == 3
