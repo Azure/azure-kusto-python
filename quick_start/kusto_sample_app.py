@@ -35,7 +35,7 @@ configFileName = "kusto_sample_config.json"
 #  Some of the auth modes require additional environment variables to be set in order to work (check the use below)
 #  Managed Identity Authentication only works when running as an Azure service (webapp, function, etc.)
 authenticationMode = "userPrompt"  # choose between: (userPrompt|managedIdentity|AppKey|AppCertificate)
-waitForUser = True
+waitForUser = False
 
 
 def main():
@@ -46,11 +46,7 @@ def main():
     ingest_uri = config["IngestUri"]
     database_name = config["DatabaseName"]
     table_name = config["TableName"]
-    table_schema = config["TableSchema"]
-    csv_sample = config["CsvSample"] if "CsvSample" in config else None
-    json_sample = config["JsonSample"] if "JsonSample" in config else None
-    json_mapping = config["JsonMapping"] if "JsonMapping" in config else None
-    json_mapping_ref = config["JsonMappingRef"] if "JsonMappingRef" in config else None
+    create_table = str(config["CreateTable"]).lower()
 
     if authenticationMode == "userPrompt":
         print("")
@@ -64,16 +60,18 @@ def main():
     kusto_client = KustoClient(kusto_connection_string)
     ingest_client = QueuedIngestClient(ingest_connection_string)
 
-    print("")
-    print(f"Creating table '{database_name}.{table_name}' if it does not exist:")
-    # Tip: This is commonly a one-time configuration to make
-    # Learn More: For additional information on how to create tables see: https://docs.microsoft.com/azure/data-explorer/one-click-table
-    command = f".create table {table_name} {table_schema}"
-    if not run_control_command(kusto_client, database_name, command):
-        print("Failed to create or validate table exists.")
-        exit(-1)
+    if create_table == "true":
+        table_schema = config["TableSchema"]
+        print("")
+        print(f"Creating table '{database_name}.{table_name}' if it does not exist:")
+        # Tip: This is commonly a one-time configuration to make
+        # Learn More: For additional information on how to create tables see: https://docs.microsoft.com/azure/data-explorer/one-click-table
+        command = f".create table {table_name} {table_schema}"
+        if not run_control_command(kusto_client, database_name, command):
+            print("Failed to create or validate table exists.")
+            exit(-1)
 
-    wait_for_user()
+        wait_for_user()
 
     print("")
     print(f"Altering the batching policy for '{table_name}'")
@@ -102,35 +100,51 @@ def main():
     run_query(kusto_client, database_name, f"{table_name} | summarize count()")
     wait_for_user()
 
-    # Learn More: For additional information on how to ingest data to Kusto in Python see:
-    #  https://docs.microsoft.com/azure/data-explorer/python-ingest-data
-    if csv_sample is not None:
-        print("")
-        print(f"Attempting to ingest '{csv_sample}'")
-        ingest_data_from_file(ingest_client, database_name, table_name, csv_sample, DataFormat.CSV)
-        wait_for_user()
+    files = config["Data"]
+    for file in files:
+        data_source = str(file["DataSource"]).lower()
+        uri = file["DataSourceUri"]
+        data_format = str_to_data_format(str(file["DataFormat"]))
+        create_mapping = str(file["CreateMapping"]).lower()
+        mapping_name = file["MappingName"]
+        mapping_value = file["MappingValue"]
 
-    if json_sample is not None:
-        print("")
-        print(f"Attempting to create a json mapping reference named '{json_mapping_ref}'")
-        # Tip: This is commonly a one-time configuration to make
-        mapping_command = f".create-or-alter table {table_name} ingestion json mapping '{json_mapping_ref}' '{json_mapping}'"
-        mapping_exists = run_control_command(kusto_client, database_name, mapping_command)
-        if not mapping_exists:
-            print(f"failed to create a json  mapping reference named {json_mapping_ref}")
-            print(f"skipping json ingestion")
+        # Learn More: For additional information on how to ingest data to Kusto in Python see:
+        #  https://docs.microsoft.com/azure/data-explorer/python-ingest-data
+        if data_format in {DataFormat.JSON, DataFormat.MULTIJSON, DataFormat.SINGLEJSON}:
+            if create_mapping == "true":
+                print("")
+                print(f"Attempting to create a json mapping reference named '{mapping_name}'")
+                # Tip: This is commonly a one-time configuration to make
+                mapping_command = f".create-or-alter table {table_name} ingestion json mapping '{mapping_name}' '{mapping_value}'"
+                mapping_exists = run_control_command(kusto_client, database_name, mapping_command)
+                if not mapping_exists:
+                    print(f"failed to create a json  mapping reference named {mapping_name}")
+                    print(f"skipping json ingestion")
+                    continue
 
-        # learn More: For more information about providing inline mappings or mapping references see:
-        #  https://docs.microsoft.com/azure/data-explorer/kusto/management/mappings
+                # learn More: For more information about providing inline mappings or mapping references see:
+                #  https://docs.microsoft.com/azure/data-explorer/kusto/management/mappings
 
-        wait_for_user()
-
-        if mapping_exists:
             print("")
-            print(f"Attempting to ingest '{json_sample}'")
+            print(f"Attempting to ingest '{uri}' from {data_source}")
             # Tip: When ingesting json files, if a each row is represented by a single line json, use MULTIJSON format even if the file only includes one line.
             # When the json contains whitespace formatting, use SINGLEJSON. IN this case only one row/json per file is allowed.
-            ingest_data_from_file(ingest_client, database_name, table_name, json_sample, DataFormat.MULTIJSON, json_mapping_ref)
+            if data_source == "file":
+                ingest_data_from_file(ingest_client, database_name, table_name, uri, data_format, mapping_name)
+            else:  # assume source is a blob
+                pass  # ingest_data_from_blob()
+
+            wait_for_user()
+
+        else:  # file is not in json format
+            print("")
+            print(f"Attempting to ingest '{uri}' from {data_source}")
+            if data_source == "file":
+                ingest_data_from_file(ingest_client, database_name, table_name, uri, data_format)
+            else:  # assume source is a blob
+                pass  # ingest_data_from_blob()
+
             wait_for_user()
 
     print("")
@@ -319,6 +333,43 @@ def die(error: str, ex: Exception = None):
 def wait_for_user():
     if waitForUser:
         input("Press Enter to continue...")
+
+
+def str_to_data_format(format_str: str) -> DataFormat:
+    format_str = format_str.lower()
+    
+    if format_str == "csv":
+        return DataFormat.CSV
+    elif format_str == "tsv":
+        return DataFormat.TSV
+    elif format_str == "scsv":
+        return DataFormat.SCSV
+    elif format_str == "sohsv":
+        return DataFormat.SOHSV
+    elif format_str == "psv":
+        return DataFormat.PSV
+    elif format_str == "txt":
+        return DataFormat.TXT
+    elif format_str == "json":
+        return DataFormat.JSON
+    elif format_str == "singlejson":
+        return DataFormat.SINGLEJSON
+    elif format_str == "avro":
+        return DataFormat.AVRO
+    elif format_str == "parquet":
+        return DataFormat.PARQUET
+    elif format_str == "multijson":
+        return DataFormat.MULTIJSON
+    elif format_str == "orc":
+        return DataFormat.ORC
+    elif format_str == "tsve":
+        return DataFormat.TSVE
+    elif format_str == "raw":
+        return DataFormat.RAW
+    elif format_str == "w3clogfile":
+        return DataFormat.W3CLOGFILE
+    else:
+        die(fr"Unexpected data format {format_str}")
 
 
 if __name__ == "__main__":
