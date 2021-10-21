@@ -129,21 +129,22 @@ def main():
             print("")
             print(f"Attempting to ingest '{uri}' from {data_source}")
             # Tip: When ingesting json files, if a each row is represented by a single line json, use MULTIJSON format even if the file only includes one line.
-            # When the json contains whitespace formatting, use SINGLEJSON. IN this case only one row/json per file is allowed.
+            # When the json contains whitespace formatting, use SINGLEJSON. In this case only one data row json object per file is allowed.
+            data_format = DataFormat.MULTIJSON if data_format == data_format.JSON else data_format
             if data_source == "file":
                 ingest_data_from_file(ingest_client, database_name, table_name, uri, data_format, mapping_name)
             else:  # assume source is a blob
-                pass  # ingest_data_from_blob()
+                ingest_data_from_blob(ingest_client, database_name, table_name, uri, data_format, mapping_name)
 
             wait_for_user()
 
-        else:  # file is not in json format
+        else:  # file is not in any json format
             print("")
             print(f"Attempting to ingest '{uri}' from {data_source}")
             if data_source == "file":
                 ingest_data_from_file(ingest_client, database_name, table_name, uri, data_format)
             else:  # assume source is a blob
-                pass  # ingest_data_from_blob()
+                ingest_data_from_blob(ingest_client, database_name, table_name, uri, data_format)
 
             wait_for_user()
 
@@ -226,10 +227,32 @@ def ingest_data_from_file(client: QueuedIngestClient, db: str, table: str, file_
     )
 
     # Tip: For optimal ingestion batching it's best to specify the uncompressed data size in the file descriptor
-    file_descriptor = FileDescriptor(f"{file_path}")
+    file_descriptor = FileDescriptor(file_path)
     client.ingest_from_file(file_descriptor, ingestion_properties=ingestion_props)
 
-    # Tip: Kusto can also ingest data from blobs, open streams and pandas dataframes.
+    # Tip: Kusto can also ingest data from open streams and pandas dataframes.
+    #  See the python SDK azure.kusto.ingest samples for additional references.
+
+
+def ingest_data_from_blob(client: QueuedIngestClient, db: str, table: str, blob_path: str, file_format: DataFormat, mapping_ref: str = None):
+    ingestion_props = IngestionProperties(
+        database=f"{db}",
+        table=f"{table}",
+        ingestion_mapping_reference=mapping_ref,
+        # Learn More: For additional information about supported data formats, see
+        #  https://docs.microsoft.com/azure/data-explorer/ingestion-supported-formats
+        data_format=file_format,
+        # Todo - Config: Setting the ingestion batching policy takes up to 5 minutes to have an effect.
+        #  For the sake of the sample we set Flush-Immediately, but in practice it should not be commonly used.
+        #  Comment the below line after running the sample for the first few times!
+        flush_immediately=True,
+    )
+
+    # Tip: For optimal ingestion batching it's best to specify the uncompressed data size in the file descriptor
+    blob_descriptor = BlobDescriptor(blob_path)
+    client.ingest_from_blob(blob_descriptor, ingestion_properties=ingestion_props)
+
+    # Tip: Kusto can also ingest data from open streams and pandas dataframes.
     #  See the python SDK azure.kusto.ingest samples for additional references.
 
 
@@ -337,7 +360,7 @@ def wait_for_user():
 
 def str_to_data_format(format_str: str) -> DataFormat:
     format_str = format_str.lower()
-    
+
     if format_str == "csv":
         return DataFormat.CSV
     elif format_str == "tsv":
