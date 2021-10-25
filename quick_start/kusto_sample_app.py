@@ -46,7 +46,7 @@ def main():
     ingest_uri = config["IngestUri"]
     database_name = config["DatabaseName"]
     table_name = config["TableName"]
-    create_table = str(config["CreateTable"]).lower()
+    use_existing_table = str(config["UseExistingTable"]).lower()
 
     if authenticationMode == "userPrompt":
         print("")
@@ -60,7 +60,7 @@ def main():
     kusto_client = KustoClient(kusto_connection_string)
     ingest_client = QueuedIngestClient(ingest_connection_string)
 
-    if create_table == "true":
+    if use_existing_table == "false":
         table_schema = config["TableSchema"]
         print("")
         print(f"Creating table '{database_name}.{table_name}' if it does not exist:")
@@ -102,17 +102,17 @@ def main():
 
     files = config["Data"]
     for file in files:
-        data_source = str(file["DataSource"]).lower()
+        source_type = str(file["SourceType"]).lower()
         uri = file["DataSourceUri"]
         data_format = str_to_data_format(str(file["DataFormat"]))
-        create_mapping = str(file["CreateMapping"]).lower()
+        use_existing_mapping = str(file["UseExistingMapping"]).lower()
         mapping_name = file["MappingName"]
         mapping_value = file["MappingValue"]
 
         # Learn More: For additional information on how to ingest data to Kusto in Python see:
         #  https://docs.microsoft.com/azure/data-explorer/python-ingest-data
         if data_format in {DataFormat.JSON, DataFormat.MULTIJSON, DataFormat.SINGLEJSON}:
-            if create_mapping == "true":
+            if use_existing_mapping == "false":
                 print("")
                 print(f"Attempting to create a json mapping reference named '{mapping_name}'")
                 # Tip: This is commonly a one-time configuration to make
@@ -127,11 +127,11 @@ def main():
                 #  https://docs.microsoft.com/azure/data-explorer/kusto/management/mappings
 
             print("")
-            print(f"Attempting to ingest '{uri}' from {data_source}")
+            print(f"Attempting to ingest '{uri}' from {source_type}")
             # Tip: When ingesting json files, if a each row is represented by a single line json, use MULTIJSON format even if the file only includes one line.
             # When the json contains whitespace formatting, use SINGLEJSON. In this case only one data row json object per file is allowed.
             data_format = DataFormat.MULTIJSON if data_format == data_format.JSON else data_format
-            if data_source == "file":
+            if source_type == "file":
                 ingest_data_from_file(ingest_client, database_name, table_name, uri, data_format, mapping_name)
             else:  # assume source is a blob
                 ingest_data_from_blob(ingest_client, database_name, table_name, uri, data_format, mapping_name)
@@ -140,8 +140,8 @@ def main():
 
         else:  # file is not in any json format
             print("")
-            print(f"Attempting to ingest '{uri}' from {data_source}")
-            if data_source == "file":
+            print(f"Attempting to ingest '{uri}' from {source_type}")
+            if source_type == "file":
                 ingest_data_from_file(ingest_client, database_name, table_name, uri, data_format)
             else:  # assume source is a blob
                 ingest_data_from_blob(ingest_client, database_name, table_name, uri, data_format)
