@@ -54,7 +54,7 @@ There is also a feature request for the adal team to work on implementing IWA (I
 
 ## Samples:
 
-* [Kusto Quick Start Sample App] (https://github.com/Azure/azure-kusto-python/tree/master/quick_start)
+* [Kusto Quick Start Sample App](https://github.com/Azure/azure-kusto-python/tree/master/quick_start)
 
 * [Kusto query sample sinppets](https://github.com/Azure/azure-kusto-python/blob/master/azure-kusto-data/tests/sample.py)
 
