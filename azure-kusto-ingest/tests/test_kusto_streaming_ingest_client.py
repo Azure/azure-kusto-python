@@ -6,7 +6,7 @@ import json
 import pytest
 import responses
 import io
-from azure.kusto.ingest import KustoStreamingIngestClient, IngestionProperties, DataFormat
+from azure.kusto.ingest import KustoStreamingIngestClient, IngestionProperties, DataFormat, IngestionResultKind
 from azure.kusto.ingest.exceptions import KustoMissingMappingReferenceError
 
 
@@ -63,7 +63,8 @@ class KustoStreamingIngestClientTests(unittest.TestCase):
 
         file_path = os.path.join(current_dir, *missing_path_parts)
 
-        ingest_client.ingest_from_file(file_path, ingestion_properties=ingestion_properties)
+        result = ingest_client.ingest_from_file(file_path, ingestion_properties=ingestion_properties)
+        assert result.kind == IngestionResultKind.STREAMING
 
         path_parts = ["azure-kusto-ingest", "tests", "input", "dataset.csv.gz"]
         missing_path_parts = []
@@ -73,7 +74,8 @@ class KustoStreamingIngestClientTests(unittest.TestCase):
 
         file_path = os.path.join(current_dir, *missing_path_parts)
 
-        ingest_client.ingest_from_file(file_path, ingestion_properties=ingestion_properties)
+        result = ingest_client.ingest_from_file(file_path, ingestion_properties=ingestion_properties)
+        assert result.kind == IngestionResultKind.STREAMING
 
         ingestion_properties = IngestionProperties(database="database", table="table", data_format=DataFormat.JSON, ingestion_mapping_reference="JsonMapping")
 
@@ -85,7 +87,8 @@ class KustoStreamingIngestClientTests(unittest.TestCase):
 
         file_path = os.path.join(current_dir, *missing_path_parts)
 
-        ingest_client.ingest_from_file(file_path, ingestion_properties=ingestion_properties)
+        result = ingest_client.ingest_from_file(file_path, ingestion_properties=ingestion_properties)
+        assert result.kind == IngestionResultKind.STREAMING
 
         path_parts = ["azure-kusto-ingest", "tests", "input", "dataset.jsonz.gz"]
         missing_path_parts = []
@@ -95,7 +98,8 @@ class KustoStreamingIngestClientTests(unittest.TestCase):
 
         file_path = os.path.join(current_dir, *missing_path_parts)
 
-        ingest_client.ingest_from_file(file_path, ingestion_properties=ingestion_properties)
+        result = ingest_client.ingest_from_file(file_path, ingestion_properties=ingestion_properties)
+        assert result.kind == IngestionResultKind.STREAMING
 
         ingestion_properties = IngestionProperties(database="database", table="table", data_format=DataFormat.TSV)
 
@@ -107,7 +111,8 @@ class KustoStreamingIngestClientTests(unittest.TestCase):
 
         file_path = os.path.join(current_dir, *missing_path_parts)
 
-        ingest_client.ingest_from_file(file_path, ingestion_properties=ingestion_properties)
+        result = ingest_client.ingest_from_file(file_path, ingestion_properties=ingestion_properties)
+        assert result.kind == IngestionResultKind.STREAMING
 
     @pytest.mark.skipif(not pandas_installed, reason="requires pandas")
     @responses.activate
@@ -123,7 +128,8 @@ class KustoStreamingIngestClientTests(unittest.TestCase):
         rows = [[1, "abc", 15.3], [2, "cde", 99.9]]
         df = DataFrame(data=rows, columns=fields)
 
-        ingest_client.ingest_from_dataframe(df, ingestion_properties)
+        result = ingest_client.ingest_from_dataframe(df, ingestion_properties)
+        assert result.kind == IngestionResultKind.STREAMING
 
     @responses.activate
     def test_streaming_ingest_from_stream(self):
@@ -134,23 +140,25 @@ class KustoStreamingIngestClientTests(unittest.TestCase):
 
         byte_sequence = b"56,56,56"
         bytes_stream = io.BytesIO(byte_sequence)
-        ingest_client.ingest_from_stream(bytes_stream, ingestion_properties=ingestion_properties)
+        result = ingest_client.ingest_from_stream(bytes_stream, ingestion_properties=ingestion_properties)
+        assert result.kind == IngestionResultKind.STREAMING
 
         str_sequence = u"57,57,57"
         str_stream = io.StringIO(str_sequence)
-        ingest_client.ingest_from_stream(str_stream, ingestion_properties=ingestion_properties)
+        result = ingest_client.ingest_from_stream(str_stream, ingestion_properties=ingestion_properties)
+        assert result.kind == IngestionResultKind.STREAMING
 
         byte_sequence = b'{"Name":"Ben","Age":"56","Weight":"75"}'
         bytes_stream = io.BytesIO(byte_sequence)
         ingestion_properties.format = DataFormat.JSON
-        try:
+        with pytest.raises(KustoMissingMappingReferenceError):
             ingest_client.ingest_from_stream(bytes_stream, ingestion_properties=ingestion_properties)
-        except KustoMissingMappingReferenceError:
-            pass
 
         ingestion_properties.ingestion_mapping_reference = "JsonMapping"
-        ingest_client.ingest_from_stream(bytes_stream, ingestion_properties=ingestion_properties)
+        result = ingest_client.ingest_from_stream(bytes_stream, ingestion_properties=ingestion_properties)
+        assert result.kind == IngestionResultKind.STREAMING
 
         str_sequence = u'{"Name":"Ben","Age":"56","Weight":"75"}'
         str_stream = io.StringIO(str_sequence)
-        ingest_client.ingest_from_stream(str_stream, ingestion_properties=ingestion_properties)
+        result = ingest_client.ingest_from_stream(str_stream, ingestion_properties=ingestion_properties)
+        assert result.kind == IngestionResultKind.STREAMING

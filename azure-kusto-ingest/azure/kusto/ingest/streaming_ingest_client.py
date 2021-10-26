@@ -5,7 +5,7 @@ from typing import Union, AnyStr
 from typing.io import IO
 
 from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
-from .base_ingest_client import BaseIngestClient
+from .base_ingest_client import BaseIngestClient, IngestionResult, IngestionResultKind
 from .descriptors import FileDescriptor, StreamDescriptor
 from .ingestion_properties import IngestionProperties
 
@@ -23,7 +23,7 @@ class KustoStreamingIngestClient(BaseIngestClient):
         """
         self._kusto_client = KustoClient(kcsb)
 
-    def ingest_from_file(self, file_descriptor: Union[FileDescriptor, str], ingestion_properties: IngestionProperties):
+    def ingest_from_file(self, file_descriptor: Union[FileDescriptor, str], ingestion_properties: IngestionProperties) -> IngestionResult:
         """Ingest from local files.
         :param file_descriptor: a FileDescriptor to be ingested.
         :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
@@ -36,7 +36,9 @@ class KustoStreamingIngestClient(BaseIngestClient):
         if stream is not None:
             stream.close()
 
-    def ingest_from_stream(self, stream_descriptor: Union[IO[AnyStr], StreamDescriptor], ingestion_properties: IngestionProperties):
+        return IngestionResult(IngestionResultKind.STREAMING)
+
+    def ingest_from_stream(self, stream_descriptor: Union[IO[AnyStr], StreamDescriptor], ingestion_properties: IngestionProperties) -> IngestionResult:
         """Ingest from io streams.
         :param azure.kusto.ingest.StreamDescriptor stream_descriptor: An object that contains a description of the stream to
                be ingested.
@@ -53,3 +55,5 @@ class KustoStreamingIngestClient(BaseIngestClient):
             ingestion_properties.format.name,
             mapping_name=ingestion_properties.ingestion_mapping_reference,
         )
+
+        return IngestionResult(IngestionResultKind.STREAMING)

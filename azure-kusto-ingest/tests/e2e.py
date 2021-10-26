@@ -30,6 +30,7 @@ from azure.kusto.ingest import (
     ReportMethod,
     FileDescriptor,
     StreamDescriptor,
+    ManagedStreamingIngestClient,
 )
 
 CLEAR_DB_CACHE = ".clear database cache streamingingestion schema"
@@ -156,6 +157,7 @@ class TestE2E:
         cls.client = KustoClient(cls.engine_kcsb_from_env())
         cls.ingest_client = QueuedIngestClient(cls.dm_kcsb_from_env())
         cls.streaming_ingest_client = KustoStreamingIngestClient(cls.engine_kcsb_from_env())
+        cls.managed_streaming_ingest_client = ManagedStreamingIngestClient(cls.dm_kcsb_from_env())
         cls.async_client_lock = asyncio.Lock()
         cls.async_client = None  # async client needs to be initialized in an async context, so instead of
         # initializing it here we use a lazy function get_async_client

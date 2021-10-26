@@ -10,7 +10,7 @@ import pytest
 import responses
 from mock import patch
 
-from azure.kusto.ingest import QueuedIngestClient, IngestionProperties, DataFormat
+from azure.kusto.ingest import QueuedIngestClient, IngestionProperties, DataFormat, IngestionResultKind
 from azure.kusto.ingest.exceptions import KustoInvalidEndpointError
 
 pandas_installed = False
@@ -190,7 +190,9 @@ class QueuedIngestClientTests(unittest.TestCase):
 
         file_path = os.path.join(current_dir, *missing_path_parts)
 
-        ingest_client.ingest_from_file(file_path, ingestion_properties=ingestion_properties)
+        result = ingest_client.ingest_from_file(file_path, ingestion_properties=ingestion_properties)
+
+        assert result.kind == IngestionResultKind.QUEUED
 
         self._assert_upload(
             mock_put_message_in_queue,
@@ -246,7 +248,8 @@ class QueuedIngestClientTests(unittest.TestCase):
         rows = [[1, "abc", 15.3], [2, "cde", 99.9]]
         df = DataFrame(data=rows, columns=fields)
 
-        ingest_client.ingest_from_dataframe(df, ingestion_properties=ingestion_properties)
+        result = ingest_client.ingest_from_dataframe(df, ingestion_properties=ingestion_properties)
+        assert result.kind == IngestionResultKind.QUEUED
 
         expected_url = "https://storageaccount.blob.core.windows.net/tempstorage/database__table__1111-111111-111111-1111__df_{0}_100_1111-111111-111111-1111.csv.gz?".format(
             id(df)
@@ -278,7 +281,8 @@ class QueuedIngestClientTests(unittest.TestCase):
 
         file_path = os.path.join(current_dir, *missing_path_parts)
 
-        ingest_client.ingest_from_stream(io.StringIO(Path(file_path).read_text()), ingestion_properties=ingestion_properties)
+        result = ingest_client.ingest_from_stream(io.StringIO(Path(file_path).read_text()), ingestion_properties=ingestion_properties)
+        assert result.kind == IngestionResultKind.QUEUED
 
         self._assert_upload(
             mock_put_message_in_queue,

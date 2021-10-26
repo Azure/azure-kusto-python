@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Union, Optional, IO, AnyStr
 from azure.kusto.data import KustoConnectionStringBuilder
 from azure.kusto.data.exceptions import KustoApiError
 from . import IngestionProperties, BlobDescriptor, StreamDescriptor, FileDescriptor
-from .base_ingest_client import BaseIngestClient
+from .base_ingest_client import BaseIngestClient, IngestionResult, IngestionResultKind
 from .helpers import get_stream_size, sleep_with_backoff
 from .ingest_client import QueuedIngestClient
 from .streaming_ingest_client import KustoStreamingIngestClient
@@ -25,13 +25,13 @@ class ManagedStreamingIngestClient(BaseIngestClient):
         self.queued_client = QueuedIngestClient(queued_kcsb)
         self.streaming_client = KustoStreamingIngestClient(streaming_kcsb)
 
-    def ingest_from_file(self, file_descriptor: Union[FileDescriptor, str], ingestion_properties: IngestionProperties):
+    def ingest_from_file(self, file_descriptor: Union[FileDescriptor, str], ingestion_properties: IngestionProperties) -> IngestionResult:
         stream, stream_descriptor = self._prepare_stream_descriptor_from_file(file_descriptor)
 
         with stream:
-            self.ingest_from_stream(stream_descriptor, ingestion_properties)
+            return self.ingest_from_stream(stream_descriptor, ingestion_properties)
 
-    def ingest_from_stream(self, stream_descriptor: Union[IO[AnyStr], StreamDescriptor], ingestion_properties: IngestionProperties):
+    def ingest_from_stream(self, stream_descriptor: Union[IO[AnyStr], StreamDescriptor], ingestion_properties: IngestionProperties) -> IngestionResult:
         if not isinstance(stream_descriptor, StreamDescriptor):
             stream_descriptor = StreamDescriptor(stream_descriptor)
         stream = self._prepare_stream(stream_descriptor, ingestion_properties)
@@ -43,7 +43,10 @@ class ManagedStreamingIngestClient(BaseIngestClient):
             # 3. Send it directly to queued ingest
 
         if get_stream_size(stream) > self.MAX_STREAMING_SIZE:
-            return self.queued_client.ingest_from_stream(stream_descriptor, ingestion_properties)
+            self.queued_client.ingest_from_stream(stream_descriptor, ingestion_properties)
+            return IngestionResult(IngestionResultKind.QUEUED, "Stream exceeded max size, defaulting to queued ingestion")
+
+        reason = "Streaming ingestion exceeded maximum retry count, defaulting to queued ingestion"
 
         for i in range(self.RETRY_COUNT + 1):
             try:
@@ -52,13 +55,15 @@ class ManagedStreamingIngestClient(BaseIngestClient):
                 error = e.get_api_error()
                 if error.permanent:
                     if error.type == self.STREAMING_INGEST_EXCEPTION:  # If the error is directly related to streaming ingestion, we might succeed in queued
+                        reason = "Streaming ingestion not supported for the table, defaulting to queued ingestion"
                         break
                     raise
                 stream.seek(0, SEEK_SET)
                 if i != self.RETRY_COUNT:
                     sleep_with_backoff(i)
 
-        return self.queued_client.ingest_from_stream(stream_descriptor, ingestion_properties)
+        self.queued_client.ingest_from_stream(stream_descriptor, ingestion_properties)
+        return IngestionResult(IngestionResultKind.QUEUED, reason)
 
     def ingest_from_dataframe(self, df: "pandas.DataFrame", ingestion_properties: IngestionProperties):
         return super().ingest_from_dataframe(df, ingestion_properties)

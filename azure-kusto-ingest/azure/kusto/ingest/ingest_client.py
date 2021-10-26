@@ -12,7 +12,7 @@ from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
 from azure.kusto.data.exceptions import KustoServiceError
 from ._ingestion_blob_info import _IngestionBlobInfo
 from ._resource_manager import _ResourceManager
-from .base_ingest_client import BaseIngestClient
+from .base_ingest_client import BaseIngestClient, IngestionResult, IngestionResultKind
 from .descriptors import BlobDescriptor, FileDescriptor, StreamDescriptor
 from .exceptions import KustoInvalidEndpointError
 from .ingestion_properties import DataFormat, IngestionProperties
@@ -39,7 +39,7 @@ class QueuedIngestClient(BaseIngestClient):
         self._endpoint_service_type = None
         self._suggested_endpoint_uri = None
 
-    def ingest_from_file(self, file_descriptor: Union[FileDescriptor, str], ingestion_properties: IngestionProperties):
+    def ingest_from_file(self, file_descriptor: Union[FileDescriptor, str], ingestion_properties: IngestionProperties) -> IngestionResult:
         """
         Enqueue an ingest command from local files.
         To learn more about ingestion methods go to:
@@ -64,7 +64,9 @@ class QueuedIngestClient(BaseIngestClient):
         with descriptor.open(should_compress) as stream:
             self._upload_blob(containers, descriptor, ingestion_properties, stream)
 
-    def ingest_from_stream(self, stream_descriptor: Union[IO[AnyStr], StreamDescriptor], ingestion_properties: IngestionProperties):
+        return IngestionResult(IngestionResultKind.QUEUED)
+
+    def ingest_from_stream(self, stream_descriptor: Union[IO[AnyStr], StreamDescriptor], ingestion_properties: IngestionProperties) -> IngestionResult:
         containers = self._get_containers()
 
         if not isinstance(stream_descriptor, StreamDescriptor):
@@ -73,7 +75,9 @@ class QueuedIngestClient(BaseIngestClient):
         stream = self._prepare_stream(stream_descriptor, ingestion_properties)
         self._upload_blob(containers, stream_descriptor, ingestion_properties, stream)
 
-    def ingest_from_blob(self, blob_descriptor: BlobDescriptor, ingestion_properties: IngestionProperties):
+        return IngestionResult(IngestionResultKind.QUEUED)
+
+    def ingest_from_blob(self, blob_descriptor: BlobDescriptor, ingestion_properties: IngestionProperties) -> IngestionResult:
         """
         Enqueue an ingest command from azure blobs.
         To learn more about ingestion methods go to:
@@ -96,6 +100,8 @@ class QueuedIngestClient(BaseIngestClient):
         content = ingestion_blob_info_json
         queue_client = queue_service.get_queue_client(queue=random_queue.object_name, message_encode_policy=TextBase64EncodePolicy())
         queue_client.send_message(content=content)
+
+        return IngestionResult(IngestionResultKind.QUEUED)
 
     def _get_containers(self):
         try:

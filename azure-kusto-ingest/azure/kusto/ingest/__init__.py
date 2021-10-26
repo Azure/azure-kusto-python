@@ -17,3 +17,5 @@ from .ingestion_properties import (
     TransformationMethod,
 )
 from .streaming_ingest_client import KustoStreamingIngestClient
+from .managed_streaming_ingest_client import ManagedStreamingIngestClient
+from .base_ingest_client import IngestionResult, IngestionResultKind
