@@ -111,7 +111,7 @@ def request_callback(request):
 def request_error_callback(request):
     body = json.loads(request.body.decode()) if type(request.body) == bytes else json.loads(request.body)
     response_status = 400
-    response_headers = ()
+    response_headers = dict()
     response_body = {}
 
     if ".get ingestion resources" in body["csl"]:
