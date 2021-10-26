@@ -31,7 +31,7 @@ TEMP_STORAGE_URL = "https://storageaccount.blob.core.windows.net/tempstorage?sp=
 def request_callback(request):
     body = json.loads(request.body.decode()) if type(request.body) == bytes else json.loads(request.body)
     response_status = 400
-    response_headers = []
+    response_headers = dict()
     response_body = {}
 
     if ".get ingestion resources" in body["csl"]:
@@ -111,7 +111,7 @@ def request_callback(request):
 def request_error_callback(request):
     body = json.loads(request.body.decode()) if type(request.body) == bytes else json.loads(request.body)
     response_status = 400
-    response_headers = []
+    response_headers = ()
     response_body = {}
 
     if ".get ingestion resources" in body["csl"]:

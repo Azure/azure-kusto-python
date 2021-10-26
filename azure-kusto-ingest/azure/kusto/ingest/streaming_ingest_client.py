@@ -2,7 +2,7 @@
 # Licensed under the MIT License
 from typing import Union, AnyStr
 
-from typing.io import IO
+from typing import IO
 
 from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
 from .base_ingest_client import BaseIngestClient, IngestionResult, IngestionResultKind
@@ -17,7 +17,7 @@ class KustoStreamingIngestClient(BaseIngestClient):
     Tests are run using pytest.
     """
 
-    def __init__(self, kcsb: KustoConnectionStringBuilder):
+    def __init__(self, kcsb: Union[KustoConnectionStringBuilder, str]):
         """Kusto Streaming Ingest Client constructor.
         :param KustoConnectionStringBuilder kcsb: The connection string to initialize KustoClient.
         """
