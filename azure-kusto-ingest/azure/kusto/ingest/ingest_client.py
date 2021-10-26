@@ -2,7 +2,7 @@
 # Licensed under the MIT License
 import random
 import uuid
-from typing import Union, AnyStr, IO
+from typing import Union, AnyStr, IO, List
 from urllib.parse import urlparse
 
 from azure.storage.blob import BlobServiceClient
@@ -11,7 +11,7 @@ from azure.storage.queue import QueueServiceClient, TextBase64EncodePolicy
 from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
 from azure.kusto.data.exceptions import KustoServiceError
 from ._ingestion_blob_info import _IngestionBlobInfo
-from ._resource_manager import _ResourceManager
+from ._resource_manager import _ResourceManager, _ResourceUri
 from .base_ingest_client import BaseIngestClient, IngestionResult, IngestionResultKind
 from .descriptors import BlobDescriptor, FileDescriptor, StreamDescriptor
 from .exceptions import KustoInvalidEndpointError
@@ -69,11 +69,8 @@ class QueuedIngestClient(BaseIngestClient):
     def ingest_from_stream(self, stream_descriptor: Union[IO[AnyStr], StreamDescriptor], ingestion_properties: IngestionProperties) -> IngestionResult:
         containers = self._get_containers()
 
-        if not isinstance(stream_descriptor, StreamDescriptor):
-            stream_descriptor = StreamDescriptor(stream_descriptor)
-
-        stream = self._prepare_stream(stream_descriptor, ingestion_properties)
-        self._upload_blob(containers, stream_descriptor, ingestion_properties, stream)
+        stream_descriptor = self._prepare_stream(stream_descriptor, ingestion_properties)
+        self._upload_blob(containers, stream_descriptor, ingestion_properties, stream_descriptor.stream)
 
         return IngestionResult(IngestionResultKind.QUEUED)
 
@@ -103,7 +100,7 @@ class QueuedIngestClient(BaseIngestClient):
 
         return IngestionResult(IngestionResultKind.QUEUED)
 
-    def _get_containers(self):
+    def _get_containers(self) -> List[_ResourceUri]:
         try:
             containers = self._resource_manager.get_containers()
         except KustoServiceError as ex:
@@ -113,7 +110,7 @@ class QueuedIngestClient(BaseIngestClient):
 
     def _upload_blob(
         self,
-        containers: "List[_ResourceUri]",
+        containers: List[_ResourceUri],
         descriptor: Union[FileDescriptor, StreamDescriptor],
         ingestion_properties: IngestionProperties,
         stream: IO[AnyStr],

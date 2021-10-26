@@ -115,7 +115,9 @@ class BlobDescriptor:
 class StreamDescriptor:
     """StreamDescriptor is used to describe a stream that will be used as ingestion source"""
 
-    def __init__(self, stream: Union[IO[AnyStr], BytesIO], source_id: Optional[str] = None, is_compressed: bool = False):
+    # TODO: currently we always assume that streams are gz compressed (will get compressed before sending), should we expand that?
+    def __init__(self, stream: Union[IO[AnyStr], BytesIO], source_id: Optional[str] = None, is_compressed: bool = False, stream_name: Optional[str] = None,
+                 size: int = 0):
         """
         :param stream: in-memory stream object.
         :type stream: io.BaseIO
@@ -128,7 +130,10 @@ class StreamDescriptor:
         assert_uuid4(source_id, "source_id must be a valid uuid4")
         self.source_id = source_id
         self.is_compressed = is_compressed
-        # TODO - do want to expose these outwards?
-        self.size = 0
-        # TODO: currently we always assume that streams are gz compressed (will get compressed before sending), should we expand that?
-        self.stream_name = "stream.gz"
+        self.stream_name = stream_name
+        if self.stream_name is None:
+            self.stream_name = "stream"
+            if is_compressed:
+                self.stream_name += ".gz"
+        self.size = size
+

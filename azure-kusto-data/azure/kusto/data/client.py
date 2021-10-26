@@ -91,6 +91,14 @@ class KustoConnectionStringBuilder:
                 return cls.msi_auth
             if key in ["msi_type"]:
                 return cls.msi_params
+            if key in ["az cli"]:
+                return cls.az_cli
+            if key in ["interactive login"]:
+                return cls.interactive_login
+            if key in ["login hint"]:
+                return cls.login_hint
+            if key in ["domain hint"]:
+                return cls.domain_hint
             raise KeyError(key)
 
         def is_secret(self) -> bool:

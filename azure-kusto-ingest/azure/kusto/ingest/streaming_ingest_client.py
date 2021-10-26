@@ -29,12 +29,12 @@ class KustoStreamingIngestClient(BaseIngestClient):
         :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
         """
 
-        stream, stream_descriptor = self._prepare_stream_descriptor_from_file(file_descriptor)
+        stream_descriptor = self._prepare_stream_descriptor_from_file(file_descriptor)
 
         self.ingest_from_stream(stream_descriptor, ingestion_properties)
 
-        if stream is not None:
-            stream.close()
+        if stream_descriptor.stream is not None:
+            stream_descriptor.stream.close()
 
         return IngestionResult(IngestionResultKind.STREAMING)
 
@@ -44,14 +44,12 @@ class KustoStreamingIngestClient(BaseIngestClient):
                be ingested.
         :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
         """
-        if not isinstance(stream_descriptor, StreamDescriptor):
-            stream_descriptor = StreamDescriptor(stream_descriptor)
-        stream = self._prepare_stream(stream_descriptor, ingestion_properties)
+        stream_descriptor = self._prepare_stream(stream_descriptor, ingestion_properties)
 
         self._kusto_client.execute_streaming_ingest(
             ingestion_properties.database,
             ingestion_properties.table,
-            stream,
+            stream_descriptor.stream,
             ingestion_properties.format.name,
             mapping_name=ingestion_properties.ingestion_mapping_reference,
         )

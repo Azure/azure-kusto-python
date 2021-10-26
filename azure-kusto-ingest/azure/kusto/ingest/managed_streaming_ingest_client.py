@@ -20,21 +20,22 @@ class ManagedStreamingIngestClient(BaseIngestClient):
 
     def __init__(self, queued_kcsb: Union[KustoConnectionStringBuilder, str], streaming_kcsb: Optional[Union[KustoConnectionStringBuilder, str]] = None):
         if streaming_kcsb is None:
-            streaming_kcsb = KustoConnectionStringBuilder(repr(queued_kcsb).replace("https://ingest-", "https://"))
+            kcsb = repr(queued_kcsb) if type(queued_kcsb) == KustoConnectionStringBuilder else queued_kcsb
+            streaming_kcsb = KustoConnectionStringBuilder(kcsb.replace("https://ingest-", "https://"))
 
         self.queued_client = QueuedIngestClient(queued_kcsb)
         self.streaming_client = KustoStreamingIngestClient(streaming_kcsb)
 
     def ingest_from_file(self, file_descriptor: Union[FileDescriptor, str], ingestion_properties: IngestionProperties) -> IngestionResult:
-        stream, stream_descriptor = self._prepare_stream_descriptor_from_file(file_descriptor)
+        stream_descriptor = self._prepare_stream_descriptor_from_file(file_descriptor)
 
-        with stream:
+        with stream_descriptor.stream:
             return self.ingest_from_stream(stream_descriptor, ingestion_properties)
 
     def ingest_from_stream(self, stream_descriptor: Union[IO[AnyStr], StreamDescriptor], ingestion_properties: IngestionProperties) -> IngestionResult:
-        if not isinstance(stream_descriptor, StreamDescriptor):
-            stream_descriptor = StreamDescriptor(stream_descriptor)
-        stream = self._prepare_stream(stream_descriptor, ingestion_properties)
+
+        stream_descriptor = self._prepare_stream(stream_descriptor, ingestion_properties)
+        stream = stream_descriptor.stream
 
         if not stream.seekable():
             ...  # TODO - We need the stream to be seekable to do retries, so what's the correct thing to do here:

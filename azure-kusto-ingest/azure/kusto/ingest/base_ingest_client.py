@@ -3,6 +3,7 @@ import tempfile
 import time
 import uuid
 from abc import ABCMeta, abstractmethod
+from copy import copy
 from enum import Enum
 from gzip import GzipFile
 from io import TextIOWrapper, BytesIO
@@ -73,11 +74,16 @@ class BaseIngestClient(metaclass=ABCMeta):
         finally:
             os.unlink(temp_file_path)
 
-    def _prepare_stream(self, stream_descriptor: StreamDescriptor, ingestion_properties: IngestionProperties) -> BytesIO:
-        if isinstance(stream_descriptor.stream, TextIOWrapper):
-            stream = stream_descriptor.stream.buffer
+    def _prepare_stream(self, stream_descriptor: Union[IO[AnyStr], StreamDescriptor], ingestion_properties: IngestionProperties) -> StreamDescriptor:
+        if not isinstance(stream_descriptor, StreamDescriptor):
+            new_descriptor = StreamDescriptor(stream_descriptor)
         else:
-            stream = stream_descriptor.stream
+            new_descriptor = copy(stream_descriptor)
+
+        if isinstance(new_descriptor.stream, TextIOWrapper):
+            stream = new_descriptor.stream.buffer
+        else:
+            stream = new_descriptor.stream
 
         # Todo - also throw this error in other types of ingestions?
         if (
@@ -86,7 +92,8 @@ class BaseIngestClient(metaclass=ABCMeta):
             and ingestion_properties.ingestion_mapping is None
         ):
             raise KustoMissingMappingReferenceError()
-        if not stream_descriptor.is_compressed:
+
+        if not new_descriptor.is_compressed:
             zipped_stream = BytesIO()
             buffer = stream.read()
             with GzipFile(filename="data", fileobj=zipped_stream, mode="wb") as f_out:
@@ -96,8 +103,12 @@ class BaseIngestClient(metaclass=ABCMeta):
                 else:
                     f_out.write(buffer)
             zipped_stream.seek(0)
+            new_descriptor.is_compressed = True
+            new_descriptor.stream_name += ".gz"
             stream = zipped_stream
-        return stream
+        new_descriptor.stream = stream
+
+        return new_descriptor
 
     def _prepare_stream_descriptor_from_file(self, file_descriptor):
         if isinstance(file_descriptor, FileDescriptor):
@@ -106,5 +117,5 @@ class BaseIngestClient(metaclass=ABCMeta):
             descriptor = FileDescriptor(file_descriptor)
         stream = open(descriptor.path, "rb")
         is_compressed = descriptor.path.endswith(".gz") or descriptor.path.endswith(".zip")
-        stream_descriptor = StreamDescriptor(stream, descriptor.source_id, is_compressed)
-        return stream, stream_descriptor
+        stream_descriptor = StreamDescriptor(stream, descriptor.source_id, is_compressed, descriptor.stream_name, descriptor.size)
+        return stream_descriptor
