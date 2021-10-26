@@ -8,10 +8,9 @@
 import json
 import os
 import time
-import typing
+import uuid
 
 from azure.kusto.data.exceptions import KustoClientError, KustoServiceError
-from azure.kusto.data.helpers import dataframe_from_result_table
 from azure.kusto.data import KustoClient, KustoConnectionStringBuilder, ClientRequestProperties
 
 from azure.kusto.ingest import (
@@ -19,11 +18,7 @@ from azure.kusto.ingest import (
     IngestionProperties,
     FileDescriptor,
     BlobDescriptor,
-    StreamDescriptor,
     DataFormat,
-    ReportLevel,
-    IngestionMappingType,
-    KustoStreamingIngestClient,
 )
 
 # Todo - Config:
@@ -167,7 +162,8 @@ def main():
 
 def run_control_command(client: KustoClient, db: str, command: str) -> bool:
     try:
-        res = client.execute_mgmt(db, command)
+        crp = create_client_request_properties("SampleAppControlCommand")
+        res = client.execute_mgmt(db, command, crp)
         print("")
         print("Response:")
         for row in res.primary_results[0]:
@@ -192,6 +188,7 @@ def run_control_command(client: KustoClient, db: str, command: str) -> bool:
 
 def run_query(client: KustoClient, db: str, query: str):
     try:
+        crp = create_client_request_properties("SampleAppQuery")
         res = client.execute_query(db, query)
         for row in res.primary_results[0]:
             print(row.to_list())
@@ -227,8 +224,9 @@ def ingest_data_from_file(client: QueuedIngestClient, db: str, table: str, file_
         flush_immediately=True,
     )
 
-    # Tip: For optimal ingestion batching it's best to specify the uncompressed data size in the file descriptor
-    file_descriptor = FileDescriptor(file_path)
+    # Tip 1: For optimal ingestion batching it's best to specify the uncompressed data size in the file descriptor
+    # Tip 2: Set the source id and log it somewhere, if you want to correlate between operations in your applications and operations in kusto
+    file_descriptor = FileDescriptor(file_path, source_id=uuid.uuid4())
     client.ingest_from_file(file_descriptor, ingestion_properties=ingestion_props)
 
     # Tip: Kusto can also ingest data from open streams and pandas dataframes.
@@ -249,12 +247,23 @@ def ingest_data_from_blob(client: QueuedIngestClient, db: str, table: str, blob_
         flush_immediately=True,
     )
 
-    # Tip: For optimal ingestion batching it's best to specify the uncompressed data size in the file descriptor
-    blob_descriptor = BlobDescriptor(blob_path)
+    # Tip 1: For optimal ingestion batching it's best to specify the uncompressed data size in the file descriptor
+    # Tip 2: Set the source id and log it somewhere, if you want to correlate between operations in your applications and operations in kusto
+    blob_descriptor = BlobDescriptor(blob_path, source_id=uuid.uuid4())
     client.ingest_from_blob(blob_descriptor, ingestion_properties=ingestion_props)
 
     # Tip: Kusto can also ingest data from open streams and pandas dataframes.
     #  See the python SDK azure.kusto.ingest samples for additional references.
+
+
+def create_client_request_properties(scope: str, timeout: str = None) -> ClientRequestProperties:
+    crp = ClientRequestProperties()
+    crp.client_request_id = f"{scope};{str(uuid.uuid4())}"
+    crp.application = "kusto_sample_app.py"
+
+    # Tip: While not common, you can alter the request default command timeout using the below command, e.f. to set the timeout to 10 minutes use "10m"
+    if timeout is not None:
+        crp.set_option(ClientRequestProperties.request_timeout_option_name, timeout)
 
 
 def create_connection_string(cluster: str, auth_mode: str) -> KustoConnectionStringBuilder:
