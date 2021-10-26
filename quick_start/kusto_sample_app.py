@@ -34,8 +34,8 @@ configFileName = "kusto_sample_config.json"
 # Todo - Config (Optional): Change the authentication method from Device Code (User Prompt) to one of the other options
 #  Some of the auth modes require additional environment variables to be set in order to work (check the use below)
 #  Managed Identity Authentication only works when running as an Azure service (webapp, function, etc.)
-authenticationMode = "userPrompt"  # choose between: (userPrompt|managedIdentity|AppKey|AppCertificate)
-waitForUser = False
+authenticationMode = "UserPrompt"  # choose between: (UserPrompt|ManagedIdentity|AppKey|AppCertificate)
+waitForUser = True
 
 
 def main():
@@ -48,7 +48,7 @@ def main():
     table_name = config["TableName"]
     use_existing_table = str(config["UseExistingTable"]).lower()
 
-    if authenticationMode == "userPrompt":
+    if authenticationMode == "UserPrompt":
         print("")
         print("You will be prompted for credentials during this script.")
         print("Please, return to the console after authenticating.")
@@ -75,7 +75,8 @@ def main():
 
     print("")
     print(f"Altering the batching policy for '{table_name}'")
-    # Tip: This is commonly a one-time configuration to make
+    # Tip 1: This is an optional step. Most users should be fine with the defaults.
+    # Tip 2: This is a one-time configuration to make, no actual need to repeat it.
     batching_policy = '{ "MaximumBatchingTimeSpan": "00:00:10", "MaximumNumberOfItems": 500, "MaximumRawDataSizeMB": 1024 }'
     command = f".alter table {table_name} policy ingestionbatching @'{batching_policy}'"
     if not run_control_command(kusto_client, database_name, command):
@@ -259,10 +260,10 @@ def ingest_data_from_blob(client: QueuedIngestClient, db: str, table: str, blob_
 def create_connection_string(cluster: str, auth_mode: str) -> KustoConnectionStringBuilder:
     # Learn More: For additional information on how to authorize users and apps on Kusto Database see:
     #  https://docs.microsoft.com/azure/data-explorer/manage-database-permissions
-    if auth_mode == "userPrompt":
+    if auth_mode == "UserPrompt":
         return create_interactive_auth_connection_string(cluster)
 
-    elif auth_mode == "managedIdentity":
+    elif auth_mode == "ManagedIdentity":
         return create_managed_identity_connection_string(cluster)
 
     elif auth_mode == "AppKey":
