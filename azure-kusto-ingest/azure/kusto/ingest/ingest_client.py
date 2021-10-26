@@ -69,7 +69,7 @@ class QueuedIngestClient(BaseIngestClient):
     def ingest_from_stream(self, stream_descriptor: Union[IO[AnyStr], StreamDescriptor], ingestion_properties: IngestionProperties) -> IngestionResult:
         containers = self._get_containers()
 
-        stream_descriptor = self._prepare_stream(stream_descriptor, ingestion_properties)
+        stream_descriptor = self._prepare_stream(stream_descriptor)
         self._upload_blob(containers, stream_descriptor, ingestion_properties, stream_descriptor.stream)
 
         return IngestionResult(IngestionResultKind.QUEUED)

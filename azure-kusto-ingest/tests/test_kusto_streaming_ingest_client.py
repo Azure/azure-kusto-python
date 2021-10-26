@@ -154,9 +154,9 @@ class TestKustoStreamingIngestClient:
 
         byte_sequence = b'{"Name":"Ben","Age":"56","Weight":"75"}'
         bytes_stream = io.BytesIO(byte_sequence)
-        ingestion_properties.format = DataFormat.JSON
+
         with pytest.raises(KustoMissingMappingReferenceError):
-            ingest_client.ingest_from_stream(bytes_stream, ingestion_properties=ingestion_properties)
+            ingestion_properties = IngestionProperties(database="database", table="table", data_format=DataFormat.JSON)
 
         ingestion_properties.ingestion_mapping_reference = "JsonMapping"
         result = ingest_client.ingest_from_stream(bytes_stream, ingestion_properties=ingestion_properties)

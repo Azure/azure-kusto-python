@@ -10,7 +10,6 @@ from io import TextIOWrapper, BytesIO
 from typing import TYPE_CHECKING, Union, IO, AnyStr, Optional
 
 from .descriptors import FileDescriptor, StreamDescriptor
-from .exceptions import KustoMissingMappingReferenceError
 from .ingestion_properties import DataFormat, IngestionProperties
 
 if TYPE_CHECKING:
@@ -29,7 +28,6 @@ class IngestionResult:
 
 
 class BaseIngestClient(metaclass=ABCMeta):
-    _mapping_required_formats = {DataFormat.JSON, DataFormat.SINGLEJSON, DataFormat.AVRO, DataFormat.MULTIJSON}
 
     @abstractmethod
     def ingest_from_file(self, file_descriptor: Union[FileDescriptor, str], ingestion_properties: IngestionProperties) -> IngestionResult:
@@ -74,7 +72,8 @@ class BaseIngestClient(metaclass=ABCMeta):
         finally:
             os.unlink(temp_file_path)
 
-    def _prepare_stream(self, stream_descriptor: Union[IO[AnyStr], StreamDescriptor], ingestion_properties: IngestionProperties) -> StreamDescriptor:
+    @staticmethod
+    def _prepare_stream(stream_descriptor: Union[IO[AnyStr], StreamDescriptor]) -> StreamDescriptor:
         if not isinstance(stream_descriptor, StreamDescriptor):
             new_descriptor = StreamDescriptor(stream_descriptor)
         else:
@@ -84,14 +83,6 @@ class BaseIngestClient(metaclass=ABCMeta):
             stream = new_descriptor.stream.buffer
         else:
             stream = new_descriptor.stream
-
-        # Todo - also throw this error in other types of ingestions?
-        if (
-            ingestion_properties.format in self._mapping_required_formats
-            and ingestion_properties.ingestion_mapping_reference is None
-            and ingestion_properties.ingestion_mapping is None
-        ):
-            raise KustoMissingMappingReferenceError()
 
         if not new_descriptor.is_compressed:
             zipped_stream = BytesIO()
@@ -110,7 +101,8 @@ class BaseIngestClient(metaclass=ABCMeta):
 
         return new_descriptor
 
-    def _prepare_stream_descriptor_from_file(self, file_descriptor):
+    @staticmethod
+    def _prepare_stream_descriptor_from_file(file_descriptor):
         if isinstance(file_descriptor, FileDescriptor):
             descriptor = file_descriptor
         else:
