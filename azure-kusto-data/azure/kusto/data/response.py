@@ -1,7 +1,7 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
 from abc import ABCMeta, abstractmethod
-from typing import List, Iterator
+from typing import List, Iterator, Union, Dict, Any
 
 from ._models import KustoResultTable, WellKnownDataSet, KustoStreamingResultTable, BaseKustoResultTable
 from .exceptions import KustoStreamingQueryError
@@ -15,17 +15,17 @@ class BaseKustoResponseDataSet(metaclass=ABCMeta):
 
     @property
     @abstractmethod
-    def _error_column(self):
+    def _error_column(self) -> str:
         raise NotImplementedError
 
     @property
     @abstractmethod
-    def _crid_column(self):
+    def _crid_column(self) -> str:
         raise NotImplementedError
 
     @property
     @abstractmethod
-    def _status_column(self):
+    def _status_column(self) -> str:
         raise NotImplementedError
 
     @property
@@ -59,10 +59,10 @@ class BaseKustoResponseDataSet(metaclass=ABCMeta):
                 )
         return result
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[BaseKustoResultTable]:
         return iter(self.tables)
 
-    def __getitem__(self, key) -> KustoResultTable:
+    def __getitem__(self, key: Union[int, str]) -> KustoResultTable:
         if isinstance(key, int):
             return self.tables[key]
         try:
@@ -83,7 +83,7 @@ class KustoResponseDataSet(BaseKustoResponseDataSet, metaclass=ABCMeta):
         It can contain more than one table when [`fork`](https://docs.microsoft.com/en-us/azure/kusto/query/forkoperator) is used.
     """
 
-    def __init__(self, json_response):
+    def __init__(self, json_response: List[Dict[str, Any]]):
         self.tables = [KustoResultTable(t) for t in json_response]
         self.tables_count = len(self.tables)
         self.tables_names = [t.table_name for t in self.tables]

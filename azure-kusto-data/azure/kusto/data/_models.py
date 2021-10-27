@@ -5,7 +5,7 @@ import json
 from abc import ABCMeta, abstractmethod
 from decimal import Decimal
 from enum import Enum
-from typing import Iterator
+from typing import Iterator, List, Any, Union, Optional, Dict
 
 from . import _converters
 from .exceptions import KustoServiceError, KustoStreamingQueryError
@@ -25,7 +25,7 @@ class KustoResultRow:
 
     conversion_funcs = {"datetime": _converters.to_datetime, "timespan": _converters.to_timedelta, "decimal": Decimal}
 
-    def __init__(self, columns, row):
+    def __init__(self, columns: "List[KustoResultColumn]", row: list):
         self._value_by_name = {}
         self._value_by_index = []
 
@@ -48,39 +48,39 @@ class KustoResultRow:
             self._value_by_name[column.column_name] = typed_value
 
     @staticmethod
-    def get_typed_value(column_type, value):
+    def get_typed_value(column_type: str, value: Any) -> Any:
         return KustoResultRow.conversion_funcs[column_type](value) if value is not None and column_type in KustoResultRow.conversion_funcs else value
 
     @property
     def columns_count(self) -> int:
         return len(self._value_by_name)
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[Any]:
         for i in range(self.columns_count):
             yield self[i]
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: Union[str, int]) -> Any:
         if isinstance(key, int):
             return self._value_by_index[key]
         return self._value_by_name[key]
 
-    def __len__(self):
+    def __len__(self) -> int:
         return self.columns_count
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> Dict[str, Any]:
         return self._value_by_name
 
     def to_list(self) -> list:
         return self._value_by_index
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "['{}']".format("', '".join([str(val) for val in self._value_by_index]))
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         values = [repr(val) for val in self._value_by_name.values()]
         return "KustoResultRow(['{}'], [{}])".format("', '".join(self._value_by_name), ", ".join(values))
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         if len(self) != len(other):
             return False
         for value_index, value in enumerate(self):
@@ -90,17 +90,17 @@ class KustoResultRow:
 
 
 class KustoResultColumn:
-    def __init__(self, json_column: dict, ordinal: int):
+    def __init__(self, json_column: Dict[str, Any], ordinal: int):
         self.column_name = json_column["ColumnName"]
         self.column_type = json_column.get("ColumnType") or json_column["DataType"]
         self.ordinal = ordinal
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "KustoResultColumn({},{})".format(json.dumps({"ColumnName": self.column_name, "ColumnType": self.column_type}), self.ordinal)
 
 
 class BaseKustoResultTable(metaclass=ABCMeta):
-    def __init__(self, json_table: dict):
+    def __init__(self, json_table: Dict[str, Any]):
         self.table_name = json_table.get("TableName")
         self.table_id = json_table.get("TableId")
         self.table_kind = WellKnownDataSet[json_table["TableKind"]] if "TableKind" in json_table else None
@@ -110,7 +110,7 @@ class BaseKustoResultTable(metaclass=ABCMeta):
         self.raw_rows = json_table["Rows"]
         self.kusto_result_rows = None
 
-    def __bool__(self):
+    def __bool__(self) -> bool:
         return any(self.columns)
 
     __nonzero__ = __bool__
@@ -120,7 +120,7 @@ class BaseKustoResultTable(metaclass=ABCMeta):
         return len(self.columns)
 
     @abstractmethod
-    def __len__(self):
+    def __len__(self) -> Optional[int]:
         pass
 
     @property
@@ -130,7 +130,7 @@ class BaseKustoResultTable(metaclass=ABCMeta):
 
 
 class BaseStreamingKustoResultTable(BaseKustoResultTable):
-    def __init__(self, json_table: dict):
+    def __init__(self, json_table: Dict[str, Any]):
         super().__init__(json_table)
 
         self.finished = False
@@ -142,31 +142,31 @@ class BaseStreamingKustoResultTable(BaseKustoResultTable):
             raise KustoStreamingQueryError("Can't retrieve rows count before the iteration is finished")
         return self.row_count
 
-    def __len__(self):
+    def __len__(self) -> Optional[int]:
         if not self.finished:
             return None  # We return None here instead of an exception, because otherwise calling list() on the object will throw
         return self.rows_count
 
-    def iter_rows(self):
+    def iter_rows(self) -> "BaseStreamingKustoResultTable":
         return self
 
 
 class KustoResultTable(BaseKustoResultTable):
     """Iterator over a Kusto result table."""
 
-    def __init__(self, json_table: dict):
+    def __init__(self, json_table: Dict[str, Any]):
         super().__init__(json_table)
         errors = [row for row in json_table["Rows"] if isinstance(row, dict)]
         if errors:
-            raise KustoServiceError(errors[0]["OneApiErrors"][0]["error"]["@message"], json_table)
+            raise KustoServiceError(errors[0]["OneApiErrors"][0]["error"]["@message"], kusto_response=json_table)
 
     @property
-    def rows(self):
+    def rows(self) -> List[KustoResultRow]:
         if not self.kusto_result_rows:
             self.kusto_result_rows = [KustoResultRow(self.columns, row) for row in self.raw_rows]
         return self.kusto_result_rows
 
-    def to_dict(self):
+    def to_dict(self) -> Dict[str, Any]:
         """Converts the table to a dict."""
         return {"name": self.table_name, "kind": self.table_kind, "data": [r.to_dict() for r in self]}
 
@@ -174,20 +174,20 @@ class KustoResultTable(BaseKustoResultTable):
     def rows_count(self) -> int:
         return len(self.raw_rows)
 
-    def __len__(self):
+    def __len__(self) -> int:
         return self.rows_count
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[KustoResultRow]:
         for row_index, row in enumerate(self.raw_rows):
             if self.kusto_result_rows:
                 yield self.kusto_result_rows[row_index]
             else:
                 yield KustoResultRow(self.columns, row)
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: int) -> KustoResultRow:
         return self.rows[key]
 
-    def __str__(self):
+    def __str__(self) -> str:
         d = self.to_dict()
         # enum is not serializable, using value instead
         d["kind"] = d["kind"].value

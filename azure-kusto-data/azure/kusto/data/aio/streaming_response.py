@@ -1,4 +1,4 @@
-from typing import Any, Tuple, Dict
+from typing import Any, Tuple, Dict, Iterator
 
 import aiohttp
 import ijson
@@ -13,7 +13,7 @@ class JsonTokenReader:
     def __init__(self, stream: aiohttp.StreamReader):
         self.json_iter = ijson.parse_async(stream, use_float=True)
 
-    def __aiter__(self):
+    def __aiter__(self) -> "JsonTokenReader":
         return self
 
     def __anext__(self) -> JsonToken:
@@ -59,7 +59,7 @@ class JsonTokenReader:
                 if potential_end_token.token_path == prev_token.token_path and potential_end_token.token_type in JsonTokenType.end_tokens():
                     break
 
-    async def skip_until_property_name(self, name: str):
+    async def skip_until_property_name(self, name: str) -> JsonToken:
         while True:
             token = await self.read_token_of_type(JsonTokenType.MAP_KEY)
             if token.token_value == name:
@@ -67,7 +67,7 @@ class JsonTokenReader:
 
             await self.skip_children(token)
 
-    async def skip_until_any_property_name(self, *names: str):
+    async def skip_until_any_property_name(self, *names: str) -> JsonToken:
         while True:
             token = await self.read_token_of_type(JsonTokenType.MAP_KEY)
             if token.token_value in names:
@@ -89,7 +89,7 @@ class JsonTokenReader:
 
             raise Exception(f"Unexpected token {token}")
 
-    async def skip_until_token_with_paths(self, *tokens: (JsonTokenType, str)):
+    async def skip_until_token_with_paths(self, *tokens: (JsonTokenType, str)) -> JsonToken:
         async for token in self:
             if any((token.token_type == t_type and token.token_path == t_path) for (t_type, t_path) in tokens):
                 return token
@@ -104,10 +104,10 @@ class StreamingDataSetEnumerator:
         self.started_primary_results = False
         self.finished_primary_results = False
 
-    def __aiter__(self):
+    def __aiter__(self) -> "StreamingDataSetEnumerator":
         return self
 
-    async def __anext__(self):
+    async def __anext__(self) -> Dict[str, Any]:
         if self.done:
             raise StopIteration()
 
@@ -130,7 +130,7 @@ class StreamingDataSetEnumerator:
 
         return parsed_frame
 
-    async def parse_frame(self, frame_type):
+    async def parse_frame(self, frame_type: FrameType) -> Dict[str, Any]:
         if frame_type == FrameType.DataSetHeader:
             frame = await self.extract_props(frame_type, ("IsProgressive", JsonTokenType.BOOLEAN), ("Version", JsonTokenType.STRING))
             if frame["IsProgressive"]:
@@ -158,7 +158,7 @@ class StreamingDataSetEnumerator:
                 res["OneApiErrors"] = self.parse_array(skip_start=False)
             return res
 
-    async def row_iterator(self):
+    async def row_iterator(self) -> Iterator[list]:
         await self.reader.read_token_of_type(JsonTokenType.START_ARRAY)
         while True:
             token = await self.reader.read_token_of_type(JsonTokenType.START_ARRAY, JsonTokenType.END_ARRAY, JsonTokenType.START_MAP)
@@ -170,7 +170,7 @@ class StreamingDataSetEnumerator:
                 return
             yield await self.parse_array(skip_start=True)
 
-    async def parse_array(self, skip_start):
+    async def parse_array(self, skip_start: bool) -> list:
         if not skip_start:
             await self.reader.read_start_array()
         arr = []
@@ -196,7 +196,7 @@ class StreamingDataSetEnumerator:
             else:
                 arr.append(token.token_value)
 
-    async def parse_object(self, skip_start):
+    async def parse_object(self, skip_start: bool) -> Dict[str, Any]:
         if not skip_start:
             await self.reader.read_start_object()
 
@@ -218,7 +218,7 @@ class StreamingDataSetEnumerator:
             else:
                 obj[prop_name] = token.token_value
 
-    async def extract_props(self, frame_type, *props: Tuple[str, JsonTokenType]) -> Dict[str, Any]:
+    async def extract_props(self, frame_type: FrameType, *props: Tuple[str, JsonTokenType]) -> Dict[str, Any]:
         result = {"FrameType": frame_type}
         props_dict = dict(props)
         while props_dict:

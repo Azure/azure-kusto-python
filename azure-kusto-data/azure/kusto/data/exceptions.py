@@ -1,6 +1,6 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
-from typing import List, Union, TYPE_CHECKING
+from typing import List, Union, TYPE_CHECKING, Optional, Dict, Any
 
 import requests
 
@@ -27,27 +27,32 @@ class KustoTokenParsingError(KustoStreamingQueryError):
 class KustoServiceError(KustoError):
     """Raised when the Kusto service was unable to process a request."""
 
-    def __init__(self, messages: Union[str, List[dict]], http_response: "Union[requests.Response, ClientResponse, None]" = None, kusto_response=None):
+    def __init__(
+        self,
+        messages: Union[str, List[dict]],
+        http_response: "Union[requests.Response, ClientResponse, None]" = None,
+        kusto_response: Optional[Dict[str, Any]] = None,
+    ):
         super().__init__(messages)
         self.http_response = http_response
         self.kusto_response = kusto_response
 
-    def get_raw_http_response(self):
+    def get_raw_http_response(self) -> "Union[requests.Response, ClientResponse, None]":
         """Gets the http response."""
         return self.http_response
 
-    def is_semantic_error(self):
+    def is_semantic_error(self) -> bool:
         """Checks if a response is a semantic error."""
         try:
             return "Semantic error:" in self.http_response.text
         except AttributeError:
             return False
 
-    def has_partial_results(self):
+    def has_partial_results(self) -> bool:
         """Checks if a response exists."""
         return self.kusto_response is not None
 
-    def get_partial_results(self):
+    def get_partial_results(self) -> Optional[Dict[str, Any]]:
         """Gets the Kusto response."""
         return self.kusto_response
 

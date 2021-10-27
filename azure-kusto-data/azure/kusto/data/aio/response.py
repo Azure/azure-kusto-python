@@ -1,4 +1,4 @@
-from typing import List, AsyncIterator
+from typing import List, AsyncIterator, Union
 
 from azure.kusto.data._models import WellKnownDataSet, KustoResultTable, BaseKustoResultTable
 from azure.kusto.data.aio._models import KustoStreamingResultTable
@@ -66,7 +66,7 @@ class KustoStreamingResponseDataSet(BaseKustoResponseDataSet):
             raise KustoStreamingQueryError("Unable to get errors count before reading all of the tables.")
         return super().get_exceptions()
 
-    def __getitem__(self, key) -> KustoResultTable:
+    def __getitem__(self, key: Union[int, str]) -> KustoResultTable:
         if isinstance(key, int):
             return self.tables[key]
         try:

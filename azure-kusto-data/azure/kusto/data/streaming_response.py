@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Optional, Any, Tuple, Dict, AnyStr, IO
+from typing import Optional, Any, Tuple, Dict, AnyStr, IO, List, Iterator
 
 import ijson
 from ijson import IncompleteJSONError
@@ -20,11 +20,11 @@ class JsonTokenType(Enum):
     END_ARRAY = 8
 
     @staticmethod
-    def start_tokens():
+    def start_tokens() -> "List[JsonTokenType]":
         return [JsonTokenType.START_MAP, JsonTokenType.START_ARRAY]
 
     @staticmethod
-    def end_tokens():
+    def end_tokens() -> "List[JsonTokenType]":
         return [JsonTokenType.END_MAP, JsonTokenType.END_ARRAY]
 
 
@@ -39,7 +39,7 @@ class FrameType(Enum):
 
 
 class JsonToken:
-    def __init__(self, token_path: str, token_type: JsonTokenType, token_value: Optional[Any]) -> None:
+    def __init__(self, token_path: str, token_type: JsonTokenType, token_value: Optional[Any]):
         self.token_path = token_path
         self.token_type = token_type
         self.token_value = token_value
@@ -49,10 +49,10 @@ class JsonTokenReader:
     def __init__(self, stream: IO[AnyStr]):
         self.json_iter = ijson.parse(stream, use_float=True)
 
-    def __iter__(self):
+    def __iter__(self) -> "JsonTokenReader":
         return self
 
-    def __next__(self):
+    def __next__(self) -> JsonToken:
         return self.read_next_token_or_throw()
 
     def read_next_token_or_throw(self) -> JsonToken:
@@ -96,7 +96,7 @@ class JsonTokenReader:
                 if potential_end_token.token_path == prev_token.token_path and potential_end_token.token_type in JsonTokenType.end_tokens():
                     break
 
-    def skip_until_property_name(self, name: str):
+    def skip_until_property_name(self, name: str) -> JsonToken:
         while True:
             token = self.read_token_of_type(JsonTokenType.MAP_KEY)
             if token.token_value == name:
@@ -104,7 +104,7 @@ class JsonTokenReader:
 
             self.skip_children(token)
 
-    def skip_until_any_property_name(self, *names: str):
+    def skip_until_any_property_name(self, *names: str) -> JsonToken:
         while True:
             token = self.read_token_of_type(JsonTokenType.MAP_KEY)
             if token.token_value in names:
@@ -126,7 +126,7 @@ class JsonTokenReader:
 
             raise Exception(f"Unexpected token {token}")
 
-    def skip_until_token_with_paths(self, *tokens: (JsonTokenType, str)):
+    def skip_until_token_with_paths(self, *tokens: (JsonTokenType, str)) -> JsonToken:
         for token in self:
             if any((token.token_type == t_type and token.token_path == t_path) for (t_type, t_path) in tokens):
                 return token
@@ -141,10 +141,10 @@ class StreamingDataSetEnumerator:
         self.started_primary_results = False
         self.finished_primary_results = False
 
-    def __iter__(self):
+    def __iter__(self) -> "StreamingDataSetEnumerator":
         return self
 
-    def __next__(self):
+    def __next__(self) -> Dict[str, Any]:
         if self.done:
             raise StopIteration()
 
@@ -167,7 +167,7 @@ class StreamingDataSetEnumerator:
 
         return parsed_frame
 
-    def parse_frame(self, frame_type):
+    def parse_frame(self, frame_type: FrameType) -> Dict[str, Any]:
         if frame_type == FrameType.DataSetHeader:
             frame = self.extract_props(frame_type, ("IsProgressive", JsonTokenType.BOOLEAN), ("Version", JsonTokenType.STRING))
             if frame["IsProgressive"]:
@@ -195,7 +195,7 @@ class StreamingDataSetEnumerator:
                 res["OneApiErrors"] = self.parse_array(skip_start=False)
             return res
 
-    def row_iterator(self):
+    def row_iterator(self) -> Iterator[list]:
         self.reader.read_token_of_type(JsonTokenType.START_ARRAY)
         while True:
             token = self.reader.read_token_of_type(JsonTokenType.START_ARRAY, JsonTokenType.END_ARRAY, JsonTokenType.START_MAP)
@@ -209,7 +209,7 @@ class StreamingDataSetEnumerator:
                 return
             yield self.parse_array(skip_start=True)
 
-    def parse_array(self, skip_start):
+    def parse_array(self, skip_start: bool) -> list:
         if not skip_start:
             self.reader.read_start_array()
         arr = []
@@ -235,7 +235,7 @@ class StreamingDataSetEnumerator:
             else:
                 arr.append(token.token_value)
 
-    def parse_object(self, skip_start):
+    def parse_object(self, skip_start: bool) -> Dict[str, Any]:
         if not skip_start:
             self.reader.read_start_object()
 
@@ -257,7 +257,7 @@ class StreamingDataSetEnumerator:
             else:
                 obj[prop_name] = token.token_value
 
-    def extract_props(self, frame_type, *props: Tuple[str, JsonTokenType]) -> Dict[str, Any]:
+    def extract_props(self, frame_type: FrameType, *props: Tuple[str, JsonTokenType]) -> Dict[str, Any]:
         result = {"FrameType": frame_type}
         props_dict = dict(props)
         while props_dict:

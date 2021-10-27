@@ -8,7 +8,7 @@ import uuid
 from copy import copy
 from datetime import timedelta
 from enum import Enum, unique
-from typing import TYPE_CHECKING, Union, Callable, Optional, Any, Coroutine
+from typing import TYPE_CHECKING, Union, Callable, Optional, Any, Coroutine, List, Tuple
 
 import requests
 from requests import Response
@@ -61,7 +61,7 @@ class KustoConnectionStringBuilder:
         domain_hint = "Domain Hint"
 
         @classmethod
-        def parse(cls, key: str) -> "ValidKeywords":
+        def parse(cls, key: str) -> "KustoConnectionStringBuilder.ValidKeywords":
             """Create a valid keyword."""
             key = key.lower().strip()
             if key in ["data source", "addr", "address", "network address", "server"]:
@@ -153,7 +153,7 @@ class KustoConnectionStringBuilder:
                 else:
                     raise KeyError("Expected aad federated security to be bool. Recieved %s" % value)
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key: "Union[KustoConnectionStringBuilder.ValidKeywords, str]", value: Union[str, bool, dict]):
         try:
             keyword = key if isinstance(key, self.ValidKeywords) else self.ValidKeywords.parse(key)
         except KeyError:
@@ -439,108 +439,108 @@ class KustoConnectionStringBuilder:
         return kcsb
 
     @property
-    def data_source(self) -> str:
+    def data_source(self) -> Optional[str]:
         """The URI specifying the Kusto service endpoint.
         For example, https://kuskus.kusto.windows.net or net.tcp://localhost
         """
         return self._internal_dict.get(self.ValidKeywords.data_source)
 
     @property
-    def aad_user_id(self) -> str:
+    def aad_user_id(self) -> Optional[str]:
         """The username to use for AAD Federated AuthN."""
         return self._internal_dict.get(self.ValidKeywords.aad_user_id)
 
     @property
-    def password(self) -> str:
+    def password(self) -> Optional[str]:
         """The password to use for authentication when username/password authentication is used.
         Must be accompanied by UserID property
         """
         return self._internal_dict.get(self.ValidKeywords.password)
 
     @property
-    def application_client_id(self) -> str:
+    def application_client_id(self) -> Optional[str]:
         """The application client id to use for authentication when federated
         authentication is used.
         """
         return self._internal_dict.get(self.ValidKeywords.application_client_id)
 
     @property
-    def application_key(self) -> str:
+    def application_key(self) -> Optional[str]:
         """The application key to use for authentication when federated authentication is used"""
         return self._internal_dict.get(self.ValidKeywords.application_key)
 
     @property
-    def application_certificate(self) -> str:
+    def application_certificate(self) -> Optional[str]:
         """A PEM encoded certificate private key."""
         return self._internal_dict.get(self.ValidKeywords.application_certificate)
 
     @application_certificate.setter
-    def application_certificate(self, value):
+    def application_certificate(self, value: str):
         self[self.ValidKeywords.application_certificate] = value
 
     @property
-    def application_certificate_thumbprint(self):
+    def application_certificate_thumbprint(self) -> Optional[str]:
         """hex encoded thumbprint of the certificate."""
         return self._internal_dict.get(self.ValidKeywords.application_certificate_thumbprint)
 
     @application_certificate_thumbprint.setter
-    def application_certificate_thumbprint(self, value):
+    def application_certificate_thumbprint(self, value: str):
         self[self.ValidKeywords.application_certificate_thumbprint] = value
 
     @property
-    def application_public_certificate(self) -> str:
+    def application_public_certificate(self) -> Optional[str]:
         """A public certificate matching the PEM encoded certificate private key."""
         return self._internal_dict.get(self.ValidKeywords.public_application_certificate)
 
     @application_public_certificate.setter
-    def application_public_certificate(self, value):
+    def application_public_certificate(self, value: str):
         self[self.ValidKeywords.public_application_certificate] = value
 
     @property
-    def authority_id(self):
+    def authority_id(self) -> Optional[str]:
         """The ID of the AAD tenant where the application is configured.
         (should be supplied only for non-Microsoft tenant)"""
         return self._internal_dict.get(self.ValidKeywords.authority_id)
 
     @authority_id.setter
-    def authority_id(self, value):
+    def authority_id(self, value: str):
         self[self.ValidKeywords.authority_id] = value
 
     @property
-    def aad_federated_security(self):
+    def aad_federated_security(self) -> Optional[bool]:
         """A Boolean value that instructs the client to perform AAD federated authentication."""
         return self._internal_dict.get(self.ValidKeywords.aad_federated_security)
 
     @property
-    def user_token(self):
+    def user_token(self) -> Optional[str]:
         """User token."""
         return self._internal_dict.get(self.ValidKeywords.user_token)
 
     @property
-    def application_token(self):
+    def application_token(self) -> Optional[str]:
         """Application token."""
         return self._internal_dict.get(self.ValidKeywords.application_token)
 
     @property
-    def msi_authentication(self):
+    def msi_authentication(self) -> Optional[bool]:
         """A value stating the MSI identity type to obtain"""
         return self._internal_dict.get(self.ValidKeywords.msi_auth)
 
     @property
-    def msi_parameters(self):
+    def msi_parameters(self) -> Optional[dict]:
         """A user assigned MSI ID to be obtained"""
         return self._internal_dict.get(self.ValidKeywords.msi_params)
 
     @property
-    def az_cli(self):
+    def az_cli(self) -> Optional[bool]:
         return self._internal_dict.get(self.ValidKeywords.az_cli)
 
     @property
-    def token_provider(self):
+    def token_provider(self) -> Optional[Callable[[], str]]:
         return self._token_provider
 
     @property
-    def async_token_provider(self):
+    def async_token_provider(self) -> Optional[Callable[[], Coroutine[None, None, str]]]:
         return self._async_token_provider
 
     @property
@@ -556,21 +556,21 @@ class KustoConnectionStringBuilder:
     def domain_hint(self) -> Optional[str]:
         return self._internal_dict.get(self.ValidKeywords.domain_hint)
 
-    def __str__(self):
+    def __str__(self) -> str:
         dict_copy = self._internal_dict.copy()
         for key in dict_copy:
             if key.is_secret():
                 dict_copy[key] = "****"
         return self._build_connection_string(dict_copy)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return self._build_connection_string(self._internal_dict)
 
-    def _build_connection_string(self, kcsb_as_dict) -> str:
+    def _build_connection_string(self, kcsb_as_dict: dict) -> str:
         return ";".join(["{0}={1}".format(word.value, kcsb_as_dict[word]) for word in self.ValidKeywords if word in kcsb_as_dict])
 
 
-def _assert_value_is_valid(value):
+def _assert_value_is_valid(value: str):
     if not value or not value.strip():
         raise ValueError("Should not be empty")
 
@@ -596,28 +596,28 @@ class ClientRequestProperties:
         _assert_value_is_valid(name)
         self._parameters[name] = value
 
-    def has_parameter(self, name):
+    def has_parameter(self, name: str) -> bool:
         """Checks if a parameter is specified."""
         return name in self._parameters
 
-    def get_parameter(self, name, default_value):
+    def get_parameter(self, name: str, default_value: str) -> str:
         """Gets a parameter's value."""
         return self._parameters.get(name, default_value)
 
-    def set_option(self, name, value):
+    def set_option(self, name: str, value: Any):
         """Sets an option's value"""
         _assert_value_is_valid(name)
         self._options[name] = value
 
-    def has_option(self, name):
+    def has_option(self, name: str) -> bool:
         """Checks if an option is specified."""
         return name in self._options
 
-    def get_option(self, name, default_value):
+    def get_option(self, name: str, default_value: Any) -> str:
         """Gets an option's value."""
         return self._options.get(name, default_value)
 
-    def to_json(self):
+    def to_json(self) -> str:
         """Safe serialization to a JSON string."""
         return json.dumps({"Options": self._options, "Parameters": self._parameters}, default=str)
 
@@ -771,7 +771,7 @@ class KustoClient(_KustoClientBase):
         # notice that in this context, federated actually just stands for add auth, not aad federated auth (legacy code)
         self._auth_provider = _AadHelper(self._kcsb, is_async=False) if self._kcsb.aad_federated_security else None
 
-    def set_http_retries(self, max_retries):
+    def set_http_retries(self, max_retries: int):
         """
         Set the number of HTTP retries to attempt
         """
@@ -784,17 +784,17 @@ class KustoClient(_KustoClientBase):
         self._session.mount("https://", adapter)
 
     @staticmethod
-    def compose_socket_options():
+    def compose_socket_options() -> List[Tuple[int, int, int]]:
         # Sends TCP Keep-Alive after MAX_IDLE_SECONDS seconds of idleness, once every INTERVAL_SECONDS seconds, and closes the connection after MAX_FAILED_KEEPALIVES failed pings (e.g. 20 => 1:00:30)
         MAX_IDLE_SECONDS = 30
         INTERVAL_SECONDS = 180  # Corresponds to Azure Load Balancer Service 4 minute timeout, with 1 minute of slack
         MAX_FAILED_KEEPALIVES = 20
 
         if (
-            sys.platform == "linux"
-            and hasattr(socket, "SOL_SOCKET")
-            and hasattr(socket, "SO_KEEPALIVE")
-            and hasattr(socket, "TCP_KEEPIDLE")
+                sys.platform == "linux"
+                and hasattr(socket, "SOL_SOCKET")
+                and hasattr(socket, "SO_KEEPALIVE")
+                and hasattr(socket, "TCP_KEEPIDLE")
             and hasattr(socket, "TCP_KEEPINTVL")
             and hasattr(socket, "TCP_KEEPCNT")
         ):
