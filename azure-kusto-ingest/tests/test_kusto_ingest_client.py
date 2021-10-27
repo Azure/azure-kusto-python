@@ -153,7 +153,7 @@ def request_error_callback(request):
                 "message": "Request is invalid and cannot be executed.",
                 "@type": "Kusto.Common.Svc.Exceptions.AdminCommandWrongEndpointException",
                 "@message": "Cannot get ingestion resources from this service endpoint. The appropriate endpoint is most likely "
-                            "'https://ingest-somecluster.kusto.windows.net/'.",
+                "'https://ingest-somecluster.kusto.windows.net/'.",
                 "@context": {
                     "timestamp": "2021-10-12T06:05:35.6602087Z",
                     "serviceAlias": "SomeCluster",
@@ -213,7 +213,9 @@ class TestQueuedIngestClient:
             responses.POST, "https://ingest-somecluster.kusto.windows.net/v1/rest/mgmt", callback=request_callback, content_type="application/json"
         )
         responses.add_callback(
-            responses.POST, 'https://somecluster.kusto.windows.net/v1/rest/ingest/database/table', callback=unsupported_streaming_callback,
+            responses.POST,
+            "https://somecluster.kusto.windows.net/v1/rest/ingest/database/table",
+            callback=unsupported_streaming_callback,
             content_type="application/json",
         )
 
@@ -234,8 +236,11 @@ class TestQueuedIngestClient:
 
         assert result.kind == IngestionResultKind.QUEUED
 
-        self._assert_upload(mock_put_message_in_queue, mock_upload_blob_from_stream,
-                            "https://storageaccount.blob.core.windows.net/tempstorage/database__table__1111-111111-111111-1111__dataset.csv.gz?")
+        self._assert_upload(
+            mock_put_message_in_queue,
+            mock_upload_blob_from_stream,
+            "https://storageaccount.blob.core.windows.net/tempstorage/database__table__1111-111111-111111-1111__dataset.csv.gz?",
+        )
 
     @responses.activate
     def test_ingest_from_file_wrong_endpoint(self, ingest_client_class):
@@ -243,7 +248,9 @@ class TestQueuedIngestClient:
             responses.POST, "https://somecluster.kusto.windows.net/v1/rest/mgmt", callback=request_error_callback, content_type="application/json"
         )
         responses.add_callback(
-            responses.POST, 'https://somecluster.kusto.windows.net/v1/rest/ingest/database/table', callback=unsupported_streaming_callback,
+            responses.POST,
+            "https://somecluster.kusto.windows.net/v1/rest/ingest/database/table",
+            callback=unsupported_streaming_callback,
             content_type="application/json",
         )
 
@@ -262,9 +269,10 @@ class TestQueuedIngestClient:
         with pytest.raises(KustoInvalidEndpointError) as ex:
             ingest_client.ingest_from_file(file_path, ingestion_properties=ingestion_properties)
 
-        assert ex.value.args[0] == "You are using 'DataManagement' client type, but the provided endpoint is of ServiceType 'Engine'. Initialize the " \
-                                   "client with the appropriate endpoint URI: 'https://ingest-somecluster.kusto.windows.net'", "Expected exception was " \
-                                                                                                                               "not raised"
+        assert (
+            ex.value.args[0] == "You are using 'DataManagement' client type, but the provided endpoint is of ServiceType 'Engine'. Initialize the "
+            "client with the appropriate endpoint URI: 'https://ingest-somecluster.kusto.windows.net'"
+        ), ("Expected exception was " "not raised")
 
     @responses.activate
     @pytest.mark.skipif(not pandas_installed, reason="requires pandas")
@@ -278,7 +286,9 @@ class TestQueuedIngestClient:
             responses.POST, "https://ingest-somecluster.kusto.windows.net/v1/rest/mgmt", callback=request_callback, content_type="application/json"
         )
         responses.add_callback(
-            responses.POST, 'https://somecluster.kusto.windows.net/v1/rest/ingest/database/table', callback=unsupported_streaming_callback,
+            responses.POST,
+            "https://somecluster.kusto.windows.net/v1/rest/ingest/database/table",
+            callback=unsupported_streaming_callback,
             content_type="application/json",
         )
 
@@ -310,7 +320,9 @@ class TestQueuedIngestClient:
             responses.POST, "https://ingest-somecluster.kusto.windows.net/v1/rest/mgmt", callback=request_callback, content_type="application/json"
         )
         responses.add_callback(
-            responses.POST, 'https://somecluster.kusto.windows.net/v1/rest/ingest/database/table', callback=unsupported_streaming_callback,
+            responses.POST,
+            "https://somecluster.kusto.windows.net/v1/rest/ingest/database/table",
+            callback=unsupported_streaming_callback,
             content_type="application/json",
         )
 
@@ -331,9 +343,12 @@ class TestQueuedIngestClient:
         result = ingest_client.ingest_from_stream(io.StringIO(Path(file_path).read_text()), ingestion_properties=ingestion_properties)
         assert result.kind == IngestionResultKind.QUEUED
 
-        self._assert_upload(mock_put_message_in_queue, mock_upload_blob_from_stream,
-                            "https://storageaccount.blob.core.windows.net/tempstorage/database__table__1111-111111-111111-1111__stream.gz?",
-                            check_raw_data=False)
+        self._assert_upload(
+            mock_put_message_in_queue,
+            mock_upload_blob_from_stream,
+            "https://storageaccount.blob.core.windows.net/tempstorage/database__table__1111-111111-111111-1111__stream.gz?",
+            check_raw_data=False,
+        )
 
     def _assert_upload(self, mock_put_message_in_queue, mock_upload_blob_from_stream, expected_url: str, check_raw_data: bool = True):
         # mock_put_message_in_queue

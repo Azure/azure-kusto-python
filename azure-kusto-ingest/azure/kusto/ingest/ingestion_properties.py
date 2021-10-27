@@ -106,16 +106,16 @@ class ColumnMapping:
     STORAGE_DATA_TYPE = "StorageDataType"
 
     def __init__(
-            self,
-            column_name: str,
-            column_type,
-            path: str = None,
-            transform: TransformationMethod = TransformationMethod.NONE,
-            ordinal: int = None,
-            const_value: str = None,
-            field=None,
-            columns=None,
-            storage_data_type=None,
+        self,
+        column_name: str,
+        column_type,
+        path: str = None,
+        transform: TransformationMethod = TransformationMethod.NONE,
+        ordinal: int = None,
+        const_value: str = None,
+        field=None,
+        columns=None,
+        storage_data_type=None,
     ):
         self.column = column_name
         self.datatype = column_type
@@ -145,32 +145,28 @@ class IngestionProperties:
     _mapping_required_formats = {DataFormat.JSON, DataFormat.SINGLEJSON, DataFormat.AVRO, DataFormat.MULTIJSON}
 
     def __init__(
-            self,
-            database: str,
-            table: str,
-            data_format: DataFormat = DataFormat.CSV,
-            ingestion_mapping: List[ColumnMapping] = None,
-            ingestion_mapping_type: IngestionMappingType = None,
-            ingestion_mapping_reference: str = None,
-            ingest_if_not_exists: List[str] = None,
-            ingest_by_tags: List[str] = None,
-            drop_by_tags: List[str] = None,
-            additional_tags: List[str] = None,
-            flush_immediately: bool = False,
-            report_level: ReportLevel = ReportLevel.DoNotReport,
-            report_method: ReportMethod = ReportMethod.Queue,
-            validation_policy: ValidationPolicy = None,
-            additional_properties: dict = None,
+        self,
+        database: str,
+        table: str,
+        data_format: DataFormat = DataFormat.CSV,
+        ingestion_mapping: List[ColumnMapping] = None,
+        ingestion_mapping_type: IngestionMappingType = None,
+        ingestion_mapping_reference: str = None,
+        ingest_if_not_exists: List[str] = None,
+        ingest_by_tags: List[str] = None,
+        drop_by_tags: List[str] = None,
+        additional_tags: List[str] = None,
+        flush_immediately: bool = False,
+        report_level: ReportLevel = ReportLevel.DoNotReport,
+        report_method: ReportMethod = ReportMethod.Queue,
+        validation_policy: ValidationPolicy = None,
+        additional_properties: dict = None,
     ):
 
         if ingestion_mapping is not None and ingestion_mapping_reference is not None:
             raise KustoMappingAndMappingReferenceError()
 
-        if (
-                data_format in self._mapping_required_formats
-                and ingestion_mapping_reference is None
-                and ingestion_mapping is None
-        ):
+        if data_format in self._mapping_required_formats and ingestion_mapping_reference is None and ingestion_mapping is None:
             raise KustoMissingMappingReferenceError()
 
         self.database = database

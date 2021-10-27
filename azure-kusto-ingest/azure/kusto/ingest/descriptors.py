@@ -120,8 +120,9 @@ class StreamDescriptor:
     """StreamDescriptor is used to describe a stream that will be used as ingestion source"""
 
     # TODO: currently we always assume that streams are gz compressed (will get compressed before sending), should we expand that?
-    def __init__(self, stream: Union[IO[AnyStr], BytesIO], source_id: Optional[str] = None, is_compressed: bool = False, stream_name: Optional[str] = None,
-                 size: int = 0):
+    def __init__(
+        self, stream: Union[IO[AnyStr], BytesIO], source_id: Optional[str] = None, is_compressed: bool = False, stream_name: Optional[str] = None, size: int = 0
+    ):
         """
         :param stream: in-memory stream object.
         :type stream: io.BaseIO
@@ -140,4 +141,3 @@ class StreamDescriptor:
             if is_compressed:
                 self.stream_name += ".gz"
         self.size = size
-

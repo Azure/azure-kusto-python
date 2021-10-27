@@ -28,7 +28,6 @@ class IngestionResult:
 
 
 class BaseIngestClient(metaclass=ABCMeta):
-
     @abstractmethod
     def ingest_from_file(self, file_descriptor: Union[FileDescriptor, str], ingestion_properties: IngestionProperties) -> IngestionResult:
         """Ingest from local files.
