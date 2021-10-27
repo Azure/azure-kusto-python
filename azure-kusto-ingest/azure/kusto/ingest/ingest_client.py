@@ -15,7 +15,7 @@ from ._resource_manager import _ResourceManager, _ResourceUri
 from .base_ingest_client import BaseIngestClient, IngestionResult, IngestionResultKind
 from .descriptors import BlobDescriptor, FileDescriptor, StreamDescriptor
 from .exceptions import KustoInvalidEndpointError
-from .ingestion_properties import DataFormat, IngestionProperties
+from .ingestion_properties import IngestionProperties
 
 
 class QueuedIngestClient(BaseIngestClient):
@@ -54,12 +54,7 @@ class QueuedIngestClient(BaseIngestClient):
         else:
             descriptor = FileDescriptor(file_descriptor)
 
-        # TODO: should we add this logic to all ingestions?
-        should_compress = not (
-            ingestion_properties.format in [DataFormat.AVRO, DataFormat.ORC, DataFormat.PARQUET]
-            or descriptor.path.endswith(".gz")
-            or descriptor.path.endswith(".zip")
-        )
+        should_compress = not descriptor.is_compressed and not ingestion_properties.is_format_binary()
 
         with descriptor.open(should_compress) as stream:
             self._upload_blob(containers, descriptor, ingestion_properties, stream)
@@ -69,7 +64,7 @@ class QueuedIngestClient(BaseIngestClient):
     def ingest_from_stream(self, stream_descriptor: Union[IO[AnyStr], StreamDescriptor], ingestion_properties: IngestionProperties) -> IngestionResult:
         containers = self._get_containers()
 
-        stream_descriptor = self._prepare_stream(stream_descriptor)
+        stream_descriptor = self._prepare_stream(stream_descriptor, ingestion_properties)
         self._upload_blob(containers, stream_descriptor, ingestion_properties, stream_descriptor.stream)
 
         return IngestionResult(IngestionResultKind.QUEUED)

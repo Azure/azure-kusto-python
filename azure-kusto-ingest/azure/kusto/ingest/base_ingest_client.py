@@ -73,7 +73,7 @@ class BaseIngestClient(metaclass=ABCMeta):
             os.unlink(temp_file_path)
 
     @staticmethod
-    def _prepare_stream(stream_descriptor: Union[IO[AnyStr], StreamDescriptor]) -> StreamDescriptor:
+    def _prepare_stream(stream_descriptor: Union[IO[AnyStr], StreamDescriptor], ingestion_properties: IngestionProperties) -> StreamDescriptor:
         if not isinstance(stream_descriptor, StreamDescriptor):
             new_descriptor = StreamDescriptor(stream_descriptor)
         else:
@@ -84,7 +84,7 @@ class BaseIngestClient(metaclass=ABCMeta):
         else:
             stream = new_descriptor.stream
 
-        if not new_descriptor.is_compressed:
+        if not new_descriptor.is_compressed and not ingestion_properties.is_format_binary():
             zipped_stream = BytesIO()
             buffer = stream.read()
             with GzipFile(filename="data", fileobj=zipped_stream, mode="wb") as f_out:

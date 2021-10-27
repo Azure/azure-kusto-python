@@ -81,6 +81,10 @@ class FileDescriptor:
 
         self._size = uncompressed_size
 
+    @property
+    def is_compressed(self) -> bool:
+        return self.path.endswith(".gz") or self.path.endswith(".zip")
+
     def open(self, should_compress: bool) -> BytesIO:
         if should_compress:
             self.stream_name += ".gz"

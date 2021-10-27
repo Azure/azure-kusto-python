@@ -188,3 +188,6 @@ class IngestionProperties:
         self.report_method = report_method
         self.validation_policy = validation_policy
         self.additional_properties = additional_properties
+
+    def is_format_binary(self):
+        return self.format in [DataFormat.AVRO, DataFormat.ORC, DataFormat.PARQUET]

@@ -34,7 +34,7 @@ class ManagedStreamingIngestClient(BaseIngestClient):
 
     def ingest_from_stream(self, stream_descriptor: Union[IO[AnyStr], StreamDescriptor], ingestion_properties: IngestionProperties) -> IngestionResult:
 
-        stream_descriptor = self._prepare_stream(stream_descriptor)
+        stream_descriptor = self._prepare_stream(stream_descriptor, ingestion_properties)
         stream = stream_descriptor.stream
 
         if not stream.seekable():

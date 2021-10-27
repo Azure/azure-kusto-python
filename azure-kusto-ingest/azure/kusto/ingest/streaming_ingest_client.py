@@ -44,7 +44,7 @@ class KustoStreamingIngestClient(BaseIngestClient):
                be ingested.
         :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
         """
-        stream_descriptor = self._prepare_stream(stream_descriptor)
+        stream_descriptor = self._prepare_stream(stream_descriptor, ingestion_properties)
 
         self._kusto_client.execute_streaming_ingest(
             ingestion_properties.database,
