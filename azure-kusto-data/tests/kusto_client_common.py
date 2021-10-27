@@ -4,13 +4,13 @@ import json
 import os
 from datetime import datetime, timedelta
 from io import StringIO
-from typing import Optional
+from typing import Optional, Any, Dict, Union, Iterator
 
 from dateutil.tz import UTC
 from requests import HTTPError
 
-from azure.kusto.data._models import KustoStreamingResultTable
-from azure.kusto.data.response import WellKnownDataSet, KustoStreamingResponseDataSet
+from azure.kusto.data._models import KustoResultRow, KustoResultTable, KustoStreamingResultTable
+from azure.kusto.data.response import WellKnownDataSet, KustoStreamingResponseDataSet, KustoResponseDataSet
 
 PANDAS = False
 try:
@@ -32,7 +32,7 @@ def mocked_requests_post(*args, **kwargs):
     class MockResponse:
         """Mock class for KustoResponse."""
 
-        def __init__(self, json_data, status_code, url):
+        def __init__(self, json_data: Optional[Dict[str, Any]], status_code: int, url: str):
             self.json_data = json_data
             self.text = str(json_data)
             self.status_code = status_code
@@ -41,7 +41,7 @@ def mocked_requests_post(*args, **kwargs):
             self.url = url
             self.raw = Raw(json.dumps(json_data))
 
-        def json(self):
+        def json(self) -> Optional[Dict[str, Any]]:
             """Get json data from response."""
             return self.json_data
 
@@ -105,26 +105,23 @@ def mocked_requests_post(*args, **kwargs):
 
 DIGIT_WORDS = [str("Zero"), str("One"), str("Two"), str("Three"), str("Four"), str("Five"), str("Six"), str("Seven"), str("Eight"), str("Nine"), str("ten")]
 
-
-def get_response_first_primary_result(response):
-    if type(response) == KustoStreamingResponseDataSet:
-        return next(response.iter_primary_results())
-    else:
-        return response.primary_results[0]
+SyncResponseSet = Union[KustoStreamingResponseDataSet, KustoResponseDataSet]
+SyncResultTable = Union[KustoResultTable, KustoStreamingResultTable]
 
 
-def get_table_first_row(table):
-    if type(table) == KustoStreamingResultTable:
-        return next(iter(table))
-    else:
-        return table.rows[0]
+def get_response_first_primary_result(response: SyncResponseSet) -> SyncResultTable:
+    return next(x for x in response if x.table_kind == WellKnownDataSet.PrimaryResult)
+
+
+def get_table_first_row(table: SyncResultTable) -> KustoResultRow:
+    return next(iter(table))
 
 
 class KustoClientTestsMixin:
     HOST = "https://somecluster.kusto.windows.net"
 
     @staticmethod
-    def _assert_sanity_query_primary_results(results):
+    def _assert_sanity_query_primary_results(results: Iterator[KustoResultRow]):
         expected = {
             "rownumber": None,
             "rowguid": str(""),
@@ -220,11 +217,11 @@ class KustoClientTestsMixin:
                 expected["xdynamicWithNulls"] = {"rowId": expected["xint16"], "arr": [0, expected["xint16"]]}
 
     @staticmethod
-    def _assert_sanity_query_response(response):
+    def _assert_sanity_query_response(response: SyncResponseSet):
         KustoClientTestsMixin._assert_sanity_query_primary_results(get_response_first_primary_result(response))
 
     @staticmethod
-    def _assert_sanity_control_command_response(response):
+    def _assert_sanity_control_command_response(response: SyncResponseSet):
         assert len(response) == 1
         primary_table = get_response_first_primary_result(response)
         row_count = 0
@@ -237,7 +234,7 @@ class KustoClientTestsMixin:
         assert result["ServiceType"] == "Engine"
         assert result["ProductVersion"] == "KustoMain_2018.04.29.5"
 
-    def _assert_sanity_data_frame_response(self, data_frame):
+    def _assert_sanity_data_frame_response(self, data_frame: "pandas.DataFrame"):
         from pandas import DataFrame, Series
         from pandas.testing import assert_frame_equal
 
@@ -347,7 +344,7 @@ class KustoClientTestsMixin:
         assert_frame_equal(data_frame, expected_data_frame)
 
     @staticmethod
-    def _assert_partial_results_response(response):
+    def _assert_partial_results_response(response: SyncResponseSet):
         results = list(get_response_first_primary_result(response))
         assert len(results) == 5
         assert results[0]["x"] == 1
@@ -359,7 +356,7 @@ class KustoClientTestsMixin:
         assert len(response) == 3
 
     @staticmethod
-    def _assert_admin_then_query_response(response):
+    def _assert_admin_then_query_response(response: SyncResponseSet):
         assert response.errors_count == 0
         assert len(response) == 4
         results = list(get_response_first_primary_result(response))
@@ -370,7 +367,7 @@ class KustoClientTestsMixin:
         assert response[3].table_kind == WellKnownDataSet.TableOfContents
 
     @staticmethod
-    def _assert_dynamic_response(row):
+    def _assert_dynamic_response(row: KustoResultRow):
         assert isinstance(row[0], int)
         assert row[0] == 123
         assert isinstance(row[1], str)

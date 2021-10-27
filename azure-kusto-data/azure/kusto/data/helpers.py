@@ -28,7 +28,7 @@ def to_pandas_timedelta(raw_value: Union[int, float, str]) -> "pandas.Timedelta"
             return pd.to_timedelta(formatted_value)
 
 
-def dataframe_from_result_table(table: "Union[KustoResultTable, KustoStreamingResultTable]") -> "pd.DataFrame":
+def dataframe_from_result_table(table: "Union[KustoResultTable, KustoStreamingResultTable]") -> "pandas.DataFrame":
     """Converts Kusto tables into pandas DataFrame.
     :param azure.kusto.data._models.KustoResultTable table: Table received from the response.
     :return: pandas DataFrame.

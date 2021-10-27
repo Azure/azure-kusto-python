@@ -795,8 +795,8 @@ class KustoClient(_KustoClientBase):
                 and hasattr(socket, "SOL_SOCKET")
                 and hasattr(socket, "SO_KEEPALIVE")
                 and hasattr(socket, "TCP_KEEPIDLE")
-            and hasattr(socket, "TCP_KEEPINTVL")
-            and hasattr(socket, "TCP_KEEPCNT")
+                and hasattr(socket, "TCP_KEEPINTVL")
+                and hasattr(socket, "TCP_KEEPCNT")
         ):
             return [
                 (socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1),

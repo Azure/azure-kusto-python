@@ -97,6 +97,9 @@ class KustoResponseDataSet(BaseKustoResponseDataSet, metaclass=ABCMeta):
 
         return primary
 
+    def __iter__(self) -> Iterator[KustoResultTable]:
+        return iter(self.tables)
+
 
 class KustoResponseDataSetV1(KustoResponseDataSet):
     """
@@ -163,10 +166,10 @@ class KustoStreamingResponseDataSet(BaseKustoResponseDataSet):
     def iter_primary_results(self) -> "PrimaryResultsIterator":
         return PrimaryResultsIterator(self)
 
-    def __iter__(self) -> Iterator[BaseKustoResultTable]:
+    def __iter__(self) -> Iterator[Union[KustoResultTable, KustoStreamingResultTable]]:
         return self
 
-    def __next__(self) -> BaseKustoResultTable:
+    def __next__(self) -> Union[KustoResultTable, KustoStreamingResultTable]:
         if self.finished:
             raise StopIteration
 
