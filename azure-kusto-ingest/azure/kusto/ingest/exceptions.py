@@ -31,8 +31,8 @@ class KustoMissingMappingReferenceError(KustoClientError):
     but ingestion mappings reference was not defined.
     """
 
-    def __init__(self):
-        message = "When stream format is json, mapping name must be provided."
+    def __init__(self, stream_format: str):
+        message = "When stream format is {}, mapping name must be provided.".format(stream_format)
         super(KustoMissingMappingReferenceError, self).__init__(message)
 
 

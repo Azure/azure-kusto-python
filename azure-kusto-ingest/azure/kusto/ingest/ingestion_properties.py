@@ -167,7 +167,7 @@ class IngestionProperties:
             raise KustoMappingAndMappingReferenceError()
 
         if data_format in self._mapping_required_formats and ingestion_mapping_reference is None and ingestion_mapping is None:
-            raise KustoMissingMappingReferenceError()
+            raise KustoMissingMappingReferenceError(data_format.value)
 
         self.database = database
         self.table = table
