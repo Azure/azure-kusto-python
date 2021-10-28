@@ -45,7 +45,7 @@ def main():
 
     if authenticationMode == "UserPrompt":
         print("")
-        print("You will be prompted for credentials during this script.")
+        print("You will be prompted *twice* for credentials during this script.")
         print("Please, return to the console after authenticating.")
         wait_for_user()
 
