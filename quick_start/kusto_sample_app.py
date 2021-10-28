@@ -1,8 +1,7 @@
 # Todo - README:
-#  1) Run: pip install azure-kusto-data azure-kusto-ingest
-#  2) Fill in or edit the sections commented as 'To Do'
-#  3) Run the script
-#  4) Read additional comments for tips and reference material
+#  1) Run: python -m pip install azure-kusto-data azure-kusto-ingest
+#  2) Run the script
+#  3) Read additional comments for tips and reference material
 
 
 import json
