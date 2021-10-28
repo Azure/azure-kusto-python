@@ -6,8 +6,8 @@ from io import SEEK_END, SEEK_SET, BytesIO
 # TODO - is there a better place for these functions?
 
 
-def sleep_with_backoff(i: int):
-    sleep = (2 ** i) + random.uniform(0, 1)
+def sleep_with_backoff(base: float, ordinal: int):
+    sleep = base * ((2 ** ordinal) + random.uniform(0, 1))
     time.sleep(sleep)
 
 

@@ -193,6 +193,31 @@ def request_error_callback(request):
     return response_status, response_headers, json.dumps(response_body)
 
 
+def assert_queued_upload(mock_put_message_in_queue, mock_upload_blob_from_stream, expected_url: str, check_raw_data: bool = True, format: str = "csv"):
+    # mock_put_message_in_queue
+    assert mock_put_message_in_queue.call_count == 1
+
+    put_message_in_queue_mock_kwargs = mock_put_message_in_queue.call_args_list[0][1]
+
+    queued_message_json = json.loads(put_message_in_queue_mock_kwargs["content"])
+
+    # mock_upload_blob_from_stream
+    # not checking the query string because it can change order, just checking it's there
+    assert queued_message_json["BlobPath"].startswith(expected_url) is True
+    assert len(queued_message_json["BlobPath"]) > len(expected_url)
+    assert queued_message_json["DatabaseName"] == "database"
+    assert queued_message_json["IgnoreSizeLimit"] is False
+    assert queued_message_json["AdditionalProperties"]["format"] == format
+    assert queued_message_json["FlushImmediately"] is False
+    assert queued_message_json["TableName"] == "table"
+    if check_raw_data:
+        assert queued_message_json["RawDataSize"] > 0
+    assert queued_message_json["RetainBlobOnSuccess"] is True
+    if mock_upload_blob_from_stream is not None:
+        upload_blob_kwargs = mock_upload_blob_from_stream.call_args_list[0][1]
+        assert issubclass(type(upload_blob_kwargs["data"]), io.BufferedIOBase)
+
+
 @pytest.fixture(params=[QueuedIngestClient, ManagedStreamingIngestClient])
 def ingest_client_class(request):
     return request.param
@@ -236,7 +261,7 @@ class TestQueuedIngestClient:
 
         assert result.kind == IngestionResultKind.QUEUED
 
-        self._assert_upload(
+        assert_queued_upload(
             mock_put_message_in_queue,
             mock_upload_blob_from_stream,
             "https://storageaccount.blob.core.windows.net/tempstorage/database__table__1111-111111-111111-1111__dataset.csv.gz?",
@@ -308,7 +333,7 @@ class TestQueuedIngestClient:
             id(df)
         )
 
-        self._assert_upload(mock_put_message_in_queue, mock_upload_blob_from_stream, expected_url)
+        assert_queued_upload(mock_put_message_in_queue, mock_upload_blob_from_stream, expected_url)
 
     @responses.activate
     @patch("azure.kusto.data.security._AadHelper.acquire_authorization_header", return_value=None)
@@ -343,32 +368,9 @@ class TestQueuedIngestClient:
         result = ingest_client.ingest_from_stream(io.StringIO(Path(file_path).read_text()), ingestion_properties=ingestion_properties)
         assert result.kind == IngestionResultKind.QUEUED
 
-        self._assert_upload(
+        assert_queued_upload(
             mock_put_message_in_queue,
             mock_upload_blob_from_stream,
             "https://storageaccount.blob.core.windows.net/tempstorage/database__table__1111-111111-111111-1111__stream.gz?",
             check_raw_data=False,
         )
-
-    def _assert_upload(self, mock_put_message_in_queue, mock_upload_blob_from_stream, expected_url: str, check_raw_data: bool = True):
-        # mock_put_message_in_queue
-        assert mock_put_message_in_queue.call_count == 1
-
-        put_message_in_queue_mock_kwargs = mock_put_message_in_queue.call_args_list[0][1]
-
-        queued_message_json = json.loads(put_message_in_queue_mock_kwargs["content"])
-
-        # mock_upload_blob_from_stream
-        # not checking the query string because it can change order, just checking it's there
-        assert queued_message_json["BlobPath"].startswith(expected_url) is True
-        assert len(queued_message_json["BlobPath"]) > len(expected_url)
-        assert queued_message_json["DatabaseName"] == "database"
-        assert queued_message_json["IgnoreSizeLimit"] is False
-        assert queued_message_json["AdditionalProperties"]["format"] == "csv"
-        assert queued_message_json["FlushImmediately"] is False
-        assert queued_message_json["TableName"] == "table"
-        if check_raw_data:
-            assert queued_message_json["RawDataSize"] > 0
-        assert queued_message_json["RetainBlobOnSuccess"] is True
-        upload_blob_kwargs = mock_upload_blob_from_stream.call_args_list[0][1]
-        assert issubclass(type(upload_blob_kwargs["data"]), io.BufferedIOBase)
