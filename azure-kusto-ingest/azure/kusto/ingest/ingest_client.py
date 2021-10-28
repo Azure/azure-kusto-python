@@ -57,7 +57,7 @@ class QueuedIngestClient(BaseIngestClient):
         should_compress = not descriptor.is_compressed and not ingestion_properties.is_format_binary()
 
         with descriptor.open(should_compress) as stream:
-            self._upload_blob(containers, descriptor, ingestion_properties, stream)
+            self._upload_blob_and_ingest(containers, descriptor, ingestion_properties, stream)
 
         return IngestionResult(IngestionResultKind.QUEUED)
 
@@ -65,7 +65,7 @@ class QueuedIngestClient(BaseIngestClient):
         containers = self._get_containers()
 
         stream_descriptor = self._prepare_stream(stream_descriptor, ingestion_properties)
-        self._upload_blob(containers, stream_descriptor, ingestion_properties, stream_descriptor.stream)
+        self._upload_blob_and_ingest(containers, stream_descriptor, ingestion_properties, stream_descriptor.stream)
 
         return IngestionResult(IngestionResultKind.QUEUED)
 
@@ -103,7 +103,7 @@ class QueuedIngestClient(BaseIngestClient):
             raise ex
         return containers
 
-    def _upload_blob(
+    def _upload_blob_and_ingest(
         self,
         containers: List[_ResourceUri],
         descriptor: Union[FileDescriptor, StreamDescriptor],
