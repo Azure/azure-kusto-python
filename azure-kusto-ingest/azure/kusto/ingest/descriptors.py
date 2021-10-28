@@ -6,7 +6,7 @@ import struct
 import uuid
 from gzip import GzipFile
 from io import BytesIO, SEEK_END
-from typing import AnyStr, Union
+from typing import AnyStr, Union, Optional
 from zipfile import ZipFile
 
 from typing.io import IO
@@ -99,7 +99,7 @@ class FileDescriptor:
 class BlobDescriptor:
     """FileDescriptor is used to describe a file that will be used as an ingestion source"""
 
-    def __init__(self, path: str, size: int, source_id: str = None):
+    def __init__(self, path: str, size: Optional[int], source_id: str = None):
         """
         :param path: blob uri.
         :type path: str.
