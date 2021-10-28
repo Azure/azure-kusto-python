@@ -30,18 +30,18 @@ configFileName = "kusto_sample_config.json"
 #  Some of the auth modes require additional environment variables to be set in order to work (check the use below)
 #  Managed Identity Authentication only works when running as an Azure service (webapp, function, etc.)
 authenticationMode = "UserPrompt"  # choose between: (UserPrompt|ManagedIdentity|AppKey|AppCertificate)
-waitForUser = True
+waitForUser = False
 
 
 def main():
     print("Kusto sample app is starting...")
     config = read_config(configFileName)
 
-    kusto_uri = config["KustoUri"]
-    ingest_uri = config["IngestUri"]
-    database_name = config["DatabaseName"]
-    table_name = config["TableName"]
-    use_existing_table = str(config["UseExistingTable"]).lower()
+    kusto_uri = config["kustoUri"]
+    ingest_uri = config["ingestUri"]
+    database_name = config["databaseName"]
+    table_name = config["tableName"]
+    use_existing_table = str(config["useExistingTable"]).lower()
 
     if authenticationMode == "UserPrompt":
         print("")
@@ -56,7 +56,7 @@ def main():
     ingest_client = QueuedIngestClient(ingest_connection_string)
 
     if use_existing_table == "false":
-        table_schema = config["TableSchema"]
+        table_schema = config["tableSchema"]
         print("")
         print(f"Creating table '{database_name}.{table_name}' if it does not exist:")
         # Tip: This is commonly a one-time configuration to make
@@ -96,14 +96,14 @@ def main():
     run_query(kusto_client, database_name, f"{table_name} | summarize count()")
     wait_for_user()
 
-    files = config["Data"]
+    files = config["data"]
     for file in files:
-        source_type = str(file["SourceType"]).lower()
-        uri = file["DataSourceUri"]
-        data_format = str_to_data_format(str(file["DataFormat"]))
-        use_existing_mapping = str(file["UseExistingMapping"]).lower()
-        mapping_name = file["MappingName"]
-        mapping_value = file["MappingValue"]
+        source_type = str(file["sourceType"]).lower()
+        uri = file["dataSourceUri"]
+        data_format = str_to_data_format(str(file["format"]))
+        use_existing_mapping = str(file["useExistingMapping"]).lower()
+        mapping_name = file["mappingName"]
+        mapping_value = file["mappingValue"]
 
         # Learn More: For additional information on how to ingest data to Kusto in Python see:
         #  https://docs.microsoft.com/azure/data-explorer/python-ingest-data
@@ -127,20 +127,24 @@ def main():
             # Tip: When ingesting json files, if a each row is represented by a single line json, use MULTIJSON format even if the file only includes one line.
             # When the json contains whitespace formatting, use SINGLEJSON. In this case only one data row json object per file is allowed.
             data_format = DataFormat.MULTIJSON if data_format == data_format.JSON else data_format
-            if source_type == "file":
+            if source_type == "localfilesource":
                 ingest_data_from_file(ingest_client, database_name, table_name, uri, data_format, mapping_name)
-            else:  # assume source is a blob
+            elif source_type == "blobsource":
                 ingest_data_from_blob(ingest_client, database_name, table_name, uri, data_format, mapping_name)
+            else:
+                print(f"Unknown source '{source_type}' for file '{uri}'")
 
             wait_for_user()
 
         else:  # file is not in any json format
             print("")
             print(f"Attempting to ingest '{uri}' from {source_type}")
-            if source_type == "file":
+            if source_type == "localfilesource":
                 ingest_data_from_file(ingest_client, database_name, table_name, uri, data_format)
-            else:  # assume source is a blob
+            elif source_type == "blobsource":
                 ingest_data_from_blob(ingest_client, database_name, table_name, uri, data_format)
+            else:
+                print(f"Unknown source '{source_type}' for file '{uri}'")
 
             wait_for_user()
 
@@ -225,7 +229,7 @@ def ingest_data_from_file(client: QueuedIngestClient, db: str, table: str, file_
     )
 
     # Tip 1: For optimal ingestion batching it's best to specify the uncompressed data size in the file descriptor
-    # Tip 2: Set the source id and log it somewhere, if you want to correlate between operations in your applications and operations in kusto
+    # Tip 2: If you wish to correlate between ingestion operations in your applications and kusto, set the source id and log it somewhere
     file_descriptor = FileDescriptor(file_path, source_id=uuid.uuid4())
     client.ingest_from_file(file_descriptor, ingestion_properties=ingestion_props)
 
@@ -247,9 +251,9 @@ def ingest_data_from_blob(client: QueuedIngestClient, db: str, table: str, blob_
         flush_immediately=True,
     )
 
-    # Tip 1: For optimal ingestion batching it's best to specify the uncompressed data size in the file descriptor
-    # Tip 2: Set the source id and log it somewhere, if you want to correlate between operations in your applications and operations in kusto
-    blob_descriptor = BlobDescriptor(blob_path, source_id=uuid.uuid4())
+    # Tip 1: For optimal ingestion batching it's best to specify the actual uncompressed data size in the blob descriptor
+    # Tip 2: If you wish to correlate between ingestion operations in your applications and kusto, set the source id and log it somewhere
+    blob_descriptor = BlobDescriptor(blob_path, size=0, source_id=uuid.uuid4())
     client.ingest_from_blob(blob_descriptor, ingestion_properties=ingestion_props)
 
     # Tip: Kusto can also ingest data from open streams and pandas dataframes.
