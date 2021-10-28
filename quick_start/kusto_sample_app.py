@@ -30,7 +30,7 @@ configFileName = "kusto_sample_config.json"
 #  Some of the auth modes require additional environment variables to be set in order to work (check the use below)
 #  Managed Identity Authentication only works when running as an Azure service (webapp, function, etc.)
 authenticationMode = "UserPrompt"  # choose between: (UserPrompt|ManagedIdentity|AppKey|AppCertificate)
-waitForUser = False
+waitForUser = True
 
 
 def main():
