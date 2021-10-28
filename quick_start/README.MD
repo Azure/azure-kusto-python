@@ -18,7 +18,7 @@ You can use it as a baseline to write your own first kusto client application, a
 1. Open a browser and type your cluster's address
 2. Open the left side menu, if it is closed, using the Hamburger button
 3. On the left side menu choose Data
-4. Click on _Generate Sample App Code_ button 
+4. Click on _Create Sample App Code_ button 
 5. Follow the wizard to select your data, target details and language of choice (Python), etc.
 6. Download the app as a zip file 
 7. Unpack the script to your folder of choice
