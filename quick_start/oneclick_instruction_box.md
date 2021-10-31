@@ -1,6 +1,6 @@
 ### Instructions
 
-1. Download the feFuncA 
+1. Download the **DOWNLOAD_LINK** 
 2. Unpack the script to your folder of choice
 3. Open a command line window and CD into the folder you created 
 4. Run `python -m pip install azure-kusto-data azure-kusto-ingest`
