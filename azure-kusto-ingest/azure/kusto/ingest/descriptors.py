@@ -36,7 +36,7 @@ class FileDescriptor:
         :param size: estimated size of file if known. if None or 0 will try to guess.
         :type size: int.
         :param source_id: a v4 uuid to serve as the sources id.
-        :type source_id: Optional[str] (of a uuid4) or uuid4.
+        :type source_id: Optional[Union[str, uuid.UUID]] (of a uuid4) or uuid4.
         """
         self.path = path
         self._size = size
