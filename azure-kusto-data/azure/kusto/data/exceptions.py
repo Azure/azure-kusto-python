@@ -45,13 +45,6 @@ class KustoServiceError(KustoError):
 
 
 class OneApiError:
-    code = None  # type: str
-    message = None  # type: str
-    type = None  # type: str
-    description = None  # type: str
-    context = None  # type: dict
-    permanent = None  # type: bool
-
     def __init__(self, code: str, message: str, type: str, description: str, context: dict, permanent: bool) -> None:
         self.code = code
         self.message = message
