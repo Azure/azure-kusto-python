@@ -73,7 +73,7 @@ class OneApiError:
 
 class KustoMultiApiError(KustoServiceError):
     """
-    todo
+    Represents a collection of standard API errors from kusto. Use `get_api_errors()` to retrieve more details.
     """
 
     def __init__(self, errors: List[dict]):
@@ -100,7 +100,7 @@ class KustoMultiApiError(KustoServiceError):
 
 class KustoApiError(KustoServiceError):
     """
-    todo
+    Represents a standard API error from kusto. Use `get_api_error()` to retrieve more details.
     """
 
     def __init__(self, error_dict: dict, message: str = None, http_response: "Union[requests.Response, ClientResponse, None]" = None, kusto_response=None):
