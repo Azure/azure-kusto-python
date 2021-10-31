@@ -10,7 +10,7 @@ from .ingest_client import QueuedIngestClient
 from .streaming_ingest_client import KustoStreamingIngestClient
 
 if TYPE_CHECKING:
-    import pandas
+    pass
 
 
 class ManagedStreamingIngestClient(BaseIngestClient):
@@ -73,9 +73,6 @@ class ManagedStreamingIngestClient(BaseIngestClient):
 
         self.queued_client.ingest_from_stream(stream_descriptor, ingestion_properties)
         return IngestionResult(IngestionResultKind.QUEUED, reason)
-
-    def ingest_from_dataframe(self, df: "pandas.DataFrame", ingestion_properties: IngestionProperties):
-        return super().ingest_from_dataframe(df, ingestion_properties)
 
     def ingest_from_blob(self, blob_descriptor: BlobDescriptor, ingestion_properties: IngestionProperties):
         """
