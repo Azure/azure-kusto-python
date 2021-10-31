@@ -11,11 +11,11 @@ import unittest
 import uuid
 
 import pytest
+
 from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
 from azure.kusto.data._cloud_settings import CloudSettings
 from azure.kusto.data.aio import KustoClient as AsyncKustoClient
 from azure.kusto.data.exceptions import KustoServiceError
-
 from azure.kusto.ingest import (
     QueuedIngestClient,
     KustoStreamingIngestClient,
@@ -34,6 +34,11 @@ from azure.kusto.ingest import (
 )
 
 CLEAR_DB_CACHE = ".clear database cache streamingingestion schema"
+
+
+@pytest.fixture(params=["ManagedStreaming", "NormalClient"])
+def is_managed_streaming(request):
+    return request.param == "ManagedStreaming"
 
 
 class TestE2E:
@@ -224,7 +229,7 @@ class TestE2E:
         assert actual == expected, "Row count expected = {0}, while actual row count = {1}".format(expected, actual)
 
     @pytest.mark.asyncio
-    async def test_csv_ingest_existing_table(self):
+    async def test_csv_ingest_existing_table(self, is_managed_streaming):
         csv_ingest_props = IngestionProperties(
             self.test_db,
             self.test_table,
@@ -234,8 +239,12 @@ class TestE2E:
             flush_immediately=True,
         )
 
+        client = self.streaming_ingest_client if is_managed_streaming else self.ingest_client
+        if is_managed_streaming:
+            self.client.execute(self.test_db, CLEAR_DB_CACHE)
+
         for f in [self.csv_file_path, self.zipped_csv_file_path]:
-            self.ingest_client.ingest_from_file(f, csv_ingest_props)
+            client.ingest_from_file(f, csv_ingest_props)
 
         await self.assert_rows_added(20)
 
@@ -284,7 +293,7 @@ class TestE2E:
         await self.assert_rows_added(4)
 
     @pytest.mark.asyncio
-    async def test_ingest_from_stream(self):
+    async def test_ingest_from_stream(self, is_managed_streaming):
         validation_policy = ValidationPolicy(
             validation_options=ValidationOptions.ValidateCsvInputConstantColumns, validation_implications=ValidationImplications.Fail
         )
@@ -305,8 +314,12 @@ class TestE2E:
         text = io.StringIO(pathlib.Path(self.json_file_path).read_text())
         zipped = io.BytesIO(pathlib.Path(self.zipped_json_file_path).read_bytes())
 
-        self.ingest_client.ingest_from_stream(text, json_ingestion_props)
-        self.ingest_client.ingest_from_stream(StreamDescriptor(zipped, is_compressed=True), json_ingestion_props)
+        client = self.managed_streaming_ingest_client if is_managed_streaming else self.ingest_client
+        if is_managed_streaming:
+            self.client.execute(self.test_db, CLEAR_DB_CACHE)
+
+        client.ingest_from_stream(text, json_ingestion_props)
+        client.ingest_from_stream(StreamDescriptor(zipped, is_compressed=True), json_ingestion_props)
 
         await self.assert_rows_added(4)
 
@@ -344,12 +357,13 @@ class TestE2E:
         await self.assert_rows_added(10)
 
     @pytest.mark.asyncio
-    async def test_streaming_ingest_from_opened_file(self):
+    async def test_streaming_ingest_from_opened_file(self, is_managed_streaming):
         self.client.execute(self.test_db, CLEAR_DB_CACHE)
         ingestion_properties = IngestionProperties(database=self.test_db, table=self.test_table, data_format=DataFormat.CSV)
 
+        client = self.managed_streaming_ingest_client if is_managed_streaming else self.streaming_ingest_client
         with open(self.csv_file_path, "r") as stream:
-            self.streaming_ingest_client.ingest_from_stream(stream, ingestion_properties=ingestion_properties)
+            client.ingest_from_stream(stream, ingestion_properties=ingestion_properties)
 
         await self.assert_rows_added(10, timeout=120)
 

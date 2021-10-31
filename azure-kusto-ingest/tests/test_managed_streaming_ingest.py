@@ -286,8 +286,10 @@ class TestManagedStreamingIngestClient:
         ingest_client = ManagedStreamingIngestClient("https://ingest-somecluster.kusto.windows.net")
         ingestion_properties = IngestionProperties(database="database", table="table")
 
-        blob_path = "https://storageaccount.blob.core.windows.net/tempstorage/database__table__1111-111111-111111-1111__tmpbvk40leg?sp=rl&st=2020-05-20T13" \
-                    "%3A38%3A37Z&se=2020-05-21T13%3A38%3A37Z&sv=2019-10-10&sr=c&sig=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx "
+        blob_path = (
+            "https://storageaccount.blob.core.windows.net/tempstorage/database__table__1111-111111-111111-1111__tmpbvk40leg?sp=rl&st=2020-05-20T13"
+            "%3A38%3A37Z&se=2020-05-21T13%3A38%3A37Z&sv=2019-10-10&sr=c&sig=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx "
+        )
         result = ingest_client.ingest_from_blob(BlobDescriptor(blob_path, 1), ingestion_properties=ingestion_properties)
 
         assert result.kind == IngestionResultKind.QUEUED
