@@ -8,7 +8,7 @@ import uuid
 from copy import copy
 from datetime import timedelta
 from enum import Enum, unique
-from typing import TYPE_CHECKING, Union, Callable, Optional, Any, NoReturn, Coroutine
+from typing import TYPE_CHECKING, Union, Callable, Optional, Any, Coroutine
 
 import requests
 from requests import Response
@@ -703,7 +703,8 @@ class _KustoClientBase:
         status: int,
         response_json: Any,
         response_text: Optional[str],
-    ) -> NoReturn:
+    ):  # TODO: This method return type should be "NoReturn". Re-add when the minimum python version is increased (3.6.2 or higher)
+
         if status == 404:
             if payload:
                 raise KustoServiceError("The ingestion endpoint does not exist. Please enable streaming ingestion on your cluster.", response) from exception
