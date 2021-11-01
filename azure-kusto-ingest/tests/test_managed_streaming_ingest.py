@@ -8,7 +8,7 @@ import responses
 from mock import patch
 
 from azure.kusto.data.exceptions import KustoApiError
-from azure.kusto.ingest import ManagedStreamingIngestClient, IngestionProperties, DataFormat, IngestionResultKind, BlobDescriptor
+from azure.kusto.ingest import ManagedStreamingIngestClient, IngestionProperties, DataFormat, IngestionResultKind, BlobDescriptor, FallbackReason
 from test_kusto_ingest_client import request_callback as queued_request_callback, assert_queued_upload
 from test_kusto_streaming_ingest_client import request_callback as streaming_request_callback
 
@@ -93,16 +93,23 @@ class TestManagedStreamingIngestClient:
         ingest_client = ManagedStreamingIngestClient("https://ingest-somecluster.kusto.windows.net")
         ingestion_properties = IngestionProperties(database="database", table="table", data_format=data_format)
 
+        initial_bytes = bytearray(os.urandom(5 * 1024 * 1024))
+
+        def check_bytes(data):
+            assert data.read() == initial_bytes
+
+        mock_upload_blob_from_stream.side_effect = check_bytes
+
         f = NamedTemporaryFile(dir=".", mode="wb", delete=False)
         try:
-            f.write(b"\0" * (5 * 1024 * 1024))
+            f.write(initial_bytes)
             f.close()
             result = ingest_client.ingest_from_file(f.name, ingestion_properties=ingestion_properties)
         finally:
             os.unlink(f.name)
 
         assert result.kind == IngestionResultKind.QUEUED
-        assert result.reason == "Stream exceeded max size, defaulting to queued ingestion"
+        assert result.reason == FallbackReason.STREAMING_MAX_SIZE_EXCEEDED
 
         assert_queued_upload(
             mock_put_message_in_queue,
@@ -110,6 +117,8 @@ class TestManagedStreamingIngestClient:
             "https://storageaccount.blob.core.windows.net/tempstorage/database__table__1111-111111-111111-1111__{}?".format(os.path.basename(f.name)),
             format=data_format.value,
         )
+
+        mock_upload_blob_from_stream.assert_called()
 
     @responses.activate
     @patch("azure.kusto.data.security._AadHelper.acquire_authorization_header", return_value=None)
@@ -131,18 +140,30 @@ class TestManagedStreamingIngestClient:
         ingest_client = ManagedStreamingIngestClient("https://ingest-somecluster.kusto.windows.net")
         ingestion_properties = IngestionProperties(database="database", table="table", data_format=data_format)
 
-        stream = io.BytesIO(b"\0" * (5 * 1024 * 1024))
+        initial_bytes = bytearray(os.urandom(5 * 1024 * 1024))
+        stream = io.BytesIO(initial_bytes)
+
+        def check_bytes(data):
+            assert data.read() == initial_bytes
+
+        mock_upload_blob_from_stream.side_effect = check_bytes
+
+
         result = ingest_client.ingest_from_stream(stream, ingestion_properties=ingestion_properties)
 
         assert result.kind == IngestionResultKind.QUEUED
-        assert result.reason == "Stream exceeded max size, defaulting to queued ingestion"
+        assert result.reason == result.reason == FallbackReason.STREAMING_MAX_SIZE_EXCEEDED
 
         assert_queued_upload(
             mock_put_message_in_queue,
             mock_upload_blob_from_stream,
             "https://storageaccount.blob.core.windows.net/tempstorage/database__table__1111-111111-111111-1111__stream?",
             format=data_format.value,
+            check_raw_data=False
         )
+
+        mock_upload_blob_from_stream.assert_called()
+
 
     @responses.activate
     @patch("azure.kusto.data.security._AadHelper.acquire_authorization_header", return_value=None)
@@ -153,16 +174,17 @@ class TestManagedStreamingIngestClient:
         responses.add_callback(
             responses.POST, "https://ingest-somecluster.kusto.windows.net/v1/rest/mgmt", callback=queued_request_callback, content_type="application/json"
         )
-        helper = TransientResponseHelper(times_to_fail=ManagedStreamingIngestClient.ATTEMPTS_COUNT)
+
+        ingest_client = ManagedStreamingIngestClient("https://ingest-somecluster.kusto.windows.net", sleep_base=0)
+        ingestion_properties = IngestionProperties(database="database", table="table")
+
+        helper = TransientResponseHelper(times_to_fail=ingest_client.attempts_count)
         responses.add_callback(
             responses.POST,
             "https://somecluster.kusto.windows.net/v1/rest/ingest/database/table",
             callback=lambda x: transient_error_callback(helper),
             content_type="application/json",
         )
-
-        ingest_client = ManagedStreamingIngestClient("https://ingest-somecluster.kusto.windows.net", sleep_base=0)
-        ingestion_properties = IngestionProperties(database="database", table="table")
 
         # ensure test can work when executed from within directories
         current_dir = os.getcwd()
@@ -177,7 +199,7 @@ class TestManagedStreamingIngestClient:
         result = ingest_client.ingest_from_file(file_path, ingestion_properties=ingestion_properties)
 
         assert result.kind == IngestionResultKind.QUEUED
-        assert result.reason == "Streaming ingestion exceeded maximum retry count, defaulting to queued ingestion"
+        assert result.reason == FallbackReason.RETRIES_EXCEEDED
 
         assert_queued_upload(
             mock_put_message_in_queue,
@@ -185,7 +207,7 @@ class TestManagedStreamingIngestClient:
             "https://storageaccount.blob.core.windows.net/tempstorage/database__table__1111-111111-111111-1111__dataset.csv.gz?",
         )
 
-        assert helper.total_calls == ManagedStreamingIngestClient.ATTEMPTS_COUNT
+        assert helper.total_calls == ingest_client.attempts_count
 
     @responses.activate
     @patch("azure.kusto.data.security._AadHelper.acquire_authorization_header", return_value=None)
@@ -293,7 +315,7 @@ class TestManagedStreamingIngestClient:
         result = ingest_client.ingest_from_blob(BlobDescriptor(blob_path, 1), ingestion_properties=ingestion_properties)
 
         assert result.kind == IngestionResultKind.QUEUED
-        assert result.reason == "ingest_from_blob always uses queued ingestion"
+        assert result.reason == FallbackReason.BLOB_INGESTION
 
         assert_queued_upload(
             mock_put_message_in_queue,

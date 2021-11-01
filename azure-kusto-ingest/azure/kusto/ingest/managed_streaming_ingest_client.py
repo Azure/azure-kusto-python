@@ -4,25 +4,35 @@ from typing import TYPE_CHECKING, Union, Optional, IO, AnyStr
 from azure.kusto.data import KustoConnectionStringBuilder
 from azure.kusto.data.exceptions import KustoApiError
 from . import IngestionProperties, BlobDescriptor, StreamDescriptor, FileDescriptor
-from .base_ingest_client import BaseIngestClient, IngestionResult, IngestionResultKind
-from .helpers import get_stream_size, sleep_with_backoff
+from .base_ingest_client import BaseIngestClient, IngestionResult, IngestionResultKind, Reason
+from .helpers import sleep_with_backoff, read_until_size_or_end, chain_streams
 from .ingest_client import QueuedIngestClient
 from .streaming_ingest_client import KustoStreamingIngestClient
 
 if TYPE_CHECKING:
     pass
 
+MAX_STREAMING_SIZE = 4 * 1024 * 1024
+
+
+class FallbackReason(Reason):
+    RETRIES_EXCEEDED = "Streaming ingestion exceeded maximum retry count, defaulting to queued ingestion",
+    STREAMING_MAX_SIZE_EXCEEDED = "Stream exceeded max size of {}MB, defaulting to queued ingestion".format(MAX_STREAMING_SIZE / 1024 / 1024),
+    STREAMING_INGEST_NOT_SUPPORTED = "Streaming ingestion not supported for the table, defaulting to queued ingestion",
+    BLOB_INGESTION = "ingest_from_blob always uses queued ingestion"
+
 
 class ManagedStreamingIngestClient(BaseIngestClient):
-    ATTEMPTS_COUNT = 3
-    MAX_STREAMING_SIZE = 4 * 1024 * 1024
     STREAMING_INGEST_EXCEPTION = "Kusto.DataNode.Exceptions.StreamingIngestionRequestException"
+    DEFAULT_SLEEP_BASE = 1.0
+    DEFAULT_RETRY_COUNT = 3
 
     def __init__(
-        self,
-        queued_kcsb: Union[KustoConnectionStringBuilder, str],
-        streaming_kcsb: Optional[Union[KustoConnectionStringBuilder, str]] = None,
-        sleep_base: float = 1.0,
+            self,
+            queued_kcsb: Union[KustoConnectionStringBuilder, str],
+            streaming_kcsb: Optional[Union[KustoConnectionStringBuilder, str]] = None,
+            sleep_base: float = DEFAULT_SLEEP_BASE,
+            retries: int = DEFAULT_RETRY_COUNT
     ):
         if streaming_kcsb is None:
             kcsb = repr(queued_kcsb) if type(queued_kcsb) == KustoConnectionStringBuilder else queued_kcsb
@@ -30,7 +40,13 @@ class ManagedStreamingIngestClient(BaseIngestClient):
 
         self.queued_client = QueuedIngestClient(queued_kcsb)
         self.streaming_client = KustoStreamingIngestClient(streaming_kcsb)
+
+        if sleep_base < 0:
+            raise ValueError("sleep_base must not be negative")
         self.sleep_base = sleep_base
+        if retries < 0:
+            raise ValueError("retries must not be negative")
+        self.attempts_count = 1 + retries
 
     def ingest_from_file(self, file_descriptor: Union[FileDescriptor, str], ingestion_properties: IngestionProperties) -> IngestionResult:
         stream_descriptor = self._prepare_stream_descriptor_from_file(file_descriptor)
@@ -43,32 +59,29 @@ class ManagedStreamingIngestClient(BaseIngestClient):
         stream_descriptor = self._prepare_stream(stream_descriptor, ingestion_properties)
         stream = stream_descriptor.stream
 
-        if not stream.seekable():
-            ...  # TODO - We need the stream to be seekable to do retries, so what's the correct thing to do here:
-            # 1. Raise an exception saying we don't support non-seekable streams
-            # 2. Read the stream into a list and wrap with BytesIO (might use lots of memory)
-            # 3. Send it directly to queued ingest
+        buffered_stream = read_until_size_or_end(stream, MAX_STREAMING_SIZE + 1)
 
-        stream_descriptor.size = get_stream_size(stream)
-        if stream_descriptor.size > self.MAX_STREAMING_SIZE:
+        if len(buffered_stream.getbuffer()) > MAX_STREAMING_SIZE:
+            stream_descriptor.stream = chain_streams([buffered_stream, stream])
             self.queued_client.ingest_from_stream(stream_descriptor, ingestion_properties)
-            return IngestionResult(IngestionResultKind.QUEUED, "Stream exceeded max size, defaulting to queued ingestion")
+            return IngestionResult(IngestionResultKind.QUEUED, FallbackReason.STREAMING_MAX_SIZE_EXCEEDED)
 
-        reason = "Streaming ingestion exceeded maximum retry count, defaulting to queued ingestion"
+        stream_descriptor.stream = buffered_stream
 
-        for i in range(self.ATTEMPTS_COUNT):
+        reason = FallbackReason.RETRIES_EXCEEDED
+
+        for i in range(self.attempts_count):
             try:
                 return self.streaming_client.ingest_from_stream(stream_descriptor, ingestion_properties)
             except KustoApiError as e:
                 error = e.get_api_error()
                 if error.permanent:
-                    # Todo - do we want this behaviour, or do we want to throw an exception?
                     if error.type == self.STREAMING_INGEST_EXCEPTION:
-                        reason = "Streaming ingestion not supported for the table, defaulting to queued ingestion"
+                        reason = FallbackReason.STREAMING_INGEST_NOT_SUPPORTED
                         break
                     raise
                 stream.seek(0, SEEK_SET)
-                if i != (self.ATTEMPTS_COUNT - 1):
+                if i != (self.attempts_count - 1):
                     sleep_with_backoff(self.sleep_base, i)
 
         self.queued_client.ingest_from_stream(stream_descriptor, ingestion_properties)
@@ -86,4 +99,4 @@ class ManagedStreamingIngestClient(BaseIngestClient):
         :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
         """
         self.queued_client.ingest_from_blob(blob_descriptor, ingestion_properties)
-        return IngestionResult(IngestionResultKind.QUEUED, "ingest_from_blob always uses queued ingestion")
+        return IngestionResult(IngestionResultKind.QUEUED, FallbackReason.BLOB_INGESTION)

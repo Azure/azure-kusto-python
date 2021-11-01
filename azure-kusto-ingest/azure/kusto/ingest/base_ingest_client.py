@@ -16,13 +16,17 @@ if TYPE_CHECKING:
     import pandas
 
 
+class Reason(Enum):
+    pass
+
+
 class IngestionResultKind(Enum):
     QUEUED = "QUEUED"
     STREAMING = "STREAMING"
 
 
 class IngestionResult:
-    def __init__(self, kind: IngestionResultKind, reason: Optional[str] = None):
+    def __init__(self, kind: IngestionResultKind, reason: Optional[Reason] = None):
         self.reason = reason
         self.kind = kind
 
