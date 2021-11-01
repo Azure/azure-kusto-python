@@ -227,9 +227,10 @@ def ingest_data_from_file(client: QueuedIngestClient, db: str, table: str, file_
         flush_immediately=True,
     )
 
-    # Tip 1: For optimal ingestion batching it's best to specify the uncompressed data size in the file descriptor
+    # Tip 1: For optimal ingestion batching it's best to specify the uncompressed data size in the file descriptor.
+    #  The default value of 0 will trigger auto detection of the file size, but it may not be accurate in case of compressed files.
     # Tip 2: If you wish to correlate between ingestion operations in your applications and kusto, set the source id and log it somewhere
-    file_descriptor = FileDescriptor(file_path, source_id=uuid.uuid4())
+    file_descriptor = FileDescriptor(file_path, size=0, source_id=uuid.uuid4())
     client.ingest_from_file(file_descriptor, ingestion_properties=ingestion_props)
 
     # Tip: Kusto can also ingest data from open streams and pandas dataframes.
@@ -251,6 +252,7 @@ def ingest_data_from_blob(client: QueuedIngestClient, db: str, table: str, blob_
     )
 
     # Tip 1: For optimal ingestion batching it's best to specify the actual uncompressed data size in the blob descriptor
+    #  A value of 0 will trigger auto detection of the file size, but it may not be accurate in case of compressed files.
     # Tip 2: If you wish to correlate between ingestion operations in your applications and kusto, set the source id and log it somewhere
     blob_descriptor = BlobDescriptor(blob_path, size=0, source_id=uuid.uuid4())
     client.ingest_from_blob(blob_descriptor, ingestion_properties=ingestion_props)
