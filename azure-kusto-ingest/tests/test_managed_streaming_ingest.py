@@ -148,7 +148,6 @@ class TestManagedStreamingIngestClient:
 
         mock_upload_blob_from_stream.side_effect = check_bytes
 
-
         result = ingest_client.ingest_from_stream(stream, ingestion_properties=ingestion_properties)
 
         assert result.kind == IngestionResultKind.QUEUED
@@ -159,11 +158,10 @@ class TestManagedStreamingIngestClient:
             mock_upload_blob_from_stream,
             "https://storageaccount.blob.core.windows.net/tempstorage/database__table__1111-111111-111111-1111__stream?",
             format=data_format.value,
-            check_raw_data=False
+            check_raw_data=False,
         )
 
         mock_upload_blob_from_stream.assert_called()
-
 
     @responses.activate
     @patch("azure.kusto.data.security._AadHelper.acquire_authorization_header", return_value=None)

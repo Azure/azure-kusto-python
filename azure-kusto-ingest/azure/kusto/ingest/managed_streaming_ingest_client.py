@@ -16,9 +16,9 @@ MAX_STREAMING_SIZE = 4 * 1024 * 1024
 
 
 class FallbackReason(Reason):
-    RETRIES_EXCEEDED = "Streaming ingestion exceeded maximum retry count, defaulting to queued ingestion",
-    STREAMING_MAX_SIZE_EXCEEDED = "Stream exceeded max size of {}MB, defaulting to queued ingestion".format(MAX_STREAMING_SIZE / 1024 / 1024),
-    STREAMING_INGEST_NOT_SUPPORTED = "Streaming ingestion not supported for the table, defaulting to queued ingestion",
+    RETRIES_EXCEEDED = ("Streaming ingestion exceeded maximum retry count, defaulting to queued ingestion",)
+    STREAMING_MAX_SIZE_EXCEEDED = ("Stream exceeded max size of {}MB, defaulting to queued ingestion".format(MAX_STREAMING_SIZE / 1024 / 1024),)
+    STREAMING_INGEST_NOT_SUPPORTED = ("Streaming ingestion not supported for the table, defaulting to queued ingestion",)
     BLOB_INGESTION = "ingest_from_blob always uses queued ingestion"
 
 
@@ -28,11 +28,11 @@ class ManagedStreamingIngestClient(BaseIngestClient):
     DEFAULT_RETRY_COUNT = 3
 
     def __init__(
-            self,
-            queued_kcsb: Union[KustoConnectionStringBuilder, str],
-            streaming_kcsb: Optional[Union[KustoConnectionStringBuilder, str]] = None,
-            sleep_base: float = DEFAULT_SLEEP_BASE,
-            retries: int = DEFAULT_RETRY_COUNT
+        self,
+        queued_kcsb: Union[KustoConnectionStringBuilder, str],
+        streaming_kcsb: Optional[Union[KustoConnectionStringBuilder, str]] = None,
+        sleep_base: float = DEFAULT_SLEEP_BASE,
+        retries: int = DEFAULT_RETRY_COUNT,
     ):
         if streaming_kcsb is None:
             kcsb = repr(queued_kcsb) if type(queued_kcsb) == KustoConnectionStringBuilder else queued_kcsb
