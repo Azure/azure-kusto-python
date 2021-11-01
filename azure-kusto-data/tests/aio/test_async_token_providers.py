@@ -11,7 +11,7 @@ from .test_kusto_client import run_aio_tests
 from ..test_token_providers import KUSTO_URI, TOKEN_VALUE, TEST_AZ_AUTH, TEST_MSI_AUTH, TEST_DEVICE_AUTH, TokenProviderTests, MockProvider
 
 
-@pytest.mark.skipif(not run_aio_tests, reason="requires aio")
+@pytest.mark.skipif(not run_aio_tests, reason="requires aio ")
 @aio_documented_by(TokenProviderTests)
 class TestTokenProvider:
     @aio_documented_by(TokenProviderTests.test_base_provider)
