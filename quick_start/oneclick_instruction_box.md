@@ -2,7 +2,7 @@
 
 1. Download the **DOWNLOAD_LINK** 
 2. Unpack the script to your folder of choice
-3. Open a command line window and CD into the folder you created 
+3. Open a command line window and CD into the above folder 
 4. Run `python -m pip install azure-kusto-data azure-kusto-ingest`
 5. Run `python kusto_sample_app.py`. It will already be configured to your cluster and source.
 

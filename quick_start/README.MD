@@ -22,7 +22,7 @@ You can use it as a baseline to write your own first kusto client application, a
 5. Follow the wizard
 6. Download the app as a zip file 
 7. Unpack the script to your folder of choice
-8. Open a command line windows and CD into the folder you created 
+8. Open a command line windows and CD into the above folder 
 9. Run `python -m pip install azure-kusto-data azure-kusto-ingest`
 10. Run `python kusto_sample_app.py`. It will already be configured to your cluster and source.
 
