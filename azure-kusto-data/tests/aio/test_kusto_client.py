@@ -9,7 +9,7 @@ from azure.kusto.data.client import ClientRequestProperties
 from azure.kusto.data.exceptions import KustoMultiApiError
 from azure.kusto.data.helpers import dataframe_from_result_table
 from ..kusto_client_common import KustoClientTestsMixin, mocked_requests_post
-from ..test_kusto_client import KustoClientTests as KustoClientTestsSync
+from ..test_kusto_client import TestKustoClient as KustoClientTestsSync
 
 PANDAS = False
 try:
@@ -87,8 +87,12 @@ range x from 1 to 10 step 1"""
             properties.set_option(ClientRequestProperties.results_defer_partial_query_failures_option_name, False)
             with aioresponses() as aioresponses_mock:
                 self._mock_query(aioresponses_mock)
-                with pytest.raises(KustoMultiApiError):
+                with pytest.raises(KustoMultiApiError) as e:
                     await client.execute_query("PythonTest", query, properties)
+                errors = e.value.get_api_errors()
+                assert len(errors) == 1
+                assert errors[0].code == "LimitsExceeded"
+
                 properties.set_option(ClientRequestProperties.results_defer_partial_query_failures_option_name, True)
                 self._mock_query(aioresponses_mock)
                 response = await client.execute_query("PythonTest", query, properties)

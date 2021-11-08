@@ -1,0 +1,398 @@
+[
+  {
+    "FrameType": "DataSetHeader",
+    "IsProgressive": true,
+    "Version": "v2.0"
+  },
+  {
+    "FrameType": "DataTable",
+    "TableId": 0,
+    "TableKind": "QueryProperties",
+    "TableName": "@ExtendedProperties",
+    "Columns": [
+      {
+        "ColumnName": "TableId",
+        "ColumnType": "int"
+      },
+      {
+        "ColumnName": "Key",
+        "ColumnType": "string"
+      },
+      {
+        "ColumnName": "Value",
+        "ColumnType": "dynamic"
+      }
+    ],
+    "Rows": [
+      [
+        1,
+        "Visualization",
+        "{\"Visualization\":null,\"Title\":null,\"XColumn\":null,\"Series\":null,\"YColumns\":null,\"AnomalyColumns\":null,\"XTitle\":null,\"YTitle\":null,\"XAxis\":null,\"YAxis\":null,\"Legend\":null,\"YSplit\":null,\"Accumulate\":false,\"IsQuerySorted\":false,\"Kind\":null,\"Ymin\":\"NaN\",\"Ymax\":\"NaN\"}"
+      ]
+    ]
+  },
+  {
+    "FrameType": "TableHeader",
+    "TableId": 1,
+    "TableKind": "PrimaryResult",
+    "TableName": "PrimaryResult",
+    "Columns": [
+      {
+        "ColumnName": "StartTime",
+        "ColumnType": "datetime"
+      },
+      {
+        "ColumnName": "EndTime",
+        "ColumnType": "datetime"
+      },
+      {
+        "ColumnName": "EpisodeId",
+        "ColumnType": "int"
+      },
+      {
+        "ColumnName": "EventId",
+        "ColumnType": "int"
+      },
+      {
+        "ColumnName": "State",
+        "ColumnType": "string"
+      },
+      {
+        "ColumnName": "EventType",
+        "ColumnType": "string"
+      },
+      {
+        "ColumnName": "InjuriesDirect",
+        "ColumnType": "int"
+      },
+      {
+        "ColumnName": "InjuriesIndirect",
+        "ColumnType": "int"
+      },
+      {
+        "ColumnName": "DeathsDirect",
+        "ColumnType": "int"
+      },
+      {
+        "ColumnName": "DeathsIndirect",
+        "ColumnType": "int"
+      },
+      {
+        "ColumnName": "DamageProperty",
+        "ColumnType": "int"
+      },
+      {
+        "ColumnName": "DamageCrops",
+        "ColumnType": "int"
+      },
+      {
+        "ColumnName": "Source",
+        "ColumnType": "string"
+      },
+      {
+        "ColumnName": "BeginLocation",
+        "ColumnType": "string"
+      },
+      {
+        "ColumnName": "EndLocation",
+        "ColumnType": "string"
+      },
+      {
+        "ColumnName": "BeginLat",
+        "ColumnType": "real"
+      },
+      {
+        "ColumnName": "BeginLon",
+        "ColumnType": "real"
+      },
+      {
+        "ColumnName": "EndLat",
+        "ColumnType": "real"
+      },
+      {
+        "ColumnName": "EndLon",
+        "ColumnType": "real"
+      },
+      {
+        "ColumnName": "EpisodeNarrative",
+        "ColumnType": "string"
+      },
+      {
+        "ColumnName": "EventNarrative",
+        "ColumnType": "string"
+      },
+      {
+        "ColumnName": "StormSummary",
+        "ColumnType": "dynamic"
+      }
+    ]
+  },
+  {
+    "FrameType": "TableFragment",
+    "TableFragmentType": "DataAppend",
+    "TableId": 1,
+    "Rows": [
+      [
+        "2007-01-01T00:00:00Z",
+        "2007-01-01T00:00:00Z",
+        2592,
+        13208,
+        "NORTH CAROLINA",
+        "Thunderstorm Wind",
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        "Public",
+        "CASAR",
+        "CASAR",
+        35.52,
+        -81.63,
+        35.52,
+        -81.63,
+        "A small cluster of thunderstorms moved rapidly across the foothills and piedmont of western North Carolina, producing scattered wind damage.",
+        "Several trees down.",
+        {
+          "TotalDamages": 0,
+          "StartTime": "2007-01-01T00:00:00.0000000Z",
+          "EndTime": "2007-01-01T00:00:00.0000000Z",
+          "Details": {
+            "Description": "Several trees down.",
+            "Location": "NORTH CAROLINA"
+          }
+        }
+      ],
+      [
+        "2007-01-01T00:00:00Z",
+        "2007-01-01T05:00:00Z",
+        4171,
+        23358,
+        "WISCONSIN",
+        "Winter Storm",
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        "COOP Observer",
+        "",
+        "",
+        null,
+        null,
+        null,
+        null,
+        "A powerful storm system moved from the southern plains through eastern Wisconsin, bringing copious amounts of precipitation to northwest Wisconsin from December 30th through the morning of January 1st. Deep tropical moisture out ahead of the storm brought heavy rains to the area on December 30th and 31st. Many areas saw over 1 inch of rain. Cold air wrapped around the system and changed the rain over to snow New Year's Eve. The snow finally ended during the early morning hours of New Year's Day, with the heaviest amounts of 6 to 12 inches reported across Ashland and Iron counties.",
+        "",
+        {
+          "TotalDamages": 0,
+          "StartTime": "2007-01-01T00:00:00.0000000Z",
+          "EndTime": "2007-01-01T05:00:00.0000000Z",
+          "Details": {
+            "Description": "",
+            "Location": "WISCONSIN"
+          }
+        }
+      ],
+      [
+        "2007-01-01T00:00:00Z",
+        "2007-01-01T05:00:00Z",
+        4171,
+        23357,
+        "WISCONSIN",
+        "Winter Storm",
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        "COOP Observer",
+        "",
+        "",
+        null,
+        null,
+        null,
+        null,
+        "A powerful storm system moved from the southern plains through eastern Wisconsin, bringing copious amounts of precipitation to northwest Wisconsin from December 30th through the morning of January 1st. Deep tropical moisture out ahead of the storm brought heavy rains to the area on December 30th and 31st. Many areas saw over 1 inch of rain. Cold air wrapped around the system and changed the rain over to snow New Year's Eve. The snow finally ended during the early morning hours of New Year's Day, with the heaviest amounts of 6 to 12 inches reported across Ashland and Iron counties.",
+        "",
+        {
+          "TotalDamages": 0,
+          "StartTime": "2007-01-01T00:00:00.0000000Z",
+          "EndTime": "2007-01-01T05:00:00.0000000Z",
+          "Details": {
+            "Description": "",
+            "Location": "WISCONSIN"
+          }
+        }
+      ],
+      [
+        "2007-01-01T00:00:00Z",
+        "2007-01-01T06:00:00Z",
+        1930,
+        9494,
+        "NEW YORK",
+        "Winter Weather",
+        0,
+        0,
+        0,
+        0,
+        2000,
+        0,
+        "Department of Highways",
+        "",
+        "",
+        null,
+        null,
+        null,
+        null,
+        "A weak area of low pressure moved across Ontario and Quebec provinces in Canada during the morning and afternoon of the 1st. Mild, moist air traveled over a seasonably cool airmass across New York and this resulted in a period of freezing rain from around Midnight to just before dawn. Freezing rain accumulated up to 1/4 of an inch across northern New York resulting in slick roads and several vehicle accidents.",
+        "",
+        {
+          "TotalDamages": 2000,
+          "StartTime": "2007-01-01T00:00:00.0000000Z",
+          "EndTime": "2007-01-01T06:00:00.0000000Z",
+          "Details": {
+            "Description": "",
+            "Location": "NEW YORK"
+          }
+        }
+      ],
+      [
+        "2007-01-01T00:00:00Z",
+        "2007-01-01T06:00:00Z",
+        1930,
+        9488,
+        "NEW YORK",
+        "Winter Weather",
+        0,
+        0,
+        0,
+        0,
+        2000,
+        0,
+        "Department of Highways",
+        "",
+        "",
+        null,
+        null,
+        null,
+        null,
+        "A weak area of low pressure moved across Ontario and Quebec provinces in Canada during the morning and afternoon of the 1st. Mild, moist air traveled over a seasonably cool airmass across New York and this resulted in a period of freezing rain from around Midnight to just before dawn. Freezing rain accumulated up to 1/4 of an inch across northern New York resulting in slick roads and several vehicle accidents.",
+        "",
+        {
+          "TotalDamages": 2000,
+          "StartTime": "2007-01-01T00:00:00.0000000Z",
+          "EndTime": "2007-01-01T06:00:00.0000000Z",
+          "Details": {
+            "Description": "",
+            "Location": "NEW YORK"
+          }
+        }
+      ]
+    ]
+  },
+  {
+    "FrameType": "TableProgress",
+    "TableId": 1,
+    "TableProgress": 0.0
+  },
+  {
+    "FrameType": "TableCompletion",
+    "TableId": 1,
+    "RowCount": 5
+  },
+  {
+    "FrameType": "DataTable",
+    "TableId": 2,
+    "TableKind": "QueryCompletionInformation",
+    "TableName": "QueryCompletionInformation",
+    "Columns": [
+      {
+        "ColumnName": "Timestamp",
+        "ColumnType": "datetime"
+      },
+      {
+        "ColumnName": "ClientRequestId",
+        "ColumnType": "string"
+      },
+      {
+        "ColumnName": "ActivityId",
+        "ColumnType": "guid"
+      },
+      {
+        "ColumnName": "SubActivityId",
+        "ColumnType": "guid"
+      },
+      {
+        "ColumnName": "ParentActivityId",
+        "ColumnType": "guid"
+      },
+      {
+        "ColumnName": "Level",
+        "ColumnType": "int"
+      },
+      {
+        "ColumnName": "LevelName",
+        "ColumnType": "string"
+      },
+      {
+        "ColumnName": "StatusCode",
+        "ColumnType": "int"
+      },
+      {
+        "ColumnName": "StatusCodeName",
+        "ColumnType": "string"
+      },
+      {
+        "ColumnName": "EventType",
+        "ColumnType": "int"
+      },
+      {
+        "ColumnName": "EventTypeName",
+        "ColumnType": "string"
+      },
+      {
+        "ColumnName": "Payload",
+        "ColumnType": "string"
+      }
+    ],
+    "Rows": [
+      [
+        "2021-10-17T08:28:04.3361959Z",
+        "KPC.execute;e6ab4da1-748a-4d7e-ae35-c8b9de57d5fc",
+        "d26c0e33-1a52-493e-931b-c3c37e4adb70",
+        "d6e77cac-8a3c-4eff-aa3a-85b7fa59c724",
+        "cd40ac74-c68c-4afa-aad1-992d599bc681",
+        4,
+        "Info",
+        0,
+        "S_OK (0)",
+        4,
+        "QueryInfo",
+        "{\"Count\":1,\"Text\":\"Query completed successfully\"}"
+      ],
+      [
+        "2021-10-17T08:28:04.3361959Z",
+        "KPC.execute;e6ab4da1-748a-4d7e-ae35-c8b9de57d5fc",
+        "d26c0e33-1a52-493e-931b-c3c37e4adb70",
+        "d6e77cac-8a3c-4eff-aa3a-85b7fa59c724",
+        "cd40ac74-c68c-4afa-aad1-992d599bc681",
+        6,
+        "Stats",
+        0,
+        "S_OK (0)",
+        0,
+        "QueryResourceConsumption",
+        "{\"ExecutionTime\":0.1250077,\"resource_usage\":{\"cache\":{\"memory\":{\"hits\":0,\"misses\":0,\"total\":0},\"disk\":{\"hits\":0,\"misses\":0,\"total\":0},\"shards\":{\"hot\":{\"hitbytes\":521712,\"missbytes\":0,\"retrievebytes\":0},\"cold\":{\"hitbytes\":0,\"missbytes\":0,\"retrievebytes\":0},\"bypassbytes\":0}},\"cpu\":{\"user\":\"00:00:00\",\"kernel\":\"00:00:00\",\"total cpu\":\"00:00:00\"},\"memory\":{\"peak_per_node\":1179040},\"network\":{\"inter_cluster_total_bytes\":5072,\"intra_cluster_total_bytes\":0}},\"input_dataset_statistics\":{\"extents\":{\"total\":1,\"scanned\":1,\"scanned_min_datetime\":\"2021-10-17T05:47:23.0551402Z\",\"scanned_max_datetime\":\"2021-10-17T05:47:23.0551402Z\"},\"rows\":{\"total\":59066,\"scanned\":5},\"rowstores\":{\"scanned_rows\":0,\"scanned_values_size\":0},\"shards\":{\"queries_generic\":1,\"queries_specialized\":0}},\"dataset_statistics\":[{\"table_row_count\":5,\"table_size\":3594}]}"
+      ]
+    ]
+  },
+  {
+    "FrameType": "DataSetCompletion",
+    "HasErrors": false,
+    "Cancelled": false
+  }
+]

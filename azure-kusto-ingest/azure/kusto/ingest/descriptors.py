@@ -6,7 +6,7 @@ import struct
 import uuid
 from gzip import GzipFile
 from io import BytesIO, SEEK_END
-from typing import IO, AnyStr, Union, Optional
+from typing import Union, Optional, AnyStr, IO
 from zipfile import ZipFile
 
 OptionalUUID = Optional[Union[str, uuid.UUID]]
@@ -36,7 +36,7 @@ class FileDescriptor:
         :param path: file path.
         :type path: str.
         :param size: estimated size of file if known. if None or 0 will try to guess.
-        :type size: int.
+        :type size: Optional[int].
         :param source_id: a v4 uuid to serve as the sources id.
         :type source_id: OptionalUUID
         """
@@ -123,7 +123,8 @@ class StreamDescriptor:
 
     # TODO: currently we always assume that streams are gz compressed (will get compressed before sending), should we expand that?
     def __init__(
-        self, stream: Union[IO[AnyStr], BytesIO], source_id: Optional[str] = None, is_compressed: bool = False, stream_name: Optional[str] = None, size: int = 0
+            self, stream:  IO[AnyStr], source_id: OptionalUUID = None, is_compressed: bool = False, stream_name: Optional[str] = None,
+            size: Optional[int] = None
     ):
         """
         :param stream: in-memory stream object.
