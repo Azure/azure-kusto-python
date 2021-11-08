@@ -36,7 +36,7 @@ class FileDescriptor:
         :param path: file path.
         :type path: str.
         :param size: estimated size of file if known. if None or 0 will try to guess.
-        :type size: int.
+        :type size: Optional[int].
         :param source_id: a v4 uuid to serve as the sources id.
         :type source_id: OptionalUUID
         """
@@ -104,7 +104,7 @@ class BlobDescriptor:
         :param path: blob uri.
         :type path: str.
         :param size: estimated size of file if known.
-        :type size: Optional[int[.
+        :type size: Optional[int].
         :param source_id: a v4 uuid to serve as the sources id.
         :type source_id: OptionalUUID
         """
