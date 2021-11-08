@@ -19,6 +19,7 @@ from azure.kusto.data._models import WellKnownDataSet
 from azure.kusto.data.aio import KustoClient as AsyncKustoClient
 from azure.kusto.data.exceptions import KustoServiceError
 from azure.kusto.data.streaming_response import FrameType
+
 from azure.kusto.ingest import (
     QueuedIngestClient,
     KustoStreamingIngestClient,
@@ -32,6 +33,7 @@ from azure.kusto.ingest import (
     ReportLevel,
     ReportMethod,
     FileDescriptor,
+    BlobDescriptor,
 )
 
 CLEAR_DB_CACHE = ".clear database cache streamingingestion schema"
@@ -163,6 +165,7 @@ class TestE2E:
         cls.app_key = os.environ.get("APP_KEY")
         cls.auth_id = os.environ.get("AUTH_ID")
         cls.test_db = os.environ.get("TEST_DATABASE")
+        cls.test_blob = os.environ.get("TEST_BLOB")
 
         if not all([cls.engine_cs, cls.dm_cs, cls.test_db]):
             raise unittest.SkipTest("E2E environment is missing")
@@ -431,6 +434,30 @@ class TestE2E:
         )
 
         self.ingest_client.ingest_from_file(self.tsv_file_path, tsv_ingestion_props)
+
+        await self.assert_rows_added(10)
+
+    @pytest.mark.asyncio
+    async def test_ingest_blob(self):
+        if not self.test_blob:
+            pytest.skip("Provide blob SAS uri with 'dataset.csv'")
+
+        csv_ingest_props = IngestionProperties(
+            self.test_db,
+            self.test_table,
+            data_format=DataFormat.CSV,
+            ingestion_mapping=self.get_test_table_csv_mappings(),
+            report_level=ReportLevel.FailuresAndSuccesses,
+            flush_immediately=True,
+        )
+
+        blob_len = 1578
+        self.ingest_client.ingest_from_blob(BlobDescriptor(self.test_blob, blob_len), csv_ingest_props)
+
+        await self.assert_rows_added(10)
+
+        # Don't provide size hint
+        self.ingest_client.ingest_from_blob(BlobDescriptor(self.test_blob, size=None), csv_ingest_props)
 
         await self.assert_rows_added(10)
 

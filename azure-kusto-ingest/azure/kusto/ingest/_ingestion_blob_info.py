@@ -9,7 +9,8 @@ class _IngestionBlobInfo:
     def __init__(self, blob_descriptor: "BlobDescriptor", ingestion_properties: "IngestionProperties", auth_context=None):
         self.properties = dict()
         self.properties["BlobPath"] = blob_descriptor.path
-        self.properties["RawDataSize"] = blob_descriptor.size
+        if blob_descriptor.size:
+            self.properties["RawDataSize"] = blob_descriptor.size
         self.properties["DatabaseName"] = ingestion_properties.database
         self.properties["TableName"] = ingestion_properties.table
         self.properties["RetainBlobOnSuccess"] = True
