@@ -44,6 +44,7 @@ jobs:
         APP_KEY: ${{ secrets.APP_KEY }}
         AUTH_ID: ${{ secrets.AUTH_ID }}
         TEST_DATABASE: ${{ secrets.TEST_DATABASE }}
+        TEST_BLOB: ${{ secrets.TEST_BLOB }}
         ENGINE_CONNECTION_STRING: ${{ secrets.ENGINE_CONNECTION_STRING }}
       run: |
-        pytest ./azure-kusto-ingest/tests/e2e.py
+        pytest -v ./azure-kusto-ingest/tests/e2e.py
