@@ -4,9 +4,9 @@
 
 from datetime import timedelta
 
+from azure.kusto.data import KustoClient, KustoConnectionStringBuilder, ClientRequestProperties
 from azure.kusto.data.exceptions import KustoServiceError
 from azure.kusto.data.helpers import dataframe_from_result_table
-from azure.kusto.data import KustoClient, KustoConnectionStringBuilder, ClientRequestProperties
 
 ######################################################
 ##                        AUTH                      ##
@@ -96,6 +96,38 @@ with open("results.json", "w+") as f:
 dataframe = dataframe_from_result_table(response.primary_results[0])
 
 print(dataframe)
+
+# Streaming Query - rather than reading everything ahead, iterate through results as they come
+multiple_tables = 'StormEvents | where EventType == "Heavy Rain" | take 10; StormEvents | where EventType == "Tornado" | take 10'
+
+results = client.execute_streaming_query("DB", multiple_tables)
+tables_iter = results.iter_primary_results()
+
+first_table = next(tables_iter)
+# Will block until each row arrives
+for row in first_table:
+    # printing specific columns by index
+    print("value at 0 {}".format(row[0]))
+    print("\n")
+    # printing specific columns by name
+    print("EventType:{}".format(row["EventType"]))
+
+    # next(tables_iter) - throws, we can't read the next table until we exhausted this one
+
+# Read next table
+second_table = next(tables_iter)
+print(next(second_table))
+
+# You can always access the table's properties, even after it's exhausted
+print(first_table.columns, first_table.table_kind, first_table.table_name)
+print(second_table.columns, second_table.table_kind, second_table.table_name)
+
+# Will skip forward, but the previous table will be exhausted
+results.set_skip_incomplete_tables(True)
+next(results, None)  # Tables are finished
+
+# When we finish all the tables we get None
+print(results.tables)  # Access all tables, not just the primary results
 
 ##################
 ### EXCEPTIONS ###
