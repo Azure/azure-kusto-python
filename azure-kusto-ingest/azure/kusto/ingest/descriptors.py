@@ -123,8 +123,7 @@ class StreamDescriptor:
 
     # TODO: currently we always assume that streams are gz compressed (will get compressed before sending), should we expand that?
     def __init__(
-            self, stream:  IO[AnyStr], source_id: OptionalUUID = None, is_compressed: bool = False, stream_name: Optional[str] = None,
-            size: Optional[int] = None
+        self, stream: IO[AnyStr], source_id: OptionalUUID = None, is_compressed: bool = False, stream_name: Optional[str] = None, size: Optional[int] = None
     ):
         """
         :param stream: in-memory stream object.
