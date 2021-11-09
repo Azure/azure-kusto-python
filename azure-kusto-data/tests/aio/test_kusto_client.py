@@ -1,16 +1,15 @@
 """Tests for KustoClient."""
 import json
 import sys
-import unittest
 
 import pytest
+
 from azure.kusto.data._decorators import aio_documented_by
+from azure.kusto.data.client import ClientRequestProperties
 from azure.kusto.data.exceptions import KustoServiceError
 from azure.kusto.data.helpers import dataframe_from_result_table
-from azure.kusto.data.client import ClientRequestProperties
-
 from ..kusto_client_common import KustoClientTestsMixin, mocked_requests_post
-from ..test_kusto_client import KustoClientTests as KustoClientTestsSync
+from ..test_kusto_client import TestKustoClient as KustoClientTestsSync
 
 PANDAS = False
 try:

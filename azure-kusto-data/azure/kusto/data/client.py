@@ -8,7 +8,7 @@ import uuid
 from copy import copy
 from datetime import timedelta
 from enum import Enum, unique
-from typing import TYPE_CHECKING, Union, Callable, Optional, Any, Coroutine
+from typing import TYPE_CHECKING, Union, Callable, Optional, Any, Coroutine, List, Tuple
 
 import requests
 from requests import Response
@@ -18,8 +18,9 @@ from urllib3.connection import HTTPConnection
 from ._version import VERSION
 from .data_format import DataFormat
 from .exceptions import KustoServiceError
-from .response import KustoResponseDataSetV1, KustoResponseDataSetV2, KustoResponseDataSet
+from .response import KustoResponseDataSetV1, KustoResponseDataSetV2, KustoStreamingResponseDataSet, KustoResponseDataSet
 from .security import _AadHelper
+from .streaming_response import StreamingDataSetEnumerator, JsonTokenReader
 
 if TYPE_CHECKING:
     import aiohttp
@@ -60,7 +61,7 @@ class KustoConnectionStringBuilder:
         domain_hint = "Domain Hint"
 
         @classmethod
-        def parse(cls, key: str) -> "ValidKeywords":
+        def parse(cls, key: str) -> "KustoConnectionStringBuilder.ValidKeywords":
             """Create a valid keyword."""
             key = key.lower().strip()
             if key in ["data source", "addr", "address", "network address", "server"]:
@@ -152,7 +153,7 @@ class KustoConnectionStringBuilder:
                 else:
                     raise KeyError("Expected aad federated security to be bool. Recieved %s" % value)
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key: "Union[KustoConnectionStringBuilder.ValidKeywords, str]", value: Union[str, bool, dict]):
         try:
             keyword = key if isinstance(key, self.ValidKeywords) else self.ValidKeywords.parse(key)
         except KeyError:
@@ -438,108 +439,108 @@ class KustoConnectionStringBuilder:
         return kcsb
 
     @property
-    def data_source(self) -> str:
+    def data_source(self) -> Optional[str]:
         """The URI specifying the Kusto service endpoint.
         For example, https://kuskus.kusto.windows.net or net.tcp://localhost
         """
         return self._internal_dict.get(self.ValidKeywords.data_source)
 
     @property
-    def aad_user_id(self) -> str:
+    def aad_user_id(self) -> Optional[str]:
         """The username to use for AAD Federated AuthN."""
         return self._internal_dict.get(self.ValidKeywords.aad_user_id)
 
     @property
-    def password(self) -> str:
+    def password(self) -> Optional[str]:
         """The password to use for authentication when username/password authentication is used.
         Must be accompanied by UserID property
         """
         return self._internal_dict.get(self.ValidKeywords.password)
 
     @property
-    def application_client_id(self) -> str:
+    def application_client_id(self) -> Optional[str]:
         """The application client id to use for authentication when federated
         authentication is used.
         """
         return self._internal_dict.get(self.ValidKeywords.application_client_id)
 
     @property
-    def application_key(self) -> str:
+    def application_key(self) -> Optional[str]:
         """The application key to use for authentication when federated authentication is used"""
         return self._internal_dict.get(self.ValidKeywords.application_key)
 
     @property
-    def application_certificate(self) -> str:
+    def application_certificate(self) -> Optional[str]:
         """A PEM encoded certificate private key."""
         return self._internal_dict.get(self.ValidKeywords.application_certificate)
 
     @application_certificate.setter
-    def application_certificate(self, value):
+    def application_certificate(self, value: str):
         self[self.ValidKeywords.application_certificate] = value
 
     @property
-    def application_certificate_thumbprint(self):
+    def application_certificate_thumbprint(self) -> Optional[str]:
         """hex encoded thumbprint of the certificate."""
         return self._internal_dict.get(self.ValidKeywords.application_certificate_thumbprint)
 
     @application_certificate_thumbprint.setter
-    def application_certificate_thumbprint(self, value):
+    def application_certificate_thumbprint(self, value: str):
         self[self.ValidKeywords.application_certificate_thumbprint] = value
 
     @property
-    def application_public_certificate(self) -> str:
+    def application_public_certificate(self) -> Optional[str]:
         """A public certificate matching the PEM encoded certificate private key."""
         return self._internal_dict.get(self.ValidKeywords.public_application_certificate)
 
     @application_public_certificate.setter
-    def application_public_certificate(self, value):
+    def application_public_certificate(self, value: str):
         self[self.ValidKeywords.public_application_certificate] = value
 
     @property
-    def authority_id(self):
+    def authority_id(self) -> Optional[str]:
         """The ID of the AAD tenant where the application is configured.
         (should be supplied only for non-Microsoft tenant)"""
         return self._internal_dict.get(self.ValidKeywords.authority_id)
 
     @authority_id.setter
-    def authority_id(self, value):
+    def authority_id(self, value: str):
         self[self.ValidKeywords.authority_id] = value
 
     @property
-    def aad_federated_security(self):
+    def aad_federated_security(self) -> Optional[bool]:
         """A Boolean value that instructs the client to perform AAD federated authentication."""
         return self._internal_dict.get(self.ValidKeywords.aad_federated_security)
 
     @property
-    def user_token(self):
+    def user_token(self) -> Optional[str]:
         """User token."""
         return self._internal_dict.get(self.ValidKeywords.user_token)
 
     @property
-    def application_token(self):
+    def application_token(self) -> Optional[str]:
         """Application token."""
         return self._internal_dict.get(self.ValidKeywords.application_token)
 
     @property
-    def msi_authentication(self):
+    def msi_authentication(self) -> Optional[bool]:
         """A value stating the MSI identity type to obtain"""
         return self._internal_dict.get(self.ValidKeywords.msi_auth)
 
     @property
-    def msi_parameters(self):
+    def msi_parameters(self) -> Optional[dict]:
         """A user assigned MSI ID to be obtained"""
         return self._internal_dict.get(self.ValidKeywords.msi_params)
 
     @property
-    def az_cli(self):
+    def az_cli(self) -> Optional[bool]:
         return self._internal_dict.get(self.ValidKeywords.az_cli)
 
     @property
-    def token_provider(self):
+    def token_provider(self) -> Optional[Callable[[], str]]:
         return self._token_provider
 
     @property
-    def async_token_provider(self):
+    def async_token_provider(self) -> Optional[Callable[[], Coroutine[None, None, str]]]:
         return self._async_token_provider
 
     @property
@@ -555,21 +556,21 @@ class KustoConnectionStringBuilder:
     def domain_hint(self) -> Optional[str]:
         return self._internal_dict.get(self.ValidKeywords.domain_hint)
 
-    def __str__(self):
+    def __str__(self) -> str:
         dict_copy = self._internal_dict.copy()
         for key in dict_copy:
             if key.is_secret():
                 dict_copy[key] = "****"
         return self._build_connection_string(dict_copy)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return self._build_connection_string(self._internal_dict)
 
-    def _build_connection_string(self, kcsb_as_dict) -> str:
+    def _build_connection_string(self, kcsb_as_dict: dict) -> str:
         return ";".join(["{0}={1}".format(word.value, kcsb_as_dict[word]) for word in self.ValidKeywords if word in kcsb_as_dict])
 
 
-def _assert_value_is_valid(value):
+def _assert_value_is_valid(value: str):
     if not value or not value.strip():
         raise ValueError("Should not be empty")
 
@@ -595,34 +596,34 @@ class ClientRequestProperties:
         _assert_value_is_valid(name)
         self._parameters[name] = value
 
-    def has_parameter(self, name):
+    def has_parameter(self, name: str) -> bool:
         """Checks if a parameter is specified."""
         return name in self._parameters
 
-    def get_parameter(self, name, default_value):
+    def get_parameter(self, name: str, default_value: str) -> str:
         """Gets a parameter's value."""
         return self._parameters.get(name, default_value)
 
-    def set_option(self, name, value):
+    def set_option(self, name: str, value: Any):
         """Sets an option's value"""
         _assert_value_is_valid(name)
         self._options[name] = value
 
-    def has_option(self, name):
+    def has_option(self, name: str) -> bool:
         """Checks if an option is specified."""
         return name in self._options
 
-    def get_option(self, name, default_value):
+    def get_option(self, name: str, default_value: Any) -> str:
         """Gets an option's value."""
         return self._options.get(name, default_value)
 
-    def to_json(self):
+    def to_json(self) -> str:
         """Safe serialization to a JSON string."""
         return json.dumps({"Options": self._options, "Parameters": self._parameters}, default=str)
 
 
 class ExecuteRequestParams:
-    def __init__(self, database: str, payload: io.IOBase, properties: ClientRequestProperties, query: str, timeout: timedelta, request_headers: dict):
+    def __init__(self, database: str, payload: Optional[io.IOBase], properties: ClientRequestProperties, query: str, timeout: timedelta, request_headers: dict):
         request_headers = copy(request_headers)
         json_payload = None
         if not payload:
@@ -672,6 +673,8 @@ class HTTPAdapterWithSocketOptions(requests.adapters.HTTPAdapter):
 
 
 class _KustoClientBase:
+    API_VERSION = "2019-02-13"
+
     _mgmt_default_timeout = timedelta(hours=1, seconds=30)
     _query_default_timeout = timedelta(minutes=4, seconds=30)
     _streaming_ingest_default_timeout = timedelta(minutes=10)
@@ -686,7 +689,12 @@ class _KustoClientBase:
         self._mgmt_endpoint = "{0}/v1/rest/mgmt".format(self._kusto_cluster)
         self._query_endpoint = "{0}/v2/rest/query".format(self._kusto_cluster)
         self._streaming_ingest_endpoint = "{0}/v1/rest/ingest/".format(self._kusto_cluster)
-        self._request_headers = {"Accept": "application/json", "Accept-Encoding": "gzip,deflate", "x-ms-client-version": "Kusto.Python.Client:" + VERSION}
+        self._request_headers = {
+            "Accept": "application/json",
+            "Accept-Encoding": "gzip,deflate",
+            "x-ms-client-version": "Kusto.Python.Client:" + VERSION,
+            "x-ms-version": self.API_VERSION,
+        }
 
     @staticmethod
     def _kusto_parse_by_endpoint(endpoint: str, response_json: Any) -> KustoResponseDataSet:
@@ -763,7 +771,7 @@ class KustoClient(_KustoClientBase):
         # notice that in this context, federated actually just stands for add auth, not aad federated auth (legacy code)
         self._auth_provider = _AadHelper(self._kcsb, is_async=False) if self._kcsb.aad_federated_security else None
 
-    def set_http_retries(self, max_retries):
+    def set_http_retries(self, max_retries: int):
         """
         Set the number of HTTP retries to attempt
         """
@@ -776,7 +784,7 @@ class KustoClient(_KustoClientBase):
         self._session.mount("https://", adapter)
 
     @staticmethod
-    def compose_socket_options():
+    def compose_socket_options() -> List[Tuple[int, int, int]]:
         # Sends TCP Keep-Alive after MAX_IDLE_SECONDS seconds of idleness, once every INTERVAL_SECONDS seconds, and closes the connection after MAX_FAILED_KEEPALIVES failed pings (e.g. 20 => 1:00:30)
         MAX_IDLE_SECONDS = 30
         INTERVAL_SECONDS = 180  # Corresponds to Azure Load Balancer Service 4 minute timeout, with 1 minute of slack
@@ -814,7 +822,7 @@ class KustoClient(_KustoClientBase):
         else:
             return []
 
-    def execute(self, database: str, query: str, properties: ClientRequestProperties = None) -> KustoResponseDataSet:
+    def execute(self, database: str, query: str, properties: Optional[ClientRequestProperties] = None) -> KustoResponseDataSet:
         """
         Executes a query or management command.
         :param str database: Database against query will be executed.
@@ -828,7 +836,7 @@ class KustoClient(_KustoClientBase):
             return self.execute_mgmt(database, query, properties)
         return self.execute_query(database, query, properties)
 
-    def execute_query(self, database: str, query: str, properties: ClientRequestProperties = None) -> KustoResponseDataSet:
+    def execute_query(self, database: str, query: str, properties: Optional[ClientRequestProperties] = None) -> KustoResponseDataSet:
         """
         Execute a KQL query.
         To learn more about KQL go to https://docs.microsoft.com/en-us/azure/kusto/query/
@@ -840,7 +848,7 @@ class KustoClient(_KustoClientBase):
         """
         return self._execute(self._query_endpoint, database, query, None, self._query_default_timeout, properties)
 
-    def execute_mgmt(self, database: str, query: str, properties: ClientRequestProperties = None) -> KustoResponseDataSet:
+    def execute_mgmt(self, database: str, query: str, properties: Optional[ClientRequestProperties] = None) -> KustoResponseDataSet:
         """
         Execute a KQL control command.
         To learn more about KQL control commands go to  https://docs.microsoft.com/en-us/azure/kusto/management/
@@ -858,7 +866,7 @@ class KustoClient(_KustoClientBase):
         table: str,
         stream: io.IOBase,
         stream_format: Union[DataFormat, str],
-        properties: ClientRequestProperties = None,
+        properties: Optional[ClientRequestProperties] = None,
         mapping_name: str = None,
     ):
         """
@@ -880,25 +888,59 @@ class KustoClient(_KustoClientBase):
 
         self._execute(endpoint, database, None, stream, self._streaming_ingest_default_timeout, properties)
 
+    def _execute_streaming_query_parsed(
+        self, database: str, query: str, timeout: timedelta = _KustoClientBase._query_default_timeout, properties: Optional[ClientRequestProperties] = None
+    ) -> StreamingDataSetEnumerator:
+        response = self._execute(self._query_endpoint, database, query, None, timeout, properties, stream_response=True)
+        response.raw.decode_content = True
+        return StreamingDataSetEnumerator(JsonTokenReader(response.raw))
+
+    def execute_streaming_query(
+        self, database: str, query: str, timeout: timedelta = _KustoClientBase._query_default_timeout, properties: Optional[ClientRequestProperties] = None
+    ) -> KustoStreamingResponseDataSet:
+        """
+        Execute a KQL query without reading it all to memory.
+        The resulting KustoStreamingResponseDataSet will stream one table at a time, and the rows can be retrieved sequentially.
+
+        :param str database: Database against query will be executed.
+        :param str query: Query to be executed.
+        :param timedelta timeout: timeout for the query to be executed
+        :param azure.kusto.data.ClientRequestProperties properties: Optional additional properties.
+        :return KustoStreamingResponseDataSet:
+        """
+        return KustoStreamingResponseDataSet(self._execute_streaming_query_parsed(database, query, timeout, properties))
+
     def _execute(
-        self, endpoint: str, database: str, query: Optional[str], payload: Optional[io.IOBase], timeout: timedelta, properties: ClientRequestProperties = None
-    ):
+        self,
+        endpoint: str,
+        database: str,
+        query: Optional[str],
+        payload: Optional[io.IOBase],
+        timeout: timedelta,
+        properties: Optional[ClientRequestProperties] = None,
+        stream_response: bool = False,
+    ) -> Union[KustoResponseDataSet, Response]:
         """Executes given query against this client"""
         request_params = ExecuteRequestParams(database, payload, properties, query, timeout, self._request_headers)
         json_payload = request_params.json_payload
         request_headers = request_params.request_headers
         timeout = request_params.timeout
-
         if self._auth_provider:
             request_headers["Authorization"] = self._auth_provider.acquire_authorization_header()
+        response = self._session.post(endpoint, headers=request_headers, json=json_payload, data=payload, timeout=timeout.seconds, stream=stream_response)
 
-        response = self._session.post(endpoint, headers=request_headers, data=payload, json=json_payload, timeout=timeout.seconds)
+        if stream_response:
+            try:
+                response.raise_for_status()
+                return response
+            except Exception as e:
+                raise self._handle_http_error(e, self._query_endpoint, None, response, response.json(), response.text)
 
         response_json = None
         try:
             response_json = response.json()
             response.raise_for_status()
         except Exception as e:
-            self._handle_http_error(e, endpoint, payload, response, response.status_code, response_json, response.text)
+            raise self._handle_http_error(e, endpoint, payload, response, response.status_code, response_json, response.text)
 
         return self._kusto_parse_by_endpoint(endpoint, response_json)
