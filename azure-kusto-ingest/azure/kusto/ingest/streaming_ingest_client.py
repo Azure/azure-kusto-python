@@ -29,22 +29,18 @@ class KustoStreamingIngestClient(BaseIngestClient):
         :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
         """
 
-        stream_descriptor = self._prepare_stream_descriptor_from_file(file_descriptor)
+        stream_descriptor = StreamDescriptor.from_file_descriptor(file_descriptor)
 
-        self.ingest_from_stream(stream_descriptor, ingestion_properties)
+        with stream_descriptor.stream:
+            return self.ingest_from_stream(stream_descriptor, ingestion_properties)
 
-        if stream_descriptor.stream is not None:
-            stream_descriptor.stream.close()
-
-        return IngestionResult(IngestionResultKind.STREAMING)
-
-    def ingest_from_stream(self, stream_descriptor: Union[IO[AnyStr], StreamDescriptor], ingestion_properties: IngestionProperties) -> IngestionResult:
+    def ingest_from_stream(self, stream_descriptor: Union[StreamDescriptor, IO[AnyStr]], ingestion_properties: IngestionProperties) -> IngestionResult:
         """Ingest from io streams.
         :param azure.kusto.ingest.StreamDescriptor stream_descriptor: An object that contains a description of the stream to
                be ingested.
         :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
         """
-        stream_descriptor = self._prepare_stream(stream_descriptor, ingestion_properties)
+        stream_descriptor = BaseIngestClient._prepare_stream(stream_descriptor, ingestion_properties)
 
         self._kusto_client.execute_streaming_ingest(
             ingestion_properties.database,

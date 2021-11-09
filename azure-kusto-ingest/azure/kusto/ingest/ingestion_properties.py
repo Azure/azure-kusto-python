@@ -143,6 +143,7 @@ class IngestionProperties:
     """
 
     _mapping_required_formats = {DataFormat.JSON, DataFormat.SINGLEJSON, DataFormat.AVRO, DataFormat.MULTIJSON}
+    _binary_formats = {DataFormat.AVRO, DataFormat.ORC, DataFormat.PARQUET}
 
     def __init__(
         self,
@@ -186,4 +187,4 @@ class IngestionProperties:
         self.additional_properties = additional_properties
 
     def is_format_binary(self):
-        return self.format in [DataFormat.AVRO, DataFormat.ORC, DataFormat.PARQUET]
+        return self.format in self._binary_formats

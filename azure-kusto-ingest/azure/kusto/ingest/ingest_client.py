@@ -2,7 +2,7 @@
 # Licensed under the MIT License
 import random
 import uuid
-from typing import Union, AnyStr, IO, List
+from typing import Union, AnyStr, IO, List, Optional
 from urllib.parse import urlparse
 
 from azure.storage.blob import BlobServiceClient
@@ -40,8 +40,7 @@ class QueuedIngestClient(BaseIngestClient):
         self._suggested_endpoint_uri = None
 
     def ingest_from_file(self, file_descriptor: Union[FileDescriptor, str], ingestion_properties: IngestionProperties) -> IngestionResult:
-        """
-        Enqueue an ingest command from local files.
+        """Enqueue an ingest command from local files.
         To learn more about ingestion methods go to:
         https://docs.microsoft.com/en-us/azure/data-explorer/ingest-data-overview#ingestion-methods
         :param file_descriptor: a FileDescriptor to be ingested.
@@ -61,17 +60,20 @@ class QueuedIngestClient(BaseIngestClient):
 
         return IngestionResult(IngestionResultKind.QUEUED)
 
-    def ingest_from_stream(self, stream_descriptor: Union[IO[AnyStr], StreamDescriptor], ingestion_properties: IngestionProperties) -> IngestionResult:
+    def ingest_from_stream(self, stream_descriptor: Union[StreamDescriptor, IO[AnyStr]], ingestion_properties: IngestionProperties) -> IngestionResult:
+        """Ingest from io streams.
+        :param stream_descriptor: An object that contains a description of the stream to be ingested.
+        :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
+        """
         containers = self._get_containers()
 
-        stream_descriptor = self._prepare_stream(stream_descriptor, ingestion_properties)
+        stream_descriptor = BaseIngestClient._prepare_stream(stream_descriptor, ingestion_properties)
         self._upload_blob_and_ingest(containers, stream_descriptor, ingestion_properties, stream_descriptor.stream)
 
         return IngestionResult(IngestionResultKind.QUEUED)
 
     def ingest_from_blob(self, blob_descriptor: BlobDescriptor, ingestion_properties: IngestionProperties) -> IngestionResult:
-        """
-        Enqueue an ingest command from azure blobs.
+        """Enqueue an ingest command from azure blobs.
         To learn more about ingestion methods go to:
         https://docs.microsoft.com/en-us/azure/data-explorer/ingest-data-overview#ingestion-methods
         :param azure.kusto.ingest.BlobDescriptor blob_descriptor: An object that contains a description of the blob to be ingested.
@@ -131,10 +133,10 @@ class QueuedIngestClient(BaseIngestClient):
                         raise KustoInvalidEndpointError(self._EXPECTED_SERVICE_TYPE, self._endpoint_service_type)
                 raise KustoInvalidEndpointError(self._EXPECTED_SERVICE_TYPE, self._endpoint_service_type, self._suggested_endpoint_uri)
 
-    def _retrieve_service_type(self):
+    def _retrieve_service_type(self) -> str:
         return self._resource_manager.retrieve_service_type()
 
-    def _generate_endpoint_suggestion(self, datasource):
+    def _generate_endpoint_suggestion(self, datasource: str) -> Optional[str]:
         """The default is not passing a suggestion to the exception String"""
         endpoint_uri_to_suggest_str = None
         if datasource.strip():
@@ -148,7 +150,7 @@ class QueuedIngestClient(BaseIngestClient):
                 pass
         return endpoint_uri_to_suggest_str
 
-    def _hostname_starts_with_ingest(self, datasource):
+    def _hostname_starts_with_ingest(self, datasource: str) -> bool:
         datasource_uri = urlparse(datasource)
         hostname = datasource_uri.hostname
         return hostname and hostname.startswith(self._INGEST_PREFIX)

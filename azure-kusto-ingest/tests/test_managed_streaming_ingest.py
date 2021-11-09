@@ -173,7 +173,7 @@ class TestManagedStreamingIngestClient:
             responses.POST, "https://ingest-somecluster.kusto.windows.net/v1/rest/mgmt", callback=queued_request_callback, content_type="application/json"
         )
 
-        ingest_client = ManagedStreamingIngestClient("https://ingest-somecluster.kusto.windows.net", sleep_base=0)
+        ingest_client = ManagedStreamingIngestClient("https://ingest-somecluster.kusto.windows.net", sleep_base_in_secs=0)
         ingestion_properties = IngestionProperties(database="database", table="table")
 
         helper = TransientResponseHelper(times_to_fail=ingest_client.attempts_count)
@@ -225,7 +225,7 @@ class TestManagedStreamingIngestClient:
             content_type="application/json",
         )
 
-        ingest_client = ManagedStreamingIngestClient("https://ingest-somecluster.kusto.windows.net", sleep_base=0)
+        ingest_client = ManagedStreamingIngestClient("https://ingest-somecluster.kusto.windows.net", sleep_base_in_secs=0)
         ingestion_properties = IngestionProperties(database="database", table="table")
 
         # ensure test can work when executed from within directories

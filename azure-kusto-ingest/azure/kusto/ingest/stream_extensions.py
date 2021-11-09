@@ -2,10 +2,7 @@ import io
 import random
 import time
 
-
-# TODO - is there a better place for these functions?
-
-
+# TODO - find a correct place/name for this function
 def sleep_with_backoff(base: float, ordinal: int):
     sleep = base * ((2 ** ordinal) + random.uniform(0, 1))
     time.sleep(sleep)

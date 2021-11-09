@@ -41,17 +41,15 @@ class BaseIngestClient(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def ingest_from_stream(self, stream_descriptor: Union[IO[AnyStr], StreamDescriptor], ingestion_properties: IngestionProperties) -> IngestionResult:
+    def ingest_from_stream(self, stream_descriptor: Union[StreamDescriptor, IO[AnyStr]], ingestion_properties: IngestionProperties) -> IngestionResult:
         """Ingest from io streams.
-        :param azure.kusto.ingest.StreamDescriptor stream_descriptor: An object that contains a description of the stream to
-               be ingested.
+        :param stream_descriptor: An object that contains a description of the stream to be ingested.
         :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
         """
         pass
 
     def ingest_from_dataframe(self, df: "pandas.DataFrame", ingestion_properties: IngestionProperties) -> IngestionResult:
-        """
-        Enqueue an ingest command from local files.
+        """Enqueue an ingest command from local files.
         To learn more about ingestion methods go to:
         https://docs.microsoft.com/en-us/azure/data-explorer/ingest-data-overview#ingestion-methods
         :param pandas.DataFrame df: input dataframe to ingest.
@@ -76,7 +74,7 @@ class BaseIngestClient(metaclass=ABCMeta):
             os.unlink(temp_file_path)
 
     @staticmethod
-    def _prepare_stream(stream_descriptor: Union[IO[AnyStr], StreamDescriptor], ingestion_properties: IngestionProperties) -> StreamDescriptor:
+    def _prepare_stream(stream_descriptor: Union[StreamDescriptor, IO[AnyStr]], ingestion_properties: IngestionProperties) -> StreamDescriptor:
         if not isinstance(stream_descriptor, StreamDescriptor):
             new_descriptor = StreamDescriptor(stream_descriptor)
         else:
@@ -103,14 +101,3 @@ class BaseIngestClient(metaclass=ABCMeta):
         new_descriptor.stream = stream
 
         return new_descriptor
-
-    @staticmethod
-    def _prepare_stream_descriptor_from_file(file_descriptor):
-        if isinstance(file_descriptor, FileDescriptor):
-            descriptor = file_descriptor
-        else:
-            descriptor = FileDescriptor(file_descriptor)
-        stream = open(descriptor.path, "rb")
-        is_compressed = descriptor.path.endswith(".gz") or descriptor.path.endswith(".zip")
-        stream_descriptor = StreamDescriptor(stream, descriptor.source_id, is_compressed, descriptor.stream_name, descriptor.size)
-        return stream_descriptor

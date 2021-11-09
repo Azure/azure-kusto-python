@@ -8,7 +8,7 @@ import uuid
 from copy import copy
 from datetime import timedelta
 from enum import Enum, unique
-from typing import TYPE_CHECKING, Union, Callable, Optional, Any, Coroutine, List, Tuple
+from typing import TYPE_CHECKING, Union, Callable, Optional, Any, Coroutine, List, Tuple, AnyStr, IO
 
 import requests
 from requests import Response
@@ -874,7 +874,7 @@ class KustoClient(_KustoClientBase):
         self,
         database: str,
         table: str,
-        stream: io.IOBase,
+        stream: IO[AnyStr],
         stream_format: Union[DataFormat, str],
         properties: Optional[ClientRequestProperties] = None,
         mapping_name: str = None,

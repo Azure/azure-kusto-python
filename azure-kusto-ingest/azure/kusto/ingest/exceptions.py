@@ -32,7 +32,7 @@ class KustoMissingMappingReferenceError(KustoClientError):
     """
 
     def __init__(self, stream_format: str):
-        message = "When stream format is {}, mapping name must be provided.".format(stream_format)
+        message = f"When stream format is {stream_format}, mapping name must be provided."
         super(KustoMissingMappingReferenceError, self).__init__(message)
 
 
@@ -40,9 +40,7 @@ class KustoInvalidEndpointError(KustoClientError):
     """Raised when trying to ingest to invalid cluster type."""
 
     def __init__(self, expected_service_type, actual_service_type, suggested_endpoint_url=None):
-        message = "You are using '{0}' client type, but the provided endpoint is of ServiceType '{1}'. Initialize the client with the appropriate endpoint URI".format(
-            expected_service_type, actual_service_type
-        )
+        message = f"You are using '{expected_service_type}' client type, but the provided endpoint is of ServiceType '{actual_service_type}'. Initialize the client with the appropriate endpoint URI"
         if suggested_endpoint_url:
             message = message + ": '" + suggested_endpoint_url + "'"
         super(KustoInvalidEndpointError, self).__init__(message)

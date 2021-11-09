@@ -143,3 +143,14 @@ class StreamDescriptor:
             if is_compressed:
                 self.stream_name += ".gz"
         self.size = size
+
+    @staticmethod
+    def from_file_descriptor(file_descriptor: Union[FileDescriptor, str]) -> "StreamDescriptor":
+        if isinstance(file_descriptor, FileDescriptor):
+            descriptor = file_descriptor
+        else:
+            descriptor = FileDescriptor(file_descriptor)
+        stream = open(descriptor.path, "rb")
+        is_compressed = descriptor.path.endswith(".gz") or descriptor.path.endswith(".zip")
+        stream_descriptor = StreamDescriptor(stream, descriptor.source_id, is_compressed, descriptor.stream_name, descriptor.size)
+        return stream_descriptor
