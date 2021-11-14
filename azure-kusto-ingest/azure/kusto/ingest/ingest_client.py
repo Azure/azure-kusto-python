@@ -56,7 +56,8 @@ class QueuedIngestClient(BaseIngestClient):
         should_compress = not descriptor.is_compressed and not ingestion_properties.is_format_binary()
 
         with descriptor.open(should_compress) as stream:
-            self._upload_blob_and_ingest(containers, descriptor, ingestion_properties, stream)
+            blob_descriptor = QueuedIngestClient._upload_blob(containers, descriptor, ingestion_properties, stream)
+            self.ingest_from_blob(blob_descriptor, ingestion_properties=ingestion_properties)
 
         return IngestionResult(IngestionResultKind.QUEUED)
 
@@ -68,7 +69,8 @@ class QueuedIngestClient(BaseIngestClient):
         containers = self._get_containers()
 
         stream_descriptor = BaseIngestClient._prepare_stream(stream_descriptor, ingestion_properties)
-        self._upload_blob_and_ingest(containers, stream_descriptor, ingestion_properties, stream_descriptor.stream)
+        blob_descriptor = QueuedIngestClient._upload_blob(containers, stream_descriptor, ingestion_properties, stream_descriptor.stream)
+        self.ingest_from_blob(blob_descriptor, ingestion_properties=ingestion_properties)
 
         return IngestionResult(IngestionResultKind.QUEUED)
 
@@ -105,13 +107,13 @@ class QueuedIngestClient(BaseIngestClient):
             raise ex
         return containers
 
-    def _upload_blob_and_ingest(
-        self,
+    @staticmethod
+    def _upload_blob(
         containers: List[_ResourceUri],
         descriptor: Union[FileDescriptor, StreamDescriptor],
         ingestion_properties: IngestionProperties,
         stream: IO[AnyStr],
-    ):
+    ) -> BlobDescriptor:
         blob_name = "{db}__{table}__{guid}__{file}".format(
             db=ingestion_properties.database, table=ingestion_properties.table, guid=descriptor.source_id or uuid.uuid4(), file=descriptor.stream_name
         )
@@ -119,7 +121,7 @@ class QueuedIngestClient(BaseIngestClient):
         blob_service = BlobServiceClient(random_container.account_uri)
         blob_client = blob_service.get_blob_client(container=random_container.object_name, blob=blob_name)
         blob_client.upload_blob(data=stream)
-        self.ingest_from_blob(BlobDescriptor(blob_client.url, descriptor.size, descriptor.source_id), ingestion_properties=ingestion_properties)
+        return BlobDescriptor(blob_client.url, descriptor.size, descriptor.source_id)
 
     def _validate_endpoint_service_type(self):
         if not self._hostname_starts_with_ingest(self._connection_datasource):

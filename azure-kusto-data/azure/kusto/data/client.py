@@ -725,10 +725,10 @@ class _KustoClientBase:
             if payload:
                 raise KustoServiceError("The ingestion endpoint does not exist. Please enable streaming ingestion on your cluster.", response) from exception
 
-            raise KustoServiceError("The requested endpoint '{}' does not exist.".format(endpoint), response) from exception
+            raise KustoServiceError(f"The requested endpoint '{endpoint}' does not exist.", response) from exception
 
         if payload:
-            message = "An error occurred while trying to ingest: Status: {}, Reason: {}, Text: {}.".format(status, response.reason, response_text)
+            message = f"An error occurred while trying to ingest: Status: {status}, Reason: {response.reason}, Text: {response_text}."
             if response_json:
                 raise KustoApiError(response_json, message, response) from exception
 

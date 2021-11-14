@@ -5,7 +5,7 @@ from azure.kusto.data import KustoConnectionStringBuilder
 from azure.kusto.data.exceptions import KustoApiError
 from . import IngestionProperties, BlobDescriptor, StreamDescriptor, FileDescriptor
 from .base_ingest_client import BaseIngestClient, IngestionResult, IngestionResultKind, Reason
-from .stream_extensions import sleep_with_backoff, read_until_size_or_end, chain_streams
+from ._stream_extensions import sleep_with_backoff, read_until_size_or_end, chain_streams
 from .ingest_client import QueuedIngestClient
 from .streaming_ingest_client import KustoStreamingIngestClient
 
