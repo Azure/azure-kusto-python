@@ -1,13 +1,11 @@
 from io import SEEK_SET
 from typing import TYPE_CHECKING, Union, Optional, IO, AnyStr
 
-from retry.api import retry_call
-
 from azure.kusto.data import KustoConnectionStringBuilder
 from azure.kusto.data.exceptions import KustoApiError
 from . import IngestionProperties, BlobDescriptor, StreamDescriptor, FileDescriptor
-from ._stream_extensions import read_until_size_or_end, chain_streams
 from .base_ingest_client import BaseIngestClient, IngestionResult, IngestionResultKind, Reason
+from ._stream_extensions import sleep_with_backoff, read_until_size_or_end, chain_streams
 from .ingest_client import QueuedIngestClient
 from .streaming_ingest_client import KustoStreamingIngestClient
 
@@ -22,10 +20,6 @@ class FallbackReason(Reason):
     STREAMING_MAX_SIZE_EXCEEDED = ("Stream exceeded max size of {}MB, defaulting to queued ingestion".format(MAX_STREAMING_SIZE_IN_BYTES / 1024 / 1024),)
     STREAMING_INGEST_NOT_SUPPORTED = ("Streaming ingestion not supported for the table, defaulting to queued ingestion",)
     BLOB_INGESTION = "ingest_from_blob always uses queued ingestion"
-
-
-class KustoTemporaryError(Exception):
-    ...
 
 
 class ManagedStreamingIngestClient(BaseIngestClient):
@@ -75,36 +69,24 @@ class ManagedStreamingIngestClient(BaseIngestClient):
 
         stream_descriptor.stream = buffered_stream
 
-        try:
-            result = retry_call(
-                self._do_ingest,
-                [stream_descriptor, ingestion_properties],
-                tries=self.attempts_count,
-                delay=self.sleep_base_in_secs,
-                backoff=2,
-                jitter=1 * self.sleep_base_in_secs,
-                exceptions=KustoTemporaryError,
-            )
-        except KustoTemporaryError:
-            result = IngestionResult(IngestionResultKind.QUEUED, FallbackReason.RETRIES_EXCEEDED)
+        reason = FallbackReason.RETRIES_EXCEEDED
 
-        if result.kind != result.kind.STREAMING:
-            self.queued_client.ingest_from_stream(stream_descriptor, ingestion_properties)
-            return IngestionResult(IngestionResultKind.QUEUED, result.reason)
+        for i in range(self.attempts_count):
+            try:
+                return self.streaming_client.ingest_from_stream(stream_descriptor, ingestion_properties)
+            except KustoApiError as e:
+                error = e.get_api_error()
+                if error.permanent:
+                    if error.type == self.STREAMING_INGEST_EXCEPTION:
+                        reason = FallbackReason.STREAMING_INGEST_NOT_SUPPORTED
+                        break
+                    raise
+                stream.seek(0, SEEK_SET)
+                if i != (self.attempts_count - 1):
+                    sleep_with_backoff(self.sleep_base_in_secs, i)
 
-        return result
-
-    def _do_ingest(self, stream_descriptor: StreamDescriptor, ingestion_properties: IngestionProperties) -> IngestionResult:
-        try:
-            return self.streaming_client.ingest_from_stream(stream_descriptor, ingestion_properties)
-        except KustoApiError as e:
-            error = e.get_api_error()
-            if error.permanent:
-                if error.type == self.STREAMING_INGEST_EXCEPTION:
-                    return IngestionResult(IngestionResultKind.QUEUED, FallbackReason.STREAMING_INGEST_NOT_SUPPORTED)
-                raise
-            stream_descriptor.stream.seek(0, SEEK_SET)
-            raise KustoTemporaryError()
+        self.queued_client.ingest_from_stream(stream_descriptor, ingestion_properties)
+        return IngestionResult(IngestionResultKind.QUEUED, reason)
 
     def ingest_from_blob(self, blob_descriptor: BlobDescriptor, ingestion_properties: IngestionProperties):
         """
