@@ -9,7 +9,7 @@ import pytest
 import responses
 from mock import patch
 
-from azure.kusto.ingest import QueuedIngestClient, IngestionProperties, DataFormat, IngestionResultKind
+from azure.kusto.ingest import QueuedIngestClient, IngestionProperties, DataFormat, IngestionStatus
 from azure.kusto.ingest.exceptions import KustoInvalidEndpointError
 from azure.kusto.ingest.managed_streaming_ingest_client import ManagedStreamingIngestClient
 
@@ -108,37 +108,6 @@ def request_callback(request):
     return response_status, response_headers, json.dumps(response_body)
 
 
-def unsupported_streaming_callback(request):
-    response_status = 400
-    response_headers = dict()
-    response_body = {
-        "error": {
-            "code": "BadRequest",
-            "message": "Request is invalid and cannot be executed.",
-            "@type": "Kusto.DataNode.Exceptions.StreamingIngestionRequestException",
-            "@message": "Bad streaming ingestion request to SomeCluster.NodeTest1634825396843 : No streaming ingestion policy defined for the table",
-            "@context": {
-                "timestamp": "2021-10-21T14:12:00.7878847Z",
-                "serviceAlias": "SomeCluster",
-                "machineName": "KEngine000000",
-                "processName": "Kusto.WinSvc.Svc",
-                "processId": 3040,
-                "threadId": 7524,
-                "appDomainName": "Kusto.WinSvc.Svc.exe",
-                "clientRequestId": "KNC.executeStreamingIngest;a4d80ca5-8729-404b-b745-0d5555737483",
-                "activityId": "bace3d9d-d949-457e-b741-1d2c6bc56658",
-                "subActivityId": "bace3d9d-d949-457e-b741-1d2c6bc56658",
-                "activityType": "PO.OWIN.CallContext",
-                "parentActivityId": "bace3d9d-d949-457e-b741-1d2c6bc56658",
-                "activityStack": "(Activity stack: CRID=KNC.executeStreamingIngest;a4d80ca5-8729-404b-b745-0d5555737493 ARID=bace3d9d-d949-457e-b741-1d2c6bc56678 > PO.OWIN.CallContext/bace3d9d-d949-457e-b741-1d2c6bc56678 > PO.OWIN.CallContext/bace3d9d-d949-457e-b741-1d2c6bc56678)",
-            },
-            "@permanent": True,
-        }
-    }
-
-    return response_status, response_headers, json.dumps(response_body)
-
-
 def request_error_callback(request):
     body = json.loads(request.body.decode()) if type(request.body) == bytes else json.loads(request.body)
     response_status = 400
@@ -153,7 +122,7 @@ def request_error_callback(request):
                 "message": "Request is invalid and cannot be executed.",
                 "@type": "Kusto.Common.Svc.Exceptions.AdminCommandWrongEndpointException",
                 "@message": "Cannot get ingestion resources from this service endpoint. The appropriate endpoint is most likely "
-                "'https://ingest-somecluster.kusto.windows.net/'.",
+                            "'https://ingest-somecluster.kusto.windows.net/'.",
                 "@context": {
                     "timestamp": "2021-10-12T06:05:35.6602087Z",
                     "serviceAlias": "SomeCluster",
@@ -229,19 +198,16 @@ class TestQueuedIngestClient:
     MOCKED_TIME = 100
 
     @responses.activate
+    @patch("azure.kusto.ingest.managed_streaming_ingest_client.ManagedStreamingIngestClient.MAX_STREAMING_SIZE_IN_BYTES",
+           new=0)  # Trick to always fallback to queued ingest
     @patch("azure.kusto.data.security._AadHelper.acquire_authorization_header", return_value=None)
     @patch("azure.storage.blob.BlobClient.upload_blob")
     @patch("azure.storage.queue.QueueClient.send_message")
     @patch("uuid.uuid4", return_value=MOCKED_UUID_4)
-    def test_sanity_ingest_from_file(self, mock_uuid, mock_put_message_in_queue, mock_upload_blob_from_stream, mock_aad, ingest_client_class):
+    def test_sanity_ingest_from_file(self, mock_uuid, mock_put_message_in_queue, mock_upload_blob_from_stream, mock_aad,
+                                     ingest_client_class):
         responses.add_callback(
             responses.POST, "https://ingest-somecluster.kusto.windows.net/v1/rest/mgmt", callback=request_callback, content_type="application/json"
-        )
-        responses.add_callback(
-            responses.POST,
-            "https://somecluster.kusto.windows.net/v1/rest/ingest/database/table",
-            callback=unsupported_streaming_callback,
-            content_type="application/json",
         )
 
         ingest_client = ingest_client_class("https://ingest-somecluster.kusto.windows.net")
@@ -259,7 +225,7 @@ class TestQueuedIngestClient:
 
         result = ingest_client.ingest_from_file(file_path, ingestion_properties=ingestion_properties)
 
-        assert result.kind == IngestionResultKind.QUEUED
+        assert result.status == IngestionStatus.PENDING
 
         assert_queued_upload(
             mock_put_message_in_queue,
@@ -268,15 +234,10 @@ class TestQueuedIngestClient:
         )
 
     @responses.activate
+    @patch("azure.kusto.ingest.managed_streaming_ingest_client.ManagedStreamingIngestClient.MAX_STREAMING_SIZE_IN_BYTES", new=0)
     def test_ingest_from_file_wrong_endpoint(self, ingest_client_class):
         responses.add_callback(
             responses.POST, "https://somecluster.kusto.windows.net/v1/rest/mgmt", callback=request_error_callback, content_type="application/json"
-        )
-        responses.add_callback(
-            responses.POST,
-            "https://somecluster.kusto.windows.net/v1/rest/ingest/database/table",
-            callback=unsupported_streaming_callback,
-            content_type="application/json",
         )
 
         ingest_client = ingest_client_class("https://somecluster.kusto.windows.net")
@@ -295,12 +256,13 @@ class TestQueuedIngestClient:
             ingest_client.ingest_from_file(file_path, ingestion_properties=ingestion_properties)
 
         assert (
-            ex.value.args[0] == "You are using 'DataManagement' client type, but the provided endpoint is of ServiceType 'Engine'. Initialize the "
-            "client with the appropriate endpoint URI: 'https://ingest-somecluster.kusto.windows.net'"
+                ex.value.args[0] == "You are using 'DataManagement' client type, but the provided endpoint is of ServiceType 'Engine'. Initialize the "
+                                    "client with the appropriate endpoint URI: 'https://ingest-somecluster.kusto.windows.net'"
         ), ("Expected exception was " "not raised")
 
     @responses.activate
     @pytest.mark.skipif(not pandas_installed, reason="requires pandas")
+    @patch("azure.kusto.ingest.managed_streaming_ingest_client.ManagedStreamingIngestClient.MAX_STREAMING_SIZE_IN_BYTES", new=0)
     @patch("azure.storage.blob.BlobClient.upload_blob")
     @patch("azure.storage.queue.QueueClient.send_message")
     @patch("uuid.uuid4", return_value=MOCKED_UUID_4)
@@ -309,12 +271,6 @@ class TestQueuedIngestClient:
     def test_simple_ingest_from_dataframe(self, mock_pid, mock_time, mock_uuid, mock_put_message_in_queue, mock_upload_blob_from_stream, ingest_client_class):
         responses.add_callback(
             responses.POST, "https://ingest-somecluster.kusto.windows.net/v1/rest/mgmt", callback=request_callback, content_type="application/json"
-        )
-        responses.add_callback(
-            responses.POST,
-            "https://somecluster.kusto.windows.net/v1/rest/ingest/database/table",
-            callback=unsupported_streaming_callback,
-            content_type="application/json",
         )
 
         ingest_client = ingest_client_class("https://ingest-somecluster.kusto.windows.net")
@@ -327,7 +283,7 @@ class TestQueuedIngestClient:
         df = DataFrame(data=rows, columns=fields)
 
         result = ingest_client.ingest_from_dataframe(df, ingestion_properties=ingestion_properties)
-        assert result.kind == IngestionResultKind.QUEUED
+        assert result.status == IngestionStatus.PENDING
 
         expected_url = "https://storageaccount.blob.core.windows.net/tempstorage/database__table__1111-111111-111111-1111__df_{0}_100_1111-111111-111111-1111.csv.gz?".format(
             id(df)
@@ -336,6 +292,7 @@ class TestQueuedIngestClient:
         assert_queued_upload(mock_put_message_in_queue, mock_upload_blob_from_stream, expected_url)
 
     @responses.activate
+    @patch("azure.kusto.ingest.managed_streaming_ingest_client.ManagedStreamingIngestClient.MAX_STREAMING_SIZE_IN_BYTES", new=0)
     @patch("azure.kusto.data.security._AadHelper.acquire_authorization_header", return_value=None)
     @patch("azure.storage.blob.BlobClient.upload_blob")
     @patch("azure.storage.queue.QueueClient.send_message")
@@ -343,12 +300,6 @@ class TestQueuedIngestClient:
     def test_sanity_ingest_from_stream(self, mock_uuid, mock_put_message_in_queue, mock_upload_blob_from_stream, mock_aad, ingest_client_class):
         responses.add_callback(
             responses.POST, "https://ingest-somecluster.kusto.windows.net/v1/rest/mgmt", callback=request_callback, content_type="application/json"
-        )
-        responses.add_callback(
-            responses.POST,
-            "https://somecluster.kusto.windows.net/v1/rest/ingest/database/table",
-            callback=unsupported_streaming_callback,
-            content_type="application/json",
         )
 
         ingest_client = ingest_client_class("https://ingest-somecluster.kusto.windows.net")
@@ -366,7 +317,7 @@ class TestQueuedIngestClient:
         file_path = os.path.join(current_dir, *missing_path_parts)
 
         result = ingest_client.ingest_from_stream(io.StringIO(Path(file_path).read_text()), ingestion_properties=ingestion_properties)
-        assert result.kind == IngestionResultKind.QUEUED
+        assert result.status == IngestionStatus.PENDING
 
         assert_queued_upload(
             mock_put_message_in_queue,

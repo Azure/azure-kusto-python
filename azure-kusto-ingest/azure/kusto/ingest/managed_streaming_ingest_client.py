@@ -6,25 +6,16 @@ from azure.kusto.data.exceptions import KustoApiError
 from . import IngestionProperties, BlobDescriptor, StreamDescriptor, FileDescriptor
 from ._retry import ExponentialRetry
 from ._stream_extensions import read_until_size_or_end, chain_streams
-from .base_ingest_client import BaseIngestClient, IngestionResult, IngestionResultKind, Reason
+from .base_ingest_client import BaseIngestClient, IngestionResult
 from .ingest_client import QueuedIngestClient
 from .streaming_ingest_client import KustoStreamingIngestClient
 
 if TYPE_CHECKING:
     pass
 
-MAX_STREAMING_SIZE_IN_BYTES = 4 * 1024 * 1024
-
-
-class FallbackReason(Reason):
-    RETRIES_EXCEEDED = ("Streaming ingestion exceeded maximum retry count, defaulting to queued ingestion",)
-    STREAMING_MAX_SIZE_EXCEEDED = ("Stream exceeded max size of {}MB, defaulting to queued ingestion".format(MAX_STREAMING_SIZE_IN_BYTES / 1024 / 1024),)
-    STREAMING_INGEST_NOT_SUPPORTED = ("Streaming ingestion not supported for the table, defaulting to queued ingestion",)
-    BLOB_INGESTION = "ingest_from_blob always uses queued ingestion"
-
 
 class ManagedStreamingIngestClient(BaseIngestClient):
-    STREAMING_INGEST_EXCEPTION = "Kusto.DataNode.Exceptions.StreamingIngestionRequestException"
+    MAX_STREAMING_SIZE_IN_BYTES = 4 * 1024 * 1024
     ATTEMPT_COUNT = 4
 
     def __init__(self, queued_kcsb: Union[KustoConnectionStringBuilder, str], streaming_kcsb: Optional[Union[KustoConnectionStringBuilder, str]] = None):
@@ -47,16 +38,13 @@ class ManagedStreamingIngestClient(BaseIngestClient):
         stream_descriptor = BaseIngestClient._prepare_stream(stream_descriptor, ingestion_properties)
         stream = stream_descriptor.stream
 
-        buffered_stream = read_until_size_or_end(stream, MAX_STREAMING_SIZE_IN_BYTES + 1)
+        buffered_stream = read_until_size_or_end(stream, self.MAX_STREAMING_SIZE_IN_BYTES + 1)
 
-        if len(buffered_stream.getbuffer()) > MAX_STREAMING_SIZE_IN_BYTES:
+        if len(buffered_stream.getbuffer()) > self.MAX_STREAMING_SIZE_IN_BYTES:
             stream_descriptor.stream = chain_streams([buffered_stream, stream])
-            self.queued_client.ingest_from_stream(stream_descriptor, ingestion_properties)
-            return IngestionResult(IngestionResultKind.QUEUED, FallbackReason.STREAMING_MAX_SIZE_EXCEEDED)
+            return self.queued_client.ingest_from_stream(stream_descriptor, ingestion_properties)
 
         stream_descriptor.stream = buffered_stream
-
-        reason = FallbackReason.RETRIES_EXCEEDED
 
         retry = self._create_exponential_retry()
         while retry:
@@ -65,15 +53,11 @@ class ManagedStreamingIngestClient(BaseIngestClient):
             except KustoApiError as e:
                 error = e.get_api_error()
                 if error.permanent:
-                    if error.type == self.STREAMING_INGEST_EXCEPTION:
-                        reason = FallbackReason.STREAMING_INGEST_NOT_SUPPORTED
-                        break
                     raise
                 stream.seek(0, SEEK_SET)
                 retry.backoff()
 
-        self.queued_client.ingest_from_stream(stream_descriptor, ingestion_properties)
-        return IngestionResult(IngestionResultKind.QUEUED, reason)
+        return self.queued_client.ingest_from_stream(stream_descriptor, ingestion_properties)
 
     def ingest_from_blob(self, blob_descriptor: BlobDescriptor, ingestion_properties: IngestionProperties):
         """
@@ -86,8 +70,8 @@ class ManagedStreamingIngestClient(BaseIngestClient):
         :param azure.kusto.ingest.BlobDescriptor blob_descriptor: An object that contains a description of the blob to be ingested.
         :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
         """
-        self.queued_client.ingest_from_blob(blob_descriptor, ingestion_properties)
-        return IngestionResult(IngestionResultKind.QUEUED, FallbackReason.BLOB_INGESTION)
+        return self.queued_client.ingest_from_blob(blob_descriptor, ingestion_properties)
 
-    def _create_exponential_retry(self):
+    @staticmethod
+    def _create_exponential_retry():
         return ExponentialRetry(ManagedStreamingIngestClient.ATTEMPT_COUNT)

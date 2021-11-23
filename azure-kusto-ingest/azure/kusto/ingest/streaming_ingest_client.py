@@ -5,7 +5,7 @@ from typing import Union, AnyStr
 from typing import IO
 
 from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
-from .base_ingest_client import BaseIngestClient, IngestionResult, IngestionResultKind
+from .base_ingest_client import BaseIngestClient, IngestionResult, IngestionStatus
 from .descriptors import FileDescriptor, StreamDescriptor
 from .ingestion_properties import IngestionProperties
 
@@ -50,4 +50,4 @@ class KustoStreamingIngestClient(BaseIngestClient):
             mapping_name=ingestion_properties.ingestion_mapping_reference,
         )
 
-        return IngestionResult(IngestionResultKind.STREAMING)
+        return IngestionResult(IngestionStatus.SUCCESS)

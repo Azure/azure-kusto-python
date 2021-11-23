@@ -12,7 +12,7 @@ from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
 from azure.kusto.data.exceptions import KustoServiceError
 from ._ingestion_blob_info import _IngestionBlobInfo
 from ._resource_manager import _ResourceManager, _ResourceUri
-from .base_ingest_client import BaseIngestClient, IngestionResult, IngestionResultKind
+from .base_ingest_client import BaseIngestClient, IngestionResult, IngestionStatus
 from .descriptors import BlobDescriptor, FileDescriptor, StreamDescriptor
 from .exceptions import KustoInvalidEndpointError
 from .ingestion_properties import IngestionProperties
@@ -59,7 +59,7 @@ class QueuedIngestClient(BaseIngestClient):
             blob_descriptor = QueuedIngestClient._upload_blob(containers, descriptor, ingestion_properties, stream)
             self.ingest_from_blob(blob_descriptor, ingestion_properties=ingestion_properties)
 
-        return IngestionResult(IngestionResultKind.QUEUED)
+        return IngestionResult(IngestionStatus.PENDING)
 
     def ingest_from_stream(self, stream_descriptor: Union[StreamDescriptor, IO[AnyStr]], ingestion_properties: IngestionProperties) -> IngestionResult:
         """Ingest from io streams.
@@ -72,7 +72,7 @@ class QueuedIngestClient(BaseIngestClient):
         blob_descriptor = QueuedIngestClient._upload_blob(containers, stream_descriptor, ingestion_properties, stream_descriptor.stream)
         self.ingest_from_blob(blob_descriptor, ingestion_properties=ingestion_properties)
 
-        return IngestionResult(IngestionResultKind.QUEUED)
+        return IngestionResult(IngestionStatus.PENDING)
 
     def ingest_from_blob(self, blob_descriptor: BlobDescriptor, ingestion_properties: IngestionProperties) -> IngestionResult:
         """Enqueue an ingest command from azure blobs.
@@ -97,7 +97,7 @@ class QueuedIngestClient(BaseIngestClient):
         queue_client = queue_service.get_queue_client(queue=random_queue.object_name, message_encode_policy=TextBase64EncodePolicy())
         queue_client.send_message(content=content)
 
-        return IngestionResult(IngestionResultKind.QUEUED)
+        return IngestionResult(IngestionStatus.PENDING)
 
     def _get_containers(self) -> List[_ResourceUri]:
         try:

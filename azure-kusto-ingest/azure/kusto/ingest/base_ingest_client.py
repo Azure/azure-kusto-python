@@ -7,7 +7,7 @@ from copy import copy
 from enum import Enum
 from gzip import GzipFile
 from io import TextIOWrapper, BytesIO
-from typing import TYPE_CHECKING, Union, IO, AnyStr, Optional
+from typing import TYPE_CHECKING, Union, IO, AnyStr
 
 from .descriptors import FileDescriptor, StreamDescriptor
 from .ingestion_properties import DataFormat, IngestionProperties
@@ -16,19 +16,22 @@ if TYPE_CHECKING:
     import pandas
 
 
-class Reason(Enum):
-    pass
+class IngestionStatus(Enum):
+    """
+    The ingestion was queued.
+    """
+    PENDING = "PENDING"
+    """
+    The ingestion was successfully streamed
+    """
+    SUCCESS = "SUCCESS"
 
 
-class IngestionResultKind(Enum):
-    QUEUED = "QUEUED"
-    STREAMING = "STREAMING"
-
-
+# TODO - do we want to return an array of statuses, to match java/c#?
+# TODO - do we want to add fields like database, table, etc like java/c#?
 class IngestionResult:
-    def __init__(self, kind: IngestionResultKind, reason: Optional[Reason] = None):
-        self.reason = reason
-        self.kind = kind
+    def __init__(self, status: IngestionStatus):
+        self.status = status
 
 
 class BaseIngestClient(metaclass=ABCMeta):

@@ -8,7 +8,7 @@ import responses
 from mock import patch
 
 from azure.kusto.data.exceptions import KustoApiError
-from azure.kusto.ingest import ManagedStreamingIngestClient, IngestionProperties, DataFormat, IngestionResultKind, BlobDescriptor, FallbackReason
+from azure.kusto.ingest import ManagedStreamingIngestClient, IngestionProperties, DataFormat, IngestionStatus, BlobDescriptor
 from azure.kusto.ingest._retry import ExponentialRetry
 from test_kusto_ingest_client import request_callback as queued_request_callback, assert_queued_upload
 from test_kusto_streaming_ingest_client import request_callback as streaming_request_callback
@@ -116,8 +116,7 @@ class TestManagedStreamingIngestClient:
         finally:
             os.unlink(f.name)
 
-        assert result.kind == IngestionResultKind.QUEUED
-        assert result.reason == FallbackReason.STREAMING_MAX_SIZE_EXCEEDED
+        assert result.status == IngestionStatus.PENDING
 
         assert_queued_upload(
             mock_put_message_in_queue,
@@ -158,8 +157,7 @@ class TestManagedStreamingIngestClient:
 
         result = ingest_client.ingest_from_stream(stream, ingestion_properties=ingestion_properties)
 
-        assert result.kind == IngestionResultKind.QUEUED
-        assert result.reason == result.reason == FallbackReason.STREAMING_MAX_SIZE_EXCEEDED
+        assert result.status == IngestionStatus.PENDING
 
         assert_queued_upload(
             mock_put_message_in_queue,
@@ -210,8 +208,7 @@ class TestManagedStreamingIngestClient:
 
         result = ingest_client.ingest_from_file(file_path, ingestion_properties=ingestion_properties)
 
-        assert result.kind == IngestionResultKind.QUEUED
-        assert result.reason == FallbackReason.RETRIES_EXCEEDED
+        assert result.status == IngestionStatus.PENDING
 
         assert_queued_upload(
             mock_put_message_in_queue,
@@ -259,7 +256,7 @@ class TestManagedStreamingIngestClient:
 
         result = ingest_client.ingest_from_file(file_path, ingestion_properties=ingestion_properties)
 
-        assert result.kind == IngestionResultKind.STREAMING
+        assert result.status == IngestionStatus.SUCCESS
 
         assert helper.total_calls == total_failures + 1
 
@@ -331,8 +328,7 @@ class TestManagedStreamingIngestClient:
         )
         result = ingest_client.ingest_from_blob(BlobDescriptor(blob_path, 1), ingestion_properties=ingestion_properties)
 
-        assert result.kind == IngestionResultKind.QUEUED
-        assert result.reason == FallbackReason.BLOB_INGESTION
+        assert result.status == IngestionStatus.PENDING
 
         assert_queued_upload(
             mock_put_message_in_queue,
