@@ -4,8 +4,9 @@ from typing import TYPE_CHECKING, Union, Optional, IO, AnyStr
 from azure.kusto.data import KustoConnectionStringBuilder
 from azure.kusto.data.exceptions import KustoApiError
 from . import IngestionProperties, BlobDescriptor, StreamDescriptor, FileDescriptor
+from ._retry import ExponentialRetry
+from ._stream_extensions import read_until_size_or_end, chain_streams
 from .base_ingest_client import BaseIngestClient, IngestionResult, IngestionResultKind, Reason
-from ._stream_extensions import sleep_with_backoff, read_until_size_or_end, chain_streams
 from .ingest_client import QueuedIngestClient
 from .streaming_ingest_client import KustoStreamingIngestClient
 
@@ -24,21 +25,9 @@ class FallbackReason(Reason):
 
 class ManagedStreamingIngestClient(BaseIngestClient):
     STREAMING_INGEST_EXCEPTION = "Kusto.DataNode.Exceptions.StreamingIngestionRequestException"
-    DEFAULT_SLEEP_BASE = 1.0
-    DEFAULT_RETRY_COUNT = 3
+    ATTEMPT_COUNT = 4
 
-    def __init__(
-        self,
-        queued_kcsb: Union[KustoConnectionStringBuilder, str],
-        streaming_kcsb: Optional[Union[KustoConnectionStringBuilder, str]] = None,
-        sleep_base_in_secs: float = DEFAULT_SLEEP_BASE,
-        retries: int = DEFAULT_RETRY_COUNT,
-    ):
-        if sleep_base_in_secs < 0:
-            raise ValueError("sleep_base must not be negative")
-        self.sleep_base_in_secs = sleep_base_in_secs
-        if retries < 0:
-            raise ValueError("retries must not be negative")
+    def __init__(self, queued_kcsb: Union[KustoConnectionStringBuilder, str], streaming_kcsb: Optional[Union[KustoConnectionStringBuilder, str]] = None):
 
         if streaming_kcsb is None:
             kcsb = repr(queued_kcsb) if type(queued_kcsb) == KustoConnectionStringBuilder else queued_kcsb
@@ -46,8 +35,6 @@ class ManagedStreamingIngestClient(BaseIngestClient):
 
         self.queued_client = QueuedIngestClient(queued_kcsb)
         self.streaming_client = KustoStreamingIngestClient(streaming_kcsb)
-
-        self.attempts_count = 1 + retries
 
     def ingest_from_file(self, file_descriptor: Union[FileDescriptor, str], ingestion_properties: IngestionProperties) -> IngestionResult:
         stream_descriptor = StreamDescriptor.from_file_descriptor(file_descriptor)
@@ -71,7 +58,8 @@ class ManagedStreamingIngestClient(BaseIngestClient):
 
         reason = FallbackReason.RETRIES_EXCEEDED
 
-        for i in range(self.attempts_count):
+        retry = self._create_exponential_retry()
+        while retry:
             try:
                 return self.streaming_client.ingest_from_stream(stream_descriptor, ingestion_properties)
             except KustoApiError as e:
@@ -82,8 +70,7 @@ class ManagedStreamingIngestClient(BaseIngestClient):
                         break
                     raise
                 stream.seek(0, SEEK_SET)
-                if i != (self.attempts_count - 1):
-                    sleep_with_backoff(self.sleep_base_in_secs, i)
+                retry.backoff()
 
         self.queued_client.ingest_from_stream(stream_descriptor, ingestion_properties)
         return IngestionResult(IngestionResultKind.QUEUED, reason)
@@ -101,3 +88,6 @@ class ManagedStreamingIngestClient(BaseIngestClient):
         """
         self.queued_client.ingest_from_blob(blob_descriptor, ingestion_properties)
         return IngestionResult(IngestionResultKind.QUEUED, FallbackReason.BLOB_INGESTION)
+
+    def _create_exponential_retry(self):
+        return ExponentialRetry(ManagedStreamingIngestClient.ATTEMPT_COUNT)

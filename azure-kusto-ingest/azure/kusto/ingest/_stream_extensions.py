@@ -1,14 +1,9 @@
 import io
-import random
-import time
 
-# TODO - find a correct place/name for this function
-def sleep_with_backoff(base: float, ordinal: int):
-    sleep = base * ((2 ** ordinal) + random.uniform(0, 1))
-    time.sleep(sleep)
+from typing import IO, AnyStr
 
 
-def read_until_size_or_end(stream: io.IOBase, size: int) -> io.BytesIO:
+def read_until_size_or_end(stream: IO[AnyStr], size: int) -> io.BytesIO:
     pos = 0
     result = io.BytesIO()
     while True:
