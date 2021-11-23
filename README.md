@@ -60,6 +60,8 @@ There is also a feature request for the adal team to work on implementing IWA (I
 
 * [Data ingest sample sinppets](https://github.com/Azure/azure-kusto-python/blob/master/azure-kusto-ingest/tests/sample.py)
 
+## Best Practices
+See the SDK [best practices guide](https://docs.microsoft.com/azure/data-explorer/kusto/api/netfx/kusto-ingest-best-practices), which though written for the .NET SDK, applies similarly here.
 
 ## Need Support?
 - **Have a feature request for SDKs?** Please post it on [User Voice](https://feedback.azure.com/forums/915733-azure-data-explorer) to help us prioritize
