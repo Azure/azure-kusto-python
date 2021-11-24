@@ -588,6 +588,8 @@ class ClientRequestProperties:
     For more information please look at: https://docs.microsoft.com/en-us/azure/kusto/api/netfx/request-properties
     """
 
+    OPTION_CLIENT_REQUEST_ID = "ClientRequestId"
+
     results_defer_partial_query_failures_option_name = "deferpartialqueryfailures"
     request_timeout_option_name = "servertimeout"
     no_request_timeout_option_name = "norequesttimeout"
@@ -598,6 +600,12 @@ class ClientRequestProperties:
         self.client_request_id = None
         self.application = None
         self.user = None
+
+    def set_client_request_id(self, client_request_id: str):
+        self._options[ClientRequestProperties.OPTION_CLIENT_REQUEST_ID] = client_request_id
+
+    def get_client_request_id(self) -> Optional[str]:
+        return self._options.get(ClientRequestProperties.OPTION_CLIENT_REQUEST_ID)
 
     def set_parameter(self, name: str, value: str):
         """Sets a parameter's value"""
@@ -647,7 +655,10 @@ class ExecuteRequestParams:
 
             client_request_id_prefix = "KPC.execute_streaming_ingest;"
             request_headers["Content-Encoding"] = "gzip"
-        request_headers["x-ms-client-request-id"] = client_request_id_prefix + str(uuid.uuid4())
+        if properties and properties.get_client_request_id():
+            request_headers["x-ms-client-request-id"] = properties.get_client_request_id()
+        else:
+            request_headers["x-ms-client-request-id"] = client_request_id_prefix + str(uuid.uuid4())
         if properties is not None:
             if properties.client_request_id is not None:
                 request_headers["x-ms-client-request-id"] = properties.client_request_id
@@ -944,7 +955,7 @@ class KustoClient(_KustoClientBase):
                 response.raise_for_status()
                 return response
             except Exception as e:
-                raise self._handle_http_error(e, self._query_endpoint, None, response, response.json(), response.text)
+                raise self._handle_http_error(e, self._query_endpoint, None, response, response.status_code, response.json(), response.text)
 
         response_json = None
         try:

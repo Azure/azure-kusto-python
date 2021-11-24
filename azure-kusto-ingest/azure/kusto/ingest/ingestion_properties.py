@@ -1,7 +1,7 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
 from enum import Enum, IntEnum
-from typing import List
+from typing import List, Optional
 
 from .exceptions import KustoMappingAndMappingReferenceError, KustoMissingMappingReferenceError
 
@@ -150,18 +150,19 @@ class IngestionProperties:
         database: str,
         table: str,
         data_format: DataFormat = DataFormat.CSV,
-        ingestion_mapping: List[ColumnMapping] = None,
-        ingestion_mapping_type: IngestionMappingType = None,
-        ingestion_mapping_reference: str = None,
-        ingest_if_not_exists: List[str] = None,
-        ingest_by_tags: List[str] = None,
-        drop_by_tags: List[str] = None,
-        additional_tags: List[str] = None,
+        ingestion_mapping: Optional[List[ColumnMapping]] = None,
+        ingestion_mapping_type: Optional[IngestionMappingType] = None,
+        ingestion_mapping_reference: Optional[str] = None,
+        ingest_if_not_exists: Optional[List[str]] = None,
+        ingest_by_tags: Optional[List[str]] = None,
+        drop_by_tags: Optional[List[str]] = None,
+        additional_tags: Optional[List[str]] = None,
         flush_immediately: bool = False,
         report_level: ReportLevel = ReportLevel.DoNotReport,
         report_method: ReportMethod = ReportMethod.Queue,
-        validation_policy: ValidationPolicy = None,
-        additional_properties: dict = None,
+        validation_policy: Optional[ValidationPolicy] = None,
+        additional_properties: Optional[dict] = None,
+        client_request_id: Optional[str] = None,
     ):
 
         if ingestion_mapping is not None and ingestion_mapping_reference is not None:
@@ -185,6 +186,7 @@ class IngestionProperties:
         self.report_method = report_method
         self.validation_policy = validation_policy
         self.additional_properties = additional_properties
+        self.client_request_id = client_request_id
 
     def is_format_binary(self):
         return self.format in self._binary_formats

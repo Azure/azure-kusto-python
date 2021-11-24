@@ -4,7 +4,7 @@ from typing import Union, AnyStr
 
 from typing import IO
 
-from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
+from azure.kusto.data import KustoClient, KustoConnectionStringBuilder, ClientRequestProperties
 from .base_ingest_client import BaseIngestClient, IngestionResult, IngestionStatus
 from .descriptors import FileDescriptor, StreamDescriptor
 from .ingestion_properties import IngestionProperties
@@ -41,12 +41,17 @@ class KustoStreamingIngestClient(BaseIngestClient):
         :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
         """
         stream_descriptor = BaseIngestClient._prepare_stream(stream_descriptor, ingestion_properties)
+        additional_properties = None
+        if ingestion_properties.client_request_id:
+            additional_properties = ClientRequestProperties()
+            additional_properties.set_client_request_id(ingestion_properties.client_request_id)
 
         self._kusto_client.execute_streaming_ingest(
             ingestion_properties.database,
             ingestion_properties.table,
             stream_descriptor.stream,
             ingestion_properties.format.name,
+            additional_properties,
             mapping_name=ingestion_properties.ingestion_mapping_reference,
         )
 

@@ -202,13 +202,11 @@ class TestE2E:
 
         cls.client.execute(
             cls.test_db,
-            ".create table {0} (rownumber: int, rowguid: string, xdouble: real, xfloat: real, xbool: bool, xint16: int, xint32: int, xint64: long, xuint8: long, xuint16: long, xuint32: long, xuint64: long, xdate: datetime, xsmalltext: string, xtext: string, xnumberAsText: string, xtime: timespan, xtextWithNulls: string, xdynamicWithNulls: dynamic)".format(
-                cls.test_table
-            ),
+            f".create table {cls.test_table} (rownumber: int, rowguid: string, xdouble: real, xfloat: real, xbool: bool, xint16: int, xint32: int, xint64: long, xuint8: long, xuint16: long, xuint32: long, xuint64: long, xdate: datetime, xsmalltext: string, xtext: string, xnumberAsText: string, xtime: timespan, xtextWithNulls: string, xdynamicWithNulls: dynamic)",
         )
-        cls.client.execute(
-            cls.test_db, ".create table {0} ingestion json mapping 'JsonMapping' {1}".format(cls.test_table, cls.test_table_json_mapping_reference())
-        )
+        cls.client.execute(cls.test_db, f".create table {cls.test_table} ingestion json mapping 'JsonMapping' {cls.test_table_json_mapping_reference()}")
+
+        cls.client.execute(cls.test_db, f".alter table {cls.test_table} policy streamingingestion enable ")
 
     @classmethod
     def teardown_class(cls):

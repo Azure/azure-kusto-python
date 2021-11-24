@@ -55,6 +55,8 @@ class TestKustoClient(KustoClientTestsMixin):
             self._mock_query(aioresponses_mock)
             async with KustoClient(self.HOST) as client:
                 response = await client.execute_query("PythonTest", "Deft")
+            first_request = next(iter(aioresponses_mock.requests.values()))
+            self._assert_client_request_id(first_request[0].kwargs)
         self._assert_sanity_query_response(response)
 
     @aio_documented_by(KustoClientTestsSync.test_sanity_control_command)
@@ -139,3 +141,17 @@ range x from 1 to 10 step 1"""
                 query = "PrimaryResultName"
                 response = await client.execute_query("PythonTest", query)
             assert response is not None
+
+    @aio_documented_by(KustoClientTestsSync.test_sanity_query)
+    @pytest.mark.asyncio
+    async def test_request_id(self):
+        with aioresponses() as aioresponses_mock:
+            properties = ClientRequestProperties()
+            request_id = "test_request_id"
+            properties.set_client_request_id(request_id)
+            self._mock_query(aioresponses_mock)
+            async with KustoClient(self.HOST) as client:
+                response = await client.execute_query("PythonTest", "Deft", properties=properties)
+            first_request = next(iter(aioresponses_mock.requests.values()))
+            self._assert_client_request_id(first_request[0].kwargs, value=request_id)
+        self._assert_sanity_query_response(response)

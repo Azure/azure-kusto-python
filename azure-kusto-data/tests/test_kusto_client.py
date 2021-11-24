@@ -1,7 +1,6 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
 import sys
-import unittest
 
 import pytest
 from mock import patch
@@ -35,6 +34,7 @@ class TestKustoClient(KustoClientTestsMixin):
         client = KustoClient(self.HOST)
         response = method.__call__(client, "PythonTest", "Deft")
         self._assert_sanity_query_response(response)
+        self._assert_client_request_id(mock_post.call_args.kwargs)
 
     @patch("requests.Session.post", side_effect=mocked_requests_post)
     def test_sanity_control_command(self, mock_post):
@@ -123,3 +123,14 @@ range x from 1 to 10 step 1"""
             query = """print dynamic(123)"""
             row = get_table_first_row(get_response_first_primary_result(method.__call__(client, "PythonTest", query)))
             assert isinstance(row[0], int)
+
+    @patch("requests.Session.post", side_effect=mocked_requests_post)
+    def test_custom_request_id(self, mock_post, method):
+        """Test query V2."""
+        client = KustoClient(self.HOST)
+        properties = ClientRequestProperties()
+        request_id = "test_request_id"
+        properties.set_client_request_id(request_id)
+        response = method.__call__(client, "PythonTest", "Deft", properties=properties)
+        self._assert_sanity_query_response(response)
+        self._assert_client_request_id(mock_post.call_args.kwargs, value=request_id)

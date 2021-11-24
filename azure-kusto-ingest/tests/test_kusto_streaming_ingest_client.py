@@ -3,6 +3,7 @@
 import io
 import json
 import os
+import uuid
 
 import pytest
 import responses
@@ -23,7 +24,17 @@ BLOB_NAME_REGEX = "database__table__" + UUID_REGEX + "__dataset.csv.gz"
 BLOB_URL_REGEX = "https://storageaccount.blob.core.windows.net/tempstorage/database__table__" + UUID_REGEX + "__dataset.csv.gz[?]sas"
 
 
-def request_callback(request):
+def request_callback(request, client_type, custom_request_id=None):
+    request_id = request.headers["x-ms-client-request-id"]
+    if custom_request_id:
+        assert custom_request_id == request_id
+    elif client_type == KustoStreamingIngestClient:
+        [prefix, request_uuid] = request_id.split(";")
+        assert prefix == "KPC.execute_streaming_ingest"
+        uuid.UUID(request_uuid)
+    elif client_type == ManagedStreamingIngestClient:
+        assert_managed_streaming_request_id(request_id)
+
     response_status = 200
     response_headers = dict()
     response_body = {
@@ -44,6 +55,13 @@ def request_callback(request):
     return response_status, response_headers, json.dumps(response_body)
 
 
+def assert_managed_streaming_request_id(request_id: str, retry: int = 0):
+    [prefix, request_uuid, suffix] = request_id.split(";")
+    assert prefix == "KPC.execute_managed_streaming_ingest"
+    uuid.UUID(request_uuid)
+    assert int(suffix) == retry
+
+
 @pytest.fixture(params=[KustoStreamingIngestClient, ManagedStreamingIngestClient])
 def ingest_client_class(request):
     return request.param
@@ -52,7 +70,9 @@ def ingest_client_class(request):
 class TestKustoStreamingIngestClient:
     @responses.activate
     def test_streaming_ingest_from_file(self, ingest_client_class):
-        responses.add_callback(responses.POST, "https://somecluster.kusto.windows.net/v1/rest/ingest/database/table", callback=request_callback)
+        responses.add_callback(
+            responses.POST, "https://somecluster.kusto.windows.net/v1/rest/ingest/database/table", callback=lambda r: request_callback(r, ingest_client_class)
+        )
 
         ingest_client = ingest_client_class("https://somecluster.kusto.windows.net")
         ingestion_properties = IngestionProperties(database="database", table="table", data_format=DataFormat.CSV)
@@ -121,7 +141,9 @@ class TestKustoStreamingIngestClient:
     @pytest.mark.skipif(not pandas_installed, reason="requires pandas")
     @responses.activate
     def test_streaming_ingest_from_dataframe(self, ingest_client_class):
-        responses.add_callback(responses.POST, "https://somecluster.kusto.windows.net/v1/rest/ingest/database/table", callback=request_callback)
+        responses.add_callback(
+            responses.POST, "https://somecluster.kusto.windows.net/v1/rest/ingest/database/table", callback=lambda r: request_callback(r, ingest_client_class)
+        )
 
         ingest_client = ingest_client_class("https://somecluster.kusto.windows.net")
         ingestion_properties = IngestionProperties(database="database", table="table", data_format=DataFormat.CSV)
@@ -137,7 +159,9 @@ class TestKustoStreamingIngestClient:
 
     @responses.activate
     def test_streaming_ingest_from_stream(self, ingest_client_class):
-        responses.add_callback(responses.POST, "https://somecluster.kusto.windows.net/v1/rest/ingest/database/table", callback=request_callback)
+        responses.add_callback(
+            responses.POST, "https://somecluster.kusto.windows.net/v1/rest/ingest/database/table", callback=lambda r: request_callback(r, ingest_client_class)
+        )
 
         ingest_client = ingest_client_class("https://somecluster.kusto.windows.net")
         ingestion_properties = IngestionProperties(database="database", table="table", data_format=DataFormat.CSV)
@@ -165,4 +189,22 @@ class TestKustoStreamingIngestClient:
         str_sequence = u'{"Name":"Ben","Age":"56","Weight":"75"}'
         str_stream = io.StringIO(str_sequence)
         result = ingest_client.ingest_from_stream(str_stream, ingestion_properties=ingestion_properties)
+        assert result.status == IngestionStatus.SUCCESS
+
+    @responses.activate
+    def test_streaming_ingest_from_stream_custom_request_id(self, ingest_client_class):
+        custom_request_id = "custom_request_id"
+        responses.add_callback(
+            responses.POST,
+            "https://somecluster.kusto.windows.net/v1/rest/ingest/database/table",
+            callback=lambda r: request_callback(r, ingest_client_class, custom_request_id),
+        )
+
+        ingest_client = ingest_client_class("https://somecluster.kusto.windows.net")
+        ingestion_properties = IngestionProperties(database="database", table="table", data_format=DataFormat.CSV)
+        ingestion_properties.client_request_id = custom_request_id
+
+        byte_sequence = b"56,56,56"
+        bytes_stream = io.BytesIO(byte_sequence)
+        result = ingest_client.ingest_from_stream(bytes_stream, ingestion_properties=ingestion_properties)
         assert result.status == IngestionStatus.SUCCESS

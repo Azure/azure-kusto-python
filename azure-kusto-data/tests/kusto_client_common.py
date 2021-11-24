@@ -2,6 +2,7 @@
 # Licensed under the MIT License
 import json
 import os
+import uuid
 from datetime import datetime, timedelta
 from io import StringIO
 from typing import Optional, Any, Dict, Union, Iterator
@@ -119,6 +120,17 @@ def get_table_first_row(table: SyncResultTable) -> KustoResultRow:
 
 class KustoClientTestsMixin:
     HOST = "https://somecluster.kusto.windows.net"
+
+    @staticmethod
+    def _assert_client_request_id(response_args: dict, value: Optional[str] = None) -> None:
+        header = response_args["headers"]["x-ms-client-request-id"]
+        if value:
+            assert header == value
+            return
+
+        [header_prefix, header_uuid] = header.split(";")
+        assert header_prefix == "KPC.execute"
+        uuid.UUID(header_uuid)
 
     @staticmethod
     def _assert_sanity_query_primary_results(results: Iterator[KustoResultRow]):

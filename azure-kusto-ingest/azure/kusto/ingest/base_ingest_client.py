@@ -20,6 +20,7 @@ class IngestionStatus(Enum):
     """
     The ingestion was queued.
     """
+
     PENDING = "PENDING"
     """
     The ingestion was successfully streamed
