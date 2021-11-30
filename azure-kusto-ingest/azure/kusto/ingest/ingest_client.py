@@ -59,7 +59,7 @@ class QueuedIngestClient(BaseIngestClient):
             blob_descriptor = QueuedIngestClient._upload_blob(containers, descriptor, ingestion_properties, stream)
             self.ingest_from_blob(blob_descriptor, ingestion_properties=ingestion_properties)
 
-        return IngestionResult(IngestionStatus.QUEUED, file_descriptor.source_id)
+        return IngestionResult(IngestionStatus.QUEUED, descriptor.source_id)
 
     def ingest_from_stream(self, stream_descriptor: Union[StreamDescriptor, IO[AnyStr]], ingestion_properties: IngestionProperties) -> IngestionResult:
         """Ingest from io streams.

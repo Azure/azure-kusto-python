@@ -17,9 +17,8 @@ def assert_uuid4(maybe_uuid: OptionalUUID, error_message: str):
     if maybe_uuid is None:
         return
 
-    maybe_uuid = uuid.UUID("{}".format(maybe_uuid)) if maybe_uuid is not None else None
-    if maybe_uuid and maybe_uuid.version != 4:
-        raise ValueError(error_message)
+    if maybe_uuid:
+        uuid.UUID("{}".format(maybe_uuid), version=4)
 
 
 class FileDescriptor:
@@ -134,6 +133,8 @@ class StreamDescriptor:
         :type is_compressed: boolean
         """
         self.stream = stream
+        if source_id is None:
+            source_id = uuid.uuid4()
         assert_uuid4(source_id, "source_id must be a valid uuid4")
         self.source_id = source_id
         self.is_compressed = is_compressed

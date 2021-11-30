@@ -35,13 +35,13 @@ class ManagedStreamingIngestClient(BaseIngestClient):
             return self.ingest_from_stream(stream_descriptor, ingestion_properties)
 
     def ingest_from_stream(self, stream_descriptor: Union[StreamDescriptor, IO[AnyStr]], ingestion_properties: IngestionProperties) -> IngestionResult:
+        stream_descriptor = BaseIngestClient._prepare_stream(stream_descriptor, ingestion_properties)
+        stream = stream_descriptor.stream
+
         set_client_request_id = False
         if not ingestion_properties.client_request_id:
             set_client_request_id = True
             ingestion_properties.client_request_id = ManagedStreamingIngestClient._get_request_id(stream_descriptor.source_id, 0)
-
-        stream_descriptor = BaseIngestClient._prepare_stream(stream_descriptor, ingestion_properties)
-        stream = stream_descriptor.stream
 
         buffered_stream = read_until_size_or_end(stream, self.MAX_STREAMING_SIZE_IN_BYTES + 1)
 
