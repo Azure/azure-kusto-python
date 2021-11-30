@@ -55,4 +55,4 @@ class KustoStreamingIngestClient(BaseIngestClient):
             mapping_name=ingestion_properties.ingestion_mapping_reference,
         )
 
-        return IngestionResult(IngestionStatus.SUCCESS)
+        return IngestionResult(IngestionStatus.SUCCESS, stream_descriptor.source_id)

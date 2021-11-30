@@ -2,13 +2,14 @@
 # Licensed under the MIT License
 from typing import List, Union, TYPE_CHECKING, Optional, Dict, Any
 
-import requests
-
 if TYPE_CHECKING:
+    import requests
+
     try:
         from aiohttp import ClientResponse
     except ImportError:
         # No aio installed, ignore
+        ClientResponse = None
         pass
 
 
@@ -18,6 +19,14 @@ class KustoError(Exception):
 
 class KustoStreamingQueryError(KustoError):
     ...
+
+
+class KustoBlobError(KustoError):
+    def __init__(self, inner: Exception):
+        self.inner = inner
+
+    def message(self) -> str:
+        return f"Failed to upload blob: {self.inner}"
 
 
 class KustoTokenParsingError(KustoStreamingQueryError):

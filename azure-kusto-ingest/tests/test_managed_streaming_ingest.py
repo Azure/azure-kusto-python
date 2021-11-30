@@ -120,7 +120,7 @@ class TestManagedStreamingIngestClient:
         finally:
             os.unlink(f.name)
 
-        assert result.status == IngestionStatus.PENDING
+        assert result.status == IngestionStatus.QUEUED
 
         assert_queued_upload(
             mock_put_message_in_queue,
@@ -163,7 +163,7 @@ class TestManagedStreamingIngestClient:
 
         result = ingest_client.ingest_from_stream(stream, ingestion_properties=ingestion_properties)
 
-        assert result.status == IngestionStatus.PENDING
+        assert result.status == IngestionStatus.QUEUED
 
         assert_queued_upload(
             mock_put_message_in_queue,
@@ -214,7 +214,7 @@ class TestManagedStreamingIngestClient:
 
         result = ingest_client.ingest_from_file(file_path, ingestion_properties=ingestion_properties)
 
-        assert result.status == IngestionStatus.PENDING
+        assert result.status == IngestionStatus.QUEUED
 
         assert_queued_upload(
             mock_put_message_in_queue,
@@ -265,7 +265,7 @@ class TestManagedStreamingIngestClient:
 
         result = ingest_client.ingest_from_file(file_path, ingestion_properties=ingestion_properties)
 
-        assert result.status == IngestionStatus.PENDING
+        assert result.status == IngestionStatus.QUEUED
 
         assert_queued_upload(
             mock_put_message_in_queue,
@@ -429,7 +429,7 @@ class TestManagedStreamingIngestClient:
         )
         result = ingest_client.ingest_from_blob(BlobDescriptor(blob_path, 1), ingestion_properties=ingestion_properties)
 
-        assert result.status == IngestionStatus.PENDING
+        assert result.status == IngestionStatus.QUEUED
 
         assert_queued_upload(
             mock_put_message_in_queue,

@@ -36,10 +36,9 @@ class ManagedStreamingIngestClient(BaseIngestClient):
 
     def ingest_from_stream(self, stream_descriptor: Union[StreamDescriptor, IO[AnyStr]], ingestion_properties: IngestionProperties) -> IngestionResult:
         set_client_request_id = False
-        random_uuid = uuid.uuid4()
         if not ingestion_properties.client_request_id:
             set_client_request_id = True
-            ingestion_properties.client_request_id = ManagedStreamingIngestClient._get_request_id(random_uuid, 0)
+            ingestion_properties.client_request_id = ManagedStreamingIngestClient._get_request_id(stream_descriptor.source_id, 0)
 
         stream_descriptor = BaseIngestClient._prepare_stream(stream_descriptor, ingestion_properties)
         stream = stream_descriptor.stream
@@ -56,7 +55,7 @@ class ManagedStreamingIngestClient(BaseIngestClient):
         while retry:
             try:
                 if set_client_request_id:
-                    ingestion_properties.client_request_id = ManagedStreamingIngestClient._get_request_id(random_uuid, retry.retries)
+                    ingestion_properties.client_request_id = ManagedStreamingIngestClient._get_request_id(stream_descriptor.source_id, retry.retries)
                 return self.streaming_client.ingest_from_stream(stream_descriptor, ingestion_properties)
             except KustoApiError as e:
                 error = e.get_api_error()
@@ -81,8 +80,8 @@ class ManagedStreamingIngestClient(BaseIngestClient):
         return self.queued_client.ingest_from_blob(blob_descriptor, ingestion_properties)
 
     @staticmethod
-    def _get_request_id(random_uuid: uuid.UUID, attempt: int):
-        return f"KPC.execute_managed_streaming_ingest;{random_uuid};{attempt}"
+    def _get_request_id(source_id: uuid.UUID, attempt: int):
+        return f"KPC.execute_managed_streaming_ingest;{source_id};{attempt}"
 
     @staticmethod
     def _create_exponential_retry():

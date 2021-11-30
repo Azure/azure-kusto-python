@@ -9,7 +9,7 @@ from azure.storage.blob import BlobServiceClient
 from azure.storage.queue import QueueServiceClient, TextBase64EncodePolicy
 
 from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
-from azure.kusto.data.exceptions import KustoServiceError
+from azure.kusto.data.exceptions import KustoServiceError, KustoBlobError
 from ._ingestion_blob_info import _IngestionBlobInfo
 from ._resource_manager import _ResourceManager, _ResourceUri
 from .base_ingest_client import BaseIngestClient, IngestionResult, IngestionStatus
@@ -59,7 +59,7 @@ class QueuedIngestClient(BaseIngestClient):
             blob_descriptor = QueuedIngestClient._upload_blob(containers, descriptor, ingestion_properties, stream)
             self.ingest_from_blob(blob_descriptor, ingestion_properties=ingestion_properties)
 
-        return IngestionResult(IngestionStatus.PENDING)
+        return IngestionResult(IngestionStatus.QUEUED, file_descriptor.source_id)
 
     def ingest_from_stream(self, stream_descriptor: Union[StreamDescriptor, IO[AnyStr]], ingestion_properties: IngestionProperties) -> IngestionResult:
         """Ingest from io streams.
@@ -72,7 +72,7 @@ class QueuedIngestClient(BaseIngestClient):
         blob_descriptor = QueuedIngestClient._upload_blob(containers, stream_descriptor, ingestion_properties, stream_descriptor.stream)
         self.ingest_from_blob(blob_descriptor, ingestion_properties=ingestion_properties)
 
-        return IngestionResult(IngestionStatus.PENDING)
+        return IngestionResult(IngestionStatus.QUEUED, stream_descriptor.source_id)
 
     def ingest_from_blob(self, blob_descriptor: BlobDescriptor, ingestion_properties: IngestionProperties) -> IngestionResult:
         """Enqueue an ingest command from azure blobs.
@@ -97,7 +97,7 @@ class QueuedIngestClient(BaseIngestClient):
         queue_client = queue_service.get_queue_client(queue=random_queue.object_name, message_encode_policy=TextBase64EncodePolicy())
         queue_client.send_message(content=content)
 
-        return IngestionResult(IngestionStatus.PENDING)
+        return IngestionResult(IngestionStatus.QUEUED, blob_descriptor.source_id)
 
     def _get_containers(self) -> List[_ResourceUri]:
         try:
@@ -118,9 +118,12 @@ class QueuedIngestClient(BaseIngestClient):
             db=ingestion_properties.database, table=ingestion_properties.table, guid=descriptor.source_id or uuid.uuid4(), file=descriptor.stream_name
         )
         random_container = random.choice(containers)
-        blob_service = BlobServiceClient(random_container.account_uri)
-        blob_client = blob_service.get_blob_client(container=random_container.object_name, blob=blob_name)
-        blob_client.upload_blob(data=stream)
+        try:
+            blob_service = BlobServiceClient(random_container.account_uri)
+            blob_client = blob_service.get_blob_client(container=random_container.object_name, blob=blob_name)
+            blob_client.upload_blob(data=stream)
+        except Exception as e:
+            raise KustoBlobError(e)
         return BlobDescriptor(blob_client.url, descriptor.size, descriptor.source_id)
 
     def _validate_endpoint_service_type(self):

@@ -21,7 +21,7 @@ class IngestionStatus(Enum):
     The ingestion was queued.
     """
 
-    PENDING = "PENDING"
+    QUEUED = "QUEUED"
     """
     The ingestion was successfully streamed
     """
@@ -31,8 +31,9 @@ class IngestionStatus(Enum):
 # TODO - do we want to return an array of statuses, to match java/c#?
 # TODO - do we want to add fields like database, table, etc like java/c#?
 class IngestionResult:
-    def __init__(self, status: IngestionStatus):
+    def __init__(self, status: IngestionStatus, source_id: uuid.UUID):
         self.status = status
+        self.source_id = source_id
 
 
 class BaseIngestClient(metaclass=ABCMeta):

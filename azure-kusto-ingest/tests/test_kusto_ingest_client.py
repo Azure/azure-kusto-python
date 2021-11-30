@@ -225,7 +225,7 @@ class TestQueuedIngestClient:
 
         result = ingest_client.ingest_from_file(file_path, ingestion_properties=ingestion_properties)
 
-        assert result.status == IngestionStatus.PENDING
+        assert result.status == IngestionStatus.QUEUED
 
         assert_queued_upload(
             mock_put_message_in_queue,
@@ -283,7 +283,7 @@ class TestQueuedIngestClient:
         df = DataFrame(data=rows, columns=fields)
 
         result = ingest_client.ingest_from_dataframe(df, ingestion_properties=ingestion_properties)
-        assert result.status == IngestionStatus.PENDING
+        assert result.status == IngestionStatus.QUEUED
 
         expected_url = "https://storageaccount.blob.core.windows.net/tempstorage/database__table__11111111-1111-1111-1111-111111111111__df_{0}_100_11111111-1111-1111-1111-111111111111.csv.gz?".format(
             id(df)
@@ -317,7 +317,7 @@ class TestQueuedIngestClient:
         file_path = os.path.join(current_dir, *missing_path_parts)
 
         result = ingest_client.ingest_from_stream(io.StringIO(Path(file_path).read_text()), ingestion_properties=ingestion_properties)
-        assert result.status == IngestionStatus.PENDING
+        assert result.status == IngestionStatus.QUEUED
 
         assert_queued_upload(
             mock_put_message_in_queue,
