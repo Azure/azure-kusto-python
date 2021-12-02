@@ -10,7 +10,7 @@ from azure.storage.queue import QueueServiceClient, TextBase64EncodePolicy
 
 from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
 from azure.kusto.data.exceptions import KustoServiceError, KustoBlobError
-from ._ingestion_blob_info import _IngestionBlobInfo
+from .ingestion_blob_info import IngestionBlobInfo
 from ._resource_manager import _ResourceManager, _ResourceUri
 from .base_ingest_client import BaseIngestClient, IngestionResult, IngestionStatus
 from .descriptors import BlobDescriptor, FileDescriptor, StreamDescriptor
@@ -57,9 +57,9 @@ class QueuedIngestClient(BaseIngestClient):
 
         with descriptor.open(should_compress) as stream:
             blob_descriptor = QueuedIngestClient._upload_blob(containers, descriptor, ingestion_properties, stream)
-            self.ingest_from_blob(blob_descriptor, ingestion_properties=ingestion_properties)
+            result = self.ingest_from_blob(blob_descriptor, ingestion_properties=ingestion_properties)
 
-        return IngestionResult(IngestionStatus.QUEUED, descriptor.source_id)
+        return result
 
     def ingest_from_stream(self, stream_descriptor: Union[StreamDescriptor, IO[AnyStr]], ingestion_properties: IngestionProperties) -> IngestionResult:
         """Ingest from io streams.
@@ -70,9 +70,7 @@ class QueuedIngestClient(BaseIngestClient):
 
         stream_descriptor = BaseIngestClient._prepare_stream(stream_descriptor, ingestion_properties)
         blob_descriptor = QueuedIngestClient._upload_blob(containers, stream_descriptor, ingestion_properties, stream_descriptor.stream)
-        self.ingest_from_blob(blob_descriptor, ingestion_properties=ingestion_properties)
-
-        return IngestionResult(IngestionStatus.QUEUED, stream_descriptor.source_id)
+        return self.ingest_from_blob(blob_descriptor, ingestion_properties=ingestion_properties)
 
     def ingest_from_blob(self, blob_descriptor: BlobDescriptor, ingestion_properties: IngestionProperties) -> IngestionResult:
         """Enqueue an ingest command from azure blobs.
@@ -90,14 +88,14 @@ class QueuedIngestClient(BaseIngestClient):
         random_queue = random.choice(queues)
         queue_service = QueueServiceClient(random_queue.account_uri)
         authorization_context = self._resource_manager.get_authorization_context()
-        ingestion_blob_info = _IngestionBlobInfo(blob_descriptor, ingestion_properties=ingestion_properties, auth_context=authorization_context)
+        ingestion_blob_info = IngestionBlobInfo(blob_descriptor, ingestion_properties=ingestion_properties, auth_context=authorization_context)
         ingestion_blob_info_json = ingestion_blob_info.to_json()
-        # TODO: perhaps this needs to be more visible
-        content = ingestion_blob_info_json
         queue_client = queue_service.get_queue_client(queue=random_queue.object_name, message_encode_policy=TextBase64EncodePolicy())
-        queue_client.send_message(content=content)
+        queue_client.send_message(content=ingestion_blob_info_json)
 
-        return IngestionResult(IngestionStatus.QUEUED, blob_descriptor.source_id)
+        return IngestionResult(
+            IngestionStatus.QUEUED, ingestion_properties.database, ingestion_properties.table, blob_descriptor.source_id, ingestion_blob_info
+        )
 
     def _get_containers(self) -> List[_ResourceUri]:
         try:

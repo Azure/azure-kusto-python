@@ -148,7 +148,7 @@ range x from 1 to 10 step 1"""
         with aioresponses() as aioresponses_mock:
             properties = ClientRequestProperties()
             request_id = "test_request_id"
-            properties.set_client_request_id(request_id)
+            properties.client_request_id = request_id
             self._mock_query(aioresponses_mock)
             async with KustoClient(self.HOST) as client:
                 response = await client.execute_query("PythonTest", "Deft", properties=properties)

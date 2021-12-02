@@ -21,14 +21,6 @@ class KustoStreamingQueryError(KustoError):
     ...
 
 
-class KustoBlobError(KustoError):
-    def __init__(self, inner: Exception):
-        self.inner = inner
-
-    def message(self) -> str:
-        return f"Failed to upload blob: {self.inner}"
-
-
 class KustoTokenParsingError(KustoStreamingQueryError):
     ...
 
@@ -128,6 +120,14 @@ class KustoApiError(KustoServiceError):
 
 class KustoClientError(KustoError):
     """Raised when a Kusto client is unable to send or complete a request."""
+
+
+class KustoBlobError(KustoClientError):
+    def __init__(self, inner: Exception):
+        self.inner = inner
+
+    def message(self) -> str:
+        return f"Failed to upload blob: {self.inner}"
 
 
 class KustoUnsupportedApiError(KustoError):

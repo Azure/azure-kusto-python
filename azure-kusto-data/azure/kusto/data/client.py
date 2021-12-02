@@ -375,6 +375,7 @@ class KustoConnectionStringBuilder:
         if object_id is not None:
             # Until we upgrade azure-identity to version 1.4.1, only client_id is excepted as a hint for user managed service identity
             raise ValueError("User Managed Service Identity with object_id is temporarily not supported by azure identity 1.3.1. Please use client_id instead.")
+            # noinspection PyUnreachableCode
             params["object_id"] = object_id
             exclusive_pcount += 1
 
@@ -383,6 +384,7 @@ class KustoConnectionStringBuilder:
             raise ValueError(
                 "User Managed Service Identity with msi_res_id is temporarily not supported by azure identity 1.3.1. Please use client_id instead."
             )
+            # noinspection PyUnreachableCode
             params["msi_res_id"] = msi_res_id
             exclusive_pcount += 1
 
@@ -601,12 +603,6 @@ class ClientRequestProperties:
         self.application = None
         self.user = None
 
-    def set_client_request_id(self, client_request_id: str):
-        self._options[ClientRequestProperties.OPTION_CLIENT_REQUEST_ID] = client_request_id
-
-    def get_client_request_id(self) -> Optional[str]:
-        return self._options.get(ClientRequestProperties.OPTION_CLIENT_REQUEST_ID)
-
     def set_parameter(self, name: str, value: str):
         """Sets a parameter's value"""
         _assert_value_is_valid(name)
@@ -655,10 +651,7 @@ class ExecuteRequestParams:
 
             client_request_id_prefix = "KPC.execute_streaming_ingest;"
             request_headers["Content-Encoding"] = "gzip"
-        if properties and properties.get_client_request_id():
-            request_headers["x-ms-client-request-id"] = properties.get_client_request_id()
-        else:
-            request_headers["x-ms-client-request-id"] = client_request_id_prefix + str(uuid.uuid4())
+        request_headers["x-ms-client-request-id"] = client_request_id_prefix + str(uuid.uuid4())
         if properties is not None:
             if properties.client_request_id is not None:
                 request_headers["x-ms-client-request-id"] = properties.client_request_id
@@ -936,7 +929,7 @@ class KustoClient(_KustoClientBase):
         endpoint: str,
         database: str,
         query: Optional[str],
-        payload: Optional[io.IOBase],
+        payload: Optional[IO[AnyStr]],
         timeout: timedelta,
         properties: Optional[ClientRequestProperties] = None,
         stream_response: bool = False,

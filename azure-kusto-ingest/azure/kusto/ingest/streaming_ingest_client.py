@@ -44,7 +44,7 @@ class KustoStreamingIngestClient(BaseIngestClient):
         additional_properties = None
         if ingestion_properties.client_request_id:
             additional_properties = ClientRequestProperties()
-            additional_properties.set_client_request_id(ingestion_properties.client_request_id)
+            additional_properties.client_request_id = ingestion_properties.client_request_id
 
         self._kusto_client.execute_streaming_ingest(
             ingestion_properties.database,
@@ -55,4 +55,4 @@ class KustoStreamingIngestClient(BaseIngestClient):
             mapping_name=ingestion_properties.ingestion_mapping_reference,
         )
 
-        return IngestionResult(IngestionStatus.SUCCESS, stream_descriptor.source_id)
+        return IngestionResult(IngestionStatus.SUCCESS, ingestion_properties.database, ingestion_properties.table, stream_descriptor.source_id)

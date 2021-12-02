@@ -130,7 +130,7 @@ range x from 1 to 10 step 1"""
         client = KustoClient(self.HOST)
         properties = ClientRequestProperties()
         request_id = "test_request_id"
-        properties.set_client_request_id(request_id)
+        properties.client_request_id = request_id
         response = method.__call__(client, "PythonTest", "Deft", properties=properties)
         self._assert_sanity_query_response(response)
         self._assert_client_request_id(mock_post.call_args.kwargs, value=request_id)

@@ -7,9 +7,10 @@ from copy import copy
 from enum import Enum
 from gzip import GzipFile
 from io import TextIOWrapper, BytesIO
-from typing import TYPE_CHECKING, Union, IO, AnyStr
+from typing import TYPE_CHECKING, Union, IO, AnyStr, Optional
 
 from .descriptors import FileDescriptor, StreamDescriptor
+from .ingestion_blob_info import IngestionBlobInfo
 from .ingestion_properties import DataFormat, IngestionProperties
 
 if TYPE_CHECKING:
@@ -28,12 +29,13 @@ class IngestionStatus(Enum):
     SUCCESS = "SUCCESS"
 
 
-# TODO - do we want to return an array of statuses, to match java/c#?
-# TODO - do we want to add fields like database, table, etc like java/c#?
 class IngestionResult:
-    def __init__(self, status: IngestionStatus, source_id: uuid.UUID):
+    def __init__(self, status: IngestionStatus, database: str, table: str, source_id: uuid.UUID, blob_info: Optional[IngestionBlobInfo] = None):
         self.status = status
+        self.database = database
+        self.table = table
         self.source_id = source_id
+        self.blob_info = blob_info
 
 
 class BaseIngestClient(metaclass=ABCMeta):
