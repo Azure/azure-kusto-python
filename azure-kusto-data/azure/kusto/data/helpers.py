@@ -58,7 +58,7 @@ def dataframe_from_result_table(table: "Union[KustoResultTable, KustoStreamingRe
             frame[col.column_name] = frame[col.column_name].replace('NaN', np.NaN)
             frame[col.column_name] = frame[col.column_name].replace('Infinity', np.PINF)
             frame[col.column_name] = frame[col.column_name].replace('-Infinity', np.NINF)
-            frame[col.column_name] = pd.to_numeric(frame[col.column_name], errors= 'coerce')
+            frame[col.column_name] = pd.to_numeric(frame[col.column_name], errors='coerce')
             frame[col.column_name] = frame[col.column_name].astype('Float64')
         elif col.column_type == "datetime":
             frame[col.column_name] = pd.to_datetime(frame[col.column_name])
