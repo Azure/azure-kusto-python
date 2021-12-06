@@ -55,11 +55,11 @@ def dataframe_from_result_table(table: "Union[KustoResultTable, KustoStreamingRe
         elif col.column_type == "int" or col.column_type == "long":
             frame[col.column_name] = frame[col.column_name].astype("Int64")
         elif col.column_type == "real" or col.column_type == "decimal":
-            frame[col.column_name] = frame[col.column_name].replace('NaN', np.NaN)
-            frame[col.column_name] = frame[col.column_name].replace('Infinity', np.PINF)
-            frame[col.column_name] = frame[col.column_name].replace('-Infinity', np.NINF)
-            frame[col.column_name] = pd.to_numeric(frame[col.column_name], errors='coerce')
-            frame[col.column_name] = frame[col.column_name].astype('Float64')
+            frame[col.column_name] = frame[col.column_name].replace("NaN", np.NaN)
+            frame[col.column_name] = frame[col.column_name].replace("Infinity", np.PINF)
+            frame[col.column_name] = frame[col.column_name].replace("-Infinity", np.NINF)
+            frame[col.column_name] = pd.to_numeric(frame[col.column_name], errors="coerce")
+            frame[col.column_name] = frame[col.column_name].astype("Float64")
         elif col.column_type == "datetime":
             frame[col.column_name] = pd.to_datetime(frame[col.column_name])
         elif col.column_type == "timespan":
