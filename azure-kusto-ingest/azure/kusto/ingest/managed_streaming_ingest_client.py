@@ -16,6 +16,16 @@ if TYPE_CHECKING:
 
 
 class ManagedStreamingIngestClient(BaseIngestClient):
+    """
+    Managed Streaming Ingestion Client.
+    Will try to ingest with streaming, but if it fails, will fall back to queued ingestion.
+    Each transient failure will be retried with exponential backoff.
+
+    Managed streaming ingest client will fall back to queued if:
+        - Multiple transient errors were encountered when trying to do streaming ingestion
+        - The ingestion is too large for streaming ingestion (over 4MB)
+        - The ingestion is directly for a blob
+    """
     MAX_STREAMING_SIZE_IN_BYTES = 4 * 1024 * 1024
     ATTEMPT_COUNT = 4
 

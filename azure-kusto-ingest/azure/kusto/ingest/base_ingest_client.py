@@ -55,6 +55,9 @@ class IngestionResult:
         self.source_id = source_id
         self.blob_uri = blob_uri
 
+    def __repr__(self):
+        return f"IngestionResult(status={self.status}, database={self.database}, table={self.table}, source_id={self.source_id}, blob_uri={self.blob_uri})"
+
 
 class BaseIngestClient(metaclass=ABCMeta):
     @abstractmethod

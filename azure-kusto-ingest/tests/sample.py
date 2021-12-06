@@ -3,6 +3,7 @@
 import io
 
 from azure.kusto.data import KustoConnectionStringBuilder
+
 from azure.kusto.ingest import (
     QueuedIngestClient,
     IngestionProperties,
@@ -10,9 +11,7 @@ from azure.kusto.ingest import (
     BlobDescriptor,
     StreamDescriptor,
     DataFormat,
-    ReportLevel,
-    IngestionMappingType,
-    KustoStreamingIngestClient,
+    KustoStreamingIngestClient, ManagedStreamingIngestClient, IngestionStatus,
 )
 
 ##################################################################
@@ -90,8 +89,10 @@ ingestion_props = IngestionProperties(
 # ingest from file
 file_descriptor = FileDescriptor("{filename}.csv", 3333)  # 3333 is the raw size of the data in bytes.
 client.ingest_from_file(file_descriptor, ingestion_properties=ingestion_props)
-client.ingest_from_file("{filename}.csv", ingestion_properties=ingestion_props)
+result = client.ingest_from_file("{filename}.csv", ingestion_properties=ingestion_props)
 
+# Inspect the result for useful information, such as source_id and blob_url
+print(repr(result))
 
 # ingest from blob
 blob_descriptor = BlobDescriptor(
@@ -195,3 +196,40 @@ client.ingest_from_stream(stream_descriptor, ingestion_properties=ingestion_prop
 str_sequence = u"57,57,57"
 str_stream = io.StringIO(str_sequence)
 client.ingest_from_stream(str_stream, ingestion_properties=ingestion_properties)
+
+##################################################################
+##                NANAGED STREAMING INGEST                      ##
+##################################################################
+
+# Managed streaming ingest client will try to use streaming ingestion for performance, but will fall back to queued ingestion if unable.
+dm_cluster = "https://ingest-{cluster_name}.kusto.windows.net"
+
+kcsb = KustoConnectionStringBuilder.with_aad_application_key_authentication(dm_cluster, client_id, client_secret, authority_id)
+
+# Create it from a dm connection string
+client = ManagedStreamingIngestClient.from_dm_kcsb(kcsb)
+# or an engine connection string, like a streaming ingestion client with `from_engine_kcsb`
+# or provide both: `ManagedStreamingIngestClient(engine_kcsb, dm_kcsb)`
+
+# use client as you would a streaming or queued ingestion client
+
+byte_sequence = b"56,56,56"
+bytes_stream = io.BytesIO(byte_sequence)
+client.ingest_from_stream(bytes_stream, ingestion_properties=ingestion_properties)
+
+ingestion_properties = IngestionProperties(database="{database_name}", table="{table_name}", data_format=DataFormat.CSV)
+
+# ingest from file
+file_descriptor = FileDescriptor("{filename}.csv", 3333)  # 3333 is the raw size of the data in bytes.
+result = client.ingest_from_file(file_descriptor, ingestion_properties=ingestion_properties)
+
+# inspect the result to see what type of ingestion was preformed
+if result.status == IngestionStatus.QUEUED:
+    # fell back to queued ingestion
+    pass
+
+# Managed streaming ingest client will fall back to queued if:
+# - Multiple transient errors were encountered when trying to do streaming ingestion
+# - The ingestion is too large for streaming ingestion (over 4MB)
+# - The ingestion is directly for a blob
+
