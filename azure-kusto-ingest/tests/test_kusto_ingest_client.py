@@ -189,6 +189,8 @@ def assert_queued_upload(mock_put_message_in_queue, mock_upload_blob_from_stream
 
 @pytest.fixture(params=[QueuedIngestClient, ManagedStreamingIngestClient])
 def ingest_client_class(request):
+    if request.param == ManagedStreamingIngestClient:
+        return ManagedStreamingIngestClient.from_dm_kcsb
     return request.param
 
 

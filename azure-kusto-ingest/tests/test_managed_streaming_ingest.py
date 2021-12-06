@@ -102,7 +102,7 @@ class TestManagedStreamingIngestClient:
         )
 
         data_format = DataFormat.ORC  # Using orc to avoid compression
-        ingest_client = ManagedStreamingIngestClient("https://ingest-somecluster.kusto.windows.net")
+        ingest_client = ManagedStreamingIngestClient.from_dm_kcsb("https://ingest-somecluster.kusto.windows.net")
         ingestion_properties = IngestionProperties(database="database", table="table", data_format=data_format)
 
         initial_bytes = bytearray(os.urandom(5 * 1024 * 1024))
@@ -150,7 +150,7 @@ class TestManagedStreamingIngestClient:
         )
 
         data_format = DataFormat.ORC  # Using orc to avoid compression
-        ingest_client = ManagedStreamingIngestClient("https://ingest-somecluster.kusto.windows.net")
+        ingest_client = ManagedStreamingIngestClient.from_engine_kcsb("https://somecluster.kusto.windows.net")
         ingestion_properties = IngestionProperties(database="database", table="table", data_format=data_format)
 
         initial_bytes = bytearray(os.urandom(5 * 1024 * 1024))
@@ -191,7 +191,7 @@ class TestManagedStreamingIngestClient:
             responses.POST, "https://ingest-somecluster.kusto.windows.net/v1/rest/mgmt", callback=queued_request_callback, content_type="application/json"
         )
 
-        ingest_client = ManagedStreamingIngestClient("https://ingest-somecluster.kusto.windows.net")
+        ingest_client = ManagedStreamingIngestClient.from_engine_kcsb("https://somecluster.kusto.windows.net")
         ingestion_properties = IngestionProperties(database="database", table="table")
 
         helper = TransientResponseHelper(times_to_fail=total_attempts)
@@ -199,57 +199,6 @@ class TestManagedStreamingIngestClient:
             responses.POST,
             "https://somecluster.kusto.windows.net/v1/rest/ingest/database/table",
             callback=lambda request: transient_error_callback(helper, request),
-            content_type="application/json",
-        )
-
-        # ensure test can work when executed from within directories
-        current_dir = os.getcwd()
-        path_parts = ["azure-kusto-ingest", "tests", "input", "dataset.csv"]
-        missing_path_parts = []
-        for path_part in path_parts:
-            if path_part not in current_dir:
-                missing_path_parts.append(path_part)
-
-        file_path = os.path.join(current_dir, *missing_path_parts)
-
-        result = ingest_client.ingest_from_file(file_path, ingestion_properties=ingestion_properties)
-
-        assert result.status == IngestionStatus.QUEUED
-
-        assert_queued_upload(
-            mock_put_message_in_queue,
-            mock_upload_blob_from_stream,
-            "https://storageaccount.blob.core.windows.net/tempstorage/database__table__11111111-1111-1111-1111-111111111111__dataset.csv.gz?",
-        )
-
-        assert helper.total_calls == total_attempts
-
-    @responses.activate
-    @patch(
-        "azure.kusto.ingest.managed_streaming_ingest_client.ManagedStreamingIngestClient._create_exponential_retry",
-        return_value=ExponentialRetry(ManagedStreamingIngestClient.ATTEMPT_COUNT, sleep_base=0, max_jitter=0),
-    )
-    @patch("azure.kusto.data.security._AadHelper.acquire_authorization_header", return_value=None)
-    @patch("azure.storage.blob.BlobClient.upload_blob")
-    @patch("azure.storage.queue.QueueClient.send_message")
-    @patch("uuid.uuid4", return_value=MOCKED_UUID_4)
-    def test_fallback_transient_errors_limit_custom_request_id(self, mock_uuid, mock_put_message_in_queue, mock_upload_blob_from_stream, mock_aad, mock_retry):
-        total_attempts = 4
-        custom_request_id = "custom_request_id"
-
-        responses.add_callback(
-            responses.POST, "https://ingest-somecluster.kusto.windows.net/v1/rest/mgmt", callback=queued_request_callback, content_type="application/json"
-        )
-
-        ingest_client = ManagedStreamingIngestClient("https://ingest-somecluster.kusto.windows.net")
-        ingestion_properties = IngestionProperties(database="database", table="table")
-        ingestion_properties.client_request_id = custom_request_id
-
-        helper = TransientResponseHelper(times_to_fail=total_attempts)
-        responses.add_callback(
-            responses.POST,
-            "https://somecluster.kusto.windows.net/v1/rest/ingest/database/table",
-            callback=lambda request: transient_error_callback(helper, request, custom_request_id),
             content_type="application/json",
         )
 
@@ -298,52 +247,8 @@ class TestManagedStreamingIngestClient:
             content_type="application/json",
         )
 
-        ingest_client = ManagedStreamingIngestClient("https://ingest-somecluster.kusto.windows.net")
+        ingest_client = ManagedStreamingIngestClient.from_engine_kcsb("https://somecluster.kusto.windows.net")
         ingestion_properties = IngestionProperties(database="database", table="table")
-
-        # ensure test can work when executed from within directories
-        current_dir = os.getcwd()
-        path_parts = ["azure-kusto-ingest", "tests", "input", "dataset.csv"]
-        missing_path_parts = []
-        for path_part in path_parts:
-            if path_part not in current_dir:
-                missing_path_parts.append(path_part)
-
-        file_path = os.path.join(current_dir, *missing_path_parts)
-
-        result = ingest_client.ingest_from_file(file_path, ingestion_properties=ingestion_properties)
-
-        assert result.status == IngestionStatus.SUCCESS
-
-        assert helper.total_calls == total_failures + 1
-
-    @responses.activate
-    @patch(
-        "azure.kusto.ingest.managed_streaming_ingest_client.ManagedStreamingIngestClient._create_exponential_retry",
-        return_value=ExponentialRetry(ManagedStreamingIngestClient.ATTEMPT_COUNT, sleep_base=0, max_jitter=0),
-    )
-    @patch("azure.kusto.data.security._AadHelper.acquire_authorization_header", return_value=None)
-    @patch("azure.storage.blob.BlobClient.upload_blob")
-    @patch("azure.storage.queue.QueueClient.send_message")
-    @patch("uuid.uuid4", return_value=MOCKED_UUID_4)
-    def test_fallback_transient_single_error_custom_request_id(self, mock_uuid, mock_put_message_in_queue, mock_upload_blob_from_stream, mock_aad, mock_retry):
-        custom_request_id = "custom_request_id"
-        total_failures = 2
-
-        responses.add_callback(
-            responses.POST, "https://ingest-somecluster.kusto.windows.net/v1/rest/mgmt", callback=queued_request_callback, content_type="application/json"
-        )
-        helper = TransientResponseHelper(times_to_fail=total_failures)
-        responses.add_callback(
-            responses.POST,
-            "https://somecluster.kusto.windows.net/v1/rest/ingest/database/table",
-            callback=lambda request: transient_error_callback(helper, request, custom_request_id),
-            content_type="application/json",
-        )
-
-        ingest_client = ManagedStreamingIngestClient("https://ingest-somecluster.kusto.windows.net")
-        ingestion_properties = IngestionProperties(database="database", table="table")
-        ingestion_properties.client_request_id = custom_request_id
 
         # ensure test can work when executed from within directories
         current_dir = os.getcwd()
@@ -395,7 +300,7 @@ class TestManagedStreamingIngestClient:
             content_type="application/json",
         )
 
-        ingest_client = ManagedStreamingIngestClient("https://somecluster.kusto.windows.net")
+        ingest_client = ManagedStreamingIngestClient.from_dm_kcsb("https://ingest-somecluster.kusto.windows.net")
         ingestion_properties = IngestionProperties(database="database", table="table", data_format=DataFormat.CSV)
 
         current_dir = os.getcwd()
@@ -420,7 +325,7 @@ class TestManagedStreamingIngestClient:
             responses.POST, "https://ingest-somecluster.kusto.windows.net/v1/rest/mgmt", callback=queued_request_callback, content_type="application/json"
         )
 
-        ingest_client = ManagedStreamingIngestClient("https://ingest-somecluster.kusto.windows.net")
+        ingest_client = ManagedStreamingIngestClient.from_dm_kcsb("https://ingest-somecluster.kusto.windows.net")
         ingestion_properties = IngestionProperties(database="database", table="table")
 
         blob_path = (

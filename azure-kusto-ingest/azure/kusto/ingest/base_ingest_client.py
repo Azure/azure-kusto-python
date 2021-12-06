@@ -10,7 +10,6 @@ from io import TextIOWrapper, BytesIO
 from typing import TYPE_CHECKING, Union, IO, AnyStr, Optional
 
 from .descriptors import FileDescriptor, StreamDescriptor
-from .ingestion_blob_info import IngestionBlobInfo
 from .ingestion_properties import DataFormat, IngestionProperties
 
 if TYPE_CHECKING:
@@ -30,12 +29,31 @@ class IngestionStatus(Enum):
 
 
 class IngestionResult:
-    def __init__(self, status: IngestionStatus, database: str, table: str, source_id: uuid.UUID, blob_info: Optional[IngestionBlobInfo] = None):
+    """
+    The result of an ingestion.
+    """
+
+    status: IngestionStatus
+    "Will be `Queued` if the ingestion is queued, or `Success` if the ingestion is streaming and successful."
+
+    database: str
+    "The name of the database where the ingestion was performed."
+
+    table: str
+    "The name of the table where the ingestion was performed."
+
+    source_id: uuid.UUID
+    "The source id of the ingestion."
+
+    blob_uri: Optional[str]
+    "The blob uri of the ingestion, if exists."
+
+    def __init__(self, status: IngestionStatus, database: str, table: str, source_id: uuid.UUID, blob_uri: Optional[str] = None):
         self.status = status
         self.database = database
         self.table = table
         self.source_id = source_id
-        self.blob_info = blob_info
+        self.blob_uri = blob_uri
 
 
 class BaseIngestClient(metaclass=ABCMeta):

@@ -162,7 +162,6 @@ class IngestionProperties:
         report_method: ReportMethod = ReportMethod.Queue,
         validation_policy: Optional[ValidationPolicy] = None,
         additional_properties: Optional[dict] = None,
-        client_request_id: Optional[str] = None,
     ):
 
         if ingestion_mapping is not None and ingestion_mapping_reference is not None:
@@ -186,7 +185,6 @@ class IngestionProperties:
         self.report_method = report_method
         self.validation_policy = validation_policy
         self.additional_properties = additional_properties
-        self.client_request_id = client_request_id
 
     def is_format_binary(self):
         return self.format in self._binary_formats

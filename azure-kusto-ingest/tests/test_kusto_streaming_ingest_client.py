@@ -64,6 +64,8 @@ def assert_managed_streaming_request_id(request_id: str, retry: int = 0):
 
 @pytest.fixture(params=[KustoStreamingIngestClient, ManagedStreamingIngestClient])
 def ingest_client_class(request):
+    if request.param == ManagedStreamingIngestClient:
+        return ManagedStreamingIngestClient.from_engine_kcsb
     return request.param
 
 
@@ -189,22 +191,4 @@ class TestKustoStreamingIngestClient:
         str_sequence = u'{"Name":"Ben","Age":"56","Weight":"75"}'
         str_stream = io.StringIO(str_sequence)
         result = ingest_client.ingest_from_stream(str_stream, ingestion_properties=ingestion_properties)
-        assert result.status == IngestionStatus.SUCCESS
-
-    @responses.activate
-    def test_streaming_ingest_from_stream_custom_request_id(self, ingest_client_class):
-        custom_request_id = "custom_request_id"
-        responses.add_callback(
-            responses.POST,
-            "https://somecluster.kusto.windows.net/v1/rest/ingest/database/table",
-            callback=lambda r: request_callback(r, ingest_client_class, custom_request_id),
-        )
-
-        ingest_client = ingest_client_class("https://somecluster.kusto.windows.net")
-        ingestion_properties = IngestionProperties(database="database", table="table", data_format=DataFormat.CSV)
-        ingestion_properties.client_request_id = custom_request_id
-
-        byte_sequence = b"56,56,56"
-        bytes_stream = io.BytesIO(byte_sequence)
-        result = ingest_client.ingest_from_stream(bytes_stream, ingestion_properties=ingestion_properties)
         assert result.status == IngestionStatus.SUCCESS

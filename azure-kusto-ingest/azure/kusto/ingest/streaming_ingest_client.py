@@ -1,6 +1,6 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
-from typing import Union, AnyStr
+from typing import Union, AnyStr, Optional
 
 from typing import IO
 
@@ -40,11 +40,16 @@ class KustoStreamingIngestClient(BaseIngestClient):
                be ingested.
         :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
         """
+        return self._ingest_from_stream_with_client_request_id(stream_descriptor, ingestion_properties, None)
+
+    def _ingest_from_stream_with_client_request_id(
+        self, stream_descriptor: Union[StreamDescriptor, IO[AnyStr]], ingestion_properties: IngestionProperties, client_request_id: Optional[str]
+    ) -> IngestionResult:
         stream_descriptor = BaseIngestClient._prepare_stream(stream_descriptor, ingestion_properties)
         additional_properties = None
-        if ingestion_properties.client_request_id:
+        if client_request_id:
             additional_properties = ClientRequestProperties()
-            additional_properties.client_request_id = ingestion_properties.client_request_id
+            additional_properties.client_request_id = client_request_id
 
         self._kusto_client.execute_streaming_ingest(
             ingestion_properties.database,

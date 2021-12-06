@@ -187,7 +187,7 @@ class TestE2E:
         cls.client = KustoClient(cls.engine_kcsb_from_env())
         cls.ingest_client = QueuedIngestClient(cls.dm_kcsb_from_env())
         cls.streaming_ingest_client = KustoStreamingIngestClient(cls.engine_kcsb_from_env())
-        cls.managed_streaming_ingest_client = ManagedStreamingIngestClient(cls.dm_kcsb_from_env())
+        cls.managed_streaming_ingest_client = ManagedStreamingIngestClient(cls.engine_kcsb_from_env(), cls.dm_kcsb_from_env())
         cls.input_folder_path = cls.get_file_path()
 
         cls.csv_file_path = os.path.join(cls.input_folder_path, "dataset.csv")

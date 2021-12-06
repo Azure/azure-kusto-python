@@ -19,14 +19,37 @@ class ManagedStreamingIngestClient(BaseIngestClient):
     MAX_STREAMING_SIZE_IN_BYTES = 4 * 1024 * 1024
     ATTEMPT_COUNT = 4
 
-    def __init__(self, queued_kcsb: Union[KustoConnectionStringBuilder, str], streaming_kcsb: Optional[Union[KustoConnectionStringBuilder, str]] = None):
+    @staticmethod
+    def from_engine_kcsb(engine_kcsb: Union[KustoConnectionStringBuilder, str]) -> "ManagedStreamingIngestClient":
+        """
+        Create a ManagedStreamingIngestClient from a KustoConnectionStringBuilder for the engine.
+        This Connection String is used for the streaming ingest client.
+        This method will infer the dm connection string (by using the same authentication and adding the ingest- prefix)
+        For advanced use cases, use the constructor directly.
+        :param engine_kcsb: KustoConnectionStringBuilder for the engine.
+        :return: ManagedStreamingIngestClient
+        """
+        kcsb = repr(engine_kcsb) if type(engine_kcsb) == KustoConnectionStringBuilder else engine_kcsb
+        dm_kcsb = KustoConnectionStringBuilder(kcsb.replace("https://", "https://ingest-"))
+        return ManagedStreamingIngestClient(engine_kcsb, dm_kcsb)
 
-        if streaming_kcsb is None:
-            kcsb = repr(queued_kcsb) if type(queued_kcsb) == KustoConnectionStringBuilder else queued_kcsb
-            streaming_kcsb = KustoConnectionStringBuilder(kcsb.replace("https://ingest-", "https://"))
+    @staticmethod
+    def from_dm_kcsb(dm_kcsb: Union[KustoConnectionStringBuilder, str]) -> "ManagedStreamingIngestClient":
+        """
+        Create a ManagedStreamingIngestClient from a KustoConnectionStringBuilder for the dm.
+        This Connection String is used for the queued ingest client.
+        This method will infer the engine connection string (by using the same authentication and removing the ingest- prefix)
+        For advanced use cases, use the constructor directly.
+        :param dm_kcsb: KustoConnectionStringBuilder for the dm.
+        :return: ManagedStreamingIngestClient
+        """
+        kcsb = repr(dm_kcsb) if type(dm_kcsb) == KustoConnectionStringBuilder else dm_kcsb
+        engine_kcsb = KustoConnectionStringBuilder(kcsb.replace("https://ingest-", "https://"))
+        return ManagedStreamingIngestClient(engine_kcsb, dm_kcsb)
 
-        self.queued_client = QueuedIngestClient(queued_kcsb)
-        self.streaming_client = KustoStreamingIngestClient(streaming_kcsb)
+    def __init__(self, engine_kcsb: Union[KustoConnectionStringBuilder, str], dm_kcsb: Optional[Union[KustoConnectionStringBuilder, str]]):
+        self.queued_client = QueuedIngestClient(dm_kcsb)
+        self.streaming_client = KustoStreamingIngestClient(engine_kcsb)
 
     def ingest_from_file(self, file_descriptor: Union[FileDescriptor, str], ingestion_properties: IngestionProperties) -> IngestionResult:
         stream_descriptor = StreamDescriptor.from_file_descriptor(file_descriptor)
@@ -37,11 +60,6 @@ class ManagedStreamingIngestClient(BaseIngestClient):
     def ingest_from_stream(self, stream_descriptor: Union[StreamDescriptor, IO[AnyStr]], ingestion_properties: IngestionProperties) -> IngestionResult:
         stream_descriptor = BaseIngestClient._prepare_stream(stream_descriptor, ingestion_properties)
         stream = stream_descriptor.stream
-
-        set_client_request_id = False
-        if not ingestion_properties.client_request_id:
-            set_client_request_id = True
-            ingestion_properties.client_request_id = ManagedStreamingIngestClient._get_request_id(stream_descriptor.source_id, 0)
 
         buffered_stream = read_until_size_or_end(stream, self.MAX_STREAMING_SIZE_IN_BYTES + 1)
 
@@ -54,9 +72,8 @@ class ManagedStreamingIngestClient(BaseIngestClient):
         retry = self._create_exponential_retry()
         while retry:
             try:
-                if set_client_request_id:
-                    ingestion_properties.client_request_id = ManagedStreamingIngestClient._get_request_id(stream_descriptor.source_id, retry.retries)
-                return self.streaming_client.ingest_from_stream(stream_descriptor, ingestion_properties)
+                client_request_id = ManagedStreamingIngestClient._get_request_id(stream_descriptor.source_id, retry.retries)
+                return self.streaming_client._ingest_from_stream_with_client_request_id(stream_descriptor, ingestion_properties, client_request_id)
             except KustoApiError as e:
                 error = e.get_api_error()
                 if error.permanent:

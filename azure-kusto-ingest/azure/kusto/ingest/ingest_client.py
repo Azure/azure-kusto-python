@@ -94,7 +94,7 @@ class QueuedIngestClient(BaseIngestClient):
         queue_client.send_message(content=ingestion_blob_info_json)
 
         return IngestionResult(
-            IngestionStatus.QUEUED, ingestion_properties.database, ingestion_properties.table, blob_descriptor.source_id, ingestion_blob_info
+            IngestionStatus.QUEUED, ingestion_properties.database, ingestion_properties.table, blob_descriptor.source_id, blob_descriptor.path
         )
 
     def _get_containers(self) -> List[_ResourceUri]:
