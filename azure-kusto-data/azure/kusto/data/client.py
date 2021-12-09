@@ -783,6 +783,9 @@ class KustoClient(_KustoClientBase):
         self._session.mount("http://", adapter)
         self._session.mount("https://", adapter)
 
+    def set_http_proxies(self, proxies: dict):
+        self._session.proxies.update(proxies)
+
     @staticmethod
     def compose_socket_options() -> List[Tuple[int, int, int]]:
         # Sends TCP Keep-Alive after MAX_IDLE_SECONDS seconds of idleness, once every INTERVAL_SECONDS seconds, and closes the connection after MAX_FAILED_KEEPALIVES failed pings (e.g. 20 => 1:00:30)
