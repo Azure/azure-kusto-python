@@ -26,6 +26,7 @@ class ManagedStreamingIngestClient(BaseIngestClient):
         - The ingestion is too large for streaming ingestion (over 4MB)
         - The ingestion is directly for a blob
     """
+
     MAX_STREAMING_SIZE_IN_BYTES = 4 * 1024 * 1024
     ATTEMPT_COUNT = 4
 

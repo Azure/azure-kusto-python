@@ -11,7 +11,9 @@ from azure.kusto.ingest import (
     BlobDescriptor,
     StreamDescriptor,
     DataFormat,
-    KustoStreamingIngestClient, ManagedStreamingIngestClient, IngestionStatus,
+    KustoStreamingIngestClient,
+    ManagedStreamingIngestClient,
+    IngestionStatus,
 )
 
 ##################################################################
@@ -232,4 +234,3 @@ if result.status == IngestionStatus.QUEUED:
 # - Multiple transient errors were encountered when trying to do streaming ingestion
 # - The ingestion is too large for streaming ingestion (over 4MB)
 # - The ingestion is directly for a blob
-
