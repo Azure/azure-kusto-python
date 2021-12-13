@@ -28,7 +28,7 @@ class ManagedStreamingIngestClient(BaseIngestClient):
     """
 
     MAX_STREAMING_SIZE_IN_BYTES = 4 * 1024 * 1024
-    ATTEMPT_COUNT = 4
+    ATTEMPT_COUNT = 3
 
     @staticmethod
     def from_engine_kcsb(engine_kcsb: Union[KustoConnectionStringBuilder, str]) -> "ManagedStreamingIngestClient":

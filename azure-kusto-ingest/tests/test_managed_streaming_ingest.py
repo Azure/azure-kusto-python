@@ -185,7 +185,7 @@ class TestManagedStreamingIngestClient:
     @patch("azure.storage.queue.QueueClient.send_message")
     @patch("uuid.uuid4", return_value=MOCKED_UUID_4)
     def test_fallback_transient_errors_limit(self, mock_uuid, mock_put_message_in_queue, mock_upload_blob_from_stream, mock_aad, mock_retry):
-        total_attempts = 4
+        total_attempts = 3
 
         responses.add_callback(
             responses.POST, "https://ingest-somecluster.kusto.windows.net/v1/rest/mgmt", callback=queued_request_callback, content_type="application/json"
