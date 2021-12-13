@@ -3,10 +3,10 @@ from time import sleep
 
 
 class ExponentialRetry:
-    def __init__(self, max_attempts, sleep_base: float = 1.0, max_jitter: float = 1.0):
+    def __init__(self, max_attempts, sleep_base_secs: float = 1.0, max_jitter_secs: float = 1.0):
         self.max_attempts = max_attempts
-        self.sleep_base = sleep_base
-        self.max_jitter = max_jitter
+        self.sleep_base = sleep_base_secs
+        self.max_jitter = max_jitter_secs
 
         self.current_attempt = 0
 

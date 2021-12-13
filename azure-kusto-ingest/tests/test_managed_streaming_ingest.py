@@ -17,7 +17,7 @@ from test_kusto_streaming_ingest_client import request_callback as streaming_req
 def mock_retry(self):
     self.max_attempts = ManagedStreamingIngestClient.ATTEMPT_COUNT
     self.sleep_base = 0
-    self.max_jitter = 0
+    self.max_jitter_secs = 0
     self.current_attempt = 0
 
 
@@ -178,7 +178,7 @@ class TestManagedStreamingIngestClient:
     @responses.activate
     @patch(
         "azure.kusto.ingest.managed_streaming_ingest_client.ManagedStreamingIngestClient._create_exponential_retry",
-        return_value=ExponentialRetry(ManagedStreamingIngestClient.ATTEMPT_COUNT, sleep_base=0, max_jitter=0),
+        return_value=ExponentialRetry(ManagedStreamingIngestClient.ATTEMPT_COUNT, sleep_base_secs=0, max_jitter_secs=0),
     )
     @patch("azure.kusto.data.security._AadHelper.acquire_authorization_header", return_value=None)
     @patch("azure.storage.blob.BlobClient.upload_blob")
@@ -227,7 +227,7 @@ class TestManagedStreamingIngestClient:
     @responses.activate
     @patch(
         "azure.kusto.ingest.managed_streaming_ingest_client.ManagedStreamingIngestClient._create_exponential_retry",
-        return_value=ExponentialRetry(ManagedStreamingIngestClient.ATTEMPT_COUNT, sleep_base=0, max_jitter=0),
+        return_value=ExponentialRetry(ManagedStreamingIngestClient.ATTEMPT_COUNT, sleep_base_secs=0, max_jitter_secs=0),
     )
     @patch("azure.kusto.data.security._AadHelper.acquire_authorization_header", return_value=None)
     @patch("azure.storage.blob.BlobClient.upload_blob")
