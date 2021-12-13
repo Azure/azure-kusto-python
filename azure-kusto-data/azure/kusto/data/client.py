@@ -649,7 +649,7 @@ class ExecuteRequestParams:
             if properties:
                 request_headers.update(json.loads(properties.to_json())["Options"])
 
-            client_request_id_prefix = "KPC.execute_streaming_ingest;"
+            client_request_id_prefix = "KPC.executeStreaming;"
             request_headers["Content-Encoding"] = "gzip"
         request_headers["x-ms-client-request-id"] = client_request_id_prefix + str(uuid.uuid4())
         if properties is not None:
