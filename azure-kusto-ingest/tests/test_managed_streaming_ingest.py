@@ -16,7 +16,7 @@ from test_kusto_streaming_ingest_client import request_callback as streaming_req
 
 def mock_retry(self):
     self.max_attempts = ManagedStreamingIngestClient.ATTEMPT_COUNT
-    self.sleep_base = 0
+    self.sleep_base_secs = 0
     self.max_jitter_secs = 0
     self.current_attempt = 0
 
