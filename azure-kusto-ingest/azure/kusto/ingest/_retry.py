@@ -8,11 +8,11 @@ class ExponentialRetry:
         self.sleep_base = sleep_base
         self.max_jitter = max_jitter
 
-        self.retries = 0
+        self.current_attempt = 0
 
-    def backoff(self):
-        sleep((self.sleep_base * (2 ** self.retries)) + (random.uniform(0, self.max_jitter)))
-        self.retries += 1
+    def do_backoff(self):
+        sleep((self.sleep_base * (2 ** self.current_attempt)) + (random.uniform(0, self.max_jitter)))
+        self.current_attempt += 1
 
     def __bool__(self):
-        return self.retries < self.max_attempts
+        return self.current_attempt < self.max_attempts

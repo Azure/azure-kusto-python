@@ -83,14 +83,14 @@ class ManagedStreamingIngestClient(BaseIngestClient):
         retry = self._create_exponential_retry()
         while retry:
             try:
-                client_request_id = ManagedStreamingIngestClient._get_request_id(stream_descriptor.source_id, retry.retries)
+                client_request_id = ManagedStreamingIngestClient._get_request_id(stream_descriptor.source_id, retry.current_attempt)
                 return self.streaming_client._ingest_from_stream_with_client_request_id(stream_descriptor, ingestion_properties, client_request_id)
             except KustoApiError as e:
                 error = e.get_api_error()
                 if error.permanent:
                     raise
                 stream.seek(0, SEEK_SET)
-                retry.backoff()
+                retry.do_backoff()
 
         return self.queued_client.ingest_from_stream(stream_descriptor, ingestion_properties)
 

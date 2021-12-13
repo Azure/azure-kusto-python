@@ -18,7 +18,7 @@ def mock_retry(self):
     self.max_attempts = ManagedStreamingIngestClient.ATTEMPT_COUNT
     self.sleep_base = 0
     self.max_jitter = 0
-    self.retries = 0
+    self.current_attempt = 0
 
 
 class TransientResponseHelper:
