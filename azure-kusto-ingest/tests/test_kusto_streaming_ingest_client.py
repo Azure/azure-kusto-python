@@ -30,7 +30,7 @@ def request_callback(request, client_type, custom_request_id=None):
         assert custom_request_id == request_id
     elif client_type == KustoStreamingIngestClient:
         [prefix, request_uuid] = request_id.split(";")
-        assert prefix == "KPC.execute_streaming_ingest"
+        assert prefix == "KPC.executeStreamingIngest"
         uuid.UUID(request_uuid)
     elif client_type == ManagedStreamingIngestClient:
         assert_managed_streaming_request_id(request_id)
