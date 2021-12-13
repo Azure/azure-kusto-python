@@ -57,7 +57,7 @@ def request_callback(request, client_type, custom_request_id=None):
 
 def assert_managed_streaming_request_id(request_id: str, retry: int = 0):
     [prefix, request_uuid, suffix] = request_id.split(";")
-    assert prefix == "KPC.execute_managed_streaming_ingest"
+    assert prefix == "KPC.executeManagedStreamingIngest"
     uuid.UUID(request_uuid)
     assert int(suffix) == retry
 

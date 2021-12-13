@@ -109,7 +109,7 @@ class ManagedStreamingIngestClient(BaseIngestClient):
 
     @staticmethod
     def _get_request_id(source_id: uuid.UUID, attempt: int):
-        return f"KPC.execute_managed_streaming_ingest;{source_id};{attempt}"
+        return f"KPC.executeManagedStreamingIngest;{source_id};{attempt}"
 
     @staticmethod
     def _create_exponential_retry():
