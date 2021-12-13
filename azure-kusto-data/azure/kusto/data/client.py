@@ -649,6 +649,7 @@ class ExecuteRequestParams:
             if properties:
                 request_headers.update(json.loads(properties.to_json())["Options"])
 
+            # Before 3.0 it was KPC.execute_streaming_ingest, but was changed to align with the other SDKs
             client_request_id_prefix = "KPC.executeStreaming;"
             request_headers["Content-Encoding"] = "gzip"
         request_headers["x-ms-client-request-id"] = client_request_id_prefix + str(uuid.uuid4())
