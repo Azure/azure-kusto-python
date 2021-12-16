@@ -33,7 +33,7 @@ class KustoSampleApp:
     #  If this quickstart app was downloaded from GitHub, edit kusto_sample_config.json and modify the cluster URL and database fields appropriately
     CONFIG_FILE_NAME = "kusto_sample_config.json"
 
-    BATCHING_POLICY = "{ \"MaximumBatchingTimeSpan\": \"00:00:10\", \"MaximumNumberOfItems\": 500, \"MaximumRawDataSizeMB\": 1024 }"
+    BATCHING_POLICY = '{ "MaximumBatchingTimeSpan": "00:00:10", "MaximumNumberOfItems": 500, "MaximumRawDataSizeMB": 1024 }'
     WAIT_FOR_INGEST_SECONDS = 20
 
     _step = 1
@@ -83,7 +83,15 @@ class KustoSampleApp:
 
                 # Tip: This is generally a one-time configuration.
                 # Learn More: For more information about providing inline mappings and mapping references, see: https://docs.microsoft.com/azure/data-explorer/kusto/management/mappings
-                if not cls.create_ingestion_mappings(strtobool(file["useExistingMapping"].lower()), kusto_client, cls.database_name, cls.table_name, mapping_name, file["mappingValue"], data_format):
+                if not cls.create_ingestion_mappings(
+                    strtobool(file["useExistingMapping"].lower()),
+                    kusto_client,
+                    cls.database_name,
+                    cls.table_name,
+                    mapping_name,
+                    file["mappingValue"],
+                    data_format,
+                ):
                     continue
 
                 # Learn More: For more information about ingesting data to Kusto in Python, see: https://docs.microsoft.com/azure/data-explorer/python-ingest-data
@@ -129,7 +137,14 @@ class KustoSampleApp:
         cls.should_alter_table = strtobool(config["alterTable"].lower())
         cls.should_query_data = strtobool(config["queryData"].lower())
         cls.should_ingest_data = strtobool(config["ingestData"].lower())
-        if cls.database_name is None or cls.table_name is None or cls.table_schema is None or cls.kusto_url is None or cls.ingest_url is None or cls.data_to_ingest is None:
+        if (
+            cls.database_name is None
+            or cls.table_name is None
+            or cls.table_schema is None
+            or cls.kusto_url is None
+            or cls.ingest_url is None
+            or cls.data_to_ingest is None
+        ):
             cls.die(f"File '{config_file_name}' is missing required fields")
 
     @classmethod
@@ -143,10 +158,9 @@ class KustoSampleApp:
         elif authentication_mode == "AppKey":
             # Learn More: For information about how to procure an AAD Application, see: https://docs.microsoft.com/azure/data-explorer/provision-azure-ad-app
             # TODO (config - optional): App ID & tenant, and App Key to authenticate with
-            return KustoConnectionStringBuilder.with_aad_application_key_authentication(cluster_url,
-                                                                                        os.environ.get("APP_ID"),
-                                                                                        os.environ.get("APP_KEY"),
-                                                                                        os.environ.get("APP_TENANT"))
+            return KustoConnectionStringBuilder.with_aad_application_key_authentication(
+                cluster_url, os.environ.get("APP_ID"), os.environ.get("APP_KEY"), os.environ.get("APP_TENANT")
+            )
         elif authentication_mode == "AppCertificate":
             return cls.create_application_certificate_connection_string(cluster_url)
         else:
@@ -160,8 +174,7 @@ class KustoSampleApp:
         if client_id is None:
             return KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication(cluster_url)
         else:
-            return KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication(cluster_url,
-                                                                                                 client_id=client_id)
+            return KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication(cluster_url, client_id=client_id)
 
     @classmethod
     def create_application_certificate_connection_string(cls, cluster_url: str) -> KustoConnectionStringBuilder:
@@ -191,9 +204,9 @@ class KustoSampleApp:
                 cluster_url, app_id, pem_certificate, public_certificate, cert_thumbprint, app_tenant
             )
         else:
-            return KustoConnectionStringBuilder.with_aad_application_certificate_authentication(cluster_url, app_id,
-                                                                                                pem_certificate,
-                                                                                                cert_thumbprint, app_tenant)
+            return KustoConnectionStringBuilder.with_aad_application_certificate_authentication(
+                cluster_url, app_id, pem_certificate, cert_thumbprint, app_tenant
+            )
 
     @classmethod
     def create_new_table(cls, kusto_client: KustoClient, database_name: str, table_name: str, table_schema: str) -> None:
@@ -291,13 +304,26 @@ class KustoSampleApp:
         cls.wait_for_user_to_proceed(f"Alter the batching policy for table '{database_name}.{table_name}'")
         command = f".alter table {table_name} policy ingestionbatching @'{cls.BATCHING_POLICY}'"
         if not cls.execute_control_command(kusto_client, database_name, command):
-            print("Failed to alter the ingestion policy, which could be the result of insufficient permissions. The sample will still run, though ingestion will be delayed for up to 5 minutes.")
+            print(
+                "Failed to alter the ingestion policy, which could be the result of insufficient permissions. The sample will still run, though ingestion will be delayed for up to 5 minutes."
+            )
 
     @classmethod
-    def create_ingestion_mappings(cls, use_existing_mapping:bool, kusto_client: KustoClient, database_name: str, table_name: str, mapping_name: str, mapping_value: str, data_format: DataFormat) -> bool:
+    def create_ingestion_mappings(
+        cls,
+        use_existing_mapping: bool,
+        kusto_client: KustoClient,
+        database_name: str,
+        table_name: str,
+        mapping_name: str,
+        mapping_value: str,
+        data_format: DataFormat,
+    ) -> bool:
         if not use_existing_mapping:
             if cls.data_format_to_is_mapping_required(data_format) and not mapping_value:
-                print(f"The data format '{data_format.name}' requires a mapping, but configuration indicates to not use an existing mapping and no mapping was provided. Skipping this ingestion.")
+                print(
+                    f"The data format '{data_format.name}' requires a mapping, but configuration indicates to not use an existing mapping and no mapping was provided. Skipping this ingestion."
+                )
                 return False
 
             if mapping_value:
@@ -311,7 +337,9 @@ class KustoSampleApp:
                     print(f"Failed to create a '{ingestion_mapping_kind}' mapping reference named '{mapping_name}'. Skipping this ingestion.")
                     return False
         elif cls.data_format_to_is_mapping_required(data_format) and not mapping_name:
-            print(f"The data format '{data_format.name}' requires a mapping and the configuration indicates an existing mapping should be used, but none was provided. Skipping this ingestion.")
+            print(
+                f"The data format '{data_format.name}' requires a mapping and the configuration indicates an existing mapping should be used, but none was provided. Skipping this ingestion."
+            )
             return False
 
         return True
@@ -335,8 +363,9 @@ class KustoSampleApp:
             print(f"Unknown source '{source_type}' for file '{uri}'")
 
     @classmethod
-    def ingest_from_file(cls, ingest_client: QueuedIngestClient, database_name: str, table_name: str, file_path: str,
-                         data_format: DataFormat, mapping_name: str = None):
+    def ingest_from_file(
+        cls, ingest_client: QueuedIngestClient, database_name: str, table_name: str, file_path: str, data_format: DataFormat, mapping_name: str = None
+    ):
         ingestion_properties = cls.create_ingestion_properties(database_name, table_name, data_format, mapping_name)
 
         # Tip 1: For optimal ingestion batching and performance, specify the uncompressed data size in the file descriptor instead of the default below of 0.
@@ -346,8 +375,9 @@ class KustoSampleApp:
         ingest_client.ingest_from_file(file_descriptor, ingestion_properties=ingestion_properties)
 
     @classmethod
-    def ingest_from_blob(cls, client: QueuedIngestClient, database_name: str, table_name: str, blob_url: str,
-                         data_format: DataFormat, mapping_name: str = None):
+    def ingest_from_blob(
+        cls, client: QueuedIngestClient, database_name: str, table_name: str, blob_url: str, data_format: DataFormat, mapping_name: str = None
+    ):
         ingestion_properties = cls.create_ingestion_properties(database_name, table_name, data_format, mapping_name)
 
         # Tip 1: For optimal ingestion batching and performance, specify the uncompressed data size in the file descriptor instead of the default below of 0.
@@ -372,7 +402,9 @@ class KustoSampleApp:
 
     @classmethod
     def wait_for_ingestion_to_complete(cls) -> None:
-        print(f"Sleeping {cls.WAIT_FOR_INGEST_SECONDS} seconds for queued ingestion to complete. Note: This may take longer depending on the file size and ingestion batching policy.")
+        print(
+            f"Sleeping {cls.WAIT_FOR_INGEST_SECONDS} seconds for queued ingestion to complete. Note: This may take longer depending on the file size and ingestion batching policy."
+        )
         for x in range(cls.WAIT_FOR_INGEST_SECONDS, 0, -1):
             print(f"{x} ", end="\r")
             time.sleep(1)
