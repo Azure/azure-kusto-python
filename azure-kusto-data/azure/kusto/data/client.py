@@ -590,8 +590,6 @@ class ClientRequestProperties:
     For more information please look at: https://docs.microsoft.com/en-us/azure/kusto/api/netfx/request-properties
     """
 
-    OPTION_CLIENT_REQUEST_ID = "ClientRequestId"
-
     results_defer_partial_query_failures_option_name = "deferpartialqueryfailures"
     request_timeout_option_name = "servertimeout"
     no_request_timeout_option_name = "norequesttimeout"

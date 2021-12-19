@@ -1,9 +1,10 @@
 import uuid
 from io import SEEK_SET
-from typing import TYPE_CHECKING, Union, Optional, IO, AnyStr
+from typing import TYPE_CHECKING, Union, IO, AnyStr
 
 from azure.kusto.data import KustoConnectionStringBuilder
 from azure.kusto.data.exceptions import KustoApiError
+
 from . import IngestionProperties, BlobDescriptor, StreamDescriptor, FileDescriptor
 from ._retry import ExponentialRetry
 from ._stream_extensions import read_until_size_or_end, chain_streams
@@ -58,7 +59,7 @@ class ManagedStreamingIngestClient(BaseIngestClient):
         engine_kcsb = KustoConnectionStringBuilder(kcsb.replace("https://ingest-", "https://"))
         return ManagedStreamingIngestClient(engine_kcsb, dm_kcsb)
 
-    def __init__(self, engine_kcsb: Union[KustoConnectionStringBuilder, str], dm_kcsb: Optional[Union[KustoConnectionStringBuilder, str]]):
+    def __init__(self, engine_kcsb: Union[KustoConnectionStringBuilder, str], dm_kcsb: Union[KustoConnectionStringBuilder, str]):
         self.queued_client = QueuedIngestClient(dm_kcsb)
         self.streaming_client = KustoStreamingIngestClient(engine_kcsb)
 
