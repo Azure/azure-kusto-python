@@ -6,7 +6,7 @@ import pytest
 from azure.kusto.data._models import WellKnownDataSet, KustoResultRow, KustoResultColumn
 from azure.kusto.data.aio.response import KustoStreamingResponseDataSet as AsyncKustoStreamingResponseDataSet
 from azure.kusto.data.aio.streaming_response import JsonTokenReader as AsyncJsonTokenReader, StreamingDataSetEnumerator as AsyncProgressiveDataSetEnumerator
-from azure.kusto.data.exceptions import KustoServiceError, KustoStreamingQueryError, KustoTokenParsingError, KustoUnsupportedApiError
+from azure.kusto.data.exceptions import KustoServiceError, KustoStreamingQueryError, KustoTokenParsingError, KustoUnsupportedApiError, KustoMultiApiError
 from azure.kusto.data.response import KustoStreamingResponseDataSet
 from azure.kusto.data.streaming_response import JsonTokenReader, StreamingDataSetEnumerator, FrameType, JsonTokenType
 from tests.kusto_client_common import KustoClientTestsMixin
@@ -207,7 +207,7 @@ class TestStreamingQuery(KustoClientTestsMixin):
 
             response = AsyncKustoStreamingResponseDataSet(reader)
             table = await response.iter_primary_results().__anext__()
-            with pytest.raises(KustoServiceError):
+            with pytest.raises(KustoMultiApiError):
                 rows = [r async for r in table]
 
 

@@ -5,7 +5,7 @@ import ijson
 from ijson import IncompleteJSONError
 
 from azure.kusto.data._models import WellKnownDataSet
-from azure.kusto.data.exceptions import KustoTokenParsingError, KustoServiceError, KustoUnsupportedApiError
+from azure.kusto.data.exceptions import KustoTokenParsingError, KustoUnsupportedApiError, KustoApiError, KustoMultiApiError
 from azure.kusto.data.streaming_response import JsonTokenType, FrameType, JsonToken
 
 
@@ -163,9 +163,7 @@ class StreamingDataSetEnumerator:
         while True:
             token = await self.reader.read_token_of_type(JsonTokenType.START_ARRAY, JsonTokenType.END_ARRAY, JsonTokenType.START_MAP)
             if token.token_type == JsonTokenType.START_MAP:
-                raise KustoServiceError(
-                    "Received error in data: " + str(self.parse_object(skip_start=True))
-                )  # Todo - replace this with a better error once managed streaming ingest is merged
+                raise KustoMultiApiError([await self.parse_object(skip_start=True)])
             if token.token_type == JsonTokenType.END_ARRAY:
                 return
             yield await self.parse_array(skip_start=True)
