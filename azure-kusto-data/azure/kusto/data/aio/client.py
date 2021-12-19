@@ -2,7 +2,9 @@ import io
 from datetime import timedelta
 from typing import Union, Optional
 
+from .response import KustoStreamingResponseDataSet
 from .._decorators import documented_by, aio_documented_by
+from ..aio.streaming_response import StreamingDataSetEnumerator, JsonTokenReader
 from ..client import KustoClient as KustoClientSync, _KustoClientBase, KustoConnectionStringBuilder, ClientRequestProperties, ExecuteRequestParams
 from ..data_format import DataFormat
 from ..exceptions import KustoAioSyntaxError
@@ -21,14 +23,14 @@ class KustoClient(_KustoClientBase):
     def __init__(self, kcsb: Union[KustoConnectionStringBuilder, str]):
         super().__init__(kcsb)
         # notice that in this context, federated actually just stands for add auth, not aad federated auth (legacy code)
-        self._auth_provider = _AadHelper(self._kcsb) if self._kcsb.aad_federated_security else None
+        self._auth_provider = _AadHelper(self._kcsb, is_async=True) if self._kcsb.aad_federated_security else None
         self._session = ClientSession()
 
     async def __aenter__(self) -> "KustoClient":
         return self
 
     def __aexit__(self, exc_type, exc_val, exc_tb):
-        self._session.__aexit__(exc_type, exc_val, exc_tb)
+        return self._session.__aexit__(exc_type, exc_val, exc_tb)
 
     @aio_documented_by(KustoClientSync.execute)
     async def execute(self, database: str, query: str, properties: ClientRequestProperties = None) -> KustoResponseDataSet:
@@ -62,20 +64,57 @@ class KustoClient(_KustoClientBase):
 
         await self._execute(endpoint, database, None, stream, self._streaming_ingest_default_timeout, properties)
 
+    @aio_documented_by(KustoClientSync._execute_streaming_query_parsed)
+    async def _execute_streaming_query_parsed(
+        self, database: str, query: str, timeout: timedelta = _KustoClientBase._query_default_timeout, properties: Optional[ClientRequestProperties] = None
+    ) -> StreamingDataSetEnumerator:
+        response = await self._execute(self._query_endpoint, database, query, None, timeout, properties, stream_response=True)
+        return StreamingDataSetEnumerator(JsonTokenReader(response.content))
+
+    @aio_documented_by(KustoClientSync.execute_streaming_query)
+    async def execute_streaming_query(
+        self, database: str, query: str, timeout: timedelta = _KustoClientBase._query_default_timeout, properties: Optional[ClientRequestProperties] = None
+    ) -> KustoStreamingResponseDataSet:
+        response = await self._execute_streaming_query_parsed(database, query, timeout, properties)
+        return KustoStreamingResponseDataSet(response)
+
     @aio_documented_by(KustoClientSync._execute)
     async def _execute(
-        self, endpoint: str, database: str, query: Optional[str], payload: Optional[io.IOBase], timeout: timedelta, properties: ClientRequestProperties = None
-    ) -> KustoResponseDataSet:
-
+        self,
+        endpoint: str,
+        database: str,
+        query: Optional[str],
+        payload: Optional[io.IOBase],
+        timeout: timedelta,
+        properties: ClientRequestProperties = None,
+        stream_response: bool = False,
+    ) -> Union[KustoResponseDataSet, ClientResponse]:
+        """Executes given query against this client"""
         request_params = ExecuteRequestParams(database, payload, properties, query, timeout, self._request_headers)
         json_payload = request_params.json_payload
         request_headers = request_params.request_headers
         timeout = request_params.timeout
-
         if self._auth_provider:
             request_headers["Authorization"] = await self._auth_provider.acquire_authorization_header_async()
 
-        async with self._session.post(endpoint, headers=request_headers, data=payload, json=json_payload, timeout=timeout.seconds) as response:
+        response = await self._session.post(endpoint, headers=request_headers, data=payload, json=json_payload, timeout=timeout.seconds)
+
+        if stream_response:
+            try:
+                response.raise_for_status()
+                return response
+            except Exception as e:
+                try:
+                    response_text = await response.text()
+                except Exception:
+                    response_text = None
+                try:
+                    response_json = await response.json()
+                except Exception:
+                    response_json = None
+                raise self._handle_http_error(e, endpoint, payload, response, response.status, response_json, response_text)
+
+        async with response:
             response_json = None
             try:
                 response_json = await response.json()
@@ -85,6 +124,6 @@ class KustoClient(_KustoClientBase):
                     response_text = await response.text()
                 except Exception:
                     response_text = None
-                self._handle_http_error(e, endpoint, payload, response, response_json, response_text)
+                raise self._handle_http_error(e, endpoint, payload, response, response.status, response_json, response_text)
 
             return self._kusto_parse_by_endpoint(endpoint, response_json)

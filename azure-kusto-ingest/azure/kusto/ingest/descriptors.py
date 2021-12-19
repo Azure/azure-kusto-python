@@ -6,13 +6,13 @@ import struct
 import uuid
 from gzip import GzipFile
 from io import BytesIO, SEEK_END
-from typing import AnyStr, Union
+from typing import IO, AnyStr, Union, Optional
 from zipfile import ZipFile
 
-from typing.io import IO
+OptionalUUID = Optional[Union[str, uuid.UUID]]
 
 
-def assert_uuid4(maybe_uuid: str, error_message: str):
+def assert_uuid4(maybe_uuid: OptionalUUID, error_message: str):
     # none is valid value for our purposes
     if maybe_uuid is None:
         return
@@ -31,18 +31,18 @@ class FileDescriptor:
     GZIP_MAX_DISK_SIZE_FOR_DETECTION = int(4 * 1024 * 1024 * 1024 / 40)
     DEFAULT_COMPRESSION_RATIO = 11
 
-    def __init__(self, path, size=0, source_id=None):
+    def __init__(self, path: str, size: Optional[int] = None, source_id: OptionalUUID = None):
         """
         :param path: file path.
         :type path: str.
         :param size: estimated size of file if known. if None or 0 will try to guess.
-        :type size: int.
-        :param source_id uuid: a v4 uuid to serve as the sources id.
-        :type source_id: str (of a uuid4) or uuid4.
+        :type size: Optional[int].
+        :param source_id: a v4 uuid to serve as the sources id.
+        :type source_id: OptionalUUID
         """
         self.path = path
         self._size = size
-        self._detect_size_once = size < 1
+        self._detect_size_once = not size
 
         assert_uuid4(source_id, "source_id must be a valid uuid4")
         self.source_id = source_id
@@ -58,7 +58,7 @@ class FileDescriptor:
 
     @size.setter
     def size(self, size):
-        if size > 0:
+        if size:
             self._size = size
             self._detect_size_once = False
 
@@ -99,14 +99,14 @@ class FileDescriptor:
 class BlobDescriptor:
     """FileDescriptor is used to describe a file that will be used as an ingestion source"""
 
-    def __init__(self, path: str, size: int, source_id: str = None):
+    def __init__(self, path: str, size: Optional[int], source_id: OptionalUUID = None):
         """
         :param path: blob uri.
         :type path: str.
         :param size: estimated size of file if known.
-        :type size: int.
-        :param source_id uuid: a v4 uuid to serve as the sources id.
-        :type source_id: str (of a uuid4) or uuid4.
+        :type size: Optional[int].
+        :param source_id: a v4 uuid to serve as the sources id.
+        :type source_id: OptionalUUID
         """
         self.path = path
         self.size = size
@@ -117,12 +117,12 @@ class BlobDescriptor:
 class StreamDescriptor:
     """StreamDescriptor is used to describe a stream that will be used as ingestion source"""
 
-    def __init__(self, stream: Union[IO[AnyStr], BytesIO], source_id: str = None, is_compressed: bool = False):
+    def __init__(self, stream: Union[IO[AnyStr], BytesIO], source_id: OptionalUUID = None, is_compressed: bool = False):
         """
         :param stream: in-memory stream object.
         :type stream: io.BaseIO
         :param source_id: a v4 uuid to serve as the sources id.
-        :type source_id: str (of a uuid4) or uuid4.
+        :type source_id: OptionalUUID
         :param is_compressed: specify if the provided stream is compressed
         :type is_compressed: boolean
         """

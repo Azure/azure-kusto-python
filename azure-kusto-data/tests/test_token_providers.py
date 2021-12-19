@@ -2,12 +2,14 @@
 # Licensed under the MIT License
 import os
 import unittest
+from threading import Thread
 
+from asgiref.sync import async_to_sync
+
+from azure.kusto.data._cloud_settings import CloudInfo
 from azure.kusto.data._token_providers import *
 
-
-KUSTO_URI = "https://thisclusterdoesnotexist.kusto.windows.net"
-PUBLIC_AUTH_URI = "https://login.microsoftonline.com/"
+KUSTO_URI = "https://sdkse2etest.eastus.kusto.windows.net"
 TOKEN_VALUE = "little miss sunshine"
 
 TEST_AZ_AUTH = False  # enable this in environments with az cli installed, and make sure to call 'az login' first
@@ -17,8 +19,8 @@ TEST_INTERACTIVE_AUTH = False  # User interaction required, enable this when run
 
 
 class MockProvider(TokenProviderBase):
-    def __init__(self, uri: str):
-        super().__init__(uri)
+    def __init__(self, uri: str, is_async: bool = False):
+        super().__init__(uri, is_async)
         self._silent_token = False
         self.init_count = 0
 
@@ -26,7 +28,7 @@ class MockProvider(TokenProviderBase):
     def name() -> str:
         return "MockProvider"
 
-    def context(self) -> dict:
+    def _context_impl(self) -> dict:
         return {"authority": "MockProvider"}
 
     def _init_impl(self):
@@ -106,18 +108,49 @@ class TokenProviderTests(unittest.TestCase):
             assert False
 
     @staticmethod
+    def test_fail_async_call():
+        provider = BasicTokenProvider(token=TOKEN_VALUE)
+        try:
+            async_to_sync(provider.get_token_async)()
+            assert False, "Expected KustoAsyncUsageError to occur"
+        except KustoAsyncUsageError as e:
+            assert str(e) == "Method get_token_async can't be called from a synchronous client"
+        try:
+            async_to_sync(provider.context_async)()
+            assert False, "Expected KustoAsyncUsageError to occur"
+        except KustoAsyncUsageError as e:
+            assert str(e) == "Method context_async can't be called from a synchronous client"
+
+    @staticmethod
     def test_basic_provider():
         provider = BasicTokenProvider(token=TOKEN_VALUE)
         token = provider.get_token()
         assert TokenProviderTests.get_token_value(token) == TOKEN_VALUE
 
     @staticmethod
+    def test_basic_provider_in_thread():
+        exc = []
+
+        def inner(exc):
+            try:
+                TokenProviderTests.test_basic_provider()
+            except Exception as e:
+                exc.append(e)
+
+        pass
+        t = Thread(target=inner, args=(exc,))
+        t.start()
+        t.join()
+        if exc:
+            raise exc[0]
+
+    @staticmethod
     def test_callback_token_provider():
-        provider = CallbackTokenProvider(lambda: TOKEN_VALUE)
+        provider = CallbackTokenProvider(token_callback=lambda: TOKEN_VALUE, async_token_callback=None)
         token = provider.get_token()
         assert TokenProviderTests.get_token_value(token) == TOKEN_VALUE
 
-        provider = CallbackTokenProvider(lambda: 0)  # token is not a string
+        provider = CallbackTokenProvider(token_callback=lambda: 0, async_token_callback=None)  # token is not a string
         exception_occurred = False
         try:
             provider.get_token()
@@ -178,7 +211,7 @@ class TokenProviderTests(unittest.TestCase):
         auth = os.environ.get("USER_AUTH_ID", "organizations")
 
         if username and password and auth:
-            provider = UserPassTokenProvider(KUSTO_URI, PUBLIC_AUTH_URI + auth, username, password)
+            provider = UserPassTokenProvider(KUSTO_URI, auth, username, password)
             token = provider.get_token()
             assert TokenProviderTests.get_token_value(token) is not None
 
@@ -198,7 +231,7 @@ class TokenProviderTests(unittest.TestCase):
             # break here if you debug this test, and get the code from 'x'
             print(x)
 
-        provider = DeviceLoginTokenProvider(KUSTO_URI, PUBLIC_AUTH_URI + "organizations", callback)
+        provider = DeviceLoginTokenProvider(KUSTO_URI, "organizations", callback)
         token = provider.get_token()
         assert TokenProviderTests.get_token_value(token) is not None
 
@@ -213,7 +246,7 @@ class TokenProviderTests(unittest.TestCase):
             return
 
         auth_id = os.environ.get("APP_AUTH_ID", "72f988bf-86f1-41af-91ab-2d7cd011db47")
-        provider = InteractiveLoginTokenProvider(KUSTO_URI, PUBLIC_AUTH_URI + auth_id)
+        provider = InteractiveLoginTokenProvider(KUSTO_URI, auth_id)
         token = provider.get_token()
         assert TokenProviderTests.get_token_value(token) is not None
 
@@ -230,7 +263,7 @@ class TokenProviderTests(unittest.TestCase):
         app_key = os.environ.get("APP_KEY")
 
         if app_id and app_key and auth_id:
-            provider = ApplicationKeyTokenProvider(KUSTO_URI, PUBLIC_AUTH_URI + auth_id, app_id, app_key)
+            provider = ApplicationKeyTokenProvider(KUSTO_URI, auth_id, app_id, app_key)
             token = provider.get_token()
             assert TokenProviderTests.get_token_value(token) is not None
 
@@ -254,7 +287,7 @@ class TokenProviderTests(unittest.TestCase):
             with open(pem_key_path, "rb") as file:
                 pem_key = file.read()
 
-            provider = ApplicationCertificateTokenProvider(KUSTO_URI, cert_app_id, PUBLIC_AUTH_URI + cert_auth, pem_key, thumbprint)
+            provider = ApplicationCertificateTokenProvider(KUSTO_URI, cert_app_id, cert_auth, pem_key, thumbprint)
             token = provider.get_token()
             assert TokenProviderTests.get_token_value(token) is not None
 
@@ -266,7 +299,7 @@ class TokenProviderTests(unittest.TestCase):
                 with open(public_cert_path, "r") as file:
                     public_cert = file.read()
 
-                provider = ApplicationCertificateTokenProvider(KUSTO_URI, cert_app_id, PUBLIC_AUTH_URI + cert_auth, pem_key, thumbprint, public_cert)
+                provider = ApplicationCertificateTokenProvider(KUSTO_URI, cert_app_id, cert_auth, pem_key, thumbprint, public_cert)
                 token = provider.get_token()
                 assert TokenProviderTests.get_token_value(token) is not None
 
@@ -278,3 +311,45 @@ class TokenProviderTests(unittest.TestCase):
 
         else:
             print(" *** Skipped App Cert Provider Test ***")
+
+    @staticmethod
+    def test_cloud_mfa_off():
+        FAKE_URI = "https://fake_cluster_for_login_mfa_test.kusto.windows.net"
+        cloud = CloudInfo(
+            login_endpoint="https://login_endpoint",
+            login_mfa_required=False,
+            kusto_client_app_id="1234",
+            kusto_client_redirect_uri="",
+            kusto_service_resource_id="https://fakeurl.kusto.windows.net",
+            first_party_authority_url="",
+        )
+        CloudSettings._cloud_cache[FAKE_URI] = cloud
+        authority = "auth_test"
+
+        provider = UserPassTokenProvider(FAKE_URI, authority, "a", "b")
+        provider._init_once(init_only_cloud=True)
+        context = provider.context()
+        assert context["authority"] == "https://login_endpoint/auth_test"
+        assert context["client_id"] == cloud.kusto_client_app_id
+        assert provider._scopes == ["https://fakeurl.kusto.windows.net/.default"]
+
+    @staticmethod
+    def test_cloud_mfa_on():
+        FAKE_URI = "https://fake_cluster_for_login_mfa_test.kusto.windows.net"
+        cloud = CloudInfo(
+            login_endpoint="https://login_endpoint",
+            login_mfa_required=True,
+            kusto_client_app_id="1234",
+            kusto_client_redirect_uri="",
+            kusto_service_resource_id="https://fakeurl.kusto.windows.net",
+            first_party_authority_url="",
+        )
+        CloudSettings._cloud_cache[FAKE_URI] = cloud
+        authority = "auth_test"
+
+        provider = UserPassTokenProvider(FAKE_URI, authority, "a", "b")
+        provider._init_once(init_only_cloud=True)
+        context = provider.context()
+        assert context["authority"] == "https://login_endpoint/auth_test"
+        assert context["client_id"] == "1234"
+        assert provider._scopes == ["https://fakeurl.kustomfa.windows.net/.default"]

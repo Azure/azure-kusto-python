@@ -54,10 +54,14 @@ There is also a feature request for the adal team to work on implementing IWA (I
 
 ## Samples:
 
-* [Kusto query sample](https://github.com/Azure/azure-kusto-python/blob/master/azure-kusto-data/tests/sample.py)
+* [Kusto Quick Start Sample App](https://github.com/Azure/azure-kusto-python/tree/master/quick_start)
 
-* [Data ingest sample](https://github.com/Azure/azure-kusto-python/blob/master/azure-kusto-ingest/tests/sample.py)
+* [Kusto query sample sinppets](https://github.com/Azure/azure-kusto-python/blob/master/azure-kusto-data/tests/sample.py)
 
+* [Data ingest sample sinppets](https://github.com/Azure/azure-kusto-python/blob/master/azure-kusto-ingest/tests/sample.py)
+
+## Best Practices
+See the SDK [best practices guide](https://docs.microsoft.com/azure/data-explorer/kusto/api/netfx/kusto-ingest-best-practices), which though written for the .NET SDK, applies similarly here.
 
 ## Need Support?
 - **Have a feature request for SDKs?** Please post it on [User Voice](https://feedback.azure.com/forums/915733-azure-data-explorer) to help us prioritize
@@ -69,7 +73,7 @@ There is also a feature request for the adal team to work on implementing IWA (I
 - [Node](https://github.com/azure/azure-kusto-node)
 - [Java](https://github.com/azure/azure-kusto-java)
 - [.NET](https://docs.microsoft.com/en-us/azure/kusto/api/netfx/about-the-sdk)
-
+- [Go](https://github.com/Azure/azure-kusto-go)
 
 # Contribute
 

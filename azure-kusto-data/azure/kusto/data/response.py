@@ -1,48 +1,32 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
 from abc import ABCMeta, abstractmethod
-from typing import List
+from typing import List, Iterator, Union, Dict, Any
 
-from ._models import KustoResultTable, WellKnownDataSet
+from ._models import KustoResultTable, WellKnownDataSet, KustoStreamingResultTable, BaseKustoResultTable
+from .exceptions import KustoStreamingQueryError
+from .streaming_response import StreamingDataSetEnumerator, FrameType
 
 
-class KustoResponseDataSet(metaclass=ABCMeta):
-    """
-    `KustoResponseDataSet` Represents the parsed data set carried by the response to a Kusto request.
-    `KustoResponseDataSet` provides convenient methods to work with the returned result.
-    The result table(s) are accessable via the @primary_results property.
-    @primary_results returns a collection of `KustoResultTable`.
-        It can contain more than one table when [`fork`](https://docs.microsoft.com/en-us/azure/kusto/query/forkoperator) is used.
-    """
-
-    def __init__(self, json_response):
-        self.tables = [KustoResultTable(t) for t in json_response]
-        self.tables_count = len(self.tables)
-        self.tables_names = [t.table_name for t in self.tables]
+class BaseKustoResponseDataSet(metaclass=ABCMeta):
+    tables: list
+    tables_count: int
+    tables_names: list
 
     @property
     @abstractmethod
-    def _error_column(self):
+    def _error_column(self) -> str:
         raise NotImplementedError
 
     @property
     @abstractmethod
-    def _crid_column(self):
+    def _crid_column(self) -> str:
         raise NotImplementedError
 
     @property
     @abstractmethod
-    def _status_column(self):
+    def _status_column(self) -> str:
         raise NotImplementedError
-
-    @property
-    def primary_results(self) -> List[KustoResultTable]:
-        """Returns primary results. If there is more than one returns a list."""
-        if self.tables_count == 1:
-            return self.tables
-        primary = list(filter(lambda x: x.table_kind == WellKnownDataSet.PrimaryResult, self.tables))
-
-        return primary
 
     @property
     def errors_count(self) -> int:
@@ -75,10 +59,10 @@ class KustoResponseDataSet(metaclass=ABCMeta):
                 )
         return result
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[BaseKustoResultTable]:
         return iter(self.tables)
 
-    def __getitem__(self, key) -> KustoResultTable:
+    def __getitem__(self, key: Union[int, str]) -> KustoResultTable:
         if isinstance(key, int):
             return self.tables[key]
         try:
@@ -88,6 +72,33 @@ class KustoResponseDataSet(metaclass=ABCMeta):
 
     def __len__(self) -> int:
         return self.tables_count
+
+
+class KustoResponseDataSet(BaseKustoResponseDataSet, metaclass=ABCMeta):
+    """
+    `KustoResponseDataSet` Represents the parsed data set carried by the response to a Kusto request.
+    `KustoResponseDataSet` provides convenient methods to work with the returned result.
+    The result table(s) are accessable via the @primary_results property.
+    @primary_results returns a collection of `KustoResultTable`.
+        It can contain more than one table when [`fork`](https://docs.microsoft.com/en-us/azure/kusto/query/forkoperator) is used.
+    """
+
+    def __init__(self, json_response: List[Dict[str, Any]]):
+        self.tables = [KustoResultTable(t) for t in json_response]
+        self.tables_count = len(self.tables)
+        self.tables_names = [t.table_name for t in self.tables]
+
+    @property
+    def primary_results(self) -> List[KustoResultTable]:
+        """Returns primary results. If there is more than one returns a list."""
+        if self.tables_count == 1:
+            return self.tables
+        primary = [x for x in self.tables if x.table_kind == WellKnownDataSet.PrimaryResult]
+
+        return primary
+
+    def __iter__(self) -> Iterator[KustoResultTable]:
+        return iter(self.tables)
 
 
 class KustoResponseDataSetV1(KustoResponseDataSet):
@@ -138,3 +149,88 @@ class KustoResponseDataSetV2(KustoResponseDataSet):
 
     def __init__(self, json_response: List[dict]):
         super(KustoResponseDataSetV2, self).__init__([t for t in json_response if t["FrameType"] == "DataTable"])
+
+
+class KustoStreamingResponseDataSet(BaseKustoResponseDataSet):
+    _status_column = "Payload"
+    _error_column = "Level"
+    _crid_column = "ClientRequestId"
+
+    def __init__(self, streamed_data: StreamingDataSetEnumerator):
+        self._current_table = None
+        self._skip_incomplete_tables = False
+        self.tables = []
+        self.streamed_data = streamed_data
+        self.finished = False
+
+    def iter_primary_results(self) -> "PrimaryResultsIterator":
+        return PrimaryResultsIterator(self)
+
+    def __iter__(self) -> Iterator[Union[KustoResultTable, KustoStreamingResultTable]]:
+        return self
+
+    def __next__(self) -> Union[KustoResultTable, KustoStreamingResultTable]:
+        if self.finished:
+            raise StopIteration
+
+        if type(self._current_table) is KustoStreamingResultTable and not self._current_table.finished and not self._skip_incomplete_tables:
+            raise KustoStreamingQueryError(
+                "Tried retrieving a new primary_result table before the old one was finished. To override call `set_skip_incomplete_tables(True)`"
+            )
+
+        while True:
+            try:
+                table = next(self.streamed_data)
+            except StopIteration:
+                self.finished = True
+                raise
+            if table["FrameType"] == FrameType.DataTable:
+                break
+
+        if table["TableKind"] == WellKnownDataSet.PrimaryResult.value:
+            self._current_table = KustoStreamingResultTable(table)
+        else:
+            self._current_table = KustoResultTable(table)
+
+        self.tables.append(self._current_table)
+        return self._current_table
+
+    def set_skip_incomplete_tables(self, value: bool):
+        self._skip_incomplete_tables = value
+
+    @property
+    def errors_count(self) -> int:
+        if not self.finished:
+            raise KustoStreamingQueryError("Unable to get errors count before reading all of the tables.")
+        return super().errors_count
+
+    def get_exceptions(self) -> List[str]:
+        if not self.finished:
+            raise KustoStreamingQueryError("Unable to get errors count before reading all of the tables.")
+        return super().get_exceptions()
+
+    def __getitem__(self, key) -> KustoResultTable:
+        if isinstance(key, int):
+            return self.tables[key]
+        try:
+            return next(t for t in self.tables if t.table_name == key)
+        except StopIteration:
+            raise LookupError(key)
+
+    def __len__(self) -> int:
+        return len(self.tables)
+
+
+class PrimaryResultsIterator:
+    # This class exists because you can't raise exception from an generator and keep working
+    def __init__(self, dataset: KustoStreamingResponseDataSet):
+        self.dataset = dataset
+
+    def __iter__(self) -> Iterator[KustoStreamingResultTable]:
+        return self
+
+    def __next__(self) -> KustoStreamingResultTable:
+        while True:
+            table = next(self.dataset)
+            if type(table) is KustoStreamingResultTable:
+                return table
