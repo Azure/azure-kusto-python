@@ -6,7 +6,6 @@ from typing import List
 
 from azure.kusto.data import KustoClient
 from azure.kusto.data._models import KustoResultTable
-from azure.kusto.data.exceptions import KustoServiceError, KustoClientError
 
 _URI_FORMAT = re.compile("https://(\\w+).(queue|blob|table).(core.\\w+.\\w+)/([\\w,-]+)\\?(.*)")
 _SHOW_VERSION = ".show version"

@@ -5,7 +5,7 @@ import re
 import json
 from uuid import UUID
 
-from azure.kusto.ingest._ingestion_blob_info import _IngestionBlobInfo
+from azure.kusto.ingest.ingestion_blob_info import IngestionBlobInfo
 from azure.kusto.ingest.exceptions import KustoMappingAndMappingReferenceError
 from azure.kusto.ingest import (
     BlobDescriptor,
@@ -45,7 +45,7 @@ class IngestionBlobInfoTest(unittest.TestCase):
             validation_policy=validation_policy,
         )
         blob = BlobDescriptor("somepath", 10)
-        blob_info = _IngestionBlobInfo(blob, properties, auth_context="authorizationContextText")
+        blob_info = IngestionBlobInfo(blob, properties, auth_context="authorizationContextText")
         self._verify_ingestion_blob_info_result(blob_info.to_json())
 
     def test_blob_csv_mapping_reference(self):
@@ -66,7 +66,7 @@ class IngestionBlobInfoTest(unittest.TestCase):
             validation_policy=validation_policy,
         )
         blob = BlobDescriptor("somepath", 10)
-        blob_info = _IngestionBlobInfo(blob, properties, auth_context="authorizationContextText")
+        blob_info = IngestionBlobInfo(blob, properties, auth_context="authorizationContextText")
         self._verify_ingestion_blob_info_result(blob_info.to_json())
 
     def test_blob_info_json_mapping(self):
@@ -87,7 +87,7 @@ class IngestionBlobInfoTest(unittest.TestCase):
             validation_policy=validation_policy,
         )
         blob = BlobDescriptor("somepath", 10)
-        blob_info = _IngestionBlobInfo(blob, properties, auth_context="authorizationContextText")
+        blob_info = IngestionBlobInfo(blob, properties, auth_context="authorizationContextText")
         self._verify_ingestion_blob_info_result(blob_info.to_json())
 
     def test_blob_json_mapping_reference(self):
@@ -108,12 +108,13 @@ class IngestionBlobInfoTest(unittest.TestCase):
             validation_policy=validation_policy,
         )
         blob = BlobDescriptor("somepath", 10)
-        blob_info = _IngestionBlobInfo(blob, properties, auth_context="authorizationContextText")
+        blob_info = IngestionBlobInfo(blob, properties, auth_context="authorizationContextText")
         self._verify_ingestion_blob_info_result(blob_info.to_json())
 
     def test_blob_info_csv_exceptions(self):
         """Tests invalid ingestion properties."""
         with self.assertRaises(KustoMappingAndMappingReferenceError):
+            # noinspection PyTypeChecker
             IngestionProperties(
                 database="database", table="table", ingestion_mapping="ingestionMapping", ingestion_mapping_reference="ingestionMappingReference"
             )

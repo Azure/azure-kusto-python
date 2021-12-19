@@ -8,7 +8,7 @@ from enum import Enum
 from typing import Iterator, List, Any, Union, Optional, Dict
 
 from . import _converters
-from .exceptions import KustoServiceError, KustoStreamingQueryError
+from .exceptions import KustoMultiApiError, KustoStreamingQueryError
 
 
 class WellKnownDataSet(Enum):
@@ -158,7 +158,7 @@ class KustoResultTable(BaseKustoResultTable):
         super().__init__(json_table)
         errors = [row for row in json_table["Rows"] if isinstance(row, dict)]
         if errors:
-            raise KustoServiceError(errors[0]["OneApiErrors"][0]["error"]["@message"], kusto_response=json_table)
+            raise KustoMultiApiError(errors)
 
     @property
     def rows(self) -> List[KustoResultRow]:
