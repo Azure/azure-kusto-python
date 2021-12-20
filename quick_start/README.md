@@ -1,4 +1,4 @@
-# Quick Start App
+# Quickstart App
 
 The quick start application is a **self-contained and runnable** example script that demonstrates authenticating, connecting to, administering, ingesting data into and querying Azure Data Explorer using the azure-kusto-python SDK.
 You can use it as a baseline to write your own first kusto client application, altering the code as you go, or copy code sections out of it into your app.
@@ -8,29 +8,37 @@ You can use it as a baseline to write your own first kusto client application, a
 
 ## Using the App for the first time
 
-### Using the App from GitHub
-1. Download the app files from GitHub
-2. Run: `python -m pip install azure-kusto-data azure-kusto-ingest`
-3. Open `kusto_sample_config.json` and modify `KustoUri`, `IngestUri` and `DatabaseName` to reflect you ADX cluster
-4. Run the script
+### Prerequisites
 
-### Using the App from OneClick 
-1. Open a browser and type your cluster's address, you will be redirected to the _Azure Data Explorer_ website 
-2. Open the left side menu, if it is closed, using the Hamburger button
-3. On the left side menu choose _Data_
-4. Click on _Create Sample App Code_ button 
-5. Follow the wizard
-6. Download the app as a zip file 
-7. Unpack the script to your folder of choice
-8. Open a command line windows and CD into the above folder 
-9. Run `python -m pip install azure-kusto-data azure-kusto-ingest`
-10. Run `python kusto_sample_app.py`. It will already be configured to your cluster and source.
+1. Set up Python version 3.6 or higher on your machine. For instructions, consult a Python environment setup tutorial, like [this](https://www.tutorialspoint.com/java/java_environment_setup.htm).
 
-### Optional Changes
-1. Withing the script itself, you may alter the default User-Prompt authentication method by editing `authenticationMode`
-2. You can also make the script run without stopping between steps by setting `waitForUser = False`
+### Retrieving the app from GitHub
 
-###Troubleshooting
-* If you are having trouble running python on your machine or need instructions on how to install python, you can consult the following [python environment setup tutorial](https://www.tutorialspoint.com/python/python_environment.htm) from _TutorialsPoint_.
-* If you are having trouble running the script from your IDE of choice, first check if the script runs from commandline, then consult the troubleshooting references of your IDE.   
+1. Download the app files from this GitHub repo.
+1. Modify the `kusto_sample_config.json` file, changing `KustoUri`, `IngestUri` and `DatabaseName` appropriately for your cluster.
 
+### Retrieving the app from OneClick
+
+1. Open a browser and type your cluster's URL (e.g. https://mycluster.westeurope.kusto.windows.net/). You will be redirected to the _Azure Data Explorer_ Web UI.
+1. On the left menu, select **Data**.
+1. Click **Generate Sample App Code** and then follow the instructions in the wizard.
+1. Download the app as a ZIP file.
+1. Extract the app source code.
+**Note**: The configuration parameters defined in the `kusto_sample_config.json` file are preconfigured with the appropriate values for your cluster. Verify that these are correct.
+
+### Run the app
+
+1. Open a command line window and navigate to the folder where you extracted the script.
+1. Run `python -m pip install azure-kusto-data azure-kusto-ingest`.
+1. Run `python kusto_sample_app.py`.
+
+### Optional changes
+
+You can make the following changes from within the script itself:
+
+- Change the default User-Prompt authentication method by editing `AUTHENTICATION_MODE`.
+- Change the script to run without stopping between steps by setting `WAIT_FOR_USER = False`
+
+### Troubleshooting
+
+* If you are having trouble running the script from your IDE, first check if the script runs from the command line, then consult the troubleshooting references of your IDE.

@@ -4,6 +4,9 @@
 	"databaseName" : "e2e",
 	"tableName" : "SampleTable",
 	"useExistingTable": "False",
+	"alterTable": "True",
+	"queryData": "True",
+	"ingestData": "True",
 	"tableSchema" : "(rownumber:int, rowguid:string, xdouble:real, xfloat:real, xbool:bool, xint16:int, xint32:int, xint64:long, xuint8:long, xuint16:long, xuint32:long, xuint64:long, xdate:datetime, xsmalltext:string, xtext:string, xnumberAsText:string, xtime:timespan, xtextWithNulls:string, xdynamicWithNulls:dynamic)",
 	"data" :
 	[
