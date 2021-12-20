@@ -8,7 +8,7 @@ import uuid
 from copy import copy
 from datetime import timedelta
 from enum import Enum, unique
-from typing import TYPE_CHECKING, Union, Callable, Optional, Any, Coroutine, List, Tuple
+from typing import TYPE_CHECKING, Union, Callable, Optional, Any, Coroutine, List, Tuple, AnyStr, IO
 
 import requests
 from requests import Response
@@ -17,7 +17,7 @@ from urllib3.connection import HTTPConnection
 
 from ._version import VERSION
 from .data_format import DataFormat
-from .exceptions import KustoServiceError
+from .exceptions import KustoServiceError, KustoApiError
 from .response import KustoResponseDataSetV1, KustoResponseDataSetV2, KustoStreamingResponseDataSet, KustoResponseDataSet
 from .security import _AadHelper
 from .streaming_response import StreamingDataSetEnumerator, JsonTokenReader
@@ -92,6 +92,14 @@ class KustoConnectionStringBuilder:
                 return cls.msi_auth
             if key in ["msi_type"]:
                 return cls.msi_params
+            if key in ["az cli"]:
+                return cls.az_cli
+            if key in ["interactive login"]:
+                return cls.interactive_login
+            if key in ["login hint"]:
+                return cls.login_hint
+            if key in ["domain hint"]:
+                return cls.domain_hint
             raise KeyError(key)
 
         def is_secret(self) -> bool:
@@ -367,6 +375,7 @@ class KustoConnectionStringBuilder:
         if object_id is not None:
             # Until we upgrade azure-identity to version 1.4.1, only client_id is excepted as a hint for user managed service identity
             raise ValueError("User Managed Service Identity with object_id is temporarily not supported by azure identity 1.3.1. Please use client_id instead.")
+            # noinspection PyUnreachableCode
             params["object_id"] = object_id
             exclusive_pcount += 1
 
@@ -375,6 +384,7 @@ class KustoConnectionStringBuilder:
             raise ValueError(
                 "User Managed Service Identity with msi_res_id is temporarily not supported by azure identity 1.3.1. Please use client_id instead."
             )
+            # noinspection PyUnreachableCode
             params["msi_res_id"] = msi_res_id
             exclusive_pcount += 1
 
@@ -637,7 +647,8 @@ class ExecuteRequestParams:
             if properties:
                 request_headers.update(json.loads(properties.to_json())["Options"])
 
-            client_request_id_prefix = "KPC.execute_streaming_ingest;"
+            # Before 3.0 it was KPC.execute_streaming_ingest, but was changed to align with the other SDKs
+            client_request_id_prefix = "KPC.executeStreamingIngest;"
             request_headers["Content-Encoding"] = "gzip"
         request_headers["x-ms-client-request-id"] = client_request_id_prefix + str(uuid.uuid4())
         if properties is not None:
@@ -717,15 +728,17 @@ class _KustoClientBase:
             if payload:
                 raise KustoServiceError("The ingestion endpoint does not exist. Please enable streaming ingestion on your cluster.", response) from exception
 
-            raise KustoServiceError("The requested endpoint '{}' does not exist.".format(endpoint), response) from exception
+            raise KustoServiceError(f"The requested endpoint '{endpoint}' does not exist.", response) from exception
 
         if payload:
-            raise KustoServiceError(
-                "An error occurred while trying to ingest: Status: {0.status_code}, Reason: {0.reason}, Text: {1}.".format(response, response_text), response
-            ) from exception
+            message = f"An error occurred while trying to ingest: Status: {status}, Reason: {response.reason}, Text: {response_text}."
+            if response_json:
+                raise KustoApiError(response_json, message, response) from exception
+
+            raise KustoServiceError(message, response) from exception
 
         if response_json:
-            raise KustoServiceError([response_json], response) from exception
+            raise KustoApiError(response_json, http_response=response) from exception
 
         if response_text:
             raise KustoServiceError(response_text, response) from exception
@@ -782,6 +795,9 @@ class KustoClient(_KustoClientBase):
         )
         self._session.mount("http://", adapter)
         self._session.mount("https://", adapter)
+
+    def set_http_proxies(self, proxies: dict):
+        self._session.proxies.update(proxies)
 
     @staticmethod
     def compose_socket_options() -> List[Tuple[int, int, int]]:
@@ -864,7 +880,7 @@ class KustoClient(_KustoClientBase):
         self,
         database: str,
         table: str,
-        stream: io.IOBase,
+        stream: IO[AnyStr],
         stream_format: Union[DataFormat, str],
         properties: Optional[ClientRequestProperties] = None,
         mapping_name: str = None,
@@ -915,7 +931,7 @@ class KustoClient(_KustoClientBase):
         endpoint: str,
         database: str,
         query: Optional[str],
-        payload: Optional[io.IOBase],
+        payload: Optional[IO[AnyStr]],
         timeout: timedelta,
         properties: Optional[ClientRequestProperties] = None,
         stream_response: bool = False,
@@ -934,7 +950,7 @@ class KustoClient(_KustoClientBase):
                 response.raise_for_status()
                 return response
             except Exception as e:
-                raise self._handle_http_error(e, self._query_endpoint, None, response, response.json(), response.text)
+                raise self._handle_http_error(e, self._query_endpoint, None, response, response.status_code, response.json(), response.text)
 
         response_json = None
         try:

@@ -1,9 +1,9 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
 from enum import Enum, IntEnum
-from typing import List
+from typing import List, Optional
 
-from .exceptions import KustoMappingAndMappingReferenceError
+from .exceptions import KustoMappingAndMappingReferenceError, KustoMissingMappingReferenceError
 
 
 class DataFormat(Enum):
@@ -142,27 +142,33 @@ class IngestionProperties:
     For more information check out https://docs.microsoft.com/en-us/azure/data-explorer/ingestion-properties
     """
 
+    _mapping_required_formats = {DataFormat.JSON, DataFormat.SINGLEJSON, DataFormat.AVRO, DataFormat.MULTIJSON}
+    _binary_formats = {DataFormat.AVRO, DataFormat.ORC, DataFormat.PARQUET}
+
     def __init__(
         self,
         database: str,
         table: str,
         data_format: DataFormat = DataFormat.CSV,
-        ingestion_mapping: List[ColumnMapping] = None,
-        ingestion_mapping_type: IngestionMappingType = None,
-        ingestion_mapping_reference: str = None,
-        ingest_if_not_exists: List[str] = None,
-        ingest_by_tags: List[str] = None,
-        drop_by_tags: List[str] = None,
-        additional_tags: List[str] = None,
+        ingestion_mapping: Optional[List[ColumnMapping]] = None,
+        ingestion_mapping_type: Optional[IngestionMappingType] = None,
+        ingestion_mapping_reference: Optional[str] = None,
+        ingest_if_not_exists: Optional[List[str]] = None,
+        ingest_by_tags: Optional[List[str]] = None,
+        drop_by_tags: Optional[List[str]] = None,
+        additional_tags: Optional[List[str]] = None,
         flush_immediately: bool = False,
         report_level: ReportLevel = ReportLevel.DoNotReport,
         report_method: ReportMethod = ReportMethod.Queue,
-        validation_policy: ValidationPolicy = None,
-        additional_properties: dict = None,
+        validation_policy: Optional[ValidationPolicy] = None,
+        additional_properties: Optional[dict] = None,
     ):
 
         if ingestion_mapping is not None and ingestion_mapping_reference is not None:
             raise KustoMappingAndMappingReferenceError()
+
+        if data_format in self._mapping_required_formats and ingestion_mapping_reference is None and ingestion_mapping is None:
+            raise KustoMissingMappingReferenceError(data_format.value)
 
         self.database = database
         self.table = table
@@ -179,3 +185,6 @@ class IngestionProperties:
         self.report_method = report_method
         self.validation_policy = validation_policy
         self.additional_properties = additional_properties
+
+    def is_format_binary(self):
+        return self.format in self._binary_formats

@@ -3,9 +3,13 @@
 import json
 import uuid
 from datetime import datetime
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from azure.kusto.ingest import BlobDescriptor, IngestionProperties
 
 
-class _IngestionBlobInfo:
+class IngestionBlobInfo:
     def __init__(self, blob_descriptor: "BlobDescriptor", ingestion_properties: "IngestionProperties", auth_context=None):
         self.properties = dict()
         self.properties["BlobPath"] = blob_descriptor.path
