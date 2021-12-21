@@ -25,9 +25,7 @@ from azure.kusto.ingest import (
     QueuedIngestClient,
     KustoStreamingIngestClient,
     IngestionProperties,
-    DataFormat,
     ColumnMapping,
-    IngestionMappingType,
     ValidationPolicy,
     ValidationOptions,
     ValidationImplications,
@@ -38,6 +36,8 @@ from azure.kusto.ingest import (
     StreamDescriptor,
     ManagedStreamingIngestClient,
 )
+
+from azure.kusto.data.data_format import DataFormat, IngestionMappingType
 
 CLEAR_DB_CACHE = ".clear database cache streamingingestion schema"
 

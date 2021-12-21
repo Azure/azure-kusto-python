@@ -5,34 +5,7 @@ from typing import List, Optional
 
 from .exceptions import KustoMappingAndMappingReferenceError, KustoMissingMappingReferenceError
 
-
-class DataFormat(Enum):
-    """All data formats supported by Kusto."""
-
-    CSV = "csv"
-    TSV = "tsv"
-    SCSV = "scsv"
-    SOHSV = "sohsv"
-    PSV = "psv"
-    TXT = "txt"
-    JSON = "json"
-    SINGLEJSON = "singlejson"
-    AVRO = "avro"
-    PARQUET = "parquet"
-    MULTIJSON = "multijson"
-    ORC = "orc"
-    TSVE = "tsve"
-    RAW = "raw"
-    W3CLOGFILE = "w3clogfile"
-
-
-class IngestionMappingType(Enum):
-    CSV = "Csv"
-    JSON = "Json"
-    AVRO = "Avro"
-    PARQUET = "Parquet"
-    ORC = "Orc"
-    W3CLOGFILE = "W3CLogFile"
+from azure.kusto.data.data_format import DataFormat, IngestionMappingType
 
 
 class ValidationOptions(IntEnum):
@@ -142,9 +115,6 @@ class IngestionProperties:
     For more information check out https://docs.microsoft.com/en-us/azure/data-explorer/ingestion-properties
     """
 
-    _mapping_required_formats = {DataFormat.JSON, DataFormat.SINGLEJSON, DataFormat.AVRO, DataFormat.MULTIJSON}
-    _binary_formats = {DataFormat.AVRO, DataFormat.ORC, DataFormat.PARQUET}
-
     def __init__(
         self,
         database: str,
@@ -167,8 +137,8 @@ class IngestionProperties:
         if ingestion_mapping is not None and ingestion_mapping_reference is not None:
             raise KustoMappingAndMappingReferenceError()
 
-        if data_format in self._mapping_required_formats and ingestion_mapping_reference is None and ingestion_mapping is None:
-            raise KustoMissingMappingReferenceError(data_format.value)
+        if data_format.mapping_required and ingestion_mapping_reference is None and ingestion_mapping is None:
+            raise KustoMissingMappingReferenceError(data_format.value_)
 
         self.database = database
         self.table = table
@@ -187,4 +157,4 @@ class IngestionProperties:
         self.additional_properties = additional_properties
 
     def is_format_binary(self):
-        return self.format in self._binary_formats
+        return not self.format.compressible

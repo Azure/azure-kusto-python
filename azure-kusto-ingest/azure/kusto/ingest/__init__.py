@@ -6,7 +6,6 @@ from .descriptors import BlobDescriptor, FileDescriptor, StreamDescriptor
 from .exceptions import KustoMissingMappingReferenceError
 from .ingest_client import QueuedIngestClient
 from .ingestion_properties import (
-    DataFormat,
     ValidationPolicy,
     ValidationImplications,
     ValidationOptions,
@@ -19,3 +18,6 @@ from .ingestion_properties import (
 )
 from .managed_streaming_ingest_client import ManagedStreamingIngestClient
 from .streaming_ingest_client import KustoStreamingIngestClient
+from .base_ingest_client import BaseIngestClient
+
+from azure.kusto.data.data_format import DataFormat

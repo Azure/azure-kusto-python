@@ -57,7 +57,7 @@ class KustoClient(_KustoClientBase):
         properties: ClientRequestProperties = None,
         mapping_name: str = None,
     ):
-        stream_format = stream_format.value if isinstance(stream_format, DataFormat) else DataFormat(stream_format.lower()).value
+        stream_format = stream_format.value_ if isinstance(stream_format, DataFormat) else DataFormat[stream_format.upper()].value_
         endpoint = self._streaming_ingest_endpoint + database + "/" + table + "?streamFormat=" + stream_format
         if mapping_name is not None:
             endpoint = endpoint + "&mappingName=" + mapping_name

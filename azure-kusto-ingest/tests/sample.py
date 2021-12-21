@@ -10,11 +10,12 @@ from azure.kusto.ingest import (
     FileDescriptor,
     BlobDescriptor,
     StreamDescriptor,
-    DataFormat,
     KustoStreamingIngestClient,
     ManagedStreamingIngestClient,
     IngestionStatus,
 )
+
+from azure.kusto.data.data_format import DataFormat
 
 ##################################################################
 ##                              AUTH                            ##
