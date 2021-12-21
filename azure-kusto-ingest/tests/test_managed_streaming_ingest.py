@@ -128,7 +128,7 @@ class TestManagedStreamingIngestClient:
             "https://storageaccount.blob.core.windows.net/tempstorage/database__table__11111111-1111-1111-1111-111111111111__{}?".format(
                 os.path.basename(f.name)
             ),
-            format=data_format.value_,
+            format=data_format.kusto_value,
         )
 
         mock_upload_blob_from_stream.assert_called()
@@ -169,7 +169,7 @@ class TestManagedStreamingIngestClient:
             mock_put_message_in_queue,
             mock_upload_blob_from_stream,
             "https://storageaccount.blob.core.windows.net/tempstorage/database__table__11111111-1111-1111-1111-111111111111__stream?",
-            format=data_format.value_,
+            format=data_format.kusto_value,
             check_raw_data=False,
         )
 

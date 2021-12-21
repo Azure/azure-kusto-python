@@ -321,7 +321,7 @@ class KustoSampleApp:
         if not use_existing_mapping:
             if data_format.mapping_required and not mapping_value:
                 print(
-                    f"The data format '{data_format.value_}' requires a mapping, but configuration indicates to not use an existing mapping and no mapping was provided. Skipping this ingestion."
+                    f"The data format '{data_format.kusto_value}' requires a mapping, but configuration indicates to not use an existing mapping and no mapping was provided. Skipping this ingestion."
                 )
                 return False
 
@@ -337,7 +337,7 @@ class KustoSampleApp:
                     return False
         elif data_format.mapping_required and not mapping_name:
             print(
-                f"The data format '{data_format.value_}' requires a mapping and the configuration indicates an existing mapping should be used, but none was provided. Skipping this ingestion."
+                f"The data format '{data_format.kusto_value}' requires a mapping and the configuration indicates an existing mapping should be used, but none was provided. Skipping this ingestion."
             )
             return False
 
