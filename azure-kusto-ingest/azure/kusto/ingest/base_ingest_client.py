@@ -113,7 +113,7 @@ class BaseIngestClient(metaclass=ABCMeta):
         else:
             stream = new_descriptor.stream
 
-        if not new_descriptor.is_compressed and not ingestion_properties.is_format_binary():
+        if not new_descriptor.is_compressed and ingestion_properties.format.compressible:
             zipped_stream = BytesIO()
             buffer = stream.read()
             with GzipFile(filename="data", fileobj=zipped_stream, mode="wb") as f_out:

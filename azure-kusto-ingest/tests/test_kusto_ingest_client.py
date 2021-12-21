@@ -9,11 +9,11 @@ import pytest
 import responses
 from mock import patch
 
+from azure.kusto.data.data_format import DataFormat
+
 from azure.kusto.ingest import QueuedIngestClient, IngestionProperties, IngestionStatus
 from azure.kusto.ingest.exceptions import KustoInvalidEndpointError
 from azure.kusto.ingest.managed_streaming_ingest_client import ManagedStreamingIngestClient
-
-from azure.kusto.data.data_format import DataFormat
 
 pandas_installed = False
 try:

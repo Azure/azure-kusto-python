@@ -1,5 +1,7 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
+from azure.kusto.data.data_format import DataFormat
+
 from ._version import VERSION as __version__
 from .base_ingest_client import IngestionResult, IngestionStatus
 from .descriptors import BlobDescriptor, FileDescriptor, StreamDescriptor
@@ -19,5 +21,3 @@ from .ingestion_properties import (
 from .managed_streaming_ingest_client import ManagedStreamingIngestClient
 from .streaming_ingest_client import KustoStreamingIngestClient
 from .base_ingest_client import BaseIngestClient
-
-from azure.kusto.data.data_format import DataFormat

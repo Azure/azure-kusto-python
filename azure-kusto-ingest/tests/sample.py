@@ -3,6 +3,7 @@
 import io
 
 from azure.kusto.data import KustoConnectionStringBuilder
+from azure.kusto.data.data_format import DataFormat
 
 from azure.kusto.ingest import (
     QueuedIngestClient,
@@ -14,8 +15,6 @@ from azure.kusto.ingest import (
     ManagedStreamingIngestClient,
     IngestionStatus,
 )
-
-from azure.kusto.data.data_format import DataFormat
 
 ##################################################################
 ##                              AUTH                            ##

@@ -3,9 +3,9 @@
 from enum import Enum, IntEnum
 from typing import List, Optional
 
-from .exceptions import KustoMappingAndMappingReferenceError, KustoMissingMappingReferenceError
-
 from azure.kusto.data.data_format import DataFormat, IngestionMappingType
+
+from .exceptions import KustoMappingAndMappingReferenceError, KustoMissingMappingReferenceError
 
 
 class ValidationOptions(IntEnum):
@@ -155,6 +155,3 @@ class IngestionProperties:
         self.report_method = report_method
         self.validation_policy = validation_policy
         self.additional_properties = additional_properties
-
-    def is_format_binary(self):
-        return not self.format.compressible

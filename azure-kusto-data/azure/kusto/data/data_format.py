@@ -32,8 +32,8 @@ class DataFormat(Enum):
     RAW = ("raw", IngestionMappingType.UNKNOWN, False, True)
     W3CLOGFILE = ("w3clogfile", IngestionMappingType.W3CLOGFILE, False, True)
 
-    def __init__(self, value_: str, ingestion_mapping_type: IngestionMappingType, mapping_required: bool, compressible: bool):
-        self.value_ = value_  # Formatted how Kusto Service expects it
+    def __init__(self, kusto_value: str, ingestion_mapping_type: IngestionMappingType, mapping_required: bool, compressible: bool):
+        self.kusto_value = kusto_value  # Formatted how Kusto Service expects it
         self.ingestion_mapping_type = ingestion_mapping_type
         self.mapping_required = mapping_required
         self.compressible = compressible  # Binary formats should not be compressed

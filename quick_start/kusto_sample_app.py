@@ -5,8 +5,9 @@ import uuid
 from distutils.util import strtobool
 from typing import ClassVar
 
-from azure.kusto.data.exceptions import KustoClientError, KustoServiceError
 from azure.kusto.data import KustoClient, KustoConnectionStringBuilder, ClientRequestProperties
+from azure.kusto.data.data_format import DataFormat
+from azure.kusto.data.exceptions import KustoClientError, KustoServiceError
 
 from azure.kusto.ingest import (
     QueuedIngestClient,
@@ -15,8 +16,6 @@ from azure.kusto.ingest import (
     BlobDescriptor,
     BaseIngestClient,
 )
-
-from azure.kusto.data.data_format import DataFormat
 
 
 class KustoSampleApp:

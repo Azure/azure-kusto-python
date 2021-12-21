@@ -897,7 +897,7 @@ class KustoClient(_KustoClientBase):
         :param ClientRequestProperties properties: additional request properties.
         :param str mapping_name: Pre-defined mapping of the table. Required when stream_format is json/avro.
         """
-        stream_format = stream_format.value_ if isinstance(stream_format, DataFormat) else DataFormat[stream_format.upper()].value_
+        stream_format = stream_format.kusto_value if isinstance(stream_format, DataFormat) else DataFormat[stream_format.upper()].kusto_value
         endpoint = self._streaming_ingest_endpoint + database + "/" + table + "?streamFormat=" + stream_format
         if mapping_name is not None:
             endpoint = endpoint + "&mappingName=" + mapping_name
