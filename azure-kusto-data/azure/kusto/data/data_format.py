@@ -2,6 +2,7 @@
 # Licensed under the MIT License
 from enum import Enum
 
+
 class IngestionMappingType(Enum):
     CSV = "Csv"
     JSON = "Json"
@@ -32,7 +33,7 @@ class DataFormat(Enum):
     W3CLOGFILE = ("w3clogfile", IngestionMappingType.W3CLOGFILE, False, True)
 
     def __init__(self, value_: str, ingestion_mapping_type: IngestionMappingType, mapping_required: bool, compressible: bool):
-        self.value_ = value_ # Formatted how Kusto Service expects it
+        self.value_ = value_  # Formatted how Kusto Service expects it
         self.ingestion_mapping_type = ingestion_mapping_type
         self.mapping_required = mapping_required
-        self.compressible = compressible # Binary formats should not be compressed
+        self.compressible = compressible  # Binary formats should not be compressed

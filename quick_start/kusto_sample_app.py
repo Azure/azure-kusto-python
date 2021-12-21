@@ -375,9 +375,7 @@ class KustoSampleApp:
         ingest_client.ingest_from_file(file_descriptor, ingestion_properties=ingestion_properties)
 
     @classmethod
-    def ingest_from_blob(
-        cls, client: BaseIngestClient, database_name: str, table_name: str, blob_url: str, data_format: DataFormat, mapping_name: str = None
-    ):
+    def ingest_from_blob(cls, client: BaseIngestClient, database_name: str, table_name: str, blob_url: str, data_format: DataFormat, mapping_name: str = None):
         ingestion_properties = cls.create_ingestion_properties(database_name, table_name, data_format, mapping_name)
 
         # Tip 1: For optimal ingestion batching and performance, specify the uncompressed data size in the file descriptor instead of the default below of 0.
