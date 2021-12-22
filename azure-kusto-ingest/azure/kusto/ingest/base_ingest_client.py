@@ -9,8 +9,10 @@ from gzip import GzipFile
 from io import TextIOWrapper, BytesIO
 from typing import TYPE_CHECKING, Union, IO, AnyStr, Optional
 
+from azure.kusto.data.data_format import DataFormat
+
 from .descriptors import FileDescriptor, StreamDescriptor
-from .ingestion_properties import DataFormat, IngestionProperties
+from .ingestion_properties import IngestionProperties
 
 if TYPE_CHECKING:
     import pandas
