@@ -1,7 +1,8 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
-import unittest
+
 import json
+import os
 import pytest
 
 from azure.kusto.data.helpers import dataframe_from_result_table
@@ -18,205 +19,17 @@ except:
     pass
 
 
-# Sample response containing conversion edge cases.
-RESPONSE_TEXT = """
-[{
-    "FrameType": "DataSetHeader",
-    "IsProgressive": false,
-    "Version": "v2.0"
-},
-{
-    "FrameType": "DataTable",
-    "TableId": 0,
-    "TableName": "@ExtendedProperties",
-    "TableKind": "QueryProperties",
-    "Columns": [{
-        "ColumnName": "TableId",
-        "ColumnType": "int"
-    },
-    {
-        "ColumnName": "Key",
-        "ColumnType": "string"
-    },
-    {
-        "ColumnName": "Value",
-        "ColumnType": "dynamic"
-    }],
-    "Rows": [[1,
-    "Visualization",
-    "{\\"Visualization\\":null,\\"Title\\":null,\\"XColumn\\":null,\\"Series\\":null,\\"YColumns\\":null,\\"XTitle\\":null,\\"YTitle\\":null,\\"XAxis\\":null,\\"YAxis\\":null,\\"Legend\\":null,\\"YSplit\\":null,\\"Accumulate\\":false,\\"IsQuerySorted\\":false,\\"Kind\\":null}"]]
-},
-{
-    "FrameType": "DataTable",
-    "TableId": 1,
-    "TableName": "temp",
-    "TableKind": "PrimaryResult",
-    "Columns": [{
-        "ColumnName": "RecordName",
-        "ColumnType": "string"
-    },
-    {
-        "ColumnName": "RecordTime",
-        "ColumnType": "datetime"
-    },
-    {
-        "ColumnName": "RecordOffset",
-        "ColumnType": "timespan"
-    },
-    {
-        "ColumnName": "RecordBool",
-        "ColumnType": "bool"
-    },
-    {
-        "ColumnName": "RecordInt",
-        "ColumnType": "int"
-    },
-    {
-        "ColumnName": "RecordReal",
-        "ColumnType": "real"
-    }],
-    "Rows": [["now",
-    "2021-12-22T11:43:00Z",
-    0,
-    true,
-    5678,
-    3.14159],
-    ["earliest datetime",
-    "0000-01-01T00:00:00Z",
-    0,
-    true,
-    5678,
-    NaN],
-    ["latest datetime",
-    "9999-12-31T23:59:59Z",
-    0,
-    true,
-    5678,
-    Infinity],
-    ["earliest pandas datetime",
-    "1677-09-21T00:12:43.145224193Z",
-    0,
-    true,
-    5678,
-    -Infinity],
-    ["latest pandas datetime",
-    "2262-04-11T23:47:16.854775807Z",
-    0,
-    true,
-    5678,
-    3.14159],
-    ["timedelta ticks",
-    "2021-12-22T11:43:00Z",
-    600000000,
-    true,
-    5678,
-    3.14159],
-    ["timedelta string",
-    "2021-12-22T11:43:00Z",
-    "1.01:01:01.0",
-    true,
-    5678,
-    3.14159],
-    [null,
-    "",
-    0,
-    false,
-    0,
-    0]]
-},
-{
-    "FrameType": "DataTable",
-    "TableId": 2,
-    "TableName": "QueryCompletionInformation",
-    "TableKind": "QueryCompletionInformation",
-    "Columns": [{
-        "ColumnName": "Timestamp",
-        "ColumnType": "datetime"
-    },
-    {
-        "ColumnName": "ClientRequestId",
-        "ColumnType": "string"
-    },
-    {
-        "ColumnName": "ActivityId",
-        "ColumnType": "guid"
-    },
-    {
-        "ColumnName": "SubActivityId",
-        "ColumnType": "guid"
-    },
-    {
-        "ColumnName": "ParentActivityId",
-        "ColumnType": "guid"
-    },
-    {
-        "ColumnName": "Level",
-        "ColumnType": "int"
-    },
-    {
-        "ColumnName": "LevelName",
-        "ColumnType": "string"
-    },
-    {
-        "ColumnName": "StatusCode",
-        "ColumnType": "int"
-    },
-    {
-        "ColumnName": "StatusCodeName",
-        "ColumnType": "string"
-    },
-    {
-        "ColumnName": "EventType",
-        "ColumnType": "int"
-    },
-    {
-        "ColumnName": "EventTypeName",
-        "ColumnType": "string"
-    },
-    {
-        "ColumnName": "Payload",
-        "ColumnType": "string"
-    }],
-    "Rows": [["2018-05-01T09:32:38.916566Z",
-    "unspecified;e8e72755-786b-4bdc-835d-ea49d63d09fd",
-    "5935a050-e466-48a0-991d-0ec26bd61c7e",
-    "8182b177-7a80-4158-aca8-ff4fd8e7d3f8",
-    "6f3c1072-2739-461c-8aa7-3cfc8ff528a8",
-    4,
-    "Info",
-    0,
-    "S_OK (0)",
-    4,
-    "QueryInfo",
-    "{\\"Count\\":1,\\"Text\\":\\"Querycompletedsuccessfully\\"}"],
-    ["2018-05-01T09:32:38.916566Z",
-    "unspecified;e8e72755-786b-4bdc-835d-ea49d63d09fd",
-    "5935a050-e466-48a0-991d-0ec26bd61c7e",
-    "8182b177-7a80-4158-aca8-ff4fd8e7d3f8",
-    "6f3c1072-2739-461c-8aa7-3cfc8ff528a8",
-    6,
-    "Stats",
-    0,
-    "S_OK (0)",
-    0,
-    "QueryResourceConsumption",
-    "{\\"ExecutionTime\\":0.0156222,\\"resource_usage\\":{\\"cache\\":{\\"memory\\":{\\"hits\\":13,\\"misses\\":0,\\"total\\":13},\\"disk\\":{\\"hits\\":0,\\"misses\\":0,\\"total\\":0}},\\"cpu\\":{\\"user\\":\\"00: 00: 00\\",\\"kernel\\":\\"00: 00: 00\\",\\"totalcpu\\":\\"00: 00: 00\\"},\\"memory\\":{\\"peak_per_node\\":16777312}},\\"dataset_statistics\\":[{\\"table_row_count\\":3,\\"table_size\\":191}]}"]]
-},
-{
-    "FrameType": "DataSetCompletion",
-    "HasErrors": false,
-    "Cancelled": false
-}]
-"""
-
-
-class TestDataFrameFromResultsTable(unittest.TestCase):
+class TestDataFrameFromResultsTable:
     """Tests the dataframe_from_result_table helper function"""
 
     @pytest.mark.skipif(not PANDAS, reason="requires pandas")
     def test_dataframe_from_result_table(self):
         """Test conversion of KustoResultTable to pandas.DataFrame, including fixes for certain column types"""
-        response = KustoResponseDataSetV2(json.loads(RESPONSE_TEXT))
+
+        with open(os.path.join(os.path.dirname(__file__), "input", "dataframe.json"), "r") as response_file:
+            data = response_file.read()
+
+        response = KustoResponseDataSetV2(json.loads(data))
         df = dataframe_from_result_table(response.primary_results[0])
 
         assert df.iloc[0].RecordName == "now"
@@ -258,7 +71,7 @@ class TestDataFrameFromResultsTable(unittest.TestCase):
         assert type(df.iloc[5].RecordOffset) is pandas._libs.tslibs.timestamps.Timedelta
         assert df.iloc[5].RecordOffset == pandas.to_timedelta("00:01:00")
 
-        # Kusto timedelta(1.01:01:01.0) == 
+        # Kusto timedelta(1.01:01:01.0) ==
         assert df.iloc[6].RecordName == "timedelta string"
         assert type(df.iloc[6].RecordTime) is pandas._libs.tslibs.timestamps.Timestamp
         assert type(df.iloc[6].RecordOffset) is pandas._libs.tslibs.timestamps.Timedelta
