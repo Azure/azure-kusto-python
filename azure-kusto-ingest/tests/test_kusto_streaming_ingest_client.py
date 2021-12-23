@@ -10,7 +10,7 @@ import responses
 
 from azure.kusto.data.data_format import DataFormat
 
-from azure.kusto.ingest import KustoStreamingIngestClient, IngestionProperties, IngestionStatus, ManagedStreamingIngestClient
+from azure.kusto.ingest import KustoStreamingIngestClient, IngestionProperties, IngestionStatus, ManagedStreamingIngestClient, ColumnMapping
 from azure.kusto.ingest.exceptions import KustoMissingMappingReferenceError
 
 pandas_installed = False
@@ -194,3 +194,36 @@ class TestKustoStreamingIngestClient:
         str_stream = io.StringIO(str_sequence)
         result = ingest_client.ingest_from_stream(str_stream, ingestion_properties=ingestion_properties)
         assert result.status == IngestionStatus.SUCCESS
+
+    @responses.activate
+    def test_streaming_ingest_from_stream_no_mapping(self, ingest_client_class):
+        responses.add_callback(
+            responses.POST, "https://somecluster.kusto.windows.net/v1/rest/ingest/database/table", callback=lambda r: request_callback(r, ingest_client_class)
+        )
+
+        with pytest.raises(KustoMissingMappingReferenceError):
+            ingest_client = ingest_client_class("https://somecluster.kusto.windows.net")
+            ingestion_properties = IngestionProperties(database="database", table="table", data_format=DataFormat.JSON)
+
+            byte_sequence = b"56,56,56"
+            bytes_stream = io.BytesIO(byte_sequence)
+            ingest_client.ingest_from_stream(bytes_stream, ingestion_properties=ingestion_properties)
+
+    @responses.activate
+    def test_streaming_ingest_from_stream_column_mapping(self, ingest_client_class):
+        responses.add_callback(
+            responses.POST, "https://somecluster.kusto.windows.net/v1/rest/ingest/database/table", callback=lambda r: request_callback(r, ingest_client_class)
+        )
+
+        with pytest.raises(KustoMissingMappingReferenceError):
+            ingest_client = ingest_client_class("https://somecluster.kusto.windows.net")
+            ingestion_properties = IngestionProperties(
+                database="database",
+                table="table",
+                data_format=DataFormat.JSON,
+                ingestion_mapping=[ColumnMapping(column_name="rownumber", path="$.rownumber", column_type="int")],
+            )
+
+            byte_sequence = b"56,56,56"
+            bytes_stream = io.BytesIO(byte_sequence)
+            ingest_client.ingest_from_stream(bytes_stream, ingestion_properties=ingestion_properties)

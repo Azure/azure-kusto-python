@@ -5,6 +5,7 @@ from typing import Union, AnyStr, Optional
 from typing import IO
 
 from azure.kusto.data import KustoClient, KustoConnectionStringBuilder, ClientRequestProperties
+from . import KustoMissingMappingReferenceError
 from .base_ingest_client import BaseIngestClient, IngestionResult, IngestionStatus
 from .descriptors import FileDescriptor, StreamDescriptor
 from .ingestion_properties import IngestionProperties
@@ -45,6 +46,11 @@ class KustoStreamingIngestClient(BaseIngestClient):
     def _ingest_from_stream_with_client_request_id(
         self, stream_descriptor: Union[StreamDescriptor, IO[AnyStr]], ingestion_properties: IngestionProperties, client_request_id: Optional[str]
     ) -> IngestionResult:
+
+        # We need this check in addition to the one in the IngestionProperties constructor since streaming ingestion only supports mapping reference
+        if ingestion_properties.format.mapping_required and ingestion_properties.ingestion_mapping_reference is None:
+            raise KustoMissingMappingReferenceError(ingestion_properties.format.kusto_value)
+
         stream_descriptor = BaseIngestClient._prepare_stream(stream_descriptor, ingestion_properties)
         additional_properties = None
         if client_request_id:
