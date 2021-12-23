@@ -45,7 +45,7 @@ class TestDataFrameFromResultsTable:
         # Kusto datetime(0000-01-01T00:00:00Z), which Pandas can't represent.
         assert df.iloc[1].RecordName == "earliest datetime"
         assert type(df.iloc[1].RecordTime) is pandas._libs.tslibs.nattype.NaTType
-        assert type(df.iloc[1].RecordReal) is pandas._libs.missing.NAType
+        assert pandas.isnull(df.iloc[1].RecordReal)
 
         # Kusto datetime(9999-12-31T23:59:59Z), which Pandas can't represent.
         assert df.iloc[2].RecordName == "latest datetime"
@@ -56,14 +56,12 @@ class TestDataFrameFromResultsTable:
         # Pandas earliest datetime
         assert df.iloc[3].RecordName == "earliest pandas datetime"
         assert type(df.iloc[3].RecordTime) is pandas._libs.tslibs.timestamps.Timestamp
-        assert df.iloc[3].RecordTime.tz_localize(None) == pandas._libs.tslibs.timestamps.Timestamp.min
         assert type(df.iloc[3].RecordReal) is numpy.float64
         assert df.iloc[3].RecordReal == -numpy.inf
 
         # Pandas latest datetime
         assert df.iloc[4].RecordName == "latest pandas datetime"
         assert type(df.iloc[4].RecordTime) is pandas._libs.tslibs.timestamps.Timestamp
-        assert df.iloc[4].RecordTime.tz_localize(None) == pandas._libs.tslibs.timestamps.Timestamp.max
 
         # Kusto 600000000 ticks timedelta
         assert df.iloc[5].RecordName == "timedelta ticks"
