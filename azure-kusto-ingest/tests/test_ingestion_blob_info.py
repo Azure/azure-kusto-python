@@ -5,12 +5,13 @@ import re
 import json
 from uuid import UUID
 
+from azure.kusto.data.data_format import DataFormat
+
 from azure.kusto.ingest.ingestion_blob_info import IngestionBlobInfo
 from azure.kusto.ingest.exceptions import KustoMappingAndMappingReferenceError
 from azure.kusto.ingest import (
     BlobDescriptor,
     IngestionProperties,
-    DataFormat,
     ColumnMapping,
     ReportLevel,
     ReportMethod,

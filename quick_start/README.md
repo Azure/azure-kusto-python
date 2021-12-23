@@ -32,13 +32,13 @@ You can use it as a baseline to write your own first kusto client application, a
 1. Run `python -m pip install azure-kusto-data azure-kusto-ingest`.
 1. Run `python kusto_sample_app.py`.
 
+#### Troubleshooting
+
+* If you are having trouble running the script from your IDE, first check if the script runs from the command line, then consult the troubleshooting references of your IDE.
+
 ### Optional changes
 
 You can make the following changes from within the script itself:
 
 - Change the default User-Prompt authentication method by editing `AUTHENTICATION_MODE`.
 - Change the script to run without stopping between steps by setting `WAIT_FOR_USER = False`
-
-### Troubleshooting
-
-* If you are having trouble running the script from your IDE, first check if the script runs from the command line, then consult the troubleshooting references of your IDE.
