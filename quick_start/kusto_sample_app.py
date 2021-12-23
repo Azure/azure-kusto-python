@@ -5,18 +5,17 @@ import uuid
 from distutils.util import strtobool
 from typing import ClassVar
 
-from azure.kusto.data.exceptions import KustoClientError, KustoServiceError
 from azure.kusto.data import KustoClient, KustoConnectionStringBuilder, ClientRequestProperties
+from azure.kusto.data.data_format import DataFormat
+from azure.kusto.data.exceptions import KustoClientError, KustoServiceError
 
 from azure.kusto.ingest import (
     QueuedIngestClient,
     IngestionProperties,
     FileDescriptor,
     BlobDescriptor,
-    DataFormat,
+    BaseIngestClient,
 )
-
-from ingest import IngestionMappingType
 
 
 class KustoSampleApp:
@@ -320,14 +319,14 @@ class KustoSampleApp:
         data_format: DataFormat,
     ) -> bool:
         if not use_existing_mapping:
-            if cls.data_format_to_is_mapping_required(data_format) and not mapping_value:
+            if data_format.mapping_required and not mapping_value:
                 print(
-                    f"The data format '{data_format.name}' requires a mapping, but configuration indicates to not use an existing mapping and no mapping was provided. Skipping this ingestion."
+                    f"The data format '{data_format.kusto_value}' requires a mapping, but configuration indicates to not use an existing mapping and no mapping was provided. Skipping this ingestion."
                 )
                 return False
 
             if mapping_value:
-                ingestion_mapping_kind = cls.data_format_to_ingestion_mapping_type(data_format).value.lower()
+                ingestion_mapping_kind = data_format.ingestion_mapping_type.value.lower()
                 cls.wait_for_user_to_proceed(f"Create a '{ingestion_mapping_kind}' mapping reference named '{mapping_name}'")
 
                 if not mapping_name:
@@ -336,16 +335,16 @@ class KustoSampleApp:
                 if not cls.execute_control_command(kusto_client, database_name, mapping_command):
                     print(f"Failed to create a '{ingestion_mapping_kind}' mapping reference named '{mapping_name}'. Skipping this ingestion.")
                     return False
-        elif cls.data_format_to_is_mapping_required(data_format) and not mapping_name:
+        elif data_format.mapping_required and not mapping_name:
             print(
-                f"The data format '{data_format.name}' requires a mapping and the configuration indicates an existing mapping should be used, but none was provided. Skipping this ingestion."
+                f"The data format '{data_format.kusto_value}' requires a mapping and the configuration indicates an existing mapping should be used, but none was provided. Skipping this ingestion."
             )
             return False
 
         return True
 
     @classmethod
-    def ingest(cls, file: dict, data_format: DataFormat, ingest_client: QueuedIngestClient, database_name: str, table_name: str, mapping_name: str) -> None:
+    def ingest(cls, file: dict, data_format: DataFormat, ingest_client: BaseIngestClient, database_name: str, table_name: str, mapping_name: str) -> None:
         source_type = str(file["sourceType"]).lower()
         uri = file["dataSourceUri"]
         cls.wait_for_user_to_proceed(f"Ingest '{uri}' from '{source_type}'")
@@ -364,7 +363,7 @@ class KustoSampleApp:
 
     @classmethod
     def ingest_from_file(
-        cls, ingest_client: QueuedIngestClient, database_name: str, table_name: str, file_path: str, data_format: DataFormat, mapping_name: str = None
+        cls, ingest_client: BaseIngestClient, database_name: str, table_name: str, file_path: str, data_format: DataFormat, mapping_name: str = None
     ):
         ingestion_properties = cls.create_ingestion_properties(database_name, table_name, data_format, mapping_name)
 
@@ -375,9 +374,7 @@ class KustoSampleApp:
         ingest_client.ingest_from_file(file_descriptor, ingestion_properties=ingestion_properties)
 
     @classmethod
-    def ingest_from_blob(
-        cls, client: QueuedIngestClient, database_name: str, table_name: str, blob_url: str, data_format: DataFormat, mapping_name: str = None
-    ):
+    def ingest_from_blob(cls, client: BaseIngestClient, database_name: str, table_name: str, blob_url: str, data_format: DataFormat, mapping_name: str = None):
         ingestion_properties = cls.create_ingestion_properties(database_name, table_name, data_format, mapping_name)
 
         # Tip 1: For optimal ingestion batching and performance, specify the uncompressed data size in the file descriptor instead of the default below of 0.
@@ -422,78 +419,6 @@ class KustoSampleApp:
         print(f"Step {cls._step}: Get sample (2 records) of {optional_post_ingestion_message}data:")
         cls._step = cls._step + 1
         cls.execute_query(kusto_client, database_name, f"{table_name} | take 2")
-
-    # This method is temporary until the next major version bump, when the DataFormat enum will be enriched with this as a property
-    @classmethod
-    def data_format_to_ingestion_mapping_type(cls, data_format: DataFormat) -> IngestionMappingType:
-        if data_format == DataFormat.CSV:
-            return IngestionMappingType.CSV
-        elif data_format == DataFormat.TSV:
-            return IngestionMappingType.CSV
-        elif data_format == DataFormat.SCSV:
-            return IngestionMappingType.CSV
-        elif data_format == DataFormat.SOHSV:
-            return IngestionMappingType.CSV
-        elif data_format == DataFormat.PSV:
-            return IngestionMappingType.CSV
-        elif data_format == DataFormat.TXT:
-            return IngestionMappingType.UNKNOWN
-        elif data_format == DataFormat.JSON:
-            return IngestionMappingType.JSON
-        elif data_format == DataFormat.SINGLEJSON:
-            return IngestionMappingType.JSON
-        elif data_format == DataFormat.AVRO:
-            return IngestionMappingType.AVRO
-        elif data_format == DataFormat.PARQUET:
-            return IngestionMappingType.PARQUET
-        elif data_format == DataFormat.MULTIJSON:
-            return IngestionMappingType.JSON
-        elif data_format == DataFormat.ORC:
-            return IngestionMappingType.ORC
-        elif data_format == DataFormat.TSVE:
-            return IngestionMappingType.CSV
-        elif data_format == DataFormat.RAW:
-            return IngestionMappingType.UNKNOWN
-        elif data_format == DataFormat.W3CLOGFILE:
-            return IngestionMappingType.W3CLOGFILE
-        else:
-            raise ValueError(fr"Unexpected data format {self}")
-
-    # This method is temporary until the next major version bump, when the DataFormat enum will be enriched with this as a property
-    @classmethod
-    def data_format_to_is_mapping_required(cls, data_format: DataFormat) -> bool:
-        if data_format == DataFormat.CSV:
-            return False
-        elif data_format == DataFormat.TSV:
-            return False
-        elif data_format == DataFormat.SCSV:
-            return False
-        elif data_format == DataFormat.SOHSV:
-            return False
-        elif data_format == DataFormat.PSV:
-            return False
-        elif data_format == DataFormat.TXT:
-            return False
-        elif data_format == DataFormat.JSON:
-            return True
-        elif data_format == DataFormat.SINGLEJSON:
-            return True
-        elif data_format == DataFormat.AVRO:
-            return True
-        elif data_format == DataFormat.PARQUET:
-            return False
-        elif data_format == DataFormat.MULTIJSON:
-            return True
-        elif data_format == DataFormat.ORC:
-            return False
-        elif data_format == DataFormat.TSVE:
-            return False
-        elif data_format == DataFormat.RAW:
-            return False
-        elif data_format == DataFormat.W3CLOGFILE:
-            return False
-        else:
-            raise ValueError(fr"Unexpected data format {self}")
 
 
 def main():

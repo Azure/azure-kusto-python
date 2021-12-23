@@ -53,7 +53,7 @@ class QueuedIngestClient(BaseIngestClient):
         else:
             descriptor = FileDescriptor(file_descriptor)
 
-        should_compress = not descriptor.is_compressed and not ingestion_properties.is_format_binary()
+        should_compress = not descriptor.is_compressed and ingestion_properties.format.compressible
 
         with descriptor.open(should_compress) as stream:
             blob_descriptor = QueuedIngestClient._upload_blob(containers, descriptor, ingestion_properties, stream)

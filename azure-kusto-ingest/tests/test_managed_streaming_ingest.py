@@ -7,8 +7,9 @@ import pytest
 import responses
 from mock import patch
 
+from azure.kusto.data.data_format import DataFormat
 from azure.kusto.data.exceptions import KustoApiError
-from azure.kusto.ingest import ManagedStreamingIngestClient, IngestionProperties, DataFormat, IngestionStatus, BlobDescriptor
+from azure.kusto.ingest import ManagedStreamingIngestClient, IngestionProperties, IngestionStatus, BlobDescriptor
 from azure.kusto.ingest._retry import ExponentialRetry
 from test_kusto_ingest_client import request_callback as queued_request_callback, assert_queued_upload
 from test_kusto_streaming_ingest_client import request_callback as streaming_request_callback, assert_managed_streaming_request_id
@@ -128,7 +129,7 @@ class TestManagedStreamingIngestClient:
             "https://storageaccount.blob.core.windows.net/tempstorage/database__table__11111111-1111-1111-1111-111111111111__{}?".format(
                 os.path.basename(f.name)
             ),
-            format=data_format.value,
+            format=data_format.kusto_value,
         )
 
         mock_upload_blob_from_stream.assert_called()
@@ -169,7 +170,7 @@ class TestManagedStreamingIngestClient:
             mock_put_message_in_queue,
             mock_upload_blob_from_stream,
             "https://storageaccount.blob.core.windows.net/tempstorage/database__table__11111111-1111-1111-1111-111111111111__stream?",
-            format=data_format.value,
+            format=data_format.kusto_value,
             check_raw_data=False,
         )
 

@@ -134,7 +134,7 @@ class KustoConnectionStringBuilder:
     def __init__(self, connection_string: str):
         """
         Creates new KustoConnectionStringBuilder.
-        :param str connection_string: Kusto connection string should by of the format:
+        :param str connection_string: Kusto connection string should be of the format:
         https://<clusterName>.kusto.windows.net;AAD User ID="user@microsoft.com";Password=P@ssWord
         For more information please look at:
         https://kusto.azurewebsites.net/docs/concepts/kusto_connection_strings.html
@@ -190,7 +190,7 @@ class KustoConnectionStringBuilder:
         """
         Creates a KustoConnection string builder that will authenticate with AAD user name and
         password.
-        :param str connection_string: Kusto connection string should by of the format: https://<clusterName>.kusto.windows.net
+        :param str connection_string: Kusto connection string should be of the format: https://<clusterName>.kusto.windows.net
         :param str user_id: AAD user ID.
         :param str password: Corresponding password of the AAD user.
         :param str authority_id: optional param. defaults to "common"
@@ -210,7 +210,7 @@ class KustoConnectionStringBuilder:
         """
         Creates a KustoConnection string builder that will authenticate with AAD application and
         a certificate credentials.
-        :param str connection_string: Kusto connection string should by of the format:
+        :param str connection_string: Kusto connection string should be of the format:
         https://<clusterName>.kusto.windows.net
         :param str user_token: AAD user token.
         """
@@ -227,7 +227,7 @@ class KustoConnectionStringBuilder:
     ) -> "KustoConnectionStringBuilder":
         """
         Creates a KustoConnection string builder that will authenticate with AAD application and key.
-        :param str connection_string: Kusto connection string should by of the format: https://<clusterName>.kusto.windows.net
+        :param str connection_string: Kusto connection string should be of the format: https://<clusterName>.kusto.windows.net
         :param str aad_app_id: AAD application ID.
         :param str app_key: Corresponding key of the AAD application.
         :param str authority_id: Authority id (aka Tenant id) must be provided
@@ -250,7 +250,7 @@ class KustoConnectionStringBuilder:
         """
         Creates a KustoConnection string builder that will authenticate with AAD application using
         a certificate.
-        :param str connection_string: Kusto connection string should by of the format:
+        :param str connection_string: Kusto connection string should be of the format:
         https://<clusterName>.kusto.windows.net
         :param str aad_app_id: AAD application ID.
         :param str certificate: A PEM encoded certificate private key.
@@ -278,7 +278,7 @@ class KustoConnectionStringBuilder:
         """
         Creates a KustoConnection string builder that will authenticate with AAD application using
         a certificate Subject Name and Issuer.
-        :param str connection_string: Kusto connection string should by of the format:
+        :param str connection_string: Kusto connection string should be of the format:
         https://<clusterName>.kusto.windows.net
         :param str aad_app_id: AAD application ID.
         :param str private_certificate: A PEM encoded certificate private key.
@@ -307,7 +307,7 @@ class KustoConnectionStringBuilder:
         """
         Creates a KustoConnection string builder that will authenticate with AAD application and
         an application token.
-        :param str connection_string: Kusto connection string should by of the format:
+        :param str connection_string: Kusto connection string should be of the format:
         https://<clusterName>.kusto.windows.net
         :param str application_token: AAD application token.
         """
@@ -323,7 +323,7 @@ class KustoConnectionStringBuilder:
         """
         Creates a KustoConnection string builder that will authenticate with AAD application and
         password.
-        :param str connection_string: Kusto connection string should by of the format: https://<clusterName>.kusto.windows.net
+        :param str connection_string: Kusto connection string should be of the format: https://<clusterName>.kusto.windows.net
         :param str authority_id: optional param. defaults to "common"
         """
         kcsb = cls(connection_string)
@@ -337,7 +337,7 @@ class KustoConnectionStringBuilder:
         """
         Creates a KustoConnection string builder that will use existing authenticated az cli profile
         password.
-        :param str connection_string: Kusto connection string should by of the format: https://<clusterName>.kusto.windows.net
+        :param str connection_string: Kusto connection string should be of the format: https://<clusterName>.kusto.windows.net
         """
         kcsb = cls(connection_string)
         kcsb[kcsb.ValidKeywords.az_cli] = True
@@ -354,7 +354,7 @@ class KustoConnectionStringBuilder:
         an application token obtained from a Microsoft Service Identity endpoint. An optional user
         assigned application ID can be added to the token.
 
-        :param str connection_string: Kusto connection string should by of the format: https://<clusterName>.kusto.windows.net
+        :param str connection_string: Kusto connection string should be of the format: https://<clusterName>.kusto.windows.net
         :param client_id: an optional user assigned identity provided as an Azure ID of a client
         :param object_id: an optional user assigned identity provided as an Azure ID of an object
         :param msi_res_id: an optional user assigned identity provided as an Azure ID of an MSI resource
@@ -401,7 +401,7 @@ class KustoConnectionStringBuilder:
     def with_token_provider(cls, connection_string: str, token_provider: Callable[[], str]) -> "KustoConnectionStringBuilder":
         """
         Create a KustoConnectionStringBuilder that uses a callback function to obtain a connection token
-        :param str connection_string: Kusto connection string should by of the format: https://<clusterName>.kusto.windows.net
+        :param str connection_string: Kusto connection string should be of the format: https://<clusterName>.kusto.windows.net
         :param token_provider: a parameterless function that returns a valid bearer token for the relevant kusto resource as a string
         """
 
@@ -421,7 +421,7 @@ class KustoConnectionStringBuilder:
     ) -> "KustoConnectionStringBuilder":
         """
         Create a KustoConnectionStringBuilder that uses an async callback function to obtain a connection token
-        :param str connection_string: Kusto connection string should by of the format: https://<clusterName>.kusto.windows.net
+        :param str connection_string: Kusto connection string should be of the format: https://<clusterName>.kusto.windows.net
         :param async_token_provider: a parameterless function that after awaiting returns a valid bearer token for the relevant kusto resource as a string
         """
 
@@ -897,7 +897,7 @@ class KustoClient(_KustoClientBase):
         :param ClientRequestProperties properties: additional request properties.
         :param str mapping_name: Pre-defined mapping of the table. Required when stream_format is json/avro.
         """
-        stream_format = stream_format.value if isinstance(stream_format, DataFormat) else DataFormat(stream_format.lower()).value
+        stream_format = stream_format.kusto_value if isinstance(stream_format, DataFormat) else DataFormat[stream_format.upper()].kusto_value
         endpoint = self._streaming_ingest_endpoint + database + "/" + table + "?streamFormat=" + stream_format
         if mapping_name is not None:
             endpoint = endpoint + "&mappingName=" + mapping_name
