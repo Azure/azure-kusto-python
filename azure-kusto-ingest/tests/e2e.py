@@ -18,6 +18,7 @@ from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
 from azure.kusto.data._cloud_settings import CloudSettings
 from azure.kusto.data._models import WellKnownDataSet
 from azure.kusto.data.aio import KustoClient as AsyncKustoClient
+from azure.kusto.data.data_format import DataFormat, IngestionMappingType
 from azure.kusto.data.exceptions import KustoServiceError
 from azure.kusto.data.streaming_response import FrameType
 
@@ -25,9 +26,7 @@ from azure.kusto.ingest import (
     QueuedIngestClient,
     KustoStreamingIngestClient,
     IngestionProperties,
-    DataFormat,
     ColumnMapping,
-    IngestionMappingType,
     ValidationPolicy,
     ValidationOptions,
     ValidationImplications,

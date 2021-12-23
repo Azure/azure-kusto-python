@@ -8,7 +8,9 @@ import uuid
 import pytest
 import responses
 
-from azure.kusto.ingest import KustoStreamingIngestClient, IngestionProperties, DataFormat, IngestionStatus, ManagedStreamingIngestClient
+from azure.kusto.data.data_format import DataFormat
+
+from azure.kusto.ingest import KustoStreamingIngestClient, IngestionProperties, IngestionStatus, ManagedStreamingIngestClient
 from azure.kusto.ingest.exceptions import KustoMissingMappingReferenceError
 
 pandas_installed = False

@@ -52,7 +52,7 @@ class IngestionBlobInfo:
         if ingestion_properties.validation_policy:
             additional_properties["ValidationPolicy"] = _convert_dict_to_json(ingestion_properties.validation_policy)
         if ingestion_properties.format:
-            additional_properties["format"] = ingestion_properties.format.value
+            additional_properties["format"] = ingestion_properties.format.kusto_value
 
         if additional_properties:
             self.properties["AdditionalProperties"] = additional_properties
