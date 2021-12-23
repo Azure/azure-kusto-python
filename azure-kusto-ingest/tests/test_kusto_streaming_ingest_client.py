@@ -11,6 +11,7 @@ import responses
 from azure.kusto.data.data_format import DataFormat
 
 from azure.kusto.ingest import KustoStreamingIngestClient, IngestionProperties, IngestionStatus, ManagedStreamingIngestClient, ColumnMapping
+
 from azure.kusto.ingest.exceptions import KustoMissingMappingReferenceError
 
 pandas_installed = False
