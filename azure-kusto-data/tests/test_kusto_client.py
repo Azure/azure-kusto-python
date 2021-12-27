@@ -2,10 +2,11 @@
 # Licensed under the MIT License
 import sys
 
+import proxy
 import pytest
 from mock import patch
 
-from azure.kusto.data import KustoClient, ClientRequestProperties
+from azure.kusto.data import KustoClient, ClientRequestProperties, KustoConnectionStringBuilder
 from azure.kusto.data.exceptions import KustoMultiApiError
 from azure.kusto.data.helpers import dataframe_from_result_table
 from azure.kusto.data.response import KustoStreamingResponseDataSet

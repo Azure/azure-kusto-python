@@ -19,8 +19,8 @@ TEST_INTERACTIVE_AUTH = False  # User interaction required, enable this when run
 
 
 class MockProvider(TokenProviderBase):
-    def __init__(self, uri: str, is_async: bool = False):
-        super().__init__(uri, is_async)
+    def __init__(self, is_async: bool = False):
+        super().__init__(is_async)
         self._silent_token = False
         self.init_count = 0
 
@@ -49,10 +49,10 @@ class TokenProviderTests(unittest.TestCase):
     @staticmethod
     def test_base_provider():
         # test init with no URI
-        provider = MockProvider(None)
+        provider = MockProvider()
 
         # Test provider with URI, No silent token
-        provider = MockProvider(KUSTO_URI)
+        provider = MockProvider()
 
         token = provider._get_token_from_cache_impl()
         assert provider.init_count == 0

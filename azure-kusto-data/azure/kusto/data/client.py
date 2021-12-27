@@ -8,7 +8,7 @@ import uuid
 from copy import copy
 from datetime import timedelta
 from enum import Enum, unique
-from typing import TYPE_CHECKING, Union, Callable, Optional, Any, Coroutine, List, Tuple, AnyStr, IO
+from typing import TYPE_CHECKING, Union, Callable, Optional, Any, Coroutine, List, Tuple, AnyStr, IO, Dict
 
 import requests
 from requests import Response
@@ -690,8 +690,9 @@ class _KustoClientBase:
     _query_default_timeout = timedelta(minutes=4, seconds=30)
     _streaming_ingest_default_timeout = timedelta(minutes=10)
 
-    def __init__(self, kcsb: Union[KustoConnectionStringBuilder, str]):
+    def __init__(self, kcsb: Union[KustoConnectionStringBuilder, str], proxies: Optional[Dict[str, str]]):
         self._kcsb = kcsb
+        self._proxies = proxies
         if not isinstance(kcsb, KustoConnectionStringBuilder):
             self._kcsb = KustoConnectionStringBuilder(kcsb)
         self._kusto_cluster = self._kcsb.data_source
@@ -765,16 +766,18 @@ class KustoClient(_KustoClientBase):
     # The maximum amount of connections to be able to operate in parallel
     _max_pool_size = 100
 
-    def __init__(self, kcsb: Union[KustoConnectionStringBuilder, str]):
+    def __init__(self, kcsb: Union[KustoConnectionStringBuilder, str], proxies: Optional[Dict[str, str]] = None):
         """
         Kusto Client constructor.
         :param kcsb: The connection string to initialize KustoClient.
         :type kcsb: azure.kusto.data.KustoConnectionStringBuilder or str
         """
-        super().__init__(kcsb)
+        super().__init__(kcsb, proxies)
 
         # Create a session object for connection pooling
         self._session = requests.Session()
+        self._session.proxies = proxies or {}
+
         adapter = HTTPAdapterWithSocketOptions(
             socket_options=(HTTPConnection.default_socket_options or []) + self.compose_socket_options(), pool_maxsize=self._max_pool_size
         )
@@ -782,7 +785,7 @@ class KustoClient(_KustoClientBase):
         self._session.mount("https://", adapter)
 
         # notice that in this context, federated actually just stands for add auth, not aad federated auth (legacy code)
-        self._auth_provider = _AadHelper(self._kcsb, is_async=False) if self._kcsb.aad_federated_security else None
+        self._auth_provider = _AadHelper(self._kcsb, is_async=False, proxies=proxies) if self._kcsb.aad_federated_security else None
 
     def set_http_retries(self, max_retries: int):
         """
@@ -795,9 +798,6 @@ class KustoClient(_KustoClientBase):
         )
         self._session.mount("http://", adapter)
         self._session.mount("https://", adapter)
-
-    def set_http_proxies(self, proxies: dict):
-        self._session.proxies.update(proxies)
 
     @staticmethod
     def compose_socket_options() -> List[Tuple[int, int, int]]:
