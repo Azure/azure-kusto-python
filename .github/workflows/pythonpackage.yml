@@ -29,11 +29,9 @@ jobs:
         pip install codecov coverage
         pip install ./azure-kusto-data ./azure-kusto-ingest
         pip freeze
-    - name: Lint with black
-      if: matrix.python-version == 3.6 # deploy is on 3.6 so black is needed only here
-      run: |
-        pip install black
-        black . --line-length 160 --check
+    - uses: psf/black@stable
+      with:
+        options: "--check --diff --line-length 160"
     - name: Test with pytest
       run: |
         pip install pytest
