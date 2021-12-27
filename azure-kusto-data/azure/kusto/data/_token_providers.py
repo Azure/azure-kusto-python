@@ -67,7 +67,7 @@ class TokenProviderBase(abc.ABC):
         else:
             self._lock = Lock()
 
-    def _init_once(self, init_only_cloud=False):
+    def _init_once(self, init_only_resources=False):
         if self._initialized:
             return
 
@@ -79,13 +79,13 @@ class TokenProviderBase(abc.ABC):
                 self._init_resources()
                 self._resources_initialized = True
 
-            if init_only_cloud:
+            if init_only_resources:
                 return
 
             self._init_impl()
             self._initialized = True
 
-    async def _init_once_async(self, init_only_cloud=False):
+    async def _init_once_async(self, init_only_resources=False):
         if self._initialized:
             return
 
@@ -97,7 +97,7 @@ class TokenProviderBase(abc.ABC):
                 await (sync_to_async(self._init_resources)())
                 self._resources_initialized = True
 
-            if init_only_cloud:
+            if init_only_resources:
                 return
 
             self._init_impl()
@@ -122,14 +122,14 @@ class TokenProviderBase(abc.ABC):
     def context(self) -> dict:
         if self.is_async:
             raise KustoAsyncUsageError("context", self.is_async)
-        self._init_once(init_only_cloud=True)
+        self._init_once(init_only_resources=True)
         return self._context_impl()
 
     async def context_async(self) -> dict:
         if not self.is_async:
             raise KustoAsyncUsageError("context_async", self.is_async)
 
-        await self._init_once_async(init_only_cloud=True)
+        await self._init_once_async(init_only_resources=True)
         return self._context_impl()
 
     async def get_token_async(self):

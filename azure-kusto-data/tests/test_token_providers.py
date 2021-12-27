@@ -327,7 +327,7 @@ class TokenProviderTests(unittest.TestCase):
         authority = "auth_test"
 
         provider = UserPassTokenProvider(FAKE_URI, authority, "a", "b")
-        provider._init_once(init_only_cloud=True)
+        provider._init_once(init_only_resources=True)
         context = provider.context()
         assert context["authority"] == "https://login_endpoint/auth_test"
         assert context["client_id"] == cloud.kusto_client_app_id
@@ -348,7 +348,7 @@ class TokenProviderTests(unittest.TestCase):
         authority = "auth_test"
 
         provider = UserPassTokenProvider(FAKE_URI, authority, "a", "b")
-        provider._init_once(init_only_cloud=True)
+        provider._init_once(init_only_resources=True)
         context = provider.context()
         assert context["authority"] == "https://login_endpoint/auth_test"
         assert context["client_id"] == "1234"
