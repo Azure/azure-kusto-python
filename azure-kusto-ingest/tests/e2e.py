@@ -428,13 +428,10 @@ class TestE2E:
             report_level=ReportLevel.FailuresAndSuccesses,
             report_method=ReportMethod.Queue,
             validation_policy=validation_policy,
+            # TODO - change this when we decide if json needs a mapping
+            ingestion_mapping=self.test_table_json_mappings() if not is_managed_streaming else None,
+            ingestion_mapping_reference="JsonMapping" if is_managed_streaming else None,
         )
-
-        # TODO - change this when we figure out if json really needs mapping
-        if is_managed_streaming:
-            json_ingestion_props.ingestion_mapping_reference = "JsonMapping"
-        else:
-            json_ingestion_props.ingestion_mapping = self.test_table_json_mappings()
 
         text = io.StringIO(pathlib.Path(self.json_file_path).read_text())
         zipped = io.BytesIO(pathlib.Path(self.zipped_json_file_path).read_bytes())
