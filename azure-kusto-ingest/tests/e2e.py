@@ -434,7 +434,7 @@ class TestE2E:
         if is_managed_streaming:
             json_ingestion_props.ingestion_mapping_reference = "JsonMapping"
         else:
-            json_ingestion_props.ingestion_mapping = self.test_table_json_mappings(),
+            json_ingestion_props.ingestion_mapping = self.test_table_json_mappings()
 
         text = io.StringIO(pathlib.Path(self.json_file_path).read_text())
         zipped = io.BytesIO(pathlib.Path(self.zipped_json_file_path).read_bytes())
