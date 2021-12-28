@@ -1,6 +1,6 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
-from typing import Optional, Dict
+from typing import Optional, Dict, TYPE_CHECKING
 from urllib.parse import urlparse
 
 from ._token_providers import (
@@ -17,6 +17,9 @@ from ._token_providers import (
     TokenConstants,
 )
 from .exceptions import KustoAuthenticationError, KustoClientError
+
+if TYPE_CHECKING:
+    from . import KustoConnectionStringBuilder
 
 
 class _AadHelper:
@@ -36,7 +39,7 @@ class _AadHelper:
             self.token_provider = UserPassTokenProvider(self.kusto_uri, kcsb.authority_id, kcsb.aad_user_id, kcsb.password, is_async=is_async, proxies=proxies)
         elif all([kcsb.application_client_id, kcsb.application_key]):
             self.token_provider = ApplicationKeyTokenProvider(
-                self.kusto_uri, kcsb.authority_id, kcsb.application_client_id, kcsb.application_key, is_async=is_async
+                self.kusto_uri, kcsb.authority_id, kcsb.application_client_id, kcsb.application_key, is_async=is_async, proxies=proxies
             )
         elif all([kcsb.application_client_id, kcsb.application_certificate, kcsb.application_certificate_thumbprint]):
             # kcsb.application_public_certificate can be None if SNI is not used
@@ -48,9 +51,10 @@ class _AadHelper:
                 kcsb.application_certificate_thumbprint,
                 kcsb.application_public_certificate,
                 is_async=is_async,
+                proxies=proxies,
             )
         elif kcsb.msi_authentication:
-            self.token_provider = MsiTokenProvider(self.kusto_uri, kcsb.msi_parameters, is_async=is_async, proxies=proxies)
+            self.token_provider = MsiTokenProvider(self.kusto_uri, kcsb.msi_parameters, is_async=is_async)
         elif kcsb.user_token:
             self.token_provider = BasicTokenProvider(kcsb.user_token, is_async=is_async)
         elif kcsb.application_token:

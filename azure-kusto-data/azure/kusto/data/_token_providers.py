@@ -30,6 +30,10 @@ except ImportError:
         def __init__(self):
             raise KustoAioSyntaxError()
 
+    class AsyncAzureCliCredential:
+        def __init__(self):
+            raise KustoAioSyntaxError()
+
 
 # constant key names and values used throughout the code
 class TokenConstants:
@@ -287,8 +291,8 @@ class MsiTokenProvider(CloudInfoTokenProvider):
     The args parameter is a dictionary conforming with the ManagedIdentityCredential initializer API arguments
     """
 
-    def __init__(self, kusto_uri: str, msi_args: dict = None, is_async: bool = False, proxies: Optional[dict] = None):
-        super().__init__(kusto_uri, is_async, proxies)
+    def __init__(self, kusto_uri: str, msi_args: dict = None, is_async: bool = False):
+        super().__init__(kusto_uri, is_async)
         self._msi_args = msi_args
         self._msi_auth_context = None
         self._msi_auth_context_async = None
@@ -308,7 +312,7 @@ class MsiTokenProvider(CloudInfoTokenProvider):
     def _get_token_impl(self) -> dict:
         try:
             if self._msi_auth_context is None:
-                self._msi_auth_context = ManagedIdentityCredential(**self._msi_args, proxies=self._proxies)
+                self._msi_auth_context = ManagedIdentityCredential(**self._msi_args)
 
             msi_token = self._msi_auth_context.get_token(self._scopes[0])
             return {TokenConstants.MSAL_TOKEN_TYPE: TokenConstants.BEARER_TYPE, TokenConstants.MSAL_ACCESS_TOKEN: msi_token.token}
@@ -320,7 +324,7 @@ class MsiTokenProvider(CloudInfoTokenProvider):
     async def _get_token_impl_async(self) -> Optional[dict]:
         try:
             if self._msi_auth_context_async is None:
-                self._msi_auth_context_async = AsyncManagedIdentityCredential(**self._msi_args, proxies=self._proxies)
+                self._msi_auth_context_async = AsyncManagedIdentityCredential(**self._msi_args)
 
             msi_token = await self._msi_auth_context_async.get_token(self._scopes[0])
             return {TokenConstants.MSAL_TOKEN_TYPE: TokenConstants.BEARER_TYPE, TokenConstants.MSAL_ACCESS_TOKEN: msi_token.token}
