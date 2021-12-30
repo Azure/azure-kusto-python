@@ -237,7 +237,7 @@ class BasicTokenProvider(TokenProviderBase):
     def _init_impl(self):
         pass
 
-    def _get_token_impl(self) -> None:
+    def _get_token_impl(self) -> Optional[dict]:
         return None
 
     def _get_token_from_cache_impl(self) -> dict:
@@ -271,7 +271,7 @@ class CallbackTokenProvider(TokenProviderBase):
 
         return {TokenConstants.MSAL_TOKEN_TYPE: TokenConstants.BEARER_TYPE, TokenConstants.MSAL_ACCESS_TOKEN: caller_token}
 
-    def _get_token_impl(self) -> dict:
+    def _get_token_impl(self) -> Optional[dict]:
         if self._token_callback is None:
             raise KustoClientError("token_callback is None, can't retrieve token")
         return self._build_response(self._token_callback())
@@ -309,7 +309,7 @@ class MsiTokenProvider(CloudInfoTokenProvider):
     def _init_impl(self):
         pass
 
-    def _get_token_impl(self) -> dict:
+    def _get_token_impl(self) -> Optional[dict]:
         try:
             if self._msi_auth_context is None:
                 self._msi_auth_context = ManagedIdentityCredential(**self._msi_args)
@@ -356,7 +356,7 @@ class AzCliTokenProvider(CloudInfoTokenProvider):
     def _init_impl(self):
         pass
 
-    def _get_token_impl(self) -> dict:
+    def _get_token_impl(self) -> Optional[dict]:
         try:
             if self._az_auth_context is None:
                 self._az_auth_context = AzureCliCredential()
@@ -412,7 +412,7 @@ class UserPassTokenProvider(CloudInfoTokenProvider):
             client_id=self._cloud_info.kusto_client_app_id, authority=self._cloud_info.authority_uri(self._auth), proxies=self._proxy_dict
         )
 
-    def _get_token_impl(self) -> dict:
+    def _get_token_impl(self) -> Optional[dict]:
         token = self._msal_client.acquire_token_by_username_password(username=self._user, password=self._pass, scopes=self._scopes)
         return self._valid_token_or_throw(token)
 
@@ -449,7 +449,7 @@ class DeviceLoginTokenProvider(CloudInfoTokenProvider):
             client_id=self._cloud_info.kusto_client_app_id, authority=self._cloud_info.authority_uri(self._auth), proxies=self._proxy_dict
         )
 
-    def _get_token_impl(self) -> dict:
+    def _get_token_impl(self) -> Optional[dict]:
         flow = self._msal_client.initiate_device_flow(scopes=self._scopes)
         try:
             if self._device_code_callback:
@@ -507,7 +507,7 @@ class InteractiveLoginTokenProvider(CloudInfoTokenProvider):
             client_id=self._cloud_info.kusto_client_app_id, authority=self._cloud_info.authority_uri(self._auth), proxies=self._proxy_dict
         )
 
-    def _get_token_impl(self) -> dict:
+    def _get_token_impl(self) -> Optional[dict]:
         token = self._msal_client.acquire_token_interactive(
             scopes=self._scopes, prompt=TokenConstants.MSAL_INTERACTIVE_PROMPT, login_hint=self._login_hint, domain_hint=self._domain_hint
         )
@@ -545,7 +545,7 @@ class ApplicationKeyTokenProvider(CloudInfoTokenProvider):
             client_id=self._app_client_id, client_credential=self._app_key, authority=self._cloud_info.authority_uri(self._auth), proxies=self._proxy_dict
         )
 
-    def _get_token_impl(self) -> dict:
+    def _get_token_impl(self) -> Optional[dict]:
         token = self._msal_client.acquire_token_for_client(scopes=self._scopes)
         return self._valid_token_or_throw(token)
 
@@ -595,7 +595,7 @@ class ApplicationCertificateTokenProvider(CloudInfoTokenProvider):
             client_id=self._client_id, client_credential=self._cert_credentials, authority=self._cloud_info.authority_uri(self._auth), proxies=self._proxy_dict
         )
 
-    def _get_token_impl(self) -> dict:
+    def _get_token_impl(self) -> Optional[dict]:
         token = self._msal_client.acquire_token_for_client(scopes=self._scopes)
         return self._valid_token_or_throw(token)
 
