@@ -294,7 +294,7 @@ class TestTokenProvider:
         authority = "auth_test"
 
         provider = UserPassTokenProvider(FAKE_URI, authority, "a", "b", is_async=True)
-        await provider._init_once_async(init_only_cloud=True)
+        await provider._init_once_async(init_only_resources=True)
         context = await provider.context_async()
         assert context["authority"] == "https://login_endpoint/auth_test"
         assert context["client_id"] == "1234"
@@ -316,7 +316,7 @@ class TestTokenProvider:
         authority = "auth_test"
 
         provider = UserPassTokenProvider(FAKE_URI, authority, "a", "b", is_async=True)
-        await provider._init_once_async(init_only_cloud=True)
+        await provider._init_once_async(init_only_resources=True)
         context = await provider.context_async()
         assert context["authority"] == "https://login_endpoint/auth_test"
         assert context["client_id"] == "1234"
