@@ -141,7 +141,9 @@ range x from 1 to 10 step 1"""
         """Test query V2."""
         proxy = "https://my_proxy.sample"
         kcsb, auth_supports_proxy = proxy_kcsb
-        client = KustoClient(kcsb, proxy)
+        client = KustoClient(kcsb)
+        client.set_proxy(proxy)
+
         assert client._proxy == proxy
 
         expected_dict = {"http": proxy, "https": proxy}

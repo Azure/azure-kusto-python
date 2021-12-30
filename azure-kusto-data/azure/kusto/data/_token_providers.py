@@ -5,7 +5,7 @@ import asyncio
 import time
 import webbrowser
 from threading import Lock
-from typing import Callable, Optional, Coroutine, List
+from typing import Callable, Optional, Coroutine, List, Dict
 
 from azure.core.exceptions import ClientAuthenticationError
 from azure.identity import ManagedIdentityCredential, AzureCliCredential
@@ -63,6 +63,7 @@ class TokenProviderBase(abc.ABC):
     _kusto_uri: str
 
     def __init__(self, is_async: bool = False):
+        self._proxy_dict: Optional[str, str] = None
         self.is_async = is_async
 
         if is_async:
@@ -200,15 +201,17 @@ class TokenProviderBase(abc.ABC):
 
         return token
 
+    def set_proxy_dict(self, proxy_dict: Dict[str, str]):
+        self._proxy_dict = proxy_dict
+
 
 class CloudInfoTokenProvider(TokenProviderBase, abc.ABC):
     _cloud_info: Optional[CloudInfo]
     _scopes = List[str]
 
-    def __init__(self, kusto_uri: str, is_async: bool = False, proxy_dict: Optional[dict] = None):
+    def __init__(self, kusto_uri: str, is_async: bool = False):
         super().__init__(is_async)
         self._kusto_uri = kusto_uri
-        self._proxy_dict = proxy_dict
 
     def _init_resources(self):
         if self._kusto_uri is not None:
@@ -340,8 +343,8 @@ class MsiTokenProvider(CloudInfoTokenProvider):
 class AzCliTokenProvider(CloudInfoTokenProvider):
     """AzCli Token Provider obtains a refresh token from the AzCli cache and uses it to authenticate with MSAL"""
 
-    def __init__(self, kusto_uri: str, is_async: bool = False, proxy_dict: Optional[dict] = None):
-        super().__init__(kusto_uri, is_async, proxy_dict)
+    def __init__(self, kusto_uri: str, is_async: bool = False):
+        super().__init__(kusto_uri, is_async)
         self._az_auth_context = None
         self._az_auth_context_async = None
         self._az_token = None
@@ -393,8 +396,8 @@ class AzCliTokenProvider(CloudInfoTokenProvider):
 class UserPassTokenProvider(CloudInfoTokenProvider):
     """Acquire a token from MSAL with username and password"""
 
-    def __init__(self, kusto_uri: str, authority_id: str, username: str, password: str, is_async: bool = False, proxy_dict: Optional[dict] = None):
-        super().__init__(kusto_uri, is_async, proxy_dict)
+    def __init__(self, kusto_uri: str, authority_id: str, username: str, password: str, is_async: bool = False):
+        super().__init__(kusto_uri, is_async)
         self._msal_client = None
         self._auth = authority_id
         self._user = username
@@ -430,8 +433,8 @@ class UserPassTokenProvider(CloudInfoTokenProvider):
 class DeviceLoginTokenProvider(CloudInfoTokenProvider):
     """Acquire a token from MSAL with Device Login flow"""
 
-    def __init__(self, kusto_uri: str, authority_id: str, device_code_callback=None, is_async: bool = False, proxy_dict: Optional[dict] = None):
-        super().__init__(kusto_uri, is_async, proxy_dict)
+    def __init__(self, kusto_uri: str, authority_id: str, device_code_callback=None, is_async: bool = False):
+        super().__init__(kusto_uri, is_async)
         self._msal_client = None
         self._auth = authority_id
         self._account = None
@@ -488,7 +491,7 @@ class InteractiveLoginTokenProvider(CloudInfoTokenProvider):
         is_async: bool = False,
         proxy_dict: Optional[dict] = None,
     ):
-        super().__init__(kusto_uri, is_async, proxy_dict)
+        super().__init__(kusto_uri, is_async)
         self._msal_client = None
         self._auth = authority_id
         self._login_hint = login_hint
@@ -526,8 +529,8 @@ class InteractiveLoginTokenProvider(CloudInfoTokenProvider):
 class ApplicationKeyTokenProvider(CloudInfoTokenProvider):
     """Acquire a token from MSAL with application Id and Key"""
 
-    def __init__(self, kusto_uri: str, authority_id: str, app_client_id: str, app_key: str, is_async: bool = False, proxy_dict: Optional[dict] = None):
-        super().__init__(kusto_uri, is_async, proxy_dict)
+    def __init__(self, kusto_uri: str, authority_id: str, app_client_id: str, app_key: str, is_async: bool = False):
+        super().__init__(kusto_uri, is_async)
         self._msal_client = None
         self._app_client_id = app_client_id
         self._app_key = app_key
@@ -571,7 +574,7 @@ class ApplicationCertificateTokenProvider(CloudInfoTokenProvider):
         is_async: bool = False,
         proxy_dict: Optional[dict] = None,
     ):
-        super().__init__(kusto_uri, is_async, proxy_dict)
+        super().__init__(kusto_uri, is_async)
         self._msal_client = None
         self._auth = authority_id
         self._client_id = client_id

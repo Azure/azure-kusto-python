@@ -1,5 +1,6 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
+import abc
 import io
 import json
 import socket
@@ -683,17 +684,19 @@ class HTTPAdapterWithSocketOptions(requests.adapters.HTTPAdapter):
         super(HTTPAdapterWithSocketOptions, self).init_poolmanager(*args, **kwargs)
 
 
-class _KustoClientBase:
+class _KustoClientBase(abc.ABC):
     API_VERSION = "2019-02-13"
 
     _mgmt_default_timeout = timedelta(hours=1, seconds=30)
     _query_default_timeout = timedelta(minutes=4, seconds=30)
     _streaming_ingest_default_timeout = timedelta(minutes=10)
 
-    def __init__(self, kcsb: Union[KustoConnectionStringBuilder, str], proxy: Optional[str] = None):
+    _auth_provider: _AadHelper
+
+    def __init__(self, kcsb: Union[KustoConnectionStringBuilder, str]):
         self._kcsb = kcsb
-        self._proxy: Optional[str] = proxy
-        self._proxy_dict: Optional[Dict[str, str]] = {"http": proxy, "https": proxy} if proxy else None
+        self._proxy: Optional[str] = None
+        self._proxy_dict: Optional[Dict[str, str]] = None
         if not isinstance(kcsb, KustoConnectionStringBuilder):
             self._kcsb = KustoConnectionStringBuilder(kcsb)
         self._kusto_cluster = self._kcsb.data_source
@@ -708,6 +711,11 @@ class _KustoClientBase:
             "x-ms-client-version": "Kusto.Python.Client:" + VERSION,
             "x-ms-version": self.API_VERSION,
         }
+
+    def set_proxy(self, proxy: str):
+        self._proxy = proxy
+        self._proxy_dict = {"http": proxy, "https": proxy}
+        self._auth_provider.token_provider.set_proxy_dict(self._proxy_dict)
 
     @staticmethod
     def _kusto_parse_by_endpoint(endpoint: str, response_json: Any) -> KustoResponseDataSet:
@@ -767,13 +775,13 @@ class KustoClient(_KustoClientBase):
     # The maximum amount of connections to be able to operate in parallel
     _max_pool_size = 100
 
-    def __init__(self, kcsb: Union[KustoConnectionStringBuilder, str], proxy: Optional[str] = None):
+    def __init__(self, kcsb: Union[KustoConnectionStringBuilder, str]):
         """
         Kusto Client constructor.
         :param kcsb: The connection string to initialize KustoClient.
         :type kcsb: azure.kusto.data.KustoConnectionStringBuilder or str
         """
-        super().__init__(kcsb, proxy)
+        super().__init__(kcsb)
 
         # Create a session object for connection pooling
         self._session = requests.Session()
@@ -786,7 +794,11 @@ class KustoClient(_KustoClientBase):
         self._session.mount("https://", adapter)
 
         # notice that in this context, federated actually just stands for add auth, not aad federated auth (legacy code)
-        self._auth_provider = _AadHelper(self._kcsb, is_async=False, proxy_dict=self._proxy_dict) if self._kcsb.aad_federated_security else None
+        self._auth_provider = _AadHelper(self._kcsb, is_async=False) if self._kcsb.aad_federated_security else None
+
+    def set_proxy(self, proxy: str):
+        super().set_proxy(proxy)
+        self._session.proxies = self._proxy_dict
 
     def set_http_retries(self, max_retries: int):
         """

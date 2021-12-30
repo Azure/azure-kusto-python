@@ -20,11 +20,11 @@ except ImportError:
 @documented_by(KustoClientSync)
 class KustoClient(_KustoClientBase):
     @documented_by(KustoClientSync.__init__)
-    def __init__(self, kcsb: Union[KustoConnectionStringBuilder, str], proxy: Optional[str] = None):
-        super().__init__(kcsb, proxy)
+    def __init__(self, kcsb: Union[KustoConnectionStringBuilder, str]):
+        super().__init__(kcsb)
 
         # notice that in this context, federated actually just stands for add auth, not aad federated auth (legacy code)
-        self._auth_provider = _AadHelper(self._kcsb, is_async=True, proxy_dict=self._proxy_dict) if self._kcsb.aad_federated_security else None
+        self._auth_provider = _AadHelper(self._kcsb, is_async=True) if self._kcsb.aad_federated_security else None
         self._session = ClientSession()
 
     async def __aenter__(self) -> "KustoClient":
