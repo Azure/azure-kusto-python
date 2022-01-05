@@ -10,7 +10,8 @@ You can use it as a baseline to write your own first kusto client application, a
 
 ### Prerequisites
 
-1. Set up Python version 3.6 or higher on your machine. For instructions, consult a Python environment setup tutorial, like [this](https://www.tutorialspoint.com/java/java_environment_setup.htm).
+1. Set up Python version 3.7 or higher on your machine. For instructions, consult a Python environment setup tutorial, like [this](https://www.
+   tutorialspoint.com/java/java_environment_setup.htm).
 
 ### Retrieving the app from GitHub
 
