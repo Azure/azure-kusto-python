@@ -141,16 +141,16 @@ class TestDescriptors:
     def test_uuid_blob_descriptor(self):
         dummy_file = "dummy"
 
-        descriptor = BlobDescriptor(dummy_file, None)
+        descriptor = BlobDescriptor(dummy_file)
         assert descriptor.source_id
         assert descriptor.source_id != TestDescriptors.TEST_UUID
         assert uuid.UUID(str(descriptor.source_id), version=4)
 
-        descriptor = BlobDescriptor(dummy_file, None, source_id=TestDescriptors.TEST_UUID_STR)
+        descriptor = BlobDescriptor(dummy_file, source_id=TestDescriptors.TEST_UUID_STR)
         assert descriptor.source_id == TestDescriptors.TEST_UUID
 
-        descriptor = BlobDescriptor(dummy_file, None, source_id=TestDescriptors.TEST_UUID)
+        descriptor = BlobDescriptor(dummy_file, source_id=TestDescriptors.TEST_UUID)
         assert descriptor.source_id == TestDescriptors.TEST_UUID
 
         with pytest.raises(ValueError):
-            BlobDescriptor(dummy_file, None, source_id=TestDescriptors.INVALID_UUID)
+            BlobDescriptor(dummy_file, source_id=TestDescriptors.INVALID_UUID)

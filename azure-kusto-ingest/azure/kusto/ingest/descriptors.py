@@ -102,7 +102,7 @@ class FileDescriptor:
 class BlobDescriptor:
     """FileDescriptor is used to describe a file that will be used as an ingestion source"""
 
-    def __init__(self, path: str, size: Optional[int], source_id: OptionalUUID = None):
+    def __init__(self, path: str, size: Optional[int] = None, source_id: OptionalUUID = None):
         """
         :param path: blob uri.
         :type path: str.
