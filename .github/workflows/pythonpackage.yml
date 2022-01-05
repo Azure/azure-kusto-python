@@ -16,6 +16,8 @@ jobs:
       fail-fast: false
       matrix:
         python-version: [ '3.7', '3.8', '3.9', '3.10' ]
+    env:
+      PYTHON: ${{ matrix.python-version }}
 
     steps:
       - uses: actions/checkout@v2
@@ -36,7 +38,7 @@ jobs:
       - name: Test with pytest
         run: |
           pip install pytest
-          pytest -v --junit-xml pytest.xml
+          pytest -v --junit-xml pytest.xml --cov=./ --cov-report=xml
       - name: EtoE Test with pytest
         env:
           APP_ID: ${{ secrets.APP_ID }}
@@ -46,7 +48,13 @@ jobs:
           TEST_BLOB: ${{ secrets.TEST_BLOB }}
           ENGINE_CONNECTION_STRING: ${{ secrets.ENGINE_CONNECTION_STRING }}
         run: |
-          pytest -v ./azure-kusto-ingest/tests/e2e.py --junit-xml pytest_e2e.xml
+          pytest -v ./azure-kusto-ingest/tests/e2e.py --junit-xml pytest_e2e.xml --cov=./ --cov-report=xml --cov-append
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v2
+        with:
+          env_vars: PYTHON
+          fail_ci_if_error: true
 
       - name: Upload Unit Test Results
         if: always()
