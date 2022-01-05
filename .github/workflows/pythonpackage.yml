@@ -15,37 +15,59 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.6, 3.7, 3.8, 3.9]
+        python-version: [ '3.7', '3.8', '3.9', '3.10' ]
 
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v1
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r dev_requirements.txt
-        pip install codecov coverage
-        pip install ./azure-kusto-data ./azure-kusto-ingest
-        pip freeze
-    - name: Lint with black
-      if: matrix.python-version == 3.6 # deploy is on 3.6 so black is needed only here
-      run: |
-        pip install black
-        black . --line-length 160 --check
-    - name: Test with pytest
-      run: |
-        pip install pytest
-        pytest
-    - name: EtoE Test with pytest
-      env:
-        APP_ID: ${{ secrets.APP_ID }}
-        APP_KEY: ${{ secrets.APP_KEY }}
-        AUTH_ID: ${{ secrets.AUTH_ID }}
-        TEST_DATABASE: ${{ secrets.TEST_DATABASE }}
-        TEST_BLOB: ${{ secrets.TEST_BLOB }}
-        ENGINE_CONNECTION_STRING: ${{ secrets.ENGINE_CONNECTION_STRING }}
-      run: |
-        pytest -v ./azure-kusto-ingest/tests/e2e.py
+      - uses: actions/checkout@v2
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r dev_requirements.txt
+          pip install codecov coverage
+          pip install ./azure-kusto-data ./azure-kusto-ingest
+          pip freeze
+      - uses: psf/black@stable
+        with:
+          options: "--check --diff --line-length 160"
+      - name: Test with pytest
+        run: |
+          pip install pytest
+          pytest -v --junit-xml pytest.xml
+      - name: EtoE Test with pytest
+        env:
+          APP_ID: ${{ secrets.APP_ID }}
+          APP_KEY: ${{ secrets.APP_KEY }}
+          AUTH_ID: ${{ secrets.AUTH_ID }}
+          TEST_DATABASE: ${{ secrets.TEST_DATABASE }}
+          TEST_BLOB: ${{ secrets.TEST_BLOB }}
+          ENGINE_CONNECTION_STRING: ${{ secrets.ENGINE_CONNECTION_STRING }}
+        run: |
+          pytest -v ./azure-kusto-ingest/tests/e2e.py --junit-xml pytest_e2e.xml
+
+      - name: Upload Unit Test Results
+        if: always()
+        uses: actions/upload-artifact@v2
+        with:
+          name: Unit Test Results (Python ${{ matrix.python-version }})
+          path: pytest*.xml
+
+  publish-test-results:
+    name: "Publish Unit Tests Results"
+    needs: build
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: Download Artifacts
+        uses: actions/download-artifact@v2
+        with:
+          path: artifacts
+
+      - name: Publish Unit Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v1
+        with:
+          files: artifacts/**/*.xml

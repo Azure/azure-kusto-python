@@ -9,7 +9,7 @@ import uuid
 from copy import copy
 from datetime import timedelta
 from enum import Enum, unique
-from typing import TYPE_CHECKING, Union, Callable, Optional, Any, Coroutine, List, Tuple, AnyStr, IO, Dict
+from typing import TYPE_CHECKING, Union, Callable, Optional, Any, Coroutine, List, Tuple, AnyStr, IO, NoReturn, Dict
 
 import requests
 from requests import Response
@@ -732,7 +732,7 @@ class _KustoClientBase(abc.ABC):
         status: int,
         response_json: Any,
         response_text: Optional[str],
-    ):  # TODO: This method return type should be "NoReturn". Re-add when the minimum python version is increased (3.6.2 or higher)
+    ) -> NoReturn:
 
         if status == 404:
             if payload:
