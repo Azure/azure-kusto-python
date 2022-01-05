@@ -1,6 +1,7 @@
 import io
 import json
 import os
+import uuid
 from tempfile import NamedTemporaryFile
 
 import pytest
@@ -84,7 +85,7 @@ def transient_error_callback(helper: TransientResponseHelper, request, custom_re
 
 
 class TestManagedStreamingIngestClient:
-    MOCKED_UUID_4 = "11111111-1111-1111-1111-111111111111"
+    MOCKED_UUID_4 = uuid.UUID("11111111-1111-1111-1111-111111111111")
 
     @responses.activate
     @patch("azure.kusto.data.security._AadHelper.acquire_authorization_header", return_value=None)
