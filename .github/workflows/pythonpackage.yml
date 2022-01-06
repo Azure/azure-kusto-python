@@ -61,7 +61,6 @@ jobs:
         uses: codecov/codecov-action@v2
         with:
           env_vars: PYTHON
-          fail_ci_if_error: true
 
 
   publish-test-results:
