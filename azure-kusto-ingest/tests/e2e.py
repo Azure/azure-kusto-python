@@ -165,6 +165,7 @@ class TestE2E:
 
     @classmethod
     def setup_class(cls):
+        raise Exception("Intentional error")
         # DM CS can be composed from engine CS
         cls.engine_cs = os.environ.get("ENGINE_CONNECTION_STRING")
         cls.dm_cs = os.environ.get("DM_CONNECTION_STRING") or cls.engine_cs.replace("//", "//ingest-")
