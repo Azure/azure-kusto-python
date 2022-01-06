@@ -50,18 +50,19 @@ jobs:
         run: |
           pytest -v ./azure-kusto-ingest/tests/e2e.py --junit-xml pytest_e2e.xml --cov=./ --cov-report=xml --cov-append
 
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v2
-        with:
-          env_vars: PYTHON
-          fail_ci_if_error: true
-
       - name: Upload Unit Test Results
         if: always()
         uses: actions/upload-artifact@v2
         with:
           name: Unit Test Results (Python ${{ matrix.python-version }})
           path: pytest*.xml
+          
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v2
+        with:
+          env_vars: PYTHON
+          fail_ci_if_error: true
+
 
   publish-test-results:
     name: "Publish Unit Tests Results"
