@@ -23,9 +23,7 @@ class IngestionBlobInfo:
         self.properties["ReportLevel"] = ingestion_properties.report_level.value
         self.properties["ReportMethod"] = ingestion_properties.report_method.value
         self.properties["SourceMessageCreationTime"] = datetime.utcnow().isoformat()
-        self.properties["Id"] = (
-            str(blob_descriptor.source_id) if hasattr(blob_descriptor, "source_id") and blob_descriptor.source_id is not None else str(uuid.uuid4())
-        )
+        self.properties["Id"] = str(blob_descriptor.source_id)
 
         additional_properties = ingestion_properties.additional_properties or {}
         additional_properties["authorizationContext"] = auth_context

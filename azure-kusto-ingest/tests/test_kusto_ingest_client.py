@@ -3,6 +3,7 @@
 import io
 import json
 import os
+import uuid
 from pathlib import Path
 
 import pytest
@@ -197,7 +198,7 @@ def ingest_client_class(request):
 
 
 class TestQueuedIngestClient:
-    MOCKED_UUID_4 = "11111111-1111-1111-1111-111111111111"
+    MOCKED_UUID_4 = uuid.UUID("11111111-1111-1111-1111-111111111111")
     MOCKED_PID = 64
     MOCKED_TIME = 100
 
