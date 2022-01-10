@@ -1,14 +1,11 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
-import unittest
-import re
 import json
+import re
+import unittest
 from uuid import UUID
 
 from azure.kusto.data.data_format import DataFormat
-
-from azure.kusto.ingest.ingestion_blob_info import IngestionBlobInfo
-from azure.kusto.ingest.exceptions import KustoMappingAndMappingReferenceError
 from azure.kusto.ingest import (
     BlobDescriptor,
     IngestionProperties,
@@ -19,6 +16,7 @@ from azure.kusto.ingest import (
     ValidationOptions,
     ValidationImplications,
 )
+from azure.kusto.ingest.ingestion_blob_info import IngestionBlobInfo
 
 TIMESTAMP_REGEX = "[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}.[0-9]{6}"
 
@@ -35,7 +33,7 @@ class IngestionBlobInfoTest(unittest.TestCase):
             database="database",
             table="table",
             data_format=DataFormat.CSV,
-            ingestion_mapping=[column_mapping],
+            column_mappings=[column_mapping],
             additional_tags=["tag"],
             ingest_if_not_exists=["ingestIfNotExistTags"],
             ingest_by_tags=["ingestByTags"],
@@ -77,7 +75,7 @@ class IngestionBlobInfoTest(unittest.TestCase):
             database="database",
             table="table",
             data_format=DataFormat.JSON,
-            ingestion_mapping=[ColumnMapping("ColumnName", "datatype", path="jsonpath")],
+            column_mappings=[ColumnMapping("ColumnName", "datatype", path="jsonpath")],
             additional_tags=["tag"],
             ingest_if_not_exists=["ingestIfNotExistTags"],
             ingest_by_tags=["ingestByTags"],
@@ -111,14 +109,6 @@ class IngestionBlobInfoTest(unittest.TestCase):
         blob = BlobDescriptor("somepath", 10)
         blob_info = IngestionBlobInfo(blob, properties, auth_context="authorizationContextText")
         self._verify_ingestion_blob_info_result(blob_info.to_json())
-
-    def test_blob_info_csv_exceptions(self):
-        """Tests invalid ingestion properties."""
-        with self.assertRaises(KustoMappingAndMappingReferenceError):
-            # noinspection PyTypeChecker
-            IngestionProperties(
-                database="database", table="table", ingestion_mapping="ingestionMapping", ingestion_mapping_reference="ingestionMappingReference"
-            )
 
     def _verify_ingestion_blob_info_result(self, ingestion_blob_info):
         result = json.loads(ingestion_blob_info)

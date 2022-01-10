@@ -3,7 +3,7 @@
 from ._version import VERSION as __version__
 from .base_ingest_client import IngestionResult, IngestionStatus
 from .descriptors import BlobDescriptor, FileDescriptor, StreamDescriptor
-from .exceptions import KustoMissingMappingReferenceError
+from .exceptions import KustoMissingMappingError
 from .ingest_client import QueuedIngestClient
 from .ingestion_properties import (
     ValidationPolicy,
@@ -12,7 +12,7 @@ from .ingestion_properties import (
     ReportLevel,
     ReportMethod,
     IngestionProperties,
-    IngestionMappingType,
+    IngestionMappingKind,
     ColumnMapping,
     TransformationMethod,
 )

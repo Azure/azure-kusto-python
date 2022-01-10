@@ -18,7 +18,7 @@ from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
 from azure.kusto.data._cloud_settings import CloudSettings
 from azure.kusto.data._models import WellKnownDataSet
 from azure.kusto.data.aio import KustoClient as AsyncKustoClient
-from azure.kusto.data.data_format import DataFormat, IngestionMappingType
+from azure.kusto.data.data_format import DataFormat, IngestionMappingKind
 from azure.kusto.data.exceptions import KustoServiceError
 from azure.kusto.data.streaming_response import FrameType
 
@@ -353,7 +353,7 @@ class TestE2E:
             self.test_db,
             self.test_table,
             data_format=DataFormat.CSV,
-            ingestion_mapping=self.get_test_table_csv_mappings(),
+            column_mappings=self.get_test_table_csv_mappings(),
             report_level=ReportLevel.FailuresAndSuccesses,
             flush_immediately=True,
         )
@@ -374,7 +374,7 @@ class TestE2E:
             self.test_table,
             flush_immediately=True,
             data_format=DataFormat.JSON,
-            ingestion_mapping=self.test_table_json_mappings(),
+            column_mappings=self.test_table_json_mappings(),
             report_level=ReportLevel.FailuresAndSuccesses,
         )
 
@@ -392,7 +392,7 @@ class TestE2E:
             self.test_db,
             self.test_table,
             data_format=DataFormat.JSON,
-            ingestion_mapping=self.test_table_json_mappings(),
+            column_mappings=self.test_table_json_mappings(),
             additional_tags=["a", "b"],
             ingest_if_not_exists=["aaaa", "bbbb"],
             ingest_by_tags=["ingestByTag"],
@@ -420,7 +420,7 @@ class TestE2E:
             self.test_db,
             self.test_table,
             data_format=DataFormat.JSON,
-            ingestion_mapping=self.test_table_json_mappings(),
+            column_mappings=self.test_table_json_mappings(),
             additional_tags=["a", "b"],
             ingest_if_not_exists=["aaaa", "bbbb"],
             ingest_by_tags=["ingestByTag"],
@@ -448,7 +448,7 @@ class TestE2E:
             self.test_db,
             self.test_table,
             data_format=DataFormat.JSON,
-            ingestion_mapping=self.test_table_json_mappings(),
+            column_mappings=self.test_table_json_mappings(),
             ingest_if_not_exists=["ingestByTag"],
             report_level=ReportLevel.FailuresAndSuccesses,
             drop_by_tags=["drop", "drop-by"],
@@ -467,7 +467,7 @@ class TestE2E:
             self.test_table,
             flush_immediately=True,
             data_format=DataFormat.TSV,
-            ingestion_mapping=self.get_test_table_csv_mappings(),
+            column_mappings=self.get_test_table_csv_mappings(),
             report_level=ReportLevel.FailuresAndSuccesses,
         )
 
@@ -484,7 +484,7 @@ class TestE2E:
             self.test_db,
             self.test_table,
             data_format=DataFormat.CSV,
-            ingestion_mapping=self.get_test_table_csv_mappings(),
+            column_mappings=self.get_test_table_csv_mappings(),
             report_level=ReportLevel.FailuresAndSuccesses,
             flush_immediately=True,
         )
@@ -529,7 +529,7 @@ class TestE2E:
             flush_immediately=True,
             data_format=DataFormat.JSON,
             ingestion_mapping_reference="JsonMapping",
-            ingestion_mapping_type=IngestionMappingType.JSON,
+            ingestion_mapping_kind=IngestionMappingKind.JSON,
         )
 
         for f in [self.json_file_path, self.zipped_json_file_path]:
@@ -559,7 +559,7 @@ class TestE2E:
             data_format=DataFormat.JSON,
             flush_immediately=True,
             ingestion_mapping_reference="JsonMapping",
-            ingestion_mapping_type=IngestionMappingType.JSON,
+            ingestion_mapping_kind=IngestionMappingKind.JSON,
         )
 
         byte_sequence = b'{"rownumber": 0, "rowguid": "00000000-0000-0000-0001-020304050607", "xdouble": 0.0, "xfloat": 0.0, "xbool": 0, "xint16": 0, "xint32": 0, "xint64": 0, "xunit8": 0, "xuint16": 0, "xunit32": 0, "xunit64": 0, "xdate": "2014-01-01T01:01:01Z", "xsmalltext": "Zero", "xtext": "Zero", "xnumberAsText": "0", "xtime": "00:00:00", "xtextWithNulls": null, "xdynamicWithNulls": ""}'
