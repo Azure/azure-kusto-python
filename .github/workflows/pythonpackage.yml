@@ -37,7 +37,9 @@ jobs:
           options: "--check --diff --line-length 160"
       - name: Test with pytest
         run: |
-          pytest -v --junit-xml pytest.xml --cov=./azure-kusto-ingest ./azure-kusto-data --cov-report=xml --cov-report=term-missing
+          pytest -v ./azure-kusto-ingest  --junit-xml pytest.xml --cov=azure-kusto-ingest --cov=azure-kusto-data --cov-report=xml --cov-report=term-missing
+          pytest -v ./azure-kusto-data --junit-xml pytest2.xml --cov=azure-kusto-data --cov-append --cov-report=xml --cov-report=term-missing
+          --cov-report=term-missing
 #      - name: EtoE Test with pytest
 #        env:
 #          APP_ID: ${{ secrets.APP_ID }}
