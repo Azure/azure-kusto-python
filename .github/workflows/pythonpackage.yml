@@ -30,7 +30,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r dev_requirements.txt
           pip install pytest-cov
-          pip install ./azure-kusto-data ./azure-kusto-ingest
+          pip install -e ./azure-kusto-data ./azure-kusto-ingest
           pip freeze
       - uses: psf/black@stable
         with:
