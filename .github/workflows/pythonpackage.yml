@@ -37,7 +37,7 @@ jobs:
           options: "--check --diff --line-length 160"
       - name: Test with pytest
         run: |
-          pytest -v --junit-xml pytest.xml --cov=./azure-kusto-ingest --cov=./azure-kusto-data --cov-report=xml
+          pytest -v --junit-xml pytest.xml --cov=./azure-kusto-ingest --cov=./azure-kusto-data --cov-report=xml --cov-report=term-missing
       - name: EtoE Test with pytest
         env:
           APP_ID: ${{ secrets.APP_ID }}
@@ -47,7 +47,8 @@ jobs:
           TEST_BLOB: ${{ secrets.TEST_BLOB }}
           ENGINE_CONNECTION_STRING: ${{ secrets.ENGINE_CONNECTION_STRING }}
         run: |
-          pytest -v ./azure-kusto-ingest/tests/e2e.py --junit-xml pytest_e2e.xml  --cov=./azure-kusto-ingest --cov=./azure-kusto-data --cov-report=xml --cov-append
+          pytest -v ./azure-kusto-ingest/tests/e2e.py --junit-xml pytest_e2e.xml  --cov=./azure-kusto-ingest --cov=./azure-kusto-data --cov-report=xml  --cov-report=term-missing 
+          --cov-append
       - name: Upload Unit Test Results
         if: always()
         uses: actions/upload-artifact@v2
