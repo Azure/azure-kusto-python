@@ -10,7 +10,7 @@ from azure.kusto.data._decorators import aio_documented_by
 from azure.kusto.data.client import ClientRequestProperties
 from azure.kusto.data.exceptions import KustoMultiApiError
 from azure.kusto.data.helpers import dataframe_from_result_table
-from ..kusto_client_common import KustoClientTestsMixin, mocked_requests_post, proxy_kcsb
+from ..kusto_client_common import KustoClientTestsMixin, mocked_requests_post
 from ..test_kusto_client import TestKustoClient as KustoClientTestsSync
 
 PANDAS = False
@@ -171,17 +171,16 @@ range x from 1 to 10 step 1"""
         async with KustoClient(kcsb) as client:
             client.set_proxy(proxy)
 
-            assert client._proxy == proxy
+            assert client._proxy_url == proxy
 
             expected_dict = {"http": proxy, "https": proxy}
-            assert client._proxy_dict == expected_dict
             if not auth_supports_proxy:
                 return
 
-            assert client._auth_provider.token_provider._proxy_dict == expected_dict
+            assert client._aad_helper.token_provider._proxy_dict == expected_dict
 
             CloudSettings._cloud_cache.clear()
             with patch("requests.get", side_effect=mocked_requests_post) as mock_get:
-                client._auth_provider.token_provider._init_resources()
+                client._aad_helper.token_provider._init_resources()
 
                 mock_get.assert_called_with("https://somecluster.kusto.windows.net/v1/rest/auth/metadata", proxies=expected_dict)

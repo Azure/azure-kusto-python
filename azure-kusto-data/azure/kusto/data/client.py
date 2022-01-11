@@ -691,15 +691,18 @@ class _KustoClientBase(abc.ABC):
     _query_default_timeout = timedelta(minutes=4, seconds=30)
     _streaming_ingest_default_timeout = timedelta(minutes=10)
 
-    _auth_provider: _AadHelper
+    _aad_helper: _AadHelper
 
-    def __init__(self, kcsb: Union[KustoConnectionStringBuilder, str]):
+    def __init__(self, kcsb: Union[KustoConnectionStringBuilder, str], is_async):
         self._kcsb = kcsb
-        self._proxy: Optional[str] = None
+        self._proxy_url: Optional[str] = None
         self._proxy_dict: Optional[Dict[str, str]] = None
         if not isinstance(kcsb, KustoConnectionStringBuilder):
             self._kcsb = KustoConnectionStringBuilder(kcsb)
         self._kusto_cluster = self._kcsb.data_source
+
+        # notice that in this context, federated actually just stands for add auth, not aad federated auth (legacy code)
+        self._aad_helper = _AadHelper(self._kcsb, is_async) if self._kcsb.aad_federated_security else None
 
         # Create a session object for connection pooling
         self._mgmt_endpoint = "{0}/v1/rest/mgmt".format(self._kusto_cluster)
@@ -712,10 +715,9 @@ class _KustoClientBase(abc.ABC):
             "x-ms-version": self.API_VERSION,
         }
 
-    def set_proxy(self, proxy: str):
-        self._proxy = proxy
-        self._proxy_dict = {"http": proxy, "https": proxy}
-        self._auth_provider.token_provider.set_proxy_dict(self._proxy_dict)
+    def set_proxy(self, proxy_url: str):
+        self._proxy_url = proxy_url
+        self._aad_helper.token_provider.set_proxy_dict({"http": proxy_url, "https": proxy_url})
 
     @staticmethod
     def _kusto_parse_by_endpoint(endpoint: str, response_json: Any) -> KustoResponseDataSet:
@@ -781,11 +783,10 @@ class KustoClient(_KustoClientBase):
         :param kcsb: The connection string to initialize KustoClient.
         :type kcsb: azure.kusto.data.KustoConnectionStringBuilder or str
         """
-        super().__init__(kcsb)
+        super().__init__(kcsb, False)
 
         # Create a session object for connection pooling
         self._session = requests.Session()
-        self._session.proxies = self._proxy_dict or {}
 
         adapter = HTTPAdapterWithSocketOptions(
             socket_options=(HTTPConnection.default_socket_options or []) + self.compose_socket_options(), pool_maxsize=self._max_pool_size
@@ -793,11 +794,8 @@ class KustoClient(_KustoClientBase):
         self._session.mount("http://", adapter)
         self._session.mount("https://", adapter)
 
-        # notice that in this context, federated actually just stands for add auth, not aad federated auth (legacy code)
-        self._auth_provider = _AadHelper(self._kcsb, is_async=False) if self._kcsb.aad_federated_security else None
-
-    def set_proxy(self, proxy: str):
-        super().set_proxy(proxy)
+    def set_proxy(self, proxy_url: str):
+        super().set_proxy(proxy_url)
         self._session.proxies = self._proxy_dict
 
     def set_http_retries(self, max_retries: int):
@@ -820,12 +818,12 @@ class KustoClient(_KustoClientBase):
         MAX_FAILED_KEEPALIVES = 20
 
         if (
-            sys.platform == "linux"
-            and hasattr(socket, "SOL_SOCKET")
-            and hasattr(socket, "SO_KEEPALIVE")
-            and hasattr(socket, "TCP_KEEPIDLE")
-            and hasattr(socket, "TCP_KEEPINTVL")
-            and hasattr(socket, "TCP_KEEPCNT")
+                sys.platform == "linux"
+                and hasattr(socket, "SOL_SOCKET")
+                and hasattr(socket, "SO_KEEPALIVE")
+                and hasattr(socket, "TCP_KEEPIDLE")
+                and hasattr(socket, "TCP_KEEPINTVL")
+                and hasattr(socket, "TCP_KEEPCNT")
         ):
             return [
                 (socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1),
@@ -834,11 +832,11 @@ class KustoClient(_KustoClientBase):
                 (socket.IPPROTO_TCP, socket.TCP_KEEPCNT, MAX_FAILED_KEEPALIVES),
             ]
         elif (
-            sys.platform == "win32"
-            and hasattr(socket, "SOL_SOCKET")
-            and hasattr(socket, "SO_KEEPALIVE")
-            and hasattr(socket, "TCP_KEEPIDLE")
-            and hasattr(socket, "TCP_KEEPCNT")
+                sys.platform == "win32"
+                and hasattr(socket, "SOL_SOCKET")
+                and hasattr(socket, "SO_KEEPALIVE")
+                and hasattr(socket, "TCP_KEEPIDLE")
+                and hasattr(socket, "TCP_KEEPCNT")
         ):
             return [
                 (socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1),
@@ -954,8 +952,8 @@ class KustoClient(_KustoClientBase):
         json_payload = request_params.json_payload
         request_headers = request_params.request_headers
         timeout = request_params.timeout
-        if self._auth_provider:
-            request_headers["Authorization"] = self._auth_provider.acquire_authorization_header()
+        if self._aad_helper:
+            request_headers["Authorization"] = self._aad_helper.acquire_authorization_header()
         response = self._session.post(endpoint, headers=request_headers, json=json_payload, data=payload, timeout=timeout.seconds, stream=stream_response)
 
         if stream_response:

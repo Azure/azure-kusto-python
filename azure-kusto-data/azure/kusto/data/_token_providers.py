@@ -21,7 +21,6 @@ except ImportError:
     def sync_to_async(f):
         raise KustoAioSyntaxError()
 
-
 try:
     from azure.identity.aio import ManagedIdentityCredential as AsyncManagedIdentityCredential, AzureCliCredential as AsyncAzureCliCredential
 except ImportError:
@@ -29,6 +28,7 @@ except ImportError:
     class AsyncManagedIdentityCredential:
         def __init__(self):
             raise KustoAioSyntaxError()
+
 
     class AsyncAzureCliCredential:
         def __init__(self):
@@ -60,7 +60,6 @@ class TokenProviderBase(abc.ABC):
 
     _initialized: bool = False
     _resources_initialized: bool = False
-    _kusto_uri: str
 
     def __init__(self, is_async: bool = False):
         self._proxy_dict: Optional[str, str] = None
@@ -208,6 +207,7 @@ class TokenProviderBase(abc.ABC):
 class CloudInfoTokenProvider(TokenProviderBase, abc.ABC):
     _cloud_info: Optional[CloudInfo]
     _scopes = List[str]
+    _kusto_uri: str
 
     def __init__(self, kusto_uri: str, is_async: bool = False):
         super().__init__(is_async)
@@ -489,7 +489,6 @@ class InteractiveLoginTokenProvider(CloudInfoTokenProvider):
         login_hint: Optional[str] = None,
         domain_hint: Optional[str] = None,
         is_async: bool = False,
-        proxy_dict: Optional[dict] = None,
     ):
         super().__init__(kusto_uri, is_async)
         self._msal_client = None
@@ -572,7 +571,6 @@ class ApplicationCertificateTokenProvider(CloudInfoTokenProvider):
         thumbprint: str,
         public_cert: str = None,
         is_async: bool = False,
-        proxy_dict: Optional[dict] = None,
     ):
         super().__init__(kusto_uri, is_async)
         self._msal_client = None
