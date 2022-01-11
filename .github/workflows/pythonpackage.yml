@@ -36,10 +36,6 @@ jobs:
         with:
           options: "--check --diff --line-length 160"
       - name: Test with pytest
-        run: |
-          pip install pytest
-          pytest -v --junit-xml pytest.xml --cov=./ --cov-report=xml
-      - name: EtoE Test with pytest
         env:
           APP_ID: ${{ secrets.APP_ID }}
           APP_KEY: ${{ secrets.APP_KEY }}
@@ -48,7 +44,7 @@ jobs:
           TEST_BLOB: ${{ secrets.TEST_BLOB }}
           ENGINE_CONNECTION_STRING: ${{ secrets.ENGINE_CONNECTION_STRING }}
         run: |
-          pytest -v ./azure-kusto-ingest/tests/e2e.py --junit-xml pytest_e2e.xml --cov=./ --cov-report=xml:coverage2.xml
+          pytest -v ./azure-kusto-ingest ./azure-kusto-data --junit-xml pytest.xml --cov=./ --cov-report=xml
 
       - name: Upload Unit Test Results
         if: always()
