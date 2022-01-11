@@ -113,9 +113,9 @@ class ColumnMapping:
 
         if kind in (IngestionMappingKind.JSON, IngestionMappingKind.PARQUET, IngestionMappingKind.ORC, IngestionMappingKind.W3CLOGFILE):
             return (
-                bool(self.properties.get(self.PATH))
-                or self.properties.get(self.TRANSFORMATION_METHOD) == TransformationMethod.SOURCE_LINE_NUMBER.value
-                or self.properties.get(self.TRANSFORMATION_METHOD) == TransformationMethod.SOURCE_LOCATION.value
+                    bool(self.properties.get(self.PATH))
+                    or self.properties.get(self.TRANSFORMATION_METHOD) == TransformationMethod.SOURCE_LINE_NUMBER.value
+                    or self.properties.get(self.TRANSFORMATION_METHOD) == TransformationMethod.SOURCE_LOCATION.value
             )
 
         if kind in (IngestionMappingKind.AVRO, IngestionMappingKind.APACHEAVRO):
@@ -150,7 +150,7 @@ class IngestionProperties:
     ):
 
         if ingestion_mapping_reference is None and column_mappings is None:
-            if data_format.mapping_required:
+            if data_format._mapping_required:
                 raise KustoMissingMappingError.required_data_format(data_format)
             if ingestion_mapping_kind is not None:
                 raise KustoMissingMappingError.required_with_kind(ingestion_mapping_kind)

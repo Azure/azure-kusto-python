@@ -39,5 +39,6 @@ class DataFormat(Enum):
     def __init__(self, kusto_value: str, ingestion_mapping_kind: IngestionMappingKind, mapping_required: bool, compressible: bool):
         self.kusto_value = kusto_value  # Formatted how Kusto Service expects it
         self.ingestion_mapping_kind = ingestion_mapping_kind
-        self.mapping_required = mapping_required
+        # Deprecated - will probably be removed soon
+        self._mapping_required = mapping_required
         self.compressible = compressible  # Binary formats should not be compressed
