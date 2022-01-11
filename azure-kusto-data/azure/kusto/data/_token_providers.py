@@ -5,7 +5,7 @@ import asyncio
 import time
 import webbrowser
 from threading import Lock
-from typing import Callable, Optional, Coroutine, List, Dict
+from typing import Callable, Optional, Coroutine, List
 
 from azure.core.exceptions import ClientAuthenticationError
 from azure.identity import ManagedIdentityCredential, AzureCliCredential
@@ -200,8 +200,8 @@ class TokenProviderBase(abc.ABC):
 
         return token
 
-    def set_proxy_dict(self, proxy_dict: Dict[str, str]):
-        self._proxy_dict = proxy_dict
+    def set_proxy(self, proxy_url: str):
+        self._proxy_dict = {"http": proxy_url, "https": proxy_url}
 
 
 class CloudInfoTokenProvider(TokenProviderBase, abc.ABC):

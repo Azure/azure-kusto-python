@@ -717,7 +717,7 @@ class _KustoClientBase(abc.ABC):
 
     def set_proxy(self, proxy_url: str):
         self._proxy_url = proxy_url
-        self._aad_helper.token_provider.set_proxy_dict({"http": proxy_url, "https": proxy_url})
+        self._aad_helper.token_provider.set_proxy(proxy_url)
 
     @staticmethod
     def _kusto_parse_by_endpoint(endpoint: str, response_json: Any) -> KustoResponseDataSet:
