@@ -151,6 +151,7 @@ range x from 1 to 10 step 1"""
             return
 
         assert client._aad_helper.token_provider._proxy_dict == expected_dict
+        assert client._session.proxies == expected_dict
 
         CloudSettings._cloud_cache.clear()
 

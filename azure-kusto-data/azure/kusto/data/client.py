@@ -9,11 +9,10 @@ import uuid
 from copy import copy
 from datetime import timedelta
 from enum import Enum, unique
-from typing import TYPE_CHECKING, Union, Callable, Optional, Any, Coroutine, List, Tuple, AnyStr, IO, NoReturn, Dict
+from typing import TYPE_CHECKING, Union, Callable, Optional, Any, Coroutine, List, Tuple, AnyStr, IO, NoReturn
 
 import requests
 from requests import Response
-from requests.adapters import HTTPAdapter
 from urllib3.connection import HTTPConnection
 
 from ._version import VERSION
@@ -696,7 +695,6 @@ class _KustoClientBase(abc.ABC):
     def __init__(self, kcsb: Union[KustoConnectionStringBuilder, str], is_async):
         self._kcsb = kcsb
         self._proxy_url: Optional[str] = None
-        self._proxy_dict: Optional[Dict[str, str]] = None
         if not isinstance(kcsb, KustoConnectionStringBuilder):
             self._kcsb = KustoConnectionStringBuilder(kcsb)
         self._kusto_cluster = self._kcsb.data_source
@@ -796,7 +794,7 @@ class KustoClient(_KustoClientBase):
 
     def set_proxy(self, proxy_url: str):
         super().set_proxy(proxy_url)
-        self._session.proxies = self._proxy_dict
+        self._session.proxies = {"http": proxy_url, "https": proxy_url}
 
     def set_http_retries(self, max_retries: int):
         """
