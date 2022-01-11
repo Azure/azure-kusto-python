@@ -816,12 +816,12 @@ class KustoClient(_KustoClientBase):
         MAX_FAILED_KEEPALIVES = 20
 
         if (
-                sys.platform == "linux"
-                and hasattr(socket, "SOL_SOCKET")
-                and hasattr(socket, "SO_KEEPALIVE")
-                and hasattr(socket, "TCP_KEEPIDLE")
-                and hasattr(socket, "TCP_KEEPINTVL")
-                and hasattr(socket, "TCP_KEEPCNT")
+            sys.platform == "linux"
+            and hasattr(socket, "SOL_SOCKET")
+            and hasattr(socket, "SO_KEEPALIVE")
+            and hasattr(socket, "TCP_KEEPIDLE")
+            and hasattr(socket, "TCP_KEEPINTVL")
+            and hasattr(socket, "TCP_KEEPCNT")
         ):
             return [
                 (socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1),
@@ -830,11 +830,11 @@ class KustoClient(_KustoClientBase):
                 (socket.IPPROTO_TCP, socket.TCP_KEEPCNT, MAX_FAILED_KEEPALIVES),
             ]
         elif (
-                sys.platform == "win32"
-                and hasattr(socket, "SOL_SOCKET")
-                and hasattr(socket, "SO_KEEPALIVE")
-                and hasattr(socket, "TCP_KEEPIDLE")
-                and hasattr(socket, "TCP_KEEPCNT")
+            sys.platform == "win32"
+            and hasattr(socket, "SOL_SOCKET")
+            and hasattr(socket, "SO_KEEPALIVE")
+            and hasattr(socket, "TCP_KEEPIDLE")
+            and hasattr(socket, "TCP_KEEPCNT")
         ):
             return [
                 (socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1),
