@@ -47,7 +47,7 @@ jobs:
           TEST_BLOB: ${{ secrets.TEST_BLOB }}
           ENGINE_CONNECTION_STRING: ${{ secrets.ENGINE_CONNECTION_STRING }}
         run: |
-          pytest -v ./azure-kusto-ingest/tests/e2e.py --junit-xml pytest_e2e.xml  --cov=./azure-kusto-ingest --cov=./azure-kusto-data --cov-report=xml:coverage2.xml
+          pytest -v ./azure-kusto-ingest/tests/e2e.py --junit-xml pytest_e2e.xml  --cov=./azure-kusto-ingest --cov=./azure-kusto-data --cov-report=xml --cov-append
       - name: Upload Unit Test Results
         if: always()
         uses: actions/upload-artifact@v2
