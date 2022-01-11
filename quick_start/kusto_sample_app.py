@@ -330,7 +330,7 @@ class KustoSampleApp:
                 cls.wait_for_user_to_proceed(f"Create a '{ingestion_mapping_kind}' mapping reference named '{mapping_name}'")
 
                 if not mapping_name:
-                    mapping_name = "DefaultQuickstartMapping" + UUID.randomUUID().toString().substring(0, 5)
+                    mapping_name = "DefaultQuickstartMapping" + str(uuid.UUID())[:5]
                 mapping_command = f".create-or-alter table {table_name} ingestion {ingestion_mapping_kind} mapping '{mapping_name}' '{mapping_value}'"
                 if not cls.execute_control_command(kusto_client, database_name, mapping_command):
                     print(f"Failed to create a '{ingestion_mapping_kind}' mapping reference named '{mapping_name}'. Skipping this ingestion.")
@@ -357,6 +357,7 @@ class KustoSampleApp:
         if source_type == "localfilesource":
             cls.ingest_from_file(ingest_client, database_name, table_name, uri, data_format, mapping_name)
         elif source_type == "blobsource":
+            ingest_client: QueuedIngestClient
             cls.ingest_from_blob(ingest_client, database_name, table_name, uri, data_format, mapping_name)
         else:
             print(f"Unknown source '{source_type}' for file '{uri}'")
@@ -374,7 +375,9 @@ class KustoSampleApp:
         ingest_client.ingest_from_file(file_descriptor, ingestion_properties=ingestion_properties)
 
     @classmethod
-    def ingest_from_blob(cls, client: BaseIngestClient, database_name: str, table_name: str, blob_url: str, data_format: DataFormat, mapping_name: str = None):
+    def ingest_from_blob(
+        cls, client: QueuedIngestClient, database_name: str, table_name: str, blob_url: str, data_format: DataFormat, mapping_name: str = None
+    ):
         ingestion_properties = cls.create_ingestion_properties(database_name, table_name, data_format, mapping_name)
 
         # Tip 1: For optimal ingestion batching and performance, specify the uncompressed data size in the file descriptor instead of the default below of 0.
