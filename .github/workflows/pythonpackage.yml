@@ -33,7 +33,7 @@ jobs:
           pip install -e ./azure-kusto-data[aio,pandas] -e ./azure-kusto-ingest[aio,pandas]
           pip freeze
       - name: Set env
-        run: echo "PYTHONPATH="`pwd`/azure-kusto-data:`pwd`/azure-kusto-ingest" >> $GITHUB_ENV
+        run: echo PYTHONPATH="`pwd`/azure-kusto-data:`pwd`/azure-kusto-ingest" >> $GITHUB_ENV
       - uses: psf/black@stable
         with:
           options: "--check --diff --line-length 160"
