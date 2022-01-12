@@ -30,16 +30,15 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r dev_requirements.txt
           pip install pytest-cov
-          pip install ./azure-kusto-data[aio,pandas] ./azure-kusto-ingest[aio,pandas]
+          pip install ./azure-kusto-data[aio,pandas] ./azure-kusto-ingest[aio,pandas] --user
           pip freeze
       - uses: psf/black@stable
         with:
           options: "--check --diff --line-length 160"
       - name: Test with pytest
         run: |
-          echo `python -m site --user-site`
-          echo `python -c 'import site; print(site.getsitepackages())'`
           ls -R ~/.local
+          ls -r /opt/hostedtoolcache/Python/3.8.12/x64/lib/python3.8/site-packages
           pytest -v . --junit-xml pytest.xml --cov=/usr/lib/python${{ matrix.python-version }}/dist-packages/azure/kusto --cov-report=xml --cov-report=term-missing
       - name: EtoE Test with pytest
         env:
