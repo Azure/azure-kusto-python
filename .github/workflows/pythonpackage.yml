@@ -30,25 +30,24 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r dev_requirements.txt
           pip install pytest-cov
-          pip install ./azure-kusto-data ./azure-kusto-ingest
+          pip install -e ./azure-kusto-data[aio,pandas] -e ./azure-kusto-ingest[aio,pandas]
           pip freeze
       - uses: psf/black@stable
         with:
           options: "--check --diff --line-length 160"
       - name: Test with pytest
         run: |
-          PYTHONPATH="`pwd`/azure-kusto-data:`pwd`/azure-kusto-ingest" pytest -v -s . --junit-xml pytest.xml --cov=azure-kusto-data --cov=azure-kusto-ingest --cov-report=xml --cov-report=term-missing
-#      - name: EtoE Test with pytest
-#        env:
-#          APP_ID: ${{ secrets.APP_ID }}
-#          APP_KEY: ${{ secrets.APP_KEY }}
-#          AUTH_ID: ${{ secrets.AUTH_ID }}
-#          TEST_DATABASE: ${{ secrets.TEST_DATABASE }}
-#          TEST_BLOB: ${{ secrets.TEST_BLOB }}
-#          ENGINE_CONNECTION_STRING: ${{ secrets.ENGINE_CONNECTION_STRING }}
-#        run: |
-#          pytest -v ./azure-kusto-ingest/tests/e2e.py --junit-xml pytest_e2e.xml  --cov=./azure-kusto-ingest --cov=./azure-kusto-data --cov-report=xml  --cov-report=term-missing
-#          --cov-append
+          pytest -v . --junit-xml pytest.xml --cov=azure-kusto-data --cov=azure-kusto-ingest --cov-report=xml
+      - name: EtoE Test with pytest
+        env:
+          APP_ID: ${{ secrets.APP_ID }}
+          APP_KEY: ${{ secrets.APP_KEY }}
+          AUTH_ID: ${{ secrets.AUTH_ID }}
+          TEST_DATABASE: ${{ secrets.TEST_DATABASE }}
+          TEST_BLOB: ${{ secrets.TEST_BLOB }}
+          ENGINE_CONNECTION_STRING: ${{ secrets.ENGINE_CONNECTION_STRING }}
+        run: |
+          pytest -v ./azure-kusto-ingest/tests/e2e.py --junit-xml pytest_e2e.xml  --cov=./azure-kusto-ingest --cov=./azure-kusto- --cov-report=xml --cov-append
       - name: Upload Unit Test Results
         if: always()
         uses: actions/upload-artifact@v2
