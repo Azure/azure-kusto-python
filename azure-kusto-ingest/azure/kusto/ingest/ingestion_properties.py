@@ -113,9 +113,9 @@ class ColumnMapping:
 
         if kind in (IngestionMappingKind.JSON, IngestionMappingKind.PARQUET, IngestionMappingKind.ORC, IngestionMappingKind.W3CLOGFILE):
             return (
-                    bool(self.properties.get(self.PATH))
-                    or self.properties.get(self.TRANSFORMATION_METHOD) == TransformationMethod.SOURCE_LINE_NUMBER.value
-                    or self.properties.get(self.TRANSFORMATION_METHOD) == TransformationMethod.SOURCE_LOCATION.value
+                bool(self.properties.get(self.PATH))
+                or self.properties.get(self.TRANSFORMATION_METHOD) == TransformationMethod.SOURCE_LINE_NUMBER.value
+                or self.properties.get(self.TRANSFORMATION_METHOD) == TransformationMethod.SOURCE_LOCATION.value
             )
 
         if kind in (IngestionMappingKind.AVRO, IngestionMappingKind.APACHEAVRO):
