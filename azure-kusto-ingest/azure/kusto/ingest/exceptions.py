@@ -10,9 +10,9 @@ class KustoMappingError(KustoClientError):
     """
 
 
-class KustoDuplicateMappingError(KustoMappingError):
+class KustoDuplicateMappingError(KustoClientError):
     """
-    Error to be raised when ingestion properties include both
+    Raised when ingestion properties include both
     column mappings and a mapping reference
     """
 
@@ -21,9 +21,9 @@ class KustoDuplicateMappingError(KustoMappingError):
         super(KustoDuplicateMappingError, self).__init__(message)
 
 
-class KustoMissingMappingError(KustoMappingError):
+class KustoMissingMappingError(KustoClientError):
     """
-    Error to be raised when ingestion properties has data format that requires a mapping and is not defined,
+    Raised when ingestion properties has data format that requires a mapping and is not defined,
     or when provided a mapping kind without a mapping.
     """
 
