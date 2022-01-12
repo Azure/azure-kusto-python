@@ -48,6 +48,7 @@ class MockProvider(TokenProviderBase):
 class TokenProviderTests(unittest.TestCase):
     @staticmethod
     def test_base_provider():
+        print(f"path - '{os.environ['PYTHONPATH']}'")
         # test init with no URI
         provider = MockProvider(None)
 

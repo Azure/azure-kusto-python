@@ -30,16 +30,14 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r dev_requirements.txt
           pip install pytest-cov
-          pip install -e ./azure-kusto-data ./azure-kusto-ingest
+          pip install ./azure-kusto-data ./azure-kusto-ingest
           pip freeze
       - uses: psf/black@stable
         with:
           options: "--check --diff --line-length 160"
       - name: Test with pytest
         run: |
-          pytest -v ./azure-kusto-ingest  --junit-xml pytest.xml --cov=azure-kusto-ingest --cov=azure-kusto-data --cov-report=xml --cov-report=term-missing
-          pytest -v ./azure-kusto-data --junit-xml pytest2.xml --cov=azure-kusto-data --cov-append --cov-report=xml --cov-report=term-missing
-          --cov-report=term-missing
+          PYTHONPATH="`pwd`\azure-kusto-data:`pwd`\azure-kusto-ingest" pytest -v -s . --junit-xml pytest.xml --cov=azure-kusto-data --cov=azure-kusto-ingest --cov-report=xml --cov-report=term-missing
 #      - name: EtoE Test with pytest
 #        env:
 #          APP_ID: ${{ secrets.APP_ID }}
