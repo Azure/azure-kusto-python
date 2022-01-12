@@ -37,9 +37,9 @@ jobs:
           options: "--check --diff --line-length 160"
       - name: Test with pytest
         run: |
-          echo /usr/lib/python${{ matrix.python-version }}/dist-packages/azure-kusto-data
-          ls /usr/lib/python${{ matrix.python-version }}/dist-packages/azure-kusto-data
-          pytest -v . --junit-xml pytest.xml --cov=/usr/lib/python${{ matrix.python-version }}/dist-packages/azure-kusto-data --cov=/usr/lib/python${{ matrix.python-version }}/dist-packages/azure-kusto-ingest --cov-report=xml --cov-report=term-missing
+          echo /usr/lib/python${{ matrix.python-version }}/dist-packages/azure/kusto
+          ls /usr/lib/python${{ matrix.python-version }}/dist-packages/azure/kusto
+          pytest -v . --junit-xml pytest.xml --cov=/usr/lib/python${{ matrix.python-version }}/dist-packages/azure/kusto --cov-report=xml --cov-report=term-missing
       - name: EtoE Test with pytest
         env:
           APP_ID: ${{ secrets.APP_ID }}
@@ -49,7 +49,7 @@ jobs:
           TEST_BLOB: ${{ secrets.TEST_BLOB }}
           ENGINE_CONNECTION_STRING: ${{ secrets.ENGINE_CONNECTION_STRING }}
         run: |
-          pytest -v ./azure-kusto-ingest/tests/e2e.py --junit-xml pytest.xml --cov=/usr/lib/python${{ matrix.python-version }}/dist-packages/azure-kusto-data --cov=/usr/lib/python${{ matrix.python-version }}/dist-packages/azure-kusto-ingest --cov-report=xml --cov-report=term-missing
+          pytest -v ./azure-kusto-ingest/tests/e2e.py --junit-xml pytest.xml --cov=/usr/lib/python${{ matrix.python-version }}/dist-packages/azure/kusto --cov-report=xml --cov-report=term-missing
       - name: Upload Unit Test Results
         if: always()
         uses: actions/upload-artifact@v2
