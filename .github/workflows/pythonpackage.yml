@@ -37,7 +37,8 @@ jobs:
           options: "--check --diff --line-length 160"
       - name: Test with pytest
         run: |
-          ls -R /usr/local/lib/python${{ matrix.python-version }}
+          echo `python -m site --user-site`
+          echo `python -c 'import site; print(site.getsitepackages())'`
           ls -R ~/.local
           pytest -v . --junit-xml pytest.xml --cov=/usr/lib/python${{ matrix.python-version }}/dist-packages/azure/kusto --cov-report=xml --cov-report=term-missing
       - name: EtoE Test with pytest
