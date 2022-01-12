@@ -30,7 +30,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r dev_requirements.txt
           pip install pytest-cov
-          pip install -e ./azure-kusto-data[aio,pandas] -e ./azure-kusto-ingest[aio,pandas]
+          pip install ./azure-kusto-data[aio,pandas] ./azure-kusto-ingest[aio,pandas]
           pip freeze
       - name: Set env
         run: echo PYTHONPATH="`pwd`/azure-kusto-data:`pwd`/azure-kusto-ingest" >> $GITHUB_ENV
@@ -39,6 +39,7 @@ jobs:
           options: "--check --diff --line-length 160"
       - name: Test with pytest
         run: |
+          echo $PYTHONPATH
           pytest -v . --junit-xml pytest.xml --cov=azure-kusto-data --cov=azure-kusto-ingest --cov-report=xml
       - name: EtoE Test with pytest
         env:
