@@ -24,24 +24,22 @@ jobs:
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v2
         with:
-          python-version: ${{ matrix.python-version }}
-          cache: 'pip'
-          cache-dependency-path: 'dev_requirements.txt'
+          python-version: ${{ matrix.python-version }}\
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r dev_requirements.txt
           pip install pytest-cov
-          pip install -e ./azure-kusto-data[aio,pandas] -e ./azure-kusto-ingest[aio,pandas]
-          pip install ./azure-kusto-ingest[aio,pandas]
+          pip install ./azure-kusto-data[aio,pandas] ./azure-kusto-ingest[aio,pandas]
           pip freeze
       - uses: psf/black@stable
         with:
           options: "--check --diff --line-length 160"
       - name: Test with pytest
         run: |
-          echo $PYTHONPATH
-          pytest -v . --junit-xml pytest.xml --cov=azure-kusto-data --cov=azure-kusto-ingest --cov-report=xml --cov-report=term-missing
+          echo /usr/lib/python${{ matrix.python-version }}/dist-packages/azure-kusto-data
+          ls /usr/lib/python${{ matrix.python-version }}/dist-packages/azure-kusto-data
+          pytest -v . --junit-xml pytest.xml --cov=/usr/lib/python${{ matrix.python-version }}/dist-packages/azure-kusto-data --cov=/usr/lib/python${{ matrix.python-version }}/dist-packages/azure-kusto-ingest --cov-report=xml --cov-report=term-missing
       - name: EtoE Test with pytest
         env:
           APP_ID: ${{ secrets.APP_ID }}
@@ -51,7 +49,7 @@ jobs:
           TEST_BLOB: ${{ secrets.TEST_BLOB }}
           ENGINE_CONNECTION_STRING: ${{ secrets.ENGINE_CONNECTION_STRING }}
         run: |
-          pytest -v ./azure-kusto-ingest/tests/e2e.py --junit-xml pytest_e2e.xml  --cov=./azure-kusto-ingest --cov=./azure-kusto- --cov-report=xml --cov-append
+          pytest -v ./azure-kusto-ingest/tests/e2e.py --junit-xml pytest.xml --cov=/usr/lib/python${{ matrix.python-version }}/dist-packages/azure-kusto-data --cov=/usr/lib/python${{ matrix.python-version }}/dist-packages/azure-kusto-ingest --cov-report=xml --cov-report=term-missing
       - name: Upload Unit Test Results
         if: always()
         uses: actions/upload-artifact@v2
