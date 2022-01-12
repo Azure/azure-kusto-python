@@ -30,7 +30,8 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r dev_requirements.txt
           pip install pytest-cov
-          pip install ./azure-kusto-data[aio,pandas] -e ./azure-kusto-ingest[aio,pandas]
+          pip install -e ./azure-kusto-data[aio,pandas] -e ./azure-kusto-ingest[aio,pandas]
+          pip install ./azure-kusto-ingest[aio,pandas]
           pip freeze
       - name: Set env
         run: echo PYTHONPATH="`pwd`/azure-kusto-data:`pwd`/azure-kusto-ingest" >> $GITHUB_ENV
