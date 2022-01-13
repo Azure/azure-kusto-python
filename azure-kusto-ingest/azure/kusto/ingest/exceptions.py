@@ -1,6 +1,6 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
-from azure.kusto.data.data_format import DataFormat, IngestionMappingKind
+from azure.kusto.data.data_format import IngestionMappingKind
 from azure.kusto.data.exceptions import KustoClientError
 
 
@@ -23,13 +23,8 @@ class KustoDuplicateMappingError(KustoClientError):
 
 class KustoMissingMappingError(KustoClientError):
     """
-    Raised when ingestion properties has data format that requires a mapping and is not defined,
-    or when provided a mapping kind without a mapping.
+    Raised when provided a mapping kind without a mapping reference or column mapping.
     """
-
-    @staticmethod
-    def required_data_format(data_format: DataFormat) -> "KustoMissingMappingError":
-        return KustoMissingMappingError(f"When stream format is '{data_format.kusto_value}', a mapping must be provided.")
 
     @staticmethod
     def required_with_kind(kind: IngestionMappingKind) -> "KustoMissingMappingError":

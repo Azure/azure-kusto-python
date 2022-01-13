@@ -384,6 +384,21 @@ class TestE2E:
         await self.assert_rows_added(4)
 
     @pytest.mark.asyncio
+    async def test_json_ingest_existing_table_no_mapping(self):
+        json_ingestion_props = IngestionProperties(
+            self.test_db,
+            self.test_table,
+            flush_immediately=True,
+            data_format=DataFormat.JSON,
+            report_level=ReportLevel.FailuresAndSuccesses,
+        )
+
+        for f in [self.json_file_path, self.zipped_json_file_path]:
+            self.ingest_client.ingest_from_file(f, json_ingestion_props)
+
+        await self.assert_rows_added(4)
+
+    @pytest.mark.asyncio
     async def test_ingest_complicated_props(self):
         validation_policy = ValidationPolicy(
             validation_options=ValidationOptions.ValidateCsvInputConstantColumns, validation_implications=ValidationImplications.Fail
