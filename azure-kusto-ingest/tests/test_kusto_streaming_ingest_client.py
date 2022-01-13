@@ -173,14 +173,13 @@ class TestKustoStreamingIngestClient:
         result = ingest_client.ingest_from_stream(bytes_stream, ingestion_properties=ingestion_properties)
         assert result.status == IngestionStatus.SUCCESS
 
-        str_sequence = u"57,57,57"
+        str_sequence = "57,57,57"
         str_stream = io.StringIO(str_sequence)
         result = ingest_client.ingest_from_stream(str_stream, ingestion_properties=ingestion_properties)
         assert result.status == IngestionStatus.SUCCESS
 
         byte_sequence = b'{"Name":"Ben","Age":"56","Weight":"75"}'
         bytes_stream = io.BytesIO(byte_sequence)
-
 
         # Make sure we don't raise when not providing a mapping to JSON
         ingestion_properties = IngestionProperties(database="database", table="table", data_format=DataFormat.JSON)
@@ -189,7 +188,7 @@ class TestKustoStreamingIngestClient:
         result = ingest_client.ingest_from_stream(bytes_stream, ingestion_properties=ingestion_properties)
         assert result.status == IngestionStatus.SUCCESS
 
-        str_sequence = u'{"Name":"Ben","Age":"56","Weight":"75"}'
+        str_sequence = '{"Name":"Ben","Age":"56","Weight":"75"}'
         str_stream = io.StringIO(str_sequence)
         result = ingest_client.ingest_from_stream(str_stream, ingestion_properties=ingestion_properties)
         assert result.status == IngestionStatus.SUCCESS
