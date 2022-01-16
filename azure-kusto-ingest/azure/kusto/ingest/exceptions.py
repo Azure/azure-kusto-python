@@ -1,39 +1,31 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
-
+from azure.kusto.data.data_format import DataFormat, IngestionMappingKind
 from azure.kusto.data.exceptions import KustoClientError
 
 
-class KustoMappingAndMappingReferenceError(KustoClientError):
+class KustoMappingError(KustoClientError):
     """
-    Error to be raised when ingestion properties include both
-    a mapping and a mapping reference
+    Raised when the provided mapping arguments are invalid.
     """
-
-    def __init__(self):
-        message = "Ingestion properties contain both an explicit mapping and a mapping reference."
-        super(KustoMappingAndMappingReferenceError, self).__init__(message)
 
 
 class KustoDuplicateMappingError(KustoClientError):
     """
-    Error to be raised when ingestion properties include two explicit mappings.
+    Raised when ingestion properties include both
+    column mappings and a mapping reference
     """
 
     def __init__(self):
-        message = "Ingestion properties contain two explicit mappings."
+        message = "Ingestion properties can't contain both an explicit mapping and a mapping reference."
         super(KustoDuplicateMappingError, self).__init__(message)
 
 
-class KustoMissingMappingReferenceError(KustoClientError):
+class KustoMissingMappingError(KustoClientError):
     """
-    Error to be raised when ingestion properties has data format of Json, SingleJson, MultiJson or Avro
-    but ingestion mappings reference was not defined.
+    Raised when ingestion properties has data format that requires a mapping and is not defined,
+    or when provided a mapping kind without a mapping.
     """
-
-    def __init__(self, data_format: str):
-        message = f"When stream format is {data_format}, mapping name must be provided."
-        super(KustoMissingMappingReferenceError, self).__init__(message)
 
 
 class KustoInvalidEndpointError(KustoClientError):
