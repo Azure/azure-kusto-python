@@ -326,9 +326,8 @@ class KustoSampleApp:
                 return False
 
             if mapping_value:
-                ingestion_mapping_kind = data_format.ingestion_mapping_type.value.lower()
+                ingestion_mapping_kind = data_format.ingestion_mapping_kind.value.lower()
                 cls.wait_for_user_to_proceed(f"Create a '{ingestion_mapping_kind}' mapping reference named '{mapping_name}'")
-
                 if not mapping_name:
                     mapping_name = "DefaultQuickstartMapping" + str(uuid.UUID())[:5]
                 mapping_command = f".create-or-alter table {table_name} ingestion {ingestion_mapping_kind} mapping '{mapping_name}' '{mapping_value}'"

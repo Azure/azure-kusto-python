@@ -18,10 +18,10 @@ class TestTokenProvider:
     @pytest.mark.asyncio
     async def test_base_provider(self):
         # test init with no URI
-        provider = MockProvider(None, is_async=True)
+        provider = MockProvider(is_async=True)
 
         # Test provider with URI, No silent token
-        provider = MockProvider(KUSTO_URI, is_async=True)
+        provider = MockProvider(is_async=True)
 
         token = provider._get_token_from_cache_impl()
         assert provider.init_count == 0

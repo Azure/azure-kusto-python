@@ -3,11 +3,13 @@
 from enum import Enum
 
 
-class IngestionMappingType(Enum):
+class IngestionMappingKind(Enum):
     CSV = "Csv"
     JSON = "Json"
     AVRO = "Avro"
+    APACHEAVRO = "ApacheAvro"
     PARQUET = "Parquet"
+    SSTREAM = "SStream"
     ORC = "Orc"
     W3CLOGFILE = "W3CLogFile"
     UNKNOWN = "Unknown"
@@ -16,24 +18,27 @@ class IngestionMappingType(Enum):
 class DataFormat(Enum):
     """All data formats supported by Kusto."""
 
-    CSV = ("csv", IngestionMappingType.CSV, False, True)
-    TSV = ("tsv", IngestionMappingType.CSV, False, True)
-    SCSV = ("scsv", IngestionMappingType.CSV, False, True)
-    SOHSV = ("sohsv", IngestionMappingType.CSV, False, True)
-    PSV = ("psv", IngestionMappingType.CSV, False, True)
-    TXT = ("txt", IngestionMappingType.UNKNOWN, False, True)
-    TSVE = ("tsve", IngestionMappingType.CSV, False, True)
-    JSON = ("json", IngestionMappingType.JSON, True, True)
-    SINGLEJSON = ("singlejson", IngestionMappingType.JSON, True, True)
-    MULTIJSON = ("multijson", IngestionMappingType.JSON, True, True)
-    AVRO = ("avro", IngestionMappingType.AVRO, True, True)
-    PARQUET = ("parquet", IngestionMappingType.PARQUET, False, False)
-    ORC = ("orc", IngestionMappingType.ORC, False, False)
-    RAW = ("raw", IngestionMappingType.UNKNOWN, False, True)
-    W3CLOGFILE = ("w3clogfile", IngestionMappingType.W3CLOGFILE, False, True)
+    CSV = ("csv", IngestionMappingKind.CSV, False, True)
+    TSV = ("tsv", IngestionMappingKind.CSV, False, True)
+    SCSV = ("scsv", IngestionMappingKind.CSV, False, True)
+    SOHSV = ("sohsv", IngestionMappingKind.CSV, False, True)
+    PSV = ("psv", IngestionMappingKind.CSV, False, True)
+    TXT = ("txt", IngestionMappingKind.CSV, False, True)
+    TSVE = ("tsve", IngestionMappingKind.CSV, False, True)
+    JSON = ("json", IngestionMappingKind.JSON, True, True)
+    SINGLEJSON = ("singlejson", IngestionMappingKind.JSON, True, True)
+    MULTIJSON = ("multijson", IngestionMappingKind.JSON, True, True)
+    AVRO = ("avro", IngestionMappingKind.AVRO, True, True)
+    APACHEAVRO = ("apacheavro", IngestionMappingKind.APACHEAVRO, False, True)
+    PARQUET = ("parquet", IngestionMappingKind.PARQUET, False, False)
+    SSTREAM = ("sstream", IngestionMappingKind.SSTREAM, False, False)
+    ORC = ("orc", IngestionMappingKind.ORC, False, False)
+    RAW = ("raw", IngestionMappingKind.CSV, False, True)
+    W3CLOGFILE = ("w3clogfile", IngestionMappingKind.W3CLOGFILE, False, True)
 
-    def __init__(self, kusto_value: str, ingestion_mapping_type: IngestionMappingType, mapping_required: bool, compressible: bool):
+    def __init__(self, kusto_value: str, ingestion_mapping_kind: IngestionMappingKind, mapping_required: bool, compressible: bool):
         self.kusto_value = kusto_value  # Formatted how Kusto Service expects it
-        self.ingestion_mapping_type = ingestion_mapping_type
-        self.mapping_required = mapping_required
+        self.ingestion_mapping_kind = ingestion_mapping_kind
+        # Deprecated - will probably be removed soon
+        self._mapping_required = mapping_required
         self.compressible = compressible  # Binary formats should not be compressed

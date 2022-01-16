@@ -1,5 +1,6 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
+import abc
 import io
 import json
 import socket
@@ -12,7 +13,6 @@ from typing import TYPE_CHECKING, Union, Callable, Optional, Any, Coroutine, Lis
 
 import requests
 from requests import Response
-from requests.adapters import HTTPAdapter
 from urllib3.connection import HTTPConnection
 
 from ._version import VERSION
@@ -683,18 +683,24 @@ class HTTPAdapterWithSocketOptions(requests.adapters.HTTPAdapter):
         super(HTTPAdapterWithSocketOptions, self).init_poolmanager(*args, **kwargs)
 
 
-class _KustoClientBase:
+class _KustoClientBase(abc.ABC):
     API_VERSION = "2019-02-13"
 
     _mgmt_default_timeout = timedelta(hours=1, seconds=30)
     _query_default_timeout = timedelta(minutes=4, seconds=30)
     _streaming_ingest_default_timeout = timedelta(minutes=10)
 
-    def __init__(self, kcsb: Union[KustoConnectionStringBuilder, str]):
+    _aad_helper: _AadHelper
+
+    def __init__(self, kcsb: Union[KustoConnectionStringBuilder, str], is_async):
         self._kcsb = kcsb
+        self._proxy_url: Optional[str] = None
         if not isinstance(kcsb, KustoConnectionStringBuilder):
             self._kcsb = KustoConnectionStringBuilder(kcsb)
         self._kusto_cluster = self._kcsb.data_source
+
+        # notice that in this context, federated actually just stands for aad auth, not aad federated auth (legacy code)
+        self._aad_helper = _AadHelper(self._kcsb, is_async) if self._kcsb.aad_federated_security else None
 
         # Create a session object for connection pooling
         self._mgmt_endpoint = "{0}/v1/rest/mgmt".format(self._kusto_cluster)
@@ -706,6 +712,11 @@ class _KustoClientBase:
             "x-ms-client-version": "Kusto.Python.Client:" + VERSION,
             "x-ms-version": self.API_VERSION,
         }
+
+    def set_proxy(self, proxy_url: str):
+        self._proxy_url = proxy_url
+        if self._aad_helper:
+            self._aad_helper.token_provider.set_proxy(proxy_url)
 
     @staticmethod
     def _kusto_parse_by_endpoint(endpoint: str, response_json: Any) -> KustoResponseDataSet:
@@ -771,18 +782,20 @@ class KustoClient(_KustoClientBase):
         :param kcsb: The connection string to initialize KustoClient.
         :type kcsb: azure.kusto.data.KustoConnectionStringBuilder or str
         """
-        super().__init__(kcsb)
+        super().__init__(kcsb, False)
 
         # Create a session object for connection pooling
         self._session = requests.Session()
+
         adapter = HTTPAdapterWithSocketOptions(
             socket_options=(HTTPConnection.default_socket_options or []) + self.compose_socket_options(), pool_maxsize=self._max_pool_size
         )
         self._session.mount("http://", adapter)
         self._session.mount("https://", adapter)
 
-        # notice that in this context, federated actually just stands for add auth, not aad federated auth (legacy code)
-        self._auth_provider = _AadHelper(self._kcsb, is_async=False) if self._kcsb.aad_federated_security else None
+    def set_proxy(self, proxy_url: str):
+        super().set_proxy(proxy_url)
+        self._session.proxies = {"http": proxy_url, "https": proxy_url}
 
     def set_http_retries(self, max_retries: int):
         """
@@ -795,9 +808,6 @@ class KustoClient(_KustoClientBase):
         )
         self._session.mount("http://", adapter)
         self._session.mount("https://", adapter)
-
-    def set_http_proxies(self, proxies: dict):
-        self._session.proxies.update(proxies)
 
     @staticmethod
     def compose_socket_options() -> List[Tuple[int, int, int]]:
@@ -941,8 +951,8 @@ class KustoClient(_KustoClientBase):
         json_payload = request_params.json_payload
         request_headers = request_params.request_headers
         timeout = request_params.timeout
-        if self._auth_provider:
-            request_headers["Authorization"] = self._auth_provider.acquire_authorization_header()
+        if self._aad_helper:
+            request_headers["Authorization"] = self._aad_helper.acquire_authorization_header()
         response = self._session.post(endpoint, headers=request_headers, json=json_payload, data=payload, timeout=timeout.seconds, stream=stream_response)
 
         if stream_response:

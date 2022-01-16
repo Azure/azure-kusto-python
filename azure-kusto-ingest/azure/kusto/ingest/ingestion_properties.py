@@ -3,9 +3,8 @@
 from enum import Enum, IntEnum
 from typing import List, Optional
 
-from azure.kusto.data.data_format import DataFormat, IngestionMappingType
-
-from .exceptions import KustoMappingAndMappingReferenceError, KustoMissingMappingReferenceError
+from azure.kusto.data.data_format import DataFormat, IngestionMappingKind
+from .exceptions import KustoDuplicateMappingError, KustoMissingMappingError, KustoMappingError
 
 
 class ValidationOptions(IntEnum):
@@ -81,7 +80,7 @@ class ColumnMapping:
     def __init__(
         self,
         column_name: str,
-        column_type,
+        column_type: str,
         path: str = None,
         transform: TransformationMethod = TransformationMethod.NONE,
         ordinal: int = None,
@@ -108,6 +107,22 @@ class ColumnMapping:
         if storage_data_type:
             self.properties[self.STORAGE_DATA_TYPE] = storage_data_type
 
+    def is_valid(self, kind: IngestionMappingKind) -> bool:
+        if not self.column:
+            return False
+
+        if kind in (IngestionMappingKind.JSON, IngestionMappingKind.PARQUET, IngestionMappingKind.ORC, IngestionMappingKind.W3CLOGFILE):
+            return (
+                bool(self.properties.get(self.PATH))
+                or self.properties.get(self.TRANSFORMATION_METHOD) == TransformationMethod.SOURCE_LINE_NUMBER.value
+                or self.properties.get(self.TRANSFORMATION_METHOD) == TransformationMethod.SOURCE_LOCATION.value
+            )
+
+        if kind in (IngestionMappingKind.AVRO, IngestionMappingKind.APACHEAVRO):
+            return bool(self.properties.get(self.COLUMNS))
+
+        return True
+
 
 class IngestionProperties:
     """
@@ -120,8 +135,8 @@ class IngestionProperties:
         database: str,
         table: str,
         data_format: DataFormat = DataFormat.CSV,
-        ingestion_mapping: Optional[List[ColumnMapping]] = None,
-        ingestion_mapping_type: Optional[IngestionMappingType] = None,
+        column_mappings: Optional[List[ColumnMapping]] = None,
+        ingestion_mapping_kind: Optional[IngestionMappingKind] = None,
         ingestion_mapping_reference: Optional[str] = None,
         ingest_if_not_exists: Optional[List[str]] = None,
         ingest_by_tags: Optional[List[str]] = None,
@@ -134,17 +149,38 @@ class IngestionProperties:
         additional_properties: Optional[dict] = None,
     ):
 
-        if ingestion_mapping is not None and ingestion_mapping_reference is not None:
-            raise KustoMappingAndMappingReferenceError()
+        if ingestion_mapping_reference is None and column_mappings is None:
+            if data_format._mapping_required:
+                raise KustoMissingMappingError(f"When stream format is '{data_format.kusto_value}', a mapping must be provided.")
+            if ingestion_mapping_kind is not None:
+                raise KustoMissingMappingError(f"When ingestion mapping kind is set ('{ingestion_mapping_kind.value}'), a mapping must be provided.")
+        else:  # A mapping is provided
+            if ingestion_mapping_kind is not None:
+                if data_format.ingestion_mapping_kind != ingestion_mapping_kind:
+                    raise KustoMappingError(
+                        f"Wrong ingestion mapping for format '{data_format.kusto_value}'; mapping kind should be '{data_format.ingestion_mapping_kind.value}', "
+                        f"but was '{ingestion_mapping_kind.value}'. "
+                    )
+            else:
+                ingestion_mapping_kind = data_format.ingestion_mapping_kind
 
-        if data_format.mapping_required and ingestion_mapping_reference is None and ingestion_mapping is None:
-            raise KustoMissingMappingReferenceError(data_format.kusto_value)
+            if column_mappings is not None:
+                if ingestion_mapping_reference is not None:
+                    raise KustoDuplicateMappingError()
+
+                validation_errors = [
+                    f"Column mapping '{mapping.column}' is invalid." for mapping in column_mappings if not mapping.is_valid(ingestion_mapping_kind)
+                ]
+
+                if validation_errors:
+                    errors = "\n".join(validation_errors)
+                    raise KustoMappingError(f"Failed with validation errors:\n{errors}")
 
         self.database = database
         self.table = table
         self.format = data_format
-        self.ingestion_mapping = ingestion_mapping
-        self.ingestion_mapping_type = ingestion_mapping_type
+        self.ingestion_mapping = column_mappings
+        self.ingestion_mapping_type = ingestion_mapping_kind
         self.ingestion_mapping_reference = ingestion_mapping_reference
         self.additional_tags = additional_tags
         self.ingest_if_not_exists = ingest_if_not_exists
