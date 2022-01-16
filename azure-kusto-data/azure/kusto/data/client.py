@@ -699,7 +699,7 @@ class _KustoClientBase(abc.ABC):
             self._kcsb = KustoConnectionStringBuilder(kcsb)
         self._kusto_cluster = self._kcsb.data_source
 
-        # notice that in this context, federated actually just stands for add auth, not aad federated auth (legacy code)
+        # notice that in this context, federated actually just stands for aad auth, not aad federated auth (legacy code)
         self._aad_helper = _AadHelper(self._kcsb, is_async) if self._kcsb.aad_federated_security else None
 
         # Create a session object for connection pooling
