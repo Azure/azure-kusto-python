@@ -27,14 +27,6 @@ class KustoMissingMappingError(KustoClientError):
     or when provided a mapping kind without a mapping.
     """
 
-    @staticmethod
-    def required_data_format(data_format: DataFormat) -> "KustoMissingMappingError":
-        return KustoMissingMappingError(f"When stream format is '{data_format.kusto_value}', a mapping must be provided.")
-
-    @staticmethod
-    def required_with_kind(kind: IngestionMappingKind) -> "KustoMissingMappingError":
-        return KustoMissingMappingError(f"When ingestion mapping kind is set ('{kind.value}'), a mapping must be provided.")
-
 
 class KustoInvalidEndpointError(KustoClientError):
     """Raised when trying to ingest to invalid cluster type."""
