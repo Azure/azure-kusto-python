@@ -319,7 +319,7 @@ class KustoSampleApp:
         data_format: DataFormat,
     ) -> bool:
         if not use_existing_mapping:
-            if data_format.mapping_required and not mapping_value:
+            if data_format._mapping_required and not mapping_value:
                 print(
                     f"The data format '{data_format.kusto_value}' requires a mapping, but configuration indicates to not use an existing mapping and no mapping was provided. Skipping this ingestion."
                 )
@@ -334,7 +334,7 @@ class KustoSampleApp:
                 if not cls.execute_control_command(kusto_client, database_name, mapping_command):
                     print(f"Failed to create a '{ingestion_mapping_kind}' mapping reference named '{mapping_name}'. Skipping this ingestion.")
                     return False
-        elif data_format.mapping_required and not mapping_name:
+        elif data_format._mapping_required and not mapping_name:
             print(
                 f"The data format '{data_format.kusto_value}' requires a mapping and the configuration indicates an existing mapping should be used, but none was provided. Skipping this ingestion."
             )
