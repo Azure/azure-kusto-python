@@ -1,5 +1,6 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
+from typing import Optional, Dict, TYPE_CHECKING
 from urllib.parse import urlparse
 
 from ._token_providers import (
@@ -16,6 +17,9 @@ from ._token_providers import (
     TokenConstants,
 )
 from .exceptions import KustoAuthenticationError, KustoClientError
+
+if TYPE_CHECKING:
+    from . import KustoConnectionStringBuilder
 
 
 class _AadHelper:

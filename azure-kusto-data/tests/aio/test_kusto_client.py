@@ -1,14 +1,16 @@
 """Tests for KustoClient."""
 import json
 import sys
+from unittest.mock import patch
 
 import pytest
 
+from azure.kusto.data._cloud_settings import CloudSettings
 from azure.kusto.data._decorators import aio_documented_by
 from azure.kusto.data.client import ClientRequestProperties
 from azure.kusto.data.exceptions import KustoMultiApiError
 from azure.kusto.data.helpers import dataframe_from_result_table
-from ..kusto_client_common import KustoClientTestsMixin, mocked_requests_post
+from ..kusto_client_common import KustoClientTestsMixin, mocked_requests_post, proxy_kcsb
 from ..test_kusto_client import TestKustoClient as KustoClientTestsSync
 
 PANDAS = False
@@ -47,6 +49,10 @@ class TestKustoClient(KustoClientTestsMixin):
     def _mock_mgmt(self, aioresponses_mock):
         url = "{host}/v1/rest/mgmt".format(host=self.HOST)
         aioresponses_mock.post(url, callback=self._mock_callback)
+
+    def _mock_cloud_info(self, aioresponses_mock):
+        url = "{host}/v1/rest/auth/metadata".format(host=self.HOST)
+        aioresponses_mock.get(url, callback=self._mock_callback)
 
     @aio_documented_by(KustoClientTestsSync.test_sanity_query)
     @pytest.mark.asyncio
@@ -155,3 +161,26 @@ range x from 1 to 10 step 1"""
             first_request = next(iter(aioresponses_mock.requests.values()))
             self._assert_client_request_id(first_request[0].kwargs, value=request_id)
         self._assert_sanity_query_response(response)
+
+    @aio_documented_by(KustoClientTestsSync.test_proxy_token_providers)
+    @pytest.mark.asyncio
+    async def test_proxy_token_providers(self, proxy_kcsb):
+        """Test query V2."""
+        proxy = "https://my_proxy.sample"
+        kcsb, auth_supports_proxy = proxy_kcsb
+        async with KustoClient(kcsb) as client:
+            client.set_proxy(proxy)
+
+            assert client._proxy_url == proxy
+
+            expected_dict = {"http": proxy, "https": proxy}
+            if not auth_supports_proxy:
+                return
+
+            assert client._aad_helper.token_provider._proxy_dict == expected_dict
+
+            CloudSettings._cloud_cache.clear()
+            with patch("requests.get", side_effect=mocked_requests_post) as mock_get:
+                client._aad_helper.token_provider._init_resources()
+
+                mock_get.assert_called_with("https://somecluster.kusto.windows.net/v1/rest/auth/metadata", proxies=expected_dict)

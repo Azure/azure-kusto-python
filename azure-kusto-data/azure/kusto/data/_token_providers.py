@@ -26,7 +26,13 @@ try:
     from azure.identity.aio import ManagedIdentityCredential as AsyncManagedIdentityCredential, AzureCliCredential as AsyncAzureCliCredential
 except ImportError:
 
+    # These are here in case the user doesn't have the aio optional dependency installed, but still tries to use async.
+    # They will give them a useful error message, and will appease linters.
     class AsyncManagedIdentityCredential:
+        def __init__(self):
+            raise KustoAioSyntaxError()
+
+    class AsyncAzureCliCredential:
         def __init__(self):
             raise KustoAioSyntaxError()
 
@@ -56,11 +62,10 @@ class TokenProviderBase(abc.ABC):
 
     _initialized: bool = False
     _resources_initialized: bool = False
-    _kusto_uri: str
 
-    def __init__(self, kusto_uri: str, is_async: bool = False):
+    def __init__(self, is_async: bool = False):
+        self._proxy_dict: Optional[str, str] = None
         self.is_async = is_async
-        self._kusto_uri = kusto_uri
 
         if is_async:
             self._async_lock = asyncio.Lock()
@@ -197,17 +202,22 @@ class TokenProviderBase(abc.ABC):
 
         return token
 
+    def set_proxy(self, proxy_url: str):
+        self._proxy_dict = {"http": proxy_url, "https": proxy_url}
 
-class CloudInfoTokenProvider(TokenProviderBase):
+
+class CloudInfoTokenProvider(TokenProviderBase, abc.ABC):
     _cloud_info: Optional[CloudInfo]
     _scopes = List[str]
+    _kusto_uri: str
 
     def __init__(self, kusto_uri: str, is_async: bool = False):
-        super().__init__(kusto_uri, is_async)
+        super().__init__(is_async)
+        self._kusto_uri = kusto_uri
 
     def _init_resources(self):
         if self._kusto_uri is not None:
-            self._cloud_info = CloudSettings.get_cloud_info_for_cluster(self._kusto_uri)
+            self._cloud_info = CloudSettings.get_cloud_info_for_cluster(self._kusto_uri, self._proxy_dict)
             resource_uri = self._cloud_info.kusto_service_resource_id
             if self._cloud_info.login_mfa_required:
                 resource_uri = resource_uri.replace(".kusto.", ".kustomfa.")
@@ -219,7 +229,7 @@ class BasicTokenProvider(TokenProviderBase):
     """Basic Token Provider keeps and returns a token received on construction"""
 
     def __init__(self, token: str, is_async: bool = False):
-        super().__init__(None, is_async)
+        super().__init__(is_async)
         self._token = token
 
     @staticmethod
@@ -232,7 +242,7 @@ class BasicTokenProvider(TokenProviderBase):
     def _init_impl(self):
         pass
 
-    def _get_token_impl(self) -> dict:
+    def _get_token_impl(self) -> Optional[dict]:
         return None
 
     def _get_token_from_cache_impl(self) -> dict:
@@ -245,7 +255,7 @@ class CallbackTokenProvider(TokenProviderBase):
     def __init__(
         self, token_callback: Optional[Callable[[], str]], async_token_callback: Optional[Callable[[], Coroutine[None, None, str]]], is_async: bool = False
     ):
-        super().__init__(None, is_async)
+        super().__init__(is_async)
         self._token_callback = token_callback
         self._async_token_callback = async_token_callback
 
@@ -266,7 +276,7 @@ class CallbackTokenProvider(TokenProviderBase):
 
         return {TokenConstants.MSAL_TOKEN_TYPE: TokenConstants.BEARER_TYPE, TokenConstants.MSAL_ACCESS_TOKEN: caller_token}
 
-    def _get_token_impl(self) -> dict:
+    def _get_token_impl(self) -> Optional[dict]:
         if self._token_callback is None:
             raise KustoClientError("token_callback is None, can't retrieve token")
         return self._build_response(self._token_callback())
@@ -304,7 +314,7 @@ class MsiTokenProvider(CloudInfoTokenProvider):
     def _init_impl(self):
         pass
 
-    def _get_token_impl(self) -> dict:
+    def _get_token_impl(self) -> Optional[dict]:
         try:
             if self._msi_auth_context is None:
                 self._msi_auth_context = ManagedIdentityCredential(**self._msi_args)
@@ -351,7 +361,7 @@ class AzCliTokenProvider(CloudInfoTokenProvider):
     def _init_impl(self):
         pass
 
-    def _get_token_impl(self) -> dict:
+    def _get_token_impl(self) -> Optional[dict]:
         try:
             if self._az_auth_context is None:
                 self._az_auth_context = AzureCliCredential()
@@ -403,9 +413,11 @@ class UserPassTokenProvider(CloudInfoTokenProvider):
         return {"authority": self._cloud_info.authority_uri(self._auth), "client_id": self._cloud_info.kusto_client_app_id, "username": self._user}
 
     def _init_impl(self):
-        self._msal_client = PublicClientApplication(client_id=self._cloud_info.kusto_client_app_id, authority=self._cloud_info.authority_uri(self._auth))
+        self._msal_client = PublicClientApplication(
+            client_id=self._cloud_info.kusto_client_app_id, authority=self._cloud_info.authority_uri(self._auth), proxies=self._proxy_dict
+        )
 
-    def _get_token_impl(self) -> dict:
+    def _get_token_impl(self) -> Optional[dict]:
         token = self._msal_client.acquire_token_by_username_password(username=self._user, password=self._pass, scopes=self._scopes)
         return self._valid_token_or_throw(token)
 
@@ -438,9 +450,11 @@ class DeviceLoginTokenProvider(CloudInfoTokenProvider):
         return {"authority": self._cloud_info.authority_uri(self._auth), "client_id": self._cloud_info.kusto_client_app_id}
 
     def _init_impl(self):
-        self._msal_client = PublicClientApplication(client_id=self._cloud_info.kusto_client_app_id, authority=self._cloud_info.authority_uri(self._auth))
+        self._msal_client = PublicClientApplication(
+            client_id=self._cloud_info.kusto_client_app_id, authority=self._cloud_info.authority_uri(self._auth), proxies=self._proxy_dict
+        )
 
-    def _get_token_impl(self) -> dict:
+    def _get_token_impl(self) -> Optional[dict]:
         flow = self._msal_client.initiate_device_flow(scopes=self._scopes)
         try:
             if self._device_code_callback:
@@ -470,7 +484,14 @@ class DeviceLoginTokenProvider(CloudInfoTokenProvider):
 class InteractiveLoginTokenProvider(CloudInfoTokenProvider):
     """Acquire a token from MSAL with Device Login flow"""
 
-    def __init__(self, kusto_uri: str, authority_id: str, login_hint: Optional[str] = None, domain_hint: Optional[str] = None, is_async: bool = False):
+    def __init__(
+        self,
+        kusto_uri: str,
+        authority_id: str,
+        login_hint: Optional[str] = None,
+        domain_hint: Optional[str] = None,
+        is_async: bool = False,
+    ):
         super().__init__(kusto_uri, is_async)
         self._msal_client = None
         self._auth = authority_id
@@ -486,9 +507,11 @@ class InteractiveLoginTokenProvider(CloudInfoTokenProvider):
         return {"authority": self._cloud_info.authority_uri(self._auth), "client_id": self._cloud_info.kusto_client_app_id}
 
     def _init_impl(self):
-        self._msal_client = PublicClientApplication(client_id=self._cloud_info.kusto_client_app_id, authority=self._cloud_info.authority_uri(self._auth))
+        self._msal_client = PublicClientApplication(
+            client_id=self._cloud_info.kusto_client_app_id, authority=self._cloud_info.authority_uri(self._auth), proxies=self._proxy_dict
+        )
 
-    def _get_token_impl(self) -> dict:
+    def _get_token_impl(self) -> Optional[dict]:
         token = self._msal_client.acquire_token_interactive(
             scopes=self._scopes, prompt=TokenConstants.MSAL_INTERACTIVE_PROMPT, login_hint=self._login_hint, domain_hint=self._domain_hint
         )
@@ -523,10 +546,10 @@ class ApplicationKeyTokenProvider(CloudInfoTokenProvider):
 
     def _init_impl(self):
         self._msal_client = ConfidentialClientApplication(
-            client_id=self._app_client_id, client_credential=self._app_key, authority=self._cloud_info.authority_uri(self._auth)
+            client_id=self._app_client_id, client_credential=self._app_key, authority=self._cloud_info.authority_uri(self._auth), proxies=self._proxy_dict
         )
 
-    def _get_token_impl(self) -> dict:
+    def _get_token_impl(self) -> Optional[dict]:
         token = self._msal_client.acquire_token_for_client(scopes=self._scopes)
         return self._valid_token_or_throw(token)
 
@@ -541,7 +564,16 @@ class ApplicationCertificateTokenProvider(CloudInfoTokenProvider):
     Passing the public certificate is optional and will result in Subject Name & Issuer Authentication
     """
 
-    def __init__(self, kusto_uri: str, client_id: str, authority_id: str, private_cert: str, thumbprint: str, public_cert: str = None, is_async: bool = False):
+    def __init__(
+        self,
+        kusto_uri: str,
+        client_id: str,
+        authority_id: str,
+        private_cert: str,
+        thumbprint: str,
+        public_cert: str = None,
+        is_async: bool = False,
+    ):
         super().__init__(kusto_uri, is_async)
         self._msal_client = None
         self._auth = authority_id
@@ -563,10 +595,10 @@ class ApplicationCertificateTokenProvider(CloudInfoTokenProvider):
 
     def _init_impl(self):
         self._msal_client = ConfidentialClientApplication(
-            client_id=self._client_id, client_credential=self._cert_credentials, authority=self._cloud_info.authority_uri(self._auth)
+            client_id=self._client_id, client_credential=self._cert_credentials, authority=self._cloud_info.authority_uri(self._auth), proxies=self._proxy_dict
         )
 
-    def _get_token_impl(self) -> dict:
+    def _get_token_impl(self) -> Optional[dict]:
         token = self._msal_client.acquire_token_for_client(scopes=self._scopes)
         return self._valid_token_or_throw(token)
 
