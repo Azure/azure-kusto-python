@@ -205,6 +205,8 @@ class TestE2E:
 
         cls.client.execute(cls.test_db, f".alter table {cls.test_table} policy streamingingestion enable ")
 
+        # Clear the cache to guarantee that subsequent streaming ingestion requests incorporate database and table schema changes
+        # See https://docs.microsoft.com/azure/data-explorer/kusto/management/data-ingestion/clear-schema-cache-command
         cls.client.execute(cls.test_db, ".clear database cache streamingingestion schema")
 
     @classmethod
