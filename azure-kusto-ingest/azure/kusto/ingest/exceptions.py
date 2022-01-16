@@ -1,6 +1,5 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
-from azure.kusto.data.data_format import IngestionMappingKind
 from azure.kusto.data.exceptions import KustoClientError
 
 
@@ -25,10 +24,6 @@ class KustoMissingMappingError(KustoClientError):
     """
     Raised when provided a mapping kind without a mapping reference or column mapping.
     """
-
-    @staticmethod
-    def required_with_kind(kind: IngestionMappingKind) -> "KustoMissingMappingError":
-        return KustoMissingMappingError(f"When ingestion mapping kind is set ('{kind.value}'), a mapping must be provided.")
 
 
 class KustoInvalidEndpointError(KustoClientError):

@@ -1,6 +1,6 @@
 import os
 from threading import Lock
-from typing import Optional
+from typing import Optional, Dict
 from urllib.parse import urljoin
 
 import requests
@@ -69,7 +69,7 @@ class CloudSettings:
     )
 
     @classmethod
-    def get_cloud_info_for_cluster(cls, kusto_uri: str) -> CloudInfo:
+    def get_cloud_info_for_cluster(cls, kusto_uri: str, proxies: Optional[Dict[str, str]] = None) -> CloudInfo:
 
         if kusto_uri in cls._cloud_cache:  # Double-checked locking to avoid unnecessary lock access
             return cls._cloud_cache[kusto_uri]
@@ -78,7 +78,7 @@ class CloudSettings:
             if kusto_uri in cls._cloud_cache:
                 return cls._cloud_cache[kusto_uri]
 
-            result = requests.get(urljoin(kusto_uri, METADATA_ENDPOINT))
+            result = requests.get(urljoin(kusto_uri, METADATA_ENDPOINT), proxies=proxies)
 
             if result.status_code == 200:
                 content = result.json()
