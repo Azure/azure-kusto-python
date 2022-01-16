@@ -6,10 +6,11 @@ import pytest
 from mock import patch
 
 from azure.kusto.data import KustoClient, ClientRequestProperties
+from azure.kusto.data._cloud_settings import CloudSettings
 from azure.kusto.data.exceptions import KustoMultiApiError
 from azure.kusto.data.helpers import dataframe_from_result_table
 from azure.kusto.data.response import KustoStreamingResponseDataSet
-from tests.kusto_client_common import KustoClientTestsMixin, mocked_requests_post, get_response_first_primary_result, get_table_first_row
+from tests.kusto_client_common import KustoClientTestsMixin, mocked_requests_post, get_response_first_primary_result, get_table_first_row, proxy_kcsb
 
 PANDAS = False
 try:
@@ -134,3 +135,26 @@ range x from 1 to 10 step 1"""
         response = method.__call__(client, "PythonTest", "Deft", properties=properties)
         self._assert_sanity_query_response(response)
         self._assert_client_request_id(mock_post.call_args.kwargs, value=request_id)
+
+    @patch("requests.get", side_effect=mocked_requests_post)
+    def test_proxy_token_providers(self, mock_get, proxy_kcsb):
+        """Test query V2."""
+        proxy = "https://my_proxy.sample"
+        kcsb, auth_supports_proxy = proxy_kcsb
+        client = KustoClient(kcsb)
+        client.set_proxy(proxy)
+
+        assert client._proxy_url == proxy
+
+        expected_dict = {"http": proxy, "https": proxy}
+        if not auth_supports_proxy:
+            return
+
+        assert client._aad_helper.token_provider._proxy_dict == expected_dict
+        assert client._session.proxies == expected_dict
+
+        CloudSettings._cloud_cache.clear()
+
+        client._aad_helper.token_provider._init_resources()
+
+        mock_get.assert_called_with("https://somecluster.kusto.windows.net/v1/rest/auth/metadata", proxies=expected_dict)

@@ -9,7 +9,6 @@ from ..client import KustoClient as KustoClientSync, _KustoClientBase, KustoConn
 from ..data_format import DataFormat
 from ..exceptions import KustoAioSyntaxError
 from ..response import KustoResponseDataSet
-from ..security import _AadHelper
 
 try:
     from aiohttp import ClientResponse, ClientSession
@@ -21,9 +20,8 @@ except ImportError:
 class KustoClient(_KustoClientBase):
     @documented_by(KustoClientSync.__init__)
     def __init__(self, kcsb: Union[KustoConnectionStringBuilder, str]):
-        super().__init__(kcsb)
-        # notice that in this context, federated actually just stands for add auth, not aad federated auth (legacy code)
-        self._auth_provider = _AadHelper(self._kcsb, is_async=True) if self._kcsb.aad_federated_security else None
+        super().__init__(kcsb, True)
+
         self._session = ClientSession()
 
     async def __aenter__(self) -> "KustoClient":
@@ -94,10 +92,10 @@ class KustoClient(_KustoClientBase):
         json_payload = request_params.json_payload
         request_headers = request_params.request_headers
         timeout = request_params.timeout
-        if self._auth_provider:
-            request_headers["Authorization"] = await self._auth_provider.acquire_authorization_header_async()
+        if self._aad_helper:
+            request_headers["Authorization"] = await self._aad_helper.acquire_authorization_header_async()
 
-        response = await self._session.post(endpoint, headers=request_headers, data=payload, json=json_payload, timeout=timeout.seconds)
+        response = await self._session.post(endpoint, headers=request_headers, data=payload, json=json_payload, timeout=timeout.seconds, proxy=self._proxy_url)
 
         if stream_response:
             try:
