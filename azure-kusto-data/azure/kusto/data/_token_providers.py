@@ -26,6 +26,8 @@ try:
     from azure.identity.aio import ManagedIdentityCredential as AsyncManagedIdentityCredential, AzureCliCredential as AsyncAzureCliCredential
 except ImportError:
 
+    # These are here in case the user doesn't have the aio optional dependency installed, but still tries to use async.
+    # They will give them a useful error message, and will appease linters.
     class AsyncManagedIdentityCredential:
         def __init__(self):
             raise KustoAioSyntaxError()
