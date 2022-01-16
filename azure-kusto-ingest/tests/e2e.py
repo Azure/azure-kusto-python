@@ -207,6 +207,8 @@ class TestE2E:
 
         cls.client.execute(cls.test_db, f".alter table {cls.test_table} policy streamingingestion enable ")
 
+        cls.client.execute(cls.test_db, CLEAR_DB_CACHE)
+
     @classmethod
     def teardown_class(cls):
         cls.client.execute(cls.test_db, ".drop table {} ifexists".format(cls.test_table))
@@ -359,8 +361,6 @@ class TestE2E:
         )
 
         client = self.streaming_ingest_client if is_managed_streaming else self.ingest_client
-        if is_managed_streaming:
-            self.client.execute(self.test_db, CLEAR_DB_CACHE)
 
         for f in [self.csv_file_path, self.zipped_csv_file_path]:
             client.ingest_from_file(f, csv_ingest_props)
@@ -449,8 +449,6 @@ class TestE2E:
         zipped = io.BytesIO(pathlib.Path(self.zipped_json_file_path).read_bytes())
 
         client = self.managed_streaming_ingest_client if is_managed_streaming else self.ingest_client
-        if is_managed_streaming:
-            self.client.execute(self.test_db, CLEAR_DB_CACHE)
 
         client.ingest_from_stream(text, json_ingestion_props)
         client.ingest_from_stream(StreamDescriptor(zipped, is_compressed=True), json_ingestion_props)
@@ -516,7 +514,6 @@ class TestE2E:
 
     @pytest.mark.asyncio
     async def test_streaming_ingest_from_opened_file(self, is_managed_streaming):
-        self.client.execute(self.test_db, CLEAR_DB_CACHE)
         ingestion_properties = IngestionProperties(database=self.test_db, table=self.test_table, data_format=DataFormat.CSV)
 
         client = self.managed_streaming_ingest_client if is_managed_streaming else self.streaming_ingest_client
@@ -527,7 +524,6 @@ class TestE2E:
 
     @pytest.mark.asyncio
     async def test_streaming_ingest_from_csv_file(self):
-        self.client.execute(self.test_db, CLEAR_DB_CACHE)
         ingestion_properties = IngestionProperties(database=self.test_db, table=self.test_table, flush_immediately=True, data_format=DataFormat.CSV)
 
         for f in [self.csv_file_path, self.zipped_csv_file_path]:
@@ -537,7 +533,6 @@ class TestE2E:
 
     @pytest.mark.asyncio
     async def test_streaming_ingest_from_json_file(self):
-        self.client.execute(self.test_db, CLEAR_DB_CACHE)
         ingestion_properties = IngestionProperties(
             database=self.test_db,
             table=self.test_table,
@@ -554,7 +549,6 @@ class TestE2E:
 
     @pytest.mark.asyncio
     async def test_streaming_ingest_from_csv_io_streams(self):
-        self.client.execute(self.test_db, CLEAR_DB_CACHE)
         ingestion_properties = IngestionProperties(database=self.test_db, table=self.test_table, data_format=DataFormat.CSV)
         byte_sequence = b'0,00000000-0000-0000-0001-020304050607,0,0,0,0,0,0,0,0,0,0,2014-01-01T01:01:01.0000000Z,Zero,"Zero",0,00:00:00,,null'
         bytes_stream = io.BytesIO(byte_sequence)
