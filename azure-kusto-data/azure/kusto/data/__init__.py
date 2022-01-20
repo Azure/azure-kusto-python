@@ -3,3 +3,4 @@
 
 from ._version import VERSION as __version__
 from .client import KustoClient, KustoConnectionStringBuilder, ClientRequestProperties
+from .data_format import DataFormat
