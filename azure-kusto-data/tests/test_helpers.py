@@ -37,7 +37,7 @@ class TestDataFrameFromResultsTable:
         assert all(getattr(df.iloc[0].RecordTime, k) == v for k, v in {"year": 2021, "month": 12, "day": 22, "hour": 11, "minute": 43, "second": 00}.items())
         assert type(df.iloc[0].RecordBool) is numpy.bool_
         assert df.iloc[0].RecordBool == True
-        assert type(df.iloc[0].RecordInt) is numpy.int64
+        assert type(df.iloc[0].RecordInt) is numpy.int32
         assert df.iloc[0].RecordInt == 5678
         assert type(df.iloc[0].RecordReal) is numpy.float64
         assert df.iloc[0].RecordReal == 3.14159
