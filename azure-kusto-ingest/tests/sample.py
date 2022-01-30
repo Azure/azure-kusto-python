@@ -195,7 +195,7 @@ client.ingest_from_stream(bytes_stream, ingestion_properties=ingestion_propertie
 stream_descriptor = StreamDescriptor(bytes_stream)
 client.ingest_from_stream(stream_descriptor, ingestion_properties=ingestion_properties)
 
-str_sequence = u"57,57,57"
+str_sequence = "57,57,57"
 str_stream = io.StringIO(str_sequence)
 client.ingest_from_stream(str_stream, ingestion_properties=ingestion_properties)
 
