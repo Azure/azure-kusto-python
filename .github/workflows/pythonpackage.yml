@@ -16,6 +16,8 @@ jobs:
       fail-fast: false
       matrix:
         python-version: [ '3.7', '3.8', '3.9', '3.10' ]
+    env:
+      PYTHON: ${{ matrix.python-version }}
 
     steps:
       - uses: actions/checkout@v2
@@ -25,18 +27,17 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install -r dev_requirements.txt
-          pip install codecov coverage
-          pip install ./azure-kusto-data ./azure-kusto-ingest
+          python -m pip install --upgrade pip --user
+          pip install -r dev_requirements.txt --user
+          pip install pytest-cov --user
+          pip install ./azure-kusto-data[aio,pandas] ./azure-kusto-ingest[aio,pandas] --user
           pip freeze
       - uses: psf/black@stable
         with:
           options: "--check --diff --line-length 160"
       - name: Test with pytest
         run: |
-          pip install pytest
-          pytest -v --junit-xml pytest.xml
+          pytest -v . --junit-xml pytest.xml --cov=/home/runner/.local/lib/python${{ matrix.python-version }}/site-packages/azure/kusto --cov-report=xml
       - name: EtoE Test with pytest
         env:
           APP_ID: ${{ secrets.APP_ID }}
@@ -46,14 +47,19 @@ jobs:
           TEST_BLOB: ${{ secrets.TEST_BLOB }}
           ENGINE_CONNECTION_STRING: ${{ secrets.ENGINE_CONNECTION_STRING }}
         run: |
-          pytest -v ./azure-kusto-ingest/tests/e2e.py --junit-xml pytest_e2e.xml
-
+          pytest -v ./azure-kusto-ingest/tests/e2e.py --junit-xml pytest.xml --cov=/home/runner/.local/lib/python${{ matrix.python-version }}/site-packages/azure/kusto --cov-report=xml:coverage2.xml
       - name: Upload Unit Test Results
         if: always()
         uses: actions/upload-artifact@v2
         with:
           name: Unit Test Results (Python ${{ matrix.python-version }})
           path: pytest*.xml
+          
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v2
+        with:
+          env_vars: PYTHON
+
 
   publish-test-results:
     name: "Publish Unit Tests Results"

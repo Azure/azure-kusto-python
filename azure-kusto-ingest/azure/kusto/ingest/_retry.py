@@ -11,7 +11,7 @@ class ExponentialRetry:
         self.current_attempt = 0
 
     def do_backoff(self):
-        sleep((self.sleep_base_secs * (2 ** self.current_attempt)) + (random.uniform(0, self.max_jitter_secs)))
+        sleep((self.sleep_base_secs * (2**self.current_attempt)) + (random.uniform(0, self.max_jitter_secs)))
         self.current_attempt += 1
 
     def __bool__(self):

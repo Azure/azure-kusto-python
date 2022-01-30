@@ -175,7 +175,7 @@ class TestKustoStreamingIngestClient:
         result = ingest_client.ingest_from_stream(bytes_stream, ingestion_properties=ingestion_properties)
         assert result.status == IngestionStatus.SUCCESS
 
-        str_sequence = u"57,57,57"
+        str_sequence = "57,57,57"
         str_stream = io.StringIO(str_sequence)
         result = ingest_client.ingest_from_stream(str_stream, ingestion_properties=ingestion_properties)
         assert result.status == IngestionStatus.SUCCESS
@@ -190,7 +190,7 @@ class TestKustoStreamingIngestClient:
         result = ingest_client.ingest_from_stream(bytes_stream, ingestion_properties=ingestion_properties)
         assert result.status == IngestionStatus.SUCCESS
 
-        str_sequence = u'{"Name":"Ben","Age":"56","Weight":"75"}'
+        str_sequence = '{"Name":"Ben","Age":"56","Weight":"75"}'
         str_stream = io.StringIO(str_sequence)
         result = ingest_client.ingest_from_stream(str_stream, ingestion_properties=ingestion_properties)
         assert result.status == IngestionStatus.SUCCESS
