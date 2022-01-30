@@ -314,7 +314,7 @@ class KustoClientTestsMixin:
 
         assert len(data_frame.columns) == 19
         expected_dict = {
-            "rownumber": Series([None, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9], dtype="Int64"),
+            "rownumber": Series([None, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9], dtype="Int32"),
             "rowguid": Series(
                 [
                     "",
@@ -334,8 +334,8 @@ class KustoClientTestsMixin:
             "xdouble": Series([None, 0.0, 1.0001, 2.0002, 3.0003, 4.0004, 5.0005, 6.0006, 7.0007, 8.0008, 9.0009], dtype="Float64"),
             "xfloat": Series([None, 0.0, 1.01, 2.02, 3.03, 4.04, 5.05, 6.06, 7.07, 8.08, 9.09], dtype="Float64"),
             "xbool": Series([None, False, True, False, True, False, True, False, True, False, True], dtype=bool),
-            "xint16": Series([None, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9], dtype="Int64"),
-            "xint32": Series([None, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9], dtype="Int64"),
+            "xint16": Series([None, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9], dtype="Int32"),
+            "xint32": Series([None, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9], dtype="Int32"),
             "xint64": Series([None, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9], dtype="Int64"),
             "xuint8": Series([None, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9], dtype="Int64"),
             "xuint16": Series([None, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9], dtype="Int64"),
