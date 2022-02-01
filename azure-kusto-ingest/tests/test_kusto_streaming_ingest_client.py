@@ -9,9 +9,7 @@ import pytest
 import responses
 
 from azure.kusto.data.data_format import DataFormat
-
 from azure.kusto.ingest import KustoStreamingIngestClient, IngestionProperties, IngestionStatus, ManagedStreamingIngestClient
-from azure.kusto.ingest.exceptions import KustoMissingMappingError
 
 pandas_installed = False
 try:
@@ -183,8 +181,8 @@ class TestKustoStreamingIngestClient:
         byte_sequence = b'{"Name":"Ben","Age":"56","Weight":"75"}'
         bytes_stream = io.BytesIO(byte_sequence)
 
-        with pytest.raises(KustoMissingMappingError):
-            ingestion_properties = IngestionProperties(database="database", table="table", data_format=DataFormat.JSON)
+        # Make sure we don't raise when not providing a mapping to JSON
+        ingestion_properties = IngestionProperties(database="database", table="table", data_format=DataFormat.JSON)
 
         ingestion_properties.ingestion_mapping_reference = "JsonMapping"
         result = ingest_client.ingest_from_stream(bytes_stream, ingestion_properties=ingestion_properties)

@@ -318,29 +318,19 @@ class KustoSampleApp:
         mapping_value: str,
         data_format: DataFormat,
     ) -> bool:
-        if not use_existing_mapping:
-            if data_format._mapping_required and not mapping_value:
-                print(
-                    f"The data format '{data_format.kusto_value}' requires a mapping, but configuration indicates to not use an existing mapping and no mapping was provided. Skipping this ingestion."
-                )
-                return False
+        if use_existing_mapping or not mapping_value:
+            return True
 
-            if mapping_value:
-                ingestion_mapping_kind = data_format.ingestion_mapping_kind.value.lower()
-                cls.wait_for_user_to_proceed(f"Create a '{ingestion_mapping_kind}' mapping reference named '{mapping_name}'")
-                if not mapping_name:
-                    mapping_name = "DefaultQuickstartMapping" + str(uuid.UUID())[:5]
-                mapping_command = f".create-or-alter table {table_name} ingestion {ingestion_mapping_kind} mapping '{mapping_name}' '{mapping_value}'"
-                if not cls.execute_control_command(kusto_client, database_name, mapping_command):
-                    print(f"Failed to create a '{ingestion_mapping_kind}' mapping reference named '{mapping_name}'. Skipping this ingestion.")
-                    return False
-        elif data_format._mapping_required and not mapping_name:
-            print(
-                f"The data format '{data_format.kusto_value}' requires a mapping and the configuration indicates an existing mapping should be used, but none was provided. Skipping this ingestion."
-            )
-            return False
+        ingestion_mapping_kind = data_format.ingestion_mapping_kind.value.lower()
+        cls.wait_for_user_to_proceed(f"Create a '{ingestion_mapping_kind}' mapping reference named '{mapping_name}'")
+        if not mapping_name:
+            mapping_name = "DefaultQuickstartMapping" + str(uuid.UUID())[:5]
+        mapping_command = f".create-or-alter table {table_name} ingestion {ingestion_mapping_kind} mapping '{mapping_name}' '{mapping_value}'"
+        if cls.execute_control_command(kusto_client, database_name, mapping_command):
+            return True
 
-        return True
+        print(f"Failed to create a '{ingestion_mapping_kind}' mapping reference named '{mapping_name}'. Skipping this ingestion.")
+        return False
 
     @classmethod
     def ingest(cls, file: dict, data_format: DataFormat, ingest_client: BaseIngestClient, database_name: str, table_name: str, mapping_name: str) -> None:

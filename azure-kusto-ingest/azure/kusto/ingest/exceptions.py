@@ -1,6 +1,5 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
-from azure.kusto.data.data_format import DataFormat, IngestionMappingKind
 from azure.kusto.data.exceptions import KustoClientError
 
 
@@ -23,8 +22,7 @@ class KustoDuplicateMappingError(KustoClientError):
 
 class KustoMissingMappingError(KustoClientError):
     """
-    Raised when ingestion properties has data format that requires a mapping and is not defined,
-    or when provided a mapping kind without a mapping.
+    Raised when provided a mapping kind without a mapping reference or column mapping.
     """
 
 

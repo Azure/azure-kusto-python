@@ -150,8 +150,6 @@ class IngestionProperties:
     ):
 
         if ingestion_mapping_reference is None and column_mappings is None:
-            if data_format._mapping_required:
-                raise KustoMissingMappingError(f"When stream format is '{data_format.kusto_value}', a mapping must be provided.")
             if ingestion_mapping_kind is not None:
                 raise KustoMissingMappingError(f"When ingestion mapping kind is set ('{ingestion_mapping_kind.value}'), a mapping must be provided.")
         else:  # A mapping is provided
