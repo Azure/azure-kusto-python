@@ -3,6 +3,7 @@
 import io
 import json
 import os
+import pathlib
 import random
 import sys
 import time
@@ -17,6 +18,7 @@ from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
 from azure.kusto.data._cloud_settings import CloudSettings
 from azure.kusto.data._models import WellKnownDataSet
 from azure.kusto.data.aio import KustoClient as AsyncKustoClient
+from azure.kusto.data.data_format import DataFormat, IngestionMappingKind
 from azure.kusto.data.exceptions import KustoServiceError
 from azure.kusto.data.streaming_response import FrameType
 
@@ -24,9 +26,7 @@ from azure.kusto.ingest import (
     QueuedIngestClient,
     KustoStreamingIngestClient,
     IngestionProperties,
-    DataFormat,
     ColumnMapping,
-    IngestionMappingType,
     ValidationPolicy,
     ValidationOptions,
     ValidationImplications,
@@ -34,9 +34,14 @@ from azure.kusto.ingest import (
     ReportMethod,
     FileDescriptor,
     BlobDescriptor,
+    StreamDescriptor,
+    ManagedStreamingIngestClient,
 )
 
-CLEAR_DB_CACHE = ".clear database cache streamingingestion schema"
+
+@pytest.fixture(params=["ManagedStreaming", "NormalClient"])
+def is_managed_streaming(request):
+    return request.param == "ManagedStreaming"
 
 
 class TestE2E:
@@ -179,7 +184,7 @@ class TestE2E:
         cls.client = KustoClient(cls.engine_kcsb_from_env())
         cls.ingest_client = QueuedIngestClient(cls.dm_kcsb_from_env())
         cls.streaming_ingest_client = KustoStreamingIngestClient(cls.engine_kcsb_from_env())
-
+        cls.managed_streaming_ingest_client = ManagedStreamingIngestClient(cls.engine_kcsb_from_env(), cls.dm_kcsb_from_env())
         cls.input_folder_path = cls.get_file_path()
 
         cls.csv_file_path = os.path.join(cls.input_folder_path, "dataset.csv")
@@ -194,13 +199,15 @@ class TestE2E:
 
         cls.client.execute(
             cls.test_db,
-            ".create table {0} (rownumber: int, rowguid: string, xdouble: real, xfloat: real, xbool: bool, xint16: int, xint32: int, xint64: long, xuint8: long, xuint16: long, xuint32: long, xuint64: long, xdate: datetime, xsmalltext: string, xtext: string, xnumberAsText: string, xtime: timespan, xtextWithNulls: string, xdynamicWithNulls: dynamic)".format(
-                cls.test_table
-            ),
+            f".create table {cls.test_table} (rownumber: int, rowguid: string, xdouble: real, xfloat: real, xbool: bool, xint16: int, xint32: int, xint64: long, xuint8: long, xuint16: long, xuint32: long, xuint64: long, xdate: datetime, xsmalltext: string, xtext: string, xnumberAsText: string, xtime: timespan, xtextWithNulls: string, xdynamicWithNulls: dynamic)",
         )
-        cls.client.execute(
-            cls.test_db, ".create table {0} ingestion json mapping 'JsonMapping' {1}".format(cls.test_table, cls.test_table_json_mapping_reference())
-        )
+        cls.client.execute(cls.test_db, f".create table {cls.test_table} ingestion json mapping 'JsonMapping' {cls.test_table_json_mapping_reference()}")
+
+        cls.client.execute(cls.test_db, f".alter table {cls.test_table} policy streamingingestion enable ")
+
+        # Clear the cache to guarantee that subsequent streaming ingestion requests incorporate database and table schema changes
+        # See https://docs.microsoft.com/azure/data-explorer/kusto/management/data-ingestion/clear-schema-cache-command
+        cls.client.execute(cls.test_db, ".clear database cache streamingingestion schema")
 
     @classmethod
     def teardown_class(cls):
@@ -232,9 +239,7 @@ class TestE2E:
                 actual = int(row["Count"]) - cls.current_count
                 # this is done to allow for data to arrive properly
                 if actual >= expected:
-                    assert row_async == row, "Mismatch answers between async('{0}') and sync('{1}') clients".format(
-                        row_async.primary_results, row.primary_results
-                    )
+                    assert row_async == row, "Mismatch answers between async('{0}') and sync('{1}') clients".format(row_async, row)
                     break
 
         cls.current_count += actual
@@ -345,18 +350,20 @@ class TestE2E:
             assert len(row) == len(primary_result["Columns"])
 
     @pytest.mark.asyncio
-    async def test_csv_ingest_existing_table(self):
+    async def test_csv_ingest_existing_table(self, is_managed_streaming):
         csv_ingest_props = IngestionProperties(
             self.test_db,
             self.test_table,
             data_format=DataFormat.CSV,
-            ingestion_mapping=self.get_test_table_csv_mappings(),
+            column_mappings=self.get_test_table_csv_mappings(),
             report_level=ReportLevel.FailuresAndSuccesses,
             flush_immediately=True,
         )
 
+        client = self.streaming_ingest_client if is_managed_streaming else self.ingest_client
+
         for f in [self.csv_file_path, self.zipped_csv_file_path]:
-            self.ingest_client.ingest_from_file(f, csv_ingest_props)
+            client.ingest_from_file(f, csv_ingest_props)
 
         await self.assert_rows_added(20)
 
@@ -367,7 +374,22 @@ class TestE2E:
             self.test_table,
             flush_immediately=True,
             data_format=DataFormat.JSON,
-            ingestion_mapping=self.test_table_json_mappings(),
+            column_mappings=self.test_table_json_mappings(),
+            report_level=ReportLevel.FailuresAndSuccesses,
+        )
+
+        for f in [self.json_file_path, self.zipped_json_file_path]:
+            self.ingest_client.ingest_from_file(f, json_ingestion_props)
+
+        await self.assert_rows_added(4)
+
+    @pytest.mark.asyncio
+    async def test_json_ingest_existing_table_no_mapping(self):
+        json_ingestion_props = IngestionProperties(
+            self.test_db,
+            self.test_table,
+            flush_immediately=True,
+            data_format=DataFormat.JSON,
             report_level=ReportLevel.FailuresAndSuccesses,
         )
 
@@ -385,7 +407,7 @@ class TestE2E:
             self.test_db,
             self.test_table,
             data_format=DataFormat.JSON,
-            ingestion_mapping=self.test_table_json_mappings(),
+            column_mappings=self.test_table_json_mappings(),
             additional_tags=["a", "b"],
             ingest_if_not_exists=["aaaa", "bbbb"],
             ingest_by_tags=["ingestByTag"],
@@ -405,12 +427,41 @@ class TestE2E:
         await self.assert_rows_added(4)
 
     @pytest.mark.asyncio
+    async def test_ingest_from_stream(self, is_managed_streaming):
+        validation_policy = ValidationPolicy(
+            validation_options=ValidationOptions.ValidateCsvInputConstantColumns, validation_implications=ValidationImplications.Fail
+        )
+        json_ingestion_props = IngestionProperties(
+            self.test_db,
+            self.test_table,
+            data_format=DataFormat.JSON,
+            column_mappings=self.test_table_json_mappings(),
+            additional_tags=["a", "b"],
+            ingest_if_not_exists=["aaaa", "bbbb"],
+            ingest_by_tags=["ingestByTag"],
+            drop_by_tags=["drop", "drop-by"],
+            flush_immediately=False,
+            report_level=ReportLevel.FailuresAndSuccesses,
+            report_method=ReportMethod.Queue,
+            validation_policy=validation_policy,
+        )
+        text = io.StringIO(pathlib.Path(self.json_file_path).read_text())
+        zipped = io.BytesIO(pathlib.Path(self.zipped_json_file_path).read_bytes())
+
+        client = self.managed_streaming_ingest_client if is_managed_streaming else self.ingest_client
+
+        client.ingest_from_stream(text, json_ingestion_props)
+        client.ingest_from_stream(StreamDescriptor(zipped, is_compressed=True), json_ingestion_props)
+
+        await self.assert_rows_added(4)
+
+    @pytest.mark.asyncio
     async def test_json_ingestion_ingest_by_tag(self):
         json_ingestion_props = IngestionProperties(
             self.test_db,
             self.test_table,
             data_format=DataFormat.JSON,
-            ingestion_mapping=self.test_table_json_mappings(),
+            column_mappings=self.test_table_json_mappings(),
             ingest_if_not_exists=["ingestByTag"],
             report_level=ReportLevel.FailuresAndSuccesses,
             drop_by_tags=["drop", "drop-by"],
@@ -429,7 +480,7 @@ class TestE2E:
             self.test_table,
             flush_immediately=True,
             data_format=DataFormat.TSV,
-            ingestion_mapping=self.get_test_table_csv_mappings(),
+            column_mappings=self.get_test_table_csv_mappings(),
             report_level=ReportLevel.FailuresAndSuccesses,
         )
 
@@ -446,7 +497,7 @@ class TestE2E:
             self.test_db,
             self.test_table,
             data_format=DataFormat.CSV,
-            ingestion_mapping=self.get_test_table_csv_mappings(),
+            column_mappings=self.get_test_table_csv_mappings(),
             report_level=ReportLevel.FailuresAndSuccesses,
             flush_immediately=True,
         )
@@ -462,18 +513,17 @@ class TestE2E:
         await self.assert_rows_added(10)
 
     @pytest.mark.asyncio
-    async def test_streaming_ingest_from_opened_file(self):
-        self.client.execute(self.test_db, CLEAR_DB_CACHE)
+    async def test_streaming_ingest_from_opened_file(self, is_managed_streaming):
         ingestion_properties = IngestionProperties(database=self.test_db, table=self.test_table, data_format=DataFormat.CSV)
 
+        client = self.managed_streaming_ingest_client if is_managed_streaming else self.streaming_ingest_client
         with open(self.csv_file_path, "r") as stream:
-            self.streaming_ingest_client.ingest_from_stream(stream, ingestion_properties=ingestion_properties)
+            client.ingest_from_stream(stream, ingestion_properties=ingestion_properties)
 
         await self.assert_rows_added(10, timeout=120)
 
     @pytest.mark.asyncio
     async def test_streaming_ingest_from_csv_file(self):
-        self.client.execute(self.test_db, CLEAR_DB_CACHE)
         ingestion_properties = IngestionProperties(database=self.test_db, table=self.test_table, flush_immediately=True, data_format=DataFormat.CSV)
 
         for f in [self.csv_file_path, self.zipped_csv_file_path]:
@@ -483,14 +533,13 @@ class TestE2E:
 
     @pytest.mark.asyncio
     async def test_streaming_ingest_from_json_file(self):
-        self.client.execute(self.test_db, CLEAR_DB_CACHE)
         ingestion_properties = IngestionProperties(
             database=self.test_db,
             table=self.test_table,
             flush_immediately=True,
             data_format=DataFormat.JSON,
             ingestion_mapping_reference="JsonMapping",
-            ingestion_mapping_type=IngestionMappingType.JSON,
+            ingestion_mapping_kind=IngestionMappingKind.JSON,
         )
 
         for f in [self.json_file_path, self.zipped_json_file_path]:
@@ -500,7 +549,6 @@ class TestE2E:
 
     @pytest.mark.asyncio
     async def test_streaming_ingest_from_csv_io_streams(self):
-        self.client.execute(self.test_db, CLEAR_DB_CACHE)
         ingestion_properties = IngestionProperties(database=self.test_db, table=self.test_table, data_format=DataFormat.CSV)
         byte_sequence = b'0,00000000-0000-0000-0001-020304050607,0,0,0,0,0,0,0,0,0,0,2014-01-01T01:01:01.0000000Z,Zero,"Zero",0,00:00:00,,null'
         bytes_stream = io.BytesIO(byte_sequence)
@@ -520,7 +568,7 @@ class TestE2E:
             data_format=DataFormat.JSON,
             flush_immediately=True,
             ingestion_mapping_reference="JsonMapping",
-            ingestion_mapping_type=IngestionMappingType.JSON,
+            ingestion_mapping_kind=IngestionMappingKind.JSON,
         )
 
         byte_sequence = b'{"rownumber": 0, "rowguid": "00000000-0000-0000-0001-020304050607", "xdouble": 0.0, "xfloat": 0.0, "xbool": 0, "xint16": 0, "xint32": 0, "xint64": 0, "xunit8": 0, "xuint16": 0, "xunit32": 0, "xunit64": 0, "xdate": "2014-01-01T01:01:01Z", "xsmalltext": "Zero", "xtext": "Zero", "xnumberAsText": "0", "xtime": "00:00:00", "xtextWithNulls": null, "xdynamicWithNulls": ""}'

@@ -1,5 +1,7 @@
 from typing import TYPE_CHECKING, Union
 
+import numpy as np
+
 if TYPE_CHECKING:
     import pandas
     from azure.kusto.data._models import KustoResultTable, KustoStreamingResultTable
@@ -50,9 +52,16 @@ def dataframe_from_result_table(table: "Union[KustoResultTable, KustoStreamingRe
     for col in table.columns:
         if col.column_type == "bool":
             frame[col.column_name] = frame[col.column_name].astype(bool)
-        if col.column_type == "datetime":
-            frame[col.column_name] = pd.to_datetime(frame[col.column_name])
-        if col.column_type == "timespan":
+        elif col.column_type == "int":
+            frame[col.column_name] = frame[col.column_name].astype("Int32")
+        elif col.column_type == "long":
+            frame[col.column_name] = frame[col.column_name].astype("Int64")
+        elif col.column_type == "real" or col.column_type == "decimal":
+            frame[col.column_name] = frame[col.column_name].replace("NaN", np.NaN).replace("Infinity", np.PINF).replace("-Infinity", np.NINF)
+            frame[col.column_name] = pd.to_numeric(frame[col.column_name], errors="coerce").astype("Float64")
+        elif col.column_type == "datetime":
+            frame[col.column_name] = pd.to_datetime(frame[col.column_name], errors="coerce")
+        elif col.column_type == "timespan":
             frame[col.column_name] = frame[col.column_name].apply(to_pandas_timedelta)
 
     return frame

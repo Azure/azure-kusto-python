@@ -1,0 +1,11 @@
+edit 05340e838b41 2610 Add support for PEP 420 namespace packages to find_packag
+
+# Edit history between 05340e838b41 and 05340e838b41
+#
+# Commands:
+#  p, pick = use commit
+#  e, edit = use commit, but stop for amending
+#  f, fold = use commit, but fold into previous commit (combines N and N-1)
+#  d, drop = remove commit from history
+#  m, mess = edit message without changing commit content
+#

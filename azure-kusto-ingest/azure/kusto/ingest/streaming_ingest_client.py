@@ -1,114 +1,63 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
-import os
-import tempfile
-import time
-import uuid
-from gzip import GzipFile
-from io import TextIOWrapper, BytesIO
-from typing import Union, AnyStr
-from typing.io import IO
+from typing import Union, AnyStr, Optional
 
-from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
+from typing import IO
 
+from azure.kusto.data import KustoClient, KustoConnectionStringBuilder, ClientRequestProperties
+from .base_ingest_client import BaseIngestClient, IngestionResult, IngestionStatus
 from .descriptors import FileDescriptor, StreamDescriptor
-from .exceptions import KustoMissingMappingReferenceError
-from .ingestion_properties import DataFormat, IngestionProperties
+from .ingestion_properties import IngestionProperties
 
 
-class KustoStreamingIngestClient:
+class KustoStreamingIngestClient(BaseIngestClient):
     """Kusto streaming ingest client for Python.
     KustoStreamingIngestClient works with both 2.x and 3.x flavors of Python.
     All primitive types are supported.
     Tests are run using pytest.
     """
 
-    _mapping_required_formats = {DataFormat.JSON, DataFormat.SINGLEJSON, DataFormat.AVRO, DataFormat.MULTIJSON}
-
-    def __init__(self, kcsb: KustoConnectionStringBuilder):
+    def __init__(self, kcsb: Union[KustoConnectionStringBuilder, str]):
         """Kusto Streaming Ingest Client constructor.
         :param KustoConnectionStringBuilder kcsb: The connection string to initialize KustoClient.
         """
         self._kusto_client = KustoClient(kcsb)
 
-    def ingest_from_dataframe(self, df: "pandas.DataFrame", ingestion_properties: IngestionProperties):
-        """Ingest from pandas DataFrame.
-        :param pandas.DataFrame df: input dataframe to ingest.
-        :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
-        """
-
-        from pandas import DataFrame
-
-        if not isinstance(df, DataFrame):
-            raise ValueError("Expected DataFrame instance, found {}".format(type(df)))
-
-        file_name = "df_{timestamp}_{uid}.csv.gz".format(timestamp=int(time.time()), uid=uuid.uuid4())
-        temp_file_path = os.path.join(tempfile.gettempdir(), file_name)
-
-        df.to_csv(temp_file_path, index=False, encoding="utf-8", header=False, compression="gzip")
-
-        ingestion_properties.format = DataFormat.CSV
-
-        try:
-            self.ingest_from_file(temp_file_path, ingestion_properties)
-        finally:
-            os.unlink(temp_file_path)
-
-    def ingest_from_file(self, file_descriptor: Union[FileDescriptor, str], ingestion_properties: IngestionProperties):
+    def ingest_from_file(self, file_descriptor: Union[FileDescriptor, str], ingestion_properties: IngestionProperties) -> IngestionResult:
         """Ingest from local files.
         :param file_descriptor: a FileDescriptor to be ingested.
         :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
         """
 
-        if isinstance(file_descriptor, FileDescriptor):
-            descriptor = file_descriptor
-        else:
-            descriptor = FileDescriptor(file_descriptor)
+        stream_descriptor = StreamDescriptor.from_file_descriptor(file_descriptor)
 
-        stream = open(descriptor.path, "rb")
+        with stream_descriptor.stream:
+            return self.ingest_from_stream(stream_descriptor, ingestion_properties)
 
-        is_compressed = descriptor.path.endswith(".gz") or descriptor.path.endswith(".zip")
-        stream_descriptor = StreamDescriptor(stream, descriptor.source_id, is_compressed)
-
-        self.ingest_from_stream(stream_descriptor, ingestion_properties)
-
-        if stream is not None:
-            stream.close()
-
-    def ingest_from_stream(self, stream_descriptor: Union[IO[AnyStr], StreamDescriptor], ingestion_properties: IngestionProperties):
+    def ingest_from_stream(self, stream_descriptor: Union[StreamDescriptor, IO[AnyStr]], ingestion_properties: IngestionProperties) -> IngestionResult:
         """Ingest from io streams.
         :param azure.kusto.ingest.StreamDescriptor stream_descriptor: An object that contains a description of the stream to
                be ingested.
         :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
         """
+        return self._ingest_from_stream_with_client_request_id(stream_descriptor, ingestion_properties, None)
 
-        if not isinstance(stream_descriptor, StreamDescriptor):
-            stream_descriptor = StreamDescriptor(stream_descriptor)
-
-        if isinstance(stream_descriptor.stream, TextIOWrapper):
-            stream = stream_descriptor.stream.buffer
-        else:
-            stream = stream_descriptor.stream
-
-        if ingestion_properties.format in self._mapping_required_formats and ingestion_properties.ingestion_mapping_reference is None:
-            raise KustoMissingMappingReferenceError()
-
-        if not stream_descriptor.is_compressed:
-            zipped_stream = BytesIO()
-            buffer = stream.read()
-            with GzipFile(filename="data", fileobj=zipped_stream, mode="wb") as f_out:
-                if isinstance(buffer, str):
-                    data = bytes(buffer, "utf-8")
-                    f_out.write(data)
-                else:
-                    f_out.write(buffer)
-            zipped_stream.seek(0)
-            stream = zipped_stream
+    def _ingest_from_stream_with_client_request_id(
+        self, stream_descriptor: Union[StreamDescriptor, IO[AnyStr]], ingestion_properties: IngestionProperties, client_request_id: Optional[str]
+    ) -> IngestionResult:
+        stream_descriptor = BaseIngestClient._prepare_stream(stream_descriptor, ingestion_properties)
+        additional_properties = None
+        if client_request_id:
+            additional_properties = ClientRequestProperties()
+            additional_properties.client_request_id = client_request_id
 
         self._kusto_client.execute_streaming_ingest(
             ingestion_properties.database,
             ingestion_properties.table,
-            stream,
+            stream_descriptor.stream,
             ingestion_properties.format.name,
+            additional_properties,
             mapping_name=ingestion_properties.ingestion_mapping_reference,
         )
+
+        return IngestionResult(IngestionStatus.SUCCESS, ingestion_properties.database, ingestion_properties.table, stream_descriptor.source_id)

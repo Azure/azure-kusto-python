@@ -3,9 +3,13 @@
 import json
 import uuid
 from datetime import datetime
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from azure.kusto.ingest import BlobDescriptor, IngestionProperties
 
 
-class _IngestionBlobInfo:
+class IngestionBlobInfo:
     def __init__(self, blob_descriptor: "BlobDescriptor", ingestion_properties: "IngestionProperties", auth_context=None):
         self.properties = dict()
         self.properties["BlobPath"] = blob_descriptor.path
@@ -19,9 +23,7 @@ class _IngestionBlobInfo:
         self.properties["ReportLevel"] = ingestion_properties.report_level.value
         self.properties["ReportMethod"] = ingestion_properties.report_method.value
         self.properties["SourceMessageCreationTime"] = datetime.utcnow().isoformat()
-        self.properties["Id"] = (
-            str(blob_descriptor.source_id) if hasattr(blob_descriptor, "source_id") and blob_descriptor.source_id is not None else str(uuid.uuid4())
-        )
+        self.properties["Id"] = str(blob_descriptor.source_id)
 
         additional_properties = ingestion_properties.additional_properties or {}
         additional_properties["authorizationContext"] = auth_context
@@ -48,7 +50,7 @@ class _IngestionBlobInfo:
         if ingestion_properties.validation_policy:
             additional_properties["ValidationPolicy"] = _convert_dict_to_json(ingestion_properties.validation_policy)
         if ingestion_properties.format:
-            additional_properties["format"] = ingestion_properties.format.value
+            additional_properties["format"] = ingestion_properties.format.kusto_value
 
         if additional_properties:
             self.properties["AdditionalProperties"] = additional_properties

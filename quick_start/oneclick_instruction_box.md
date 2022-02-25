@@ -1,12 +1,15 @@
+### Prerequisites
+
+1. Set up Python version 3.7 or higher on your machine. For instructions, consult a Python environment setup tutorial, like [this](https://www.tutorialspoint.com/python/python_environment.htm).
+
 ### Instructions
 
-1. Download the **DOWNLOAD_LINK** 
-2. Unpack the script to your folder of choice
-3. Open a command line window and CD into the above folder 
-4. Run `python -m pip install azure-kusto-data azure-kusto-ingest`
-5. Run `python kusto_sample_app.py`. It will already be configured to your cluster and source.
+1. Download the **DOWNLOAD_LINK** as a ZIP file.
+1. Extract the app source code.
+1. Open a command line window and navigate to the folder where you extracted the script.
+1. Run `python -m pip install azure-kusto-data azure-kusto-ingest`. If upgrading, append ` --upgrade`.
+1. Run `python kusto_sample_app.py`. It will already be configured to your cluster and source.
 
 ### Troubleshooting
 
-* If you are having trouble running python on your machine or need instructions on how to install python, you can consult the following [python environment setup tutorial](https://www.tutorialspoint.com/python/python_environment.htm) from _Tutorials Point_.
-* If you are having trouble running the script from your IDE of choice, first check if the script runs from command line, then consult the troubleshooting references of your IDE.   
+* If you are having trouble running the script from your IDE, first check if the script runs from command line, then consult the troubleshooting references of your IDE.

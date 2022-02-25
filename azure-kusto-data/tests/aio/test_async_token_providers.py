@@ -18,10 +18,10 @@ class TestTokenProvider:
     @pytest.mark.asyncio
     async def test_base_provider(self):
         # test init with no URI
-        provider = MockProvider(None, is_async=True)
+        provider = MockProvider(is_async=True)
 
         # Test provider with URI, No silent token
-        provider = MockProvider(KUSTO_URI, is_async=True)
+        provider = MockProvider(is_async=True)
 
         token = provider._get_token_from_cache_impl()
         assert provider.init_count == 0
@@ -294,7 +294,7 @@ class TestTokenProvider:
         authority = "auth_test"
 
         provider = UserPassTokenProvider(FAKE_URI, authority, "a", "b", is_async=True)
-        await provider._init_once_async(init_only_cloud=True)
+        await provider._init_once_async(init_only_resources=True)
         context = await provider.context_async()
         assert context["authority"] == "https://login_endpoint/auth_test"
         assert context["client_id"] == "1234"
@@ -316,7 +316,7 @@ class TestTokenProvider:
         authority = "auth_test"
 
         provider = UserPassTokenProvider(FAKE_URI, authority, "a", "b", is_async=True)
-        await provider._init_once_async(init_only_cloud=True)
+        await provider._init_once_async(init_only_resources=True)
         context = await provider.context_async()
         assert context["authority"] == "https://login_endpoint/auth_test"
         assert context["client_id"] == "1234"

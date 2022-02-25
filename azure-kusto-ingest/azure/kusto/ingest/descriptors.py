@@ -6,20 +6,20 @@ import struct
 import uuid
 from gzip import GzipFile
 from io import BytesIO, SEEK_END
-from typing import IO, AnyStr, Union, Optional
+from typing import Union, Optional, AnyStr, IO
 from zipfile import ZipFile
 
 OptionalUUID = Optional[Union[str, uuid.UUID]]
 
 
-def assert_uuid4(maybe_uuid: OptionalUUID, error_message: str):
-    # none is valid value for our purposes
-    if maybe_uuid is None:
-        return
+def ensure_uuid(maybe_uuid: OptionalUUID) -> uuid.UUID:
+    if not maybe_uuid:
+        return uuid.uuid4()
 
-    maybe_uuid = uuid.UUID("{}".format(maybe_uuid)) if maybe_uuid is not None else None
-    if maybe_uuid and maybe_uuid.version != 4:
-        raise ValueError(error_message)
+    if type(maybe_uuid) == uuid.UUID:
+        return maybe_uuid
+
+    return uuid.UUID(f"{maybe_uuid}", version=4)
 
 
 class FileDescriptor:
@@ -37,19 +37,18 @@ class FileDescriptor:
         :type path: str.
         :param size: estimated size of file if known. if None or 0 will try to guess.
         :type size: Optional[int].
-        :param source_id: a v4 uuid to serve as the sources id.
+        :param source_id: a v4 uuid to serve as the source's id.
         :type source_id: OptionalUUID
         """
-        self.path = path
-        self._size = size
-        self._detect_size_once = not size
+        self.path: str = path
+        self._size: Optional[int] = size
+        self._detect_size_once: bool = not size
 
-        assert_uuid4(source_id, "source_id must be a valid uuid4")
-        self.source_id = source_id
-        self.stream_name = os.path.basename(self.path)
+        self.source_id: uuid.UUID = ensure_uuid(source_id)
+        self.stream_name: str = os.path.basename(self.path)
 
     @property
-    def size(self):
+    def size(self) -> int:
         if self._detect_size_once:
             self._detect_size()
             self._detect_size_once = False
@@ -57,7 +56,7 @@ class FileDescriptor:
         return self._size
 
     @size.setter
-    def size(self, size):
+    def size(self, size: int):
         if size:
             self._size = size
             self._detect_size_once = False
@@ -83,6 +82,10 @@ class FileDescriptor:
 
         self._size = uncompressed_size
 
+    @property
+    def is_compressed(self) -> bool:
+        return self.path.endswith(".gz") or self.path.endswith(".zip")
+
     def open(self, should_compress: bool) -> BytesIO:
         if should_compress:
             self.stream_name += ".gz"
@@ -99,7 +102,7 @@ class FileDescriptor:
 class BlobDescriptor:
     """FileDescriptor is used to describe a file that will be used as an ingestion source"""
 
-    def __init__(self, path: str, size: Optional[int], source_id: OptionalUUID = None):
+    def __init__(self, path: str, size: Optional[int] = None, source_id: OptionalUUID = None):
         """
         :param path: blob uri.
         :type path: str.
@@ -108,16 +111,18 @@ class BlobDescriptor:
         :param source_id: a v4 uuid to serve as the sources id.
         :type source_id: OptionalUUID
         """
-        self.path = path
-        self.size = size
-        assert_uuid4(source_id, "source_id must be a valid uuid4")
-        self.source_id = source_id
+        self.path: str = path
+        self.size: Optional[int] = size
+        self.source_id: uuid.UUID = ensure_uuid(source_id)
 
 
 class StreamDescriptor:
     """StreamDescriptor is used to describe a stream that will be used as ingestion source"""
 
-    def __init__(self, stream: Union[IO[AnyStr], BytesIO], source_id: OptionalUUID = None, is_compressed: bool = False):
+    # TODO: currently we always assume that streams are gz compressed (will get compressed before sending), should we expand that?
+    def __init__(
+        self, stream: IO[AnyStr], source_id: OptionalUUID = None, is_compressed: bool = False, stream_name: Optional[str] = None, size: Optional[int] = None
+    ):
         """
         :param stream: in-memory stream object.
         :type stream: io.BaseIO
@@ -126,7 +131,23 @@ class StreamDescriptor:
         :param is_compressed: specify if the provided stream is compressed
         :type is_compressed: boolean
         """
-        self.stream = stream
-        assert_uuid4(source_id, "source_id must be a valid uuid4")
-        self.source_id = source_id
-        self.is_compressed = is_compressed
+        self.stream: IO[AnyStr] = stream
+        self.source_id: uuid.UUID = ensure_uuid(source_id)
+        self.is_compressed: bool = is_compressed
+        self.stream_name: str = stream_name
+        if self.stream_name is None:
+            self.stream_name = "stream"
+            if is_compressed:
+                self.stream_name += ".gz"
+        self.size: Optional[int] = size
+
+    @staticmethod
+    def from_file_descriptor(file_descriptor: Union[FileDescriptor, str]) -> "StreamDescriptor":
+        if isinstance(file_descriptor, FileDescriptor):
+            descriptor = file_descriptor
+        else:
+            descriptor = FileDescriptor(file_descriptor)
+        stream = open(descriptor.path, "rb")
+        is_compressed = descriptor.path.endswith(".gz") or descriptor.path.endswith(".zip")
+        stream_descriptor = StreamDescriptor(stream, descriptor.source_id, is_compressed, descriptor.stream_name, descriptor.size)
+        return stream_descriptor

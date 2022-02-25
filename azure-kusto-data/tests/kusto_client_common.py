@@ -2,13 +2,16 @@
 # Licensed under the MIT License
 import json
 import os
+import uuid
 from datetime import datetime, timedelta
 from io import StringIO
-from typing import Optional, Any, Dict, Union, Iterator
+from typing import Optional, Any, Dict, Union, Iterator, Tuple
 
+import pytest
 from dateutil.tz import UTC
 from requests import HTTPError
 
+from azure.kusto.data import KustoConnectionStringBuilder
 from azure.kusto.data._models import KustoResultRow, KustoResultTable, KustoStreamingResultTable
 from azure.kusto.data.response import WellKnownDataSet, KustoStreamingResponseDataSet, KustoResponseDataSet
 
@@ -61,10 +64,10 @@ def mocked_requests_post(*args, **kwargs):
                 reason = self.reason
 
             if 400 <= self.status_code < 500:
-                http_error_msg = u"%s Client Error: %s for url: %s" % (self.status_code, reason, self.url)
+                http_error_msg = "%s Client Error: %s for url: %s" % (self.status_code, reason, self.url)
 
             elif 500 <= self.status_code < 600:
-                http_error_msg = u"%s Server Error: %s for url: %s" % (self.status_code, reason, self.url)
+                http_error_msg = "%s Server Error: %s for url: %s" % (self.status_code, reason, self.url)
 
             if http_error_msg:
                 raise HTTPError(http_error_msg, response=self)
@@ -100,7 +103,67 @@ def mocked_requests_post(*args, **kwargs):
             data = response_file.read()
         return MockResponse(json.loads(data), 200, url)
 
+    elif url == "https://somecluster.kusto.windows.net/v1/rest/auth/metadata":
+        return MockResponse(
+            {
+                "AzureAD": {
+                    "LoginEndpoint": "https://login.microsoftonline.com",
+                    "LoginMfaRequired": False,
+                    "KustoClientAppId": "db662dc1-0cfe-4e1c-a843-19a68e65be58",
+                    "KustoClientRedirectUri": "https://microsoft/kustoclient",
+                    "KustoServiceResourceId": "https://kusto.dev.kusto.windows.net",
+                    "FirstPartyAuthorityUrl": "https://login.microsoftonline.com/f8cdef31-a31e-4b4a-93e4-5f571e91255a",
+                },
+                "dSTS": {
+                    "CloudEndpointSuffix": "windows.net",
+                    "DstsRealm": "realm://dsts.core.windows.net",
+                    "DstsInstance": "prod-dsts.dsts.core.windows.net",
+                    "KustoDnsHostName": "kusto.windows.net",
+                    "ServiceName": "kusto",
+                },
+            },
+            200,
+            url,
+        )
+
     return MockResponse(None, 404, url)
+
+
+@pytest.fixture(
+    params=[
+        "user_password",
+        "application_key",
+        "application_token",
+        "device",
+        "user_token",
+        "managed_identity",
+        "token_provider",
+        "async_token_provider",
+        "az_cli",
+        "interactive_login",
+    ]
+)
+def proxy_kcsb(request) -> Tuple[KustoConnectionStringBuilder, bool]:
+    cluster = KustoClientTestsMixin.HOST
+    user = "test2"
+    password = "Pa$$w0rd2"
+    authority_id = "13456"
+    uuid = "11111111-1111-1111-1111-111111111111"
+    key = "key of application"
+    token = "The app hardest token ever"
+
+    return {
+        "user_password": (KustoConnectionStringBuilder.with_aad_user_password_authentication(cluster, user, password, authority_id), True),
+        "application_key": (KustoConnectionStringBuilder.with_aad_application_key_authentication(cluster, uuid, key, "microsoft.com"), True),
+        "application_token": (KustoConnectionStringBuilder.with_aad_application_token_authentication(cluster, application_token=token), False),
+        "device": (KustoConnectionStringBuilder.with_aad_device_authentication(cluster), True),
+        "user_token": (KustoConnectionStringBuilder.with_aad_user_token_authentication(cluster, user_token=token), False),
+        "managed_identity": (KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication(cluster), False),
+        "token_provider": (KustoConnectionStringBuilder.with_token_provider(cluster, lambda x: x), False),
+        "async_token_provider": (KustoConnectionStringBuilder.with_async_token_provider(cluster, lambda x: x), False),
+        "az_cli": (KustoConnectionStringBuilder.with_az_cli_authentication(cluster), True),
+        "interactive_login": (KustoConnectionStringBuilder.with_interactive_login(cluster), True),
+    }[request.param]
 
 
 DIGIT_WORDS = [str("Zero"), str("One"), str("Two"), str("Three"), str("Four"), str("Five"), str("Six"), str("Seven"), str("Eight"), str("Nine"), str("ten")]
@@ -119,6 +182,17 @@ def get_table_first_row(table: SyncResultTable) -> KustoResultRow:
 
 class KustoClientTestsMixin:
     HOST = "https://somecluster.kusto.windows.net"
+
+    @staticmethod
+    def _assert_client_request_id(response_args: dict, value: Optional[str] = None) -> None:
+        header = response_args["headers"]["x-ms-client-request-id"]
+        if value:
+            assert header == value
+            return
+
+        [header_prefix, header_uuid] = header.split(";")
+        assert header_prefix == "KPC.execute"
+        uuid.UUID(header_uuid)
 
     @staticmethod
     def _assert_sanity_query_primary_results(results: Iterator[KustoResultRow]):
@@ -240,7 +314,7 @@ class KustoClientTestsMixin:
 
         assert len(data_frame.columns) == 19
         expected_dict = {
-            "rownumber": Series([None, 0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0]),
+            "rownumber": Series([None, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9], dtype="Int32"),
             "rowguid": Series(
                 [
                     "",
@@ -257,16 +331,16 @@ class KustoClientTestsMixin:
                 ],
                 dtype=object,
             ),
-            "xdouble": Series([None, 0.0, 1.0001, 2.0002, 3.0003, 4.0004, 5.0005, 6.0006, 7.0007, 8.0008, 9.0009]),
-            "xfloat": Series([None, 0.0, 1.01, 2.02, 3.03, 4.04, 5.05, 6.06, 7.07, 8.08, 9.09]),
+            "xdouble": Series([None, 0.0, 1.0001, 2.0002, 3.0003, 4.0004, 5.0005, 6.0006, 7.0007, 8.0008, 9.0009], dtype="Float64"),
+            "xfloat": Series([None, 0.0, 1.01, 2.02, 3.03, 4.04, 5.05, 6.06, 7.07, 8.08, 9.09], dtype="Float64"),
             "xbool": Series([None, False, True, False, True, False, True, False, True, False, True], dtype=bool),
-            "xint16": Series([None, 0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0]),
-            "xint32": Series([None, 0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0]),
-            "xint64": Series([None, 0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0]),
-            "xuint8": Series([None, 0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0]),
-            "xuint16": Series([None, 0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0]),
-            "xuint32": Series([None, 0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0]),
-            "xuint64": Series([None, 0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0]),
+            "xint16": Series([None, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9], dtype="Int32"),
+            "xint32": Series([None, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9], dtype="Int32"),
+            "xint64": Series([None, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9], dtype="Int64"),
+            "xuint8": Series([None, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9], dtype="Int64"),
+            "xuint16": Series([None, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9], dtype="Int64"),
+            "xuint32": Series([None, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9], dtype="Int64"),
+            "xuint64": Series([None, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9], dtype="Int64"),
             "xdate": Series(
                 [
                     pandas.to_datetime(None),
