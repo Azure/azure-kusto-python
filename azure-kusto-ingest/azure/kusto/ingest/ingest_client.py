@@ -5,7 +5,7 @@ import random
 import tempfile
 import time
 import uuid
-from typing import Union
+from typing import Union, Optional
 from urllib.parse import urlparse
 
 from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
@@ -30,7 +30,7 @@ class QueuedIngestClient:
     _INGEST_PREFIX = "ingest-"
     _EXPECTED_SERVICE_TYPE = "DataManagement"
 
-    def __init__(self, kcsb: Union[str, KustoConnectionStringBuilder]):
+    def __init__(self, kcsb: Union[str, KustoConnectionStringBuilder], blob_client_kwargs: Optional[dict] = None):
         """Kusto Ingest Client constructor.
         :param kcsb: The connection string to initialize KustoClient.
         """
@@ -40,6 +40,7 @@ class QueuedIngestClient:
         self._resource_manager = _ResourceManager(KustoClient(kcsb))
         self._endpoint_service_type = None
         self._suggested_endpoint_uri = None
+        self._blob_client_kwargs = blob_client_kwargs
 
     def ingest_from_dataframe(self, df, ingestion_properties: IngestionProperties):
         """
@@ -99,7 +100,7 @@ class QueuedIngestClient:
 
             random_container = random.choice(containers)
 
-            blob_service = BlobServiceClient(random_container.account_uri)
+            blob_service = BlobServiceClient(random_container.account_uri, **self._blob_client_kwargs)
             blob_client = blob_service.get_blob_client(container=random_container.object_name, blob=blob_name)
             blob_client.upload_blob(data=stream)
 
