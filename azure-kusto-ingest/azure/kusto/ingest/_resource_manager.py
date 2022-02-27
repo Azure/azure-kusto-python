@@ -140,3 +140,6 @@ class _ResourceManager:
             return command_result.primary_results[0][0][_SERVICE_TYPE_COLUMN_NAME]
         except (TypeError, KeyError):
             return ""
+
+    def set_proxy(self, proxy_url: str):
+        self._kusto_client.set_proxy(proxy_url)

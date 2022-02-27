@@ -78,6 +78,13 @@ class BaseIngestClient(metaclass=ABCMeta):
         """
         pass
 
+    @abstractmethod
+    def set_proxy(self, proxy_url: str):
+        """Set proxy for the ingestion client.
+        :param str proxy_url: proxy url.
+        """
+        pass
+
     def ingest_from_dataframe(self, df: "pandas.DataFrame", ingestion_properties: IngestionProperties) -> IngestionResult:
         """Enqueue an ingest command from local files.
         To learn more about ingestion methods go to:

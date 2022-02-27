@@ -1,8 +1,7 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
 import random
-import uuid
-from typing import Union, AnyStr, IO, List, Optional
+from typing import Union, AnyStr, IO, List, Optional, Dict
 from urllib.parse import urlparse
 
 from azure.storage.blob import BlobServiceClient
@@ -34,10 +33,15 @@ class QueuedIngestClient(BaseIngestClient):
         """
         if not isinstance(kcsb, KustoConnectionStringBuilder):
             kcsb = KustoConnectionStringBuilder(kcsb)
+        self._proxy_dict: Optional[Dict[str, str]] = None
         self._connection_datasource = kcsb.data_source
         self._resource_manager = _ResourceManager(KustoClient(kcsb))
         self._endpoint_service_type = None
         self._suggested_endpoint_uri = None
+
+    def set_proxy(self, proxy_url: str):
+        self._resource_manager.set_proxy(proxy_url)
+        self._proxy_dict = {"http": proxy_url, "https": proxy_url}
 
     def ingest_from_file(self, file_descriptor: Union[FileDescriptor, str], ingestion_properties: IngestionProperties) -> IngestionResult:
         """Enqueue an ingest command from local files.
@@ -56,7 +60,7 @@ class QueuedIngestClient(BaseIngestClient):
         should_compress = not descriptor.is_compressed and ingestion_properties.format.compressible
 
         with descriptor.open(should_compress) as stream:
-            blob_descriptor = QueuedIngestClient._upload_blob(containers, descriptor, ingestion_properties, stream)
+            blob_descriptor = self._upload_blob(containers, descriptor, ingestion_properties, stream)
             result = self.ingest_from_blob(blob_descriptor, ingestion_properties=ingestion_properties)
 
         return result
@@ -69,7 +73,7 @@ class QueuedIngestClient(BaseIngestClient):
         containers = self._get_containers()
 
         stream_descriptor = BaseIngestClient._prepare_stream(stream_descriptor, ingestion_properties)
-        blob_descriptor = QueuedIngestClient._upload_blob(containers, stream_descriptor, ingestion_properties, stream_descriptor.stream)
+        blob_descriptor = self._upload_blob(containers, stream_descriptor, ingestion_properties, stream_descriptor.stream)
         return self.ingest_from_blob(blob_descriptor, ingestion_properties=ingestion_properties)
 
     def ingest_from_blob(self, blob_descriptor: BlobDescriptor, ingestion_properties: IngestionProperties) -> IngestionResult:
@@ -86,7 +90,7 @@ class QueuedIngestClient(BaseIngestClient):
             raise ex
 
         random_queue = random.choice(queues)
-        queue_service = QueueServiceClient(random_queue.account_uri)
+        queue_service = QueueServiceClient(random_queue.account_uri, proxies=self._proxy_dict)
         authorization_context = self._resource_manager.get_authorization_context()
         ingestion_blob_info = IngestionBlobInfo(blob_descriptor, ingestion_properties=ingestion_properties, auth_context=authorization_context)
         ingestion_blob_info_json = ingestion_blob_info.to_json()
@@ -105,8 +109,8 @@ class QueuedIngestClient(BaseIngestClient):
             raise ex
         return containers
 
-    @staticmethod
     def _upload_blob(
+        self,
         containers: List[_ResourceUri],
         descriptor: Union[FileDescriptor, StreamDescriptor],
         ingestion_properties: IngestionProperties,
@@ -117,7 +121,7 @@ class QueuedIngestClient(BaseIngestClient):
         )
         random_container = random.choice(containers)
         try:
-            blob_service = BlobServiceClient(random_container.account_uri)
+            blob_service = BlobServiceClient(random_container.account_uri, proxies=self._proxy_dict)
             blob_client = blob_service.get_blob_client(container=random_container.object_name, blob=blob_name)
             blob_client.upload_blob(data=stream)
         except Exception as e:

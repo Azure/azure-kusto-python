@@ -7,10 +7,9 @@ import pathlib
 import random
 import sys
 import time
-import unittest
 import uuid
 from datetime import datetime
-from typing import Optional
+from typing import Optional, ClassVar
 
 import pytest
 
@@ -47,18 +46,21 @@ def is_managed_streaming(request):
 class TestE2E:
     """A class to define mappings to deft table."""
 
-    input_folder_path: str
-    streaming_test_table: str
-    test_streaming_data: list
-    engine_cs: Optional[str]
-    dm_cs: Optional[str]
-    app_id: Optional[str]
-    app_key: Optional[str]
-    auth_id: Optional[str]
-    test_db: Optional[str]
-    client: KustoClient
-    test_table: str
-    current_count: int
+    input_folder_path: ClassVar[str]
+    streaming_test_table: ClassVar[str]
+    test_streaming_data: ClassVar[list]
+    engine_cs: ClassVar[Optional[str]]
+    dm_cs: ClassVar[Optional[str]]
+    app_id: ClassVar[Optional[str]]
+    app_key: ClassVar[Optional[str]]
+    auth_id: ClassVar[Optional[str]]
+    test_db: ClassVar[Optional[str]]
+    client: ClassVar[KustoClient]
+    test_table: ClassVar[str]
+    current_count: ClassVar[int]
+    ingest_client: ClassVar[QueuedIngestClient]
+    streaming_ingest_client: ClassVar[KustoStreamingIngestClient]
+    managed_streaming_ingest_client: ClassVar[ManagedStreamingIngestClient]
 
     CHUNK_SIZE = 1024
 
@@ -88,7 +90,7 @@ class TestE2E:
         return mappings
 
     @staticmethod
-    def test_table_json_mappings():
+    def table_json_mappings():
         """A method to define json mappings to test table."""
         mappings = list()
         mappings.append(ColumnMapping(column_name="rownumber", path="$.rownumber", column_type="int"))
@@ -113,7 +115,7 @@ class TestE2E:
         return mappings
 
     @staticmethod
-    def test_table_json_mapping_reference():
+    def table_json_mapping_reference():
         """A method to get json mappings reference to test table."""
         return """'['
                     '    { "column" : "rownumber", "datatype" : "int", "Properties":{"Path":"$.rownumber"}},'
@@ -164,7 +166,7 @@ class TestE2E:
     @classmethod
     def setup_class(cls):
         # DM CS can be composed from engine CS
-        cls.engine_cs = os.environ.get("ENGINE_CONNECTION_STRING")
+        cls.engine_cs = os.environ.get("ENGINE_CONNECTION_STRING") or ""
         cls.dm_cs = os.environ.get("DM_CONNECTION_STRING") or cls.engine_cs.replace("//", "//ingest-")
         cls.app_id = os.environ.get("APP_ID")
         cls.app_key = os.environ.get("APP_KEY")
@@ -173,7 +175,7 @@ class TestE2E:
         cls.test_blob = os.environ.get("TEST_BLOB")
 
         if not all([cls.engine_cs, cls.dm_cs, cls.test_db]):
-            raise unittest.SkipTest("E2E environment is missing")
+            pytest.skip("E2E environment is missing")
 
         # Init clients
         python_version = "_".join([str(v) for v in sys.version_info[:3]])
@@ -185,6 +187,7 @@ class TestE2E:
         cls.ingest_client = QueuedIngestClient(cls.dm_kcsb_from_env())
         cls.streaming_ingest_client = KustoStreamingIngestClient(cls.engine_kcsb_from_env())
         cls.managed_streaming_ingest_client = ManagedStreamingIngestClient(cls.engine_kcsb_from_env(), cls.dm_kcsb_from_env())
+
         cls.input_folder_path = cls.get_file_path()
 
         cls.csv_file_path = os.path.join(cls.input_folder_path, "dataset.csv")
@@ -201,7 +204,7 @@ class TestE2E:
             cls.test_db,
             f".create table {cls.test_table} (rownumber: int, rowguid: string, xdouble: real, xfloat: real, xbool: bool, xint16: int, xint32: int, xint64: long, xuint8: long, xuint16: long, xuint32: long, xuint64: long, xdate: datetime, xsmalltext: string, xtext: string, xnumberAsText: string, xtime: timespan, xtextWithNulls: string, xdynamicWithNulls: dynamic)",
         )
-        cls.client.execute(cls.test_db, f".create table {cls.test_table} ingestion json mapping 'JsonMapping' {cls.test_table_json_mapping_reference()}")
+        cls.client.execute(cls.test_db, f".create table {cls.test_table} ingestion json mapping 'JsonMapping' {cls.table_json_mapping_reference()}")
 
         cls.client.execute(cls.test_db, f".alter table {cls.test_table} policy streamingingestion enable ")
 
@@ -374,7 +377,7 @@ class TestE2E:
             self.test_table,
             flush_immediately=True,
             data_format=DataFormat.JSON,
-            column_mappings=self.test_table_json_mappings(),
+            column_mappings=self.table_json_mappings(),
             report_level=ReportLevel.FailuresAndSuccesses,
         )
 
@@ -407,7 +410,7 @@ class TestE2E:
             self.test_db,
             self.test_table,
             data_format=DataFormat.JSON,
-            column_mappings=self.test_table_json_mappings(),
+            column_mappings=self.table_json_mappings(),
             additional_tags=["a", "b"],
             ingest_if_not_exists=["aaaa", "bbbb"],
             ingest_by_tags=["ingestByTag"],
@@ -435,7 +438,7 @@ class TestE2E:
             self.test_db,
             self.test_table,
             data_format=DataFormat.JSON,
-            column_mappings=self.test_table_json_mappings(),
+            column_mappings=self.table_json_mappings(),
             additional_tags=["a", "b"],
             ingest_if_not_exists=["aaaa", "bbbb"],
             ingest_by_tags=["ingestByTag"],
@@ -461,7 +464,7 @@ class TestE2E:
             self.test_db,
             self.test_table,
             data_format=DataFormat.JSON,
-            column_mappings=self.test_table_json_mappings(),
+            column_mappings=self.table_json_mappings(),
             ingest_if_not_exists=["ingestByTag"],
             report_level=ReportLevel.FailuresAndSuccesses,
             drop_by_tags=["drop", "drop-by"],
