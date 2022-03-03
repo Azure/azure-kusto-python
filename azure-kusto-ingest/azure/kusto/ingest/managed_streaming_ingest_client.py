@@ -63,6 +63,10 @@ class ManagedStreamingIngestClient(BaseIngestClient):
         self.queued_client = QueuedIngestClient(dm_kcsb)
         self.streaming_client = KustoStreamingIngestClient(engine_kcsb)
 
+    def set_proxy(self, proxy_url: str):
+        self.queued_client.set_proxy(proxy_url)
+        self.streaming_client.set_proxy(proxy_url)
+
     def ingest_from_file(self, file_descriptor: Union[FileDescriptor, str], ingestion_properties: IngestionProperties) -> IngestionResult:
         stream_descriptor = StreamDescriptor.from_file_descriptor(file_descriptor)
 

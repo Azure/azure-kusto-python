@@ -23,6 +23,9 @@ class KustoStreamingIngestClient(BaseIngestClient):
         """
         self._kusto_client = KustoClient(kcsb)
 
+    def set_proxy(self, proxy_url: str):
+        self._kusto_client.set_proxy(proxy_url)
+
     def ingest_from_file(self, file_descriptor: Union[FileDescriptor, str], ingestion_properties: IngestionProperties) -> IngestionResult:
         """Ingest from local files.
         :param file_descriptor: a FileDescriptor to be ingested.
