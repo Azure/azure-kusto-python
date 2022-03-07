@@ -3,9 +3,12 @@
 import re
 from datetime import datetime, timedelta
 from typing import List
+from functools import partial
 
+from ._retry import func_retry_wrapper
 from azure.kusto.data import KustoClient
 from azure.kusto.data._models import KustoResultTable
+from azure.kusto.data.exceptions import KustoThrottlingError
 
 _URI_FORMAT = re.compile("https://(\\w+).(queue|blob|table).(core.\\w+.\\w+)/([\\w,-]+)\\?(.*)")
 _SHOW_VERSION = ".show version"
@@ -65,9 +68,11 @@ class _IngestClientResources:
 
 
 class _ResourceManager:
-    def __init__(self, kusto_client: KustoClient):
+    def __init__(self, kusto_client: KustoClient, max_retry=3, seconds_between_retry: float = 1):
         self._kusto_client = kusto_client
         self._refresh_period = timedelta(hours=1)
+        self._max_retry = max_retry
+        self._seconds_between_retry = seconds_between_retry
 
         self._ingest_client_resources = None
         self._ingest_client_resources_last_update = None
@@ -88,7 +93,9 @@ class _ResourceManager:
         return [_ResourceUri.parse(row["StorageRoot"]) for row in table if row["ResourceTypeName"] == resource_name]
 
     def _get_ingest_client_resources_from_service(self):
-        table = self._kusto_client.execute("NetDefaultDB", ".get ingestion resources").primary_results[0]
+        table = func_retry_wrapper(
+            partial(self._kusto_client.execute, "NetDefaultDB", ".get ingestion resources"), self._max_retry, self._seconds_between_retry, KustoThrottlingError
+        ).primary_results[0]
 
         secured_ready_for_aggregation_queues = self._get_resource_by_name(table, "SecuredReadyForAggregationQueue")
         failed_ingestions_queues = self._get_resource_by_name(table, "FailedIngestionsQueue")
@@ -108,7 +115,9 @@ class _ResourceManager:
             self._authorization_context_last_update = datetime.utcnow()
 
     def _get_authorization_context_from_service(self):
-        return self._kusto_client.execute("NetDefaultDB", ".get kusto identity token").primary_results[0][0]["AuthorizationContext"]
+        return func_retry_wrapper(
+            partial(self._kusto_client.execute, "NetDefaultDB", ".get kusto identity token"), self._max_retry, self._seconds_between_retry, KustoThrottlingError
+        ).primary_results[0][0]["AuthorizationContext"]
 
     def get_ingestion_queues(self) -> List[_ResourceUri]:
         self._refresh_ingest_client_resources()

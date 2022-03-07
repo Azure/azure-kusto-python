@@ -34,3 +34,17 @@ class KustoInvalidEndpointError(KustoClientError):
         if suggested_endpoint_url:
             message = message + ": '" + suggested_endpoint_url + "'"
         super(KustoInvalidEndpointError, self).__init__(message)
+
+
+class KustoFailedAfterRetry(KustoClientError):
+    """
+    Raised when function execution fails after X number of retries.
+    """
+
+    def __init__(self, exp: Exception, max_retry):
+        self.inner = exp
+        self.max_retry = max_retry
+        super(KustoFailedAfterRetry, self).__init__(self.__str__())
+
+    def __str__(self) -> str:
+        return f"Exception ({self.inner}) raised after {self.max_retry} tries."

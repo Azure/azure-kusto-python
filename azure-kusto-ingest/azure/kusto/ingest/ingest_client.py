@@ -28,7 +28,7 @@ class QueuedIngestClient(BaseIngestClient):
     _EXPECTED_SERVICE_TYPE = "DataManagement"
     _SERVICE_CLIENT_TIMEOUT_SECONDS = 10 * 60
 
-    def __init__(self, kcsb: Union[str, KustoConnectionStringBuilder]):
+    def __init__(self, kcsb: Union[str, KustoConnectionStringBuilder], max_retry=3, seconds_between_retry: float = 1):
         """Kusto Ingest Client constructor.
         :param kcsb: The connection string to initialize KustoClient.
         """
@@ -36,7 +36,7 @@ class QueuedIngestClient(BaseIngestClient):
             kcsb = KustoConnectionStringBuilder(kcsb)
         self._proxy_dict: Optional[Dict[str, str]] = None
         self._connection_datasource = kcsb.data_source
-        self._resource_manager = _ResourceManager(KustoClient(kcsb))
+        self._resource_manager = _ResourceManager(KustoClient(kcsb), max_retry, seconds_between_retry)
         self._endpoint_service_type = None
         self._suggested_endpoint_uri = None
 

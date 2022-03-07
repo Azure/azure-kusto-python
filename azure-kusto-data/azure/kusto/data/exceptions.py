@@ -170,3 +170,7 @@ class KustoAsyncUsageError(Exception):
 
     def __init__(self, method: str, is_client_async: bool):
         super().__init__("Method {} can't be called from {} client".format(method, "an asynchronous" if is_client_async else "a synchronous"))
+
+
+class KustoThrottlingError(KustoError):
+    ...
