@@ -173,4 +173,6 @@ class KustoAsyncUsageError(Exception):
 
 
 class KustoThrottlingError(KustoError):
+    """Raised when API call gets throttled by the server."""
+
     ...

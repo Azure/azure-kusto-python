@@ -1,12 +1,12 @@
 import uuid
 from io import SEEK_SET
 from typing import TYPE_CHECKING, Union, IO, AnyStr
+from tenacity import stop_after_delay, Retrying, wait_random_exponential, stop_after_attempt, _utils
 
 from azure.kusto.data import KustoConnectionStringBuilder
 from azure.kusto.data.exceptions import KustoApiError
 
 from . import IngestionProperties, BlobDescriptor, StreamDescriptor, FileDescriptor
-from ._retry import ExponentialRetry
 from ._stream_extensions import read_until_size_or_end, chain_streams
 from .base_ingest_client import BaseIngestClient, IngestionResult
 from .ingest_client import QueuedIngestClient
@@ -29,7 +29,6 @@ class ManagedStreamingIngestClient(BaseIngestClient):
     """
 
     MAX_STREAMING_SIZE_IN_BYTES = 4 * 1024 * 1024
-    ATTEMPT_COUNT = 3
 
     @staticmethod
     def from_engine_kcsb(engine_kcsb: Union[KustoConnectionStringBuilder, str]) -> "ManagedStreamingIngestClient":
@@ -62,6 +61,11 @@ class ManagedStreamingIngestClient(BaseIngestClient):
     def __init__(self, engine_kcsb: Union[KustoConnectionStringBuilder, str], dm_kcsb: Union[KustoConnectionStringBuilder, str]):
         self.queued_client = QueuedIngestClient(dm_kcsb)
         self.streaming_client = KustoStreamingIngestClient(engine_kcsb)
+        self._set_retry_settings()
+
+    def _set_retry_settings(self, max_seconds_per_retry: float = _utils.MAX_WAIT, num_of_attempts: int = 3):
+        self._num_of_attempts = num_of_attempts
+        self._max_seconds_per_retry = max_seconds_per_retry
 
     def set_proxy(self, proxy_url: str):
         self.queued_client.set_proxy(proxy_url)
@@ -85,17 +89,18 @@ class ManagedStreamingIngestClient(BaseIngestClient):
 
         stream_descriptor.stream = buffered_stream
 
-        retry = self._create_exponential_retry()
-        while retry:
-            try:
-                client_request_id = ManagedStreamingIngestClient._get_request_id(stream_descriptor.source_id, retry.current_attempt)
-                return self.streaming_client._ingest_from_stream_with_client_request_id(stream_descriptor, ingestion_properties, client_request_id)
-            except KustoApiError as e:
-                error = e.get_api_error()
-                if error.permanent:
-                    raise
-                stream.seek(0, SEEK_SET)
-                retry.do_backoff()
+        try:
+            for attempt in Retrying(
+                stop=stop_after_attempt(self._num_of_attempts), wait=wait_random_exponential(max=self._max_seconds_per_retry), reraise=True
+            ):
+                with attempt:
+                    stream.seek(0, SEEK_SET)
+                    client_request_id = ManagedStreamingIngestClient._get_request_id(stream_descriptor.source_id, attempt.retry_state.attempt_number - 1)
+                    return self.streaming_client._ingest_from_stream_with_client_request_id(stream_descriptor, ingestion_properties, client_request_id)
+        except KustoApiError as ex:
+            error = ex.get_api_error()
+            if error.permanent:
+                raise
 
         return self.queued_client.ingest_from_stream(stream_descriptor, ingestion_properties)
 
@@ -115,7 +120,3 @@ class ManagedStreamingIngestClient(BaseIngestClient):
     @staticmethod
     def _get_request_id(source_id: uuid.UUID, attempt: int):
         return f"KPC.executeManagedStreamingIngest;{source_id};{attempt}"
-
-    @staticmethod
-    def _create_exponential_retry():
-        return ExponentialRetry(ManagedStreamingIngestClient.ATTEMPT_COUNT)
