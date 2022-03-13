@@ -109,7 +109,8 @@ class TestManagedStreamingIngestClient:
 
         initial_bytes = bytearray(os.urandom(5 * 1024 * 1024))
 
-        def check_bytes(data):
+        def check_bytes(data, **kwargs):
+            assert kwargs["timeout"] == 10 * 60
             assert data.read() == initial_bytes
 
         mock_upload_blob_from_stream.side_effect = check_bytes
@@ -158,7 +159,8 @@ class TestManagedStreamingIngestClient:
         initial_bytes = bytearray(os.urandom(5 * 1024 * 1024))
         stream = io.BytesIO(initial_bytes)
 
-        def check_bytes(data):
+        def check_bytes(data, **kwargs):
+            assert kwargs["timeout"] == 10 * 60
             assert data.read() == initial_bytes
 
         mock_upload_blob_from_stream.side_effect = check_bytes
