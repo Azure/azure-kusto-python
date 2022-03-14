@@ -26,6 +26,7 @@ class QueuedIngestClient(BaseIngestClient):
 
     _INGEST_PREFIX = "ingest-"
     _EXPECTED_SERVICE_TYPE = "DataManagement"
+    _SERVICE_CLIENT_TIMEOUT_SECONDS = 10 * 60
 
     def __init__(self, kcsb: Union[str, KustoConnectionStringBuilder]):
         """Kusto Ingest Client constructor.
@@ -95,7 +96,7 @@ class QueuedIngestClient(BaseIngestClient):
         ingestion_blob_info = IngestionBlobInfo(blob_descriptor, ingestion_properties=ingestion_properties, auth_context=authorization_context)
         ingestion_blob_info_json = ingestion_blob_info.to_json()
         queue_client = queue_service.get_queue_client(queue=random_queue.object_name, message_encode_policy=TextBase64EncodePolicy())
-        queue_client.send_message(content=ingestion_blob_info_json)
+        queue_client.send_message(content=ingestion_blob_info_json, timeout=self._SERVICE_CLIENT_TIMEOUT_SECONDS)
 
         return IngestionResult(
             IngestionStatus.QUEUED, ingestion_properties.database, ingestion_properties.table, blob_descriptor.source_id, blob_descriptor.path
@@ -123,7 +124,7 @@ class QueuedIngestClient(BaseIngestClient):
         try:
             blob_service = BlobServiceClient(random_container.account_uri, proxies=self._proxy_dict)
             blob_client = blob_service.get_blob_client(container=random_container.object_name, blob=blob_name)
-            blob_client.upload_blob(data=stream)
+            blob_client.upload_blob(data=stream, timeout=self._SERVICE_CLIENT_TIMEOUT_SECONDS)
         except Exception as e:
             raise KustoBlobError(e)
         return BlobDescriptor(blob_client.url, descriptor.size, descriptor.source_id)
