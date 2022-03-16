@@ -11,16 +11,8 @@ from mock import patch
 from azure.kusto.data.data_format import DataFormat
 from azure.kusto.data.exceptions import KustoApiError
 from azure.kusto.ingest import ManagedStreamingIngestClient, IngestionProperties, IngestionStatus, BlobDescriptor
-from azure.kusto.ingest._retry import ExponentialRetry
 from test_kusto_ingest_client import request_callback as queued_request_callback, assert_queued_upload
 from test_kusto_streaming_ingest_client import request_callback as streaming_request_callback, assert_managed_streaming_request_id
-
-
-def mock_retry(self):
-    self.max_attempts = ManagedStreamingIngestClient.ATTEMPT_COUNT
-    self.sleep_base_secs = 0
-    self.max_jitter_secs = 0
-    self.current_attempt = 0
 
 
 class TransientResponseHelper:
@@ -180,15 +172,11 @@ class TestManagedStreamingIngestClient:
         mock_upload_blob_from_stream.assert_called()
 
     @responses.activate
-    @patch(
-        "azure.kusto.ingest.managed_streaming_ingest_client.ManagedStreamingIngestClient._create_exponential_retry",
-        return_value=ExponentialRetry(ManagedStreamingIngestClient.ATTEMPT_COUNT, sleep_base_secs=0, max_jitter_secs=0),
-    )
     @patch("azure.kusto.data.security._AadHelper.acquire_authorization_header", return_value=None)
     @patch("azure.storage.blob.BlobClient.upload_blob")
     @patch("azure.storage.queue.QueueClient.send_message")
     @patch("uuid.uuid4", return_value=MOCKED_UUID_4)
-    def test_fallback_transient_errors_limit(self, mock_uuid, mock_put_message_in_queue, mock_upload_blob_from_stream, mock_aad, mock_retry):
+    def test_fallback_transient_errors_limit(self, mock_uuid, mock_put_message_in_queue, mock_upload_blob_from_stream, mock_aad):
         total_attempts = 3
 
         responses.add_callback(
@@ -196,6 +184,7 @@ class TestManagedStreamingIngestClient:
         )
 
         ingest_client = ManagedStreamingIngestClient.from_engine_kcsb("https://somecluster.kusto.windows.net")
+        ingest_client._set_retry_settings(0)
         ingestion_properties = IngestionProperties(database="database", table="table")
 
         helper = TransientResponseHelper(times_to_fail=total_attempts)
@@ -229,15 +218,11 @@ class TestManagedStreamingIngestClient:
         assert helper.total_calls == total_attempts
 
     @responses.activate
-    @patch(
-        "azure.kusto.ingest.managed_streaming_ingest_client.ManagedStreamingIngestClient._create_exponential_retry",
-        return_value=ExponentialRetry(ManagedStreamingIngestClient.ATTEMPT_COUNT, sleep_base_secs=0, max_jitter_secs=0),
-    )
     @patch("azure.kusto.data.security._AadHelper.acquire_authorization_header", return_value=None)
     @patch("azure.storage.blob.BlobClient.upload_blob")
     @patch("azure.storage.queue.QueueClient.send_message")
     @patch("uuid.uuid4", return_value=MOCKED_UUID_4)
-    def test_fallback_transient_single_error(self, mock_uuid, mock_put_message_in_queue, mock_upload_blob_from_stream, mock_aad, mock_retry):
+    def test_fallback_transient_single_error(self, mock_uuid, mock_put_message_in_queue, mock_upload_blob_from_stream, mock_aad):
         total_failures = 2
 
         responses.add_callback(
@@ -252,6 +237,7 @@ class TestManagedStreamingIngestClient:
         )
 
         ingest_client = ManagedStreamingIngestClient.from_engine_kcsb("https://somecluster.kusto.windows.net")
+        ingest_client._set_retry_settings(0)
         ingestion_properties = IngestionProperties(database="database", table="table")
 
         # ensure test can work when executed from within directories

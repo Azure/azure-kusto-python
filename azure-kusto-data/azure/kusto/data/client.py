@@ -17,7 +17,7 @@ from urllib3.connection import HTTPConnection
 
 from ._version import VERSION
 from .data_format import DataFormat
-from .exceptions import KustoServiceError, KustoApiError
+from .exceptions import KustoServiceError, KustoApiError, KustoThrottlingError
 from .response import KustoResponseDataSetV1, KustoResponseDataSetV2, KustoStreamingResponseDataSet, KustoResponseDataSet
 from .security import _AadHelper
 from .streaming_response import StreamingDataSetEnumerator, JsonTokenReader
@@ -740,6 +740,9 @@ class _KustoClientBase(abc.ABC):
                 raise KustoServiceError("The ingestion endpoint does not exist. Please enable streaming ingestion on your cluster.", response) from exception
 
             raise KustoServiceError(f"The requested endpoint '{endpoint}' does not exist.", response) from exception
+
+        if status == 429:
+            raise KustoThrottlingError("The request was throttled by the server.", response) from exception
 
         if payload:
             message = f"An error occurred while trying to ingest: Status: {status}, Reason: {response.reason}, Text: {response_text}."
