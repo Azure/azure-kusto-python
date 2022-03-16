@@ -2,6 +2,7 @@
 # Licensed under the MIT License
 import io
 import json
+import logging
 import os
 import pathlib
 import random
@@ -35,7 +36,31 @@ from azure.kusto.ingest import (
     BlobDescriptor,
     StreamDescriptor,
     ManagedStreamingIngestClient,
+    root_kusto_logger,
 )
+
+
+class CustomFormatter(logging.Formatter):
+
+    grey = "\x1b[38;20m"
+    yellow = "\x1b[33;20m"
+    red = "\x1b[31;20m"
+    bold_red = "\x1b[31;1m"
+    reset = "\x1b[0m"
+    format = "%(asctime)s | %(processName)s:%(process)d:%(thread)d |  %(name)s | %(levelname)s | %(filename)s:%(funcName)s:%(lineno)d | %(message)s"
+
+    FORMATS = {
+        logging.DEBUG: grey + format + reset,
+        logging.INFO: grey + format + reset,
+        logging.WARNING: yellow + format + reset,
+        logging.ERROR: red + format + reset,
+        logging.CRITICAL: bold_red + format + reset,
+    }
+
+    def format(self, record):
+        log_fmt = self.FORMATS.get(record.levelno)
+        formatter = logging.Formatter(log_fmt)
+        return formatter.format(record)
 
 
 @pytest.fixture(params=["ManagedStreaming", "NormalClient"])
@@ -165,6 +190,14 @@ class TestE2E:
 
     @classmethod
     def setup_class(cls):
+
+        handler = logging.StreamHandler()
+        handler.setLevel(logging.DEBUG)
+        handler.setFormatter(CustomFormatter())
+        logger = root_kusto_logger(enable_loggers=True)
+        logger.setLevel(logging.DEBUG)
+        logger.addHandler(handler)
+
         # DM CS can be composed from engine CS
         cls.engine_cs = os.environ.get("ENGINE_CONNECTION_STRING") or ""
         cls.dm_cs = os.environ.get("DM_CONNECTION_STRING") or cls.engine_cs.replace("//", "//ingest-")

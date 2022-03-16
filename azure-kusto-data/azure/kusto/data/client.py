@@ -3,6 +3,7 @@
 import abc
 import io
 import json
+import logging
 import socket
 import sys
 import uuid
@@ -25,6 +26,8 @@ from .streaming_response import StreamingDataSetEnumerator, JsonTokenReader
 if TYPE_CHECKING:
     import aiohttp
     import aiohttp.web_exceptions
+
+logger = logging.getLogger(__name__)
 
 
 class KustoConnectionStringBuilder:
@@ -693,6 +696,7 @@ class _KustoClientBase(abc.ABC):
     _aad_helper: _AadHelper
 
     def __init__(self, kcsb: Union[KustoConnectionStringBuilder, str], is_async):
+        logger.debug("Initializing %s", self.__class__.__name__)
         self._kcsb = kcsb
         self._proxy_url: Optional[str] = None
         if not isinstance(kcsb, KustoConnectionStringBuilder):
@@ -714,6 +718,7 @@ class _KustoClientBase(abc.ABC):
         }
 
     def set_proxy(self, proxy_url: str):
+        logger.debug("Setting proxy - %s", proxy_url)
         self._proxy_url = proxy_url
         if self._aad_helper:
             self._aad_helper.token_provider.set_proxy(proxy_url)
