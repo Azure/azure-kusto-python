@@ -1,3 +1,3 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
-VERSION = "3.1.1"
+VERSION = "3.1.0"
