@@ -21,6 +21,7 @@ from .exceptions import KustoServiceError, KustoApiError, KustoThrottlingError
 from .response import KustoResponseDataSetV1, KustoResponseDataSetV2, KustoStreamingResponseDataSet, KustoResponseDataSet
 from .security import _AadHelper
 from .streaming_response import StreamingDataSetEnumerator, JsonTokenReader
+from urllib.parse import urljoin
 
 if TYPE_CHECKING:
     import aiohttp
@@ -703,9 +704,9 @@ class _KustoClientBase(abc.ABC):
         self._aad_helper = _AadHelper(self._kcsb, is_async) if self._kcsb.aad_federated_security else None
 
         # Create a session object for connection pooling
-        self._mgmt_endpoint = "{0}/v1/rest/mgmt".format(self._kusto_cluster)
-        self._query_endpoint = "{0}/v2/rest/query".format(self._kusto_cluster)
-        self._streaming_ingest_endpoint = "{0}/v1/rest/ingest/".format(self._kusto_cluster)
+        self._mgmt_endpoint = urljoin(self._kusto_cluster, "v1/rest/mgmt")
+        self._query_endpoint = urljoin(self._kusto_cluster, "v2/rest/query")
+        self._streaming_ingest_endpoint = urljoin(self._kusto_cluster, "v1/rest/ingest/")
         self._request_headers = {
             "Accept": "application/json",
             "Accept-Encoding": "gzip,deflate",
