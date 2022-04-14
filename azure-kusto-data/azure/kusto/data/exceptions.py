@@ -1,5 +1,6 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
+import json
 from typing import List, Union, TYPE_CHECKING, Optional, Dict, Any
 
 if TYPE_CHECKING:
@@ -69,13 +70,18 @@ class OneApiError:
 
     @staticmethod
     def from_dict(obj: dict) -> "OneApiError":
-        code = obj["code"]
-        message = obj["message"]
-        type = obj["@type"]
-        description = obj["@message"]
-        context = obj["@context"]
-        permanent = obj["@permanent"]
-        return OneApiError(code, message, type, description, context, permanent)
+        try:
+            code = obj["code"]
+            message = obj["message"]
+            type = obj["@type"]
+            description = obj["@message"]
+            context = obj["@context"]
+            permanent = obj["@permanent"]
+            return OneApiError(code, message, type, description, context, permanent)
+        except Exception as e:
+            return OneApiError(
+                "FailedToParse", f"Failed to parse one api error. Got {e}. Full object - {json.dumps(obj)}", "FailedToParseOneApiError", "", {}, False
+            )
 
 
 class KustoMultiApiError(KustoServiceError):
@@ -170,3 +176,9 @@ class KustoAsyncUsageError(Exception):
 
     def __init__(self, method: str, is_client_async: bool):
         super().__init__("Method {} can't be called from {} client".format(method, "an asynchronous" if is_client_async else "a synchronous"))
+
+
+class KustoThrottlingError(KustoError):
+    """Raised when API call gets throttled by the server."""
+
+    ...

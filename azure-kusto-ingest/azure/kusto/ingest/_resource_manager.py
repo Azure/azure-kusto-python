@@ -3,9 +3,11 @@
 import re
 from datetime import datetime, timedelta
 from typing import List
+from tenacity import retry_if_exception_type, stop_after_attempt, Retrying, wait_random_exponential
 
 from azure.kusto.data import KustoClient
 from azure.kusto.data._models import KustoResultTable
+from azure.kusto.data.exceptions import KustoThrottlingError
 
 _URI_FORMAT = re.compile("https://(\\w+).(queue|blob|table).(core.\\w+.\\w+)/([\\w,-]+)\\?(.*)")
 _SHOW_VERSION = ".show version"
@@ -75,6 +77,16 @@ class _ResourceManager:
         self._authorization_context = None
         self._authorization_context_last_update = None
 
+        self.__set_throttling_settings()
+
+    def __set_throttling_settings(self, num_of_attempts: int = 4, max_seconds_per_retry: float = 30):
+        self._retryer = Retrying(
+            wait=wait_random_exponential(max=max_seconds_per_retry),
+            retry=retry_if_exception_type(KustoThrottlingError),
+            stop=stop_after_attempt(num_of_attempts),
+            reraise=True,
+        )
+
     def _refresh_ingest_client_resources(self):
         if (
             not self._ingest_client_resources
@@ -88,7 +100,8 @@ class _ResourceManager:
         return [_ResourceUri.parse(row["StorageRoot"]) for row in table if row["ResourceTypeName"] == resource_name]
 
     def _get_ingest_client_resources_from_service(self):
-        table = self._kusto_client.execute("NetDefaultDB", ".get ingestion resources").primary_results[0]
+        result = self._retryer(self._kusto_client.execute, "NetDefaultDB", ".get ingestion resources")
+        table = result.primary_results[0]
 
         secured_ready_for_aggregation_queues = self._get_resource_by_name(table, "SecuredReadyForAggregationQueue")
         failed_ingestions_queues = self._get_resource_by_name(table, "FailedIngestionsQueue")
@@ -108,7 +121,8 @@ class _ResourceManager:
             self._authorization_context_last_update = datetime.utcnow()
 
     def _get_authorization_context_from_service(self):
-        return self._kusto_client.execute("NetDefaultDB", ".get kusto identity token").primary_results[0][0]["AuthorizationContext"]
+        result = self._retryer(self._kusto_client.execute, "NetDefaultDB", ".get kusto identity token")
+        return result.primary_results[0][0]["AuthorizationContext"]
 
     def get_ingestion_queues(self) -> List[_ResourceUri]:
         self._refresh_ingest_client_resources()
