@@ -30,9 +30,9 @@ class _AadHelper:
     def __init__(self, kcsb: "KustoConnectionStringBuilder", is_async: bool):
         parsed_url = urlparse(kcsb.data_source)
         self.kusto_uri = f"{parsed_url.scheme}://{parsed_url.hostname}"
-        if (parsed_url.port is not None) {
+        if parsed_url.port is not None:
             self.kusto_uri += f":{parsed_url.port}"
-        }
+        
         
         self.username = None
 
