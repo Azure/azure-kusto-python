@@ -32,8 +32,7 @@ class _AadHelper:
         self.kusto_uri = f"{parsed_url.scheme}://{parsed_url.hostname}"
         if parsed_url.port is not None:
             self.kusto_uri += f":{parsed_url.port}"
-        
-        
+
         self.username = None
 
         if kcsb.interactive_login:
