@@ -5,7 +5,10 @@ from typing import Union, Optional
 from .response import KustoStreamingResponseDataSet
 from .._decorators import documented_by, aio_documented_by
 from ..aio.streaming_response import StreamingDataSetEnumerator, JsonTokenReader
-from ..client import KustoClient as KustoClientSync, _KustoClientBase, KustoConnectionStringBuilder, ClientRequestProperties, ExecuteRequestParams
+from ..client import KustoClient as KustoClientSync
+from ..client_base import _KustoClientBase, ExecuteRequestParams
+from ..kcsb import KustoConnectionStringBuilder
+from ..client_request_properties import ClientRequestProperties
 from ..data_format import DataFormat
 from ..exceptions import KustoAioSyntaxError
 from ..response import KustoResponseDataSet
@@ -88,7 +91,9 @@ class KustoClient(_KustoClientBase):
         stream_response: bool = False,
     ) -> Union[KustoResponseDataSet, ClientResponse]:
         """Executes given query against this client"""
-        request_params = ExecuteRequestParams(database, payload, properties, query, timeout, self._request_headers)
+        request_params = ExecuteRequestParams(
+            database, payload, properties, query, timeout, self._request_headers, self._mgmt_default_timeout, self._client_server_delta
+        )
         json_payload = request_params.json_payload
         request_headers = request_params.request_headers
         timeout = request_params.timeout
