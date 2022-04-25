@@ -28,7 +28,11 @@ class _AadHelper:
     token_provider = None  # type: TokenProviderBase
 
     def __init__(self, kcsb: "KustoConnectionStringBuilder", is_async: bool):
-        self.kusto_uri = "{0.scheme}://{0.hostname}".format(urlparse(kcsb.data_source))
+        parsed_url = urlparse(kcsb.data_source)
+        self.kusto_uri = f"{parsed_url.scheme}://{parsed_url.hostname}"
+        if parsed_url.port is not None:
+            self.kusto_uri += f":{parsed_url.port}"
+
         self.username = None
 
         if kcsb.interactive_login:
