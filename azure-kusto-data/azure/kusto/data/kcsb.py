@@ -1,6 +1,8 @@
 from enum import unique, Enum
 from typing import Union, Callable, Coroutine, Optional
 
+from ._string_utils import assert_string_is_not_empty
+
 
 class KustoConnectionStringBuilder:
     """
@@ -114,7 +116,7 @@ class KustoConnectionStringBuilder:
         For more information please look at:
         https://kusto.azurewebsites.net/docs/concepts/kusto_connection_strings.html
         """
-        _assert_value_is_valid(connection_string)
+        assert_string_is_not_empty(connection_string)
         self._internal_dict = {}
         self._token_provider = None
         self._async_token_provider = None
@@ -170,8 +172,8 @@ class KustoConnectionStringBuilder:
         :param str password: Corresponding password of the AAD user.
         :param str authority_id: optional param. defaults to "common"
         """
-        _assert_value_is_valid(user_id)
-        _assert_value_is_valid(password)
+        assert_string_is_not_empty(user_id)
+        assert_string_is_not_empty(password)
         kcsb = cls(connection_string)
         kcsb[kcsb.ValidKeywords.aad_federated_security] = True
         kcsb[kcsb.ValidKeywords.aad_user_id] = user_id
@@ -189,7 +191,7 @@ class KustoConnectionStringBuilder:
         https://<clusterName>.kusto.windows.net
         :param str user_token: AAD user token.
         """
-        _assert_value_is_valid(user_token)
+        assert_string_is_not_empty(user_token)
         kcsb = cls(connection_string)
         kcsb[kcsb.ValidKeywords.aad_federated_security] = True
         kcsb[kcsb.ValidKeywords.user_token] = user_token
@@ -207,9 +209,9 @@ class KustoConnectionStringBuilder:
         :param str app_key: Corresponding key of the AAD application.
         :param str authority_id: Authority id (aka Tenant id) must be provided
         """
-        _assert_value_is_valid(aad_app_id)
-        _assert_value_is_valid(app_key)
-        _assert_value_is_valid(authority_id)
+        assert_string_is_not_empty(aad_app_id)
+        assert_string_is_not_empty(app_key)
+        assert_string_is_not_empty(authority_id)
         kcsb = cls(connection_string)
         kcsb[kcsb.ValidKeywords.aad_federated_security] = True
         kcsb[kcsb.ValidKeywords.application_client_id] = aad_app_id
@@ -232,10 +234,10 @@ class KustoConnectionStringBuilder:
         :param str thumbprint: hex encoded thumbprint of the certificate.
         :param str authority_id: Authority id (aka Tenant id) must be provided
         """
-        _assert_value_is_valid(aad_app_id)
-        _assert_value_is_valid(certificate)
-        _assert_value_is_valid(thumbprint)
-        _assert_value_is_valid(authority_id)
+        assert_string_is_not_empty(aad_app_id)
+        assert_string_is_not_empty(certificate)
+        assert_string_is_not_empty(thumbprint)
+        assert_string_is_not_empty(authority_id)
 
         kcsb = cls(connection_string)
         kcsb[kcsb.ValidKeywords.aad_federated_security] = True
@@ -261,11 +263,11 @@ class KustoConnectionStringBuilder:
         :param str thumbprint: hex encoded thumbprint of the certificate.
         :param str authority_id: Authority id (aka Tenant id) must be provided
         """
-        _assert_value_is_valid(aad_app_id)
-        _assert_value_is_valid(private_certificate)
-        _assert_value_is_valid(public_certificate)
-        _assert_value_is_valid(thumbprint)
-        _assert_value_is_valid(authority_id)
+        assert_string_is_not_empty(aad_app_id)
+        assert_string_is_not_empty(private_certificate)
+        assert_string_is_not_empty(public_certificate)
+        assert_string_is_not_empty(thumbprint)
+        assert_string_is_not_empty(authority_id)
 
         kcsb = cls(connection_string)
         kcsb[kcsb.ValidKeywords.aad_federated_security] = True
@@ -286,7 +288,7 @@ class KustoConnectionStringBuilder:
         https://<clusterName>.kusto.windows.net
         :param str application_token: AAD application token.
         """
-        _assert_value_is_valid(application_token)
+        assert_string_is_not_empty(application_token)
         kcsb = cls(connection_string)
         kcsb[kcsb.ValidKeywords.aad_federated_security] = True
         kcsb[kcsb.ValidKeywords.application_token] = application_token
@@ -553,8 +555,3 @@ class KustoConnectionStringBuilder:
 
     def _build_connection_string(self, kcsb_as_dict: dict) -> str:
         return ";".join(["{0}={1}".format(word.value, kcsb_as_dict[word]) for word in self.ValidKeywords if word in kcsb_as_dict])
-
-
-def _assert_value_is_valid(value: str):
-    if not value or not value.strip():
-        raise ValueError("Should not be empty")

@@ -1,7 +1,7 @@
 import json
 from typing import Any
 
-from .kcsb import _assert_value_is_valid
+from ._string_utils import assert_string_is_not_empty
 
 
 class ClientRequestProperties:
@@ -22,7 +22,7 @@ class ClientRequestProperties:
 
     def set_parameter(self, name: str, value: str):
         """Sets a parameter's value"""
-        _assert_value_is_valid(name)
+        assert_string_is_not_empty(name)
         self._parameters[name] = value
 
     def has_parameter(self, name: str) -> bool:
@@ -35,7 +35,7 @@ class ClientRequestProperties:
 
     def set_option(self, name: str, value: Any):
         """Sets an option's value"""
-        _assert_value_is_valid(name)
+        assert_string_is_not_empty(name)
         self._options[name] = value
 
     def has_option(self, name: str) -> bool:
