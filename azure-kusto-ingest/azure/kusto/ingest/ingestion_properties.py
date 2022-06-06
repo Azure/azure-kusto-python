@@ -1,9 +1,10 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
 from enum import Enum, IntEnum
-from typing import List, Optional
+from typing import List, Optional, Dict
 
 from azure.kusto.data.data_format import DataFormat, IngestionMappingKind
+from ._dict_utils import invert_dict_of_lists
 from .exceptions import KustoDuplicateMappingError, KustoMissingMappingError, KustoMappingError
 
 
@@ -65,18 +66,70 @@ class ColumnMapping:
     pre-created (it is recommended to create the mappings in advance and use ingestionMappingReference).
     To read more about mappings look here: https://docs.microsoft.com/en-us/azure/kusto/management/mappings"""
 
-    # Json Mapping consts
     PATH = "Path"
     TRANSFORMATION_METHOD = "Transform"
-    # csv Mapping consts
     ORDINAL = "Ordinal"
     CONST_VALUE = "ConstValue"
-    # Avro Mapping consts
     FIELD_NAME = "Field"
+
+    # TODO - these are undocumented - do they really exist?
     COLUMNS = "Columns"
-    # General Mapping consts
     STORAGE_DATA_TYPE = "StorageDataType"
 
+    VALID_MAPPINGS: Dict[str, List[IngestionMappingKind]] = {
+        ORDINAL: [IngestionMappingKind.CSV],
+        PATH: [
+            IngestionMappingKind.JSON,
+            IngestionMappingKind.AVRO,
+            IngestionMappingKind.APACHEAVRO,
+            IngestionMappingKind.SSTREAM,
+            IngestionMappingKind.PARQUET,
+            IngestionMappingKind.ORC,
+        ],
+        CONST_VALUE: [
+            IngestionMappingKind.CSV,
+            IngestionMappingKind.JSON,
+            IngestionMappingKind.AVRO,
+            IngestionMappingKind.APACHEAVRO,
+            IngestionMappingKind.SSTREAM,
+            IngestionMappingKind.PARQUET,
+            IngestionMappingKind.ORC,
+            IngestionMappingKind.W3CLOGFILE,
+        ],
+        FIELD_NAME: [
+            IngestionMappingKind.AVRO,
+            IngestionMappingKind.APACHEAVRO,
+            IngestionMappingKind.SSTREAM,
+            IngestionMappingKind.PARQUET,
+            IngestionMappingKind.ORC,
+            IngestionMappingKind.W3CLOGFILE,
+        ],
+        TRANSFORMATION_METHOD: [
+            IngestionMappingKind.JSON,
+            IngestionMappingKind.AVRO,
+            IngestionMappingKind.APACHEAVRO,
+            IngestionMappingKind.SSTREAM,
+            IngestionMappingKind.PARQUET,
+            IngestionMappingKind.ORC,
+            IngestionMappingKind.W3CLOGFILE,
+        ],
+        COLUMNS: [IngestionMappingKind.AVRO, IngestionMappingKind.APACHEAVRO],
+        STORAGE_DATA_TYPE: [
+            IngestionMappingKind.JSON,
+            IngestionMappingKind.AVRO,
+            IngestionMappingKind.APACHEAVRO,
+            IngestionMappingKind.SSTREAM,
+            IngestionMappingKind.PARQUET,
+            IngestionMappingKind.ORC,
+            IngestionMappingKind.W3CLOGFILE,
+        ],
+    }
+
+    NEEDED_PROPERTIES = invert_dict_of_lists(VALID_MAPPINGS)
+
+    CONSTANT_TRANSFORMATION_METHODS = [TransformationMethod.SOURCE_LOCATION.value, TransformationMethod.SOURCE_LINE_NUMBER.value]
+
+    # TODO - add safe and convenient ctors, like in node
     def __init__(
         self,
         column_name: str,
@@ -107,21 +160,43 @@ class ColumnMapping:
         if storage_data_type:
             self.properties[self.STORAGE_DATA_TYPE] = storage_data_type
 
-    def is_valid(self, kind: IngestionMappingKind) -> bool:
+    def get_validation_errors(self, kind: IngestionMappingKind) -> List[str]:
         if not self.column:
-            return False
+            return ["Column name is required"]
 
-        if kind in (IngestionMappingKind.JSON, IngestionMappingKind.PARQUET, IngestionMappingKind.ORC, IngestionMappingKind.W3CLOGFILE):
-            return (
-                bool(self.properties.get(self.PATH))
-                or self.properties.get(self.TRANSFORMATION_METHOD) == TransformationMethod.SOURCE_LINE_NUMBER.value
-                or self.properties.get(self.TRANSFORMATION_METHOD) == TransformationMethod.SOURCE_LOCATION.value
-            )
+        results = []
 
-        if kind in (IngestionMappingKind.AVRO, IngestionMappingKind.APACHEAVRO):
-            return bool(self.properties.get(self.COLUMNS))
+        for (prop, valid_types) in self.VALID_MAPPINGS.items():
+            if prop not in self.properties:
+                continue
+            if kind not in valid_types:
+                results.append(f"{prop} is not a valid mapping property for {kind}")
 
-        return True
+        needed_props = self.NEEDED_PROPERTIES.get(kind, [])
+        if not needed_props:
+            results.append(f"{kind} is not a valid mapping kind")
+        else:
+            if all(prop not in self.properties for prop in needed_props):
+                results.append(f"{kind} needs at least one of the required properties: {needed_props}")
+
+            if self.properties.get(self.TRANSFORMATION_METHOD):
+                if (self.properties.get(self.PATH) or self.properties.get(self.FIELD_NAME)) and self.properties.get(
+                    self.TRANSFORMATION_METHOD
+                ) in self.CONSTANT_TRANSFORMATION_METHODS:
+                    results.append(
+                        f"When specifying {self.PATH} or {self.FIELD_NAME}, {self.TRANSFORMATION_METHOD} must not be one of "
+                        f"{','.join(str(x) for x in self.CONSTANT_TRANSFORMATION_METHODS)}, not {self.properties.get(self.TRANSFORMATION_METHOD)}."
+                    )
+
+                if (not self.properties.get(self.PATH) and not self.properties.get(self.FIELD_NAME)) and self.properties.get(
+                    self.TRANSFORMATION_METHOD
+                ) not in self.CONSTANT_TRANSFORMATION_METHODS:
+                    results.append(
+                        f"When not specifying {self.PATH} or {self.FIELD_NAME}, {self.TRANSFORMATION_METHOD} must be one of"
+                        f" {','.join(str(x) for x in self.CONSTANT_TRANSFORMATION_METHODS)}, not {self.properties.get(self.TRANSFORMATION_METHOD)}."
+                    )
+
+        return results
 
 
 class IngestionProperties:
@@ -166,9 +241,12 @@ class IngestionProperties:
                 if ingestion_mapping_reference is not None:
                     raise KustoDuplicateMappingError()
 
-                validation_errors = [
-                    f"Column mapping '{mapping.column}' is invalid." for mapping in column_mappings if not mapping.is_valid(ingestion_mapping_kind)
-                ]
+                validation_errors = []
+
+                for mapping in column_mappings:
+                    mapping_errors = mapping.get_validation_errors(ingestion_mapping_kind)
+                    if mapping_errors:
+                        validation_errors.extend(f"Column mapping '{mapping.column}' is invalid - '{e}'" for e in mapping_errors)
 
                 if validation_errors:
                     errors = "\n".join(validation_errors)
