@@ -72,10 +72,6 @@ class ColumnMapping:
     CONST_VALUE = "ConstValue"
     FIELD_NAME = "Field"
 
-    # TODO - these are undocumented - do they really exist?
-    COLUMNS = "Columns"
-    STORAGE_DATA_TYPE = "StorageDataType"
-
     VALID_MAPPINGS: Dict[str, List[IngestionMappingKind]] = {
         ORDINAL: [IngestionMappingKind.CSV],
         PATH: [
@@ -113,16 +109,6 @@ class ColumnMapping:
             IngestionMappingKind.ORC,
             IngestionMappingKind.W3CLOGFILE,
         ],
-        COLUMNS: [IngestionMappingKind.AVRO, IngestionMappingKind.APACHEAVRO],
-        STORAGE_DATA_TYPE: [
-            IngestionMappingKind.JSON,
-            IngestionMappingKind.AVRO,
-            IngestionMappingKind.APACHEAVRO,
-            IngestionMappingKind.SSTREAM,
-            IngestionMappingKind.PARQUET,
-            IngestionMappingKind.ORC,
-            IngestionMappingKind.W3CLOGFILE,
-        ],
     }
 
     NEEDED_PROPERTIES = invert_dict_of_lists(VALID_MAPPINGS)
@@ -142,6 +128,10 @@ class ColumnMapping:
         columns=None,
         storage_data_type=None,
     ):
+        """
+        :param columns: Deprecated. Columns is not used anymore.
+        :param storage_data_type: Deprecated. StorageDataType is not used anymore.
+        """
         self.column = column_name
         self.datatype = column_type
         self.properties = {}
@@ -155,10 +145,6 @@ class ColumnMapping:
             self.properties[self.CONST_VALUE] = const_value
         if field:
             self.properties[self.FIELD_NAME] = field
-        if columns:
-            self.properties[self.COLUMNS] = columns
-        if storage_data_type:
-            self.properties[self.STORAGE_DATA_TYPE] = storage_data_type
 
     def get_validation_errors(self, kind: IngestionMappingKind) -> List[str]:
         if not self.column:
