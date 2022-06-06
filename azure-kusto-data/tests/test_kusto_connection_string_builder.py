@@ -28,8 +28,8 @@ class KustoConnectionStringBuilderTests(unittest.TestCase):
             assert kcsb.application_client_id is None
             assert kcsb.application_key is None
             assert kcsb.authority_id == "organizations"
-            assert repr(kcsb) == "Data Source=localhost;Authority Id=common"
-            assert str(kcsb) == "Data Source=localhost;Authority Id=common"
+            assert repr(kcsb) == "Data Source=localhost;Authority Id=organizations"
+            assert str(kcsb) == "Data Source=localhost;Authority Id=organizations"
 
     def test_aad_app(self):
         """Checks kcsb that is created with AAD application credentials."""
@@ -125,8 +125,10 @@ class KustoConnectionStringBuilderTests(unittest.TestCase):
             assert kcsb.application_client_id is None
             assert kcsb.application_key is None
             assert kcsb.authority_id == "organizations"
-            assert repr(kcsb) == "Data Source=localhost;AAD Federated Security=True;AAD User ID={0};Password={1};Authority Id=common".format(user, password)
-            assert str(kcsb) == "Data Source=localhost;AAD Federated Security=True;AAD User ID={0};Password={1};Authority Id=common".format(
+            assert repr(kcsb) == "Data Source=localhost;AAD Federated Security=True;AAD User ID={0};Password={1};Authority Id=organizations".format(
+                user, password
+            )
+            assert str(kcsb) == "Data Source=localhost;AAD Federated Security=True;AAD User ID={0};Password={1};Authority Id=organizations".format(
                 user, self.PASSWORDS_REPLACEMENT
             )
 
@@ -160,8 +162,8 @@ class KustoConnectionStringBuilderTests(unittest.TestCase):
         assert kcsb.application_client_id is None
         assert kcsb.application_key is None
         assert kcsb.authority_id == "organizations"
-        assert repr(kcsb) == "Data Source=localhost;AAD Federated Security=True;Authority Id=common"
-        assert str(kcsb) == "Data Source=localhost;AAD Federated Security=True;Authority Id=common"
+        assert repr(kcsb) == "Data Source=localhost;AAD Federated Security=True;Authority Id=organizations"
+        assert str(kcsb) == "Data Source=localhost;AAD Federated Security=True;Authority Id=organizations"
 
     def test_aad_app_token(self):
         """Checks kcsb that is created with AAD user token."""
@@ -176,8 +178,8 @@ class KustoConnectionStringBuilderTests(unittest.TestCase):
         assert kcsb.application_key is None
         assert kcsb.user_token is None
         assert kcsb.authority_id == "organizations"
-        assert repr(kcsb) == "Data Source=localhost;AAD Federated Security=True;Authority Id=common;Application Token=%s" % token
-        assert str(kcsb) == "Data Source=localhost;AAD Federated Security=True;Authority Id=common;Application Token=%s" % self.PASSWORDS_REPLACEMENT
+        assert repr(kcsb) == "Data Source=localhost;AAD Federated Security=True;Authority Id=organizations;Application Token=%s" % token
+        assert str(kcsb) == "Data Source=localhost;AAD Federated Security=True;Authority Id=organizations;Application Token=%s" % self.PASSWORDS_REPLACEMENT
 
     def test_aad_user_token(self):
         """Checks kcsb that is created with AAD user token."""
@@ -192,8 +194,8 @@ class KustoConnectionStringBuilderTests(unittest.TestCase):
         assert kcsb.application_key is None
         assert kcsb.application_token is None
         assert kcsb.authority_id == "organizations"
-        assert repr(kcsb) == "Data Source=localhost;AAD Federated Security=True;Authority Id=common;User Token=%s" % token
-        assert str(kcsb) == "Data Source=localhost;AAD Federated Security=True;Authority Id=common;User Token=%s" % self.PASSWORDS_REPLACEMENT
+        assert repr(kcsb) == "Data Source=localhost;AAD Federated Security=True;Authority Id=organizations;User Token=%s" % token
+        assert str(kcsb) == "Data Source=localhost;AAD Federated Security=True;Authority Id=organizations;User Token=%s" % self.PASSWORDS_REPLACEMENT
 
     def test_add_msi(self):
         client_guid = "kjhjk"
