@@ -123,7 +123,7 @@ class KustoConnectionStringBuilder:
         if connection_string is not None and "=" not in connection_string.partition(";")[0]:
             connection_string = "Data Source=" + connection_string
 
-        self[self.ValidKeywords.authority_id] = "common"
+        self[self.ValidKeywords.authority_id] = "organizations"
 
         for kvp_string in connection_string.split(";"):
             key, _, value = kvp_string.partition("=")
@@ -162,7 +162,7 @@ class KustoConnectionStringBuilder:
 
     @classmethod
     def with_aad_user_password_authentication(
-        cls, connection_string: str, user_id: str, password: str, authority_id: str = "common"
+        cls, connection_string: str, user_id: str, password: str, authority_id: str = "organizations"
     ) -> "KustoConnectionStringBuilder":
         """
         Creates a KustoConnection string builder that will authenticate with AAD user name and
@@ -170,7 +170,7 @@ class KustoConnectionStringBuilder:
         :param str connection_string: Kusto connection string should be of the format: https://<clusterName>.kusto.windows.net
         :param str user_id: AAD user ID.
         :param str password: Corresponding password of the AAD user.
-        :param str authority_id: optional param. defaults to "common"
+        :param str authority_id: optional param. defaults to "organizations"
         """
         assert_string_is_not_empty(user_id)
         assert_string_is_not_empty(password)
@@ -296,12 +296,12 @@ class KustoConnectionStringBuilder:
         return kcsb
 
     @classmethod
-    def with_aad_device_authentication(cls, connection_string: str, authority_id: str = "common") -> "KustoConnectionStringBuilder":
+    def with_aad_device_authentication(cls, connection_string: str, authority_id: str = "organizations") -> "KustoConnectionStringBuilder":
         """
         Creates a KustoConnection string builder that will authenticate with AAD application and
         password.
         :param str connection_string: Kusto connection string should be of the format: https://<clusterName>.kusto.windows.net
-        :param str authority_id: optional param. defaults to "common"
+        :param str authority_id: optional param. defaults to "organizations"
         """
         kcsb = cls(connection_string)
         kcsb[kcsb.ValidKeywords.aad_federated_security] = True
