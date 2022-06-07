@@ -71,7 +71,7 @@ def test_mapping_kind_data_format_with_transform():
     )
 
 
-def test_mapping_kind_data_format_with_no_columns():
+def test_mapping_kind_data_format_with_no_properties():
     with pytest.raises(KustoMappingError):
         IngestionProperties(
             database="database",
@@ -80,3 +80,13 @@ def test_mapping_kind_data_format_with_no_columns():
             data_format=DataFormat.AVRO,
             ingestion_mapping_kind=IngestionMappingKind.AVRO,
         )
+
+
+def test_with_constant_value():
+    IngestionProperties(
+        database="database",
+        table="table",
+        column_mappings=[ColumnMapping("test", "int", const_value="1")],
+        data_format=DataFormat.PARQUET,
+        ingestion_mapping_kind=IngestionMappingKind.PARQUET,
+    )

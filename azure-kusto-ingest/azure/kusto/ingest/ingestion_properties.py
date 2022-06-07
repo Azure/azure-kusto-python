@@ -1,7 +1,7 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
 from enum import Enum, IntEnum
-from typing import List, Optional
+from typing import List, Optional, Dict
 
 from azure.kusto.data.data_format import DataFormat, IngestionMappingKind
 from .exceptions import KustoDuplicateMappingError, KustoMissingMappingError, KustoMappingError
@@ -65,18 +65,26 @@ class ColumnMapping:
     pre-created (it is recommended to create the mappings in advance and use ingestionMappingReference).
     To read more about mappings look here: https://docs.microsoft.com/en-us/azure/kusto/management/mappings"""
 
-    # Json Mapping consts
     PATH = "Path"
     TRANSFORMATION_METHOD = "Transform"
-    # csv Mapping consts
     ORDINAL = "Ordinal"
     CONST_VALUE = "ConstValue"
-    # Avro Mapping consts
     FIELD_NAME = "Field"
-    COLUMNS = "Columns"
-    # General Mapping consts
-    STORAGE_DATA_TYPE = "StorageDataType"
 
+    NEEDED_PROPERTIES: Dict[IngestionMappingKind, List[str]] = {
+        IngestionMappingKind.CSV: [ORDINAL, CONST_VALUE],
+        IngestionMappingKind.JSON: [PATH, CONST_VALUE, TRANSFORMATION_METHOD],
+        IngestionMappingKind.AVRO: [PATH, CONST_VALUE, FIELD_NAME, TRANSFORMATION_METHOD],
+        IngestionMappingKind.APACHEAVRO: [PATH, CONST_VALUE, FIELD_NAME, TRANSFORMATION_METHOD],
+        IngestionMappingKind.SSTREAM: [PATH, CONST_VALUE, FIELD_NAME, TRANSFORMATION_METHOD],
+        IngestionMappingKind.PARQUET: [PATH, CONST_VALUE, FIELD_NAME, TRANSFORMATION_METHOD],
+        IngestionMappingKind.ORC: [PATH, CONST_VALUE, FIELD_NAME, TRANSFORMATION_METHOD],
+        IngestionMappingKind.W3CLOGFILE: [CONST_VALUE, FIELD_NAME, TRANSFORMATION_METHOD],
+    }
+
+    CONSTANT_TRANSFORMATION_METHODS = [TransformationMethod.SOURCE_LOCATION.value, TransformationMethod.SOURCE_LINE_NUMBER.value]
+
+    # TODO - add safe and convenient ctors, like in node
     def __init__(
         self,
         column_name: str,
@@ -89,6 +97,10 @@ class ColumnMapping:
         columns=None,
         storage_data_type=None,
     ):
+        """
+        :param columns: Deprecated. Columns is not used anymore.
+        :param storage_data_type: Deprecated. StorageDataType is not used anymore.
+        """
         self.column = column_name
         self.datatype = column_type
         self.properties = {}
@@ -102,26 +114,37 @@ class ColumnMapping:
             self.properties[self.CONST_VALUE] = const_value
         if field:
             self.properties[self.FIELD_NAME] = field
-        if columns:
-            self.properties[self.COLUMNS] = columns
-        if storage_data_type:
-            self.properties[self.STORAGE_DATA_TYPE] = storage_data_type
 
-    def is_valid(self, kind: IngestionMappingKind) -> bool:
+    def is_valid(self, kind: IngestionMappingKind) -> (bool, List[str]):
         if not self.column:
-            return False
+            return False, ["Column name is required"]
 
-        if kind in (IngestionMappingKind.JSON, IngestionMappingKind.PARQUET, IngestionMappingKind.ORC, IngestionMappingKind.W3CLOGFILE):
-            return (
-                bool(self.properties.get(self.PATH))
-                or self.properties.get(self.TRANSFORMATION_METHOD) == TransformationMethod.SOURCE_LINE_NUMBER.value
-                or self.properties.get(self.TRANSFORMATION_METHOD) == TransformationMethod.SOURCE_LOCATION.value
-            )
+        results = []
 
-        if kind in (IngestionMappingKind.AVRO, IngestionMappingKind.APACHEAVRO):
-            return bool(self.properties.get(self.COLUMNS))
+        needed_props = self.NEEDED_PROPERTIES[kind]
 
-        return True
+        if all(prop not in self.properties for prop in needed_props):
+            results.append(f"{kind} needs at least one of the required properties: {needed_props}")
+
+        if self.properties.get(self.TRANSFORMATION_METHOD):
+
+            if (self.properties.get(self.PATH) or self.properties.get(self.FIELD_NAME)) and self.properties.get(
+                self.TRANSFORMATION_METHOD
+            ) in self.CONSTANT_TRANSFORMATION_METHODS:
+                results.append(
+                    f"When specifying {self.PATH} or {self.FIELD_NAME}, {self.TRANSFORMATION_METHOD} must not be one of "
+                    f"{','.join(str(x) for x in self.CONSTANT_TRANSFORMATION_METHODS)}, not {self.properties.get(self.TRANSFORMATION_METHOD)}."
+                )
+
+            if (not self.properties.get(self.PATH) and not self.properties.get(self.FIELD_NAME)) and self.properties.get(
+                self.TRANSFORMATION_METHOD
+            ) not in self.CONSTANT_TRANSFORMATION_METHODS:
+                results.append(
+                    f"When not specifying {self.PATH} or {self.FIELD_NAME}, {self.TRANSFORMATION_METHOD} must be one of"
+                    f" {','.join(str(x) for x in self.CONSTANT_TRANSFORMATION_METHODS)}, not {self.properties.get(self.TRANSFORMATION_METHOD)}."
+                )
+
+        return not bool(results), results
 
 
 class IngestionProperties:
@@ -166,9 +189,12 @@ class IngestionProperties:
                 if ingestion_mapping_reference is not None:
                     raise KustoDuplicateMappingError()
 
-                validation_errors = [
-                    f"Column mapping '{mapping.column}' is invalid." for mapping in column_mappings if not mapping.is_valid(ingestion_mapping_kind)
-                ]
+                validation_errors = []
+
+                for mapping in column_mappings:
+                    (valid, mapping_errors) = mapping.is_valid(ingestion_mapping_kind)
+                    if not valid:
+                        validation_errors.extend(f"Column mapping '{mapping.column}' is invalid - '{e}'" for e in mapping_errors)
 
                 if validation_errors:
                     errors = "\n".join(validation_errors)
