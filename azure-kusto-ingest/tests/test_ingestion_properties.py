@@ -82,17 +82,6 @@ def test_mapping_kind_data_format_with_no_properties():
         )
 
 
-def test_mapping_kind_data_format_invalid_property():
-    with pytest.raises(KustoMappingError):
-        IngestionProperties(
-            database="database",
-            table="table",
-            column_mappings=[ColumnMapping("test", "int", "path")],
-            data_format=DataFormat.CSV,
-            ingestion_mapping_kind=IngestionMappingKind.CSV,
-        )
-
-
 def test_with_constant_value():
     IngestionProperties(
         database="database",

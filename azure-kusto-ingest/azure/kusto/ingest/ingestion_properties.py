@@ -4,7 +4,6 @@ from enum import Enum, IntEnum
 from typing import List, Optional, Dict
 
 from azure.kusto.data.data_format import DataFormat, IngestionMappingKind
-from ._dict_utils import invert_dict_of_lists
 from .exceptions import KustoDuplicateMappingError, KustoMissingMappingError, KustoMappingError
 
 
@@ -72,46 +71,16 @@ class ColumnMapping:
     CONST_VALUE = "ConstValue"
     FIELD_NAME = "Field"
 
-    VALID_MAPPINGS: Dict[str, List[IngestionMappingKind]] = {
-        ORDINAL: [IngestionMappingKind.CSV],
-        PATH: [
-            IngestionMappingKind.JSON,
-            IngestionMappingKind.AVRO,
-            IngestionMappingKind.APACHEAVRO,
-            IngestionMappingKind.SSTREAM,
-            IngestionMappingKind.PARQUET,
-            IngestionMappingKind.ORC,
-        ],
-        CONST_VALUE: [
-            IngestionMappingKind.CSV,
-            IngestionMappingKind.JSON,
-            IngestionMappingKind.AVRO,
-            IngestionMappingKind.APACHEAVRO,
-            IngestionMappingKind.SSTREAM,
-            IngestionMappingKind.PARQUET,
-            IngestionMappingKind.ORC,
-            IngestionMappingKind.W3CLOGFILE,
-        ],
-        FIELD_NAME: [
-            IngestionMappingKind.AVRO,
-            IngestionMappingKind.APACHEAVRO,
-            IngestionMappingKind.SSTREAM,
-            IngestionMappingKind.PARQUET,
-            IngestionMappingKind.ORC,
-            IngestionMappingKind.W3CLOGFILE,
-        ],
-        TRANSFORMATION_METHOD: [
-            IngestionMappingKind.JSON,
-            IngestionMappingKind.AVRO,
-            IngestionMappingKind.APACHEAVRO,
-            IngestionMappingKind.SSTREAM,
-            IngestionMappingKind.PARQUET,
-            IngestionMappingKind.ORC,
-            IngestionMappingKind.W3CLOGFILE,
-        ],
+    NEEDED_PROPERTIES: Dict[IngestionMappingKind, List[str]] = {
+        IngestionMappingKind.CSV: [ORDINAL, CONST_VALUE],
+        IngestionMappingKind.JSON: [PATH, CONST_VALUE, TRANSFORMATION_METHOD],
+        IngestionMappingKind.AVRO: [PATH, CONST_VALUE, FIELD_NAME, TRANSFORMATION_METHOD],
+        IngestionMappingKind.APACHEAVRO: [PATH, CONST_VALUE, FIELD_NAME, TRANSFORMATION_METHOD],
+        IngestionMappingKind.SSTREAM: [PATH, CONST_VALUE, FIELD_NAME, TRANSFORMATION_METHOD],
+        IngestionMappingKind.PARQUET: [PATH, CONST_VALUE, FIELD_NAME, TRANSFORMATION_METHOD],
+        IngestionMappingKind.ORC: [PATH, CONST_VALUE, FIELD_NAME, TRANSFORMATION_METHOD],
+        IngestionMappingKind.W3CLOGFILE: [CONST_VALUE, FIELD_NAME, TRANSFORMATION_METHOD],
     }
-
-    NEEDED_PROPERTIES = invert_dict_of_lists(VALID_MAPPINGS)
 
     CONSTANT_TRANSFORMATION_METHODS = [TransformationMethod.SOURCE_LOCATION.value, TransformationMethod.SOURCE_LINE_NUMBER.value]
 
@@ -146,43 +115,36 @@ class ColumnMapping:
         if field:
             self.properties[self.FIELD_NAME] = field
 
-    def get_validation_errors(self, kind: IngestionMappingKind) -> List[str]:
+    def is_valid(self, kind: IngestionMappingKind) -> (bool, List[str]):
         if not self.column:
-            return ["Column name is required"]
+            return False, ["Column name is required"]
 
         results = []
 
-        for (prop, valid_types) in self.VALID_MAPPINGS.items():
-            if prop not in self.properties:
-                continue
-            if kind not in valid_types:
-                results.append(f"{prop} is not a valid mapping property for {kind}")
+        needed_props = self.NEEDED_PROPERTIES[kind]
 
-        needed_props = self.NEEDED_PROPERTIES.get(kind, [])
-        if not needed_props:
-            results.append(f"{kind} is not a valid mapping kind")
-        else:
-            if all(prop not in self.properties for prop in needed_props):
-                results.append(f"{kind} needs at least one of the required properties: {needed_props}")
+        if all(prop not in self.properties for prop in needed_props):
+            results.append(f"{kind} needs at least one of the required properties: {needed_props}")
 
-            if self.properties.get(self.TRANSFORMATION_METHOD):
-                if (self.properties.get(self.PATH) or self.properties.get(self.FIELD_NAME)) and self.properties.get(
-                    self.TRANSFORMATION_METHOD
-                ) in self.CONSTANT_TRANSFORMATION_METHODS:
-                    results.append(
-                        f"When specifying {self.PATH} or {self.FIELD_NAME}, {self.TRANSFORMATION_METHOD} must not be one of "
-                        f"{','.join(str(x) for x in self.CONSTANT_TRANSFORMATION_METHODS)}, not {self.properties.get(self.TRANSFORMATION_METHOD)}."
-                    )
+        if self.properties.get(self.TRANSFORMATION_METHOD):
 
-                if (not self.properties.get(self.PATH) and not self.properties.get(self.FIELD_NAME)) and self.properties.get(
-                    self.TRANSFORMATION_METHOD
-                ) not in self.CONSTANT_TRANSFORMATION_METHODS:
-                    results.append(
-                        f"When not specifying {self.PATH} or {self.FIELD_NAME}, {self.TRANSFORMATION_METHOD} must be one of"
-                        f" {','.join(str(x) for x in self.CONSTANT_TRANSFORMATION_METHODS)}, not {self.properties.get(self.TRANSFORMATION_METHOD)}."
-                    )
+            if (self.properties.get(self.PATH) or self.properties.get(self.FIELD_NAME)) and self.properties.get(
+                self.TRANSFORMATION_METHOD
+            ) in self.CONSTANT_TRANSFORMATION_METHODS:
+                results.append(
+                    f"When specifying {self.PATH} or {self.FIELD_NAME}, {self.TRANSFORMATION_METHOD} must not be one of "
+                    f"{','.join(str(x) for x in self.CONSTANT_TRANSFORMATION_METHODS)}, not {self.properties.get(self.TRANSFORMATION_METHOD)}."
+                )
 
-        return results
+            if (not self.properties.get(self.PATH) and not self.properties.get(self.FIELD_NAME)) and self.properties.get(
+                self.TRANSFORMATION_METHOD
+            ) not in self.CONSTANT_TRANSFORMATION_METHODS:
+                results.append(
+                    f"When not specifying {self.PATH} or {self.FIELD_NAME}, {self.TRANSFORMATION_METHOD} must be one of"
+                    f" {','.join(str(x) for x in self.CONSTANT_TRANSFORMATION_METHODS)}, not {self.properties.get(self.TRANSFORMATION_METHOD)}."
+                )
+
+        return not bool(results), results
 
 
 class IngestionProperties:
@@ -230,8 +192,8 @@ class IngestionProperties:
                 validation_errors = []
 
                 for mapping in column_mappings:
-                    mapping_errors = mapping.get_validation_errors(ingestion_mapping_kind)
-                    if mapping_errors:
+                    (valid, mapping_errors) = mapping.is_valid(ingestion_mapping_kind)
+                    if not valid:
                         validation_errors.extend(f"Column mapping '{mapping.column}' is invalid - '{e}'" for e in mapping_errors)
 
                 if validation_errors:
