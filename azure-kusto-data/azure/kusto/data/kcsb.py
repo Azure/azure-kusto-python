@@ -128,13 +128,13 @@ class KustoConnectionStringBuilder:
         for kvp_string in connection_string.split(";"):
             key, _, value = kvp_string.partition("=")
             keyword = self.ValidKeywords.parse(key)
-            value = value.strip()
+            value_stripped = value.strip()
             if keyword.is_str_type():
-                self[keyword] = value[:-1] if value[-1] == "/" else value
-            if keyword.is_bool_type():
-                if value in ["True", "true"]:
+                self[keyword] = value_stripped[:-1] if value_stripped[-1] == "/" else value_stripped
+            elif keyword.is_bool_type():
+                if value_stripped in ["True", "true"]:
                     self[keyword] = True
-                elif value in ["False", "false"]:
+                elif value_stripped in ["False", "false"]:
                     self[keyword] = False
                 else:
                     raise KeyError("Expected aad federated security to be bool. Recieved %s" % value)
