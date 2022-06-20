@@ -130,7 +130,7 @@ class KustoConnectionStringBuilder:
             keyword = self.ValidKeywords.parse(key)
             value_stripped = value.strip()
             if keyword.is_str_type():
-                self[keyword] = value_stripped[:-1] if value_stripped[-1] == "/" else value_stripped
+                self[keyword] = value_stripped.rstrip("/")
             elif keyword.is_bool_type():
                 if value_stripped in ["True", "true"]:
                     self[keyword] = True
