@@ -83,13 +83,13 @@ class KustoSampleApp:
                 # Tip: This is generally a one-time configuration.
                 # Learn More: For more information about providing inline mappings and mapping references, see: https://docs.microsoft.com/azure/data-explorer/kusto/management/mappings
                 if not cls.create_ingestion_mappings(
-                    strtobool(str(file["useExistingMapping"]).lower()),
-                    kusto_client,
-                    cls.database_name,
-                    cls.table_name,
-                    mapping_name,
-                    file["mappingValue"],
-                    data_format,
+                        strtobool(str(file["useExistingMapping"]).lower()),
+                        kusto_client,
+                        cls.database_name,
+                        cls.table_name,
+                        mapping_name,
+                        file["mappingValue"],
+                        data_format,
                 ):
                     continue
 
@@ -137,12 +137,12 @@ class KustoSampleApp:
         cls.should_query_data = strtobool(str(config["queryData"]).lower())
         cls.should_ingest_data = strtobool(str(config["ingestData"]).lower())
         if (
-            cls.database_name is None
-            or cls.table_name is None
-            or cls.table_schema is None
-            or cls.kusto_url is None
-            or cls.ingest_url is None
-            or cls.data_to_ingest is None
+                cls.database_name is None
+                or cls.table_name is None
+                or cls.table_schema is None
+                or cls.kusto_url is None
+                or cls.ingest_url is None
+                or cls.data_to_ingest is None
         ):
             cls.die(f"File '{config_file_name}' is missing required fields")
 
@@ -309,14 +309,14 @@ class KustoSampleApp:
 
     @classmethod
     def create_ingestion_mappings(
-        cls,
-        use_existing_mapping: bool,
-        kusto_client: KustoClient,
-        database_name: str,
-        table_name: str,
-        mapping_name: str,
-        mapping_value: str,
-        data_format: DataFormat,
+            cls,
+            use_existing_mapping: bool,
+            kusto_client: KustoClient,
+            database_name: str,
+            table_name: str,
+            mapping_name: str,
+            mapping_value: str,
+            data_format: DataFormat,
     ) -> bool:
         if use_existing_mapping or not mapping_value:
             return True
@@ -353,7 +353,7 @@ class KustoSampleApp:
 
     @classmethod
     def ingest_from_file(
-        cls, ingest_client: BaseIngestClient, database_name: str, table_name: str, file_path: str, data_format: DataFormat, mapping_name: str = None
+            cls, ingest_client: BaseIngestClient, database_name: str, table_name: str, file_path: str, data_format: DataFormat, mapping_name: str = None
     ):
         ingestion_properties = cls.create_ingestion_properties(database_name, table_name, data_format, mapping_name)
 
@@ -365,7 +365,7 @@ class KustoSampleApp:
 
     @classmethod
     def ingest_from_blob(
-        cls, client: QueuedIngestClient, database_name: str, table_name: str, blob_url: str, data_format: DataFormat, mapping_name: str = None
+            cls, client: QueuedIngestClient, database_name: str, table_name: str, blob_url: str, data_format: DataFormat, mapping_name: str = None
     ):
         ingestion_properties = cls.create_ingestion_properties(database_name, table_name, data_format, mapping_name)
 
