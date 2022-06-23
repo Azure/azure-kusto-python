@@ -1,7 +1,5 @@
 from typing import TYPE_CHECKING, Union
 
-import numpy as np
-
 if TYPE_CHECKING:
     import pandas
     from azure.kusto.data._models import KustoResultTable, KustoStreamingResultTable
@@ -35,6 +33,7 @@ def dataframe_from_result_table(table: "Union[KustoResultTable, KustoStreamingRe
     :param azure.kusto.data._models.KustoResultTable table: Table received from the response.
     :return: pandas DataFrame.
     """
+    import numpy as np
     import pandas as pd
 
     if not table:
