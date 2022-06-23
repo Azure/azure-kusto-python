@@ -1,6 +1,8 @@
 import os
+import uuid
 
-from azure.kusto.data import KustoConnectionStringBuilder
+from azure.kusto.data import KustoConnectionStringBuilder, ClientRequestProperties, KustoClient
+from azure.kusto.data.exceptions import KustoClientError, KustoServiceError
 
 from quick_start.sample_app import AuthenticationModeOptions
 
@@ -94,7 +96,59 @@ class Utils:
                                                                                                     app_tenant)
 
     class Queries:
-        pass
+        """
+        Queries module of Utils - in charge of querying the data - either with management queries, or data queries
+        """
+        MGMT_PREFIX = "."
+
+        @classmethod
+        def create_client_request_properties(cls, scope: str, timeout: str = None) -> ClientRequestProperties:
+            """
+            Creates a fitting ClientRequestProperties object, to be used when executing control commands or queries.
+            :param scope: Working scope
+            :param timeout: Requests default timeout
+            :return: ClientRequestProperties object
+            """
+            client_request_properties = ClientRequestProperties()
+            client_request_properties.client_request_id = f"{scope};{str(uuid.uuid4())}"
+            client_request_properties.application = "kusto_sample_app.py"
+
+            # Tip: Though uncommon, you can alter the request default command timeout using the below command, e.g. to set the timeout to 10 minutes, use "10m"
+            if timeout:
+                client_request_properties.set_option(ClientRequestProperties.request_timeout_option_name, timeout)
+
+            return client_request_properties
+
+        @classmethod
+        def execute_command(cls, kusto_client: KustoClient, database_name: str, command: str) -> bool:
+            """
+            Executes a Command using a premade client
+            :param kusto_client: Premade client to run Commands. can be either an adminClient or queryClient
+            :param database_name: DB name
+            :param command: The Command to execute
+            :return: True on success, false otherwise
+            """
+            try:
+                if command.startswith(cls.MGMT_PREFIX):
+                    client_request_properties = cls.create_client_request_properties("Python_SampleApp_ControlCommand")
+                else:
+                    client_request_properties = cls.create_client_request_properties("Python_SampleApp_Query")
+
+                result = kusto_client.execute(database_name, command, client_request_properties)
+                print(f"Response from executed command '{command}':")
+                for row in result.primary_results[0]:
+                    print(row.to_list())
+
+                return True
+
+            except KustoClientError as ex:
+                Utils.error_handler(f"Client error while trying to execute command '{command}' on database '{database_name}'", ex)
+            except KustoServiceError as ex:
+                Utils.error_handler(f"Server error while trying to execute command '{command}' on database '{database_name}'", ex)
+            except Exception as ex:
+                Utils.error_handler(f"Unknown error while trying to execute command '{command}' on database '{database_name}'", ex)
+
+            return False
 
     class Ingestion:
         pass
