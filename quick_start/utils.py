@@ -1,8 +1,10 @@
 import os
 import uuid
-
-from azure.kusto.data import KustoConnectionStringBuilder, ClientRequestProperties, KustoClient
+from time import sleep
+from tqdm import tqdm
+from azure.kusto.data import KustoConnectionStringBuilder, ClientRequestProperties, KustoClient, DataFormat
 from azure.kusto.data.exceptions import KustoClientError, KustoServiceError
+from azure.kusto.ingest import IngestionProperties, BaseIngestClient, QueuedIngestClient, FileDescriptor, BlobDescriptor
 
 from quick_start.sample_app import AuthenticationModeOptions
 
@@ -151,7 +153,87 @@ class Utils:
             return False
 
     class Ingestion:
-        pass
+        """
+        Ingestion module of Utils - in charge of ingesting the given data - based on the configuration file.
+        """
+
+        @classmethod
+        def create_ingestion_properties(cls, database_name: str, table_name: str, data_format: DataFormat, mapping_name: str) -> IngestionProperties:
+            """
+            Creates a fitting KustoIngestionProperties object, to be used when executing ingestion commands.
+            :param database_name: DB name
+            :param table_name: Table name
+            :param data_format: Given data format
+            :param mapping_name: Desired mapping name
+            :return: IngestionProperties object
+            """
+            return IngestionProperties(
+                database=f"{database_name}",
+                table=f"{table_name}",
+                ingestion_mapping_reference=mapping_name,
+                # Learn More: For more information about supported data formats, see: https://docs.microsoft.com/azure/data-explorer/ingestion-supported-formats
+                data_format=data_format,
+                # TODO (config - optional): Setting the ingestion batching policy takes up to 5 minutes to take effect.
+                #  We therefore set Flush-Immediately for the sake of the sample, but it generally shouldn't be used in practice.
+                #  Comment out the line below after running the sample the first few times.
+                flush_immediately=True,
+            )
+
+        @classmethod
+        def ingest_from_file(cls, ingest_client: BaseIngestClient, database_name: str, table_name: str, file_path: str, data_format: DataFormat,
+                             mapping_name: str = None) -> None:
+            """
+            Ingest Data from a given file path.
+            :param ingest_client: Client to ingest data
+            :param database_name: DB name
+            :param table_name: Table name
+            :param file_path: File path
+            :param data_format: Given data format
+            :param mapping_name: Desired mapping name
+            """
+            ingestion_properties = cls.create_ingestion_properties(database_name, table_name, data_format, mapping_name)
+
+            # Tip 1: For optimal ingestion batching and performance,specify the uncompressed data size in the file descriptor instead of the default below of 0.
+            # Otherwise, the service will determine the file size, requiring an additional s2s call, and may not be accurate for compressed files.
+            # Tip 2: To correlate between ingestion operations in your applications and Kusto, set the source ID and log it somewhere
+            file_descriptor = FileDescriptor(file_path, size=0, source_id=uuid.uuid4())
+            ingest_client.ingest_from_file(file_descriptor, ingestion_properties=ingestion_properties)
+
+        @classmethod
+        def ingest_from_blob(cls, ingest_client: QueuedIngestClient, database_name: str, table_name: str, blob_url: str, data_format: DataFormat,
+                             mapping_name: str = None) -> None:
+            """
+            Ingest Data from a Blob.
+            :param ingest_client: Client to ingest data
+            :param database_name: DB name
+            :param table_name: Table name
+            :param blob_url: Blob Uri
+            :param data_format: Given data format
+            :param mapping_name: Desired mapping name
+            """
+            ingestion_properties = cls.create_ingestion_properties(database_name, table_name, data_format, mapping_name)
+
+            # Tip 1: For optimal ingestion batching and performance,specify the uncompressed data size in the file descriptor instead of the default below of 0.
+            # Otherwise, the service will determine the file size, requiring an additional s2s call, and may not be accurate for compressed files.
+            # Tip 2: To correlate between ingestion operations in your applications and Kusto, set the source ID and log it somewhere
+            blob_descriptor = BlobDescriptor(blob_url, size=0, source_id=str(uuid.uuid4()))
+            ingest_client.ingest_from_blob(blob_descriptor, ingestion_properties=ingestion_properties)
+
+        @classmethod
+        def wait_for_ingestion_to_complete(cls, wait_for_ingest_seconds: int) -> None:
+            """
+            Halts the program for WaitForIngestSeconds, allowing the queued ingestion process to complete.
+            :param wait_for_ingest_seconds: Sleep time to allow for queued ingestion to complete.
+            """
+            print(f"Sleeping {wait_for_ingest_seconds} seconds for queued ingestion to complete. Note: This may take longer depending on the file size "
+                  f"and ingestion batching policy.")
+
+            for x in tqdm(range(wait_for_ingest_seconds, 0, -1)):
+                print(f"{x} ", end="\r")
+                sleep(1)
+
+            print()
+            print()
 
     @staticmethod
     def error_handler(error: str, e: Exception = None) -> None:
