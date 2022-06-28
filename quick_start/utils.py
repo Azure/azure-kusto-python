@@ -35,23 +35,23 @@ class Utils:
             # Learn More: For additional information on how to authorize users and apps in Kusto,
             # see: https://docs.microsoft.com/azure/data-explorer/manage-database-permissions
 
-            if authentication_mode == AuthenticationModeOptions.UserPrompt:
+            if authentication_mode == AuthenticationModeOptions.UserPrompt.name:
                 # Prompt user for credentials
                 return KustoConnectionStringBuilder.with_interactive_login(cluster_url)
 
-            elif authentication_mode == AuthenticationModeOptions.ManagedIdentity:
+            elif authentication_mode == AuthenticationModeOptions.ManagedIdentity.name:
                 # Authenticate using a System-Assigned managed identity provided to an azure service, or using a User-Assigned managed identity.
                 # For more information, see https://docs.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/overview
                 return cls.create_managed_identity_connection_string(cluster_url)
 
-            elif authentication_mode == AuthenticationModeOptions.AppKey:
+            elif authentication_mode == AuthenticationModeOptions.AppKey.name:
                 # Learn More: For information about how to procure an AAD Application,
                 # see: https://docs.microsoft.com/azure/data-explorer/provision-azure-ad-app
                 # TODO (config - optional): App ID & tenant, and App Key to authenticate with
                 return KustoConnectionStringBuilder.with_aad_application_key_authentication(cluster_url, os.environ.get("APP_ID"), os.environ.get("APP_KEY"),
                                                                                             os.environ.get("APP_TENANT"))
 
-            elif authentication_mode == AuthenticationModeOptions.AppCertificate:
+            elif authentication_mode == AuthenticationModeOptions.AppCertificate.name:
                 return cls.create_application_certificate_connection_string(cluster_url)
 
             else:
