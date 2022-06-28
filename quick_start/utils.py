@@ -1,3 +1,4 @@
+import enum
 import os
 import uuid
 from time import sleep
@@ -6,7 +7,15 @@ from azure.kusto.data import KustoConnectionStringBuilder, ClientRequestProperti
 from azure.kusto.data.exceptions import KustoClientError, KustoServiceError
 from azure.kusto.ingest import IngestionProperties, BaseIngestClient, QueuedIngestClient, FileDescriptor, BlobDescriptor
 
-from quick_start.sample_app import AuthenticationModeOptions
+
+class AuthenticationModeOptions(enum.Enum):
+    """
+    AuthenticationModeOptions - represents the different options to autenticate to the system
+    """
+    UserPrompt = "UserPrompt",
+    ManagedIdentity = "ManagedIdentity",
+    AppKey = "AppKey",
+    AppCertificate = "AppCertificate"
 
 
 class Utils:
