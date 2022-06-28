@@ -12,9 +12,10 @@ class AuthenticationModeOptions(enum.Enum):
     """
     AuthenticationModeOptions - represents the different options to autenticate to the system
     """
-    UserPrompt = "UserPrompt",
-    ManagedIdentity = "ManagedIdentity",
-    AppKey = "AppKey",
+
+    UserPrompt = ("UserPrompt",)
+    ManagedIdentity = ("ManagedIdentity",)
+    AppKey = ("AppKey",)
     AppCertificate = "AppCertificate"
 
 
@@ -48,8 +49,9 @@ class Utils:
                 # Learn More: For information about how to procure an AAD Application,
                 # see: https://docs.microsoft.com/azure/data-explorer/provision-azure-ad-app
                 # TODO (config - optional): App ID & tenant, and App Key to authenticate with
-                return KustoConnectionStringBuilder.with_aad_application_key_authentication(cluster_url, os.environ.get("APP_ID"), os.environ.get("APP_KEY"),
-                                                                                            os.environ.get("APP_TENANT"))
+                return KustoConnectionStringBuilder.with_aad_application_key_authentication(
+                    cluster_url, os.environ.get("APP_ID"), os.environ.get("APP_KEY"), os.environ.get("APP_TENANT")
+                )
 
             elif authentication_mode == AuthenticationModeOptions.AppCertificate.name:
                 return cls.create_application_certificate_connection_string(cluster_url)
@@ -67,8 +69,11 @@ class Utils:
             # Connect using the system- or user-assigned managed identity (Azure service only)
             # TODO (config - optional): Managed identity client ID if you are using a user-assigned managed identity
             client_id = os.environ.get("MANAGED_IDENTITY_CLIENT_ID")
-            return KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication(cluster_url, client_id=client_id) if client_id \
+            return (
+                KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication(cluster_url, client_id=client_id)
+                if client_id
                 else KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication(cluster_url)
+            )
 
         @classmethod
         def create_application_certificate_connection_string(cls, cluster_url: str) -> KustoConnectionStringBuilder:
@@ -100,16 +105,19 @@ class Utils:
                 except Exception as ex:
                     Utils.error_handler(f"Failed to load public certificate file from {public_cert_file_path}", ex)
 
-                return KustoConnectionStringBuilder.with_aad_application_certificate_sni_authentication(cluster_url, app_id, pem_certificate,
-                                                                                                        public_certificate, cert_thumbprint, app_tenant)
+                return KustoConnectionStringBuilder.with_aad_application_certificate_sni_authentication(
+                    cluster_url, app_id, pem_certificate, public_certificate, cert_thumbprint, app_tenant
+                )
             else:
-                return KustoConnectionStringBuilder.with_aad_application_certificate_authentication(cluster_url, app_id, pem_certificate, cert_thumbprint,
-                                                                                                    app_tenant)
+                return KustoConnectionStringBuilder.with_aad_application_certificate_authentication(
+                    cluster_url, app_id, pem_certificate, cert_thumbprint, app_tenant
+                )
 
     class Queries:
         """
         Queries module of Utils - in charge of querying the data - either with management queries, or data queries
         """
+
         MGMT_PREFIX = "."
 
         @classmethod
@@ -189,8 +197,9 @@ class Utils:
             )
 
         @classmethod
-        def ingest_from_file(cls, ingest_client: BaseIngestClient, database_name: str, table_name: str, file_path: str, data_format: DataFormat,
-                             mapping_name: str = None) -> None:
+        def ingest_from_file(
+            cls, ingest_client: BaseIngestClient, database_name: str, table_name: str, file_path: str, data_format: DataFormat, mapping_name: str = None
+        ) -> None:
             """
             Ingest Data from a given file path.
             :param ingest_client: Client to ingest data
@@ -209,8 +218,9 @@ class Utils:
             ingest_client.ingest_from_file(file_descriptor, ingestion_properties=ingestion_properties)
 
         @classmethod
-        def ingest_from_blob(cls, ingest_client: QueuedIngestClient, database_name: str, table_name: str, blob_url: str, data_format: DataFormat,
-                             mapping_name: str = None) -> None:
+        def ingest_from_blob(
+            cls, ingest_client: QueuedIngestClient, database_name: str, table_name: str, blob_url: str, data_format: DataFormat, mapping_name: str = None
+        ) -> None:
             """
             Ingest Data from a Blob.
             :param ingest_client: Client to ingest data
@@ -234,8 +244,10 @@ class Utils:
             Halts the program for WaitForIngestSeconds, allowing the queued ingestion process to complete.
             :param wait_for_ingest_seconds: Sleep time to allow for queued ingestion to complete.
             """
-            print(f"Sleeping {wait_for_ingest_seconds} seconds for queued ingestion to complete. Note: This may take longer depending on the file size "
-                  f"and ingestion batching policy.")
+            print(
+                f"Sleeping {wait_for_ingest_seconds} seconds for queued ingestion to complete. Note: This may take longer depending on the file size "
+                f"and ingestion batching policy."
+            )
 
             for x in tqdm(range(wait_for_ingest_seconds, 0, -1)):
                 sleep(1)

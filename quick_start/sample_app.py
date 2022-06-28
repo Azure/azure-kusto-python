@@ -12,14 +12,16 @@ class SourceType(enum.Enum):
     """
     SourceType - represents the type of files used for ingestion
     """
-    local_file_source = "localFileSource",
-    blob_source = "blobSource",
+
+    local_file_source = ("localFileSource",)
+    blob_source = ("blobSource",)
 
 
 class ConfigData:
     """
     ConfigData object - represents a file from which to ingest
     """
+
     source_type: ClassVar[SourceType]
     data_source_uri: ClassVar[str]
     data_format: ClassVar[DataFormat]
@@ -32,6 +34,7 @@ class ConfigJson:
     """
     ConfigJson object - represents a cluster and DataBase connection configuration file.
     """
+
     use_existing_table: ClassVar[bool]
     database_name: ClassVar[str]
     table_name: ClassVar[str]
@@ -95,15 +98,15 @@ class KustoSampleApp:
         cls.config.batching_policy = json_dict["BatchingPolicy"]
 
         if (
-                cls.config.database_name is None
-                or cls.config.table_name is None
-                or cls.config.table_schema is None
-                or cls.config.kusto_uri is None
-                or cls.config.ingest_uri is None
-                or cls.config.data_to_ingest is None
-                or cls.config.authentication_mode is None
-                or cls.config.wait_for_user is None
-                or cls.config.wait_for_ingest_seconds is None
+            cls.config.database_name is None
+            or cls.config.table_name is None
+            or cls.config.table_schema is None
+            or cls.config.kusto_uri is None
+            or cls.config.ingest_uri is None
+            or cls.config.data_to_ingest is None
+            or cls.config.authentication_mode is None
+            or cls.config.wait_for_user is None
+            or cls.config.wait_for_ingest_seconds is None
         ):
             Utils.error_handler(f"File '{config_file_name}' is missing required fields")
 
@@ -239,8 +242,15 @@ class KustoSampleApp:
             # Tip: This is generally a one-time configuration.
             # Learn More: For more information about providing inline mappings and mapping references,
             # see: https://docs.microsoft.com/azure/data-explorer/kusto/management/mappings
-            cls.create_ingestion_mappings(data_file.use_existing_mapping, kusto_client, config.database_name, config.table_name, data_file.mapping_name,
-                                          data_file.mapping_value, data_file.data_format)
+            cls.create_ingestion_mappings(
+                data_file.use_existing_mapping,
+                kusto_client,
+                config.database_name,
+                config.table_name,
+                data_file.mapping_name,
+                data_file.mapping_value,
+                data_file.data_format,
+            )
 
             # Learn More: For more information about ingesting data to Kusto in Python, see: https://docs.microsoft.com/azure/data-explorer/python-ingest-data
             cls.ingest_data(data_file, data_file.data_format, ingest_client, config.database_name, config.table_name, data_file.mapping_name)
@@ -248,8 +258,16 @@ class KustoSampleApp:
         Utils.Ingestion.wait_for_ingestion_to_complete(config.wait_for_ingest_seconds)
 
     @classmethod
-    def create_ingestion_mappings(cls, use_existing_mapping: bool, kusto_client: KustoClient, database_name: str, table_name: str, mapping_name: str,
-                                  mapping_value: str, data_format: DataFormat) -> None:
+    def create_ingestion_mappings(
+        cls,
+        use_existing_mapping: bool,
+        kusto_client: KustoClient,
+        database_name: str,
+        table_name: str,
+        mapping_name: str,
+        mapping_value: str,
+        data_format: DataFormat,
+    ) -> None:
         """
         Creates Ingestion Mappings (if required) based on given values.
         :param use_existing_mapping: Flag noting if we should the existing mapping or create a new one
@@ -271,8 +289,9 @@ class KustoSampleApp:
         Utils.Queries.execute_command(kusto_client, database_name, mapping_command)
 
     @classmethod
-    def ingest_data(cls, data_file: ConfigData, data_format: DataFormat, ingest_client: QueuedIngestClient, database_name: str, table_name: str,
-                    mapping_name: str) -> None:
+    def ingest_data(
+        cls, data_file: ConfigData, data_format: DataFormat, ingest_client: QueuedIngestClient, database_name: str, table_name: str, mapping_name: str
+    ) -> None:
         """
         Ingest data from given source.
         :param data_file: Given data source
