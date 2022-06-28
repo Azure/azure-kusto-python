@@ -238,7 +238,6 @@ class Utils:
                   f"and ingestion batching policy.")
 
             for x in tqdm(range(wait_for_ingest_seconds, 0, -1)):
-                print(f"{x} ", end="\r")
                 sleep(1)
 
             print()

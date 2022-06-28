@@ -1,11 +1,10 @@
 import enum
 import json
+import uuid
 from typing import ClassVar
-
+import inflection as inflection
 from azure.kusto.ingest import QueuedIngestClient
-
 from quick_start.utils import Utils, AuthenticationModeOptions
-
 from azure.kusto.data import DataFormat, KustoClient
 
 
@@ -13,8 +12,8 @@ class SourceType(enum.Enum):
     """
     SourceType - represents the type of files used for ingestion
     """
-    localfilesource = "localFileSource",
-    blobsource = "blobSource",
+    local_file_source = "localFileSource",
+    blob_source = "blobSource",
 
 
 class ConfigData:
@@ -71,13 +70,22 @@ class KustoSampleApp:
         except Exception as ex:
             Utils.error_handler(f"Couldn't read load config file from file '{config_file_name}'", ex)
 
+        cls.convert_config_json_fields(json_dict, config_file_name)
+
+    @classmethod
+    def convert_config_json_fields(cls, json_dict: dict, config_file_name: str) -> None:
+        """
+        Converts dict object - JSON style camelCase to ConfigJson object - python snake_case
+        :param config_file_name: JSON configuration file.
+        :param json_dict: Dict of JSON configuration - styled in camelCase
+        """
         cls.config.use_existing_table = json_dict["useExistingTable"]
         cls.config.database_name = json_dict["databaseName"]
         cls.config.table_name = json_dict["tableName"]
         cls.config.table_schema = json_dict["tableSchema"]
         cls.config.kusto_uri = json_dict["kustoUri"]
         cls.config.ingest_uri = json_dict["ingestUri"]
-        cls.config.data_to_ingest = json_dict["data"]
+        cls.config.data_to_ingest = cls.convert_config_data_fields(json_dict["data"])
         cls.config.alter_table = json_dict["alterTable"]
         cls.config.query_data = json_dict["queryData"]
         cls.config.ingest_data = json_dict["ingestData"]
@@ -100,7 +108,28 @@ class KustoSampleApp:
             Utils.error_handler(f"File '{config_file_name}' is missing required fields")
 
     @classmethod
-    def pre_ingestion_querying(cls, config: ConfigJson, kusto_client: KustoClient):
+    def convert_config_data_fields(cls, data_dicts: list[dict]) -> list[ConfigData]:
+        """
+        Converts dict object  - JSON style camelCase to ConfigData object - python snake_case
+        :param data_dicts: Dict of data sources list to ingest from - styled in camelCase
+        :return: ConfigData Data sources list to ingest from - styled in snake_case
+        """
+        config_data_list = []
+
+        for data_dict in data_dicts:
+            config_data = ConfigData()
+            config_data.source_type = SourceType[inflection.underscore(data_dict["sourceType"])]
+            config_data.data_source_uri = data_dict["dataSourceUri"]
+            config_data.data_format = DataFormat[data_dict["format"]]
+            config_data.use_existing_mapping = data_dict["useExistingMapping"]
+            config_data.mapping_name = data_dict["mappingName"]
+            config_data.mapping_value = data_dict["mappingValue"]
+            config_data_list.append(config_data)
+
+        return config_data_list
+
+    @classmethod
+    def pre_ingestion_querying(cls, config: ConfigJson, kusto_client: KustoClient) -> None:
         """
         First phase, pre ingestion - will reach the provided DB with several control commands and a query based on the configuration File.
         :param config: ConfigJson object containing the SampleApp configuration
@@ -187,6 +216,79 @@ class KustoSampleApp:
         Utils.Queries.execute_command(kusto_client, database_name, command)
 
     @classmethod
+    def ingestion(cls, config: ConfigJson, kusto_client: KustoClient, ingest_client: QueuedIngestClient) -> None:
+        """
+        Second phase - The ingestion process.
+        :param config: ConfigJson object
+        :param kusto_client: Client to run commands
+        :param ingest_client: Client to ingest data
+        """
+
+        for data_file in config.data_to_ingest:
+            # Tip: This is generally a one-time configuration.
+            # Learn More: For more information about providing inline mappings and mapping references,
+            # see: https://docs.microsoft.com/azure/data-explorer/kusto/management/mappings
+            cls.create_ingestion_mappings(data_file.use_existing_mapping, kusto_client, config.database_name, config.table_name, data_file.mapping_name,
+                                          data_file.mapping_value, data_file.data_format)
+
+            # Learn More: For more information about ingesting data to Kusto in Python, see: https://docs.microsoft.com/azure/data-explorer/python-ingest-data
+            cls.ingest_data(data_file, data_file.data_format, ingest_client, config.database_name, config.table_name, data_file.mapping_name)
+
+        Utils.Ingestion.wait_for_ingestion_to_complete(config.wait_for_ingest_seconds)
+
+    @classmethod
+    def create_ingestion_mappings(cls, use_existing_mapping: bool, kusto_client: KustoClient, database_name: str, table_name: str, mapping_name: str,
+                                  mapping_value: str, data_format: DataFormat) -> None:
+        """
+        Creates Ingestion Mappings (if required) based on given values.
+        :param use_existing_mapping: Flag noting if we should the existing mapping or create a new one
+        :param kusto_client: Client to run commands
+        :param database_name: DB name
+        :param table_name: Table name
+        :param mapping_name: Desired mapping name
+        :param mapping_value: Values of the new mappings to create
+        :param data_format: Given data format
+        """
+        if use_existing_mapping or not mapping_value:
+            return
+
+        ingestion_mapping_kind = data_format.ingestion_mapping_kind.value.lower()
+        cls.wait_for_user_to_proceed(f"Create a '{ingestion_mapping_kind}' mapping reference named '{mapping_name}'")
+
+        mapping_name = mapping_name if mapping_name else "DefaultQuickstartMapping" + str(uuid.UUID())[:5]
+        mapping_command = f".create-or-alter table {table_name} ingestion {ingestion_mapping_kind} mapping '{mapping_name}' '{mapping_value}'"
+        Utils.Queries.execute_command(kusto_client, database_name, mapping_command)
+
+    @classmethod
+    def ingest_data(cls, data_file: ConfigData, data_format: DataFormat, ingest_client: QueuedIngestClient, database_name: str, table_name: str,
+                    mapping_name: str) -> None:
+        """
+        Ingest data from given source.
+        :param data_file: Given data source
+        :param data_format: Given data format
+        :param ingest_client: Client to ingest data
+        :param database_name: DB name
+        :param table_name: Table name
+        :param mapping_name: Desired mapping name
+        """
+        source_type = data_file.source_type
+        source_uri = data_file.data_source_uri
+        cls.wait_for_user_to_proceed(f"Ingest '{source_uri}' from '{source_type.name}'")
+
+        # Tip: When ingesting json files, if each line represents a single-line json, use MULTIJSON format even if the file only contains one line.
+        # If the json contains whitespace formatting, use SINGLEJSON. In this case, only one data row json object is allowed per file.
+        data_format = DataFormat.MULTIJSON if data_format == data_format.JSON else data_format
+
+        # Tip: Kusto's Python SDK can ingest data from files, blobs, open streams and pandas dataframes.
+        # See the SDK's samples and the E2E tests in azure.kusto.ingest for additional references.
+        if source_type == SourceType.local_file_source:
+            Utils.Ingestion.ingest_from_file(ingest_client, database_name, table_name, source_uri, data_format, mapping_name)
+        elif source_type == SourceType.blob_source:
+            Utils.Ingestion.ingest_from_blob(ingest_client, database_name, table_name, source_uri, data_format, mapping_name)
+        else:
+            Utils.error_handler(f"Unknown source '{source_type}' for file '{source_uri}'")
+
+    @classmethod
     def wait_for_user_to_proceed(cls, prompt_msg: str) -> None:
         """
         Handles UX on prompts and flow of program
@@ -220,11 +322,11 @@ def main():
 
         app.pre_ingestion_querying(app.config, kusto_client)
 
-        if app.config.ingestData:
-            await app.ingestionAsync(app.config, kusto_client, ingest_client)
+        if app.config.ingest_data:
+            app.ingestion(app.config, kusto_client, ingest_client)
 
-        if app.config.queryData:
-            await app.postIngestionQueryingAsync(kusto_client, app.config.databaseName, app.config.tableName, app.config.ingestData)
+        if app.config.query_data:
+            await app.post_ingestion_querying(kusto_client, app.config.database_name, app.config.table_name, app.config.ingest_data)
 
     print("\nKusto sample app done")
 
