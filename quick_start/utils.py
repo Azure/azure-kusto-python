@@ -122,7 +122,7 @@ class Utils:
             """
             client_request_properties = ClientRequestProperties()
             client_request_properties.client_request_id = f"{scope};{str(uuid.uuid4())}"
-            client_request_properties.application = "kusto_sample_app.py"
+            client_request_properties.application = "sample_app.py"
 
             # Tip: Though uncommon, you can alter the request default command timeout using the below command, e.g. to set the timeout to 10 minutes, use "10m"
             if timeout:
@@ -239,9 +239,6 @@ class Utils:
 
             for x in tqdm(range(wait_for_ingest_seconds, 0, -1)):
                 sleep(1)
-
-            print()
-            print()
 
     @staticmethod
     def error_handler(error: str, e: Exception = None) -> None:

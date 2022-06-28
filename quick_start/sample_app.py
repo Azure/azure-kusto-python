@@ -188,6 +188,17 @@ class KustoSampleApp:
         Utils.Queries.execute_command(kusto_client, database_name, command)
 
     @classmethod
+    def query_first_two_rows(cls, kusto_client: KustoClient, database_name: str, table_name: str) -> None:
+        """
+        Queries the first two rows of the table.
+        :param kusto_client: Client to run commands
+        :param database_name: DB name
+        :param table_name: Table name
+        """
+        command = f"{table_name} | take 2"
+        Utils.Queries.execute_command(kusto_client, database_name, command)
+
+    @classmethod
     def create_new_table(cls, kusto_client: KustoClient, database_name: str, table_name: str, table_schema: str) -> None:
         """
         Creates a new table.
@@ -289,6 +300,23 @@ class KustoSampleApp:
             Utils.error_handler(f"Unknown source '{source_type}' for file '{source_uri}'")
 
     @classmethod
+    def post_ingestion_querying(cls, kusto_client: KustoClient, database_name: str, table_name: str, config_ingest_data: bool) -> None:
+        """
+        Third and final phase - simple queries to validate the hopefully successful run of the script.
+        :param kusto_client: Client to run queries
+        :param database_name: DB Name
+        :param table_name: Table Name
+        :param config_ingest_data: Flag noting whether any data was ingested by the script
+        """
+        optional_post_ingestion_message = "post-ingestion " if config_ingest_data else ""
+
+        cls.wait_for_user_to_proceed(f"Get {optional_post_ingestion_message}row count for '{database_name}.{table_name}':")
+        cls.query_existing_number_of_rows(kusto_client, database_name, table_name)
+
+        cls.wait_for_user_to_proceed(f"Get {optional_post_ingestion_message}row count for '{database_name}.{table_name}':")
+        cls.query_first_two_rows(kusto_client, database_name, table_name)
+
+    @classmethod
     def wait_for_user_to_proceed(cls, prompt_msg: str) -> None:
         """
         Handles UX on prompts and flow of program
@@ -326,7 +354,7 @@ def main():
             app.ingestion(app.config, kusto_client, ingest_client)
 
         if app.config.query_data:
-            await app.post_ingestion_querying(kusto_client, app.config.database_name, app.config.table_name, app.config.ingest_data)
+            app.post_ingestion_querying(kusto_client, app.config.database_name, app.config.table_name, app.config.ingest_data)
 
     print("\nKusto sample app done")
 
