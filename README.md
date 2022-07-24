@@ -56,9 +56,9 @@ There is also a feature request for the adal team to work on implementing IWA (I
 
 * [Kusto Quick Start Sample App](https://github.com/Azure/azure-kusto-python/tree/master/quick_start)
 
-* [Kusto query sample sinppets](https://github.com/Azure/azure-kusto-python/blob/master/azure-kusto-data/tests/sample.py)
+* [Kusto query sample snippets](https://github.com/Azure/azure-kusto-python/blob/master/azure-kusto-data/tests/sample.py)
 
-* [Data ingest sample sinppets](https://github.com/Azure/azure-kusto-python/blob/master/azure-kusto-ingest/tests/sample.py)
+* [Data ingest sample snippets](https://github.com/Azure/azure-kusto-python/blob/master/azure-kusto-ingest/tests/sample.py)
 
 ## Best Practices
 See the SDK [best practices guide](https://docs.microsoft.com/azure/data-explorer/kusto/api/netfx/kusto-ingest-best-practices), which though written for the .NET SDK, applies similarly here.
