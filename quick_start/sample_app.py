@@ -227,14 +227,14 @@ class KustoSampleApp:
 
     @classmethod
     def create_ingestion_mappings(
-            cls,
-            use_existing_mapping: bool,
-            kusto_client: KustoClient,
-            database_name: str,
-            table_name: str,
-            mapping_name: str,
-            mapping_value: str,
-            data_format: DataFormat,
+        cls,
+        use_existing_mapping: bool,
+        kusto_client: KustoClient,
+        database_name: str,
+        table_name: str,
+        mapping_name: str,
+        mapping_value: str,
+        data_format: DataFormat,
     ) -> None:
         """
         Creates Ingestion Mappings (if required) based on given values.
@@ -258,7 +258,7 @@ class KustoSampleApp:
 
     @classmethod
     def ingest_data(
-            cls, data_file: ConfigData, data_format: DataFormat, ingest_client: QueuedIngestClient, database_name: str, table_name: str, mapping_name: str
+        cls, data_file: ConfigData, data_format: DataFormat, ingest_client: QueuedIngestClient, database_name: str, table_name: str, mapping_name: str
     ) -> None:
         """
         Ingest data from given source.
