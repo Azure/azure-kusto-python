@@ -1,7 +1,7 @@
 import enum
 import json
 import uuid
-from typing import ClassVar
+from dataclasses import dataclass
 import inflection as inflection
 from azure.kusto.ingest import QueuedIngestClient
 from quick_start.utils import Utils, AuthenticationModeOptions
@@ -13,8 +13,8 @@ class SourceType(enum.Enum):
     SourceType - represents the type of files used for ingestion
     """
 
-    local_file_source = ("localFileSource",)
-    blob_source = ("blobSource",)
+    local_file_source = "localFileSource"
+    blob_source = "blobSource"
 
 
 class ConfigData:
@@ -22,33 +22,34 @@ class ConfigData:
     ConfigData object - represents a file from which to ingest
     """
 
-    source_type: ClassVar[SourceType]
-    data_source_uri: ClassVar[str]
-    data_format: ClassVar[DataFormat]
-    use_existing_mapping: ClassVar[bool]
-    mapping_name: ClassVar[str]
-    mapping_value: ClassVar[str]
+    source_type: SourceType
+    data_source_uri: str
+    data_format: DataFormat
+    use_existing_mapping: bool
+    mapping_name: str
+    mapping_value: str
 
 
+@dataclass
 class ConfigJson:
     """
     ConfigJson object - represents a cluster and DataBase connection configuration file.
     """
 
-    use_existing_table: ClassVar[bool]
-    database_name: ClassVar[str]
-    table_name: ClassVar[str]
-    table_schema: ClassVar[str]
-    kusto_uri: ClassVar[str]
-    ingest_uri: ClassVar[str]
-    data_to_ingest: ClassVar[list[ConfigData]]
-    alter_table: ClassVar[bool]
-    query_data: ClassVar[bool]
-    ingest_data: ClassVar[bool]
-    authentication_mode: ClassVar[AuthenticationModeOptions]
-    wait_for_user: ClassVar[bool]
-    wait_for_ingest_seconds: ClassVar[bool]
-    batching_policy: ClassVar[str]
+    use_existing_table: bool
+    database_name: str
+    table_name: str
+    table_schema: str
+    kusto_uri: str
+    ingest_uri: str
+    data_to_ingest: list[ConfigData]
+    alter_table: bool
+    query_data: bool
+    ingest_data: bool
+    authentication_mode: AuthenticationModeOptions
+    wait_for_user: bool
+    wait_for_ingest_seconds: bool
+    batching_policy: str
 
 
 class KustoSampleApp:
@@ -58,7 +59,7 @@ class KustoSampleApp:
     CONFIG_FILE_NAME = "kusto_sample_config.json"
 
     __step = 1
-    config = ConfigJson()
+    config = None
 
     @classmethod
     def load_configs(cls, config_file_name: str) -> None:
@@ -73,42 +74,9 @@ class KustoSampleApp:
         except Exception as ex:
             Utils.error_handler(f"Couldn't read load config file from file '{config_file_name}'", ex)
 
-        cls.convert_config_json_fields(json_dict, config_file_name)
-
-    @classmethod
-    def convert_config_json_fields(cls, json_dict: dict, config_file_name: str) -> None:
-        """
-        Converts dict object - JSON style camelCase to ConfigJson object - python snake_case
-        :param config_file_name: JSON configuration file.
-        :param json_dict: Dict of JSON configuration - styled in camelCase
-        """
-        cls.config.use_existing_table = json_dict["useExistingTable"]
-        cls.config.database_name = json_dict["databaseName"]
-        cls.config.table_name = json_dict["tableName"]
-        cls.config.table_schema = json_dict["tableSchema"]
-        cls.config.kusto_uri = json_dict["kustoUri"]
-        cls.config.ingest_uri = json_dict["ingestUri"]
-        cls.config.data_to_ingest = cls.convert_config_data_fields(json_dict["data"])
-        cls.config.alter_table = json_dict["alterTable"]
-        cls.config.query_data = json_dict["queryData"]
-        cls.config.ingest_data = json_dict["ingestData"]
-        cls.config.authentication_mode = json_dict["AuthenticationMode"]
-        cls.config.wait_for_user = json_dict["WaitForUser"]
-        cls.config.wait_for_ingest_seconds = json_dict["WaitForIngestSeconds"]
-        cls.config.batching_policy = json_dict["BatchingPolicy"]
-
-        if (
-            cls.config.database_name is None
-            or cls.config.table_name is None
-            or cls.config.table_schema is None
-            or cls.config.kusto_uri is None
-            or cls.config.ingest_uri is None
-            or cls.config.data_to_ingest is None
-            or cls.config.authentication_mode is None
-            or cls.config.wait_for_user is None
-            or cls.config.wait_for_ingest_seconds is None
-        ):
-            Utils.error_handler(f"File '{config_file_name}' is missing required fields")
+        json_dict["dataToIngest"] = cls.convert_config_data_fields(json_dict["data"])
+        json_dict.pop("data", None)
+        cls.config = ConfigJson(**{inflection.underscore(key): val for (key, val) in json_dict.items()})
 
     @classmethod
     def convert_config_data_fields(cls, data_dicts: list[dict]) -> list[ConfigData]:
@@ -259,14 +227,14 @@ class KustoSampleApp:
 
     @classmethod
     def create_ingestion_mappings(
-        cls,
-        use_existing_mapping: bool,
-        kusto_client: KustoClient,
-        database_name: str,
-        table_name: str,
-        mapping_name: str,
-        mapping_value: str,
-        data_format: DataFormat,
+            cls,
+            use_existing_mapping: bool,
+            kusto_client: KustoClient,
+            database_name: str,
+            table_name: str,
+            mapping_name: str,
+            mapping_value: str,
+            data_format: DataFormat,
     ) -> None:
         """
         Creates Ingestion Mappings (if required) based on given values.
@@ -290,7 +258,7 @@ class KustoSampleApp:
 
     @classmethod
     def ingest_data(
-        cls, data_file: ConfigData, data_format: DataFormat, ingest_client: QueuedIngestClient, database_name: str, table_name: str, mapping_name: str
+            cls, data_file: ConfigData, data_format: DataFormat, ingest_client: QueuedIngestClient, database_name: str, table_name: str, mapping_name: str
     ) -> None:
         """
         Ingest data from given source.
