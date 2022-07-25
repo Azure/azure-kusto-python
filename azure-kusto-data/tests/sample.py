@@ -45,6 +45,14 @@ with open(filename, "r") as cert_file:
 thumbprint = "certificate's thumbprint"
 kcsb = KustoConnectionStringBuilder.with_aad_application_certificate_sni_authentication(cluster, client_id, PEM, public_certificate, thumbprint, authority_id)
 
+
+# No authentication - for rare cases where the cluster is defined to work without any need for auth. usually reserved for internal use.
+
+kcsb = KustoConnectionStringBuilder()
+
+# Managed Identity - automatically injected into your machine by azure when running on an azure service.
+# It's the best way for any code that does such - it's automatic, and requires no saving of secrets.
+
 # In case you want to authenticate with a System Assigned Managed Service Identity (MSI)
 kcsb = KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication(cluster)
 
