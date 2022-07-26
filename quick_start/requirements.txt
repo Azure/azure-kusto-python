@@ -1,3 +1,4 @@
-azure_storage==0.37.0
+azure-kusto-data==3.0.1
+azure-kusto-ingest==3.0.1
 inflection==0.5.1
 tqdm==4.64.0

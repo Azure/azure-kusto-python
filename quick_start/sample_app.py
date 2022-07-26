@@ -2,9 +2,10 @@ import enum
 import json
 import uuid
 from dataclasses import dataclass
+from typing import List
 import inflection as inflection
 from azure.kusto.ingest import QueuedIngestClient
-from quick_start.utils import Utils, AuthenticationModeOptions
+from utils import Utils, AuthenticationModeOptions
 from azure.kusto.data import DataFormat, KustoClient
 
 
@@ -17,6 +18,7 @@ class SourceType(enum.Enum):
     blob_source = "blobSource"
 
 
+@dataclass
 class ConfigData:
     """
     ConfigData object - represents a file from which to ingest
@@ -42,7 +44,7 @@ class ConfigJson:
     table_schema: str
     kusto_uri: str
     ingest_uri: str
-    data_to_ingest: list[ConfigData]
+    data_to_ingest: List[ConfigData]
     alter_table: bool
     query_data: bool
     ingest_data: bool
@@ -74,9 +76,17 @@ class KustoSampleApp:
         except Exception as ex:
             Utils.error_handler(f"Couldn't read load config file from file '{config_file_name}'", ex)
 
-        json_dict["dataToIngest"] = cls.convert_config_data_fields(json_dict["data"])
-        json_dict.pop("data", None)
-        cls.config = ConfigJson(**{inflection.underscore(key): val for (key, val) in json_dict.items()})
+        json_dict["dataToIngest"] = cls.convert_config_data_fields(json_dict.pop("data"))
+        cls.config = ConfigJson(**cls.keys_to_snake_case(json_dict))
+
+    @classmethod
+    def keys_to_snake_case(cls, json_dict: dict) -> dict:
+        """
+        Converts dictionary keys to snakeCase
+        :param json_dict: Dictionary of JSON configuration file
+        :return: Dictionary with keys converted to snakeCase
+        """
+        return {inflection.underscore(key): val for (key, val) in json_dict.items()}
 
     @classmethod
     def convert_config_data_fields(cls, data_dicts: list[dict]) -> list[ConfigData]:
@@ -88,14 +98,9 @@ class KustoSampleApp:
         config_data_list = []
 
         for data_dict in data_dicts:
-            config_data = ConfigData()
-            config_data.source_type = SourceType[inflection.underscore(data_dict["sourceType"])]
-            config_data.data_source_uri = data_dict["dataSourceUri"]
-            config_data.data_format = DataFormat[data_dict["format"]]
-            config_data.use_existing_mapping = data_dict["useExistingMapping"]
-            config_data.mapping_name = data_dict["mappingName"]
-            config_data.mapping_value = data_dict["mappingValue"]
-            config_data_list.append(config_data)
+            data_dict["sourceType"] = SourceType[inflection.underscore(data_dict.pop("sourceType"))]
+            data_dict["dataFormat"] = DataFormat[data_dict.pop("format")]
+            config_data_list.append(ConfigData(**KustoSampleApp.keys_to_snake_case(data_dict)))
 
         return config_data_list
 
