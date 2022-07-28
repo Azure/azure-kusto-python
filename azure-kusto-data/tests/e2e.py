@@ -1,0 +1,284 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License
+# import io
+import json
+import os
+# import pathlib
+import random
+import sys
+import time
+# import uuid
+from datetime import datetime
+from typing import Optional, ClassVar
+
+import pytest
+
+from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
+from azure.kusto.data._models import WellKnownDataSet
+from azure.kusto.data.aio import KustoClient as AsyncKustoClient
+# from azure.kusto.data.data_format import DataFormat, IngestionMappingKind
+# from azure.kusto.data.exceptions import KustoServiceError
+from azure.kusto.data.streaming_response import FrameType
+
+# from azure.kusto.ingest import (
+#     QueuedIngestClient,
+#     KustoStreamingIngestClient,
+#     IngestionProperties,
+#     ColumnMapping,
+#     ValidationPolicy,
+#     ValidationOptions,
+#     ValidationImplications,
+#     ReportLevel,
+#     ReportMethod,
+#     FileDescriptor,
+#     BlobDescriptor,
+#     StreamDescriptor,
+#     ManagedStreamingIngestClient,
+# )
+
+
+@pytest.fixture(params=["ManagedStreaming", "NormalClient"])
+def is_managed_streaming(request):
+    return request.param == "ManagedStreaming"
+
+
+class TestE2E:
+    """A class to define mappings to deft table."""
+
+    input_folder_path: ClassVar[str]
+    streaming_test_table: ClassVar[str]
+    test_streaming_data: ClassVar[list]
+    engine_cs: ClassVar[Optional[str]]
+    # dm_cs: ClassVar[Optional[str]]
+    app_id: ClassVar[Optional[str]]
+    app_key: ClassVar[Optional[str]]
+    auth_id: ClassVar[Optional[str]]
+    test_db: ClassVar[Optional[str]]
+    client: ClassVar[KustoClient]
+    test_table: ClassVar[str]
+    # current_count: ClassVar[int]
+
+    CHUNK_SIZE = 1024
+
+
+    @staticmethod
+    def table_json_mapping_reference():
+        """A method to get json mappings reference to test table."""
+        return """'['
+                    '    { "column" : "rownumber", "datatype" : "int", "Properties":{"Path":"$.rownumber"}},'
+                    '    { "column" : "rowguid", "datatype" : "string", "Properties":{"Path":"$.rowguid"}},'
+                    '    { "column" : "xdouble", "datatype" : "real", "Properties":{"Path":"$.xdouble"}},'
+                    '    { "column" : "xfloat", "datatype" : "real", "Properties":{"Path":"$.xfloat"}},'
+                    '    { "column" : "xbool", "datatype" : "bool", "Properties":{"Path":"$.xbool"}},'
+                    '    { "column" : "xint16", "datatype" : "int", "Properties":{"Path":"$.xint16"}},'
+                    '    { "column" : "xint32", "datatype" : "int", "Properties":{"Path":"$.xint32"}},'
+                    '    { "column" : "xint64", "datatype" : "long", "Properties":{"Path":"$.xint64"}},'
+                    '    { "column" : "xuint8", "datatype" : "long", "Properties":{"Path":"$.xuint8"}},'
+                    '    { "column" : "xuint16", "datatype" : "long", "Properties":{"Path":"$.xuint16"}},'
+                    '    { "column" : "xuint32", "datatype" : "long", "Properties":{"Path":"$.xuint32"}},'
+                    '    { "column" : "xuint64", "datatype" : "long", "Properties":{"Path":"$.xuint64"}},'
+                    '    { "column" : "xdate", "datatype" : "datetime", "Properties":{"Path":"$.xdate"}},'
+                    '    { "column" : "xsmalltext", "datatype" : "string", "Properties":{"Path":"$.xsmalltext"}},'
+                    '    { "column" : "xtext", "datatype" : "string", "Properties":{"Path":"$.xtext"}},'
+                    '    { "column" : "xnumberAsText", "datatype" : "string", "Properties":{"Path":"$.rowguid"}},'
+                    '    { "column" : "xtime", "datatype" : "timespan", "Properties":{"Path":"$.xtime"}},'
+                    '    { "column" : "xtextWithNulls", "datatype" : "string", "Properties":{"Path":"$.xtextWithNulls"}},'
+                    '    { "column" : "xdynamicWithNulls", "datatype" : "dynamic", "Properties":{"Path":"$.xdynamicWithNulls"}},'
+                    ']'"""
+
+    @staticmethod
+    def get_file_path() -> str:
+        current_dir = os.getcwd()
+        path_parts = ["azure-kusto-data", "tests", "input"]
+        missing_path_parts = []
+        for path_part in path_parts:
+            if path_part not in current_dir:
+                missing_path_parts.append(path_part)
+        return os.path.join(current_dir, *missing_path_parts)
+
+    @classmethod
+    def engine_kcsb_from_env(cls) -> KustoConnectionStringBuilder:
+        if all([cls.app_id, cls.app_key, cls.auth_id]):
+            return KustoConnectionStringBuilder.with_aad_application_key_authentication(cls.engine_cs, cls.app_id, cls.app_key, cls.auth_id)
+        else:
+            return KustoConnectionStringBuilder.with_interactive_login(cls.engine_cs)
+
+    @classmethod
+    def setup_class(cls):
+        # DM CS can be composed from engine CS
+        cls.engine_cs = os.environ.get("ENGINE_CONNECTION_STRING") or ""
+        # cls.dm_cs = os.environ.get("DM_CONNECTION_STRING") or cls.engine_cs.replace("//", "//ingest-")
+        cls.app_id = os.environ.get("APP_ID")
+        cls.app_key = os.environ.get("APP_KEY")
+        cls.auth_id = os.environ.get("AUTH_ID")
+        cls.test_db = os.environ.get("TEST_DATABASE")
+
+        if not all([cls.engine_cs, cls.test_db]):
+            pytest.skip("E2E environment is missing")
+
+        # Init clients
+        python_version = "_".join([str(v) for v in sys.version_info[:3]])
+        cls.test_table = "python_test_{0}_{1}_{2}".format(python_version, str(int(time.time())), random.randint(1, 100000))
+        cls.streaming_test_table = "BigChunkus"
+        cls.streaming_test_table_query = cls.streaming_test_table + " | order by timestamp"
+
+        cls.client = KustoClient(cls.engine_kcsb_from_env())
+
+        cls.input_folder_path = cls.get_file_path()
+
+        with open(os.path.join(cls.input_folder_path, "big.json")) as f:
+            cls.test_streaming_data = json.load(f)
+        # cls.current_count = 0
+
+        cls.client.execute(
+            cls.test_db,
+            f".create table {cls.test_table} (rownumber: int, rowguid: string, xdouble: real, xfloat: real, xbool: bool, xint16: int, xint32: int, xint64: long, xuint8: long, xuint16: long, xuint32: long, xuint64: long, xdate: datetime, xsmalltext: string, xtext: string, xnumberAsText: string, xtime: timespan, xtextWithNulls: string, xdynamicWithNulls: dynamic)",
+        )
+        cls.client.execute(cls.test_db, f".create table {cls.test_table} ingestion json mapping 'JsonMapping' {cls.table_json_mapping_reference()}")
+
+        cls.client.execute(cls.test_db, f".alter table {cls.test_table} policy streamingingestion enable ")
+
+        # Clear the cache to guarantee that subsequent streaming ingestion requests incorporate database and table schema changes
+        # See https://docs.microsoft.com/azure/data-explorer/kusto/management/data-ingestion/clear-schema-cache-command
+        cls.client.execute(cls.test_db, ".clear database cache streamingingestion schema")
+
+    @classmethod
+    def teardown_class(cls):
+        cls.client.execute(cls.test_db, ".drop table {} ifexists".format(cls.test_table))
+
+    @classmethod
+    async def get_async_client(cls) -> AsyncKustoClient:
+        return AsyncKustoClient(cls.engine_kcsb_from_env())
+
+    # assertions
+    # @classmethod
+    # async def assert_rows_added(cls, expected: int, timeout=60):
+    #     actual = 0
+    #     while timeout > 0:
+    #         time.sleep(1)
+    #         timeout -= 1
+    #
+    #         try:
+    #             command = "{} | count".format(cls.test_table)
+    #             response = cls.client.execute(cls.test_db, command)
+    #             async_client = await cls.get_async_client()
+    #             response_from_async = await async_client.execute(cls.test_db, command)
+    #         except KustoServiceError:
+    #             continue
+    #
+    #         if response is not None:
+    #             row = response.primary_results[0][0]
+    #             row_async = response_from_async.primary_results[0][0]
+    #             actual = int(row["Count"]) - cls.current_count
+    #             # this is done to allow for data to arrive properly
+    #             if actual >= expected:
+    #                 assert row_async == row, "Mismatch answers between async('{0}') and sync('{1}') clients".format(row_async, row)
+    #                 break
+    #
+    #     cls.current_count += actual
+    #     assert actual == expected, "Row count expected = {0}, while actual row count = {1}".format(expected, actual)
+
+    @staticmethod
+    def normalize_row(row):
+        result = []
+        for r in row:
+            if type(r) == bool:
+                result.append(int(r))
+            elif type(r) == datetime:
+                result.append(r.strftime("%Y-%m-%dT%H:%M:%SZ"))
+            else:
+                result.append(r)
+        return result
+
+    def test_streaming_query(self):
+        result = self.client.execute_streaming_query(self.test_db, self.streaming_test_table_query + ";" + self.streaming_test_table_query)
+        counter = 0
+
+        result.set_skip_incomplete_tables(True)
+        for primary in result.iter_primary_results():
+            counter += 1
+            for row in self.test_streaming_data:
+                assert row == self.normalize_row(next(primary).to_list())
+
+        assert counter == 2
+
+        assert result.finished
+        assert result.errors_count == 0
+        assert result.get_exceptions() == []
+
+    @pytest.mark.asyncio
+    async def test_streaming_query_async(self):
+        async with await self.get_async_client() as client:
+            result = await client.execute_streaming_query(self.test_db, self.streaming_test_table_query + ";" + self.streaming_test_table_query)
+            counter = 0
+
+            result.set_skip_incomplete_tables(True)
+            async for primary in result.iter_primary_results():
+                counter += 1
+                streaming_data_iter = iter(self.test_streaming_data)
+                async for row in primary:
+                    expected_row = next(streaming_data_iter, None)
+                    if expected_row is None:
+                        break
+
+                    assert expected_row == self.normalize_row(row.to_list())
+
+            assert counter == 2
+            assert result.finished
+            assert result.errors_count == 0
+            assert result.get_exceptions() == []
+
+    def test_streaming_query_internal(self):
+        frames = self.client._execute_streaming_query_parsed(self.test_db, self.streaming_test_table_query)
+
+        initial_frame = next(frames)
+        expected_initial_frame = {
+            "FrameType": FrameType.DataSetHeader,
+            "IsProgressive": False,
+            "Version": "v2.0",
+        }
+        assert initial_frame == expected_initial_frame
+        query_props = next(frames)
+        assert query_props["FrameType"] == FrameType.DataTable
+        assert query_props["TableKind"] == WellKnownDataSet.QueryProperties.value
+        assert type(query_props["Columns"]) == list
+        assert type(query_props["Rows"]) == list
+        assert len(query_props["Rows"][0]) == len(query_props["Columns"])
+
+        primary_result = next(frames)
+        assert primary_result["FrameType"] == FrameType.DataTable
+        assert primary_result["TableKind"] == WellKnownDataSet.PrimaryResult.value
+        assert type(primary_result["Columns"]) == list
+        assert type(primary_result["Rows"]) != list
+
+        row = next(primary_result["Rows"])
+        assert len(row) == len(primary_result["Columns"])
+
+    @pytest.mark.asyncio
+    async def test_streaming_query_internal_async(self):
+        async with await self.get_async_client() as client:
+            frames = await client._execute_streaming_query_parsed(self.test_db, self.streaming_test_table_query)
+            frames.__aiter__()
+            initial_frame = await frames.__anext__()
+            expected_initial_frame = {
+                "FrameType": FrameType.DataSetHeader,
+                "IsProgressive": False,
+                "Version": "v2.0",
+            }
+            assert initial_frame == expected_initial_frame
+            query_props = await frames.__anext__()
+            assert query_props["FrameType"] == FrameType.DataTable
+            assert query_props["TableKind"] == WellKnownDataSet.QueryProperties.value
+            assert type(query_props["Columns"]) == list
+            assert type(query_props["Rows"]) == list
+            assert len(query_props["Rows"][0]) == len(query_props["Columns"])
+
+            primary_result = await frames.__anext__()
+            assert primary_result["FrameType"] == FrameType.DataTable
+            assert primary_result["TableKind"] == WellKnownDataSet.PrimaryResult.value
+            assert type(primary_result["Columns"]) == list
+            assert type(primary_result["Rows"]) != list
+
+            row = await primary_result["Rows"].__anext__()
+            assert len(row) == len(primary_result["Columns"])
+
