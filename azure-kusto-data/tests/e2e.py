@@ -3,11 +3,6 @@
 # import io
 import json
 import os
-# import pathlib
-import random
-import sys
-import time
-# import uuid
 from datetime import datetime
 from typing import Optional, ClassVar
 
@@ -16,26 +11,7 @@ import pytest
 from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
 from azure.kusto.data._models import WellKnownDataSet
 from azure.kusto.data.aio import KustoClient as AsyncKustoClient
-# from azure.kusto.data.data_format import DataFormat, IngestionMappingKind
-# from azure.kusto.data.exceptions import KustoServiceError
 from azure.kusto.data.streaming_response import FrameType
-
-
-# from azure.kusto.ingest import (
-#     QueuedIngestClient,
-#     KustoStreamingIngestClient,
-#     IngestionProperties,
-#     ColumnMapping,
-#     ValidationPolicy,
-#     ValidationOptions,
-#     ValidationImplications,
-#     ReportLevel,
-#     ReportMethod,
-#     FileDescriptor,
-#     BlobDescriptor,
-#     StreamDescriptor,
-#     ManagedStreamingIngestClient,
-# )
 
 
 @pytest.fixture(params=["ManagedStreaming", "NormalClient"])
@@ -53,7 +29,6 @@ class TestE2E:
     test_streaming_data: ClassVar[list]
     engine_cs: ClassVar[Optional[str]]
     ai_engine_cs: ClassVar[Optional[str]]
-    # dm_cs: ClassVar[Optional[str]]
     app_id: ClassVar[Optional[str]]
     app_key: ClassVar[Optional[str]]
     auth_id: ClassVar[Optional[str]]
@@ -61,8 +36,6 @@ class TestE2E:
     ai_test_db: ClassVar[Optional[str]]
     client: ClassVar[KustoClient]
     ai_client: ClassVar[KustoClient]
-    # test_table: ClassVar[str]
-    # current_count: ClassVar[int]
 
     CHUNK_SIZE = 1024
 
@@ -119,10 +92,8 @@ class TestE2E:
 
     @classmethod
     def setup_class(cls):
-        # DM CS can be composed from engine CS
         cls.engine_cs = os.environ.get("ENGINE_CONNECTION_STRING") or ""
         cls.ai_engine_cs = os.environ.get("APPLICATION_INSIGHTS_ENGINE_CONNECTION_STRING") or ""
-        # cls.dm_cs = os.environ.get("DM_CONNECTION_STRING") or cls.engine_cs.replace("//", "//ingest-")
         cls.app_id = os.environ.get("APP_ID")
         cls.app_key = os.environ.get("APP_KEY")
         cls.auth_id = os.environ.get("AUTH_ID")
@@ -133,9 +104,6 @@ class TestE2E:
             pytest.skip("E2E environment is missing")
 
         # Init clients
-        # python_version = "_".join([str(v) for v in sys.version_info[:3]])
-        # cls.test_table = "python_test_{0}_{1}_{2}".format(python_version, str(int(time.time())),
-        #                                                   random.randint(1, 100000))
         cls.streaming_test_table = "BigChunkus"
         cls.streaming_test_table_query = cls.streaming_test_table + " | order by timestamp"
 
@@ -149,26 +117,6 @@ class TestE2E:
         with open(os.path.join(cls.input_folder_path, "big.json")) as f:
             cls.test_streaming_data = json.load(f)
 
-
-        # cls.current_count = 0
-
-        # cls.client.execute(
-        #     cls.test_db,
-        #     f".create table {cls.test_table} (rownumber: int, rowguid: string, xdouble: real, xfloat: real, xbool: bool, xint16: int, xint32: int, xint64: long, xuint8: long, xuint16: long, xuint32: long, xuint64: long, xdate: datetime, xsmalltext: string, xtext: string, xnumberAsText: string, xtime: timespan, xtextWithNulls: string, xdynamicWithNulls: dynamic)",
-        # )
-        # cls.client.execute(cls.test_db,
-        #                    f".create table {cls.test_table} ingestion json mapping 'JsonMapping' {cls.table_json_mapping_reference()}")
-        #
-        # cls.client.execute(cls.test_db, f".alter table {cls.test_table} policy streamingingestion enable ")
-        #
-        # # Clear the cache to guarantee that subsequent streaming ingestion requests incorporate database and table schema changes
-        # # See https://docs.microsoft.com/azure/data-explorer/kusto/management/data-ingestion/clear-schema-cache-command
-        # cls.client.execute(cls.test_db, ".clear database cache streamingingestion schema")
-
-    #
-    # @classmethod
-    # def teardown_class(cls):
-    #     cls.client.execute(cls.test_db, ".drop table {} ifexists".format(cls.test_table)) # add teardown
 
     @classmethod
     async def get_async_client(cls, app_insights=False) -> AsyncKustoClient:
@@ -288,7 +236,6 @@ class TestE2E:
         expected_table_name = iter(self.application_insights_tables())
 
         for primary in result.primary_results:
-            print(primary)
             counter += 1
             for row in primary.rows:
                 assert row["TableName"] == expected_table_name.__next__()
@@ -313,4 +260,3 @@ class TestE2E:
             assert result.errors_count == 0
             assert result.get_exceptions() == []
 
-# check the errors
