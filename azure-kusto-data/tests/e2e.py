@@ -48,6 +48,8 @@ class TestE2E:
 
     input_folder_path: ClassVar[str]
     streaming_test_table: ClassVar[str]
+    streaming_test_table_query: ClassVar[str]
+    ai_test_table_cmd: ClassVar[str]
     test_streaming_data: ClassVar[list]
     engine_cs: ClassVar[Optional[str]]
     ai_engine_cs: ClassVar[Optional[str]]
@@ -58,7 +60,8 @@ class TestE2E:
     test_db: ClassVar[Optional[str]]
     ai_test_db: ClassVar[Optional[str]]
     client: ClassVar[KustoClient]
-    test_table: ClassVar[str]
+    ai_client: ClassVar[KustoClient]
+    # test_table: ClassVar[str]
     # current_count: ClassVar[int]
 
     CHUNK_SIZE = 1024
@@ -89,6 +92,13 @@ class TestE2E:
                     ']'"""
 
     @staticmethod
+    def application_insights_tables():
+        """A method to get the tables of an application insights instance"""
+        return ["availabilityResults", "browserTimings", "customEvents", "customMetrics", "dependencies", "exceptions",
+                "pageViews", "performanceCounters", "requests", "traces"]
+
+
+    @staticmethod
     def get_file_path() -> str:
         current_dir = os.getcwd()
         path_parts = ["azure-kusto-data", "tests", "input"]
@@ -111,25 +121,25 @@ class TestE2E:
     def setup_class(cls):
         # DM CS can be composed from engine CS
         cls.engine_cs = os.environ.get("ENGINE_CONNECTION_STRING") or ""
-        cls.ai_engine_cs = os.environ.get("AI_ENGINE_CONNECTION_STRING") or ""
+        cls.ai_engine_cs = os.environ.get("APPLICATION_INSIGHTS_ENGINE_CONNECTION_STRING") or ""
         # cls.dm_cs = os.environ.get("DM_CONNECTION_STRING") or cls.engine_cs.replace("//", "//ingest-")
         cls.app_id = os.environ.get("APP_ID")
         cls.app_key = os.environ.get("APP_KEY")
         cls.auth_id = os.environ.get("AUTH_ID")
         cls.test_db = os.environ.get("TEST_DATABASE")
-        cls.ai_test_db = os.environ.get("AI_TEST_DATABASE")  # name of e2e database could be changed
+        cls.ai_test_db = os.environ.get("APPLICATION_INSIGHTS_TEST_DATABASE")  # name of e2e database could be changed
 
-        if not all([cls.engine_cs, cls.test_db]):
+        if not all([cls.engine_cs, cls.test_db, cls.ai_engine_cs, cls.ai_test_db]):
             pytest.skip("E2E environment is missing")
 
         # Init clients
-        python_version = "_".join([str(v) for v in sys.version_info[:3]])
-        cls.test_table = "python_test_{0}_{1}_{2}".format(python_version, str(int(time.time())),
-                                                          random.randint(1, 100000))
+        # python_version = "_".join([str(v) for v in sys.version_info[:3]])
+        # cls.test_table = "python_test_{0}_{1}_{2}".format(python_version, str(int(time.time())),
+        #                                                   random.randint(1, 100000))
         cls.streaming_test_table = "BigChunkus"
         cls.streaming_test_table_query = cls.streaming_test_table + " | order by timestamp"
 
-        cls.ai_test_table_cmd = ".show veresion"
+        cls.ai_test_table_cmd = ".show tables"
 
         cls.client = KustoClient(cls.engine_kcsb_from_env())
         cls.ai_client = KustoClient(cls.engine_kcsb_from_env(True))
@@ -138,56 +148,33 @@ class TestE2E:
 
         with open(os.path.join(cls.input_folder_path, "big.json")) as f:
             cls.test_streaming_data = json.load(f)
+
+
         # cls.current_count = 0
 
-        cls.client.execute(
-            cls.test_db,
-            f".create table {cls.test_table} (rownumber: int, rowguid: string, xdouble: real, xfloat: real, xbool: bool, xint16: int, xint32: int, xint64: long, xuint8: long, xuint16: long, xuint32: long, xuint64: long, xdate: datetime, xsmalltext: string, xtext: string, xnumberAsText: string, xtime: timespan, xtextWithNulls: string, xdynamicWithNulls: dynamic)",
-        )
-        cls.client.execute(cls.test_db,
-                           f".create table {cls.test_table} ingestion json mapping 'JsonMapping' {cls.table_json_mapping_reference()}")
+        # cls.client.execute(
+        #     cls.test_db,
+        #     f".create table {cls.test_table} (rownumber: int, rowguid: string, xdouble: real, xfloat: real, xbool: bool, xint16: int, xint32: int, xint64: long, xuint8: long, xuint16: long, xuint32: long, xuint64: long, xdate: datetime, xsmalltext: string, xtext: string, xnumberAsText: string, xtime: timespan, xtextWithNulls: string, xdynamicWithNulls: dynamic)",
+        # )
+        # cls.client.execute(cls.test_db,
+        #                    f".create table {cls.test_table} ingestion json mapping 'JsonMapping' {cls.table_json_mapping_reference()}")
+        #
+        # cls.client.execute(cls.test_db, f".alter table {cls.test_table} policy streamingingestion enable ")
+        #
+        # # Clear the cache to guarantee that subsequent streaming ingestion requests incorporate database and table schema changes
+        # # See https://docs.microsoft.com/azure/data-explorer/kusto/management/data-ingestion/clear-schema-cache-command
+        # cls.client.execute(cls.test_db, ".clear database cache streamingingestion schema")
 
-        cls.client.execute(cls.test_db, f".alter table {cls.test_table} policy streamingingestion enable ")
-
-        # Clear the cache to guarantee that subsequent streaming ingestion requests incorporate database and table schema changes
-        # See https://docs.microsoft.com/azure/data-explorer/kusto/management/data-ingestion/clear-schema-cache-command
-        cls.client.execute(cls.test_db, ".clear database cache streamingingestion schema")
-
-    @classmethod
-    def teardown_class(cls):
-        cls.client.execute(cls.test_db, ".drop table {} ifexists".format(cls.test_table)) # add teardown
+    #
+    # @classmethod
+    # def teardown_class(cls):
+    #     cls.client.execute(cls.test_db, ".drop table {} ifexists".format(cls.test_table)) # add teardown
 
     @classmethod
     async def get_async_client(cls, app_insights=False) -> AsyncKustoClient:
         return AsyncKustoClient(cls.engine_kcsb_from_env(app_insights))
 
     # assertions
-    # @classmethod
-    # async def assert_rows_added(cls, expected: int, timeout=60):
-    #     actual = 0
-    #     while timeout > 0:
-    #         time.sleep(1)
-    #         timeout -= 1
-    #
-    #         try:
-    #             command = "{} | count".format(cls.test_table)
-    #             response = cls.client.execute(cls.test_db, command)
-    #             async_client = await cls.get_async_client()
-    #             response_from_async = await async_client.execute(cls.test_db, command)
-    #         except KustoServiceError:
-    #             continue
-    #
-    #         if response is not None:
-    #             row = response.primary_results[0][0]
-    #             row_async = response_from_async.primary_results[0][0]
-    #             actual = int(row["Count"]) - cls.current_count
-    #             # this is done to allow for data to arrive properly
-    #             if actual >= expected:
-    #                 assert row_async == row, "Mismatch answers between async('{0}') and sync('{1}') clients".format(row_async, row)
-    #                 break
-    #
-    #     cls.current_count += actual
-    #     assert actual == expected, "Row count expected = {0}, while actual row count = {1}".format(expected, actual)
 
     @staticmethod
     def normalize_row(row):
@@ -296,32 +283,34 @@ class TestE2E:
             assert len(row) == len(primary_result["Columns"])
 
     def test_streaming_log_analytics_query(self):
-        result = self.ai_client.execute_streaming_query(self.ai_test_db,
-                                                        self.ai_test_table_cmd + ";" + self.ai_test_table_cmd)
+        result = self.ai_client.execute_mgmt(self.ai_test_db, self.ai_test_table_cmd)
         counter = 0
+        expected_table_name = iter(self.application_insights_tables())
 
-        result.set_skip_incomplete_tables(True)
-        for primary in result.iter_primary_results():
+        for primary in result.primary_results:
+            print(primary)
             counter += 1
+            for row in primary.rows:
+                assert row["TableName"] == expected_table_name.__next__()
 
-        assert counter == 2
-
-        assert result.finished
+        assert counter == 1
         assert result.errors_count == 0
         assert result.get_exceptions() == []
 
     @pytest.mark.asyncio
     async def test_streaming_log_analytics_query_async(self):
         async with await self.get_async_client(True) as ai_client:
-            result = await ai_client.execute_streaming_query(self.ai_test_db,
-                                                             self.ai_test_table_cmd + ";" + self.ai_test_table_cmd)
+            result = await ai_client.execute_mgmt(self.ai_test_db, self.ai_test_table_cmd)
             counter = 0
+            expected_table_name = iter(self.application_insights_tables())
 
-            result.set_skip_incomplete_tables(True)
-            async for primary in result.iter_primary_results():
+            for primary in result.primary_results:
                 counter += 1
+                for row in primary.rows:
+                    assert row["TableName"] == expected_table_name.__next__()
 
-            assert counter == 2
-            assert result.finished
+            assert counter == 1
             assert result.errors_count == 0
             assert result.get_exceptions() == []
+
+# check the errors
