@@ -1,8 +1,10 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
-# import io
+
+import asyncio
 import json
 import os
+import platform
 from datetime import datetime
 from typing import Optional, ClassVar
 
@@ -67,9 +69,18 @@ class TestE2E:
     @staticmethod
     def application_insights_tables():
         """A method to get the tables of an application insights instance"""
-        return ["availabilityResults", "browserTimings", "customEvents", "customMetrics", "dependencies", "exceptions",
-                "pageViews", "performanceCounters", "requests", "traces"]
-
+        return [
+            "availabilityResults",
+            "browserTimings",
+            "customEvents",
+            "customMetrics",
+            "dependencies",
+            "exceptions",
+            "pageViews",
+            "performanceCounters",
+            "requests",
+            "traces",
+        ]
 
     @staticmethod
     def get_file_path() -> str:
@@ -85,8 +96,7 @@ class TestE2E:
     def engine_kcsb_from_env(cls, app_insights=False) -> KustoConnectionStringBuilder:
         engine = cls.engine_cs if not app_insights else cls.ai_engine_cs
         if all([cls.app_id, cls.app_key, cls.auth_id]):
-            return KustoConnectionStringBuilder.with_aad_application_key_authentication(engine, cls.app_id, cls.app_key,
-                                                                                        cls.auth_id)
+            return KustoConnectionStringBuilder.with_aad_application_key_authentication(engine, cls.app_id, cls.app_key, cls.auth_id)
         else:
             return KustoConnectionStringBuilder.with_interactive_login(engine)
 
@@ -117,12 +127,19 @@ class TestE2E:
         with open(os.path.join(cls.input_folder_path, "big.json")) as f:
             cls.test_streaming_data = json.load(f)
 
+    @staticmethod
+    @pytest.fixture(scope="session")
+    def event_loop():
+        if platform.system() == "Windows":
+            asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+        policy = asyncio.get_event_loop_policy()
+        loop = policy.new_event_loop()
+        yield loop
+        loop.close()
 
     @classmethod
     async def get_async_client(cls, app_insights=False) -> AsyncKustoClient:
         return AsyncKustoClient(cls.engine_kcsb_from_env(app_insights))
-
-    # assertions
 
     @staticmethod
     def normalize_row(row):
@@ -136,9 +153,10 @@ class TestE2E:
                 result.append(r)
         return result
 
+    # assertions
+
     def test_streaming_query(self):
-        result = self.client.execute_streaming_query(self.test_db,
-                                                     self.streaming_test_table_query + ";" + self.streaming_test_table_query)
+        result = self.client.execute_streaming_query(self.test_db, self.streaming_test_table_query + ";" + self.streaming_test_table_query)
         counter = 0
 
         result.set_skip_incomplete_tables(True)
@@ -156,8 +174,7 @@ class TestE2E:
     @pytest.mark.asyncio
     async def test_streaming_query_async(self):
         async with await self.get_async_client() as client:
-            result = await client.execute_streaming_query(self.test_db,
-                                                          self.streaming_test_table_query + ";" + self.streaming_test_table_query)
+            result = await client.execute_streaming_query(self.test_db, self.streaming_test_table_query + ";" + self.streaming_test_table_query)
             counter = 0
 
             result.set_skip_incomplete_tables(True)
@@ -230,7 +247,7 @@ class TestE2E:
             row = await primary_result["Rows"].__anext__()
             assert len(row) == len(primary_result["Columns"])
 
-    def test_streaming_log_analytics_query(self):
+    def test_log_analytics_query(self):
         result = self.ai_client.execute_mgmt(self.ai_test_db, self.ai_test_table_cmd)
         counter = 0
         expected_table_name = iter(self.application_insights_tables())
@@ -245,7 +262,7 @@ class TestE2E:
         assert result.get_exceptions() == []
 
     @pytest.mark.asyncio
-    async def test_streaming_log_analytics_query_async(self):
+    async def test_log_analytics_query_async(self):
         async with await self.get_async_client(True) as ai_client:
             result = await ai_client.execute_mgmt(self.ai_test_db, self.ai_test_table_cmd)
             counter = 0
@@ -259,4 +276,3 @@ class TestE2E:
             assert counter == 1
             assert result.errors_count == 0
             assert result.get_exceptions() == []
-
