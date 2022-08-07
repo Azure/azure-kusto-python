@@ -1,8 +1,10 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
+import asyncio
 import io
 import os
 import pathlib
+import platform
 import random
 import sys
 import time
@@ -202,6 +204,16 @@ class TestE2E:
     @classmethod
     def teardown_class(cls):
         cls.client.execute(cls.test_db, ".drop table {} ifexists".format(cls.test_table))
+
+    @staticmethod
+    @pytest.fixture(scope="session")
+    def event_loop():
+        if platform.system() == "Windows":
+            asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+        policy = asyncio.get_event_loop_policy()
+        loop = policy.new_event_loop()
+        yield loop
+        loop.close()
 
     @classmethod
     async def get_async_client(cls) -> AsyncKustoClient:
