@@ -1,0 +1,5 @@
+azure-kusto-data>=3.0.1,<4.0.0
+azure-kusto-ingest>=3.0.1,<4.0.0
+
+inflection~=0.5.1
+tqdm~=4.64.0
