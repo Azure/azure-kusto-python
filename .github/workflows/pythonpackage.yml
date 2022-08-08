@@ -43,8 +43,9 @@ jobs:
           AUTH_ID: ${{ secrets.AUTH_ID }}
           TEST_DATABASE: ${{ secrets.TEST_DATABASE }}
           TEST_BLOB: ${{ secrets.TEST_BLOB }}
-          ENGINE_CONNECTION_STRING: ${{https://ade.applicationinsights.io/subscriptions/12534eb3-8109-4d84-83ad-576c0d5e1d06/resourcegroups/clients_e2e_test/providers/microsoft.insights/components/kusto-e2e-app-insights}}
-          APPLICATION_INSIGHTS_ENGINE_CONNECTION_STRING: ${{kusto-e2e-app-insights}}
+          ENGINE_CONNECTION_STRING:  ${{ secrets.ENGINE_CONNECTION_STRING }}
+          APPLICATION_INSIGHTS_ENGINE_CONNECTION_STRING: ${{https://ade.applicationinsights.io/subscriptions/12534eb3-8109-4d84-83ad-576c0d5e1d06/resourcegroups/clients_e2e_test/providers/microsoft.insights/components/kusto-e2e-app-insights}}
+          APPLICATION_INSIGHTS_TEST_DATABASE: ${{kusto-e2e-app-insights}}
         run: |
           pytest -v ./azure-kusto-data/tests/e2e.py ./azure-kusto-ingest/tests/e2e.py --junit-xml pytest.xml --cov=/home/runner/.local/lib/python${{ matrix.python-version }}/site-packages/azure/kusto --cov-report=xml:coverage2.xml
       - name: Upload Unit Test Results
