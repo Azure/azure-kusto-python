@@ -108,6 +108,7 @@ class ExecuteRequestParams:
         client_server_delta: timedelta,
     ):
         request_headers = copy(request_headers)
+        request_headers["Connection"] = "Keep-Alive"
         json_payload = None
         if not payload:
             json_payload = {"db": database, "csl": query}
