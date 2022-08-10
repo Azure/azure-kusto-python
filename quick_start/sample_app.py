@@ -1,3 +1,4 @@
+import dataclasses
 import enum
 import json
 import uuid
@@ -77,7 +78,15 @@ class KustoSampleApp:
             Utils.error_handler(f"Couldn't read load config file from file '{config_file_name}'", ex)
 
         json_dict["dataToIngest"] = cls.convert_config_data_fields(json_dict.pop("data"))
-        cls.config = ConfigJson(**cls.keys_to_snake_case(json_dict))
+        all_keys = cls.keys_to_snake_case(json_dict)
+        config_json_keys = cls.remove_extra_keys(all_keys, ConfigJson)
+        cls.config = ConfigJson(**config_json_keys)
+
+    @classmethod
+    def remove_extra_keys(cls, json_dict: dict, data_type: type) -> dict:
+        assert dataclasses.is_dataclass(data_type)
+        field_names = [field.name for field in dataclasses.fields(data_type)]
+        return {key: value for key, value in json_dict.items() if key in field_names}
 
     @classmethod
     def keys_to_snake_case(cls, json_dict: dict) -> dict:
@@ -89,7 +98,7 @@ class KustoSampleApp:
         return {inflection.underscore(key): val for (key, val) in json_dict.items()}
 
     @classmethod
-    def convert_config_data_fields(cls, data_dicts: list[dict]) -> list[ConfigData]:
+    def convert_config_data_fields(cls, data_dicts: List[dict]) -> List[ConfigData]:
         """
         Converts dict object  - JSON style camelCase to ConfigData object - python snake_case
         :param data_dicts: Dict of data sources list to ingest from - styled in camelCase
@@ -99,8 +108,10 @@ class KustoSampleApp:
 
         for data_dict in data_dicts:
             data_dict["sourceType"] = SourceType[inflection.underscore(data_dict.pop("sourceType"))]
-            data_dict["dataFormat"] = DataFormat[data_dict.pop("format")]
-            config_data_list.append(ConfigData(**KustoSampleApp.keys_to_snake_case(data_dict)))
+            data_dict["dataFormat"] = DataFormat[data_dict.pop("format").upper()]
+            config_data_json_keys = cls.keys_to_snake_case(data_dict)
+            config_data_keys = cls.remove_extra_keys(config_data_json_keys, ConfigData)
+            config_data_list.append(ConfigData(**config_data_keys))
 
         return config_data_list
 
