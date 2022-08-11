@@ -14,7 +14,6 @@ from typing import Optional, ClassVar
 import pytest
 
 from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
-from azure.kusto.data._cloud_settings import CloudSettings
 from azure.kusto.data.aio import KustoClient as AsyncKustoClient
 from azure.kusto.data.data_format import DataFormat, IngestionMappingKind
 from azure.kusto.data.exceptions import KustoServiceError
@@ -54,6 +53,9 @@ class TestE2E:
     client: ClassVar[KustoClient]
     test_table: ClassVar[str]
     current_count: ClassVar[int]
+    ingest_client: ClassVar[QueuedIngestClient]
+    streaming_ingest_client: ClassVar[KustoStreamingIngestClient]
+    managed_streaming_ingest_client: ClassVar[ManagedStreamingIngestClient]
 
     CHUNK_SIZE = 1024
 
@@ -512,13 +514,3 @@ class TestE2E:
         self.ingest_client.ingest_from_dataframe(df, ingestion_properties)
 
         await self.assert_rows_added(1, timeout=120)
-
-    def test_cloud_info(self):
-        cloud_info = CloudSettings.get_cloud_info_for_cluster(self.engine_cs)
-        assert cloud_info is not CloudSettings.DEFAULT_CLOUD
-        assert cloud_info == CloudSettings.DEFAULT_CLOUD
-        assert cloud_info is CloudSettings.get_cloud_info_for_cluster(self.engine_cs)
-
-    def test_cloud_info_404(self):
-        cloud_info = CloudSettings.get_cloud_info_for_cluster("https://www.microsoft.com")
-        assert cloud_info is CloudSettings.DEFAULT_CLOUD

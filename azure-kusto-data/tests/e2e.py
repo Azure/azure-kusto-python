@@ -11,6 +11,7 @@ from typing import Optional, ClassVar
 import pytest
 
 from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
+from azure.kusto.data._cloud_settings import CloudSettings
 from azure.kusto.data._models import WellKnownDataSet
 from azure.kusto.data.aio import KustoClient as AsyncKustoClient
 from azure.kusto.data.streaming_response import FrameType
@@ -276,3 +277,13 @@ class TestE2E:
             assert counter == 1
             assert result.errors_count == 0
             assert result.get_exceptions() == []
+
+    def test_cloud_info(self):
+        cloud_info = CloudSettings.get_cloud_info_for_cluster(self.engine_cs)
+        assert cloud_info is not CloudSettings.DEFAULT_CLOUD
+        assert cloud_info == CloudSettings.DEFAULT_CLOUD
+        assert cloud_info is CloudSettings.get_cloud_info_for_cluster(self.engine_cs)
+
+    def test_cloud_info_404(self):
+        cloud_info = CloudSettings.get_cloud_info_for_cluster("https://www.microsoft.com")
+        assert cloud_info is CloudSettings.DEFAULT_CLOUD
