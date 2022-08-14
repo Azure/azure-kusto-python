@@ -64,3 +64,13 @@ def dataframe_from_result_table(table: "Union[KustoResultTable, KustoStreamingRe
             frame[col.column_name] = frame[col.column_name].apply(to_pandas_timedelta)
 
     return frame
+
+#
+# def getStringTailLowerCase(val, length):
+#     if length <= 0:
+#         return ""
+#
+#     if length >= len(val):
+#         return val.lower()
+#
+#     return val[len(val) - length:].lower()
