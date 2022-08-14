@@ -29,7 +29,7 @@ You can use it as a baseline to write your own first kusto client application, a
 ### Run the app
 
 1. Open a command line window and navigate to the folder where you extracted the script.
-1. Run `python -m pip install -r requirement.txt`. If upgrading, append ` --upgrade`.
+1. Run `python -m pip install -r requirements.txt`. If upgrading, append ` --upgrade`.
 1. Run `python sample_app.py`.
 
 #### Troubleshooting

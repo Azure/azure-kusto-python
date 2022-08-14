@@ -1,12 +1,15 @@
+import dataclasses
 import enum
 import json
 import uuid
 from dataclasses import dataclass
 from typing import List
+
 import inflection as inflection
-from azure.kusto.ingest import QueuedIngestClient
-from utils import Utils, AuthenticationModeOptions
+
 from azure.kusto.data import DataFormat, KustoClient
+from azure.kusto.ingest import QueuedIngestClient
+from utils import AuthenticationModeOptions, Utils
 
 
 class SourceType(enum.Enum):
@@ -31,6 +34,12 @@ class ConfigData:
     mapping_name: str
     mapping_value: str
 
+    @staticmethod
+    def from_json(json_dict: dict) -> "ConfigData":
+        json_dict["sourceType"] = SourceType[inflection.underscore(json_dict.pop("sourceType"))]
+        json_dict["dataFormat"] = DataFormat[json_dict.pop("format").upper()]
+        return data_class_from_json(json_dict, ConfigData)
+
 
 @dataclass
 class ConfigJson:
@@ -53,6 +62,28 @@ class ConfigJson:
     wait_for_ingest_seconds: bool
     batching_policy: str
 
+    @staticmethod
+    def from_json(json_dict: dict) -> "ConfigJson":
+        json_dict["dataToIngest"] = [ConfigData.from_json(j) for j in json_dict.pop("data")]
+        return data_class_from_json(json_dict, ConfigJson)
+
+
+def remove_extra_keys(json_dict: dict, data_type: type) -> dict:
+    assert dataclasses.is_dataclass(data_type)
+    field_names = [field.name for field in dataclasses.fields(data_type)]
+    return {key: value for key, value in json_dict.items() if key in field_names}
+
+
+def keys_to_snake_case(json_dict: dict) -> dict:
+    return {inflection.underscore(key): val for (key, val) in json_dict.items()}
+
+
+def data_class_from_json(json_dict: dict, data_type: type) -> dataclasses.dataclass:
+    assert dataclasses.is_dataclass(data_type)
+    all_keys = keys_to_snake_case(json_dict)
+    config_json_keys = remove_extra_keys(all_keys, data_type)
+    return data_type(**config_json_keys)
+
 
 class KustoSampleApp:
     # TODO (config):
@@ -72,37 +103,10 @@ class KustoSampleApp:
         try:
             with open(config_file_name, "r") as config_file:
                 json_dict = json.load(config_file)
+                cls.config = ConfigJson.from_json(json_dict)
 
         except Exception as ex:
             Utils.error_handler(f"Couldn't read load config file from file '{config_file_name}'", ex)
-
-        json_dict["dataToIngest"] = cls.convert_config_data_fields(json_dict.pop("data"))
-        cls.config = ConfigJson(**cls.keys_to_snake_case(json_dict))
-
-    @classmethod
-    def keys_to_snake_case(cls, json_dict: dict) -> dict:
-        """
-        Converts dictionary keys to snakeCase
-        :param json_dict: Dictionary of JSON configuration file
-        :return: Dictionary with keys converted to snakeCase
-        """
-        return {inflection.underscore(key): val for (key, val) in json_dict.items()}
-
-    @classmethod
-    def convert_config_data_fields(cls, data_dicts: list[dict]) -> list[ConfigData]:
-        """
-        Converts dict object  - JSON style camelCase to ConfigData object - python snake_case
-        :param data_dicts: Dict of data sources list to ingest from - styled in camelCase
-        :return: ConfigData Data sources list to ingest from - styled in snake_case
-        """
-        config_data_list = []
-
-        for data_dict in data_dicts:
-            data_dict["sourceType"] = SourceType[inflection.underscore(data_dict.pop("sourceType"))]
-            data_dict["dataFormat"] = DataFormat[data_dict.pop("format")]
-            config_data_list.append(ConfigData(**KustoSampleApp.keys_to_snake_case(data_dict)))
-
-        return config_data_list
 
     @classmethod
     def pre_ingestion_querying(cls, config: ConfigJson, kusto_client: KustoClient) -> None:
