@@ -56,6 +56,11 @@ class TestE2E:
     ingest_client: ClassVar[QueuedIngestClient]
     streaming_ingest_client: ClassVar[KustoStreamingIngestClient]
     managed_streaming_ingest_client: ClassVar[ManagedStreamingIngestClient]
+    csv_file_path: ClassVar[str]
+    tsv_file_path: ClassVar[str]
+    zipped_csv_file_path: ClassVar[str]
+    json_file_path: ClassVar[str]
+    zipped_json_file_path: ClassVar[str]
 
     CHUNK_SIZE = 1024
 
