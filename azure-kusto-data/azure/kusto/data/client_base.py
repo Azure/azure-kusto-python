@@ -17,7 +17,8 @@ from .exceptions import KustoServiceError, KustoThrottlingError, KustoApiError
 from .kcsb import KustoConnectionStringBuilder
 from .response import KustoResponseDataSet, KustoResponseDataSetV2, KustoResponseDataSetV1
 from .security import _AadHelper
-from.kusto_trusted_endpoints import well_known_kusto_endpoints
+from .kusto_trusted_endpoints import well_known_kusto_endpoints
+
 
 class _KustoClientBase(abc.ABC):
     API_VERSION = "2019-02-13"
@@ -59,10 +60,10 @@ class _KustoClientBase(abc.ABC):
     def validate_endpoint(self):
         if self._endpoint_validated:
             if isinstance(self._aad_helper.token_provider, CloudInfoTokenProvider):
-                well_known_kusto_endpoints.validate_trusted_endpoint(self._kusto_cluster,
-                                                                     CloudSettings.get_cloud_info_for_cluster(self._kusto_cluster).login_endpoint)
+                well_known_kusto_endpoints.validate_trusted_endpoint(
+                    self._kusto_cluster, CloudSettings.get_cloud_info_for_cluster(self._kusto_cluster).login_endpoint
+                )
             self._endpoint_validated = True
-
 
     @staticmethod
     def _kusto_parse_by_endpoint(endpoint: str, response_json: Any) -> KustoResponseDataSet:
@@ -104,6 +105,7 @@ class _KustoClientBase(abc.ABC):
             raise KustoServiceError(response_text, response) from exception
 
         raise KustoServiceError("Server error response contains no data.", response) from exception
+
 
 class ExecuteRequestParams:
     def __init__(

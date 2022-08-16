@@ -73,4 +73,4 @@ def get_string_tail_lower_case(val, length):
     if length >= len(val):
         return val.lower()
 
-    return val[len(val) - length:].lower()
+    return val[len(val) - length :].lower()
