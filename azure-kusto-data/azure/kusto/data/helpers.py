@@ -65,12 +65,12 @@ def dataframe_from_result_table(table: "Union[KustoResultTable, KustoStreamingRe
 
     return frame
 
-#
-# def getStringTailLowerCase(val, length):
-#     if length <= 0:
-#         return ""
-#
-#     if length >= len(val):
-#         return val.lower()
-#
-#     return val[len(val) - length:].lower()
+
+def getStringTailLowerCase(val, length):
+    if length <= 0:
+        return ""
+
+    if length >= len(val):
+        return val.lower()
+
+    return val[len(val) - length:].lower()

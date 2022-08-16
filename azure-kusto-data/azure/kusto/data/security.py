@@ -95,3 +95,19 @@ def _get_header_from_dict(token: dict):
 
 def _get_header(token_type: str, access_token: str) -> str:
     return "{0} {1}".format(token_type, access_token)
+
+
+def _is_local_address(host):
+    if host == "localhost" or host == "127.0.0.1" or host == "::1" or host == "[::1]":
+        return True
+
+    if host.startswith("127.") and len(host) <= 15 and len(host) >= 9:
+        i = 0
+        while i < len(host):
+            c = host[i]
+            if c != '.' and (c < '0' or c > '9'):
+                return False
+            i += 1
+        return True
+
+    return False
