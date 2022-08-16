@@ -1,8 +1,6 @@
-from unittest import TestCase
-
 from azure.kusto.data._cloud_settings import DEFAULT_PUBLIC_LOGIN_URL
 from azure.kusto.data.exceptions import KustoClientInvalidConnectionStringException
-from azure.kusto.data.kusto_trusted_endpoints import _FastSuffixMatcher,_well_known_kusto_endpoints_data, well_known_kusto_endpoints, MatchRule
+from azure.kusto.data.kusto_trusted_endpoints import _well_known_kusto_endpoints_data, well_known_kusto_endpoints, MatchRule
 CHINA_CLOUD_LOGIN = "https://login.partner.microsoftonline.cn"
 def test_well_known_kusto_endpoints_data():
     """Test the data load."""
