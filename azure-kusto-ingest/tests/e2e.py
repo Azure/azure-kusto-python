@@ -1,25 +1,22 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
+import asyncio
 import io
-import json
 import os
 import pathlib
+import platform
 import random
 import sys
 import time
 import uuid
-from datetime import datetime
 from typing import Optional, ClassVar
 
 import pytest
 
 from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
-from azure.kusto.data._cloud_settings import CloudSettings
-from azure.kusto.data._models import WellKnownDataSet
 from azure.kusto.data.aio import KustoClient as AsyncKustoClient
 from azure.kusto.data.data_format import DataFormat, IngestionMappingKind
 from azure.kusto.data.exceptions import KustoServiceError
-from azure.kusto.data.streaming_response import FrameType
 
 from azure.kusto.ingest import (
     QueuedIngestClient,
@@ -47,8 +44,6 @@ class TestE2E:
     """A class to define mappings to deft table."""
 
     input_folder_path: ClassVar[str]
-    streaming_test_table: ClassVar[str]
-    test_streaming_data: ClassVar[list]
     engine_cs: ClassVar[Optional[str]]
     dm_cs: ClassVar[Optional[str]]
     app_id: ClassVar[Optional[str]]
@@ -61,6 +56,11 @@ class TestE2E:
     ingest_client: ClassVar[QueuedIngestClient]
     streaming_ingest_client: ClassVar[KustoStreamingIngestClient]
     managed_streaming_ingest_client: ClassVar[ManagedStreamingIngestClient]
+    csv_file_path: ClassVar[str]
+    tsv_file_path: ClassVar[str]
+    zipped_csv_file_path: ClassVar[str]
+    json_file_path: ClassVar[str]
+    zipped_json_file_path: ClassVar[str]
 
     CHUNK_SIZE = 1024
 
@@ -180,8 +180,6 @@ class TestE2E:
         # Init clients
         python_version = "_".join([str(v) for v in sys.version_info[:3]])
         cls.test_table = "python_test_{0}_{1}_{2}".format(python_version, str(int(time.time())), random.randint(1, 100000))
-        cls.streaming_test_table = "BigChunkus"
-        cls.streaming_test_table_query = cls.streaming_test_table + " | order by timestamp"
 
         cls.client = KustoClient(cls.engine_kcsb_from_env())
         cls.ingest_client = QueuedIngestClient(cls.dm_kcsb_from_env())
@@ -196,8 +194,6 @@ class TestE2E:
         cls.json_file_path = os.path.join(cls.input_folder_path, "dataset.json")
         cls.zipped_json_file_path = os.path.join(cls.input_folder_path, "dataset.jsonz.gz")
 
-        with open(os.path.join(cls.input_folder_path, "big.json")) as f:
-            cls.test_streaming_data = json.load(f)
         cls.current_count = 0
 
         cls.client.execute(
@@ -215,6 +211,16 @@ class TestE2E:
     @classmethod
     def teardown_class(cls):
         cls.client.execute(cls.test_db, ".drop table {} ifexists".format(cls.test_table))
+
+    @staticmethod
+    @pytest.fixture(scope="session")
+    def event_loop():
+        if platform.system() == "Windows":
+            asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+        policy = asyncio.get_event_loop_policy()
+        loop = policy.new_event_loop()
+        yield loop
+        loop.close()
 
     @classmethod
     async def get_async_client(cls) -> AsyncKustoClient:
@@ -247,110 +253,6 @@ class TestE2E:
 
         cls.current_count += actual
         assert actual == expected, "Row count expected = {0}, while actual row count = {1}".format(expected, actual)
-
-    @staticmethod
-    def normalize_row(row):
-        result = []
-        for r in row:
-            if type(r) == bool:
-                result.append(int(r))
-            elif type(r) == datetime:
-                result.append(r.strftime("%Y-%m-%dT%H:%M:%SZ"))
-            else:
-                result.append(r)
-        return result
-
-    def test_streaming_query(self):
-        result = self.client.execute_streaming_query(self.test_db, self.streaming_test_table_query + ";" + self.streaming_test_table_query)
-        counter = 0
-
-        result.set_skip_incomplete_tables(True)
-        for primary in result.iter_primary_results():
-            counter += 1
-            for row in self.test_streaming_data:
-                assert row == self.normalize_row(next(primary).to_list())
-
-        assert counter == 2
-
-        assert result.finished
-        assert result.errors_count == 0
-        assert result.get_exceptions() == []
-
-    @pytest.mark.asyncio
-    async def test_streaming_query_async(self):
-        async with await self.get_async_client() as client:
-            result = await client.execute_streaming_query(self.test_db, self.streaming_test_table_query + ";" + self.streaming_test_table_query)
-            counter = 0
-
-            result.set_skip_incomplete_tables(True)
-            async for primary in result.iter_primary_results():
-                counter += 1
-                streaming_data_iter = iter(self.test_streaming_data)
-                async for row in primary:
-                    expected_row = next(streaming_data_iter, None)
-                    if expected_row is None:
-                        break
-
-                    assert expected_row == self.normalize_row(row.to_list())
-
-            assert counter == 2
-            assert result.finished
-            assert result.errors_count == 0
-            assert result.get_exceptions() == []
-
-    def test_streaming_query_internal(self):
-        frames = self.client._execute_streaming_query_parsed(self.test_db, self.streaming_test_table_query)
-
-        initial_frame = next(frames)
-        expected_initial_frame = {
-            "FrameType": FrameType.DataSetHeader,
-            "IsProgressive": False,
-            "Version": "v2.0",
-        }
-        assert initial_frame == expected_initial_frame
-        query_props = next(frames)
-        assert query_props["FrameType"] == FrameType.DataTable
-        assert query_props["TableKind"] == WellKnownDataSet.QueryProperties.value
-        assert type(query_props["Columns"]) == list
-        assert type(query_props["Rows"]) == list
-        assert len(query_props["Rows"][0]) == len(query_props["Columns"])
-
-        primary_result = next(frames)
-        assert primary_result["FrameType"] == FrameType.DataTable
-        assert primary_result["TableKind"] == WellKnownDataSet.PrimaryResult.value
-        assert type(primary_result["Columns"]) == list
-        assert type(primary_result["Rows"]) != list
-
-        row = next(primary_result["Rows"])
-        assert len(row) == len(primary_result["Columns"])
-
-    @pytest.mark.asyncio
-    async def test_streaming_query_internal_async(self):
-        async with await self.get_async_client() as client:
-            frames = await client._execute_streaming_query_parsed(self.test_db, self.streaming_test_table_query)
-            frames.__aiter__()
-            initial_frame = await frames.__anext__()
-            expected_initial_frame = {
-                "FrameType": FrameType.DataSetHeader,
-                "IsProgressive": False,
-                "Version": "v2.0",
-            }
-            assert initial_frame == expected_initial_frame
-            query_props = await frames.__anext__()
-            assert query_props["FrameType"] == FrameType.DataTable
-            assert query_props["TableKind"] == WellKnownDataSet.QueryProperties.value
-            assert type(query_props["Columns"]) == list
-            assert type(query_props["Rows"]) == list
-            assert len(query_props["Rows"][0]) == len(query_props["Columns"])
-
-            primary_result = await frames.__anext__()
-            assert primary_result["FrameType"] == FrameType.DataTable
-            assert primary_result["TableKind"] == WellKnownDataSet.PrimaryResult.value
-            assert type(primary_result["Columns"]) == list
-            assert type(primary_result["Rows"]) != list
-
-            row = await primary_result["Rows"].__anext__()
-            assert len(row) == len(primary_result["Columns"])
 
     @pytest.mark.asyncio
     async def test_csv_ingest_existing_table(self, is_managed_streaming):
@@ -617,13 +519,3 @@ class TestE2E:
         self.ingest_client.ingest_from_dataframe(df, ingestion_properties)
 
         await self.assert_rows_added(1, timeout=120)
-
-    def test_cloud_info(self):
-        cloud_info = CloudSettings.get_cloud_info_for_cluster(self.engine_cs)
-        assert cloud_info is not CloudSettings.DEFAULT_CLOUD
-        assert cloud_info == CloudSettings.DEFAULT_CLOUD
-        assert cloud_info is CloudSettings.get_cloud_info_for_cluster(self.engine_cs)
-
-    def test_cloud_info_404(self):
-        cloud_info = CloudSettings.get_cloud_info_for_cluster("https://www.microsoft.com")
-        assert cloud_info is CloudSettings.DEFAULT_CLOUD
