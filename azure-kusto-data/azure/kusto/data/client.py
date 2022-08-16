@@ -133,6 +133,7 @@ class KustoClient(_KustoClientBase):
         :return: Kusto response data set.
         :rtype: azure.kusto.data.response.KustoResponseDataSet
         """
+        self.validate_endpoint()
         query = query.strip()
         if query.startswith("."):
             return self.execute_mgmt(database, query, properties)
@@ -183,6 +184,7 @@ class KustoClient(_KustoClientBase):
         :param ClientRequestProperties properties: additional request properties.
         :param str mapping_name: Pre-defined mapping of the table. Required when stream_format is json/avro.
         """
+        self.validate_endpoint()
         stream_format = stream_format.kusto_value if isinstance(stream_format, DataFormat) else DataFormat[stream_format.upper()].kusto_value
         endpoint = self._streaming_ingest_endpoint + database + "/" + table + "?streamFormat=" + stream_format
         if mapping_name is not None:
@@ -210,6 +212,7 @@ class KustoClient(_KustoClientBase):
         :param azure.kusto.data.ClientRequestProperties properties: Optional additional properties.
         :return KustoStreamingResponseDataSet:
         """
+        self.validate_endpoint()
         return KustoStreamingResponseDataSet(self._execute_streaming_query_parsed(database, query, timeout, properties))
 
     def _execute(
