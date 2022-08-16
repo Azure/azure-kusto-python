@@ -102,8 +102,7 @@ def _is_local_address(host):
         return True
 
     if host.startswith("127.") and len(host) <= 15 and len(host) >= 9:
-        i = 0
-        while i < len(host):
+        for i in range(len(host)):
             c = host[i]
             if c != '.' and (c < '0' or c > '9'):
                 return False
