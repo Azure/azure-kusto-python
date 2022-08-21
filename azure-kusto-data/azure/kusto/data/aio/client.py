@@ -35,7 +35,6 @@ class KustoClient(_KustoClientBase):
 
     @aio_documented_by(KustoClientSync.execute)
     async def execute(self, database: str, query: str, properties: ClientRequestProperties = None) -> KustoResponseDataSet:
-        self.validate_endpoint()
         query = query.strip()
         if query.startswith("."):
             return await self.execute_mgmt(database, query, properties)
@@ -59,7 +58,6 @@ class KustoClient(_KustoClientBase):
         properties: ClientRequestProperties = None,
         mapping_name: str = None,
     ):
-        self.validate_endpoint()
         stream_format = stream_format.kusto_value if isinstance(stream_format, DataFormat) else DataFormat[stream_format.upper()].kusto_value
         endpoint = self._streaming_ingest_endpoint + database + "/" + table + "?streamFormat=" + stream_format
         if mapping_name is not None:
@@ -78,7 +76,6 @@ class KustoClient(_KustoClientBase):
     async def execute_streaming_query(
         self, database: str, query: str, timeout: timedelta = _KustoClientBase._query_default_timeout, properties: Optional[ClientRequestProperties] = None
     ) -> KustoStreamingResponseDataSet:
-        self.validate_endpoint()
         response = await self._execute_streaming_query_parsed(database, query, timeout, properties)
         return KustoStreamingResponseDataSet(response)
 
@@ -94,6 +91,7 @@ class KustoClient(_KustoClientBase):
         stream_response: bool = False,
     ) -> Union[KustoResponseDataSet, ClientResponse]:
         """Executes given query against this client"""
+        self.validate_endpoint()
         request_params = ExecuteRequestParams(
             database, payload, properties, query, timeout, self._request_headers, self._mgmt_default_timeout, self._client_server_delta
         )

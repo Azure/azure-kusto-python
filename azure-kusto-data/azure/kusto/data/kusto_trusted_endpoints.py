@@ -20,7 +20,7 @@ class MatchRule:
 class FastSuffixMatcher:
     def __init__(self, rules: Iterable[MatchRule]):
         it1, it2 = itertools.tee(rules)
-        self._suffix_length = min([len(rule.suffix) for rule in it1])
+        self._suffix_length = min(len(rule.suffix) for rule in it1)
         _processed_rules = {}
         for rule in it2:
             suffix = get_string_tail_lower_case(rule.suffix, self._suffix_length)
@@ -51,20 +51,17 @@ def create_fast_suffix_matcher_from_existing(rules: List[MatchRule], existing: F
     if not rules:
         return existing
 
-    lst = copy.deepcopy(rules)
-    for _, v in existing.rules.items():
-        lst = lst + v
-    return FastSuffixMatcher(lst)
+    return FastSuffixMatcher([*copy.deepcopy(rules), *existing.rules.values()])
 
 
 class KustoTrustedEndpoints:
     def __init__(self):
-        self._matchers = dict()
-        for k, v in _well_known_kusto_endpoints_data["AllowedEndpointsByLogin"].items():
-            rules = itertools.chain(
-                [MatchRule(suffix, False) for suffix in v["AllowedKustoSuffixes"]], [MatchRule(hostname, True) for hostname in v["AllowedKustoHostnames"]]
+        self._matchers = {
+            k: FastSuffixMatcher(
+                [*(MatchRule(suffix, False) for suffix in v["AllowedKustoSuffixes"]), *(MatchRule(hostname, True) for hostname in v["AllowedKustoHostnames"])]
             )
-            self._matchers[k] = FastSuffixMatcher(rules)
+            for (k, v) in _well_known_kusto_endpoints_data["AllowedEndpointsByLogin"].items()
+        }
 
         self._additional_matcher = None
         self._override_matcher = None
