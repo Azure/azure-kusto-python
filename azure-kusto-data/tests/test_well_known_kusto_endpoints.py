@@ -198,6 +198,7 @@ def test_wellKnownKustoEndpoints_AdditionalWebsites():
 
     # 2nd call - to validate that addition works
     well_known_kusto_endpoints.add_trusted_hosts([MatchRule("www.someotherdomain2.net", True)], False)
+    well_known_kusto_endpoints.add_trusted_hosts([MatchRule("www.someotherdomain3.net", True)], False)
 
     for clusterName in ["https://some.someotherdomain1.net", "https://www.someotherdomain2.net"]:
         _check_endpoint(clusterName, DEFAULT_PUBLIC_LOGIN_URL, False)

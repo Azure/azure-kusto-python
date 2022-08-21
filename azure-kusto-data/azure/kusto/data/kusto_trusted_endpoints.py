@@ -2,7 +2,7 @@ import copy
 import itertools
 import json
 import os
-from typing import List, Iterable
+from typing import List, Iterable, Dict
 from urllib.parse import urlparse
 
 from azure.kusto.data.helpers import get_string_tail_lower_case
@@ -18,11 +18,10 @@ class MatchRule:
 
 
 class FastSuffixMatcher:
-    def __init__(self, rules: Iterable[MatchRule]):
-        it1, it2 = itertools.tee(rules)
-        self._suffix_length = min(len(rule.suffix) for rule in it1)
-        _processed_rules = {}
-        for rule in it2:
+    def __init__(self, rules: List[MatchRule]):
+        self._suffix_length = min(len(rule.suffix) for rule in rules)
+        _processed_rules: Dict[str, List] = {}
+        for rule in rules:
             suffix = get_string_tail_lower_case(rule.suffix, self._suffix_length)
             if suffix not in _processed_rules:
                 _processed_rules[suffix] = []
@@ -51,7 +50,7 @@ def create_fast_suffix_matcher_from_existing(rules: List[MatchRule], existing: F
     if not rules:
         return existing
 
-    return FastSuffixMatcher([*copy.deepcopy(rules), *existing.rules.values()])
+    return FastSuffixMatcher([*copy.deepcopy(rules), *(v for item in existing.rules.values() for v in item)])
 
 
 class KustoTrustedEndpoints:
