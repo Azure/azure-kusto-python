@@ -11,6 +11,44 @@ from azure.kusto.data import DataFormat, KustoClient
 from azure.kusto.ingest import QueuedIngestClient
 from utils import AuthenticationModeOptions, Utils
 
+# Declare OpenTelemetry as enabled tracing plugin for Azure SDKs
+from azure.core.settings import settings
+from azure.core.tracing.decorator import distributed_trace
+from azure.core.tracing.ext.opentelemetry_span import OpenTelemetrySpan
+
+# See https://github.com/open-telemetry/opentelemetry-python for details on regular open telemetry usage
+
+from opentelemetry import trace
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+from opentelemetry.sdk.resources import SERVICE_NAME, Resource
+from opentelemetry.sdk.trace.export import ConsoleSpanExporter # alternative console exporter for distributed tracing
+
+from azure_monitor import AzureMonitorSpanExporter
+
+
+def enable_distributed_tracing() -> "Tracer":
+    """
+    Sets up distributed tracing environment for sample app
+
+    Returns a 'Tracer'
+    """
+
+    settings.tracing_implementation = OpenTelemetrySpan
+
+    # In the below example, we use an Azure Monitor Exporter, but you can use anything OpenTelemetry supports,
+    # uncomment these lines to use the simple console exporter.
+
+    # exporter = ConsoleSpanExporter()
+    exporter = AzureMonitorSpanExporter(
+        instrumentation_key="uuid of the instrumentation key (see your Azure Monitor account)"
+    )
+
+    trace.set_tracer_provider(TracerProvider())
+    tracer = trace.get_tracer(__name__)
+    trace.get_tracer_provider().add_span_processor(SimpleSpanProcessor(exporter))
+    return tracer
+
 
 class SourceType(enum.Enum):
     """
@@ -95,6 +133,7 @@ class KustoSampleApp:
     config = None
 
     @classmethod
+    @distributed_trace
     def load_configs(cls, config_file_name: str) -> None:
         """
         Loads JSON configuration file, and sets the metadata in place.
@@ -109,6 +148,7 @@ class KustoSampleApp:
             Utils.error_handler(f"Couldn't read load config file from file '{config_file_name}'", ex)
 
     @classmethod
+    @distributed_trace
     def pre_ingestion_querying(cls, config: ConfigJson, kusto_client: KustoClient) -> None:
         """
         First phase, pre ingestion - will reach the provided DB with several control commands and a query based on the configuration File.
@@ -120,8 +160,10 @@ class KustoSampleApp:
                 # Tip: Usually table was originally created with a schema appropriate for the data being ingested, so this wouldn't be needed.
                 # Learn More: For more information about altering table schemas,
                 #  see: https://docs.microsoft.com/azure/data-explorer/kusto/management/alter-table-command
-                cls.wait_for_user_to_proceed(f"Alter-merge existing table '{config.database_name}.{config.table_name}' to align with the provided schema")
-                cls.alter_merge_existing_table_to_provided_schema(kusto_client, config.database_name, config.table_name, config.table_schema)
+                cls.wait_for_user_to_proceed(
+                    f"Alter-merge existing table '{config.database_name}.{config.table_name}' to align with the provided schema")
+                cls.alter_merge_existing_table_to_provided_schema(kusto_client, config.database_name, config.table_name,
+                                                                  config.table_schema)
             if config.query_data:
                 # Learn More: For more information about Kusto Query Language (KQL), see: https://docs.microsoft.com/azure/data-explorer/write-queries
                 cls.wait_for_user_to_proceed(f"Get existing row count in '{config.database_name}.{config.table_name}'")
@@ -141,11 +183,14 @@ class KustoSampleApp:
 
         # TODO: Change if needed. Disabled to prevent an existing batching policy from being unintentionally changed
         if False and config.batching_policy:
-            cls.wait_for_user_to_proceed(f"Alter the batching policy for table '{config.database_name}.{config.table_name}'")
+            cls.wait_for_user_to_proceed(
+                f"Alter the batching policy for table '{config.database_name}.{config.table_name}'")
             cls.alter_batching_policy(kusto_client, config.database_name, config.table_name, config.batching_policy)
 
     @classmethod
-    def alter_merge_existing_table_to_provided_schema(cls, kusto_client: KustoClient, database_name: str, table_name: str, table_schema: str) -> None:
+    @distributed_trace
+    def alter_merge_existing_table_to_provided_schema(cls, kusto_client: KustoClient, database_name: str,
+                                                      table_name: str, table_schema: str) -> None:
         """
         Alter-merges the given existing table to provided schema.
         :param kusto_client: Client to run commands
@@ -157,6 +202,7 @@ class KustoSampleApp:
         Utils.Queries.execute_command(kusto_client, database_name, command)
 
     @classmethod
+    @distributed_trace(name_of_span="query")
     def query_existing_number_of_rows(cls, kusto_client: KustoClient, database_name: str, table_name: str) -> None:
         """
         Queries the data on the existing number of rows.
@@ -168,6 +214,7 @@ class KustoSampleApp:
         Utils.Queries.execute_command(kusto_client, database_name, command)
 
     @classmethod
+    @distributed_trace(name_of_span="query")
     def query_first_two_rows(cls, kusto_client: KustoClient, database_name: str, table_name: str) -> None:
         """
         Queries the first two rows of the table.
@@ -179,7 +226,9 @@ class KustoSampleApp:
         Utils.Queries.execute_command(kusto_client, database_name, command)
 
     @classmethod
-    def create_new_table(cls, kusto_client: KustoClient, database_name: str, table_name: str, table_schema: str) -> None:
+    @distributed_trace
+    def create_new_table(cls, kusto_client: KustoClient, database_name: str, table_name: str,
+                         table_schema: str) -> None:
         """
         Creates a new table.
         :param kusto_client: Client to run commands
@@ -191,7 +240,9 @@ class KustoSampleApp:
         Utils.Queries.execute_command(kusto_client, database_name, command)
 
     @classmethod
-    def alter_batching_policy(cls, kusto_client: KustoClient, database_name: str, table_name: str, batching_policy: str) -> None:
+    @distributed_trace
+    def alter_batching_policy(cls, kusto_client: KustoClient, database_name: str, table_name: str,
+                              batching_policy: str) -> None:
         """
         Alters the batching policy based on BatchingPolicy in configuration.
         :param kusto_client: Client to run commands
@@ -207,6 +258,7 @@ class KustoSampleApp:
         Utils.Queries.execute_command(kusto_client, database_name, command)
 
     @classmethod
+    @distributed_trace
     def ingestion(cls, config: ConfigJson, kusto_client: KustoClient, ingest_client: QueuedIngestClient) -> None:
         """
         Second phase - The ingestion process.
@@ -230,20 +282,22 @@ class KustoSampleApp:
             )
 
             # Learn More: For more information about ingesting data to Kusto in Python, see: https://docs.microsoft.com/azure/data-explorer/python-ingest-data
-            cls.ingest_data(data_file, data_file.data_format, ingest_client, config.database_name, config.table_name, data_file.mapping_name)
+            cls.ingest_data(data_file, data_file.data_format, ingest_client, config.database_name, config.table_name,
+                            data_file.mapping_name, merge_span=True)
 
         Utils.Ingestion.wait_for_ingestion_to_complete(config.wait_for_ingest_seconds)
 
     @classmethod
+    @distributed_trace
     def create_ingestion_mappings(
-        cls,
-        use_existing_mapping: bool,
-        kusto_client: KustoClient,
-        database_name: str,
-        table_name: str,
-        mapping_name: str,
-        mapping_value: str,
-        data_format: DataFormat,
+            cls,
+            use_existing_mapping: bool,
+            kusto_client: KustoClient,
+            database_name: str,
+            table_name: str,
+            mapping_name: str,
+            mapping_value: str,
+            data_format: DataFormat,
     ) -> None:
         """
         Creates Ingestion Mappings (if required) based on given values.
@@ -266,8 +320,10 @@ class KustoSampleApp:
         Utils.Queries.execute_command(kusto_client, database_name, mapping_command)
 
     @classmethod
+    @distributed_trace
     def ingest_data(
-        cls, data_file: ConfigData, data_format: DataFormat, ingest_client: QueuedIngestClient, database_name: str, table_name: str, mapping_name: str
+            cls, data_file: ConfigData, data_format: DataFormat, ingest_client: QueuedIngestClient, database_name: str,
+            table_name: str, mapping_name: str
     ) -> None:
         """
         Ingest data from given source.
@@ -289,14 +345,18 @@ class KustoSampleApp:
         # Tip: Kusto's Python SDK can ingest data from files, blobs, open streams and pandas dataframes.
         # See the SDK's samples and the E2E tests in azure.kusto.ingest for additional references.
         if source_type == SourceType.local_file_source:
-            Utils.Ingestion.ingest_from_file(ingest_client, database_name, table_name, source_uri, data_format, mapping_name)
+            Utils.Ingestion.ingest_from_file(ingest_client, database_name, table_name, source_uri, data_format,
+                                             mapping_name)
         elif source_type == SourceType.blob_source:
-            Utils.Ingestion.ingest_from_blob(ingest_client, database_name, table_name, source_uri, data_format, mapping_name)
+            Utils.Ingestion.ingest_from_blob(ingest_client, database_name, table_name, source_uri, data_format,
+                                             mapping_name)
         else:
             Utils.error_handler(f"Unknown source '{source_type}' for file '{source_uri}'")
 
     @classmethod
-    def post_ingestion_querying(cls, kusto_client: KustoClient, database_name: str, table_name: str, config_ingest_data: bool) -> None:
+    @distributed_trace
+    def post_ingestion_querying(cls, kusto_client: KustoClient, database_name: str, table_name: str,
+                                config_ingest_data: bool) -> None:
         """
         Third and final phase - simple queries to validate the hopefully successful run of the script.
         :param kusto_client: Client to run queries
@@ -306,10 +366,12 @@ class KustoSampleApp:
         """
         optional_post_ingestion_message = "post-ingestion " if config_ingest_data else ""
 
-        cls.wait_for_user_to_proceed(f"Get {optional_post_ingestion_message}row count for '{database_name}.{table_name}':")
+        cls.wait_for_user_to_proceed(
+            f"Get {optional_post_ingestion_message}row count for '{database_name}.{table_name}':")
         cls.query_existing_number_of_rows(kusto_client, database_name, table_name)
 
-        cls.wait_for_user_to_proceed(f"Get {optional_post_ingestion_message}row count for '{database_name}.{table_name}':")
+        cls.wait_for_user_to_proceed(
+            f"Get {optional_post_ingestion_message}row count for '{database_name}.{table_name}':")
         cls.query_first_two_rows(kusto_client, database_name, table_name)
 
     @classmethod
@@ -324,7 +386,7 @@ class KustoSampleApp:
         if cls.config.wait_for_user:
             input("Press ENTER to proceed with this operation...")
 
-
+@distributed_trace
 def main():
     print("Kusto sample app is starting...")
 
@@ -332,10 +394,13 @@ def main():
     app.load_configs(app.CONFIG_FILE_NAME)
 
     if app.config.authentication_mode == "UserPrompt":
-        app.wait_for_user_to_proceed("You will be prompted *twice* for credentials during this script. Please return to the console after authenticating.")
+        app.wait_for_user_to_proceed(
+            "You will be prompted *twice* for credentials during this script. Please return to the console after authenticating.")
 
-    kusto_connection_string = Utils.Authentication.generate_connection_string(app.config.kusto_uri, app.config.authentication_mode)
-    ingest_connection_string = Utils.Authentication.generate_connection_string(app.config.ingest_uri, app.config.authentication_mode)
+    kusto_connection_string = Utils.Authentication.generate_connection_string(app.config.kusto_uri,
+                                                                              app.config.authentication_mode)
+    ingest_connection_string = Utils.Authentication.generate_connection_string(app.config.ingest_uri,
+                                                                               app.config.authentication_mode)
 
     # Tip: Avoid creating a new Kusto/ingest client for each use.Instead, create the clients once and reuse them.
     if not kusto_connection_string or not ingest_connection_string:
@@ -350,10 +415,18 @@ def main():
             app.ingestion(app.config, kusto_client, ingest_client)
 
         if app.config.query_data:
-            app.post_ingestion_querying(kusto_client, app.config.database_name, app.config.table_name, app.config.ingest_data)
+            app.post_ingestion_querying(kusto_client, app.config.database_name, app.config.table_name,
+                                        app.config.ingest_data)
 
     print("\nKusto sample app done")
 
 
 if __name__ == "__main__":
+    # Uncomment the lines below and add the 'uuid of the instrumentation key (see your Azure Monitor account)' to the
+    # enable_distributed_tracing() function above, to enable distributed tracing
+    #
+    # tracer = enable_distributed_tracing()
+    # with tracer.start_as_current_span(name="SampleApp"):
+    #     main()
+
     main()
