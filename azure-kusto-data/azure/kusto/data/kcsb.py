@@ -1,6 +1,10 @@
 from enum import unique, Enum
 from typing import Union, Callable, Coroutine, Optional
 
+from azure.core.tracing.decorator import distributed_trace
+from azure.core.tracing.decorator_async import distributed_trace_async
+
+
 from ._string_utils import assert_string_is_not_empty
 
 
@@ -10,6 +14,8 @@ class KustoConnectionStringBuilder:
     For usages, check out the sample at:
         https://github.com/Azure/azure-kusto-python/blob/master/azure-kusto-data/tests/sample.py
     """
+
+    kcsb_invalid_item_error = "%s is not supported as an item in KustoConnectionStringBuilder"
 
     @unique
     class ValidKeywords(Enum):
@@ -108,6 +114,7 @@ class KustoConnectionStringBuilder:
             """States whether a word is of type bool or not."""
             return self in [self.aad_federated_security, self.msi_auth, self.az_cli, self.interactive_login]
 
+    @distributed_trace
     def __init__(self, connection_string: str):
         """
         Creates new KustoConnectionStringBuilder.
@@ -121,13 +128,16 @@ class KustoConnectionStringBuilder:
         self._token_provider = None
         self._async_token_provider = None
         if connection_string is not None and "=" not in connection_string.partition(";")[0]:
-            connection_string = "Data Source=" + connection_string
+            connection_string = self.ValidKeywords.data_source + "=" + connection_string
 
         self[self.ValidKeywords.authority_id] = "organizations"
 
         for kvp_string in connection_string.split(";"):
             key, _, value = kvp_string.partition("=")
-            keyword = self.ValidKeywords.parse(key)
+            try:
+                keyword = self.ValidKeywords.parse(key)
+            except KeyError:
+                raise KeyError(self.kcsb_invalid_item_error % key)
             value_stripped = value.strip()
             if keyword.is_str_type():
                 self[keyword] = value_stripped.rstrip("/")
@@ -143,7 +153,7 @@ class KustoConnectionStringBuilder:
         try:
             keyword = key if isinstance(key, self.ValidKeywords) else self.ValidKeywords.parse(key)
         except KeyError:
-            raise KeyError("%s is not supported as an item in KustoConnectionStringBuilder" % key)
+            raise KeyError(self.kcsb_invalid_item_error % key)
 
         if value is None:
             raise TypeError("Value cannot be None.")
@@ -162,6 +172,7 @@ class KustoConnectionStringBuilder:
             raise KeyError("KustoConnectionStringBuilder supports only bools and strings.")
 
     @classmethod
+    @distributed_trace
     def with_aad_user_password_authentication(
         cls, connection_string: str, user_id: str, password: str, authority_id: str = "organizations"
     ) -> "KustoConnectionStringBuilder":
@@ -175,7 +186,8 @@ class KustoConnectionStringBuilder:
         """
         assert_string_is_not_empty(user_id)
         assert_string_is_not_empty(password)
-        kcsb = cls(connection_string)
+
+        kcsb = cls(connection_string, merge_span=True)
         kcsb[kcsb.ValidKeywords.aad_federated_security] = True
         kcsb[kcsb.ValidKeywords.aad_user_id] = user_id
         kcsb[kcsb.ValidKeywords.password] = password
@@ -184,6 +196,7 @@ class KustoConnectionStringBuilder:
         return kcsb
 
     @classmethod
+    @distributed_trace
     def with_aad_user_token_authentication(cls, connection_string: str, user_token: str) -> "KustoConnectionStringBuilder":
         """
         Creates a KustoConnection string builder that will authenticate with AAD application and
@@ -193,13 +206,15 @@ class KustoConnectionStringBuilder:
         :param str user_token: AAD user token.
         """
         assert_string_is_not_empty(user_token)
-        kcsb = cls(connection_string)
+
+        kcsb = cls(connection_string, merge_span=True)
         kcsb[kcsb.ValidKeywords.aad_federated_security] = True
         kcsb[kcsb.ValidKeywords.user_token] = user_token
 
         return kcsb
 
     @classmethod
+    @distributed_trace
     def with_aad_application_key_authentication(
         cls, connection_string: str, aad_app_id: str, app_key: str, authority_id: str
     ) -> "KustoConnectionStringBuilder":
@@ -213,7 +228,8 @@ class KustoConnectionStringBuilder:
         assert_string_is_not_empty(aad_app_id)
         assert_string_is_not_empty(app_key)
         assert_string_is_not_empty(authority_id)
-        kcsb = cls(connection_string)
+
+        kcsb = cls(connection_string, merge_span=True)
         kcsb[kcsb.ValidKeywords.aad_federated_security] = True
         kcsb[kcsb.ValidKeywords.application_client_id] = aad_app_id
         kcsb[kcsb.ValidKeywords.application_key] = app_key
@@ -222,6 +238,7 @@ class KustoConnectionStringBuilder:
         return kcsb
 
     @classmethod
+    @distributed_trace
     def with_aad_application_certificate_authentication(
         cls, connection_string: str, aad_app_id: str, certificate: str, thumbprint: str, authority_id: str
     ) -> "KustoConnectionStringBuilder":
@@ -240,7 +257,7 @@ class KustoConnectionStringBuilder:
         assert_string_is_not_empty(thumbprint)
         assert_string_is_not_empty(authority_id)
 
-        kcsb = cls(connection_string)
+        kcsb = cls(connection_string, merge_span=True)
         kcsb[kcsb.ValidKeywords.aad_federated_security] = True
         kcsb[kcsb.ValidKeywords.application_client_id] = aad_app_id
         kcsb[kcsb.ValidKeywords.application_certificate] = certificate
@@ -250,6 +267,7 @@ class KustoConnectionStringBuilder:
         return kcsb
 
     @classmethod
+    @distributed_trace
     def with_aad_application_certificate_sni_authentication(
         cls, connection_string: str, aad_app_id: str, private_certificate: str, public_certificate: str, thumbprint: str, authority_id: str
     ) -> "KustoConnectionStringBuilder":
@@ -270,7 +288,7 @@ class KustoConnectionStringBuilder:
         assert_string_is_not_empty(thumbprint)
         assert_string_is_not_empty(authority_id)
 
-        kcsb = cls(connection_string)
+        kcsb = cls(connection_string, merge_span=True)
         kcsb[kcsb.ValidKeywords.aad_federated_security] = True
         kcsb[kcsb.ValidKeywords.application_client_id] = aad_app_id
         kcsb[kcsb.ValidKeywords.application_certificate] = private_certificate
@@ -281,6 +299,7 @@ class KustoConnectionStringBuilder:
         return kcsb
 
     @classmethod
+    @distributed_trace
     def with_aad_application_token_authentication(cls, connection_string: str, application_token: str) -> "KustoConnectionStringBuilder":
         """
         Creates a KustoConnection string builder that will authenticate with AAD application and
@@ -290,13 +309,14 @@ class KustoConnectionStringBuilder:
         :param str application_token: AAD application token.
         """
         assert_string_is_not_empty(application_token)
-        kcsb = cls(connection_string)
+        kcsb = cls(connection_string, merge_span=True)
         kcsb[kcsb.ValidKeywords.aad_federated_security] = True
         kcsb[kcsb.ValidKeywords.application_token] = application_token
 
         return kcsb
 
     @classmethod
+    @distributed_trace
     def with_aad_device_authentication(cls, connection_string: str, authority_id: str = "organizations") -> "KustoConnectionStringBuilder":
         """
         Creates a KustoConnection string builder that will authenticate with AAD application and
@@ -304,26 +324,28 @@ class KustoConnectionStringBuilder:
         :param str connection_string: Kusto connection string should be of the format: https://<clusterName>.kusto.windows.net
         :param str authority_id: optional param. defaults to "organizations"
         """
-        kcsb = cls(connection_string)
+        kcsb = cls(connection_string, merge_span=True)
         kcsb[kcsb.ValidKeywords.aad_federated_security] = True
         kcsb[kcsb.ValidKeywords.authority_id] = authority_id
 
         return kcsb
 
     @classmethod
+    @distributed_trace
     def with_az_cli_authentication(cls, connection_string: str) -> "KustoConnectionStringBuilder":
         """
         Creates a KustoConnection string builder that will use existing authenticated az cli profile
         password.
         :param str connection_string: Kusto connection string should be of the format: https://<clusterName>.kusto.windows.net
         """
-        kcsb = cls(connection_string)
+        kcsb = cls(connection_string, merge_span=True)
         kcsb[kcsb.ValidKeywords.az_cli] = True
         kcsb[kcsb.ValidKeywords.aad_federated_security] = True
 
         return kcsb
 
     @classmethod
+    @distributed_trace
     def with_aad_managed_service_identity_authentication(
         cls, connection_string: str, client_id: str = None, object_id: str = None, msi_res_id: str = None, timeout: int = None
     ) -> "KustoConnectionStringBuilder":
@@ -339,7 +361,7 @@ class KustoConnectionStringBuilder:
         :param timeout: an optional timeout (seconds) to wait for an MSI Authentication to occur
         """
 
-        kcsb = cls(connection_string)
+        kcsb = cls(connection_string, merge_span=True)
         params = {}
         exclusive_pcount = 0
 
@@ -376,6 +398,7 @@ class KustoConnectionStringBuilder:
         return kcsb
 
     @classmethod
+    @distributed_trace
     def with_token_provider(cls, connection_string: str, token_provider: Callable[[], str]) -> "KustoConnectionStringBuilder":
         """
         Create a KustoConnectionStringBuilder that uses a callback function to obtain a connection token
@@ -385,13 +408,14 @@ class KustoConnectionStringBuilder:
 
         assert callable(token_provider)
 
-        kcsb = cls(connection_string)
+        kcsb = cls(connection_string, merge_span=True)
         kcsb[kcsb.ValidKeywords.aad_federated_security] = True
         kcsb._token_provider = token_provider
 
         return kcsb
 
     @classmethod
+    @distributed_trace_async
     def with_async_token_provider(
         cls,
         connection_string: str,
@@ -405,17 +429,18 @@ class KustoConnectionStringBuilder:
 
         assert callable(async_token_provider)
 
-        kcsb = cls(connection_string)
+        kcsb = cls(connection_string, merge_span=True)
         kcsb[kcsb.ValidKeywords.aad_federated_security] = True
         kcsb._async_token_provider = async_token_provider
 
         return kcsb
 
     @classmethod
+    @distributed_trace
     def with_interactive_login(
         cls, connection_string: str, login_hint: Optional[str] = None, domain_hint: Optional[str] = None
     ) -> "KustoConnectionStringBuilder":
-        kcsb = cls(connection_string)
+        kcsb = cls(connection_string, merge_span=True)
         kcsb[kcsb.ValidKeywords.interactive_login] = True
         kcsb[kcsb.ValidKeywords.aad_federated_security] = True
         if login_hint is not None:
