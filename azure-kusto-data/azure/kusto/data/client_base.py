@@ -7,6 +7,8 @@ from datetime import timedelta
 from typing import Union, Optional, Any, NoReturn, ClassVar
 from urllib.parse import urljoin
 
+from azure.kusto.data._cloud_settings import CloudSettings
+from azure.kusto.data._token_providers import CloudInfoTokenProvider
 from requests import Response
 
 from ._version import VERSION
@@ -15,6 +17,7 @@ from .exceptions import KustoServiceError, KustoThrottlingError, KustoApiError
 from .kcsb import KustoConnectionStringBuilder
 from .response import KustoResponseDataSet, KustoResponseDataSetV2, KustoResponseDataSetV1
 from .security import _AadHelper
+from .kusto_trusted_endpoints import well_known_kusto_endpoints
 
 
 class _KustoClientBase(abc.ABC):
@@ -26,6 +29,7 @@ class _KustoClientBase(abc.ABC):
     _client_server_delta: ClassVar[timedelta] = timedelta(seconds=30)
 
     _aad_helper: _AadHelper
+    _endpoint_validated = False
 
     def __init__(self, kcsb: Union[KustoConnectionStringBuilder, str], is_async):
         self._kcsb = kcsb
@@ -52,6 +56,14 @@ class _KustoClientBase(abc.ABC):
         self._proxy_url = proxy_url
         if self._aad_helper:
             self._aad_helper.token_provider.set_proxy(proxy_url)
+
+    def validate_endpoint(self):
+        if self._endpoint_validated:
+            if isinstance(self._aad_helper.token_provider, CloudInfoTokenProvider):
+                well_known_kusto_endpoints.validate_trusted_endpoint(
+                    self._kusto_cluster, CloudSettings.get_cloud_info_for_cluster(self._kusto_cluster).login_endpoint
+                )
+            self._endpoint_validated = True
 
     @staticmethod
     def _kusto_parse_by_endpoint(endpoint: str, response_json: Any) -> KustoResponseDataSet:

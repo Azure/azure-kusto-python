@@ -91,6 +91,7 @@ class KustoClient(_KustoClientBase):
         stream_response: bool = False,
     ) -> Union[KustoResponseDataSet, ClientResponse]:
         """Executes given query against this client"""
+        self.validate_endpoint()
         request_params = ExecuteRequestParams(
             database, payload, properties, query, timeout, self._request_headers, self._mgmt_default_timeout, self._client_server_delta
         )

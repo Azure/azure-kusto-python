@@ -1,6 +1,6 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
-from typing import Optional, Dict, TYPE_CHECKING
+from typing import TYPE_CHECKING
 from urllib.parse import urlparse
 
 from ._token_providers import (
@@ -95,3 +95,18 @@ def _get_header_from_dict(token: dict):
 
 def _get_header(token_type: str, access_token: str) -> str:
     return "{0} {1}".format(token_type, access_token)
+
+
+def _is_local_address(host):
+    if host == "localhost" or host == "127.0.0.1" or host == "::1" or host == "[::1]":
+        return True
+
+    if host.startswith("127.") and 15 >= len(host) >= 9:
+        for i in range(len(host)):
+            c = host[i]
+            if c != "." and (c < "0" or c > "9"):
+                return False
+            i += 1
+        return True
+
+    return False
