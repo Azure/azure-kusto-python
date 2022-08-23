@@ -4,21 +4,21 @@ import io
 
 from azure.kusto.data import KustoConnectionStringBuilder
 from azure.kusto.data.data_format import DataFormat
-
 from azure.kusto.ingest import (
-    QueuedIngestClient,
-    IngestionProperties,
-    FileDescriptor,
     BlobDescriptor,
-    StreamDescriptor,
+    FileDescriptor,
+    IngestionProperties,
+    IngestionStatus,
     KustoStreamingIngestClient,
     ManagedStreamingIngestClient,
-    IngestionStatus,
+    QueuedIngestClient,
+    StreamDescriptor,
 )
 
 ##################################################################
 ##                              AUTH                            ##
 ##################################################################
+
 cluster = "https://ingest-{cluster_name}.kusto.windows.net/"
 
 # In case you want to authenticate with AAD application.
@@ -81,11 +81,11 @@ ingestion_props = IngestionProperties(
     database="{database_name}",
     table="{table_name}",
     data_format=DataFormat.CSV,
-    # in case status update for success are also required
+    # in case status update for success are also required (remember to import ReportLevel from azure.kusto.ingest)
     # report_level=ReportLevel.FailuresAndSuccesses,
-    # in case a mapping is required
-    # ingestion_mapping_reference="{json_mapping_that_already_exists_on_table}"
-    # ingestion_mapping_type=IngestionMappingType.JSON
+    # in case a mapping is required (remember to import IngestionMappingKind from azure.kusto.data.data_format)
+    # ingestion_mapping_reference="{json_mapping_that_already_exists_on_table}",
+    # ingestion_mapping_kind= IngestionMappingKind.JSON,
 )
 
 # ingest from file
