@@ -182,3 +182,9 @@ class KustoThrottlingError(KustoError):
     """Raised when API call gets throttled by the server."""
 
     ...
+
+
+class KustoClientInvalidConnectionStringException(KustoError):
+    """Raised when call is made to a non-trusted endpoint."""
+
+    ...
