@@ -2,6 +2,7 @@ import dataclasses
 import enum
 import json
 import uuid
+import os
 from dataclasses import dataclass
 from typing import List
 
@@ -17,15 +18,14 @@ from azure.core.tracing.decorator import distributed_trace
 from azure.core.tracing.ext.opentelemetry_span import OpenTelemetrySpan
 
 # See https://github.com/open-telemetry/opentelemetry-python for details on regular open telemetry usage
-
 from opentelemetry import trace
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
-from opentelemetry.sdk.resources import SERVICE_NAME, Resource
-from opentelemetry.sdk.trace.export import ConsoleSpanExporter # alternative console exporter for distributed tracing
 
-from azure_monitor import AzureMonitorSpanExporter
+# alternative console exporter for distributed tracing
+from opentelemetry.sdk.trace.export import ConsoleSpanExporter
 
+from azure.monitor.opentelemetry.exporter import AzureMonitorTraceExporter
 
 def enable_distributed_tracing() -> "Tracer":
     """
@@ -40,13 +40,14 @@ def enable_distributed_tracing() -> "Tracer":
     # uncomment these lines to use the simple console exporter.
 
     # exporter = ConsoleSpanExporter()
-    exporter = AzureMonitorSpanExporter(
-        instrumentation_key="uuid of the instrumentation key (see your Azure Monitor account)"
+    exporter = AzureMonitorTraceExporter.from_connection_string(
+        conn_str=os.environ["APPLICATIONINSIGHTS_CONNECTION_STRING"]
     )
 
     trace.set_tracer_provider(TracerProvider())
     tracer = trace.get_tracer(__name__)
-    trace.get_tracer_provider().add_span_processor(SimpleSpanProcessor(exporter))
+    span_processor = SimpleSpanProcessor(exporter)
+    trace.get_tracer_provider().add_span_processor(span_processor)
     return tracer
 
 
