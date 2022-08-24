@@ -239,13 +239,13 @@ class KustoClient(_KustoClientBase):
                 response.raise_for_status()
                 return response
             except Exception as e:
-                raise self._handle_http_error(e, self._query_endpoint, None, response, response.status_code, response.json(), response.text)
+                self._handle_http_error(e, self._query_endpoint, None, response, response.status_code, response.json(), response.text)
 
         response_json = None
         try:
             response_json = response.json()
             response.raise_for_status()
         except Exception as e:
-            raise self._handle_http_error(e, endpoint, payload, response, response.status_code, response_json, response.text)
+            self._handle_http_error(e, endpoint, payload, response, response.status_code, response_json, response.text)
 
         return self._kusto_parse_by_endpoint(endpoint, response_json)
