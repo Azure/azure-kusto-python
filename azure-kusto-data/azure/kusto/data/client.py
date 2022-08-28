@@ -10,6 +10,9 @@ from requests import Response
 from urllib3.connection import HTTPConnection
 
 from azure.core.tracing.decorator import distributed_trace
+from azure.core.tracing import SpanKind, AbstractSpan
+
+from azure.kusto.data._telemetry import KustoTracingAttributes
 
 from .kcsb import KustoConnectionStringBuilder
 from .client_request_properties import ClientRequestProperties
@@ -54,7 +57,6 @@ class KustoClient(_KustoClientBase):
     # The maximum amount of connections to be able to operate in parallel
     _max_pool_size = 100
 
-    @distributed_trace
     def __init__(self, kcsb: Union[KustoConnectionStringBuilder, str]):
         """
         Kusto Client constructor.
@@ -72,12 +74,10 @@ class KustoClient(_KustoClientBase):
         self._session.mount("http://", adapter)
         self._session.mount("https://", adapter)
 
-    @distributed_trace
     def set_proxy(self, proxy_url: str):
         super().set_proxy(proxy_url)
         self._session.proxies = {"http": proxy_url, "https": proxy_url}
 
-    @distributed_trace
     def set_http_retries(self, max_retries: int):
         """
         Set the number of HTTP retries to attempt
@@ -91,7 +91,6 @@ class KustoClient(_KustoClientBase):
         self._session.mount("https://", adapter)
 
     @staticmethod
-    @distributed_trace
     def compose_socket_options() -> List[Tuple[int, int, int]]:
         # Sends TCP Keep-Alive after MAX_IDLE_SECONDS seconds of idleness, once every INTERVAL_SECONDS seconds, and closes the connection after MAX_FAILED_KEEPALIVES failed pings (e.g. 20 => 1:00:30)
         MAX_IDLE_SECONDS = 30
@@ -144,7 +143,7 @@ class KustoClient(_KustoClientBase):
             return self.execute_mgmt(database, query, properties)
         return self.execute_query(database, query, properties)
 
-    @distributed_trace
+    @distributed_trace(name_of_span="adx_query_cmd", kind=SpanKind.CLIENT)
     def execute_query(self, database: str, query: str, properties: Optional[ClientRequestProperties] = None) -> KustoResponseDataSet:
         """
         Execute a KQL query.
@@ -155,9 +154,10 @@ class KustoClient(_KustoClientBase):
         :return: Kusto response data set.
         :rtype: azure.kusto.data.response.KustoResponseDataSet
         """
+        KustoTracingAttributes.add_query_attributes(database, query)
         return self._execute(self._query_endpoint, database, query, None, self._query_default_timeout, properties)
 
-    @distributed_trace
+    @distributed_trace(name_of_span="adx_control_cmd", kind=SpanKind.CLIENT)
     def execute_mgmt(self, database: str, query: str, properties: Optional[ClientRequestProperties] = None) -> KustoResponseDataSet:
         """
         Execute a KQL control command.
@@ -168,9 +168,10 @@ class KustoClient(_KustoClientBase):
         :return: Kusto response data set.
         :rtype: azure.kusto.data.response.KustoResponseDataSet
         """
+        KustoTracingAttributes.add_mgmt_attributes(database, query)
         return self._execute(self._mgmt_endpoint, database, query, None, self._mgmt_default_timeout, properties)
 
-    @distributed_trace
+    @distributed_trace(name_of_span="adx_streaming_ingestion", tracing_attributes={}, kind=SpanKind.CLIENT)
     def execute_streaming_ingest(
         self,
         database: str,
@@ -178,7 +179,7 @@ class KustoClient(_KustoClientBase):
         stream: IO[AnyStr],
         stream_format: Union[DataFormat, str],
         properties: Optional[ClientRequestProperties] = None,
-        mapping_name: str = None
+        mapping_name: str = None,
     ):
         """
         Execute streaming ingest against this client
@@ -192,6 +193,7 @@ class KustoClient(_KustoClientBase):
         :param ClientRequestProperties properties: additional request properties.
         :param str mapping_name: Pre-defined mapping of the table. Required when stream_format is json/avro.
         """
+        KustoTracingAttributes.add_ingest_attributes(database, table, streaming=True)
         stream_format = stream_format.kusto_value if isinstance(stream_format, DataFormat) else DataFormat[stream_format.upper()].kusto_value
         endpoint = self._streaming_ingest_endpoint + database + "/" + table + "?streamFormat=" + stream_format
         if mapping_name is not None:
@@ -206,7 +208,7 @@ class KustoClient(_KustoClientBase):
         response.raw.decode_content = True
         return StreamingDataSetEnumerator(JsonTokenReader(response.raw))
 
-    @distributed_trace
+    @distributed_trace(name_of_span="adx_streaming_query", kind=SpanKind.CLIENT)
     def execute_streaming_query(
         self, database: str, query: str, timeout: timedelta = _KustoClientBase._query_default_timeout, properties: Optional[ClientRequestProperties] = None
     ) -> KustoStreamingResponseDataSet:
@@ -220,6 +222,7 @@ class KustoClient(_KustoClientBase):
         :param azure.kusto.data.ClientRequestProperties properties: Optional additional properties.
         :return KustoStreamingResponseDataSet:
         """
+        KustoTracingAttributes.add_query_attributes(database, query, streaming=True)
         return KustoStreamingResponseDataSet(self._execute_streaming_query_parsed(database, query, timeout, properties))
 
     def _execute(
@@ -230,7 +233,7 @@ class KustoClient(_KustoClientBase):
         payload: Optional[IO[AnyStr]],
         timeout: timedelta,
         properties: Optional[ClientRequestProperties] = None,
-        stream_response: bool = False
+        stream_response: bool = False,
     ) -> Union[KustoResponseDataSet, Response]:
         """Executes given query against this client"""
         self.validate_endpoint()
