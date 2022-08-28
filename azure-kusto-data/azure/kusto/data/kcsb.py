@@ -1,7 +1,6 @@
 from enum import unique, Enum
 from typing import Union, Callable, Coroutine, Optional
 
-guit
 from ._string_utils import assert_string_is_not_empty
 
 
