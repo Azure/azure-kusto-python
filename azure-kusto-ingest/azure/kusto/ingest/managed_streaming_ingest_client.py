@@ -110,10 +110,13 @@ class ManagedStreamingIngestClient(BaseIngestClient):
                 with attempt:
                     stream.seek(0, SEEK_SET)
                     client_request_id = ManagedStreamingIngestClient._get_request_id(stream_descriptor.source_id, attempt.retry_state.attempt_number - 1)
-                    return kusto_client_func_tracing(self.streaming_client._ingest_from_stream_with_client_request_id,
-                                                     name_of_span="ManagedStreamingIngestClient.ingest_from_stream_attempt",
-                                                     stream_descriptor=stream_descriptor, ingestion_properties=ingestion_properties,
-                                                     client_request_id=client_request_id)
+                    return kusto_client_func_tracing(
+                        self.streaming_client._ingest_from_stream_with_client_request_id,
+                        name_of_span="ManagedStreamingIngestClient.ingest_from_stream_attempt",
+                        stream_descriptor=stream_descriptor,
+                        ingestion_properties=ingestion_properties,
+                        client_request_id=client_request_id,
+                    )
         except KustoApiError as ex:
             error = ex.get_api_error()
             if error.permanent:

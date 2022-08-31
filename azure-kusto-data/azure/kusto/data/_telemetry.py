@@ -76,18 +76,12 @@ class KustoTracingAttributes:
 
     @classmethod
     def create_http_attributes(cls, headers, method, url) -> dict:
-        http_tracing_attributes: dict = {cls._SPAN_COMPONENT: "http",
-                                         cls._HTTP_METHOD: method,
-                                         cls._HTTP_URL: url,
-                                         }
+        http_tracing_attributes: dict = {
+            cls._SPAN_COMPONENT: "http",
+            cls._HTTP_METHOD: method,
+            cls._HTTP_URL: url,
+        }
         user_agent = headers.get("User-Agent")
         if user_agent:
             http_tracing_attributes[cls._HTTP_USER_AGENT] = user_agent
         return http_tracing_attributes
-
-
-
-
-
-
-

@@ -69,8 +69,7 @@ class KustoClient(_KustoClientBase):
         self._session = requests.Session()
 
         adapter = HTTPAdapterWithSocketOptions(
-            socket_options=(HTTPConnection.default_socket_options or []) + self.compose_socket_options(),
-            pool_maxsize=self._max_pool_size
+            socket_options=(HTTPConnection.default_socket_options or []) + self.compose_socket_options(), pool_maxsize=self._max_pool_size
         )
         self._session.mount("http://", adapter)
         self._session.mount("https://", adapter)
@@ -99,12 +98,12 @@ class KustoClient(_KustoClientBase):
         MAX_FAILED_KEEPALIVES = 20
 
         if (
-                sys.platform == "linux"
-                and hasattr(socket, "SOL_SOCKET")
-                and hasattr(socket, "SO_KEEPALIVE")
-                and hasattr(socket, "TCP_KEEPIDLE")
-                and hasattr(socket, "TCP_KEEPINTVL")
-                and hasattr(socket, "TCP_KEEPCNT")
+            sys.platform == "linux"
+            and hasattr(socket, "SOL_SOCKET")
+            and hasattr(socket, "SO_KEEPALIVE")
+            and hasattr(socket, "TCP_KEEPIDLE")
+            and hasattr(socket, "TCP_KEEPINTVL")
+            and hasattr(socket, "TCP_KEEPCNT")
         ):
             return [
                 (socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1),
@@ -113,26 +112,24 @@ class KustoClient(_KustoClientBase):
                 (socket.IPPROTO_TCP, socket.TCP_KEEPCNT, MAX_FAILED_KEEPALIVES),
             ]
         elif (
-                sys.platform == "win32"
-                and hasattr(socket, "SOL_SOCKET")
-                and hasattr(socket, "SO_KEEPALIVE")
-                and hasattr(socket, "TCP_KEEPIDLE")
-                and hasattr(socket, "TCP_KEEPCNT")
+            sys.platform == "win32"
+            and hasattr(socket, "SOL_SOCKET")
+            and hasattr(socket, "SO_KEEPALIVE")
+            and hasattr(socket, "TCP_KEEPIDLE")
+            and hasattr(socket, "TCP_KEEPCNT")
         ):
             return [
                 (socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1),
                 (socket.IPPROTO_TCP, socket.TCP_KEEPIDLE, MAX_IDLE_SECONDS),
                 (socket.IPPROTO_TCP, socket.TCP_KEEPCNT, MAX_FAILED_KEEPALIVES),
             ]
-        elif sys.platform == "darwin" and hasattr(socket, "SOL_SOCKET") and hasattr(socket, "SO_KEEPALIVE") and hasattr(
-                socket, "IPPROTO_TCP"):
+        elif sys.platform == "darwin" and hasattr(socket, "SOL_SOCKET") and hasattr(socket, "SO_KEEPALIVE") and hasattr(socket, "IPPROTO_TCP"):
             TCP_KEEPALIVE = 0x10
             return [(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1), (socket.IPPROTO_TCP, TCP_KEEPALIVE, INTERVAL_SECONDS)]
         else:
             return []
 
-    def execute(self, database: str, query: str,
-                properties: Optional[ClientRequestProperties] = None) -> KustoResponseDataSet:
+    def execute(self, database: str, query: str, properties: Optional[ClientRequestProperties] = None) -> KustoResponseDataSet:
         """
         Executes a query or management command.
         :param str database: Database against query will be executed.
@@ -147,8 +144,7 @@ class KustoClient(_KustoClientBase):
         return self.execute_query(database, query, properties)
 
     @distributed_trace(name_of_span="adx_query_cmd", kind=SpanKind.CLIENT)
-    def execute_query(self, database: str, query: str,
-                      properties: Optional[ClientRequestProperties] = None) -> KustoResponseDataSet:
+    def execute_query(self, database: str, query: str, properties: Optional[ClientRequestProperties] = None) -> KustoResponseDataSet:
         """
         Execute a KQL query.
         To learn more about KQL go to https://docs.microsoft.com/en-us/azure/kusto/query/
@@ -163,8 +159,7 @@ class KustoClient(_KustoClientBase):
         return self._execute(self._query_endpoint, database, query, None, self._query_default_timeout, properties)
 
     @distributed_trace(name_of_span="adx_control_cmd", kind=SpanKind.CLIENT)
-    def execute_mgmt(self, database: str, query: str,
-                     properties: Optional[ClientRequestProperties] = None) -> KustoResponseDataSet:
+    def execute_mgmt(self, database: str, query: str, properties: Optional[ClientRequestProperties] = None) -> KustoResponseDataSet:
         """
         Execute a KQL control command.
         To learn more about KQL control commands go to  https://docs.microsoft.com/en-us/azure/kusto/management/
@@ -180,13 +175,13 @@ class KustoClient(_KustoClientBase):
 
     @distributed_trace(name_of_span="adx_streaming_ingestion", kind=SpanKind.CLIENT)
     def execute_streaming_ingest(
-            self,
-            database: str,
-            table: str,
-            stream: IO[AnyStr],
-            stream_format: Union[DataFormat, str],
-            properties: Optional[ClientRequestProperties] = None,
-            mapping_name: str = None,
+        self,
+        database: str,
+        table: str,
+        stream: IO[AnyStr],
+        stream_format: Union[DataFormat, str],
+        properties: Optional[ClientRequestProperties] = None,
+        mapping_name: str = None,
     ):
         """
         Execute streaming ingest against this client
@@ -202,8 +197,7 @@ class KustoClient(_KustoClientBase):
         """
         KustoTracingAttributes.set_ingest_attributes(database, table)
 
-        stream_format = stream_format.kusto_value if isinstance(stream_format, DataFormat) else DataFormat[
-            stream_format.upper()].kusto_value
+        stream_format = stream_format.kusto_value if isinstance(stream_format, DataFormat) else DataFormat[stream_format.upper()].kusto_value
         endpoint = self._streaming_ingest_endpoint + database + "/" + table + "?streamFormat=" + stream_format
         if mapping_name is not None:
             endpoint = endpoint + "&mappingName=" + mapping_name
@@ -211,8 +205,7 @@ class KustoClient(_KustoClientBase):
         self._execute(endpoint, database, None, stream, self._streaming_ingest_default_timeout, properties)
 
     def _execute_streaming_query_parsed(
-            self, database: str, query: str, timeout: timedelta = _KustoClientBase._query_default_timeout,
-            properties: Optional[ClientRequestProperties] = None
+        self, database: str, query: str, timeout: timedelta = _KustoClientBase._query_default_timeout, properties: Optional[ClientRequestProperties] = None
     ) -> StreamingDataSetEnumerator:
         response = self._execute(self._query_endpoint, database, query, None, timeout, properties, stream_response=True)
         response.raw.decode_content = True
@@ -220,8 +213,7 @@ class KustoClient(_KustoClientBase):
 
     @distributed_trace(name_of_span="adx_streaming_query", kind=SpanKind.CLIENT)
     def execute_streaming_query(
-            self, database: str, query: str, timeout: timedelta = _KustoClientBase._query_default_timeout,
-            properties: Optional[ClientRequestProperties] = None
+        self, database: str, query: str, timeout: timedelta = _KustoClientBase._query_default_timeout, properties: Optional[ClientRequestProperties] = None
     ) -> KustoStreamingResponseDataSet:
         """
         Execute a KQL query without reading it all to memory.
@@ -238,20 +230,19 @@ class KustoClient(_KustoClientBase):
         return KustoStreamingResponseDataSet(self._execute_streaming_query_parsed(database, query, timeout, properties))
 
     def _execute(
-            self,
-            endpoint: str,
-            database: str,
-            query: Optional[str],
-            payload: Optional[IO[AnyStr]],
-            timeout: timedelta,
-            properties: Optional[ClientRequestProperties] = None,
-            stream_response: bool = False,
+        self,
+        endpoint: str,
+        database: str,
+        query: Optional[str],
+        payload: Optional[IO[AnyStr]],
+        timeout: timedelta,
+        properties: Optional[ClientRequestProperties] = None,
+        stream_response: bool = False,
     ) -> Union[KustoResponseDataSet, Response]:
         """Executes given query against this client"""
         self.validate_endpoint()
         request_params = ExecuteRequestParams(
-            database, payload, properties, query, timeout, self._request_headers, self._mgmt_default_timeout,
-            self._client_server_delta
+            database, payload, properties, query, timeout, self._request_headers, self._mgmt_default_timeout, self._client_server_delta
         )
         json_payload = request_params.json_payload
         request_headers = request_params.request_headers
@@ -259,32 +250,34 @@ class KustoClient(_KustoClientBase):
         if self._aad_helper:
             request_headers["Authorization"] = self._aad_helper.acquire_authorization_header()
 
-        http_trace_attributes = KustoTracingAttributes.create_http_attributes(url=endpoint, method="POST",
-                                                                              headers=request_headers)
-        response = kusto_client_func_tracing(self._session.post, name_of_span="response_processing",
-                                             tracing_attributes=http_trace_attributes,
-                                             kind=SpanKind.CLIENT, url=endpoint, headers=request_headers, json=json_payload,
-                                             data=payload,
-                                             timeout=timeout.seconds, stream=stream_response)
+        http_trace_attributes = KustoTracingAttributes.create_http_attributes(url=endpoint, method="POST", headers=request_headers)
+        response = kusto_client_func_tracing(
+            self._session.post,
+            name_of_span="response_processing",
+            tracing_attributes=http_trace_attributes,
+            kind=SpanKind.CLIENT,
+            url=endpoint,
+            headers=request_headers,
+            json=json_payload,
+            data=payload,
+            timeout=timeout.seconds,
+            stream=stream_response,
+        )
 
         if stream_response:
             try:
                 response.raise_for_status()
                 return response
             except Exception as e:
-                raise self._handle_http_error(e, self._query_endpoint, None, response, response.status_code,
-                                              response.json(), response.text)
+                raise self._handle_http_error(e, self._query_endpoint, None, response, response.status_code, response.json(), response.text)
 
         response_json = None
         try:
             response_json = response.json()
             response.raise_for_status()
         except Exception as e:
-            raise self._handle_http_error(e, endpoint, payload, response, response.status_code, response_json,
-                                          response.text)
+            raise self._handle_http_error(e, endpoint, payload, response, response.status_code, response_json, response.text)
 
-        return kusto_client_func_tracing(self._kusto_parse_by_endpoint, name_of_span="response_processing",
-                                         kind=SpanKind.CLIENT, endpoint=endpoint, response_json=response_json)
-
-
-
+        return kusto_client_func_tracing(
+            self._kusto_parse_by_endpoint, name_of_span="response_processing", kind=SpanKind.CLIENT, endpoint=endpoint, response_json=response_json
+        )

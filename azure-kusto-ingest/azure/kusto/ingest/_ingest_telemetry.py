@@ -25,8 +25,7 @@ class IngestTracingAttributes:
             descriptor = FileDescriptor(file_descriptor)
         else:
             descriptor = file_descriptor
-        KustoTracingAttributes.add_attributes(tracing_attributes={cls._FILE_PATH: descriptor.stream_name,
-                                                                  cls._SOURCE_ID: descriptor.source_id})
+        KustoTracingAttributes.add_attributes(tracing_attributes={cls._FILE_PATH: descriptor.stream_name, cls._SOURCE_ID: descriptor.source_id})
 
     @classmethod
     def set_ingest_stream_attributes(cls, stream_descriptor: Union[StreamDescriptor, IO[AnyStr]]):
@@ -34,10 +33,8 @@ class IngestTracingAttributes:
             descriptor = StreamDescriptor(stream_descriptor)
         else:
             descriptor = copy(stream_descriptor)
-        KustoTracingAttributes.add_attributes(tracing_attributes={cls._FILE_PATH: descriptor.stream_name,
-                                                                  cls._SOURCE_ID: descriptor.source_id})
+        KustoTracingAttributes.add_attributes(tracing_attributes={cls._FILE_PATH: descriptor.stream_name, cls._SOURCE_ID: descriptor.source_id})
 
     @classmethod
     def set_ingest_blob_attributes(cls, blob_descriptor: BlobDescriptor):
-        KustoTracingAttributes.add_attributes(tracing_attributes={cls._BLOB_URI: blob_descriptor.path,
-                                                                  cls._SOURCE_ID: blob_descriptor.source_id})
+        KustoTracingAttributes.add_attributes(tracing_attributes={cls._BLOB_URI: blob_descriptor.path, cls._SOURCE_ID: blob_descriptor.source_id})
