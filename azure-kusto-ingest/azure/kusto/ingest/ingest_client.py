@@ -4,11 +4,15 @@ import random
 from typing import Union, AnyStr, IO, List, Optional, Dict
 from urllib.parse import urlparse
 
+from azure.core.tracing.decorator import distributed_trace
+from azure.core.tracing import SpanKind
+
 from azure.storage.blob import BlobServiceClient
 from azure.storage.queue import QueueServiceClient, TextBase64EncodePolicy
 
 from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
 from azure.kusto.data.exceptions import KustoServiceError, KustoBlobError
+from ._ingest_telemetry import IngestTracingAttributes
 from .ingestion_blob_info import IngestionBlobInfo
 from ._resource_manager import _ResourceManager, _ResourceUri
 from .base_ingest_client import BaseIngestClient, IngestionResult, IngestionStatus
@@ -44,6 +48,7 @@ class QueuedIngestClient(BaseIngestClient):
         self._resource_manager.set_proxy(proxy_url)
         self._proxy_dict = {"http": proxy_url, "https": proxy_url}
 
+    @distributed_trace(kind=SpanKind.CLIENT)
     def ingest_from_file(self, file_descriptor: Union[FileDescriptor, str], ingestion_properties: IngestionProperties) -> IngestionResult:
         """Enqueue an ingest command from local files.
         To learn more about ingestion methods go to:
@@ -51,6 +56,7 @@ class QueuedIngestClient(BaseIngestClient):
         :param file_descriptor: a FileDescriptor to be ingested.
         :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
         """
+        IngestTracingAttributes.set_ingest_file_attributes(file_descriptor)
         containers = self._get_containers()
 
         if isinstance(file_descriptor, FileDescriptor):
@@ -62,21 +68,25 @@ class QueuedIngestClient(BaseIngestClient):
 
         with descriptor.open(should_compress) as stream:
             blob_descriptor = self._upload_blob(containers, descriptor, ingestion_properties, stream)
-            result = self.ingest_from_blob(blob_descriptor, ingestion_properties=ingestion_properties)
+            result = self.ingest_from_blob(blob_descriptor, ingestion_properties=ingestion_properties, merge_span=True)
 
         return result
 
+    @distributed_trace(kind=SpanKind.CLIENT)
     def ingest_from_stream(self, stream_descriptor: Union[StreamDescriptor, IO[AnyStr]], ingestion_properties: IngestionProperties) -> IngestionResult:
         """Ingest from io streams.
         :param stream_descriptor: An object that contains a description of the stream to be ingested.
         :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
         """
+        IngestTracingAttributes.set_ingest_stream_attributes(stream_descriptor)
+
         containers = self._get_containers()
 
         stream_descriptor = BaseIngestClient._prepare_stream(stream_descriptor, ingestion_properties)
         blob_descriptor = self._upload_blob(containers, stream_descriptor, ingestion_properties, stream_descriptor.stream)
-        return self.ingest_from_blob(blob_descriptor, ingestion_properties=ingestion_properties)
+        return self.ingest_from_blob(blob_descriptor, ingestion_properties=ingestion_properties, merge_span=True)
 
+    @distributed_trace(kind=SpanKind.CLIENT)
     def ingest_from_blob(self, blob_descriptor: BlobDescriptor, ingestion_properties: IngestionProperties) -> IngestionResult:
         """Enqueue an ingest command from azure blobs.
         To learn more about ingestion methods go to:
@@ -84,6 +94,8 @@ class QueuedIngestClient(BaseIngestClient):
         :param azure.kusto.ingest.BlobDescriptor blob_descriptor: An object that contains a description of the blob to be ingested.
         :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
         """
+        IngestTracingAttributes.set_ingest_blob_attributes(blob_descriptor)
+
         try:
             queues = self._resource_manager.get_ingestion_queues()
         except KustoServiceError as ex:

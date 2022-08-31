@@ -3,10 +3,16 @@ from io import SEEK_SET
 from typing import TYPE_CHECKING, Union, IO, AnyStr
 from tenacity import stop_after_delay, Retrying, wait_random_exponential, stop_after_attempt, _utils
 
+from azure.core.tracing.decorator import distributed_trace
+from azure.core.tracing import SpanKind
+
 from azure.kusto.data import KustoConnectionStringBuilder
 from azure.kusto.data.exceptions import KustoApiError
+from azure.kusto.data._telemetry import kusto_client_func_tracing
+
 
 from . import IngestionProperties, BlobDescriptor, StreamDescriptor, FileDescriptor
+from ._ingest_telemetry import IngestTracingAttributes
 from ._stream_extensions import read_until_size_or_end, chain_streams
 from .base_ingest_client import BaseIngestClient, IngestionResult
 from .ingest_client import QueuedIngestClient
@@ -25,10 +31,12 @@ class ManagedStreamingIngestClient(BaseIngestClient):
     Managed streaming ingest client will fall back to queued if:
         - Multiple transient errors were encountered when trying to do streaming ingestion
         - The ingestion is too large for streaming ingestion (over 4MB)
-        - The ingestion is directly for a blob
+        - The ingestion is directly from a blob
     """
 
     MAX_STREAMING_SIZE_IN_BYTES = 4 * 1024 * 1024
+    INGESTION_SIZE_FAIL = "The ingestion is too large for streaming ingestion (over 4MB)"
+    MAX_ATTEMPTS_FAIL = "Multiple transient errors were encountered when trying to do streaming ingestion"
 
     @staticmethod
     def from_engine_kcsb(engine_kcsb: Union[KustoConnectionStringBuilder, str]) -> "ManagedStreamingIngestClient":
@@ -71,13 +79,19 @@ class ManagedStreamingIngestClient(BaseIngestClient):
         self.queued_client.set_proxy(proxy_url)
         self.streaming_client.set_proxy(proxy_url)
 
+    @distributed_trace(kind=SpanKind.CLIENT)
     def ingest_from_file(self, file_descriptor: Union[FileDescriptor, str], ingestion_properties: IngestionProperties) -> IngestionResult:
+        IngestTracingAttributes.set_ingest_file_attributes(file_descriptor)
+
         stream_descriptor = StreamDescriptor.from_file_descriptor(file_descriptor)
 
         with stream_descriptor.stream:
             return self.ingest_from_stream(stream_descriptor, ingestion_properties)
 
+    @distributed_trace(kind=SpanKind.CLIENT)
     def ingest_from_stream(self, stream_descriptor: Union[StreamDescriptor, IO[AnyStr]], ingestion_properties: IngestionProperties) -> IngestionResult:
+        IngestTracingAttributes.set_ingest_stream_attributes(stream_descriptor)
+
         stream_descriptor = BaseIngestClient._prepare_stream(stream_descriptor, ingestion_properties)
         stream = stream_descriptor.stream
 
@@ -96,7 +110,10 @@ class ManagedStreamingIngestClient(BaseIngestClient):
                 with attempt:
                     stream.seek(0, SEEK_SET)
                     client_request_id = ManagedStreamingIngestClient._get_request_id(stream_descriptor.source_id, attempt.retry_state.attempt_number - 1)
-                    return self.streaming_client._ingest_from_stream_with_client_request_id(stream_descriptor, ingestion_properties, client_request_id)
+                    return kusto_client_func_tracing(self.streaming_client._ingest_from_stream_with_client_request_id,
+                                                     name_of_span="ManagedStreamingIngestClient.ingest_from_stream_attempt",
+                                                     stream_descriptor=stream_descriptor, ingestion_properties=ingestion_properties,
+                                                     client_request_id=client_request_id)
         except KustoApiError as ex:
             error = ex.get_api_error()
             if error.permanent:
@@ -104,6 +121,7 @@ class ManagedStreamingIngestClient(BaseIngestClient):
 
         return self.queued_client.ingest_from_stream(stream_descriptor, ingestion_properties)
 
+    @distributed_trace(kind=SpanKind.CLIENT)
     def ingest_from_blob(self, blob_descriptor: BlobDescriptor, ingestion_properties: IngestionProperties):
         """
         Enqueue an ingest command from azure blobs.
@@ -115,6 +133,8 @@ class ManagedStreamingIngestClient(BaseIngestClient):
         :param azure.kusto.ingest.BlobDescriptor blob_descriptor: An object that contains a description of the blob to be ingested.
         :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
         """
+        IngestTracingAttributes.set_ingest_blob_attributes(blob_descriptor)
+
         return self.queued_client.ingest_from_blob(blob_descriptor, ingestion_properties)
 
     @staticmethod

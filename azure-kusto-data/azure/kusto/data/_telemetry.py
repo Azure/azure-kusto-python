@@ -1,4 +1,18 @@
+from typing import Callable
+
 from azure.core.settings import settings
+from azure.core.tracing.decorator import distributed_trace
+from azure.core.tracing import SpanKind
+
+
+def kusto_client_func_tracing(func: Callable, **kwargs):
+    name_of_span = kwargs.pop("name_of_span", None)
+    tracing_attributes = kwargs.pop("tracing_attributes", {})
+    kind = kwargs.pop("trace_kind", SpanKind.CLIENT)
+
+    kusto_trace = distributed_trace(name_of_span=name_of_span, tracing_attributes=tracing_attributes, kind=kind)
+    kusto_func = kusto_trace(func)
+    return kusto_func(**kwargs)
 
 
 class KustoTracingAttributes:
@@ -6,18 +20,18 @@ class KustoTracingAttributes:
     Additional ADX attributes for telemetry spans
     """
 
-    database = "Database"
-    type = "Type"
-    query = "Query"
-    ingest = "Ingest"
-    table = "Table"
-    streaming_ingest = "Streaming Ingest"
-    streaming_query = "Streaming Query"
-    kql_cmd = "KQL Command"
-    ctrl_cmd = "Control Command"
+    _KUSTO_CLUSTER = "Kusto Cluster"
+    _DATABASE = "Database"
+    _TABLE = "Table"
+    _SPAN_COMPONENT = "component"
+
+    _HTTP_USER_AGENT = "http.user_agent"
+    _HTTP_METHOD = "http.method"
+    _HTTP_URL = "http.url"
+    _HTTP_STATUS_CODE = "http.status_code"
 
     @classmethod
-    def _add_attributes(cls, **kwargs) -> None:
+    def add_attributes(cls, **kwargs) -> None:
         """
         Add ADX attributes to the current span
 
@@ -31,25 +45,49 @@ class KustoTracingAttributes:
                 span_impl_type.add_attribute(key, val)
 
     @classmethod
-    def add_query_attributes(cls, database: str, query: str, streaming: bool = False):
-        query_type = KustoTracingAttributes.query if not streaming else KustoTracingAttributes.streaming_query
-        cls._add_attributes(
-            tracing_attributes={KustoTracingAttributes.database: database, KustoTracingAttributes.type: query_type, KustoTracingAttributes.kql_cmd: query}
-        )
+    def set_query_attributes(cls, cluster: str, database: str) -> None:
+        query_attributes = cls.create_query_attributes(cluster, database)
+        cls.add_attributes(tracing_attributes=query_attributes)
 
     @classmethod
-    def add_mgmt_attributes(cls, database, query):
-        cls._add_attributes(
-            tracing_attributes={
-                KustoTracingAttributes.database: database,
-                KustoTracingAttributes.type: KustoTracingAttributes.ctrl_cmd,
-                KustoTracingAttributes.kql_cmd: query,
-            }
-        )
+    def set_mgmt_attributes(cls, cluster: str, database: str) -> None:
+        mgmt_attributes = cls.create_query_attributes(cluster, database)
+        cls.add_attributes(tracing_attributes=mgmt_attributes)
 
     @classmethod
-    def add_ingest_attributes(cls, database, table, streaming: bool = False):
-        ingestion_type = KustoTracingAttributes.ingest if not streaming else KustoTracingAttributes.streaming_ingest
-        cls._add_attributes(
-            tracing_attributes={KustoTracingAttributes.database: database, KustoTracingAttributes.type: ingestion_type, KustoTracingAttributes.table: table}
-        )
+    def set_ingest_attributes(cls, database: str, table: str) -> None:
+        ingest_attributes = cls.create_ingest_attributes(database, table)
+        cls.add_attributes(tracing_attributes=ingest_attributes)
+
+    @classmethod
+    def set_http_attributes(cls, url: str, method: str, headers: dict) -> None:
+        http_tracing_attributes = cls.create_http_attributes(headers, method, url)
+        cls.add_attributes(tracing_attributes=http_tracing_attributes)
+
+    @classmethod
+    def create_query_attributes(cls, cluster, database) -> dict:
+        query_attributes: dict = {cls._KUSTO_CLUSTER: cluster, cls._DATABASE: database}
+        return query_attributes
+
+    @classmethod
+    def create_ingest_attributes(cls, database, table) -> dict:
+        ingest_attributes: dict = {cls._DATABASE: database, cls._TABLE: table}
+        return ingest_attributes
+
+    @classmethod
+    def create_http_attributes(cls, headers, method, url) -> dict:
+        http_tracing_attributes: dict = {cls._SPAN_COMPONENT: "http",
+                                         cls._HTTP_METHOD: method,
+                                         cls._HTTP_URL: url,
+                                         }
+        user_agent = headers.get("User-Agent")
+        if user_agent:
+            http_tracing_attributes[cls._HTTP_USER_AGENT] = user_agent
+        return http_tracing_attributes
+
+
+
+
+
+
+
