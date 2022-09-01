@@ -59,6 +59,7 @@ class ConfigJson:
     ingest_data: bool
     authentication_mode: AuthenticationModeOptions
     wait_for_user: bool
+    ignore_first_record: bool
     wait_for_ingest_seconds: bool
     batching_policy: str
 
@@ -230,7 +231,9 @@ class KustoSampleApp:
             )
 
             # Learn More: For more information about ingesting data to Kusto in Python, see: https://docs.microsoft.com/azure/data-explorer/python-ingest-data
-            cls.ingest_data(data_file, data_file.data_format, ingest_client, config.database_name, config.table_name, data_file.mapping_name)
+            cls.ingest_data(
+                data_file, data_file.data_format, ingest_client, config.database_name, config.table_name, data_file.mapping_name, config.ignore_first_record
+            )
 
         Utils.Ingestion.wait_for_ingestion_to_complete(config.wait_for_ingest_seconds)
 
@@ -267,7 +270,14 @@ class KustoSampleApp:
 
     @classmethod
     def ingest_data(
-        cls, data_file: ConfigData, data_format: DataFormat, ingest_client: QueuedIngestClient, database_name: str, table_name: str, mapping_name: str
+        cls,
+        data_file: ConfigData,
+        data_format: DataFormat,
+        ingest_client: QueuedIngestClient,
+        database_name: str,
+        table_name: str,
+        mapping_name: str,
+        ignore_first_record: bool,
     ) -> None:
         """
         Ingest data from given source.
@@ -277,6 +287,7 @@ class KustoSampleApp:
         :param database_name: DB name
         :param table_name: Table name
         :param mapping_name: Desired mapping name
+        :param ignore_first_record: Flag noting whether to ignore the first record in the table
         """
         source_type = data_file.source_type
         source_uri = data_file.data_source_uri
@@ -289,9 +300,9 @@ class KustoSampleApp:
         # Tip: Kusto's Python SDK can ingest data from files, blobs, open streams and pandas dataframes.
         # See the SDK's samples and the E2E tests in azure.kusto.ingest for additional references.
         if source_type == SourceType.local_file_source:
-            Utils.Ingestion.ingest_from_file(ingest_client, database_name, table_name, source_uri, data_format, mapping_name)
+            Utils.Ingestion.ingest_from_file(ingest_client, database_name, table_name, source_uri, data_format, ignore_first_record, mapping_name)
         elif source_type == SourceType.blob_source:
-            Utils.Ingestion.ingest_from_blob(ingest_client, database_name, table_name, source_uri, data_format, mapping_name)
+            Utils.Ingestion.ingest_from_blob(ingest_client, database_name, table_name, source_uri, data_format, ignore_first_record, mapping_name)
         else:
             Utils.error_handler(f"Unknown source '{source_type}' for file '{source_uri}'")
 
