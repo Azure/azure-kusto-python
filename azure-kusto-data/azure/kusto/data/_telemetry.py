@@ -6,12 +6,12 @@ from azure.core.tracing import SpanKind
 
 
 def kusto_client_func_tracing(func: Callable, **kwargs):
-    name_of_span = kwargs.pop("name_of_span", None)
-    tracing_attributes = kwargs.pop("tracing_attributes", {})
-    kind = kwargs.pop("trace_kind", SpanKind.CLIENT)
+    name_of_span: str = kwargs.pop("name_of_span", None)
+    tracing_attributes: dict = kwargs.pop("tracing_attributes", {})
+    kind: str = kwargs.pop("trace_kind", SpanKind.CLIENT)
 
-    kusto_trace = distributed_trace(name_of_span=name_of_span, tracing_attributes=tracing_attributes, kind=kind)
-    kusto_func = kusto_trace(func)
+    kusto_trace: Callable = distributed_trace(name_of_span=name_of_span, tracing_attributes=tracing_attributes, kind=kind)
+    kusto_func: Callable = kusto_trace(func)
     return kusto_func(**kwargs)
 
 
@@ -23,8 +23,9 @@ class KustoTracingAttributes:
     _KUSTO_CLUSTER = "Kusto Cluster"
     _DATABASE = "Database"
     _TABLE = "Table"
-    _SPAN_COMPONENT = "component"
 
+    _SPAN_COMPONENT = "component"
+    _HTTP = "http"
     _HTTP_USER_AGENT = "http.user_agent"
     _HTTP_METHOD = "http.method"
     _HTTP_URL = "http.url"
@@ -38,7 +39,7 @@ class KustoTracingAttributes:
         :keyword tracing_attributes: Key, val ADX attributes for the current span
         :type tracing_attributes: dictionary
         """
-        tracing_attributes = kwargs.pop("tracing_attributes", {})
+        tracing_attributes: dict = kwargs.pop("tracing_attributes", {})
         span_impl_type = settings.tracing_implementation
         if span_impl_type is not None:
             for key, val in tracing_attributes:
@@ -46,38 +47,38 @@ class KustoTracingAttributes:
 
     @classmethod
     def set_query_attributes(cls, cluster: str, database: str) -> None:
-        query_attributes = cls.create_query_attributes(cluster, database)
+        query_attributes: dict = cls.create_query_attributes(cluster, database)
         cls.add_attributes(tracing_attributes=query_attributes)
 
     @classmethod
     def set_mgmt_attributes(cls, cluster: str, database: str) -> None:
-        mgmt_attributes = cls.create_query_attributes(cluster, database)
+        mgmt_attributes: dict = cls.create_query_attributes(cluster, database)
         cls.add_attributes(tracing_attributes=mgmt_attributes)
 
     @classmethod
     def set_ingest_attributes(cls, database: str, table: str) -> None:
-        ingest_attributes = cls.create_ingest_attributes(database, table)
+        ingest_attributes: dict = cls.create_ingest_attributes(database, table)
         cls.add_attributes(tracing_attributes=ingest_attributes)
 
     @classmethod
     def set_http_attributes(cls, url: str, method: str, headers: dict) -> None:
-        http_tracing_attributes = cls.create_http_attributes(headers, method, url)
+        http_tracing_attributes: dict = cls.create_http_attributes(headers, method, url)
         cls.add_attributes(tracing_attributes=http_tracing_attributes)
 
     @classmethod
-    def create_query_attributes(cls, cluster, database) -> dict:
+    def create_query_attributes(cls, cluster: str, database: str) -> dict:
         query_attributes: dict = {cls._KUSTO_CLUSTER: cluster, cls._DATABASE: database}
         return query_attributes
 
     @classmethod
-    def create_ingest_attributes(cls, database, table) -> dict:
+    def create_ingest_attributes(cls, database: str, table: str) -> dict:
         ingest_attributes: dict = {cls._DATABASE: database, cls._TABLE: table}
         return ingest_attributes
 
     @classmethod
-    def create_http_attributes(cls, headers, method, url) -> dict:
+    def create_http_attributes(cls, headers: dict, method: str, url: str) -> dict:
         http_tracing_attributes: dict = {
-            cls._SPAN_COMPONENT: "http",
+            cls._SPAN_COMPONENT: cls._HTTP,
             cls._HTTP_METHOD: method,
             cls._HTTP_URL: url,
         }

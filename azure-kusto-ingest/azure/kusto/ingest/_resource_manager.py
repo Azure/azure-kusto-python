@@ -7,6 +7,7 @@ from tenacity import retry_if_exception_type, stop_after_attempt, Retrying, wait
 
 from azure.kusto.data import KustoClient
 from azure.kusto.data._models import KustoResultTable
+from azure.kusto.data._telemetry import kusto_client_func_tracing
 from azure.kusto.data.exceptions import KustoThrottlingError
 
 _URI_FORMAT = re.compile("https://(\\w+).(queue|blob|table).(core.\\w+.\\w+)/([\\w,-]+)\\?(.*)")
@@ -100,7 +101,8 @@ class _ResourceManager:
         return [_ResourceUri.parse(row["StorageRoot"]) for row in table if row["ResourceTypeName"] == resource_name]
 
     def _get_ingest_client_resources_from_service(self):
-        result = self._retryer(self._kusto_client.execute, "NetDefaultDB", ".get ingestion resources")
+        trace_get_ingestion_resources = kusto_client_func_tracing(self._kusto_client.execute, name_of_span="ResourceManager.get_ingestion_resources")
+        result = self._retryer(trace_get_ingestion_resources, "NetDefaultDB", ".get ingestion resources")
         table = result.primary_results[0]
 
         secured_ready_for_aggregation_queues = self._get_resource_by_name(table, "SecuredReadyForAggregationQueue")
@@ -121,7 +123,8 @@ class _ResourceManager:
             self._authorization_context_last_update = datetime.utcnow()
 
     def _get_authorization_context_from_service(self):
-        result = self._retryer(self._kusto_client.execute, "NetDefaultDB", ".get kusto identity token")
+        trace_get_identity_token = kusto_client_func_tracing(self._kusto_client.execute, name_of_span="ResourceManager.get_identity_token")
+        result = self._retryer(trace_get_identity_token, "NetDefaultDB", ".get kusto identity token")
         return result.primary_results[0][0]["AuthorizationContext"]
 
     def get_ingestion_queues(self) -> List[_ResourceUri]:

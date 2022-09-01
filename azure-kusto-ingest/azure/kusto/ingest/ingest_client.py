@@ -48,7 +48,7 @@ class QueuedIngestClient(BaseIngestClient):
         self._resource_manager.set_proxy(proxy_url)
         self._proxy_dict = {"http": proxy_url, "https": proxy_url}
 
-    @distributed_trace(kind=SpanKind.CLIENT)
+    @distributed_trace(name_of_span="QueuedIngest.ingest_from_file", kind=SpanKind.CLIENT)
     def ingest_from_file(self, file_descriptor: Union[FileDescriptor, str], ingestion_properties: IngestionProperties) -> IngestionResult:
         """Enqueue an ingest command from local files.
         To learn more about ingestion methods go to:
@@ -68,11 +68,11 @@ class QueuedIngestClient(BaseIngestClient):
 
         with descriptor.open(should_compress) as stream:
             blob_descriptor = self._upload_blob(containers, descriptor, ingestion_properties, stream)
-            result = self.ingest_from_blob(blob_descriptor, ingestion_properties=ingestion_properties, merge_span=True)
+            result = self.ingest_from_blob(blob_descriptor, ingestion_properties=ingestion_properties)
 
         return result
 
-    @distributed_trace(kind=SpanKind.CLIENT)
+    @distributed_trace(name_of_span="QueuedIngest.ingest_from_stream", kind=SpanKind.CLIENT)
     def ingest_from_stream(self, stream_descriptor: Union[StreamDescriptor, IO[AnyStr]], ingestion_properties: IngestionProperties) -> IngestionResult:
         """Ingest from io streams.
         :param stream_descriptor: An object that contains a description of the stream to be ingested.
@@ -84,9 +84,9 @@ class QueuedIngestClient(BaseIngestClient):
 
         stream_descriptor = BaseIngestClient._prepare_stream(stream_descriptor, ingestion_properties)
         blob_descriptor = self._upload_blob(containers, stream_descriptor, ingestion_properties, stream_descriptor.stream)
-        return self.ingest_from_blob(blob_descriptor, ingestion_properties=ingestion_properties, merge_span=True)
+        return self.ingest_from_blob(blob_descriptor, ingestion_properties=ingestion_properties)
 
-    @distributed_trace(kind=SpanKind.CLIENT)
+    @distributed_trace(name_of_span="QueuedIngest.ingest_from_blob", kind=SpanKind.CLIENT)
     def ingest_from_blob(self, blob_descriptor: BlobDescriptor, ingestion_properties: IngestionProperties) -> IngestionResult:
         """Enqueue an ingest command from azure blobs.
         To learn more about ingestion methods go to:
@@ -122,6 +122,7 @@ class QueuedIngestClient(BaseIngestClient):
             raise ex
         return containers
 
+    @distributed_trace(name_of_span="QueuedIngest.upload_to_blob", kind=SpanKind.CLIENT)
     def _upload_blob(
         self,
         containers: List[_ResourceUri],
@@ -139,7 +140,9 @@ class QueuedIngestClient(BaseIngestClient):
             blob_client.upload_blob(data=stream, timeout=self._SERVICE_CLIENT_TIMEOUT_SECONDS)
         except Exception as e:
             raise KustoBlobError(e)
-        return BlobDescriptor(blob_client.url, descriptor.size, descriptor.source_id)
+        blob_descriptor = BlobDescriptor(blob_client.url, descriptor.size, descriptor.source_id)
+        IngestTracingAttributes.set_ingest_blob_attributes(blob_descriptor, blob_client.container_name)
+        return blob_descriptor
 
     def _validate_endpoint_service_type(self):
         if not self._hostname_starts_with_ingest(self._connection_datasource):

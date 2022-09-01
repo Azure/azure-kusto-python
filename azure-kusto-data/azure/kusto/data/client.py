@@ -253,7 +253,7 @@ class KustoClient(_KustoClientBase):
         http_trace_attributes = KustoTracingAttributes.create_http_attributes(url=endpoint, method="POST", headers=request_headers)
         response = kusto_client_func_tracing(
             self._session.post,
-            name_of_span="response_processing",
+            name_of_span="http_post",
             tracing_attributes=http_trace_attributes,
             kind=SpanKind.CLIENT,
             url=endpoint,

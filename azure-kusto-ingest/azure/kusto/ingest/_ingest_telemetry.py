@@ -14,6 +14,7 @@ class IngestTracingAttributes:
     _database = "Database"
     _table = "Table"
 
+    _BLOB_CONTAINER = "Blob Container"
     _BLOB_URI = "Blob URI"
     _FILE_PATH = "File Path"
     _STREAM_NAME = "Stream Name"
@@ -36,5 +37,8 @@ class IngestTracingAttributes:
         KustoTracingAttributes.add_attributes(tracing_attributes={cls._FILE_PATH: descriptor.stream_name, cls._SOURCE_ID: descriptor.source_id})
 
     @classmethod
-    def set_ingest_blob_attributes(cls, blob_descriptor: BlobDescriptor):
-        KustoTracingAttributes.add_attributes(tracing_attributes={cls._BLOB_URI: blob_descriptor.path, cls._SOURCE_ID: blob_descriptor.source_id})
+    def set_ingest_blob_attributes(cls, blob_descriptor: BlobDescriptor, container_name: str = ""):
+        if container_name:
+            KustoTracingAttributes.add_attributes(tracing_attributes={cls._BLOB_CONTAINER: container_name, cls._SOURCE_ID: blob_descriptor.source_id})
+        else:
+            KustoTracingAttributes.add_attributes(tracing_attributes={cls._BLOB_URI: blob_descriptor.path, cls._SOURCE_ID: blob_descriptor.source_id})
