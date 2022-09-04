@@ -118,35 +118,25 @@ class BaseIngestClient(metaclass=ABCMeta):
             new_descriptor = copy(stream_descriptor)
 
         if isinstance(new_descriptor.stream, TextIOWrapper):
-            stream = new_descriptor.stream.buffer
-        else:
-            stream = new_descriptor.stream
+            new_descriptor.stream = new_descriptor.stream.buffer
 
-        if not new_descriptor.is_compressed and ingestion_properties.format.compressible:
-            zipped_stream = BytesIO()
-            buffer = stream.read()
-            with GzipFile(filename="data", fileobj=zipped_stream, mode="wb") as f_out:
-                if isinstance(buffer, str):
-                    data = bytes(buffer, "utf-8")
-                    f_out.write(data)
-                else:
-                    f_out.write(buffer)
-            zipped_stream.seek(0)
-            new_descriptor.is_compressed = True
-            new_descriptor.stream_name += ".gz"
-            stream = zipped_stream
-        new_descriptor.stream = stream
+        should_compress = BaseIngestClient._should_compress(new_descriptor, ingestion_properties)
+        if should_compress:
+            new_descriptor.compress_stream()
 
         return new_descriptor
 
     @staticmethod
-    def _prepare_file(file_descriptor: Union[FileDescriptor, str], ingestion_properties: IngestionProperties) -> (FileDescriptor, BytesIO):
+    def _prepare_file(file_descriptor: Union[FileDescriptor, str], ingestion_properties: IngestionProperties) -> tuple[FileDescriptor, bool]:
 
-        if isinstance(file_descriptor, FileDescriptor):
-            descriptor = file_descriptor
-        else:
+        if not isinstance(file_descriptor, FileDescriptor):
             descriptor = FileDescriptor(file_descriptor)
+        else:
+            descriptor = file_descriptor
 
-        should_compress = not descriptor.is_compressed and ingestion_properties.format.compressible
-        with descriptor.open(should_compress) as stream:
-            yield descriptor, stream
+        should_compress = BaseIngestClient._should_compress(descriptor, ingestion_properties)
+        return descriptor, should_compress
+
+    @staticmethod
+    def _should_compress(new_descriptor: Union[FileDescriptor, StreamDescriptor], ingestion_properties: IngestionProperties) -> bool:
+        return not new_descriptor.is_compressed and ingestion_properties.format.compressible

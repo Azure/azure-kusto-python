@@ -13,7 +13,6 @@ from zipfile import ZipFile
 from azure.storage.blob import BlobServiceClient
 
 from azure.kusto.data.exceptions import KustoBlobError
-from azure.kusto.ingest import IngestionProperties
 from azure.kusto.ingest._resource_manager import _ResourceUri
 
 OptionalUUID = Optional[Union[str, uuid.UUID]]
@@ -95,19 +94,22 @@ class FileDescriptor:
 
     def open(self, should_compress: bool) -> BytesIO:
         if should_compress:
-            self.stream_name += ".gz"
-            file_stream = BytesIO()
-            with open(self.path, "rb") as f_in, GzipFile(filename="data", fileobj=file_stream, mode="wb") as f_out:
-                shutil.copyfileobj(f_in, f_out)
-            file_stream.seek(0)
+            file_stream = self.compress_stream()
         else:
             file_stream = open(self.path, "rb")
+        return file_stream
 
+    def compress_stream(self) -> BytesIO:
+        self.stream_name += ".gz"
+        file_stream = BytesIO()
+        with open(self.path, "rb") as f_in, GzipFile(filename="data", fileobj=file_stream, mode="wb") as f_out:
+            shutil.copyfileobj(f_in, f_out)
+        file_stream.seek(0)
         return file_stream
 
 
 class BlobDescriptor:
-    """FileDescriptor is used to describe a file that will be used as an ingestion source"""
+    """BlobDescriptor is used to describe a blob that will be used as an ingestion source"""
 
     def __init__(self, path: str, size: Optional[int] = None, source_id: OptionalUUID = None):
         """
@@ -124,20 +126,20 @@ class BlobDescriptor:
 
     @staticmethod
     def from_different_descriptor(
-        self,
         containers: List[_ResourceUri],
         descriptor: Union[FileDescriptor, "StreamDescriptor"],
-        ingestion_properties: IngestionProperties,
-        stream: IO[AnyStr], proxy_dict: Optional[Dict[str, str]], timeout: int
-        ) -> "BlobDescriptor":
-        blob_name = "{db}__{table}__{guid}__{file}".format(
-            db=ingestion_properties.database, table=ingestion_properties.table, guid=descriptor.source_id, file=descriptor.stream_name
-        )
+        database: str,
+        table: str,
+        stream: IO[AnyStr],
+        proxy_dict: Optional[Dict[str, str]],
+        timeout: int,
+    ) -> "BlobDescriptor":
+        blob_name = "{db}__{table}__{guid}__{file}".format(db=database, table=table, guid=descriptor.source_id, file=descriptor.stream_name)
         random_container = random.choice(containers)
         try:
-            blob_service = BlobServiceClient(random_container.account_uri, proxies=self._proxy_dict)
+            blob_service = BlobServiceClient(random_container.account_uri, proxies=proxy_dict)
             blob_client = blob_service.get_blob_client(container=random_container.object_name, blob=blob_name)
-            blob_client.upload_blob(data=stream, timeout=self._SERVICE_CLIENT_TIMEOUT_SECONDS)
+            blob_client.upload_blob(data=stream, timeout=timeout)
         except Exception as e:
             raise KustoBlobError(e)
         return BlobDescriptor(blob_client.url, descriptor.size, descriptor.source_id)
@@ -167,6 +169,21 @@ class StreamDescriptor:
             if is_compressed:
                 self.stream_name += ".gz"
         self.size: Optional[int] = size
+
+    def compress_stream(self) -> None:
+        stream = self.stream
+        zipped_stream = BytesIO()
+        buffer = stream.read()
+        with GzipFile(filename="data", fileobj=zipped_stream, mode="wb") as f_out:
+            if isinstance(buffer, str):
+                data = bytes(buffer, "utf-8")
+                f_out.write(data)
+            else:
+                f_out.write(buffer)
+        zipped_stream.seek(0)
+        self.is_compressed = True
+        self.stream_name += ".gz"
+        self.stream = zipped_stream
 
     @staticmethod
     def from_file_descriptor(file_descriptor: Union[FileDescriptor, str]) -> "StreamDescriptor":
