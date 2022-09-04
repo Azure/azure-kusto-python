@@ -56,7 +56,7 @@ class QueuedIngestClient(BaseIngestClient):
         :param file_descriptor: a FileDescriptor to be ingested.
         :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
         """
-        IngestTracingAttributes.set_ingest_file_attributes(file_descriptor)
+        IngestTracingAttributes.set_ingest_file_attributes(file_descriptor, ingestion_properties)
         containers = self._get_containers()
 
         if isinstance(file_descriptor, FileDescriptor):
@@ -78,7 +78,7 @@ class QueuedIngestClient(BaseIngestClient):
         :param stream_descriptor: An object that contains a description of the stream to be ingested.
         :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
         """
-        IngestTracingAttributes.set_ingest_stream_attributes(stream_descriptor)
+        IngestTracingAttributes.set_ingest_stream_attributes(stream_descriptor, ingestion_properties)
 
         containers = self._get_containers()
 
@@ -94,7 +94,7 @@ class QueuedIngestClient(BaseIngestClient):
         :param azure.kusto.ingest.BlobDescriptor blob_descriptor: An object that contains a description of the blob to be ingested.
         :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
         """
-        IngestTracingAttributes.set_ingest_blob_attributes(blob_descriptor)
+        IngestTracingAttributes.set_ingest_blob_attributes(blob_descriptor, ingestion_properties)
 
         try:
             queues = self._resource_manager.get_ingestion_queues()
@@ -141,7 +141,7 @@ class QueuedIngestClient(BaseIngestClient):
         except Exception as e:
             raise KustoBlobError(e)
         blob_descriptor = BlobDescriptor(blob_client.url, descriptor.size, descriptor.source_id)
-        IngestTracingAttributes.set_ingest_blob_attributes(blob_descriptor, blob_client.container_name)
+        IngestTracingAttributes.set_ingest_blob_attributes(blob_descriptor, ingestion_properties, blob_client.container_name)
         return blob_descriptor
 
     def _validate_endpoint_service_type(self):

@@ -81,7 +81,7 @@ class ManagedStreamingIngestClient(BaseIngestClient):
 
     @distributed_trace(kind=SpanKind.CLIENT)
     def ingest_from_file(self, file_descriptor: Union[FileDescriptor, str], ingestion_properties: IngestionProperties) -> IngestionResult:
-        IngestTracingAttributes.set_ingest_file_attributes(file_descriptor)
+        IngestTracingAttributes.set_ingest_file_attributes(file_descriptor, ingestion_properties)
 
         stream_descriptor = StreamDescriptor.from_file_descriptor(file_descriptor)
 
@@ -90,7 +90,7 @@ class ManagedStreamingIngestClient(BaseIngestClient):
 
     @distributed_trace(kind=SpanKind.CLIENT)
     def ingest_from_stream(self, stream_descriptor: Union[StreamDescriptor, IO[AnyStr]], ingestion_properties: IngestionProperties) -> IngestionResult:
-        IngestTracingAttributes.set_ingest_stream_attributes(stream_descriptor)
+        IngestTracingAttributes.set_ingest_stream_attributes(stream_descriptor, ingestion_properties)
 
         stream_descriptor = BaseIngestClient._prepare_stream(stream_descriptor, ingestion_properties)
         stream = stream_descriptor.stream

@@ -37,7 +37,7 @@ class KustoStreamingIngestClient(BaseIngestClient):
         :param file_descriptor: a FileDescriptor to be ingested.
         :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
         """
-        IngestTracingAttributes.set_ingest_file_attributes(file_descriptor)
+        IngestTracingAttributes.set_ingest_file_attributes(file_descriptor, ingestion_properties)
 
         stream_descriptor = StreamDescriptor.from_file_descriptor(file_descriptor)
 
@@ -51,7 +51,7 @@ class KustoStreamingIngestClient(BaseIngestClient):
                be ingested.
         :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
         """
-        IngestTracingAttributes.set_ingest_stream_attributes(stream_descriptor)
+        IngestTracingAttributes.set_ingest_stream_attributes(stream_descriptor, ingestion_properties)
 
         return self._ingest_from_stream_with_client_request_id(stream_descriptor, ingestion_properties, None)
 
