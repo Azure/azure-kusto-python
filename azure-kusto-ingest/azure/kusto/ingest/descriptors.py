@@ -1,13 +1,20 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
 import os
+import random
 import shutil
 import struct
 import uuid
 from gzip import GzipFile
 from io import BytesIO, SEEK_END
-from typing import Union, Optional, AnyStr, IO
+from typing import Union, Optional, AnyStr, IO, List, Dict
 from zipfile import ZipFile
+
+from azure.storage.blob import BlobServiceClient
+
+from azure.kusto.data.exceptions import KustoBlobError
+from azure.kusto.ingest import IngestionProperties
+from azure.kusto.ingest._resource_manager import _ResourceUri
 
 OptionalUUID = Optional[Union[str, uuid.UUID]]
 
@@ -114,6 +121,26 @@ class BlobDescriptor:
         self.path: str = path
         self.size: Optional[int] = size
         self.source_id: uuid.UUID = ensure_uuid(source_id)
+
+    @staticmethod
+    def from_different_descriptor(
+        self,
+        containers: List[_ResourceUri],
+        descriptor: Union[FileDescriptor, "StreamDescriptor"],
+        ingestion_properties: IngestionProperties,
+        stream: IO[AnyStr], proxy_dict: Optional[Dict[str, str]], timeout: int
+        ) -> "BlobDescriptor":
+        blob_name = "{db}__{table}__{guid}__{file}".format(
+            db=ingestion_properties.database, table=ingestion_properties.table, guid=descriptor.source_id, file=descriptor.stream_name
+        )
+        random_container = random.choice(containers)
+        try:
+            blob_service = BlobServiceClient(random_container.account_uri, proxies=self._proxy_dict)
+            blob_client = blob_service.get_blob_client(container=random_container.object_name, blob=blob_name)
+            blob_client.upload_blob(data=stream, timeout=self._SERVICE_CLIENT_TIMEOUT_SECONDS)
+        except Exception as e:
+            raise KustoBlobError(e)
+        return BlobDescriptor(blob_client.url, descriptor.size, descriptor.source_id)
 
 
 class StreamDescriptor:

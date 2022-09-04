@@ -138,3 +138,15 @@ class BaseIngestClient(metaclass=ABCMeta):
         new_descriptor.stream = stream
 
         return new_descriptor
+
+    @staticmethod
+    def _prepare_file(file_descriptor: Union[FileDescriptor, str], ingestion_properties: IngestionProperties) -> (FileDescriptor, BytesIO):
+
+        if isinstance(file_descriptor, FileDescriptor):
+            descriptor = file_descriptor
+        else:
+            descriptor = FileDescriptor(file_descriptor)
+
+        should_compress = not descriptor.is_compressed and ingestion_properties.format.compressible
+        with descriptor.open(should_compress) as stream:
+            yield descriptor, stream
