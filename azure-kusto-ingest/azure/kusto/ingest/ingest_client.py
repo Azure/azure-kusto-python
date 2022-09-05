@@ -4,11 +4,10 @@ import random
 from typing import Union, AnyStr, IO, List, Optional, Dict
 from urllib.parse import urlparse
 
-# from azure.storage.blob import BlobServiceClient
 from azure.storage.queue import QueueServiceClient, TextBase64EncodePolicy
 
 from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
-from azure.kusto.data.exceptions import KustoServiceError, KustoBlobError
+from azure.kusto.data.exceptions import KustoServiceError
 from .ingestion_blob_info import IngestionBlobInfo
 from ._resource_manager import _ResourceManager, _ResourceUri
 from .base_ingest_client import BaseIngestClient, IngestionResult, IngestionStatus
@@ -117,25 +116,6 @@ class QueuedIngestClient(BaseIngestClient):
             self._validate_endpoint_service_type()
             raise ex
         return containers
-
-    # def _upload_blob(
-    #     self,
-    #     containers: List[_ResourceUri],
-    #     descriptor: Union[FileDescriptor, StreamDescriptor],
-    #     ingestion_properties: IngestionProperties,
-    #     stream: IO[AnyStr],
-    # ) -> BlobDescriptor:
-    #     blob_name = "{db}__{table}__{guid}__{file}".format(
-    #         db=ingestion_properties.database, table=ingestion_properties.table, guid=descriptor.source_id, file=descriptor.stream_name
-    #     )
-    #     random_container = random.choice(containers)
-    #     try:
-    #         blob_service = BlobServiceClient(random_container.account_uri, proxies=self._proxy_dict)
-    #         blob_client = blob_service.get_blob_client(container=random_container.object_name, blob=blob_name)
-    #         blob_client.upload_blob(data=stream, timeout=self._SERVICE_CLIENT_TIMEOUT_SECONDS)
-    #     except Exception as e:
-    #         raise KustoBlobError(e)
-    #     return BlobDescriptor(blob_client.url, descriptor.size, descriptor.source_id)
 
     def _validate_endpoint_service_type(self):
         if not self._hostname_starts_with_ingest(self._connection_datasource):
