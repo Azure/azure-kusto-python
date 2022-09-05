@@ -127,7 +127,7 @@ class BaseIngestClient(metaclass=ABCMeta):
         return new_descriptor
 
     @staticmethod
-    def _prepare_file(file_descriptor: Union[FileDescriptor, str], ingestion_properties: IngestionProperties) -> tuple[FileDescriptor, bool]:
+    def _prepare_file(file_descriptor: Union[FileDescriptor, str], ingestion_properties: IngestionProperties) -> tuple:
 
         if not isinstance(file_descriptor, FileDescriptor):
             descriptor = FileDescriptor(file_descriptor)
