@@ -5,9 +5,8 @@ import uuid
 from abc import ABCMeta, abstractmethod
 from copy import copy
 from enum import Enum
-from gzip import GzipFile
-from io import TextIOWrapper, BytesIO
-from typing import TYPE_CHECKING, Union, IO, AnyStr, Optional
+from io import TextIOWrapper
+from typing import TYPE_CHECKING, Union, IO, AnyStr, Optional, Tuple
 
 from azure.kusto.data.data_format import DataFormat
 
@@ -127,7 +126,7 @@ class BaseIngestClient(metaclass=ABCMeta):
         return new_descriptor
 
     @staticmethod
-    def _prepare_file(file_descriptor: Union[FileDescriptor, str], ingestion_properties: IngestionProperties) -> tuple:
+    def _prepare_file(file_descriptor: Union[FileDescriptor, str], ingestion_properties: IngestionProperties) -> Tuple[FileDescriptor, bool]:
 
         if not isinstance(file_descriptor, FileDescriptor):
             descriptor = FileDescriptor(file_descriptor)
