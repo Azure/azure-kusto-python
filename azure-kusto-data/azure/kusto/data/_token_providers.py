@@ -8,10 +8,14 @@ from threading import Lock
 from typing import Callable, Optional, Coroutine, List
 
 from azure.core.exceptions import ClientAuthenticationError
+from azure.core.tracing.decorator import distributed_trace
+from azure.core.tracing import SpanKind
 from azure.identity import ManagedIdentityCredential, AzureCliCredential
 from msal import ConfidentialClientApplication, PublicClientApplication
 
 from ._cloud_settings import CloudSettings, CloudInfo
+from ._telemetry import KustoTracingAttributes
+
 from .exceptions import KustoClientError, KustoAioSyntaxError, KustoAsyncUsageError
 
 try:
@@ -111,8 +115,11 @@ class TokenProviderBase(abc.ABC):
     def _init_resources(self):
         pass
 
+    @distributed_trace(kind=SpanKind.CLIENT)
     def get_token(self):
         """Get a token silently from cache or authenticate if cached token is not found"""
+        KustoTracingAttributes.set_get_token_attributes(self.__class__.__name__)
+
         if self.is_async:
             raise KustoAsyncUsageError("get_token", self.is_async)
         self._init_once()
@@ -137,6 +144,7 @@ class TokenProviderBase(abc.ABC):
         await self._init_once_async(init_only_resources=True)
         return self._context_impl()
 
+    @distributed_trace(kind=SpanKind.CLIENT)
     async def get_token_async(self):
         """Get a token asynchronously silently from cache or authenticate if cached token is not found"""
 

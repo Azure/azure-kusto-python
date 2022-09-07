@@ -143,7 +143,7 @@ class KustoClient(_KustoClientBase):
             return self.execute_mgmt(database, query, properties)
         return self.execute_query(database, query, properties)
 
-    @distributed_trace(name_of_span="adx_query_cmd", kind=SpanKind.CLIENT)
+    @distributed_trace(name_of_span="KustoClientquery_cmd", kind=SpanKind.CLIENT)
     def execute_query(self, database: str, query: str, properties: Optional[ClientRequestProperties] = None) -> KustoResponseDataSet:
         """
         Execute a KQL query.
@@ -158,7 +158,7 @@ class KustoClient(_KustoClientBase):
 
         return self._execute(self._query_endpoint, database, query, None, self._query_default_timeout, properties)
 
-    @distributed_trace(name_of_span="adx_control_cmd", kind=SpanKind.CLIENT)
+    @distributed_trace(name_of_span="KustoClient.control_cmd", kind=SpanKind.CLIENT)
     def execute_mgmt(self, database: str, query: str, properties: Optional[ClientRequestProperties] = None) -> KustoResponseDataSet:
         """
         Execute a KQL control command.
@@ -173,7 +173,7 @@ class KustoClient(_KustoClientBase):
 
         return self._execute(self._mgmt_endpoint, database, query, None, self._mgmt_default_timeout, properties)
 
-    @distributed_trace(name_of_span="adx_streaming_ingestion", kind=SpanKind.CLIENT)
+    @distributed_trace(name_of_span="KustoClient.streaming_ingest", kind=SpanKind.CLIENT)
     def execute_streaming_ingest(
         self,
         database: str,
@@ -211,7 +211,7 @@ class KustoClient(_KustoClientBase):
         response.raw.decode_content = True
         return StreamingDataSetEnumerator(JsonTokenReader(response.raw))
 
-    @distributed_trace(name_of_span="adx_streaming_query", kind=SpanKind.CLIENT)
+    @distributed_trace(name_of_span="KustoClient.streaming_query", kind=SpanKind.CLIENT)
     def execute_streaming_query(
         self, database: str, query: str, timeout: timedelta = _KustoClientBase._query_default_timeout, properties: Optional[ClientRequestProperties] = None
     ) -> KustoStreamingResponseDataSet:
@@ -253,9 +253,8 @@ class KustoClient(_KustoClientBase):
         http_trace_attributes = KustoTracingAttributes.create_http_attributes(url=endpoint, method="POST", headers=request_headers)
         response = kusto_client_func_tracing(
             self._session.post,
-            name_of_span="http_post",
+            name_of_span="KustoClient.http_post",
             tracing_attributes=http_trace_attributes,
-            kind=SpanKind.CLIENT,
             url=endpoint,
             headers=request_headers,
             json=json_payload,
@@ -279,5 +278,5 @@ class KustoClient(_KustoClientBase):
             raise self._handle_http_error(e, endpoint, payload, response, response.status_code, response_json, response.text)
 
         return kusto_client_func_tracing(
-            self._kusto_parse_by_endpoint, name_of_span="response_processing", kind=SpanKind.CLIENT, endpoint=endpoint, response_json=response_json
+            self._kusto_parse_by_endpoint, name_of_span="KustoClient.processing_response", endpoint=endpoint, response_json=response_json
         )

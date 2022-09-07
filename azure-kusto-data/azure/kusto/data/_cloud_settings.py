@@ -5,7 +5,11 @@ from urllib.parse import urljoin
 
 import requests
 
-from azure.kusto.data.exceptions import KustoServiceError
+from azure.core.tracing.decorator import distributed_trace
+from azure.core.tracing import SpanKind
+
+from ._telemetry import KustoTracingAttributes, kusto_client_func_tracing
+from .exceptions import KustoServiceError
 
 METADATA_ENDPOINT = "v1/rest/auth/metadata"
 
@@ -69,6 +73,7 @@ class CloudSettings:
     )
 
     @classmethod
+    @distributed_trace(name_of_span="CloudSettings.get_cloud_info", kind=SpanKind.CLIENT)
     def get_cloud_info_for_cluster(cls, kusto_uri: str, proxies: Optional[Dict[str, str]] = None) -> CloudInfo:
 
         if kusto_uri in cls._cloud_cache:  # Double-checked locking to avoid unnecessary lock access
@@ -77,8 +82,17 @@ class CloudSettings:
         with cls._cloud_cache_lock:
             if kusto_uri in cls._cloud_cache:
                 return cls._cloud_cache[kusto_uri]
+            url = urljoin(kusto_uri, METADATA_ENDPOINT)
 
-            result = requests.get(urljoin(kusto_uri, METADATA_ENDPOINT), proxies=proxies)
+            http_trace_attributes = KustoTracingAttributes.create_http_attributes(url=url, method="GET")
+            result = kusto_client_func_tracing(
+                requests.get,
+                name_of_span="CloudSettings.http_get",
+                tracing_attributes=http_trace_attributes,
+                url=url,
+                proxies=proxies)
+
+            # result = requests.get(url, proxies=proxies)
 
             if result.status_code == 200:
                 content = result.json()

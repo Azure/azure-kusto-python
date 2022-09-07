@@ -12,6 +12,7 @@ from azure.storage.queue import QueueServiceClient, TextBase64EncodePolicy
 
 from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
 from azure.kusto.data.exceptions import KustoServiceError, KustoBlobError
+from azure.kusto.data._telemetry import kusto_client_func_tracing
 from ._ingest_telemetry import IngestTracingAttributes
 from .ingestion_blob_info import IngestionBlobInfo
 from ._resource_manager import _ResourceManager, _ResourceUri
@@ -108,7 +109,11 @@ class QueuedIngestClient(BaseIngestClient):
         ingestion_blob_info = IngestionBlobInfo(blob_descriptor, ingestion_properties=ingestion_properties, auth_context=authorization_context)
         ingestion_blob_info_json = ingestion_blob_info.to_json()
         queue_client = queue_service.get_queue_client(queue=random_queue.object_name, message_encode_policy=TextBase64EncodePolicy())
-        queue_client.send_message(content=ingestion_blob_info_json, timeout=self._SERVICE_CLIENT_TIMEOUT_SECONDS)
+
+        enqueue_trace_attributes = IngestTracingAttributes.create_enqueue_request_attributes(queue_client.queue_name, blob_descriptor.source_id)
+
+        kusto_client_func_tracing(queue_client.send_message, name_of_span="QueuedIngest.ingest_from_blob.enqueue_request", tracing_attributes=enqueue_trace_attributes, content=ingestion_blob_info_json, timeout=self._SERVICE_CLIENT_TIMEOUT_SECONDS)
+        # queue_client.send_message(content=ingestion_blob_info_json, timeout=self._SERVICE_CLIENT_TIMEOUT_SECONDS)
 
         return IngestionResult(
             IngestionStatus.QUEUED, ingestion_properties.database, ingestion_properties.table, blob_descriptor.source_id, blob_descriptor.path
@@ -141,7 +146,7 @@ class QueuedIngestClient(BaseIngestClient):
         except Exception as e:
             raise KustoBlobError(e)
         blob_descriptor = BlobDescriptor(blob_client.url, descriptor.size, descriptor.source_id)
-        IngestTracingAttributes.set_ingest_blob_attributes(blob_descriptor, ingestion_properties, blob_client.container_name)
+        IngestTracingAttributes.set_upload_blob_attributes(blob_client.container_name, blob_descriptor)
         return blob_descriptor
 
     def _validate_endpoint_service_type(self):
