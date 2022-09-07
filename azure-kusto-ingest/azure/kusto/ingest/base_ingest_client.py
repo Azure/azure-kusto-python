@@ -111,6 +111,12 @@ class BaseIngestClient(metaclass=ABCMeta):
 
     @staticmethod
     def _prepare_stream(stream_descriptor: Union[StreamDescriptor, IO[AnyStr]], ingestion_properties: IngestionProperties) -> StreamDescriptor:
+        """
+        Prepares a StreamDescriptor instance for ingest operation based on ingestion properties
+        :param StreamDescriptor stream_descriptor: Stream descriptor instance
+        :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
+        :return prepared stream descriptor
+        """
         if not isinstance(stream_descriptor, StreamDescriptor):
             new_descriptor = StreamDescriptor(stream_descriptor)
         else:
@@ -127,7 +133,12 @@ class BaseIngestClient(metaclass=ABCMeta):
 
     @staticmethod
     def _prepare_file(file_descriptor: Union[FileDescriptor, str], ingestion_properties: IngestionProperties) -> Tuple[FileDescriptor, bool]:
-
+        """
+        Prepares a FileDescriptor instance for ingest operation based on ingestion properties
+        :param FileDescriptor file_descriptor: File descriptor instance
+        :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
+        :return prepared file descriptor
+        """
         if not isinstance(file_descriptor, FileDescriptor):
             descriptor = FileDescriptor(file_descriptor)
         else:
@@ -138,4 +149,7 @@ class BaseIngestClient(metaclass=ABCMeta):
 
     @staticmethod
     def _should_compress(new_descriptor: Union[FileDescriptor, StreamDescriptor], ingestion_properties: IngestionProperties) -> bool:
+        """
+        Checks if descriptor should be compressed based on ingestion properties and current format
+        """
         return not new_descriptor.is_compressed and ingestion_properties.format.compressible

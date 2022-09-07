@@ -54,7 +54,7 @@ class QueuedIngestClient(BaseIngestClient):
 
         file_descriptor, should_compress = BaseIngestClient._prepare_file(file_descriptor, ingestion_properties)
         with file_descriptor.open(should_compress) as stream:
-            blob_descriptor = BlobDescriptor.from_different_descriptor(
+            blob_descriptor = BlobDescriptor.upload_from_different_descriptor(
                 containers,
                 file_descriptor,
                 ingestion_properties.database,
@@ -63,7 +63,7 @@ class QueuedIngestClient(BaseIngestClient):
                 self._proxy_dict,
                 self._SERVICE_CLIENT_TIMEOUT_SECONDS,
             )
-            return self.ingest_from_blob(blob_descriptor, ingestion_properties=ingestion_properties)
+        return self.ingest_from_blob(blob_descriptor, ingestion_properties=ingestion_properties)
 
     def ingest_from_stream(self, stream_descriptor: Union[StreamDescriptor, IO[AnyStr]], ingestion_properties: IngestionProperties) -> IngestionResult:
         """Ingest from io streams.
@@ -73,7 +73,7 @@ class QueuedIngestClient(BaseIngestClient):
         containers = self._get_containers()
 
         stream_descriptor = BaseIngestClient._prepare_stream(stream_descriptor, ingestion_properties)
-        blob_descriptor = BlobDescriptor.from_different_descriptor(
+        blob_descriptor = BlobDescriptor.upload_from_different_descriptor(
             containers,
             stream_descriptor,
             ingestion_properties.database,

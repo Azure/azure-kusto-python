@@ -125,7 +125,7 @@ class BlobDescriptor:
         self.source_id: uuid.UUID = ensure_uuid(source_id)
 
     @staticmethod
-    def from_different_descriptor(
+    def upload_from_different_descriptor(
         containers: List[_ResourceUri],
         descriptor: Union[FileDescriptor, "StreamDescriptor"],
         database: str,
@@ -134,6 +134,17 @@ class BlobDescriptor:
         proxy_dict: Optional[Dict[str, str]],
         timeout: int,
     ) -> "BlobDescriptor":
+        """
+        Uploads and transforms FileDescriptor or StreamDescriptor into a BlobDescriptor instance
+        :param List[_ResourceUri] containers: blob containers
+        :param Union[FileDescriptor, "StreamDescriptor"] descriptor:
+        :param string database: database to be ingested to
+        :param string table: table to be ingested to
+        :param IO[AnyStr] stream: stream to be ingested from
+        :param Optional[Dict[str, str]] proxy_dict: proxy urls
+        :param int timeout: Azure service call timeout in seconds
+        :return new BlobDescriptor instance
+        """
         blob_name = "{db}__{table}__{guid}__{file}".format(db=database, table=table, guid=descriptor.source_id, file=descriptor.stream_name)
         random_container = random.choice(containers)
         try:
@@ -187,6 +198,11 @@ class StreamDescriptor:
 
     @staticmethod
     def from_file_descriptor(file_descriptor: Union[FileDescriptor, str]) -> "StreamDescriptor":
+        """
+        Transforms FileDescriptor instance into StreamDescriptor instance. Note that stream is open when instance is returned
+        :param Union[FileDescriptor, str] file_descriptor: File Descriptor instance
+        :return new StreamDescriptor instance
+        """
         if isinstance(file_descriptor, FileDescriptor):
             descriptor = file_descriptor
         else:
