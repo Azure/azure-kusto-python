@@ -250,6 +250,7 @@ class KustoClient(_KustoClientBase):
         if self._aad_helper:
             request_headers["Authorization"] = self._aad_helper.acquire_authorization_header()
 
+        # trace http post call for response
         http_trace_attributes = KustoTracingAttributes.create_http_attributes(url=endpoint, method="POST", headers=request_headers)
         response = kusto_client_func_tracing(
             self._session.post,
@@ -276,7 +277,7 @@ class KustoClient(_KustoClientBase):
             response.raise_for_status()
         except Exception as e:
             raise self._handle_http_error(e, endpoint, payload, response, response.status_code, response_json, response.text)
-
+        # trace response processing
         return kusto_client_func_tracing(
             self._kusto_parse_by_endpoint, name_of_span="KustoClient.processing_response", endpoint=endpoint, response_json=response_json
         )

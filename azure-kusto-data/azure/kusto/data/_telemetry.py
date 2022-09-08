@@ -6,6 +6,14 @@ from azure.core.tracing import SpanKind
 
 
 def kusto_client_func_tracing(func: Callable, **kwargs):
+    """
+    :param func: function to trace
+    :type func: Callable
+    :key str name_of_span: name of the trace span
+    :key dict tracing_attributes: key/value dictionary of attributes to include in span of trace
+    :key str kind: the type of span
+    :param kwargs: function arguments
+    """
     name_of_span: str = kwargs.pop("name_of_span", None)
     tracing_attributes: dict = kwargs.pop("tracing_attributes", {})
     kind: str = kwargs.pop("kind", SpanKind.CLIENT)

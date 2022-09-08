@@ -110,9 +110,15 @@ class QueuedIngestClient(BaseIngestClient):
         ingestion_blob_info_json = ingestion_blob_info.to_json()
         queue_client = queue_service.get_queue_client(queue=random_queue.object_name, message_encode_policy=TextBase64EncodePolicy())
 
+        # trace enqueuing of blob for ingestion
         enqueue_trace_attributes = IngestTracingAttributes.create_enqueue_request_attributes(queue_client.queue_name, blob_descriptor.source_id)
-
-        kusto_client_func_tracing(queue_client.send_message, name_of_span="QueuedIngest.ingest_from_blob.enqueue_request", tracing_attributes=enqueue_trace_attributes, content=ingestion_blob_info_json, timeout=self._SERVICE_CLIENT_TIMEOUT_SECONDS)
+        kusto_client_func_tracing(
+            queue_client.send_message,
+            name_of_span="QueuedIngest.ingest_from_blob.enqueue_request",
+            tracing_attributes=enqueue_trace_attributes,
+            content=ingestion_blob_info_json,
+            timeout=self._SERVICE_CLIENT_TIMEOUT_SECONDS,
+        )
         # queue_client.send_message(content=ingestion_blob_info_json, timeout=self._SERVICE_CLIENT_TIMEOUT_SECONDS)
 
         return IngestionResult(

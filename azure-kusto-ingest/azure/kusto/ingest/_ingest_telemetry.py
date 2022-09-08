@@ -28,7 +28,14 @@ class IngestTracingAttributes:
             descriptor = FileDescriptor(file_descriptor)
         else:
             descriptor = file_descriptor
-        KustoTracingAttributes.add_attributes(tracing_attributes={cls._DATABASE: ingestion_properties.database, cls._TABLE: ingestion_properties.table, cls._FILE_PATH: descriptor.stream_name, cls._SOURCE_ID: descriptor.source_id})
+        KustoTracingAttributes.add_attributes(
+            tracing_attributes={
+                cls._DATABASE: ingestion_properties.database,
+                cls._TABLE: ingestion_properties.table,
+                cls._FILE_PATH: descriptor.stream_name,
+                cls._SOURCE_ID: descriptor.source_id,
+            }
+        )
 
     @classmethod
     def set_ingest_stream_attributes(cls, stream_descriptor: Union[StreamDescriptor, IO[AnyStr]], ingestion_properties: IngestionProperties) -> None:
@@ -36,12 +43,25 @@ class IngestTracingAttributes:
             descriptor = StreamDescriptor(stream_descriptor)
         else:
             descriptor = copy(stream_descriptor)
-        KustoTracingAttributes.add_attributes(tracing_attributes={cls._DATABASE: ingestion_properties.database, cls._TABLE: ingestion_properties.table, cls._FILE_PATH: descriptor.stream_name, cls._SOURCE_ID: descriptor.source_id})
+        KustoTracingAttributes.add_attributes(
+            tracing_attributes={
+                cls._DATABASE: ingestion_properties.database,
+                cls._TABLE: ingestion_properties.table,
+                cls._FILE_PATH: descriptor.stream_name,
+                cls._SOURCE_ID: descriptor.source_id,
+            }
+        )
 
     @classmethod
     def set_ingest_blob_attributes(cls, blob_descriptor: BlobDescriptor, ingestion_properties: IngestionProperties) -> None:
         KustoTracingAttributes.add_attributes(
-            tracing_attributes={cls._BLOB_URI: blob_descriptor.path, cls._DATABASE: ingestion_properties.database, cls._TABLE: ingestion_properties.table, cls._SOURCE_ID: blob_descriptor.source_id})
+            tracing_attributes={
+                cls._BLOB_URI: blob_descriptor.path,
+                cls._DATABASE: ingestion_properties.database,
+                cls._TABLE: ingestion_properties.table,
+                cls._SOURCE_ID: blob_descriptor.source_id,
+            }
+        )
 
     @classmethod
     def set_upload_blob_attributes(cls, blob_container_name: str, blob_descriptor: BlobDescriptor) -> None:

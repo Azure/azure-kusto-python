@@ -110,6 +110,7 @@ class ManagedStreamingIngestClient(BaseIngestClient):
                 with attempt:
                     stream.seek(0, SEEK_SET)
                     client_request_id = ManagedStreamingIngestClient._get_request_id(stream_descriptor.source_id, attempt.retry_state.attempt_number - 1)
+                    # trace attempt to ingest from stream
                     return kusto_client_func_tracing(
                         self.streaming_client._ingest_from_stream_with_client_request_id,
                         name_of_span="ManagedStreamingIngestClient.ingest_from_stream_attempt",

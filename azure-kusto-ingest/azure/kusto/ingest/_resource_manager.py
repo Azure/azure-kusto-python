@@ -101,6 +101,7 @@ class _ResourceManager:
         return [_ResourceUri.parse(row["StorageRoot"]) for row in table if row["ResourceTypeName"] == resource_name]
 
     def _get_ingest_client_resources_from_service(self):
+        # trace all calls to get ingestion resources
         trace_get_ingestion_resources = kusto_client_func_tracing(self._kusto_client.execute, name_of_span="_ResourceManager.get_ingestion_resources")
         result = self._retryer(trace_get_ingestion_resources, "NetDefaultDB", ".get ingestion resources")
         table = result.primary_results[0]
@@ -123,6 +124,7 @@ class _ResourceManager:
             self._authorization_context_last_update = datetime.utcnow()
 
     def _get_authorization_context_from_service(self):
+        # trace all calls to get identity token
         trace_get_identity_token = kusto_client_func_tracing(self._kusto_client.execute, name_of_span="_ResourceManager.get_identity_token")
         result = self._retryer(trace_get_identity_token, "NetDefaultDB", ".get kusto identity token")
         return result.primary_results[0][0]["AuthorizationContext"]

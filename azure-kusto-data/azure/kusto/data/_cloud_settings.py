@@ -83,14 +83,11 @@ class CloudSettings:
             if kusto_uri in cls._cloud_cache:
                 return cls._cloud_cache[kusto_uri]
             url = urljoin(kusto_uri, METADATA_ENDPOINT)
-
+            # trace http get call for result
             http_trace_attributes = KustoTracingAttributes.create_http_attributes(url=url, method="GET")
             result = kusto_client_func_tracing(
-                requests.get,
-                name_of_span="CloudSettings.http_get",
-                tracing_attributes=http_trace_attributes,
-                url=url,
-                proxies=proxies)
+                requests.get, name_of_span="CloudSettings.http_get", tracing_attributes=http_trace_attributes, url=url, proxies=proxies
+            )
 
             # result = requests.get(url, proxies=proxies)
 
