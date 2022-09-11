@@ -12,7 +12,7 @@ from urllib3.connection import HTTPConnection
 from azure.core.tracing.decorator import distributed_trace
 from azure.core.tracing import SpanKind
 
-from azure.kusto.data._telemetry import KustoTracingAttributes, kusto_client_func_tracing
+from azure.kusto.data._telemetry import KustoTracingAttributes, KustoTracing
 
 from .kcsb import KustoConnectionStringBuilder
 from .client_request_properties import ClientRequestProperties
@@ -143,7 +143,7 @@ class KustoClient(_KustoClientBase):
             return self.execute_mgmt(database, query, properties)
         return self.execute_query(database, query, properties)
 
-    @distributed_trace(name_of_span="KustoClientquery_cmd", kind=SpanKind.CLIENT)
+    @distributed_trace(name_of_span="KustoClient.query_cmd", kind=SpanKind.CLIENT)
     def execute_query(self, database: str, query: str, properties: Optional[ClientRequestProperties] = None) -> KustoResponseDataSet:
         """
         Execute a KQL query.
@@ -252,16 +252,16 @@ class KustoClient(_KustoClientBase):
 
         # trace http post call for response
         http_trace_attributes = KustoTracingAttributes.create_http_attributes(url=endpoint, method="POST", headers=request_headers)
-        response = kusto_client_func_tracing(
+        response = KustoTracing.call_func_tracing(
             self._session.post,
-            name_of_span="KustoClient.http_post",
-            tracing_attributes=http_trace_attributes,
-            url=endpoint,
+            endpoint,
             headers=request_headers,
             json=json_payload,
             data=payload,
             timeout=timeout.seconds,
             stream=stream_response,
+            name_of_span="KustoClient.http_post",
+            tracing_attributes=http_trace_attributes,
         )
 
         if stream_response:
@@ -278,6 +278,6 @@ class KustoClient(_KustoClientBase):
         except Exception as e:
             raise self._handle_http_error(e, endpoint, payload, response, response.status_code, response_json, response.text)
         # trace response processing
-        return kusto_client_func_tracing(
-            self._kusto_parse_by_endpoint, name_of_span="KustoClient.processing_response", endpoint=endpoint, response_json=response_json
+        return KustoTracing.call_func_tracing(
+            self._kusto_parse_by_endpoint, endpoint, response_json, name_of_span="KustoClient.processing_response"
         )

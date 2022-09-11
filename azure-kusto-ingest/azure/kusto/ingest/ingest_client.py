@@ -12,7 +12,7 @@ from azure.storage.queue import QueueServiceClient, TextBase64EncodePolicy
 
 from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
 from azure.kusto.data.exceptions import KustoServiceError, KustoBlobError
-from azure.kusto.data._telemetry import kusto_client_func_tracing
+from azure.kusto.data._telemetry import KustoTracing
 from ._ingest_telemetry import IngestTracingAttributes
 from .ingestion_blob_info import IngestionBlobInfo
 from ._resource_manager import _ResourceManager, _ResourceUri
@@ -73,7 +73,7 @@ class QueuedIngestClient(BaseIngestClient):
 
         return result
 
-    @distributed_trace(name_of_span="QueuedIngest.ingest_from_stream", kind=SpanKind.CLIENT)
+    @distributed_trace(name_of_span="QueuedIngestClient.ingest_from_stream", kind=SpanKind.CLIENT)
     def ingest_from_stream(self, stream_descriptor: Union[StreamDescriptor, IO[AnyStr]], ingestion_properties: IngestionProperties) -> IngestionResult:
         """Ingest from io streams.
         :param stream_descriptor: An object that contains a description of the stream to be ingested.
@@ -87,7 +87,7 @@ class QueuedIngestClient(BaseIngestClient):
         blob_descriptor = self._upload_blob(containers, stream_descriptor, ingestion_properties, stream_descriptor.stream)
         return self.ingest_from_blob(blob_descriptor, ingestion_properties=ingestion_properties)
 
-    @distributed_trace(name_of_span="QueuedIngest.ingest_from_blob", kind=SpanKind.CLIENT)
+    @distributed_trace(name_of_span="QueuedIngestClient.ingest_from_blob", kind=SpanKind.CLIENT)
     def ingest_from_blob(self, blob_descriptor: BlobDescriptor, ingestion_properties: IngestionProperties) -> IngestionResult:
         """Enqueue an ingest command from azure blobs.
         To learn more about ingestion methods go to:
@@ -112,12 +112,12 @@ class QueuedIngestClient(BaseIngestClient):
 
         # trace enqueuing of blob for ingestion
         enqueue_trace_attributes = IngestTracingAttributes.create_enqueue_request_attributes(queue_client.queue_name, blob_descriptor.source_id)
-        kusto_client_func_tracing(
+        KustoTracing.call_func_tracing(
             queue_client.send_message,
-            name_of_span="QueuedIngest.ingest_from_blob.enqueue_request",
-            tracing_attributes=enqueue_trace_attributes,
             content=ingestion_blob_info_json,
             timeout=self._SERVICE_CLIENT_TIMEOUT_SECONDS,
+            name_of_span="QueuedIngestClient.enqueue_request",
+            tracing_attributes=enqueue_trace_attributes
         )
         # queue_client.send_message(content=ingestion_blob_info_json, timeout=self._SERVICE_CLIENT_TIMEOUT_SECONDS)
 
@@ -133,7 +133,7 @@ class QueuedIngestClient(BaseIngestClient):
             raise ex
         return containers
 
-    @distributed_trace(name_of_span="QueuedIngest.upload_to_blob", kind=SpanKind.CLIENT)
+    @distributed_trace(name_of_span="QueuedIngestClient.upload_to_blob", kind=SpanKind.CLIENT)
     def _upload_blob(
         self,
         containers: List[_ResourceUri],

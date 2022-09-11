@@ -5,24 +5,6 @@ from azure.core.tracing.decorator import distributed_trace
 from azure.core.tracing import SpanKind
 
 
-def kusto_client_func_tracing(func: Callable, **kwargs):
-    """
-    :param func: function to trace
-    :type func: Callable
-    :key str name_of_span: name of the trace span
-    :key dict tracing_attributes: key/value dictionary of attributes to include in span of trace
-    :key str kind: the type of span
-    :param kwargs: function arguments
-    """
-    name_of_span: str = kwargs.pop("name_of_span", None)
-    tracing_attributes: dict = kwargs.pop("tracing_attributes", {})
-    kind: str = kwargs.pop("kind", SpanKind.CLIENT)
-
-    kusto_trace: Callable = distributed_trace(name_of_span=name_of_span, tracing_attributes=tracing_attributes, kind=kind)
-    kusto_func: Callable = kusto_trace(func)
-    return kusto_func(**kwargs)
-
-
 class KustoTracingAttributes:
     """
     Additional ADX attributes for telemetry spans
@@ -45,15 +27,15 @@ class KustoTracingAttributes:
     def add_attributes(cls, **kwargs) -> None:
         """
         Add ADX attributes to the current span
-
-        :keyword tracing_attributes: Key, val ADX attributes for the current span
-        :type tracing_attributes: dictionary
+        :key dict tracing_attributes: key, val ADX attributes to include in span of trace
         """
         tracing_attributes: dict = kwargs.pop("tracing_attributes", {})
-        span_impl_type = settings.tracing_implementation
+        span_impl_type = settings.tracing_implementation()
         if span_impl_type is not None:
-            for key, val in tracing_attributes:
-                span_impl_type.add_attribute(key, val)
+            current_span = span_impl_type.get_current_span()
+            span = span_impl_type(span=current_span)
+            for key, val in tracing_attributes.items():
+                span.add_attribute(key, val)
 
     @classmethod
     def set_query_attributes(cls, cluster: str, database: str) -> None:
@@ -108,3 +90,43 @@ class KustoTracingAttributes:
     def create_get_token_attributes(cls, auth_method: str) -> dict:
         get_token_attributes: dict = {cls._AUTH_METHOD: auth_method}
         return get_token_attributes
+
+
+class KustoTracing:
+    @staticmethod
+    def call_func_tracing(func: Callable, *args, **kwargs):
+        """
+        Prepares function for tracing and calls it
+        :param func: function to trace
+        :type func: Callable
+        :key str name_of_span: name of the trace span
+        :key dict tracing_attributes: key/value dictionary of attributes to include in span of trace
+        :key str kind: the type of span
+        :param kwargs: function arguments
+        """
+        name_of_span: str = kwargs.pop("name_of_span", None)
+        tracing_attributes: dict = kwargs.pop("tracing_attributes", {})
+        kind: str = kwargs.pop("kind", SpanKind.CLIENT)
+
+        kusto_trace: Callable = distributed_trace(name_of_span=name_of_span, tracing_attributes=tracing_attributes,
+                                                  kind=kind)
+        kusto_func: Callable = kusto_trace(func)
+        return kusto_func(*args, **kwargs)
+
+    @staticmethod
+    def prepare_func_tracing(func: Callable, **kwargs):
+        """
+        Prepares function for tracing
+        :param func: function to trace
+        :type func: Callable
+        :key str name_of_span: name of the trace span
+        :key dict tracing_attributes: key/value dictionary of attributes to include in span of trace
+        :key str kind: the type of span
+        """
+        name_of_span: str = kwargs.pop("name_of_span", None)
+        tracing_attributes: dict = kwargs.pop("tracing_attributes", {})
+        kind: str = kwargs.pop("kind", SpanKind.CLIENT)
+
+        kusto_trace: Callable = distributed_trace(name_of_span=name_of_span, tracing_attributes=tracing_attributes,
+                                                  kind=kind)
+        return kusto_trace(func)

@@ -14,6 +14,7 @@ from utils import AuthenticationModeOptions, Utils
 
 # Declare OpenTelemetry as enabled tracing plugin for Azure SDKs
 from azure.core.settings import settings
+from azure.core.tracing import SpanKind
 from azure.core.tracing.decorator import distributed_trace
 from azure.core.tracing.ext.opentelemetry_span import OpenTelemetrySpan
 
@@ -41,11 +42,12 @@ def enable_distributed_tracing() -> "Tracer":
     # In the below example, we use an Azure Monitor Exporter, but you can use anything OpenTelemetry supports,
     # uncomment these lines to use the simple console exporter.
 
-    # exporter = ConsoleSpanExporter()
-    exporter = AzureMonitorTraceExporter.from_connection_string(conn_str=os.environ["APPLICATIONINSIGHTS_CONNECTION_STRING"])
+    exporter = ConsoleSpanExporter()
+    # exporter = AzureMonitorTraceExporter.from_connection_string(conn_str=os.environ["APPLICATIONINSIGHTS_CONNECTION_STRING"])
 
     trace.set_tracer_provider(TracerProvider())
     tracer = trace.get_tracer(__name__)
+
     span_processor = SimpleSpanProcessor(exporter)
     tr: TracerProvider = trace.get_tracer_provider()
     tr.add_span_processor(span_processor)
@@ -135,7 +137,6 @@ class KustoSampleApp:
     config = None
 
     @classmethod
-    @distributed_trace
     def load_configs(cls, config_file_name: str) -> None:
         """
         Loads JSON configuration file, and sets the metadata in place.
@@ -150,7 +151,7 @@ class KustoSampleApp:
             Utils.error_handler(f"Couldn't read load config file from file '{config_file_name}'", ex)
 
     @classmethod
-    @distributed_trace
+    @distributed_trace(kind=SpanKind.CLIENT)
     def pre_ingestion_querying(cls, config: ConfigJson, kusto_client: KustoClient) -> None:
         """
         First phase, pre ingestion - will reach the provided DB with several control commands and a query based on the configuration File.
@@ -187,7 +188,6 @@ class KustoSampleApp:
             cls.alter_batching_policy(kusto_client, config.database_name, config.table_name, config.batching_policy)
 
     @classmethod
-    @distributed_trace
     def alter_merge_existing_table_to_provided_schema(cls, kusto_client: KustoClient, database_name: str, table_name: str, table_schema: str) -> None:
         """
         Alter-merges the given existing table to provided schema.
@@ -200,7 +200,7 @@ class KustoSampleApp:
         Utils.Queries.execute_command(kusto_client, database_name, command)
 
     @classmethod
-    @distributed_trace(name_of_span="query")  # We can give similar spans the same name
+    @distributed_trace(name_of_span="KustoSampleApp.query", kind=SpanKind.CLIENT)  # We can give similar spans the same name
     def query_existing_number_of_rows(cls, kusto_client: KustoClient, database_name: str, table_name: str) -> None:
         """
         Queries the data on the existing number of rows.
@@ -212,7 +212,7 @@ class KustoSampleApp:
         Utils.Queries.execute_command(kusto_client, database_name, command)
 
     @classmethod
-    @distributed_trace(name_of_span="query")  # We can give similar spans the same name
+    @distributed_trace(name_of_span="KustoSampleApp.query", kind=SpanKind.CLIENT)  # We can give similar spans the same name
     def query_first_two_rows(cls, kusto_client: KustoClient, database_name: str, table_name: str) -> None:
         """
         Queries the first two rows of the table.
@@ -224,7 +224,6 @@ class KustoSampleApp:
         Utils.Queries.execute_command(kusto_client, database_name, command)
 
     @classmethod
-    @distributed_trace
     def create_new_table(cls, kusto_client: KustoClient, database_name: str, table_name: str, table_schema: str) -> None:
         """
         Creates a new table.
@@ -237,7 +236,6 @@ class KustoSampleApp:
         Utils.Queries.execute_command(kusto_client, database_name, command)
 
     @classmethod
-    @distributed_trace
     def alter_batching_policy(cls, kusto_client: KustoClient, database_name: str, table_name: str, batching_policy: str) -> None:
         """
         Alters the batching policy based on BatchingPolicy in configuration.
@@ -254,7 +252,6 @@ class KustoSampleApp:
         Utils.Queries.execute_command(kusto_client, database_name, command)
 
     @classmethod
-    @distributed_trace
     def ingestion(cls, config: ConfigJson, kusto_client: KustoClient, ingest_client: QueuedIngestClient) -> None:
         """
         Second phase - The ingestion process.
@@ -279,13 +276,11 @@ class KustoSampleApp:
 
             # Learn More: For more information about ingesting data to Kusto in Python, see: https://docs.microsoft.com/azure/data-explorer/python-ingest-data
             cls.ingest_data(
-                data_file, data_file.data_format, ingest_client, config.database_name, config.table_name, data_file.mapping_name, merge_span=True
-            )  # Merges the ingestion and ingest_data span
+                data_file, data_file.data_format, ingest_client, config.database_name, config.table_name, data_file.mapping_name)
 
         Utils.Ingestion.wait_for_ingestion_to_complete(config.wait_for_ingest_seconds)
 
     @classmethod
-    @distributed_trace
     def create_ingestion_mappings(
         cls,
         use_existing_mapping: bool,
@@ -317,7 +312,7 @@ class KustoSampleApp:
         Utils.Queries.execute_command(kusto_client, database_name, mapping_command)
 
     @classmethod
-    @distributed_trace
+    @distributed_trace(kind=SpanKind.CLIENT)
     def ingest_data(
         cls, data_file: ConfigData, data_format: DataFormat, ingest_client: QueuedIngestClient, database_name: str, table_name: str, mapping_name: str
     ) -> None:
@@ -348,7 +343,7 @@ class KustoSampleApp:
             Utils.error_handler(f"Unknown source '{source_type}' for file '{source_uri}'")
 
     @classmethod
-    @distributed_trace
+    @distributed_trace(kind=SpanKind.CLIENT)
     def post_ingestion_querying(cls, kusto_client: KustoClient, database_name: str, table_name: str, config_ingest_data: bool) -> None:
         """
         Third and final phase - simple queries to validate the hopefully successful run of the script.
@@ -378,7 +373,7 @@ class KustoSampleApp:
             input("Press ENTER to proceed with this operation...")
 
 
-@distributed_trace
+@distributed_trace(name_of_span="KustoSampleApp.main", kind=SpanKind.CLIENT)
 def main():
     print("Kusto sample app is starting...")
 
@@ -412,9 +407,9 @@ def main():
 if __name__ == "__main__":
     # Uncomment the lines below and add the 'uuid of the instrumentation key (see your Azure Monitor account)' to the
     # enable_distributed_tracing() function above, to enable distributed tracing
-    #
-    # tracer = enable_distributed_tracing()
-    # with tracer.start_as_current_span(name="SampleApp"):
-    #     main()
 
-    main()
+    tracer = enable_distributed_tracing()
+    with tracer.start_as_current_span(name="KustoSampleApp"):
+        main()
+
+    # main()

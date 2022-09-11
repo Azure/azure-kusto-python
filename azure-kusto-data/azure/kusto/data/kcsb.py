@@ -123,7 +123,7 @@ class KustoConnectionStringBuilder:
         self._token_provider = None
         self._async_token_provider = None
         if connection_string is not None and "=" not in connection_string.partition(";")[0]:
-            connection_string = self.ValidKeywords.data_source + "=" + connection_string
+            connection_string = "data source=" + connection_string
 
         self[self.ValidKeywords.authority_id] = "organizations"
 

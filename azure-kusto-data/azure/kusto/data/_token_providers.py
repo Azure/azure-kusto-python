@@ -14,7 +14,7 @@ from azure.identity import ManagedIdentityCredential, AzureCliCredential
 from msal import ConfidentialClientApplication, PublicClientApplication
 
 from ._cloud_settings import CloudSettings, CloudInfo
-from ._telemetry import KustoTracingAttributes
+from ._telemetry import KustoTracingAttributes, KustoTracing
 
 from .exceptions import KustoClientError, KustoAioSyntaxError, KustoAsyncUsageError
 
@@ -118,7 +118,7 @@ class TokenProviderBase(abc.ABC):
     @distributed_trace(kind=SpanKind.CLIENT)
     def get_token(self):
         """Get a token silently from cache or authenticate if cached token is not found"""
-        KustoTracingAttributes.set_get_token_attributes(self.__class__.__name__)
+        KustoTracingAttributes.set_get_token_attributes(self.name())
 
         if self.is_async:
             raise KustoAsyncUsageError("get_token", self.is_async)
@@ -127,7 +127,7 @@ class TokenProviderBase(abc.ABC):
         token = self._get_token_from_cache_impl()
         if token is None:
             with self._lock:
-                token = self._get_token_impl()
+                token = KustoTracing.call_func_tracing(self._get_token_impl, name_of_span=f"{self.name()}.get_token_impl")
 
         return self._valid_token_or_throw(token)
 
@@ -147,6 +147,7 @@ class TokenProviderBase(abc.ABC):
     @distributed_trace(kind=SpanKind.CLIENT)
     async def get_token_async(self):
         """Get a token asynchronously silently from cache or authenticate if cached token is not found"""
+        await sync_to_async(KustoTracingAttributes.set_get_token_attributes(self.name()))
 
         if not self.is_async:
             raise KustoAsyncUsageError("get_token_async", self.is_async)
@@ -157,7 +158,7 @@ class TokenProviderBase(abc.ABC):
 
         if token is None:
             async with self._async_lock:
-                token = await self._get_token_impl_async()
+                token = await sync_to_async(KustoTracing.call_func_tracing(self._get_token_impl_async, name_of_span=f"{self.name()}.get_token_impl_async"))
 
         return self._valid_token_or_throw(token)
 

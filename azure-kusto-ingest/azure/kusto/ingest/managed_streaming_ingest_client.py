@@ -8,7 +8,7 @@ from azure.core.tracing import SpanKind
 
 from azure.kusto.data import KustoConnectionStringBuilder
 from azure.kusto.data.exceptions import KustoApiError
-from azure.kusto.data._telemetry import kusto_client_func_tracing
+from azure.kusto.data._telemetry import KustoTracing
 
 
 from . import IngestionProperties, BlobDescriptor, StreamDescriptor, FileDescriptor
@@ -111,12 +111,12 @@ class ManagedStreamingIngestClient(BaseIngestClient):
                     stream.seek(0, SEEK_SET)
                     client_request_id = ManagedStreamingIngestClient._get_request_id(stream_descriptor.source_id, attempt.retry_state.attempt_number - 1)
                     # trace attempt to ingest from stream
-                    return kusto_client_func_tracing(
+                    return KustoTracing.call_func_tracing(
                         self.streaming_client._ingest_from_stream_with_client_request_id,
-                        name_of_span="ManagedStreamingIngestClient.ingest_from_stream_attempt",
-                        stream_descriptor=stream_descriptor,
-                        ingestion_properties=ingestion_properties,
-                        client_request_id=client_request_id,
+                        stream_descriptor,
+                        ingestion_properties,
+                        client_request_id,
+                        name_of_span="ManagedStreamingIngestClient.ingest_from_stream_attempt"
                     )
         except KustoApiError as ex:
             error = ex.get_api_error()
@@ -137,7 +137,7 @@ class ManagedStreamingIngestClient(BaseIngestClient):
         :param azure.kusto.ingest.BlobDescriptor blob_descriptor: An object that contains a description of the blob to be ingested.
         :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
         """
-        IngestTracingAttributes.set_ingest_blob_attributes(blob_descriptor)
+        IngestTracingAttributes.set_ingest_blob_attributes(blob_descriptor, ingestion_properties)
 
         return self.queued_client.ingest_from_blob(blob_descriptor, ingestion_properties)
 

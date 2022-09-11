@@ -8,7 +8,7 @@ import requests
 from azure.core.tracing.decorator import distributed_trace
 from azure.core.tracing import SpanKind
 
-from ._telemetry import KustoTracingAttributes, kusto_client_func_tracing
+from ._telemetry import KustoTracingAttributes, KustoTracing
 from .exceptions import KustoServiceError
 
 METADATA_ENDPOINT = "v1/rest/auth/metadata"
@@ -83,13 +83,12 @@ class CloudSettings:
             if kusto_uri in cls._cloud_cache:
                 return cls._cloud_cache[kusto_uri]
             url = urljoin(kusto_uri, METADATA_ENDPOINT)
+
             # trace http get call for result
             http_trace_attributes = KustoTracingAttributes.create_http_attributes(url=url, method="GET")
-            result = kusto_client_func_tracing(
-                requests.get, name_of_span="CloudSettings.http_get", tracing_attributes=http_trace_attributes, url=url, proxies=proxies
+            result = KustoTracing.call_func_tracing(
+                requests.get, url, proxies=proxies, name_of_span="CloudSettings.http_get", tracing_attributes=http_trace_attributes
             )
-
-            # result = requests.get(url, proxies=proxies)
 
             if result.status_code == 200:
                 content = result.json()
