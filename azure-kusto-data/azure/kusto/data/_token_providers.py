@@ -115,21 +115,23 @@ class TokenProviderBase(abc.ABC):
     def _init_resources(self):
         pass
 
-    @distributed_trace(kind=SpanKind.CLIENT)
     def get_token(self):
         """Get a token silently from cache or authenticate if cached token is not found"""
-        KustoTracingAttributes.set_get_token_attributes(self.name())
 
-        if self.is_async:
-            raise KustoAsyncUsageError("get_token", self.is_async)
-        self._init_once()
+        @distributed_trace(name_of_span=f"{self.name()}.get_token", kind=SpanKind.CLIENT)
+        def _get_token():
+            if self.is_async:
+                raise KustoAsyncUsageError("get_token", self.is_async)
+            self._init_once()
 
-        token = self._get_token_from_cache_impl()
-        if token is None:
-            with self._lock:
-                token = KustoTracing.call_func_tracing(self._get_token_impl, name_of_span=f"{self.name()}.get_token_impl")
+            token = self._get_token_from_cache_impl()
+            if token is None:
+                with self._lock:
+                    token = KustoTracing.call_func_tracing(self._get_token_impl, name_of_span=f"{self.name()}.get_token_impl")
 
-        return self._valid_token_or_throw(token)
+            return self._valid_token_or_throw(token)
+
+        return _get_token()
 
     def context(self) -> dict:
         if self.is_async:

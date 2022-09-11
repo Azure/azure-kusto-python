@@ -21,7 +21,6 @@ class KustoTracingAttributes:
     _HTTP_USER_AGENT = "http.user_agent"
     _HTTP_METHOD = "http.method"
     _HTTP_URL = "http.url"
-    _HTTP_STATUS_CODE = "http.status_code"
 
     @classmethod
     def add_attributes(cls, **kwargs) -> None:
@@ -58,11 +57,6 @@ class KustoTracingAttributes:
         cls.add_attributes(tracing_attributes=http_tracing_attributes)
 
     @classmethod
-    def set_get_token_attributes(cls, auth_method: str) -> None:
-        get_token_attributes: dict = cls.create_get_token_attributes(auth_method)
-        cls.add_attributes(tracing_attributes=get_token_attributes)
-
-    @classmethod
     def create_query_attributes(cls, cluster: str, database: str) -> dict:
         query_attributes: dict = {cls._KUSTO_CLUSTER: cluster, cls._DATABASE: database}
         return query_attributes
@@ -85,11 +79,6 @@ class KustoTracingAttributes:
         if user_agent:
             http_tracing_attributes[cls._HTTP_USER_AGENT] = user_agent
         return http_tracing_attributes
-
-    @classmethod
-    def create_get_token_attributes(cls, auth_method: str) -> dict:
-        get_token_attributes: dict = {cls._AUTH_METHOD: auth_method}
-        return get_token_attributes
 
 
 class KustoTracing:

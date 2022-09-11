@@ -407,8 +407,8 @@ if __name__ == "__main__":
     # Uncomment the lines below and add the 'uuid of the instrumentation key (see your Azure Monitor account)' to the
     # enable_distributed_tracing() function above, to enable distributed tracing
 
-    tracer = enable_distributed_tracing()
-    with tracer.start_as_current_span(name="KustoSampleApp"):
-        main()
+    # tracer = enable_distributed_tracing()
+    # with tracer.start_as_current_span(name="KustoSampleApp"):
+    #     main()
 
-    # main()
+    main()

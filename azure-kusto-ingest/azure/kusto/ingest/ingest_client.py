@@ -49,7 +49,7 @@ class QueuedIngestClient(BaseIngestClient):
         self._resource_manager.set_proxy(proxy_url)
         self._proxy_dict = {"http": proxy_url, "https": proxy_url}
 
-    @distributed_trace(name_of_span="QueuedIngest.ingest_from_file", kind=SpanKind.CLIENT)
+    @distributed_trace(name_of_span="QueuedIngestClient.ingest_from_file", kind=SpanKind.CLIENT)
     def ingest_from_file(self, file_descriptor: Union[FileDescriptor, str], ingestion_properties: IngestionProperties) -> IngestionResult:
         """Enqueue an ingest command from local files.
         To learn more about ingestion methods go to:
