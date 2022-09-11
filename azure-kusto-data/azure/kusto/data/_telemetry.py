@@ -108,8 +108,7 @@ class KustoTracing:
         tracing_attributes: dict = kwargs.pop("tracing_attributes", {})
         kind: str = kwargs.pop("kind", SpanKind.CLIENT)
 
-        kusto_trace: Callable = distributed_trace(name_of_span=name_of_span, tracing_attributes=tracing_attributes,
-                                                  kind=kind)
+        kusto_trace: Callable = distributed_trace(name_of_span=name_of_span, tracing_attributes=tracing_attributes, kind=kind)
         kusto_func: Callable = kusto_trace(func)
         return kusto_func(*args, **kwargs)
 
@@ -127,6 +126,5 @@ class KustoTracing:
         tracing_attributes: dict = kwargs.pop("tracing_attributes", {})
         kind: str = kwargs.pop("kind", SpanKind.CLIENT)
 
-        kusto_trace: Callable = distributed_trace(name_of_span=name_of_span, tracing_attributes=tracing_attributes,
-                                                  kind=kind)
+        kusto_trace: Callable = distributed_trace(name_of_span=name_of_span, tracing_attributes=tracing_attributes, kind=kind)
         return kusto_trace(func)

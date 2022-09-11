@@ -117,7 +117,7 @@ class QueuedIngestClient(BaseIngestClient):
             content=ingestion_blob_info_json,
             timeout=self._SERVICE_CLIENT_TIMEOUT_SECONDS,
             name_of_span="QueuedIngestClient.enqueue_request",
-            tracing_attributes=enqueue_trace_attributes
+            tracing_attributes=enqueue_trace_attributes,
         )
         # queue_client.send_message(content=ingestion_blob_info_json, timeout=self._SERVICE_CLIENT_TIMEOUT_SECONDS)
 

@@ -275,8 +275,7 @@ class KustoSampleApp:
             )
 
             # Learn More: For more information about ingesting data to Kusto in Python, see: https://docs.microsoft.com/azure/data-explorer/python-ingest-data
-            cls.ingest_data(
-                data_file, data_file.data_format, ingest_client, config.database_name, config.table_name, data_file.mapping_name)
+            cls.ingest_data(data_file, data_file.data_format, ingest_client, config.database_name, config.table_name, data_file.mapping_name)
 
         Utils.Ingestion.wait_for_ingestion_to_complete(config.wait_for_ingest_seconds)
 

@@ -278,6 +278,4 @@ class KustoClient(_KustoClientBase):
         except Exception as e:
             raise self._handle_http_error(e, endpoint, payload, response, response.status_code, response_json, response.text)
         # trace response processing
-        return KustoTracing.call_func_tracing(
-            self._kusto_parse_by_endpoint, endpoint, response_json, name_of_span="KustoClient.processing_response"
-        )
+        return KustoTracing.call_func_tracing(self._kusto_parse_by_endpoint, endpoint, response_json, name_of_span="KustoClient.processing_response")

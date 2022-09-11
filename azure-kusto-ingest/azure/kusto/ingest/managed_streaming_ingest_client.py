@@ -116,7 +116,7 @@ class ManagedStreamingIngestClient(BaseIngestClient):
                         stream_descriptor,
                         ingestion_properties,
                         client_request_id,
-                        name_of_span="ManagedStreamingIngestClient.ingest_from_stream_attempt"
+                        name_of_span="ManagedStreamingIngestClient.ingest_from_stream_attempt",
                     )
         except KustoApiError as ex:
             error = ex.get_api_error()
