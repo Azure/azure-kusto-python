@@ -83,6 +83,9 @@ class _AadHelper:
             kwargs["resource"] = self.kusto_uri
             raise KustoAuthenticationError(self.token_provider.name(), error, **kwargs)
 
+    def close(self):
+        self.token_provider.close()
+
 
 def _get_header_from_dict(token: dict):
     if TokenConstants.MSAL_ACCESS_TOKEN in token:

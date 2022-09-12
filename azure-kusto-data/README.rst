@@ -14,14 +14,13 @@ Overview
     authority_id = "<insert here your AAD tenant id>"
 
     kcsb = KustoConnectionStringBuilder.with_aad_application_key_authentication(cluster, client_id, client_secret, authority_id)
-    client = KustoClient(kcsb)
+    with KustoClient(kcsb) as client:
+        db = "Samples"
+        query = "StormEvents | take 10"
 
-    db = "Samples"
-    query = "StormEvents | take 10"
-
-    response = client.execute(db, query)
-    for row in response.primary_results[0]:
-        print(row[0], " ", row["EventType"])
+        response = client.execute(db, query)
+        for row in response.primary_results[0]:
+            print(row[0], " ", row["EventType"])
 
 
 

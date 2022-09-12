@@ -8,9 +8,9 @@ import pytest
 from azure.kusto.data._cloud_settings import CloudSettings
 from azure.kusto.data._decorators import aio_documented_by
 from azure.kusto.data.client_request_properties import ClientRequestProperties
-from azure.kusto.data.exceptions import KustoMultiApiError
+from azure.kusto.data.exceptions import KustoClosedError, KustoMultiApiError
 from azure.kusto.data.helpers import dataframe_from_result_table
-from ..kusto_client_common import KustoClientTestsMixin, mocked_requests_post, proxy_kcsb
+from ..kusto_client_common import KustoClientTestsMixin, mocked_requests_post
 from ..test_kusto_client import TestKustoClient as KustoClientTestsSync
 
 PANDAS = False
@@ -53,6 +53,15 @@ class TestKustoClient(KustoClientTestsMixin):
     def _mock_cloud_info(self, aioresponses_mock):
         url = "{host}/v1/rest/auth/metadata".format(host=self.HOST)
         aioresponses_mock.get(url, callback=self._mock_callback)
+
+    @aio_documented_by(KustoClientTestsSync.test_throws_on_close)
+    @pytest.mark.asyncio
+    async def test_throws_on_close(self):
+        """Test query V2."""
+        async with KustoClient(self.HOST) as client:
+            pass
+        with pytest.raises(KustoClosedError):
+            await client.execute_query("PythonTest", "Deft")
 
     @aio_documented_by(KustoClientTestsSync.test_sanity_query)
     @pytest.mark.asyncio

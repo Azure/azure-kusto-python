@@ -52,6 +52,14 @@ class _KustoClientBase(abc.ABC):
             "x-ms-version": self.API_VERSION,
         }
 
+        self._is_closed: bool = False
+
+    def close(self):
+        if not self._is_closed:
+            if self._aad_helper is not None:
+                self._aad_helper.close()
+        self._is_closed = True
+
     def set_proxy(self, proxy_url: str):
         self._proxy_url = proxy_url
         if self._aad_helper:

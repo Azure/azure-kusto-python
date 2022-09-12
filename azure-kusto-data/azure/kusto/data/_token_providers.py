@@ -5,14 +5,14 @@ import asyncio
 import time
 import webbrowser
 from threading import Lock
-from typing import Callable, Optional, Coroutine, List
+from typing import Callable, Coroutine, List, Optional
 
 from azure.core.exceptions import ClientAuthenticationError
-from azure.identity import ManagedIdentityCredential, AzureCliCredential
+from azure.identity import AzureCliCredential, ManagedIdentityCredential
 from msal import ConfidentialClientApplication, PublicClientApplication
 
-from ._cloud_settings import CloudSettings, CloudInfo
-from .exceptions import KustoClientError, KustoAioSyntaxError, KustoAsyncUsageError
+from ._cloud_settings import CloudInfo, CloudSettings
+from .exceptions import KustoAioSyntaxError, KustoAsyncUsageError, KustoClientError
 
 try:
     from asgiref.sync import sync_to_async
@@ -71,6 +71,9 @@ class TokenProviderBase(abc.ABC):
             self._async_lock = asyncio.Lock()
         else:
             self._lock = Lock()
+
+    def close(self):
+        pass
 
     def _init_once(self, init_only_resources=False):
         if self._initialized:
@@ -341,6 +344,12 @@ class MsiTokenProvider(CloudInfoTokenProvider):
     def _get_token_from_cache_impl(self) -> Optional[dict]:
         return None
 
+    def close(self):
+        if self._msi_auth_context is not None:
+            self._msi_auth_context.close()
+        if self._msi_auth_context_async is not None:
+            self._msi_auth_context_async.close()
+
 
 class AzCliTokenProvider(CloudInfoTokenProvider):
     """AzCli Token Provider obtains a refresh token from the AzCli cache and uses it to authenticate with MSAL"""
@@ -393,6 +402,12 @@ class AzCliTokenProvider(CloudInfoTokenProvider):
                 return {TokenConstants.MSAL_TOKEN_TYPE: TokenConstants.BEARER_TYPE, TokenConstants.MSAL_ACCESS_TOKEN: self._az_token.token}
 
         return None
+
+    def close(self):
+        if self._az_auth_context is not None:
+            self._az_auth_context.close()
+        if self._az_auth_context_async is not None:
+            self._az_auth_context_async.close()
 
 
 class UserPassTokenProvider(CloudInfoTokenProvider):
