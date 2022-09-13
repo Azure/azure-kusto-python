@@ -10,7 +10,7 @@ from azure.kusto.data._decorators import aio_documented_by
 from azure.kusto.data.client_request_properties import ClientRequestProperties
 from azure.kusto.data.exceptions import KustoClosedError, KustoMultiApiError
 from azure.kusto.data.helpers import dataframe_from_result_table
-from ..kusto_client_common import KustoClientTestsMixin, mocked_requests_post
+from ..kusto_client_common import KustoClientTestsMixin, mocked_requests_post, proxy_kcsb
 from ..test_kusto_client import TestKustoClient as KustoClientTestsSync
 
 PANDAS = False
