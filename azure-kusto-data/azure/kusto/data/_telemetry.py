@@ -2,6 +2,7 @@ from typing import Callable
 
 from azure.core.settings import settings
 from azure.core.tracing.decorator import distributed_trace
+from azure.core.tracing.decorator_async import distributed_trace_async
 from azure.core.tracing import SpanKind
 
 
@@ -100,6 +101,25 @@ class KustoTracing:
         kusto_trace: Callable = distributed_trace(name_of_span=name_of_span, tracing_attributes=tracing_attributes, kind=kind)
         kusto_func: Callable = kusto_trace(func)
         return kusto_func(*args, **kwargs)
+
+    @staticmethod
+    async def call_func_tracing_async(func: Callable, *args, **kwargs):
+        """
+        Prepares function for tracing and calls it
+        :param func: function to trace
+        :type func: Callable
+        :key str name_of_span: name of the trace span
+        :key dict tracing_attributes: key/value dictionary of attributes to include in span of trace
+        :key str kind: the type of span
+        :param kwargs: function arguments
+        """
+        name_of_span: str = kwargs.pop("name_of_span", None)
+        tracing_attributes: dict = kwargs.pop("tracing_attributes", {})
+        kind: str = kwargs.pop("kind", SpanKind.CLIENT)
+
+        kusto_trace: Callable = distributed_trace_async(name_of_span=name_of_span, tracing_attributes=tracing_attributes, kind=kind)
+        kusto_func: Callable = kusto_trace(func)
+        return await kusto_func(*args, **kwargs)
 
     @staticmethod
     def prepare_func_tracing(func: Callable, **kwargs):

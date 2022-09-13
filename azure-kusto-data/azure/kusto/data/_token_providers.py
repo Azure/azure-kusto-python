@@ -9,6 +9,7 @@ from typing import Callable, Optional, Coroutine, List
 
 from azure.core.exceptions import ClientAuthenticationError
 from azure.core.tracing.decorator import distributed_trace
+from azure.core.tracing.decorator_async import distributed_trace_async
 from azure.core.tracing import SpanKind
 from azure.identity import ManagedIdentityCredential, AzureCliCredential
 from msal import ConfidentialClientApplication, PublicClientApplication
@@ -146,23 +147,23 @@ class TokenProviderBase(abc.ABC):
         await self._init_once_async(init_only_resources=True)
         return self._context_impl()
 
-    @distributed_trace(kind=SpanKind.CLIENT)
     async def get_token_async(self):
         """Get a token asynchronously silently from cache or authenticate if cached token is not found"""
-        await sync_to_async(KustoTracingAttributes.set_get_token_attributes(self.name()))
 
-        if not self.is_async:
-            raise KustoAsyncUsageError("get_token_async", self.is_async)
+        @distributed_trace_async(name_of_span=f"{self.name()}.get_token_async", kind=SpanKind.CLIENT)
+        def _get_token_async():
+            if not self.is_async:
+                raise KustoAsyncUsageError("get_token_async", self.is_async)
 
-        await self._init_once_async()
+            await self._init_once_async()
 
-        token = self._get_token_from_cache_impl()
+            token = self._get_token_from_cache_impl()
 
-        if token is None:
-            async with self._async_lock:
-                token = await sync_to_async(KustoTracing.call_func_tracing(self._get_token_impl_async, name_of_span=f"{self.name()}.get_token_impl_async"))
+            if token is None:
+                async with self._async_lock:
+                    token = await KustoTracing.call_func_tracing_async(self._get_token_impl_async, name_of_span=f"{self.name()}.get_token_impl_async")
 
-        return self._valid_token_or_throw(token)
+            return self._valid_token_or_throw(token)
 
     @staticmethod
     @abc.abstractmethod

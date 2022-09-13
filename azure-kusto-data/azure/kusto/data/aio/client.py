@@ -2,7 +2,11 @@ import io
 from datetime import timedelta
 from typing import Union, Optional
 
+from azure.core.tracing.decorator_async import distributed_trace_async
+from azure.core.tracing import SpanKind
+
 from .response import KustoStreamingResponseDataSet
+from .._telemetry import KustoTracing, KustoTracingAttributes
 from .._decorators import documented_by, aio_documented_by
 from ..aio.streaming_response import StreamingDataSetEnumerator, JsonTokenReader
 from ..client import KustoClient as KustoClientSync
@@ -40,14 +44,21 @@ class KustoClient(_KustoClientBase):
             return await self.execute_mgmt(database, query, properties)
         return await self.execute_query(database, query, properties)
 
+    @distributed_trace_async(name_of_span="KustoClient.query_cmd", kind=SpanKind.CLIENT)
     @aio_documented_by(KustoClientSync.execute_query)
     async def execute_query(self, database: str, query: str, properties: ClientRequestProperties = None) -> KustoResponseDataSet:
+        KustoTracingAttributes.set_query_attributes(self._kusto_cluster, database)
+
         return await self._execute(self._query_endpoint, database, query, None, KustoClient._query_default_timeout, properties)
 
+    @distributed_trace_async(name_of_span="KustoClient.control_cmd", kind=SpanKind.CLIENT)
     @aio_documented_by(KustoClientSync.execute_mgmt)
     async def execute_mgmt(self, database: str, query: str, properties: ClientRequestProperties = None) -> KustoResponseDataSet:
+        KustoTracingAttributes.set_mgmt_attributes(self._kusto_cluster, database)
+
         return await self._execute(self._mgmt_endpoint, database, query, None, KustoClient._mgmt_default_timeout, properties)
 
+    @distributed_trace_async(name_of_span="KustoClient.streaming_ingest", kind=SpanKind.CLIENT)
     @aio_documented_by(KustoClientSync.execute_streaming_ingest)
     async def execute_streaming_ingest(
         self,
@@ -58,6 +69,8 @@ class KustoClient(_KustoClientBase):
         properties: ClientRequestProperties = None,
         mapping_name: str = None,
     ):
+        KustoTracingAttributes.set_ingest_attributes(database, table)
+
         stream_format = stream_format.kusto_value if isinstance(stream_format, DataFormat) else DataFormat[stream_format.upper()].kusto_value
         endpoint = self._streaming_ingest_endpoint + database + "/" + table + "?streamFormat=" + stream_format
         if mapping_name is not None:
@@ -72,10 +85,13 @@ class KustoClient(_KustoClientBase):
         response = await self._execute(self._query_endpoint, database, query, None, timeout, properties, stream_response=True)
         return StreamingDataSetEnumerator(JsonTokenReader(response.content))
 
+    @distributed_trace_async(name_of_span="KustoClient.streaming_query", kind=SpanKind.CLIENT)
     @aio_documented_by(KustoClientSync.execute_streaming_query)
     async def execute_streaming_query(
         self, database: str, query: str, timeout: timedelta = _KustoClientBase._query_default_timeout, properties: Optional[ClientRequestProperties] = None
     ) -> KustoStreamingResponseDataSet:
+        KustoTracingAttributes.set_query_attributes(self._kusto_cluster, database)
+
         response = await self._execute_streaming_query_parsed(database, query, timeout, properties)
         return KustoStreamingResponseDataSet(response)
 
@@ -101,7 +117,18 @@ class KustoClient(_KustoClientBase):
         if self._aad_helper:
             request_headers["Authorization"] = await self._aad_helper.acquire_authorization_header_async()
 
-        response = await self._session.post(endpoint, headers=request_headers, data=payload, json=json_payload, timeout=timeout.seconds, proxy=self._proxy_url)
+        http_trace_attributes = KustoTracingAttributes.create_http_attributes(url=endpoint, method="POST", headers=request_headers)
+        response = await KustoTracing.call_func_tracing_async(
+            self._session.post,
+            endpoint,
+            headers=request_headers,
+            json=json_payload,
+            data=payload,
+            timeout=timeout.seconds,
+            proxy=self._proxy_url,
+            name_of_span="KustoClient.http_post",
+            tracing_attributes=http_trace_attributes,
+        )
 
         if stream_response:
             try:
@@ -130,4 +157,6 @@ class KustoClient(_KustoClientBase):
                     response_text = None
                 raise self._handle_http_error(e, endpoint, payload, response, response.status, response_json, response_text)
 
-            return self._kusto_parse_by_endpoint(endpoint, response_json)
+            return await KustoTracing.call_func_tracing_async(
+                self._kusto_parse_by_endpoint, endpoint, response_json, name_of_span="KustoClient.processing_response"
+            )
