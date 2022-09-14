@@ -5,9 +5,8 @@ import uuid
 from abc import ABCMeta, abstractmethod
 from copy import copy
 from enum import Enum
-from gzip import GzipFile
-from io import TextIOWrapper, BytesIO
-from typing import TYPE_CHECKING, Union, IO, AnyStr, Optional
+from io import TextIOWrapper
+from typing import TYPE_CHECKING, Union, IO, AnyStr, Optional, Tuple
 
 from azure.kusto.data.data_format import DataFormat
 
@@ -112,29 +111,45 @@ class BaseIngestClient(metaclass=ABCMeta):
 
     @staticmethod
     def _prepare_stream(stream_descriptor: Union[StreamDescriptor, IO[AnyStr]], ingestion_properties: IngestionProperties) -> StreamDescriptor:
+        """
+        Prepares a StreamDescriptor instance for ingest operation based on ingestion properties
+        :param StreamDescriptor stream_descriptor: Stream descriptor instance
+        :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
+        :return prepared stream descriptor
+        """
         if not isinstance(stream_descriptor, StreamDescriptor):
             new_descriptor = StreamDescriptor(stream_descriptor)
         else:
             new_descriptor = copy(stream_descriptor)
 
         if isinstance(new_descriptor.stream, TextIOWrapper):
-            stream = new_descriptor.stream.buffer
-        else:
-            stream = new_descriptor.stream
+            new_descriptor.stream = new_descriptor.stream.buffer
 
-        if not new_descriptor.is_compressed and ingestion_properties.format.compressible:
-            zipped_stream = BytesIO()
-            buffer = stream.read()
-            with GzipFile(filename="data", fileobj=zipped_stream, mode="wb") as f_out:
-                if isinstance(buffer, str):
-                    data = bytes(buffer, "utf-8")
-                    f_out.write(data)
-                else:
-                    f_out.write(buffer)
-            zipped_stream.seek(0)
-            new_descriptor.is_compressed = True
-            new_descriptor.stream_name += ".gz"
-            stream = zipped_stream
-        new_descriptor.stream = stream
+        should_compress = BaseIngestClient._should_compress(new_descriptor, ingestion_properties)
+        if should_compress:
+            new_descriptor.compress_stream()
 
         return new_descriptor
+
+    @staticmethod
+    def _prepare_file(file_descriptor: Union[FileDescriptor, str], ingestion_properties: IngestionProperties) -> Tuple[FileDescriptor, bool]:
+        """
+        Prepares a FileDescriptor instance for ingest operation based on ingestion properties
+        :param FileDescriptor file_descriptor: File descriptor instance
+        :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
+        :return prepared file descriptor
+        """
+        if not isinstance(file_descriptor, FileDescriptor):
+            descriptor = FileDescriptor(file_descriptor)
+        else:
+            descriptor = file_descriptor
+
+        should_compress = BaseIngestClient._should_compress(descriptor, ingestion_properties)
+        return descriptor, should_compress
+
+    @staticmethod
+    def _should_compress(new_descriptor: Union[FileDescriptor, StreamDescriptor], ingestion_properties: IngestionProperties) -> bool:
+        """
+        Checks if descriptor should be compressed based on ingestion properties and current format
+        """
+        return not new_descriptor.is_compressed and ingestion_properties.format.compressible

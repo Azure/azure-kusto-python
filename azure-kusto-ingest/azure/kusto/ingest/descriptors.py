@@ -1,13 +1,19 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
 import os
+import random
 import shutil
 import struct
 import uuid
 from gzip import GzipFile
 from io import BytesIO, SEEK_END
-from typing import Union, Optional, AnyStr, IO
+from typing import Union, Optional, AnyStr, IO, List, Dict
 from zipfile import ZipFile
+
+from azure.storage.blob import BlobServiceClient
+
+from azure.kusto.data.exceptions import KustoBlobError
+from azure.kusto.ingest._resource_manager import _ResourceUri
 
 OptionalUUID = Optional[Union[str, uuid.UUID]]
 
@@ -88,14 +94,17 @@ class FileDescriptor:
 
     def open(self, should_compress: bool) -> BytesIO:
         if should_compress:
-            self.stream_name += ".gz"
-            file_stream = BytesIO()
-            with open(self.path, "rb") as f_in, GzipFile(filename="data", fileobj=file_stream, mode="wb") as f_out:
-                shutil.copyfileobj(f_in, f_out)
-            file_stream.seek(0)
+            file_stream = self.compress_stream()
         else:
             file_stream = open(self.path, "rb")
+        return file_stream
 
+    def compress_stream(self) -> BytesIO:
+        self.stream_name += ".gz"
+        file_stream = BytesIO()
+        with open(self.path, "rb") as f_in, GzipFile(filename="data", fileobj=file_stream, mode="wb") as f_out:
+            shutil.copyfileobj(f_in, f_out)
+        file_stream.seek(0)
         return file_stream
 
 
@@ -114,6 +123,37 @@ class BlobDescriptor:
         self.path: str = path
         self.size: Optional[int] = size
         self.source_id: uuid.UUID = ensure_uuid(source_id)
+
+    @staticmethod
+    def upload_from_different_descriptor(
+        containers: List[_ResourceUri],
+        descriptor: Union[FileDescriptor, "StreamDescriptor"],
+        database: str,
+        table: str,
+        stream: IO[AnyStr],
+        proxy_dict: Optional[Dict[str, str]],
+        timeout: int,
+    ) -> "BlobDescriptor":
+        """
+        Uploads and transforms FileDescriptor or StreamDescriptor into a BlobDescriptor instance
+        :param List[_ResourceUri] containers: blob containers
+        :param Union[FileDescriptor, "StreamDescriptor"] descriptor:
+        :param string database: database to be ingested to
+        :param string table: table to be ingested to
+        :param IO[AnyStr] stream: stream to be ingested from
+        :param Optional[Dict[str, str]] proxy_dict: proxy urls
+        :param int timeout: Azure service call timeout in seconds
+        :return new BlobDescriptor instance
+        """
+        blob_name = "{db}__{table}__{guid}__{file}".format(db=database, table=table, guid=descriptor.source_id, file=descriptor.stream_name)
+        random_container = random.choice(containers)
+        try:
+            blob_service = BlobServiceClient(random_container.account_uri, proxies=proxy_dict)
+            blob_client = blob_service.get_blob_client(container=random_container.object_name, blob=blob_name)
+            blob_client.upload_blob(data=stream, timeout=timeout)
+        except Exception as e:
+            raise KustoBlobError(e)
+        return BlobDescriptor(blob_client.url, descriptor.size, descriptor.source_id)
 
 
 class StreamDescriptor:
@@ -141,8 +181,28 @@ class StreamDescriptor:
                 self.stream_name += ".gz"
         self.size: Optional[int] = size
 
+    def compress_stream(self) -> None:
+        stream = self.stream
+        zipped_stream = BytesIO()
+        buffer = stream.read()
+        with GzipFile(filename="data", fileobj=zipped_stream, mode="wb") as f_out:
+            if isinstance(buffer, str):
+                data = bytes(buffer, "utf-8")
+                f_out.write(data)
+            else:
+                f_out.write(buffer)
+        zipped_stream.seek(0)
+        self.is_compressed = True
+        self.stream_name += ".gz"
+        self.stream = zipped_stream
+
     @staticmethod
     def from_file_descriptor(file_descriptor: Union[FileDescriptor, str]) -> "StreamDescriptor":
+        """
+        Transforms FileDescriptor instance into StreamDescriptor instance. Note that stream is open when instance is returned
+        :param Union[FileDescriptor, str] file_descriptor: File Descriptor instance
+        :return new StreamDescriptor instance
+        """
         if isinstance(file_descriptor, FileDescriptor):
             descriptor = file_descriptor
         else:
