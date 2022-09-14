@@ -33,7 +33,7 @@ class IngestTracingAttributes:
                 cls._DATABASE: ingestion_properties.database,
                 cls._TABLE: ingestion_properties.table,
                 cls._FILE_PATH: descriptor.stream_name,
-                cls._SOURCE_ID: descriptor.source_id,
+                cls._SOURCE_ID: str(descriptor.source_id),
             }
         )
 
@@ -48,7 +48,7 @@ class IngestTracingAttributes:
                 cls._DATABASE: ingestion_properties.database,
                 cls._TABLE: ingestion_properties.table,
                 cls._FILE_PATH: descriptor.stream_name,
-                cls._SOURCE_ID: descriptor.source_id,
+                cls._SOURCE_ID: str(descriptor.source_id),
             }
         )
 
@@ -59,15 +59,15 @@ class IngestTracingAttributes:
                 cls._BLOB_URI: blob_descriptor.path,
                 cls._DATABASE: ingestion_properties.database,
                 cls._TABLE: ingestion_properties.table,
-                cls._SOURCE_ID: blob_descriptor.source_id,
+                cls._SOURCE_ID: str(blob_descriptor.source_id),
             }
         )
 
     @classmethod
     def set_upload_blob_attributes(cls, blob_container_name: str, blob_descriptor: BlobDescriptor) -> None:
-        KustoTracingAttributes.add_attributes(tracing_attributes={cls._BLOB_CONTAINER: blob_container_name, cls._SOURCE_ID: blob_descriptor.source_id})
+        KustoTracingAttributes.add_attributes(tracing_attributes={cls._BLOB_CONTAINER: blob_container_name, cls._SOURCE_ID: str(blob_descriptor.source_id)})
 
     @classmethod
     def create_enqueue_request_attributes(cls, queue_name: str, source_id: uuid.UUID) -> dict:
-        enqueue_request_attributes = {cls._BLOB_QUEUE_NAME: queue_name, cls._SOURCE_ID: source_id}
+        enqueue_request_attributes = {cls._BLOB_QUEUE_NAME: queue_name, cls._SOURCE_ID: str(source_id)}
         return enqueue_request_attributes

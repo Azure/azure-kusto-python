@@ -151,7 +151,7 @@ class TokenProviderBase(abc.ABC):
         """Get a token asynchronously silently from cache or authenticate if cached token is not found"""
 
         @distributed_trace_async(name_of_span=f"{self.name()}.get_token_async", kind=SpanKind.CLIENT)
-        def _get_token_async():
+        async def _get_token_async():
             if not self.is_async:
                 raise KustoAsyncUsageError("get_token_async", self.is_async)
 

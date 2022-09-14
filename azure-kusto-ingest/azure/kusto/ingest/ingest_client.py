@@ -139,31 +139,6 @@ class QueuedIngestClient(BaseIngestClient):
             raise ex
         return containers
 
-# <<<<<<< HEAD
-#     @distributed_trace(name_of_span="QueuedIngestClient.upload_to_blob", kind=SpanKind.CLIENT)
-#     def _upload_blob(
-#         self,
-#         containers: List[_ResourceUri],
-#         descriptor: Union[FileDescriptor, StreamDescriptor],
-#         ingestion_properties: IngestionProperties,
-#         stream: IO[AnyStr],
-#     ) -> BlobDescriptor:
-#         blob_name = "{db}__{table}__{guid}__{file}".format(
-#             db=ingestion_properties.database, table=ingestion_properties.table, guid=descriptor.source_id, file=descriptor.stream_name
-#         )
-#         random_container = random.choice(containers)
-#         try:
-#             blob_service = BlobServiceClient(random_container.account_uri, proxies=self._proxy_dict)
-#             blob_client = blob_service.get_blob_client(container=random_container.object_name, blob=blob_name)
-#             blob_client.upload_blob(data=stream, timeout=self._SERVICE_CLIENT_TIMEOUT_SECONDS)
-#         except Exception as e:
-#             raise KustoBlobError(e)
-#         blob_descriptor = BlobDescriptor(blob_client.url, descriptor.size, descriptor.source_id)
-#         IngestTracingAttributes.set_upload_blob_attributes(blob_client.container_name, blob_descriptor)
-#         return blob_descriptor
-#
-# =======
-
     def _validate_endpoint_service_type(self):
         if not self._hostname_starts_with_ingest(self._connection_datasource):
             if not self._endpoint_service_type:

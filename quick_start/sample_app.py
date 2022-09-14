@@ -42,8 +42,8 @@ def enable_distributed_tracing() -> "Tracer":
     # In the below example, we use an Azure Monitor Exporter, but you can use anything OpenTelemetry supports,
     # uncomment these lines to use the simple console exporter.
 
-    exporter = ConsoleSpanExporter()
-    # exporter = AzureMonitorTraceExporter.from_connection_string(conn_str=os.environ["APPLICATIONINSIGHTS_CONNECTION_STRING"])
+    # exporter = ConsoleSpanExporter()
+    exporter = AzureMonitorTraceExporter.from_connection_string(conn_str=os.environ["APPLICATIONINSIGHTS_CONNECTION_STRING"])
 
     trace.set_tracer_provider(TracerProvider())
     tracer = trace.get_tracer(__name__)
