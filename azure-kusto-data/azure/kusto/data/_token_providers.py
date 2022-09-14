@@ -165,6 +165,8 @@ class TokenProviderBase(abc.ABC):
 
             return self._valid_token_or_throw(token)
 
+        return await _get_token_async()
+
     @staticmethod
     @abc.abstractmethod
     def name() -> str:
