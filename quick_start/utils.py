@@ -175,13 +175,16 @@ class Utils:
         """
 
         @classmethod
-        def create_ingestion_properties(cls, database_name: str, table_name: str, data_format: DataFormat, mapping_name: str) -> IngestionProperties:
+        def create_ingestion_properties(
+            cls, database_name: str, table_name: str, data_format: DataFormat, mapping_name: str, ignore_first_record: bool
+        ) -> IngestionProperties:
             """
             Creates a fitting KustoIngestionProperties object, to be used when executing ingestion commands.
             :param database_name: DB name
             :param table_name: Table name
             :param data_format: Given data format
             :param mapping_name: Desired mapping name
+            :param ignore_first_record: Flag noting whether to ignore the first record in the table
             :return: IngestionProperties object
             """
             return IngestionProperties(
@@ -194,11 +197,19 @@ class Utils:
                 #  We therefore set Flush-Immediately for the sake of the sample, but it generally shouldn't be used in practice.
                 #  Comment out the line below after running the sample the first few times.
                 flush_immediately=True,
+                ignore_first_record=ignore_first_record,
             )
 
         @classmethod
         def ingest_from_file(
-            cls, ingest_client: BaseIngestClient, database_name: str, table_name: str, file_path: str, data_format: DataFormat, mapping_name: str = None
+            cls,
+            ingest_client: BaseIngestClient,
+            database_name: str,
+            table_name: str,
+            file_path: str,
+            data_format: DataFormat,
+            ignore_first_record,
+            mapping_name: str = None,
         ) -> None:
             """
             Ingest Data from a given file path.
@@ -207,9 +218,10 @@ class Utils:
             :param table_name: Table name
             :param file_path: File path
             :param data_format: Given data format
+            :param ignore_first_record: Flag noting whether to ignore the first record in the table
             :param mapping_name: Desired mapping name
             """
-            ingestion_properties = cls.create_ingestion_properties(database_name, table_name, data_format, mapping_name)
+            ingestion_properties = cls.create_ingestion_properties(database_name, table_name, data_format, mapping_name, ignore_first_record)
 
             # Tip 1: For optimal ingestion batching and performance,specify the uncompressed data size in the file descriptor instead of the default below of 0.
             # Otherwise, the service will determine the file size, requiring an additional s2s call, and may not be accurate for compressed files.
@@ -219,7 +231,14 @@ class Utils:
 
         @classmethod
         def ingest_from_blob(
-            cls, ingest_client: QueuedIngestClient, database_name: str, table_name: str, blob_url: str, data_format: DataFormat, mapping_name: str = None
+            cls,
+            ingest_client: QueuedIngestClient,
+            database_name: str,
+            table_name: str,
+            blob_url: str,
+            data_format: DataFormat,
+            ignore_first_record: bool,
+            mapping_name: str = None,
         ) -> None:
             """
             Ingest Data from a Blob.
@@ -228,9 +247,10 @@ class Utils:
             :param table_name: Table name
             :param blob_url: Blob Uri
             :param data_format: Given data format
+            :param ignore_first_record: Flag noting whether to ignore the first record in the table
             :param mapping_name: Desired mapping name
             """
-            ingestion_properties = cls.create_ingestion_properties(database_name, table_name, data_format, mapping_name)
+            ingestion_properties = cls.create_ingestion_properties(database_name, table_name, data_format, mapping_name, ignore_first_record)
 
             # Tip 1: For optimal ingestion batching and performance,specify the uncompressed data size in the file descriptor instead of the default below of 0.
             # Otherwise, the service will determine the file size, requiring an additional s2s call, and may not be accurate for compressed files.
