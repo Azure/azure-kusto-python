@@ -184,7 +184,9 @@ class Utils:
             :param table_name: Table name
             :param data_format: Given data format
             :param mapping_name: Desired mapping name
-            :param ignore_first_record: Flag noting whether to ignore the first record in the table
+            :param ignore_first_record: Flag noting whether to ignore the first record in the table. only relevant to
+            tabular textual formats (CSV and the likes). for more information
+            please read: https://docs.microsoft.com/en-us/azure/data-explorer/ingestion-properties
             :return: IngestionProperties object
             """
             return IngestionProperties(
@@ -218,7 +220,9 @@ class Utils:
             :param table_name: Table name
             :param file_path: File path
             :param data_format: Given data format
-            :param ignore_first_record: Flag noting whether to ignore the first record in the table
+            :param ignore_first_record: Flag noting whether to ignore the first record in the table. only relevant to
+            tabular textual formats (CSV and the likes). for more information
+            please read: https://docs.microsoft.com/en-us/azure/data-explorer/ingestion-properties
             :param mapping_name: Desired mapping name
             """
             ingestion_properties = cls.create_ingestion_properties(database_name, table_name, data_format, mapping_name, ignore_first_record)
@@ -247,7 +251,9 @@ class Utils:
             :param table_name: Table name
             :param blob_url: Blob Uri
             :param data_format: Given data format
-            :param ignore_first_record: Flag noting whether to ignore the first record in the table
+            :param ignore_first_record: Flag noting whether to ignore the first record in the table. only relevant to
+            tabular textual formats (CSV and the likes). for more information
+            please read: https://docs.microsoft.com/en-us/azure/data-explorer/ingestion-properties
             :param mapping_name: Desired mapping name
             """
             ingestion_properties = cls.create_ingestion_properties(database_name, table_name, data_format, mapping_name, ignore_first_record)
