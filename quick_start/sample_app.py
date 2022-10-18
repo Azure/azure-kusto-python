@@ -19,6 +19,7 @@ class SourceType(enum.Enum):
 
     local_file_source = "localFileSource"
     blob_source = "blobSource"
+    nosource = "nosource"
 
 
 @dataclass
