@@ -75,6 +75,8 @@ class CloudSettings:
     @classmethod
     @distributed_trace(name_of_span="CloudSettings.get_cloud_info", kind=SpanKind.CLIENT)
     def get_cloud_info_for_cluster(cls, kusto_uri: str, proxies: Optional[Dict[str, str]] = None) -> CloudInfo:
+        # tracing attributes for cloud info
+        KustoTracingAttributes.set_cloud_info_attributes(kusto_uri)
 
         if kusto_uri in cls._cloud_cache:  # Double-checked locking to avoid unnecessary lock access
             return cls._cloud_cache[kusto_uri]

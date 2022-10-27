@@ -15,9 +15,11 @@ class IngestTracingAttributes:
 
     _DATABASE = "Database"
     _TABLE = "Table"
+
     _BLOB_CONTAINER = "Blob Container"
     _BLOB_QUEUE_NAME = "Blob Queue Name"
     _BLOB_URI = "Blob URI"
+
     _FILE_PATH = "File Path"
     _STREAM_NAME = "Stream Name"
     _SOURCE_ID = "Source ID"

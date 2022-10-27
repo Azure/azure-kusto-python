@@ -58,6 +58,11 @@ class KustoTracingAttributes:
         cls.add_attributes(tracing_attributes=http_tracing_attributes)
 
     @classmethod
+    def set_cloud_info_attributes(cls, url: str) -> None:
+        cloud_info_attributes: dict = cls.create_cloud_info_attributes(url)
+        cls.add_attributes(tracing_attributes=cloud_info_attributes)
+
+    @classmethod
     def create_query_attributes(cls, cluster: str, database: str) -> dict:
         query_attributes: dict = {cls._KUSTO_CLUSTER: cluster, cls._DATABASE: database}
         return query_attributes
@@ -80,6 +85,16 @@ class KustoTracingAttributes:
         if user_agent:
             http_tracing_attributes[cls._HTTP_USER_AGENT] = user_agent
         return http_tracing_attributes
+
+    @classmethod
+    def create_cloud_info_attributes(cls, url: str) -> dict:
+        ingest_attributes: dict = {cls._HTTP_URL: url}
+        return ingest_attributes
+
+    @classmethod
+    def create_cluster_attributes(cls, cluster_uri: str) -> dict:
+        cluster_attributes = {cls._KUSTO_CLUSTER: cluster_uri}
+        return cluster_attributes
 
 
 class KustoTracing:
