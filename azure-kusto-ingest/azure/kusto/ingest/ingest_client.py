@@ -56,7 +56,8 @@ class QueuedIngestClient(BaseIngestClient):
         :param file_descriptor: a FileDescriptor to be ingested.
         :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
         """
-        IngestTracingAttributes.set_ingest_file_attributes(file_descriptor, ingestion_properties)
+        file_descriptor = FileDescriptor.get_instance(file_descriptor)
+        IngestTracingAttributes.set_ingest_descriptor_attributes(file_descriptor, ingestion_properties)
         containers = self._get_containers()
 
         file_descriptor, should_compress = BaseIngestClient._prepare_file(file_descriptor, ingestion_properties)
@@ -78,7 +79,8 @@ class QueuedIngestClient(BaseIngestClient):
         :param stream_descriptor: An object that contains a description of the stream to be ingested.
         :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
         """
-        IngestTracingAttributes.set_ingest_stream_attributes(stream_descriptor, ingestion_properties)
+        stream_descriptor = StreamDescriptor.get_instance(stream_descriptor)
+        IngestTracingAttributes.set_ingest_descriptor_attributes(stream_descriptor, ingestion_properties)
 
         containers = self._get_containers()
 
@@ -102,7 +104,7 @@ class QueuedIngestClient(BaseIngestClient):
         :param azure.kusto.ingest.BlobDescriptor blob_descriptor: An object that contains a description of the blob to be ingested.
         :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
         """
-        IngestTracingAttributes.set_ingest_blob_attributes(blob_descriptor, ingestion_properties)
+        IngestTracingAttributes.set_ingest_descriptor_attributes(blob_descriptor, ingestion_properties)
 
         try:
             queues = self._resource_manager.get_ingestion_queues()

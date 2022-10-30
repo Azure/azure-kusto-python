@@ -9,6 +9,8 @@ class ClientRequestProperties:
     For more information please look at: https://docs.microsoft.com/en-us/azure/kusto/api/netfx/request-properties
     """
 
+    _CLIENT_REQUEST_ID = "Client Request ID"
+
     results_defer_partial_query_failures_option_name = "deferpartialqueryfailures"
     request_timeout_option_name = "servertimeout"
     no_request_timeout_option_name = "norequesttimeout"
@@ -49,3 +51,7 @@ class ClientRequestProperties:
     def to_json(self) -> str:
         """Safe serialization to a JSON string."""
         return json.dumps({"Options": self._options, "Parameters": self._parameters}, default=str)
+
+    def get_tracing_attributes(self) -> dict:
+        """Gets dictionary of attributes to be documented during tracing"""
+        return {self._CLIENT_REQUEST_ID: self.client_request_id}

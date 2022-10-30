@@ -81,7 +81,8 @@ class ManagedStreamingIngestClient(BaseIngestClient):
 
     @distributed_trace(kind=SpanKind.CLIENT)
     def ingest_from_file(self, file_descriptor: Union[FileDescriptor, str], ingestion_properties: IngestionProperties) -> IngestionResult:
-        IngestTracingAttributes.set_ingest_file_attributes(file_descriptor, ingestion_properties)
+        file_descriptor = FileDescriptor.get_instance(file_descriptor)
+        IngestTracingAttributes.set_ingest_descriptor_attributes(file_descriptor, ingestion_properties)
 
         stream_descriptor = StreamDescriptor.from_file_descriptor(file_descriptor)
 
@@ -90,7 +91,8 @@ class ManagedStreamingIngestClient(BaseIngestClient):
 
     @distributed_trace(kind=SpanKind.CLIENT)
     def ingest_from_stream(self, stream_descriptor: Union[StreamDescriptor, IO[AnyStr]], ingestion_properties: IngestionProperties) -> IngestionResult:
-        IngestTracingAttributes.set_ingest_stream_attributes(stream_descriptor, ingestion_properties)
+        stream_descriptor = StreamDescriptor.get_instance(stream_descriptor)
+        IngestTracingAttributes.set_ingest_descriptor_attributes(stream_descriptor, ingestion_properties)
 
         stream_descriptor = BaseIngestClient._prepare_stream(stream_descriptor, ingestion_properties)
         stream = stream_descriptor.stream
@@ -137,7 +139,7 @@ class ManagedStreamingIngestClient(BaseIngestClient):
         :param azure.kusto.ingest.BlobDescriptor blob_descriptor: An object that contains a description of the blob to be ingested.
         :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
         """
-        IngestTracingAttributes.set_ingest_blob_attributes(blob_descriptor, ingestion_properties)
+        IngestTracingAttributes.set_ingest_descriptor_attributes(blob_descriptor, ingestion_properties)
 
         return self.queued_client.ingest_from_blob(blob_descriptor, ingestion_properties)
 

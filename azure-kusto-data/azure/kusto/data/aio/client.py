@@ -47,14 +47,14 @@ class KustoClient(_KustoClientBase):
     @distributed_trace_async(name_of_span="KustoClient.query_cmd", kind=SpanKind.CLIENT)
     @aio_documented_by(KustoClientSync.execute_query)
     async def execute_query(self, database: str, query: str, properties: ClientRequestProperties = None) -> KustoResponseDataSet:
-        KustoTracingAttributes.set_query_attributes(self._kusto_cluster, database)
+        KustoTracingAttributes.set_query_attributes(self._kusto_cluster, database, properties)
 
         return await self._execute(self._query_endpoint, database, query, None, KustoClient._query_default_timeout, properties)
 
     @distributed_trace_async(name_of_span="KustoClient.control_cmd", kind=SpanKind.CLIENT)
     @aio_documented_by(KustoClientSync.execute_mgmt)
     async def execute_mgmt(self, database: str, query: str, properties: ClientRequestProperties = None) -> KustoResponseDataSet:
-        KustoTracingAttributes.set_mgmt_attributes(self._kusto_cluster, database)
+        KustoTracingAttributes.set_query_attributes(self._kusto_cluster, database, properties)
 
         return await self._execute(self._mgmt_endpoint, database, query, None, KustoClient._mgmt_default_timeout, properties)
 
@@ -69,7 +69,7 @@ class KustoClient(_KustoClientBase):
         properties: ClientRequestProperties = None,
         mapping_name: str = None,
     ):
-        KustoTracingAttributes.set_ingest_attributes(database, table)
+        KustoTracingAttributes.set_ingest_attributes(self._kusto_cluster, database, properties)
 
         stream_format = stream_format.kusto_value if isinstance(stream_format, DataFormat) else DataFormat[stream_format.upper()].kusto_value
         endpoint = self._streaming_ingest_endpoint + database + "/" + table + "?streamFormat=" + stream_format
@@ -90,7 +90,7 @@ class KustoClient(_KustoClientBase):
     async def execute_streaming_query(
         self, database: str, query: str, timeout: timedelta = _KustoClientBase._query_default_timeout, properties: Optional[ClientRequestProperties] = None
     ) -> KustoStreamingResponseDataSet:
-        KustoTracingAttributes.set_query_attributes(self._kusto_cluster, database)
+        KustoTracingAttributes.set_query_attributes(self._kusto_cluster, database, properties)
 
         response = await self._execute_streaming_query_parsed(database, query, timeout, properties)
         return KustoStreamingResponseDataSet(response)

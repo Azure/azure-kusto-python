@@ -15,7 +15,7 @@ from azure.identity import ManagedIdentityCredential, AzureCliCredential
 from msal import ConfidentialClientApplication, PublicClientApplication
 
 from ._cloud_settings import CloudSettings, CloudInfo
-from ._telemetry import KustoTracingAttributes, KustoTracing
+from ._telemetry import KustoTracing
 
 from .exceptions import KustoClientError, KustoAioSyntaxError, KustoAsyncUsageError
 

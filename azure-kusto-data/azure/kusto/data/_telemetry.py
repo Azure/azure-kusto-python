@@ -1,9 +1,11 @@
-from typing import Callable
+from typing import Callable, Optional
 
 from azure.core.settings import settings
 from azure.core.tracing.decorator import distributed_trace
 from azure.core.tracing.decorator_async import distributed_trace_async
 from azure.core.tracing import SpanKind
+
+from .client_request_properties import ClientRequestProperties
 
 
 class KustoTracingAttributes:
@@ -16,6 +18,7 @@ class KustoTracingAttributes:
     _TABLE = "Table"
 
     _AUTH_METHOD = "Authentication Method"
+    _CLIENT_ACTIVITY_ID = "Client Activity ID"
 
     _SPAN_COMPONENT = "component"
     _HTTP = "http"
@@ -38,18 +41,13 @@ class KustoTracingAttributes:
                 span.add_attribute(key, val)
 
     @classmethod
-    def set_query_attributes(cls, cluster: str, database: str) -> None:
-        query_attributes: dict = cls.create_query_attributes(cluster, database)
+    def set_query_attributes(cls, cluster: str, database: str, properties: Optional[ClientRequestProperties] = None) -> None:
+        query_attributes: dict = cls.create_query_attributes(cluster, database, properties)
         cls.add_attributes(tracing_attributes=query_attributes)
 
     @classmethod
-    def set_mgmt_attributes(cls, cluster: str, database: str) -> None:
-        mgmt_attributes: dict = cls.create_query_attributes(cluster, database)
-        cls.add_attributes(tracing_attributes=mgmt_attributes)
-
-    @classmethod
-    def set_ingest_attributes(cls, database: str, table: str) -> None:
-        ingest_attributes: dict = cls.create_ingest_attributes(database, table)
+    def set_ingest_attributes(cls, database: str, table: str, properties: Optional[ClientRequestProperties] = None) -> None:
+        ingest_attributes: dict = cls.create_ingest_attributes(database, table, properties)
         cls.add_attributes(tracing_attributes=ingest_attributes)
 
     @classmethod
@@ -63,13 +61,19 @@ class KustoTracingAttributes:
         cls.add_attributes(tracing_attributes=cloud_info_attributes)
 
     @classmethod
-    def create_query_attributes(cls, cluster: str, database: str) -> dict:
+    def create_query_attributes(cls, cluster: str, database: str, properties: Optional[ClientRequestProperties] = None) -> dict:
         query_attributes: dict = {cls._KUSTO_CLUSTER: cluster, cls._DATABASE: database}
+        if properties:
+            query_attributes.update(properties.get_tracing_attributes())
+
         return query_attributes
 
     @classmethod
-    def create_ingest_attributes(cls, database: str, table: str) -> dict:
+    def create_ingest_attributes(cls, database: str, table: str, properties: Optional[ClientRequestProperties] = None) -> dict:
         ingest_attributes: dict = {cls._DATABASE: database, cls._TABLE: table}
+        if properties:
+            ingest_attributes.update(properties.get_tracing_attributes())
+
         return ingest_attributes
 
     @classmethod

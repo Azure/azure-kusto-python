@@ -117,10 +117,7 @@ class BaseIngestClient(metaclass=ABCMeta):
         :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
         :return prepared stream descriptor
         """
-        if not isinstance(stream_descriptor, StreamDescriptor):
-            new_descriptor = StreamDescriptor(stream_descriptor)
-        else:
-            new_descriptor = copy(stream_descriptor)
+        new_descriptor = StreamDescriptor.get_instance(stream_descriptor)
 
         if isinstance(new_descriptor.stream, TextIOWrapper):
             new_descriptor.stream = new_descriptor.stream.buffer
@@ -139,10 +136,7 @@ class BaseIngestClient(metaclass=ABCMeta):
         :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
         :return prepared file descriptor
         """
-        if not isinstance(file_descriptor, FileDescriptor):
-            descriptor = FileDescriptor(file_descriptor)
-        else:
-            descriptor = file_descriptor
+        descriptor = FileDescriptor.get_instance(file_descriptor)
 
         should_compress = BaseIngestClient._should_compress(descriptor, ingestion_properties)
         return descriptor, should_compress
