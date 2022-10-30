@@ -114,7 +114,12 @@ class TokenProviderTests(unittest.TestCase):
             async_to_sync(provider.get_token_async)()
             assert False, "Expected KustoAsyncUsageError to occur"
         except KustoAsyncUsageError as e:
-            assert str(e) == "Method get_token_async can't be called from a synchronous client"
+            assert (
+                str(e) == "Method get_token_async can't be called from a synchronous client"
+                or str(e) == "Method context_async can't be called from a synchronous client"
+            )
+            # context_async is called for tracing purposes
+
         try:
             async_to_sync(provider.context_async)()
             assert False, "Expected KustoAsyncUsageError to occur"
