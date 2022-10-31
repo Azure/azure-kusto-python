@@ -310,7 +310,7 @@ class KustoSampleApp:
     @classmethod
     def post_ingestion_querying(cls, kusto_client: KustoClient, database_name: str, table_name: str, config_ingest_data: bool) -> None:
         """
-        Third and final phase - simple queries to validate the hopefully successful run of the script.
+        Third and final phase - simple queries to validate the script ran successfully.
         :param kusto_client: Client to run queries
         :param database_name: DB Name
         :param table_name: Table Name
@@ -318,6 +318,10 @@ class KustoSampleApp:
         """
         optional_post_ingestion_message = "post-ingestion " if config_ingest_data else ""
 
+        # Note: We poll here the ingestion's target table because monitoring successful ingestions is expensive and not recommended.
+        #   Instead, the recommended ingestion monitoring approach is to monitor failures.
+        # Learn more: https://docs.microsoft.com/azure/data-explorer/kusto/api/netfx/kusto-ingest-client-status#tracking-ingestion-status-kustoqueuedingestclient
+        #   and https://docs.microsoft.com/azure/data-explorer/using-diagnostic-logs
         cls.wait_for_user_to_proceed(f"Get {optional_post_ingestion_message}row count for '{database_name}.{table_name}':")
         cls.query_existing_number_of_rows(kusto_client, database_name, table_name)
 
