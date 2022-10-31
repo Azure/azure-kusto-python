@@ -4,11 +4,10 @@ import random
 from typing import Union, AnyStr, IO, List, Optional, Dict
 from urllib.parse import urlparse
 
-from azure.storage.blob import BlobServiceClient
 from azure.storage.queue import QueueServiceClient, TextBase64EncodePolicy
 
 from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
-from azure.kusto.data.exceptions import KustoClosedError, KustoServiceError, KustoBlobError
+from azure.kusto.data.exceptions import KustoClosedError, KustoServiceError
 from .ingestion_blob_info import IngestionBlobInfo
 from ._resource_manager import _ResourceManager, _ResourceUri
 from .base_ingest_client import BaseIngestClient, IngestionResult, IngestionStatus
@@ -60,18 +59,18 @@ class QueuedIngestClient(BaseIngestClient):
 
         containers = self._get_containers()
 
-        if isinstance(file_descriptor, FileDescriptor):
-            descriptor = file_descriptor
-        else:
-            descriptor = FileDescriptor(file_descriptor)
-
-        should_compress = not descriptor.is_compressed and ingestion_properties.format.compressible
-
-        with descriptor.open(should_compress) as stream:
-            blob_descriptor = self._upload_blob(containers, descriptor, ingestion_properties, stream)
-            result = self.ingest_from_blob(blob_descriptor, ingestion_properties=ingestion_properties)
-
-        return result
+        file_descriptor, should_compress = BaseIngestClient._prepare_file(file_descriptor, ingestion_properties)
+        with file_descriptor.open(should_compress) as stream:
+            blob_descriptor = BlobDescriptor.upload_from_different_descriptor(
+                containers,
+                file_descriptor,
+                ingestion_properties.database,
+                ingestion_properties.table,
+                stream,
+                self._proxy_dict,
+                self._SERVICE_CLIENT_TIMEOUT_SECONDS,
+            )
+        return self.ingest_from_blob(blob_descriptor, ingestion_properties=ingestion_properties)
 
     def ingest_from_stream(self, stream_descriptor: Union[StreamDescriptor, IO[AnyStr]], ingestion_properties: IngestionProperties) -> IngestionResult:
         """Ingest from io streams.
@@ -83,7 +82,15 @@ class QueuedIngestClient(BaseIngestClient):
         containers = self._get_containers()
 
         stream_descriptor = BaseIngestClient._prepare_stream(stream_descriptor, ingestion_properties)
-        blob_descriptor = self._upload_blob(containers, stream_descriptor, ingestion_properties, stream_descriptor.stream)
+        blob_descriptor = BlobDescriptor.upload_from_different_descriptor(
+            containers,
+            stream_descriptor,
+            ingestion_properties.database,
+            ingestion_properties.table,
+            stream_descriptor.stream,
+            self._proxy_dict,
+            self._SERVICE_CLIENT_TIMEOUT_SECONDS,
+        )
         return self.ingest_from_blob(blob_descriptor, ingestion_properties=ingestion_properties)
 
     def ingest_from_blob(self, blob_descriptor: BlobDescriptor, ingestion_properties: IngestionProperties) -> IngestionResult:
@@ -121,26 +128,6 @@ class QueuedIngestClient(BaseIngestClient):
             self._validate_endpoint_service_type()
             raise ex
         return containers
-
-    def _upload_blob(
-        self,
-        containers: List[_ResourceUri],
-        descriptor: Union[FileDescriptor, StreamDescriptor],
-        ingestion_properties: IngestionProperties,
-        stream: IO[AnyStr],
-    ) -> BlobDescriptor:
-        blob_name = "{db}__{table}__{guid}__{file}".format(
-            db=ingestion_properties.database, table=ingestion_properties.table, guid=descriptor.source_id, file=descriptor.stream_name
-        )
-        random_container = random.choice(containers)
-        try:
-            with BlobServiceClient(random_container.account_uri, proxies=self._proxy_dict) as blob_service:
-                with blob_service.get_blob_client(container=random_container.object_name, blob=blob_name) as blob_client:
-                    blob_client.upload_blob(data=stream, timeout=self._SERVICE_CLIENT_TIMEOUT_SECONDS)
-                    url = blob_client.url
-        except Exception as e:
-            raise KustoBlobError(e)
-        return BlobDescriptor(url, descriptor.size, descriptor.source_id)
 
     def _validate_endpoint_service_type(self):
         if not self._hostname_starts_with_ingest(self._connection_datasource):

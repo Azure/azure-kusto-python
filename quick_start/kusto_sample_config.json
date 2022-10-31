@@ -9,6 +9,7 @@
   "ingestData": true,
   "authenticationMode": "UserPrompt",
   "waitForUser": true,
+  "ignoreFirstRecord": false,
   "waitForIngestSeconds": 20,
   "batchingPolicy": "{ 'MaximumBatchingTimeSpan': '00:00:10', 'MaximumNumberOfItems': 500, 'MaximumRawDataSizeMB': 1024 }",
   "tableSchema": "(rownumber:int, rowguid:string, xdouble:real, xfloat:real, xbool:bool, xint16:int, xint32:int, xint64:long, xuint8:long, xuint16:long, xuint32:long, xuint64:long, xdate:datetime, xsmalltext:string, xtext:string, xnumberAsText:string, xtime:timespan, xtextWithNulls:string, xdynamicWithNulls:dynamic)",

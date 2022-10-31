@@ -166,6 +166,7 @@ class IngestionProperties:
         drop_by_tags: Optional[List[str]] = None,
         additional_tags: Optional[List[str]] = None,
         flush_immediately: bool = False,
+        ignore_first_record: bool = False,
         report_level: ReportLevel = ReportLevel.DoNotReport,
         report_method: ReportMethod = ReportMethod.Queue,
         validation_policy: Optional[ValidationPolicy] = None,
@@ -211,6 +212,7 @@ class IngestionProperties:
         self.ingest_by_tags = ingest_by_tags
         self.drop_by_tags = drop_by_tags
         self.flush_immediately = flush_immediately
+        self.ignore_first_record = ignore_first_record
         self.report_level = report_level
         self.report_method = report_method
         self.validation_policy = validation_policy

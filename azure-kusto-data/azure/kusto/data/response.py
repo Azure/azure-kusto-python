@@ -78,7 +78,7 @@ class KustoResponseDataSet(BaseKustoResponseDataSet, metaclass=ABCMeta):
     """
     `KustoResponseDataSet` Represents the parsed data set carried by the response to a Kusto request.
     `KustoResponseDataSet` provides convenient methods to work with the returned result.
-    The result table(s) are accessable via the @primary_results property.
+    The result table(s) are accessible via the @primary_results property.
     @primary_results returns a collection of `KustoResultTable`.
         It can contain more than one table when [`fork`](https://docs.microsoft.com/en-us/azure/kusto/query/forkoperator) is used.
     """
