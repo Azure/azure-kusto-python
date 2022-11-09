@@ -27,6 +27,11 @@ class HTTPAdapterWithSocketOptions(requests.adapters.HTTPAdapter):
         self.max_retries = kwargs.pop("max_retries", None)
         super(HTTPAdapterWithSocketOptions, self).__init__(*args, **kwargs)
 
+    def __getstate__(self):
+        state = super(HTTPAdapterWithSocketOptions, self).__getstate__()
+        state['socket_options'] = self.socket_options
+        return state
+
     def init_poolmanager(self, *args, **kwargs):
         if self.socket_options is not None:
             kwargs["socket_options"] = self.socket_options
