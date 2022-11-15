@@ -11,7 +11,7 @@ from . import _converters
 from .exceptions import KustoMultiApiError, KustoStreamingQueryError
 
 
-class WellKnownDataSet(Enum):
+class WellKnownDataSet(str, Enum):
     """Categorizes data tables according to the role they play in the data set that a Kusto query returns."""
 
     PrimaryResult = "PrimaryResult"

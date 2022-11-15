@@ -102,6 +102,7 @@ class ConfigJson:
     ingest_data: bool
     authentication_mode: AuthenticationModeOptions
     wait_for_user: bool
+    ignore_first_record: bool
     wait_for_ingest_seconds: bool
     batching_policy: str
 
@@ -276,7 +277,9 @@ class KustoSampleApp:
             )
 
             # Learn More: For more information about ingesting data to Kusto in Python, see: https://docs.microsoft.com/azure/data-explorer/python-ingest-data
-            cls.ingest_data(data_file, data_file.data_format, ingest_client, config.database_name, config.table_name, data_file.mapping_name)
+            cls.ingest_data(
+                data_file, data_file.data_format, ingest_client, config.database_name, config.table_name, data_file.mapping_name, config.ignore_first_record
+            )
 
         Utils.Ingestion.wait_for_ingestion_to_complete(config.wait_for_ingest_seconds)
 
@@ -314,7 +317,14 @@ class KustoSampleApp:
     @classmethod
     @distributed_trace(kind=SpanKind.CLIENT)
     def ingest_data(
-        cls, data_file: ConfigData, data_format: DataFormat, ingest_client: QueuedIngestClient, database_name: str, table_name: str, mapping_name: str
+        cls,
+        data_file: ConfigData,
+        data_format: DataFormat,
+        ingest_client: QueuedIngestClient,
+        database_name: str,
+        table_name: str,
+        mapping_name: str,
+        ignore_first_record: bool,
     ) -> None:
         """
         Ingest data from given source.
@@ -324,6 +334,7 @@ class KustoSampleApp:
         :param database_name: DB name
         :param table_name: Table name
         :param mapping_name: Desired mapping name
+        :param ignore_first_record: Flag noting whether to ignore the first record in the table
         """
         source_type = data_file.source_type
         source_uri = data_file.data_source_uri
@@ -336,9 +347,9 @@ class KustoSampleApp:
         # Tip: Kusto's Python SDK can ingest data from files, blobs, open streams and pandas dataframes.
         # See the SDK's samples and the E2E tests in azure.kusto.ingest for additional references.
         if source_type == SourceType.local_file_source:
-            Utils.Ingestion.ingest_from_file(ingest_client, database_name, table_name, source_uri, data_format, mapping_name)
+            Utils.Ingestion.ingest_from_file(ingest_client, database_name, table_name, source_uri, data_format, ignore_first_record, mapping_name)
         elif source_type == SourceType.blob_source:
-            Utils.Ingestion.ingest_from_blob(ingest_client, database_name, table_name, source_uri, data_format, mapping_name)
+            Utils.Ingestion.ingest_from_blob(ingest_client, database_name, table_name, source_uri, data_format, ignore_first_record, mapping_name)
         else:
             Utils.error_handler(f"Unknown source '{source_type}' for file '{source_uri}'")
 
@@ -346,7 +357,7 @@ class KustoSampleApp:
     @distributed_trace(kind=SpanKind.CLIENT)
     def post_ingestion_querying(cls, kusto_client: KustoClient, database_name: str, table_name: str, config_ingest_data: bool) -> None:
         """
-        Third and final phase - simple queries to validate the hopefully successful run of the script.
+        Third and final phase - simple queries to validate the script ran successfully.
         :param kusto_client: Client to run queries
         :param database_name: DB Name
         :param table_name: Table Name
@@ -354,6 +365,10 @@ class KustoSampleApp:
         """
         optional_post_ingestion_message = "post-ingestion " if config_ingest_data else ""
 
+        # Note: We poll here the ingestion's target table because monitoring successful ingestions is expensive and not recommended.
+        #   Instead, the recommended ingestion monitoring approach is to monitor failures.
+        # Learn more: https://docs.microsoft.com/azure/data-explorer/kusto/api/netfx/kusto-ingest-client-status#tracking-ingestion-status-kustoqueuedingestclient
+        #   and https://docs.microsoft.com/azure/data-explorer/using-diagnostic-logs
         cls.wait_for_user_to_proceed(f"Get {optional_post_ingestion_message}row count for '{database_name}.{table_name}':")
         cls.query_existing_number_of_rows(kusto_client, database_name, table_name)
 

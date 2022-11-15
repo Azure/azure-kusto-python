@@ -45,7 +45,7 @@ class FileDescriptor(DescriptorBase):
     """FileDescriptor is used to describe a file that will be used as an ingestion source."""
 
     # Gzip keeps the decompressed stream size as a UINT32 in the last 4 bytes of the stream, however this poses a limit to the expressed size which is 4GB
-    # The standard says that when the size is bigger then 4GB, the UINT rolls over.
+    # The standard says that when the size is bigger than 4GB, the UINT rolls over.
     # The below constant expresses the maximal size of a compressed stream that will not cause the UINT32 to rollover given a maximal compression ratio of 1:40
     GZIP_MAX_DISK_SIZE_FOR_DETECTION = int(4 * 1024 * 1024 * 1024 / 40)
     DEFAULT_COMPRESSION_RATIO = 11
