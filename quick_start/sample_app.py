@@ -62,6 +62,7 @@ class SourceType(enum.Enum):
 
     local_file_source = "localFileSource"
     blob_source = "blobSource"
+    nosource = "nosource"
 
 
 @dataclass
@@ -346,6 +347,7 @@ class KustoSampleApp:
 
         # Tip: Kusto's Python SDK can ingest data from files, blobs, open streams and pandas dataframes.
         # See the SDK's samples and the E2E tests in azure.kusto.ingest for additional references.
+        # Note: No need to add "nosource" option as in that case the "ingestData" flag will be set to false, and it will be imppossible to reach this code segemnt anyway.
         if source_type == SourceType.local_file_source:
             Utils.Ingestion.ingest_from_file(ingest_client, database_name, table_name, source_uri, data_format, ignore_first_record, mapping_name)
         elif source_type == SourceType.blob_source:
