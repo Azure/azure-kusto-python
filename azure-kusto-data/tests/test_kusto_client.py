@@ -39,7 +39,7 @@ class TestKustoClient(KustoClientTestsMixin):
 
     @patch("requests.Session.post", side_effect=mocked_requests_post)
     def test_sanity_control_command(self, mock_post):
-        """Tests contol command."""
+        """Tests control command."""
         client = KustoClient(self.HOST)
         response = client.execute_mgmt("NetDefaultDB", ".show version")
         self._assert_sanity_control_command_response(response)

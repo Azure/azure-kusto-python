@@ -24,9 +24,9 @@ from opentelemetry.trace import Tracer
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 
-# alternative console exporter for distributed tracing
 from opentelemetry.sdk.trace.export import ConsoleSpanExporter
 
+# alternative azure monitor exporter for distributed tracing
 from azure.monitor.opentelemetry.exporter import AzureMonitorTraceExporter
 
 
@@ -39,11 +39,12 @@ def enable_distributed_tracing() -> "Tracer":
 
     settings.tracing_implementation = OpenTelemetrySpan
 
-    # In the below example, we use an Azure Monitor Exporter, but you can use anything OpenTelemetry supports,
-    # uncomment these lines to use the simple console exporter.
+    # In the below example, we use a simple console exporter, but you can use anything OpenTelemetry supports. To use
+    # Azure Monitor Exporter uncomment the lines below and add the 'uuid of the instrumentation key (see your Azure
+    # Monitor account)'.
 
-    # exporter = ConsoleSpanExporter()
-    exporter = AzureMonitorTraceExporter.from_connection_string(conn_str=os.environ["APPLICATIONINSIGHTS_CONNECTION_STRING"])
+    exporter = ConsoleSpanExporter()
+    # exporter = AzureMonitorTraceExporter.from_connection_string(conn_str=os.environ["APPLICATIONINSIGHTS_CONNECTION_STRING"])
 
     trace.set_tracer_provider(TracerProvider())
     tracer = trace.get_tracer(__name__)
@@ -404,8 +405,7 @@ def main():
 
 
 if __name__ == "__main__":
-    # Uncomment the lines below and add the 'uuid of the instrumentation key (see your Azure Monitor account)' to the
-    # enable_distributed_tracing() function above, to enable distributed tracing
+    # Uncomment the lines below to enable distributed tracing
 
     # tracer = enable_distributed_tracing()
     # with tracer.start_as_current_span(name="KustoSampleApp"):

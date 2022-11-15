@@ -13,12 +13,12 @@ class KustoTracingAttributes:
     Additional ADX attributes for telemetry spans
     """
 
-    _KUSTO_CLUSTER = "Kusto Cluster"
-    _DATABASE = "Database"
-    _TABLE = "Table"
+    _KUSTO_CLUSTER = "kusto_cluster"
+    _DATABASE = "database"
+    _TABLE = "table"
 
-    _AUTH_METHOD = "Authentication Method"
-    _CLIENT_ACTIVITY_ID = "Client Activity ID"
+    _AUTH_METHOD = "authentication_method"
+    _CLIENT_ACTIVITY_ID = "client_activity_id"
 
     _SPAN_COMPONENT = "component"
     _HTTP = "http"
@@ -46,8 +46,8 @@ class KustoTracingAttributes:
         cls.add_attributes(tracing_attributes=query_attributes)
 
     @classmethod
-    def set_ingest_attributes(cls, database: str, table: str, properties: Optional[ClientRequestProperties] = None) -> None:
-        ingest_attributes: dict = cls.create_ingest_attributes(database, table, properties)
+    def set_streaming_ingest_attributes(cls, cluster: str, database: str, table: str, properties: Optional[ClientRequestProperties] = None) -> None:
+        ingest_attributes: dict = cls.create_streaming_ingest_attributes(cluster, database, table, properties)
         cls.add_attributes(tracing_attributes=ingest_attributes)
 
     @classmethod
@@ -69,8 +69,8 @@ class KustoTracingAttributes:
         return query_attributes
 
     @classmethod
-    def create_ingest_attributes(cls, database: str, table: str, properties: Optional[ClientRequestProperties] = None) -> dict:
-        ingest_attributes: dict = {cls._DATABASE: database, cls._TABLE: table}
+    def create_streaming_ingest_attributes(cls, cluster: str, database: str, table: str, properties: Optional[ClientRequestProperties] = None) -> dict:
+        ingest_attributes: dict = {cls._KUSTO_CLUSTER: cluster, cls._DATABASE: database, cls._TABLE: table}
         if properties:
             ingest_attributes.update(properties.get_tracing_attributes())
 

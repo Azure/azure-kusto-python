@@ -154,10 +154,7 @@ class KustoClient(_KustoClientBase):
         :return: Kusto response data set.
         :rtype: azure.kusto.data.response.KustoResponseDataSet
         """
-        if properties:
-            KustoTracingAttributes.set_query_attributes(self._kusto_cluster, database, properties)
-        else:
-            KustoTracingAttributes.set_query_attributes(self._kusto_cluster, database)
+        KustoTracingAttributes.set_query_attributes(self._kusto_cluster, database, properties)
 
         return self._execute(self._query_endpoint, database, query, None, self._query_default_timeout, properties)
 
@@ -172,10 +169,7 @@ class KustoClient(_KustoClientBase):
         :return: Kusto response data set.
         :rtype: azure.kusto.data.response.KustoResponseDataSet
         """
-        if properties:
-            KustoTracingAttributes.set_query_attributes(self._kusto_cluster, database, properties)
-        else:
-            KustoTracingAttributes.set_query_attributes(self._kusto_cluster, database)
+        KustoTracingAttributes.set_query_attributes(self._kusto_cluster, database, properties)
 
         return self._execute(self._mgmt_endpoint, database, query, None, self._mgmt_default_timeout, properties)
 
@@ -201,10 +195,7 @@ class KustoClient(_KustoClientBase):
         :param ClientRequestProperties properties: additional request properties.
         :param str mapping_name: Pre-defined mapping of the table. Required when stream_format is json/avro.
         """
-        if properties:
-            KustoTracingAttributes.set_ingest_attributes(self._kusto_cluster, database, properties)
-        else:
-            KustoTracingAttributes.set_ingest_attributes(self._kusto_cluster, database)
+        KustoTracingAttributes.set_streaming_ingest_attributes(self._kusto_cluster, database, table, properties)
 
         stream_format = stream_format.kusto_value if isinstance(stream_format, DataFormat) else DataFormat[stream_format.upper()].kusto_value
         endpoint = self._streaming_ingest_endpoint + database + "/" + table + "?streamFormat=" + stream_format
@@ -234,10 +225,7 @@ class KustoClient(_KustoClientBase):
         :param azure.kusto.data.ClientRequestProperties properties: Optional additional properties.
         :return KustoStreamingResponseDataSet:
         """
-        if properties:
-            KustoTracingAttributes.set_query_attributes(self._kusto_cluster, database, properties)
-        else:
-            KustoTracingAttributes.set_query_attributes(self._kusto_cluster, database)
+        KustoTracingAttributes.set_query_attributes(self._kusto_cluster, database, properties)
 
         return KustoStreamingResponseDataSet(self._execute_streaming_query_parsed(database, query, timeout, properties))
 

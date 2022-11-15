@@ -153,8 +153,8 @@ class IngestionProperties:
     For more information check out https://docs.microsoft.com/en-us/azure/data-explorer/ingestion-properties
     """
 
-    _DATABASE = "Database"
-    _TABLE = "Table"
+    _DATABASE = "database"
+    _TABLE = "table"
 
     def __init__(
         self,

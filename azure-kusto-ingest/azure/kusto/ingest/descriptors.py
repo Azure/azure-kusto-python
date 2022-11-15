@@ -33,7 +33,7 @@ def ensure_uuid(maybe_uuid: OptionalUUID) -> uuid.UUID:
 class DescriptorBase(abc.ABC):
     """This base class abstracts tracing attributes for all implementations."""
 
-    _SOURCE_ID = "Source ID"
+    _SOURCE_ID = "source_id"
 
     @abc.abstractmethod
     def get_tracing_attributes(self) -> dict:
@@ -49,7 +49,7 @@ class FileDescriptor(DescriptorBase):
     # The below constant expresses the maximal size of a compressed stream that will not cause the UINT32 to rollover given a maximal compression ratio of 1:40
     GZIP_MAX_DISK_SIZE_FOR_DETECTION = int(4 * 1024 * 1024 * 1024 / 40)
     DEFAULT_COMPRESSION_RATIO = 11
-    _FILE_PATH = "File Path"
+    _FILE_PATH = "file_path"
 
     def __init__(self, path: str, size: Optional[int] = None, source_id: OptionalUUID = None):
         """
@@ -134,7 +134,7 @@ class FileDescriptor(DescriptorBase):
 class BlobDescriptor(DescriptorBase):
     """BlobDescriptor is used to describe a blob that will be used as an ingestion source"""
 
-    _BLOB_URI = "Blob URI"
+    _BLOB_URI = "blob_uri"
 
     def __init__(self, path: str, size: Optional[int] = None, source_id: OptionalUUID = None):
         """
@@ -187,7 +187,7 @@ class BlobDescriptor(DescriptorBase):
 class StreamDescriptor(DescriptorBase):
     """StreamDescriptor is used to describe a stream that will be used as ingestion source"""
 
-    _STREAM_NAME = "Stream Name"
+    _STREAM_NAME = "stream_name"
 
     # TODO: currently we always assume that streams are gz compressed (will get compressed before sending), should we expand that?
     def __init__(

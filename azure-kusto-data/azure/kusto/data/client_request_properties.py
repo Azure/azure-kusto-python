@@ -9,7 +9,7 @@ class ClientRequestProperties:
     For more information please look at: https://docs.microsoft.com/en-us/azure/kusto/api/netfx/request-properties
     """
 
-    _CLIENT_REQUEST_ID = "Client Request ID"
+    _CLIENT_REQUEST_ID = "client_request_id"
 
     results_defer_partial_query_failures_option_name = "deferpartialqueryfailures"
     request_timeout_option_name = "servertimeout"
@@ -54,4 +54,4 @@ class ClientRequestProperties:
 
     def get_tracing_attributes(self) -> dict:
         """Gets dictionary of attributes to be documented during tracing"""
-        return {self._CLIENT_REQUEST_ID: self.client_request_id}
+        return {self._CLIENT_REQUEST_ID: str(self.client_request_id)}
