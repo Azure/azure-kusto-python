@@ -34,11 +34,12 @@ class KustoTracingAttributes:
         """
         tracing_attributes: dict = kwargs.pop("tracing_attributes", {})
         span_impl_type = settings.tracing_implementation()
-        if span_impl_type is not None:
-            current_span = span_impl_type.get_current_span()
-            span = span_impl_type(span=current_span)
-            for key, val in tracing_attributes.items():
-                span.add_attribute(key, val)
+        if span_impl_type is None:
+            return
+        current_span = span_impl_type.get_current_span()
+        span = span_impl_type(span=current_span)
+        for key, val in tracing_attributes.items():
+            span.add_attribute(key, val)
 
     @classmethod
     def set_query_attributes(cls, cluster: str, database: str, properties: Optional[ClientRequestProperties] = None) -> None:
