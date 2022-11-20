@@ -1,6 +1,5 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
-from copy import copy
 from typing import Union, AnyStr, Optional
 from typing import IO
 

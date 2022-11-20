@@ -35,8 +35,6 @@ class ManagedStreamingIngestClient(BaseIngestClient):
     """
 
     MAX_STREAMING_SIZE_IN_BYTES = 4 * 1024 * 1024
-    INGESTION_SIZE_FAIL = "The ingestion is too large for streaming ingestion (over 4MB)"
-    MAX_ATTEMPTS_FAIL = "Multiple transient errors were encountered when trying to do streaming ingestion"
 
     @staticmethod
     def from_engine_kcsb(engine_kcsb: Union[KustoConnectionStringBuilder, str]) -> "ManagedStreamingIngestClient":
