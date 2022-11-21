@@ -27,7 +27,7 @@ class HTTPAdapterWithSocketOptions(requests.adapters.HTTPAdapter):
 
     def __getstate__(self):
         state = super(HTTPAdapterWithSocketOptions, self).__getstate__()
-        state['socket_options'] = self.socket_options
+        state["socket_options"] = self.socket_options
         return state
 
     def init_poolmanager(self, *args, **kwargs):

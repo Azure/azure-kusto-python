@@ -11,4 +11,3 @@ def test_pickle():
     original = HTTPAdapterWithSocketOptions(socket_options=socket_options)
     unpickled = pickle.loads(pickle.dumps(original))
     assert unpickled.socket_options == socket_options
-
