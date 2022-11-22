@@ -25,9 +25,12 @@ if TYPE_CHECKING:
 class HTTPAdapterWithSocketOptions(requests.adapters.HTTPAdapter):
     def __init__(self, *args, **kwargs):
         self.socket_options = kwargs.pop("socket_options", None)
-        self.pool_maxsize = kwargs.pop("pool_maxsize", None)
-        self.max_retries = kwargs.pop("max_retries", None)
         super(HTTPAdapterWithSocketOptions, self).__init__(*args, **kwargs)
+
+    def __getstate__(self):
+        state = super(HTTPAdapterWithSocketOptions, self).__getstate__()
+        state["socket_options"] = self.socket_options
+        return state
 
     def init_poolmanager(self, *args, **kwargs):
         if self.socket_options is not None:
