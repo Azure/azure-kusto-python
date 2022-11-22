@@ -358,16 +358,18 @@ def main():
     if not kusto_connection_string or not ingest_connection_string:
         Utils.error_handler("Connection String error. Please validate your configuration file.")
     else:
-        kusto_client = KustoClient(kusto_connection_string)
-        ingest_client = QueuedIngestClient(ingest_connection_string)
+        # Make sure to use context manager for the Kusto client, as it will close the underlying resources properly.
+        # Alternatively, you can use the client as a regular Python object and call close() on it.
+        with KustoClient(kusto_connection_string) as kusto_client:
+            with QueuedIngestClient(ingest_connection_string) as ingest_client:
 
-        app.pre_ingestion_querying(app.config, kusto_client)
+                app.pre_ingestion_querying(app.config, kusto_client)
 
-        if app.config.ingest_data:
-            app.ingestion(app.config, kusto_client, ingest_client)
+                if app.config.ingest_data:
+                    app.ingestion(app.config, kusto_client, ingest_client)
 
-        if app.config.query_data:
-            app.post_ingestion_querying(kusto_client, app.config.database_name, app.config.table_name, app.config.ingest_data)
+                if app.config.query_data:
+                    app.post_ingestion_querying(kusto_client, app.config.database_name, app.config.table_name, app.config.ingest_data)
 
     print("\nKusto sample app done")
 

@@ -79,6 +79,9 @@ class _ResourceManager:
 
         self.__set_throttling_settings()
 
+    def close(self):
+        self._kusto_client.close()
+
     def __set_throttling_settings(self, num_of_attempts: int = 4, max_seconds_per_retry: float = 30):
         self._retryer = Retrying(
             wait=wait_random_exponential(max=max_seconds_per_retry),
@@ -99,7 +102,7 @@ class _ResourceManager:
     def _get_resource_by_name(self, table: KustoResultTable, resource_name: str):
         return [_ResourceUri.parse(row["StorageRoot"]) for row in table if row["ResourceTypeName"] == resource_name]
 
-    def _get_ingest_client_resources_from_service(self):
+    def _get_ingest_client_resources_from_service(self) -> _IngestClientResources:
         result = self._retryer(self._kusto_client.execute, "NetDefaultDB", ".get ingestion resources")
         table = result.primary_results[0]
 

@@ -1,13 +1,13 @@
 import uuid
 from io import SEEK_SET
-from typing import TYPE_CHECKING, Union, IO, AnyStr
-from tenacity import stop_after_delay, Retrying, wait_random_exponential, stop_after_attempt, _utils
+from typing import AnyStr, IO, TYPE_CHECKING, Union
+
+from tenacity import Retrying, _utils, stop_after_attempt, wait_random_exponential
 
 from azure.kusto.data import KustoConnectionStringBuilder
-from azure.kusto.data.exceptions import KustoApiError
-
-from . import IngestionProperties, BlobDescriptor, StreamDescriptor, FileDescriptor
-from ._stream_extensions import read_until_size_or_end, chain_streams
+from azure.kusto.data.exceptions import KustoApiError, KustoClosedError
+from . import BlobDescriptor, FileDescriptor, IngestionProperties, StreamDescriptor
+from ._stream_extensions import chain_streams, read_until_size_or_end
 from .base_ingest_client import BaseIngestClient, IngestionResult
 from .ingest_client import QueuedIngestClient
 from .streaming_ingest_client import KustoStreamingIngestClient
@@ -59,9 +59,16 @@ class ManagedStreamingIngestClient(BaseIngestClient):
         return ManagedStreamingIngestClient(engine_kcsb, dm_kcsb)
 
     def __init__(self, engine_kcsb: Union[KustoConnectionStringBuilder, str], dm_kcsb: Union[KustoConnectionStringBuilder, str]):
+        super().__init__()
         self.queued_client = QueuedIngestClient(dm_kcsb)
         self.streaming_client = KustoStreamingIngestClient(engine_kcsb)
         self._set_retry_settings()
+
+    def close(self) -> None:
+        if not self._is_closed:
+            self.queued_client.close()
+            self.streaming_client.close()
+        super().close()
 
     def _set_retry_settings(self, max_seconds_per_retry: float = _utils.MAX_WAIT, num_of_attempts: int = 3):
         self._num_of_attempts = num_of_attempts
@@ -72,12 +79,16 @@ class ManagedStreamingIngestClient(BaseIngestClient):
         self.streaming_client.set_proxy(proxy_url)
 
     def ingest_from_file(self, file_descriptor: Union[FileDescriptor, str], ingestion_properties: IngestionProperties) -> IngestionResult:
+        super().ingest_from_file(file_descriptor, ingestion_properties)
+
         stream_descriptor = StreamDescriptor.from_file_descriptor(file_descriptor)
 
         with stream_descriptor.stream:
             return self.ingest_from_stream(stream_descriptor, ingestion_properties)
 
     def ingest_from_stream(self, stream_descriptor: Union[StreamDescriptor, IO[AnyStr]], ingestion_properties: IngestionProperties) -> IngestionResult:
+        super().ingest_from_stream(stream_descriptor, ingestion_properties)
+
         stream_descriptor = BaseIngestClient._prepare_stream(stream_descriptor, ingestion_properties)
         stream = stream_descriptor.stream
 
@@ -115,6 +126,9 @@ class ManagedStreamingIngestClient(BaseIngestClient):
         :param azure.kusto.ingest.BlobDescriptor blob_descriptor: An object that contains a description of the blob to be ingested.
         :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
         """
+        if self._is_closed:
+            raise KustoClosedError()
+
         return self.queued_client.ingest_from_blob(blob_descriptor, ingestion_properties)
 
     @staticmethod

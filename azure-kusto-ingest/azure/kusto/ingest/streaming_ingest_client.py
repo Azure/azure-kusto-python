@@ -21,7 +21,13 @@ class KustoStreamingIngestClient(BaseIngestClient):
         """Kusto Streaming Ingest Client constructor.
         :param KustoConnectionStringBuilder kcsb: The connection string to initialize KustoClient.
         """
+        super().__init__()
         self._kusto_client = KustoClient(kcsb)
+
+    def close(self):
+        if not self._is_closed:
+            self._kusto_client.close()
+        super().close()
 
     def set_proxy(self, proxy_url: str):
         self._kusto_client.set_proxy(proxy_url)
@@ -31,6 +37,7 @@ class KustoStreamingIngestClient(BaseIngestClient):
         :param file_descriptor: a FileDescriptor to be ingested.
         :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
         """
+        super().ingest_from_file(file_descriptor, ingestion_properties)
 
         stream_descriptor = StreamDescriptor.from_file_descriptor(file_descriptor)
 
@@ -43,6 +50,8 @@ class KustoStreamingIngestClient(BaseIngestClient):
                be ingested.
         :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
         """
+        super().ingest_from_stream(stream_descriptor, ingestion_properties)
+
         return self._ingest_from_stream_with_client_request_id(stream_descriptor, ingestion_properties, None)
 
     def _ingest_from_stream_with_client_request_id(

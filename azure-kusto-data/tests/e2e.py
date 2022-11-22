@@ -37,8 +37,6 @@ class TestE2E:
     auth_id: ClassVar[Optional[str]]
     test_db: ClassVar[Optional[str]]
     ai_test_db: ClassVar[Optional[str]]
-    client: ClassVar[KustoClient]
-    ai_client: ClassVar[KustoClient]
 
     CHUNK_SIZE = 1024
 
@@ -120,9 +118,6 @@ class TestE2E:
 
         cls.ai_test_table_cmd = ".show tables"
 
-        cls.client = KustoClient(cls.engine_kcsb_from_env())
-        cls.ai_client = KustoClient(cls.engine_kcsb_from_env(True))
-
         cls.input_folder_path = cls.get_file_path()
 
         with open(os.path.join(cls.input_folder_path, "big.json")) as f:
@@ -142,6 +137,10 @@ class TestE2E:
     async def get_async_client(cls, app_insights=False) -> AsyncKustoClient:
         return AsyncKustoClient(cls.engine_kcsb_from_env(app_insights))
 
+    @classmethod
+    def get_client(cls, app_insights=False) -> KustoClient:
+        return KustoClient(cls.engine_kcsb_from_env(app_insights))
+
     @staticmethod
     def normalize_row(row):
         result = []
@@ -157,20 +156,21 @@ class TestE2E:
     # assertions
 
     def test_streaming_query(self):
-        result = self.client.execute_streaming_query(self.test_db, self.streaming_test_table_query + ";" + self.streaming_test_table_query)
-        counter = 0
+        with self.get_client() as client:
+            result = client.execute_streaming_query(self.test_db, self.streaming_test_table_query + ";" + self.streaming_test_table_query)
+            counter = 0
 
-        result.set_skip_incomplete_tables(True)
-        for primary in result.iter_primary_results():
-            counter += 1
-            for row in self.test_streaming_data:
-                assert row == self.normalize_row(next(primary).to_list())
+            result.set_skip_incomplete_tables(True)
+            for primary in result.iter_primary_results():
+                counter += 1
+                for row in self.test_streaming_data:
+                    assert row == self.normalize_row(next(primary).to_list())
 
-        assert counter == 2
+            assert counter == 2
 
-        assert result.finished
-        assert result.errors_count == 0
-        assert result.get_exceptions() == []
+            assert result.finished
+            assert result.errors_count == 0
+            assert result.get_exceptions() == []
 
     @pytest.mark.asyncio
     async def test_streaming_query_async(self):
@@ -195,30 +195,31 @@ class TestE2E:
             assert result.get_exceptions() == []
 
     def test_streaming_query_internal(self):
-        frames = self.client._execute_streaming_query_parsed(self.test_db, self.streaming_test_table_query)
+        with self.get_client() as client:
+            frames = client._execute_streaming_query_parsed(self.test_db, self.streaming_test_table_query)
 
-        initial_frame = next(frames)
-        expected_initial_frame = {
-            "FrameType": FrameType.DataSetHeader,
-            "IsProgressive": False,
-            "Version": "v2.0",
-        }
-        assert initial_frame == expected_initial_frame
-        query_props = next(frames)
-        assert query_props["FrameType"] == FrameType.DataTable
-        assert query_props["TableKind"] == WellKnownDataSet.QueryProperties.value
-        assert type(query_props["Columns"]) == list
-        assert type(query_props["Rows"]) == list
-        assert len(query_props["Rows"][0]) == len(query_props["Columns"])
+            initial_frame = next(frames)
+            expected_initial_frame = {
+                "FrameType": FrameType.DataSetHeader,
+                "IsProgressive": False,
+                "Version": "v2.0",
+            }
+            assert initial_frame == expected_initial_frame
+            query_props = next(frames)
+            assert query_props["FrameType"] == FrameType.DataTable
+            assert query_props["TableKind"] == WellKnownDataSet.QueryProperties.value
+            assert type(query_props["Columns"]) == list
+            assert type(query_props["Rows"]) == list
+            assert len(query_props["Rows"][0]) == len(query_props["Columns"])
 
-        primary_result = next(frames)
-        assert primary_result["FrameType"] == FrameType.DataTable
-        assert primary_result["TableKind"] == WellKnownDataSet.PrimaryResult.value
-        assert type(primary_result["Columns"]) == list
-        assert type(primary_result["Rows"]) != list
+            primary_result = next(frames)
+            assert primary_result["FrameType"] == FrameType.DataTable
+            assert primary_result["TableKind"] == WellKnownDataSet.PrimaryResult.value
+            assert type(primary_result["Columns"]) == list
+            assert type(primary_result["Rows"]) != list
 
-        row = next(primary_result["Rows"])
-        assert len(row) == len(primary_result["Columns"])
+            row = next(primary_result["Rows"])
+            assert len(row) == len(primary_result["Columns"])
 
     @pytest.mark.asyncio
     async def test_streaming_query_internal_async(self):
@@ -249,18 +250,19 @@ class TestE2E:
             assert len(row) == len(primary_result["Columns"])
 
     def test_log_analytics_query(self):
-        result = self.ai_client.execute_mgmt(self.ai_test_db, self.ai_test_table_cmd)
-        counter = 0
-        expected_table_name = iter(self.application_insights_tables())
+        with self.get_client(True) as client:
+            result = client.execute_mgmt(self.ai_test_db, self.ai_test_table_cmd)
+            counter = 0
+            expected_table_name = iter(self.application_insights_tables())
 
-        for primary in result.primary_results:
-            counter += 1
-            for row in primary.rows:
-                assert row["TableName"] == expected_table_name.__next__()
+            for primary in result.primary_results:
+                counter += 1
+                for row in primary.rows:
+                    assert row["TableName"] == expected_table_name.__next__()
 
-        assert counter == 1
-        assert result.errors_count == 0
-        assert result.get_exceptions() == []
+            assert counter == 1
+            assert result.errors_count == 0
+            assert result.get_exceptions() == []
 
     @pytest.mark.asyncio
     async def test_log_analytics_query_async(self):

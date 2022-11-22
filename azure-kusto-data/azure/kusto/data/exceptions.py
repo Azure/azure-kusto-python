@@ -188,3 +188,10 @@ class KustoClientInvalidConnectionStringException(KustoError):
     """Raised when call is made to a non-trusted endpoint."""
 
     ...
+
+
+class KustoClosedError(KustoError):
+    """Raised when a client is closed."""
+
+    def __init__(self):
+        super().__init__("The client cannot be used because it was closed in the past.")

@@ -3,18 +3,20 @@
 import socket
 import sys
 from datetime import timedelta
-from typing import TYPE_CHECKING, Union, Optional, List, Tuple, AnyStr, IO
+from typing import AnyStr, IO, List, Optional, TYPE_CHECKING, Tuple, Union
 
 import requests
+import requests.adapters
 from requests import Response
 from urllib3.connection import HTTPConnection
 
-from .kcsb import KustoConnectionStringBuilder
+from .client_base import ExecuteRequestParams, _KustoClientBase
 from .client_request_properties import ClientRequestProperties
-from .client_base import _KustoClientBase, ExecuteRequestParams
 from .data_format import DataFormat
-from .response import KustoStreamingResponseDataSet, KustoResponseDataSet
-from .streaming_response import StreamingDataSetEnumerator, JsonTokenReader
+from .exceptions import KustoClosedError
+from .kcsb import KustoConnectionStringBuilder
+from .response import KustoResponseDataSet, KustoStreamingResponseDataSet
+from .streaming_response import JsonTokenReader, StreamingDataSetEnumerator
 
 if TYPE_CHECKING:
     pass
@@ -71,6 +73,17 @@ class KustoClient(_KustoClientBase):
         )
         self._session.mount("http://", adapter)
         self._session.mount("https://", adapter)
+
+    def close(self):
+        if not self._is_closed:
+            self._session.close()
+        super().close()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
 
     def set_proxy(self, proxy_url: str):
         super().set_proxy(proxy_url)
@@ -226,6 +239,8 @@ class KustoClient(_KustoClientBase):
         stream_response: bool = False,
     ) -> Union[KustoResponseDataSet, Response]:
         """Executes given query against this client"""
+        if self._is_closed:
+            raise KustoClosedError()
         self.validate_endpoint()
         request_params = ExecuteRequestParams(
             database, payload, properties, query, timeout, self._request_headers, self._mgmt_default_timeout, self._client_server_delta
