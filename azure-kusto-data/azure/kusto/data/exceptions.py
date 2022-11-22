@@ -194,4 +194,4 @@ class KustoClosedError(KustoError):
     """Raised when a client is closed."""
 
     def __init__(self):
-        super().__init__("Client is closed")
+        super().__init__("The client cannot be used because it was closed in the past.")
