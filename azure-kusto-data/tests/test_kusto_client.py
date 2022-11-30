@@ -60,6 +60,37 @@ class TestKustoClient(KustoClientTestsMixin):
             data_frame = dataframe_from_result_table(get_response_first_primary_result(response))
             self._assert_sanity_data_frame_response(data_frame)
 
+    @pytest.mark.skipif(not PANDAS, reason="requires pandas")
+    @patch("requests.Session.post", side_effect=mocked_requests_post)
+    def test_pandas_bool(self, mock_post):
+        """Tests KustoResponse to pandas.DataFrame."""
+        with KustoClient(self.HOST) as client:
+            from pandas import DataFrame, Series
+            from pandas.testing import assert_frame_equal
+
+            columns = ["xbool"]
+            response = client.execute_query("PythonTest", "pandas_bool")
+            result = get_response_first_primary_result(response)
+            assert [x["xbool"] for x in result.rows] == [None, True, False]
+
+            # Without flag - nulls are converted to False
+
+            data_frame = dataframe_from_result_table(result)
+            expected_dict = {
+                "xbool": Series([False, True, False], dtype=bool),
+            }
+            expected_data_frame = DataFrame(expected_dict, columns=columns, copy=True)
+            assert_frame_equal(data_frame, expected_data_frame)
+
+            # With flag - nulls are converted to pandas.NA
+
+            data_frame = dataframe_from_result_table(result, nullable_bools=True)
+            expected_dict = {
+                "xbool": Series([pandas.NA, True, False], dtype="boolean"),
+            }
+            expected_data_frame = DataFrame(expected_dict, columns=columns, copy=True)
+            assert_frame_equal(data_frame, expected_data_frame)
+
     @patch("requests.Session.post", side_effect=mocked_requests_post)
     def test_partial_results(self, mock_post, method):
         """Tests partial results."""
