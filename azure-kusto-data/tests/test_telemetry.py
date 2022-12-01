@@ -1,10 +1,12 @@
-import unittest
+import pytest
+from mock.mock import patch
+from responses import mock
 
 from azure.kusto.data._telemetry import KustoTracing, KustoTracingAttributes
 from azure.kusto.data.client_request_properties import ClientRequestProperties
 
 
-class TestTelemetry(unittest.TestCase):
+class TestTelemetry:
     """
     Tests for telemetry class to make sure adding tracing doesn't impact functionality of original code
     """
@@ -30,72 +32,60 @@ class TestTelemetry(unittest.TestCase):
         assert res(1) == 2
 
     @staticmethod
+    @pytest.mark.asyncio
     async def test_call_func_tracing_async():
         res = KustoTracing.call_func_tracing_async(TestTelemetry.plus_one_async, 1, name_of_span="plus_one")
         assert await res == 2
 
     @staticmethod
-    def test_create_query_attributes():
-        client_request_properties = ClientRequestProperties()
-        assert isinstance(client_request_properties.get_tracing_attributes(), dict)
-        attributes = KustoTracingAttributes.create_query_attributes("cluster_test", "database_test", client_request_properties)
+    def test_get_client_request_properties_attributes():
+        attributes = ClientRequestProperties().get_tracing_attributes()
+        keynames = {"client_request_id"}
         assert isinstance(attributes, dict)
         for key, val in attributes.items():
-            assert isinstance(key, str)
+            assert key in keynames
             assert isinstance(val, str)
-            assert str.lower(key) == key
-            assert " " not in key
+        for key in keynames:
+            assert key in attributes.keys()
+
+    @staticmethod
+    def test_create_query_attributes():
+        attributes = KustoTracingAttributes.create_query_attributes("cluster_test", "database_test", ClientRequestProperties())
+        keynames = {"kusto_cluster", "database", "client_request_id"}
+        assert isinstance(attributes, dict)
+        for key, val in attributes.items():
+            assert isinstance(val, str)
+        for key in keynames:
+            assert key in attributes.keys()
+        attributes = KustoTracingAttributes.create_query_attributes("cluster_test", "database_test")
+        keynames = {"kusto_cluster", "database"}
+        assert isinstance(attributes, dict)
+        for key, val in attributes.items():
+            assert isinstance(val, str)
+        for key in keynames:
+            assert key in attributes.keys()
 
     @staticmethod
     def test_create_ingest_attributes():
-        client_request_properties = ClientRequestProperties()
-        assert isinstance(client_request_properties.get_tracing_attributes(), dict)
-        attributes = KustoTracingAttributes.create_streaming_ingest_attributes("cluster_test", "database_test", "table_test", client_request_properties)
+        attributes = KustoTracingAttributes.create_streaming_ingest_attributes("cluster_test", "database_test", "table", ClientRequestProperties())
+        keynames = {"kusto_cluster", "database", "table", "client_request_id"}
         assert isinstance(attributes, dict)
         for key, val in attributes.items():
-            assert isinstance(key, str)
             assert isinstance(val, str)
-            assert str.lower(key) == key
-            assert " " not in key
+        for key in keynames:
+            assert key in attributes.keys()
+        attributes = KustoTracingAttributes.create_streaming_ingest_attributes("cluster_test", "database_test", "table")
+        keynames = {"kusto_cluster", "database", "table"}
+        assert isinstance(attributes, dict)
+        for key, val in attributes.items():
+            assert isinstance(val, str)
+        for key in keynames:
+            assert key in attributes.keys()
 
     @staticmethod
     def test_create_http_attributes():
         attributes = KustoTracingAttributes.create_http_attributes("method_test", "url_test")
-        assert isinstance(attributes, dict)
-        for key, val in attributes.items():
-            assert isinstance(key, str)
-            assert isinstance(val, str)
-            assert str.lower(key) == key
-            assert " " not in key
+        assert attributes == {"component": "http", "http.method": "method_test", "http.url": "url_test"}
         headers = {"User-Agent": "user_agent_test"}
-        headers_test = False
         attributes = KustoTracingAttributes.create_http_attributes("method_test", "url_test", headers)
-        assert isinstance(attributes, dict)
-        for key, val in attributes.items():
-            if val == "user_agent_test":
-                headers_test = True
-            assert isinstance(key, str)
-            assert isinstance(val, str)
-            assert str.lower(key) == key
-            assert " " not in key
-        assert headers_test
-
-    @staticmethod
-    def test_create_cloud_info_attributes():
-        attributes = KustoTracingAttributes.create_cloud_info_attributes("url")
-        assert isinstance(attributes, dict)
-        for key, val in attributes.items():
-            assert isinstance(key, str)
-            assert isinstance(val, str)
-            assert str.lower(key) == key
-            assert " " not in key
-
-    @staticmethod
-    def test_create_cluster_attributes():
-        attributes = KustoTracingAttributes.create_cloud_info_attributes("cluster_uri")
-        assert isinstance(attributes, dict)
-        for key, val in attributes.items():
-            assert isinstance(key, str)
-            assert isinstance(val, str)
-            assert str.lower(key) == key
-            assert " " not in key
+        assert attributes == {"component": "http", "http.method": "method_test", "http.url": "url_test", "http.user_agent": "user_agent_test"}
