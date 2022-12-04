@@ -67,7 +67,7 @@ class KustoConnectionStringBuilder:
                 return cls.user_token
             if key in ["msi_auth", "msi authentication"]:
                 return cls.msi_auth
-            if key in ["msi_params", "msi params"]:
+            if key in ["msi_type", "msi params"]:
                 return cls.msi_params
             if key in ["az cli"]:
                 return cls.az_cli
