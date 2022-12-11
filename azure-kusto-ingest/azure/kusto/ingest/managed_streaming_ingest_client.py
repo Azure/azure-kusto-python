@@ -92,7 +92,6 @@ class ManagedStreamingIngestClient(BaseIngestClient):
 
         super().ingest_from_file(file_descriptor, ingestion_properties)
 
-
         stream_descriptor = StreamDescriptor.from_file_descriptor(file_descriptor)
 
         with stream_descriptor.stream:

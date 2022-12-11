@@ -92,7 +92,6 @@ class QueuedIngestClient(BaseIngestClient):
 
         super().ingest_from_stream(stream_descriptor, ingestion_properties)
 
-
         containers = self._get_containers()
 
         stream_descriptor = BaseIngestClient._prepare_stream(stream_descriptor, ingestion_properties)
@@ -116,7 +115,7 @@ class QueuedIngestClient(BaseIngestClient):
         :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
         """
         IngestTracingAttributes.set_ingest_descriptor_attributes(blob_descriptor, ingestion_properties)
-        
+
         if self._is_closed:
             raise KustoClosedError()
 
@@ -132,15 +131,15 @@ class QueuedIngestClient(BaseIngestClient):
             ingestion_blob_info = IngestionBlobInfo(blob_descriptor, ingestion_properties=ingestion_properties, auth_context=authorization_context)
             ingestion_blob_info_json = ingestion_blob_info.to_json()
             with queue_service.get_queue_client(queue=random_queue.object_name, message_encode_policy=TextBase64EncodePolicy()) as queue_client:
-                  # trace enqueuing of blob for ingestion
-                  enqueue_trace_attributes = IngestTracingAttributes.create_enqueue_request_attributes(queue_client.queue_name, blob_descriptor.source_id)
-                  KustoTracing.call_func_tracing(
-                      queue_client.send_message,
-                      content=ingestion_blob_info_json,
-                      timeout=self._SERVICE_CLIENT_TIMEOUT_SECONDS,
-                      name_of_span="QueuedIngestClient.enqueue_request",
-                      tracing_attributes=enqueue_trace_attributes,
-                  )
+                # trace enqueuing of blob for ingestion
+                enqueue_trace_attributes = IngestTracingAttributes.create_enqueue_request_attributes(queue_client.queue_name, blob_descriptor.source_id)
+                KustoTracing.call_func_tracing(
+                    queue_client.send_message,
+                    content=ingestion_blob_info_json,
+                    timeout=self._SERVICE_CLIENT_TIMEOUT_SECONDS,
+                    name_of_span="QueuedIngestClient.enqueue_request",
+                    tracing_attributes=enqueue_trace_attributes,
+                )
 
         return IngestionResult(
             IngestionStatus.QUEUED, ingestion_properties.database, ingestion_properties.table, blob_descriptor.source_id, blob_descriptor.path

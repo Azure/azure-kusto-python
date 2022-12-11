@@ -51,7 +51,6 @@ class TestKustoClient(KustoClientTestsMixin):
             response = client.execute_mgmt("NetDefaultDB", ".show version")
             self._assert_sanity_control_command_response(response)
 
-
     @pytest.mark.skipif(not PANDAS, reason="requires pandas")
     @patch("requests.Session.post", side_effect=mocked_requests_post)
     def test_sanity_data_frame(self, mock_post, method):
