@@ -14,14 +14,15 @@ Overview
     authority_id = "<insert here your AAD tenant id>"
 
     kcsb = KustoConnectionStringBuilder.with_aad_application_key_authentication(cluster, client_id, client_secret, authority_id)
-    client = KustoClient(kcsb)
+    # It is a good practice to re-use the KustoClient instance, as it maintains a pool of connections to the Kusto service.
+    # This sample shows how to create a client and close it in the same scope, for demonstration purposes.
+    with KustoClient(kcsb) as client:
+        db = "Samples"
+        query = "StormEvents | take 10"
 
-    db = "Samples"
-    query = "StormEvents | take 10"
-
-    response = client.execute(db, query)
-    for row in response.primary_results[0]:
-        print(row[0], " ", row["EventType"])
+        response = client.execute(db, query)
+        for row in response.primary_results[0]:
+            print(row[0], " ", row["EventType"])
 
 
 

@@ -1,20 +1,21 @@
 import io
 from datetime import timedelta
-from typing import Union, Optional
+from typing import Optional, Union
 
 from azure.core.tracing.decorator_async import distributed_trace_async
 from azure.core.tracing import SpanKind
 
 from .response import KustoStreamingResponseDataSet
+
 from .._telemetry import KustoTracing, KustoTracingAttributes
-from .._decorators import documented_by, aio_documented_by
-from ..aio.streaming_response import StreamingDataSetEnumerator, JsonTokenReader
+from .._decorators import aio_documented_by, documented_by
+from ..aio.streaming_response import JsonTokenReader, StreamingDataSetEnumerator
 from ..client import KustoClient as KustoClientSync
-from ..client_base import _KustoClientBase, ExecuteRequestParams
-from ..kcsb import KustoConnectionStringBuilder
+from ..client_base import ExecuteRequestParams, _KustoClientBase
 from ..client_request_properties import ClientRequestProperties
 from ..data_format import DataFormat
-from ..exceptions import KustoAioSyntaxError
+from ..exceptions import KustoAioSyntaxError, KustoClosedError
+from ..kcsb import KustoConnectionStringBuilder
 from ..response import KustoResponseDataSet
 
 try:
@@ -34,8 +35,13 @@ class KustoClient(_KustoClientBase):
     async def __aenter__(self) -> "KustoClient":
         return self
 
-    def __aexit__(self, exc_type, exc_val, exc_tb):
-        return self._session.__aexit__(exc_type, exc_val, exc_tb)
+    async def close(self):
+        if not self._is_closed:
+            await self._session.__aexit__(None, None, None)
+        super().close()
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        await self.close()
 
     @aio_documented_by(KustoClientSync.execute)
     async def execute(self, database: str, query: str, properties: ClientRequestProperties = None) -> KustoResponseDataSet:
@@ -107,6 +113,8 @@ class KustoClient(_KustoClientBase):
         stream_response: bool = False,
     ) -> Union[KustoResponseDataSet, ClientResponse]:
         """Executes given query against this client"""
+        if self._is_closed:
+            raise KustoClosedError()
         self.validate_endpoint()
         request_params = ExecuteRequestParams(
             database, payload, properties, query, timeout, self._request_headers, self._mgmt_default_timeout, self._client_server_delta

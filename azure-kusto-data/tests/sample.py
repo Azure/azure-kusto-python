@@ -78,6 +78,15 @@ kcsb = KustoConnectionStringBuilder.with_aad_device_authentication(cluster)
 # The authentication method will be taken from the chosen KustoConnectionStringBuilder.
 client = KustoClient(kcsb)
 
+# Make sure to close the client when you're done with it.
+# Either by using a context manager:
+with KustoClient(kcsb) as client2:
+    pass  # will be closed automatically at the end of the block
+
+# Or by calling the close method explicitly:
+client3 = KustoClient(kcsb)
+client3.close()
+
 ######################################################
 ##                       QUERY                      ##
 ######################################################

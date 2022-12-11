@@ -8,9 +8,9 @@ from azure.core.tracing.decorator import distributed_trace
 from azure.core.tracing import SpanKind
 from azure.storage.queue import QueueServiceClient, TextBase64EncodePolicy
 
-from azure.kusto.data._telemetry import KustoTracing
 from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
-from azure.kusto.data.exceptions import KustoServiceError
+from azure.kusto.data._telemetry import KustoTracing
+from azure.kusto.data.exceptions import KustoClosedError, KustoServiceError
 
 from ._ingest_telemetry import IngestTracingAttributes
 from ._resource_manager import _ResourceManager, _ResourceUri
@@ -36,6 +36,7 @@ class QueuedIngestClient(BaseIngestClient):
         """Kusto Ingest Client constructor.
         :param kcsb: The connection string to initialize KustoClient.
         """
+        super().__init__()
         if not isinstance(kcsb, KustoConnectionStringBuilder):
             kcsb = KustoConnectionStringBuilder(kcsb)
         self._proxy_dict: Optional[Dict[str, str]] = None
@@ -43,6 +44,10 @@ class QueuedIngestClient(BaseIngestClient):
         self._resource_manager = _ResourceManager(KustoClient(kcsb))
         self._endpoint_service_type = None
         self._suggested_endpoint_uri = None
+
+    def close(self) -> None:
+        self._resource_manager.close()
+        super().close()
 
     def set_proxy(self, proxy_url: str):
         self._resource_manager.set_proxy(proxy_url)
@@ -58,6 +63,9 @@ class QueuedIngestClient(BaseIngestClient):
         """
         file_descriptor = FileDescriptor.get_instance(file_descriptor)
         IngestTracingAttributes.set_ingest_descriptor_attributes(file_descriptor, ingestion_properties)
+
+        super().ingest_from_file(file_descriptor, ingestion_properties)
+
         containers = self._get_containers()
 
         file_descriptor, should_compress = BaseIngestClient._prepare_file(file_descriptor, ingestion_properties)
@@ -82,6 +90,9 @@ class QueuedIngestClient(BaseIngestClient):
         stream_descriptor = StreamDescriptor.get_instance(stream_descriptor)
         IngestTracingAttributes.set_ingest_descriptor_attributes(stream_descriptor, ingestion_properties)
 
+        super().ingest_from_stream(stream_descriptor, ingestion_properties)
+
+
         containers = self._get_containers()
 
         stream_descriptor = BaseIngestClient._prepare_stream(stream_descriptor, ingestion_properties)
@@ -105,6 +116,9 @@ class QueuedIngestClient(BaseIngestClient):
         :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
         """
         IngestTracingAttributes.set_ingest_descriptor_attributes(blob_descriptor, ingestion_properties)
+        
+        if self._is_closed:
+            raise KustoClosedError()
 
         try:
             queues = self._resource_manager.get_ingestion_queues()
@@ -113,21 +127,20 @@ class QueuedIngestClient(BaseIngestClient):
             raise ex
 
         random_queue = random.choice(queues)
-        queue_service = QueueServiceClient(random_queue.account_uri, proxies=self._proxy_dict)
-        authorization_context = self._resource_manager.get_authorization_context()
-        ingestion_blob_info = IngestionBlobInfo(blob_descriptor, ingestion_properties=ingestion_properties, auth_context=authorization_context)
-        ingestion_blob_info_json = ingestion_blob_info.to_json()
-        queue_client = queue_service.get_queue_client(queue=random_queue.object_name, message_encode_policy=TextBase64EncodePolicy())
-
-        # trace enqueuing of blob for ingestion
-        enqueue_trace_attributes = IngestTracingAttributes.create_enqueue_request_attributes(queue_client.queue_name, blob_descriptor.source_id)
-        KustoTracing.call_func_tracing(
-            queue_client.send_message,
-            content=ingestion_blob_info_json,
-            timeout=self._SERVICE_CLIENT_TIMEOUT_SECONDS,
-            name_of_span="QueuedIngestClient.enqueue_request",
-            tracing_attributes=enqueue_trace_attributes,
-        )
+        with QueueServiceClient(random_queue.account_uri, proxies=self._proxy_dict) as queue_service:
+            authorization_context = self._resource_manager.get_authorization_context()
+            ingestion_blob_info = IngestionBlobInfo(blob_descriptor, ingestion_properties=ingestion_properties, auth_context=authorization_context)
+            ingestion_blob_info_json = ingestion_blob_info.to_json()
+            with queue_service.get_queue_client(queue=random_queue.object_name, message_encode_policy=TextBase64EncodePolicy()) as queue_client:
+                  # trace enqueuing of blob for ingestion
+                  enqueue_trace_attributes = IngestTracingAttributes.create_enqueue_request_attributes(queue_client.queue_name, blob_descriptor.source_id)
+                  KustoTracing.call_func_tracing(
+                      queue_client.send_message,
+                      content=ingestion_blob_info_json,
+                      timeout=self._SERVICE_CLIENT_TIMEOUT_SECONDS,
+                      name_of_span="QueuedIngestClient.enqueue_request",
+                      tracing_attributes=enqueue_trace_attributes,
+                  )
 
         return IngestionResult(
             IngestionStatus.QUEUED, ingestion_properties.database, ingestion_properties.table, blob_descriptor.source_id, blob_descriptor.path

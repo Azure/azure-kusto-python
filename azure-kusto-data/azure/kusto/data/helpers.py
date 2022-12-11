@@ -28,9 +28,10 @@ def to_pandas_timedelta(raw_value: Union[int, float, str]) -> "pandas.Timedelta"
             return pd.to_timedelta(formatted_value)
 
 
-def dataframe_from_result_table(table: "Union[KustoResultTable, KustoStreamingResultTable]") -> "pandas.DataFrame":
+def dataframe_from_result_table(table: "Union[KustoResultTable, KustoStreamingResultTable]", nullable_bools: bool = False) -> "pandas.DataFrame":
     """Converts Kusto tables into pandas DataFrame.
     :param azure.kusto.data._models.KustoResultTable table: Table received from the response.
+    :param nullable_bools: When True, converts bools that are 'null' from kusto or 'None' from python to pandas.NA. This will be the default in the future.
     :return: pandas DataFrame.
     """
     import numpy as np
@@ -50,7 +51,7 @@ def dataframe_from_result_table(table: "Union[KustoResultTable, KustoStreamingRe
     # fix types
     for col in table.columns:
         if col.column_type == "bool":
-            frame[col.column_name] = frame[col.column_name].astype(bool)
+            frame[col.column_name] = frame[col.column_name].astype("boolean" if nullable_bools else bool)
         elif col.column_type == "int":
             frame[col.column_name] = frame[col.column_name].astype("Int32")
         elif col.column_type == "long":

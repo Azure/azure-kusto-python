@@ -9,9 +9,11 @@ from io import TextIOWrapper
 from typing import TYPE_CHECKING, Union, IO, AnyStr, Optional, Tuple
 
 from azure.kusto.data.data_format import DataFormat
+from azure.kusto.data.exceptions import KustoClosedError
 
 from .descriptors import FileDescriptor, StreamDescriptor
 from .ingestion_properties import IngestionProperties
+
 
 if TYPE_CHECKING:
     import pandas
@@ -61,13 +63,16 @@ class IngestionResult:
 
 
 class BaseIngestClient(metaclass=ABCMeta):
-    @abstractmethod
+    def __init__(self):
+        self._is_closed: bool = False
+
     def ingest_from_file(self, file_descriptor: Union[FileDescriptor, str], ingestion_properties: IngestionProperties) -> IngestionResult:
         """Ingest from local files.
         :param file_descriptor: a FileDescriptor to be ingested.
         :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
         """
-        pass
+        if self._is_closed:
+            raise KustoClosedError()
 
     @abstractmethod
     def ingest_from_stream(self, stream_descriptor: Union[StreamDescriptor, IO[AnyStr]], ingestion_properties: IngestionProperties) -> IngestionResult:
@@ -75,14 +80,16 @@ class BaseIngestClient(metaclass=ABCMeta):
         :param stream_descriptor: An object that contains a description of the stream to be ingested.
         :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
         """
-        pass
+        if self._is_closed:
+            raise KustoClosedError()
 
     @abstractmethod
     def set_proxy(self, proxy_url: str):
         """Set proxy for the ingestion client.
         :param str proxy_url: proxy url.
         """
-        pass
+        if self._is_closed:
+            raise KustoClosedError()
 
     def ingest_from_dataframe(self, df: "pandas.DataFrame", ingestion_properties: IngestionProperties) -> IngestionResult:
         """Enqueue an ingest command from local files.
@@ -91,6 +98,9 @@ class BaseIngestClient(metaclass=ABCMeta):
         :param pandas.DataFrame df: input dataframe to ingest.
         :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
         """
+
+        if self._is_closed:
+            raise KustoClosedError()
 
         from pandas import DataFrame
 
@@ -147,3 +157,12 @@ class BaseIngestClient(metaclass=ABCMeta):
         Checks if descriptor should be compressed based on ingestion properties and current format
         """
         return not new_descriptor.is_compressed and ingestion_properties.format.compressible
+
+    def close(self) -> None:
+        self._is_closed = True
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()

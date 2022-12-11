@@ -3,9 +3,10 @@
 import socket
 import sys
 from datetime import timedelta
-from typing import TYPE_CHECKING, Union, Optional, List, Tuple, AnyStr, IO
+from typing import AnyStr, IO, List, Optional, TYPE_CHECKING, Tuple, Union
 
 import requests
+import requests.adapters
 from requests import Response
 from urllib3.connection import HTTPConnection
 
@@ -14,12 +15,13 @@ from azure.core.tracing import SpanKind
 
 from azure.kusto.data._telemetry import KustoTracingAttributes, KustoTracing
 
-from .kcsb import KustoConnectionStringBuilder
+from .client_base import ExecuteRequestParams, _KustoClientBase
 from .client_request_properties import ClientRequestProperties
-from .client_base import _KustoClientBase, ExecuteRequestParams
 from .data_format import DataFormat
-from .response import KustoStreamingResponseDataSet, KustoResponseDataSet
-from .streaming_response import StreamingDataSetEnumerator, JsonTokenReader
+from .exceptions import KustoClosedError
+from .kcsb import KustoConnectionStringBuilder
+from .response import KustoResponseDataSet, KustoStreamingResponseDataSet
+from .streaming_response import JsonTokenReader, StreamingDataSetEnumerator
 
 if TYPE_CHECKING:
     pass
@@ -28,9 +30,12 @@ if TYPE_CHECKING:
 class HTTPAdapterWithSocketOptions(requests.adapters.HTTPAdapter):
     def __init__(self, *args, **kwargs):
         self.socket_options = kwargs.pop("socket_options", None)
-        self.pool_maxsize = kwargs.pop("pool_maxsize", None)
-        self.max_retries = kwargs.pop("max_retries", None)
         super(HTTPAdapterWithSocketOptions, self).__init__(*args, **kwargs)
+
+    def __getstate__(self):
+        state = super(HTTPAdapterWithSocketOptions, self).__getstate__()
+        state["socket_options"] = self.socket_options
+        return state
 
     def init_poolmanager(self, *args, **kwargs):
         if self.socket_options is not None:
@@ -73,6 +78,17 @@ class KustoClient(_KustoClientBase):
         )
         self._session.mount("http://", adapter)
         self._session.mount("https://", adapter)
+
+    def close(self):
+        if not self._is_closed:
+            self._session.close()
+        super().close()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
 
     def set_proxy(self, proxy_url: str):
         super().set_proxy(proxy_url)
@@ -240,6 +256,8 @@ class KustoClient(_KustoClientBase):
         stream_response: bool = False,
     ) -> Union[KustoResponseDataSet, Response]:
         """Executes given query against this client"""
+        if self._is_closed:
+            raise KustoClosedError()
         self.validate_endpoint()
         request_params = ExecuteRequestParams(
             database, payload, properties, query, timeout, self._request_headers, self._mgmt_default_timeout, self._client_server_delta

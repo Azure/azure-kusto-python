@@ -80,6 +80,9 @@ class _ResourceManager:
 
         self.__set_throttling_settings()
 
+    def close(self):
+        self._kusto_client.close()
+
     def __set_throttling_settings(self, num_of_attempts: int = 4, max_seconds_per_retry: float = 30):
         self._retryer = Retrying(
             wait=wait_random_exponential(max=max_seconds_per_retry),

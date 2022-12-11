@@ -81,6 +81,8 @@ def mocked_requests_post(*args, **kwargs):
                 file_name = "query_partial_results_defer_is_false.json"
         elif "Deft" in kwargs["json"]["csl"]:
             file_name = "deft.json"
+        elif "pandas_bool" in kwargs["json"]["csl"]:
+            file_name = "pandas_bool.json"
         elif "print dynamic" in kwargs["json"]["csl"]:
             file_name = "dynamic.json"
         elif "take 0" in kwargs["json"]["csl"]:
