@@ -222,24 +222,24 @@ class KustoConnectionStringBuilderTests(unittest.TestCase):
 
         assert exception_occurred is True
 
-        kcsb = [
+        kcsbs = [
             KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication("localhost0", timeout=1),
             KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication("localhost1", client_id=client_guid, timeout=2),
             # KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication("localhost2", object_id=object_guid, timeout=3),
             # KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication("localhost3", msi_res_id=res_guid),
         ]
 
-        assert kcsb[0].msi_authentication
-        assert kcsb[0].msi_parameters["connection_timeout"] == 1
-        assert "client_id" not in kcsb[0].msi_parameters
-        assert "object_id" not in kcsb[0].msi_parameters
-        assert "msi_res_id" not in kcsb[0].msi_parameters
+        assert kcsbs[0].msi_authentication
+        assert kcsbs[0].msi_parameters["connection_timeout"] == 1
+        assert "client_id" not in kcsbs[0].msi_parameters
+        assert "object_id" not in kcsbs[0].msi_parameters
+        assert "msi_res_id" not in kcsbs[0].msi_parameters
 
-        assert kcsb[1].msi_authentication
-        assert kcsb[1].msi_parameters["connection_timeout"] == 2
-        assert kcsb[1].msi_parameters["client_id"] == client_guid
-        assert "object_id" not in kcsb[1].msi_parameters
-        assert "msi_res_id" not in kcsb[1].msi_parameters
+        assert kcsbs[1].msi_authentication
+        assert kcsbs[1].msi_parameters["connection_timeout"] == 2
+        assert kcsbs[1].msi_parameters["client_id"] == client_guid
+        assert "object_id" not in kcsbs[1].msi_parameters
+        assert "msi_res_id" not in kcsbs[1].msi_parameters
 
         """
         assert kcsb[2].msi_authentication
@@ -262,6 +262,10 @@ class KustoConnectionStringBuilderTests(unittest.TestCase):
             exception_occurred = True
         finally:
             assert exception_occurred
+
+        # Check serializability.
+        for kcsb in kcsbs:
+            _ = KustoConnectionStringBuilder(str(kcsb))
 
     def test_add_token_provider(self):
         caller_token = "caller token"
