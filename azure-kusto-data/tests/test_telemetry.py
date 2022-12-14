@@ -1,6 +1,4 @@
 import pytest
-from mock.mock import patch
-from responses import mock
 
 from azure.kusto.data._telemetry import KustoTracing, KustoTracingAttributes
 from azure.kusto.data.client_request_properties import ClientRequestProperties
