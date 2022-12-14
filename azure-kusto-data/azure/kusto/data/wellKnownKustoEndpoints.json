@@ -17,7 +17,8 @@
         ".kustodev.windows.net",
         ".kustomfa.windows.net",
         ".playfabapi.com",
-        ".playfab.com"
+        ".playfab.com",
+        ".kusto.data.microsoft.com"
 
       ],
       "AllowedKustoHostnames": [
