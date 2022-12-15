@@ -72,8 +72,8 @@ class OneApiError:
     @staticmethod
     def from_dict(obj: dict) -> "OneApiError":
         try:
-            code = obj.get("code", None)
-            message = obj.get("message", None)
+            code = obj["code"]
+            message = obj["message"]
             type = obj.get("@type", None)
             description = obj.get("@message", None)
             context = obj.get("@context", None)
@@ -81,7 +81,7 @@ class OneApiError:
             return OneApiError(code, message, type, description, context, permanent)
         except Exception as e:
             return OneApiError(
-                "FailedToParse", f"Failed to parse one api error. Got {e}. Full object - {json.dumps(obj)}", "FailedToParseOneApiError", "", {}, False
+                "FailedToParse", f"Failed to parse one api error. Got {repr(e)}. Full object - {json.dumps(obj)}", "FailedToParseOneApiError", "", {}, False
             )
 
 

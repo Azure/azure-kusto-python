@@ -46,3 +46,58 @@ def test_parse_one_api_error():
         result.context["activityStack"] == "(Activity stack: CRID=KPC.execute;d3a43e37-0d7f-47a9-b6cd-a889b2aee3d3 ARID=a57ec272-8846-49e6-b458-460b841ed47d "
         "> PO-OWIN-CallContext/a57ec272-8846-49e6-b458-460b841ed47d)"
     )
+
+
+def test_one_api_error_no_type_success():
+    result = OneApiError.from_dict(
+        {
+            "code": "LimitsExceeded",
+            "message": "Request is invalid and cannot be executed.",
+            "@message": "Query execution has exceeded the allowed limits (80DA0003): .",
+            "@context": {
+                "timestamp": "2018-12-10T15:10:48.8352222Z",
+                "machineName": "RD0003FFBEDEB9",
+                "processName": "Kusto.Azure.Svc",
+                "processId": 4328,
+                "threadId": 7284,
+                "appDomainName": "RdRuntime",
+                "clientRequestId": "KPC.execute;d3a43e37-0d7f-47a9-b6cd-a889b2aee3d3",
+                "activityId": "a57ec272-8846-49e6-b458-460b841ed47d",
+                "subActivityId": "a57ec272-8846-49e6-b458-460b841ed47d",
+                "activityType": "PO-OWIN-CallContext",
+                "parentActivityId": "a57ec272-8846-49e6-b458-460b841ed47d",
+                "activityStack": "(Activity stack: CRID=KPC.execute;d3a43e37-0d7f-47a9-b6cd-a889b2aee3d3 ARID=a57ec272-8846-49e6-b458-460b841ed47d > PO-OWIN-CallContext/a57ec272-8846-49e6-b458-460b841ed47d)",
+            },
+        }
+    )
+
+    assert result.code == "LimitsExceeded"
+    assert not result.permanent
+
+
+def test_one_api_error_no_code_fail():
+    result = OneApiError.from_dict(
+        {
+            "message": "Request is invalid and cannot be executed.",
+            "@message": "Query execution has exceeded the allowed limits (80DA0003): .",
+            "@context": {
+                "timestamp": "2018-12-10T15:10:48.8352222Z",
+                "machineName": "RD0003FFBEDEB9",
+                "processName": "Kusto.Azure.Svc",
+                "processId": 4328,
+                "threadId": 7284,
+                "appDomainName": "RdRuntime",
+                "clientRequestId": "KPC.execute;d3a43e37-0d7f-47a9-b6cd-a889b2aee3d3",
+                "activityId": "a57ec272-8846-49e6-b458-460b841ed47d",
+                "subActivityId": "a57ec272-8846-49e6-b458-460b841ed47d",
+                "activityType": "PO-OWIN-CallContext",
+                "parentActivityId": "a57ec272-8846-49e6-b458-460b841ed47d",
+                "activityStack": "(Activity stack: CRID=KPC.execute;d3a43e37-0d7f-47a9-b6cd-a889b2aee3d3 ARID=a57ec272-8846-49e6-b458-460b841ed47d > PO-OWIN-CallContext/a57ec272-8846-49e6-b458-460b841ed47d)",
+            },
+            "@permanent": False,
+        }
+    )
+
+    assert result.code == "FailedToParse"
+    assert result.type == "FailedToParseOneApiError"
+    assert not result.permanent
