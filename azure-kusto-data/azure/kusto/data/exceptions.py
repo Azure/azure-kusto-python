@@ -1,6 +1,7 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
 import json
+from dataclasses import dataclass
 from typing import List, Union, TYPE_CHECKING, Optional, Dict, Any
 
 if TYPE_CHECKING:
@@ -59,28 +60,28 @@ class KustoServiceError(KustoError):
         return self.kusto_response
 
 
+@dataclass
 class OneApiError:
-    def __init__(self, code: str, message: str, type: str, description: str, context: dict, permanent: bool) -> None:
-        self.code = code
-        self.message = message
-        self.type = type
-        self.description = description
-        self.context = context
-        self.permanent = permanent
+    code: Optional[str] = None
+    message: Optional[str] = None
+    type: Optional[str] = None
+    description: Optional[str] = None
+    context: Optional[dict] = None
+    permanent: Optional[bool] = None
 
     @staticmethod
     def from_dict(obj: dict) -> "OneApiError":
         try:
             code = obj["code"]
             message = obj["message"]
-            type = obj["@type"]
-            description = obj["@message"]
-            context = obj["@context"]
-            permanent = obj["@permanent"]
+            type = obj.get("@type", None)
+            description = obj.get("@message", None)
+            context = obj.get("@context", None)
+            permanent = obj.get("@permanent", None)
             return OneApiError(code, message, type, description, context, permanent)
         except Exception as e:
             return OneApiError(
-                "FailedToParse", f"Failed to parse one api error. Got {e}. Full object - {json.dumps(obj)}", "FailedToParseOneApiError", "", {}, False
+                "FailedToParse", f"Failed to parse one api error. Got {repr(e)}. Full object - {json.dumps(obj)}", "FailedToParseOneApiError", "", {}, False
             )
 
 
