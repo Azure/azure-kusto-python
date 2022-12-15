@@ -1,7 +1,11 @@
+import functools
+import os
+import sys
 from enum import unique, Enum
 from typing import Union, Callable, Coroutine, Optional
 
 from ._string_utils import assert_string_is_not_empty
+from ._version import VERSION
 
 
 class KustoConnectionStringBuilder:
@@ -122,6 +126,10 @@ class KustoConnectionStringBuilder:
         self._async_token_provider = None
         if connection_string is not None and "=" not in connection_string.partition(";")[0]:
             connection_string = "Data Source=" + connection_string
+
+        self._application_for_tracing: Optional[str] = None
+        self._user_for_tracing: Optional[str] = None
+        self._client_version_for_tracing: Optional[str] = None
 
         self[self.ValidKeywords.authority_id] = "organizations"
 
@@ -543,6 +551,54 @@ class KustoConnectionStringBuilder:
     @property
     def domain_hint(self) -> Optional[str]:
         return self._internal_dict.get(self.ValidKeywords.domain_hint)
+
+    @property
+    def application_for_tracing(self) -> Optional[str]:
+        return self._application_for_tracing if self._application_for_tracing else self.get_script_name()
+
+    @application_for_tracing.setter
+    def application_for_tracing(self, value: str):
+        self._application_for_tracing = value
+
+    @property
+    def user_for_tracing(self) -> Optional[str]:
+        return self._user_for_tracing if self._user_for_tracing else self.get_user_name()
+
+    @user_for_tracing.setter
+    def user_for_tracing(self, value: str):
+        self._user_for_tracing = value
+
+    @property
+    def client_version_for_tracing(self) -> Optional[str]:
+        return self._client_version_for_tracing if self._client_version_for_tracing else self.get_client_version()
+
+    @client_version_for_tracing.setter
+    def client_version_for_tracing(self, value: str):
+        self._client_version_for_tracing = value
+
+    @staticmethod
+    @functools.lru_cache(maxsize=1)
+    def get_script_name() -> str:
+        """Returns the name of the script that is currently running"""
+        try:
+            return os.path.basename(sys.argv[0])
+        except Exception:
+            return "Unknown"
+
+    @staticmethod
+    @functools.lru_cache(maxsize=1)
+    def get_user_name() -> str:
+        """Returns the name of the user that is currently logged in"""
+        try:
+            return os.getlogin()
+        except Exception:
+            return "Unknown"
+
+    @staticmethod
+    @functools.lru_cache(maxsize=1)
+    def get_client_version() -> str:
+        """Returns the version of the client"""
+        return "Kusto.Python.Client:" + VERSION
 
     def __str__(self) -> str:
         dict_copy = self._internal_dict.copy()
