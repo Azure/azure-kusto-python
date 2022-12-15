@@ -1,5 +1,6 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
+import copy
 from typing import Union, AnyStr, Optional
 
 from typing import IO
@@ -22,7 +23,14 @@ class KustoStreamingIngestClient(BaseIngestClient):
         :param KustoConnectionStringBuilder kcsb: The connection string to initialize KustoClient.
         """
         super().__init__()
+
+        if isinstance(kcsb, str):
+            kcsb = KustoConnectionStringBuilder(kcsb)
+        else:
+            kcsb = copy.deepcopy(kcsb)
+
         kcsb.data_source = self.get_query_endpoint(kcsb.data_source)
+
         self._kusto_client = KustoClient(kcsb)
 
     def close(self):

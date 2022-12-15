@@ -433,6 +433,10 @@ class KustoConnectionStringBuilder:
         """
         return self._internal_dict.get(self.ValidKeywords.data_source)
 
+    @data_source.setter
+    def data_source(self, value: str):
+        self._internal_dict[self.ValidKeywords.data_source] = value
+
     @property
     def aad_user_id(self) -> Optional[str]:
         """The username to use for AAD Federated AuthN."""

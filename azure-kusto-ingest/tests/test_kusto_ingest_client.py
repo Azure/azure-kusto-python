@@ -11,9 +11,7 @@ import responses
 from mock import patch
 
 from azure.kusto.data.data_format import DataFormat
-
 from azure.kusto.ingest import QueuedIngestClient, IngestionProperties, IngestionStatus
-from azure.kusto.ingest.exceptions import KustoInvalidEndpointError
 from azure.kusto.ingest.managed_streaming_ingest_client import ManagedStreamingIngestClient
 
 pandas_installed = False
@@ -193,7 +191,7 @@ def assert_queued_upload(mock_put_message_in_queue, mock_upload_blob_from_stream
 @pytest.fixture(params=[QueuedIngestClient, ManagedStreamingIngestClient])
 def ingest_client_class(request):
     if request.param == ManagedStreamingIngestClient:
-        return ManagedStreamingIngestClient.__init__
+        return ManagedStreamingIngestClient
     return request.param
 
 
@@ -237,33 +235,6 @@ class TestQueuedIngestClient:
             mock_upload_blob_from_stream,
             "https://storageaccount.blob.core.windows.net/tempstorage/database__table__11111111-1111-1111-1111-111111111111__dataset.csv.gz?",
         )
-
-    @responses.activate
-    @patch("azure.kusto.ingest.managed_streaming_ingest_client.ManagedStreamingIngestClient.MAX_STREAMING_SIZE_IN_BYTES", new=0)
-    def test_ingest_from_file_wrong_endpoint(self, ingest_client_class):
-        responses.add_callback(
-            responses.POST, "https://somecluster.kusto.windows.net/v1/rest/mgmt", callback=request_error_callback, content_type="application/json"
-        )
-
-        ingest_client = ingest_client_class("https://somecluster.kusto.windows.net")
-        ingestion_properties = IngestionProperties(database="database", table="table", data_format=DataFormat.CSV)
-
-        current_dir = os.getcwd()
-        path_parts = ["azure-kusto-ingest", "tests", "input", "dataset.csv"]
-        missing_path_parts = []
-        for path_part in path_parts:
-            if path_part not in current_dir:
-                missing_path_parts.append(path_part)
-
-        file_path = os.path.join(current_dir, *missing_path_parts)
-
-        with pytest.raises(KustoInvalidEndpointError) as ex:
-            ingest_client.ingest_from_file(file_path, ingestion_properties=ingestion_properties)
-
-        assert (
-            ex.value.args[0] == "You are using 'DataManagement' client type, but the provided endpoint is of ServiceType 'Engine'. Initialize the "
-            "client with the appropriate endpoint URI: 'https://ingest-somecluster.kusto.windows.net'"
-        ), ("Expected exception was " "not raised")
 
     @responses.activate
     @pytest.mark.skipif(not pandas_installed, reason="requires pandas")
@@ -330,3 +301,15 @@ class TestQueuedIngestClient:
             "https://storageaccount.blob.core.windows.net/tempstorage/database__table__11111111-1111-1111-1111-111111111111__stream.gz?",
             check_raw_data=False,
         )
+
+    def test_client_uri_from_query_endpoint(self):
+        client = QueuedIngestClient("https://somecluster.kusto.windows.net")
+        assert client._connection_datasource == "https://ingest-somecluster.kusto.windows.net", "Client URI was not extracted correctly from query endpoint"
+
+        assert client._resource_manager._kusto_client._kusto_cluster == "https://ingest-somecluster.kusto.windows.net"
+
+    def test_client_uri_from_ingestion_endpoint(self):
+        client = QueuedIngestClient("https://ingest-somecluster.kusto.windows.net")
+        assert client._connection_datasource == "https://ingest-somecluster.kusto.windows.net", "Client URI was not extracted correctly from query endpoint"
+
+        assert client._resource_manager._kusto_client._kusto_cluster == "https://ingest-somecluster.kusto.windows.net"

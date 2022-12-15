@@ -66,8 +66,8 @@ class ManagedStreamingIngestClient(BaseIngestClient):
 
     def __init__(self, engine_kcsb: Union[KustoConnectionStringBuilder, str], dm_kcsb: Union[KustoConnectionStringBuilder, str, None] = None):
         super().__init__()
-        self.queued_client = QueuedIngestClient(dm_kcsb)
-        self.streaming_client = KustoStreamingIngestClient(engine_kcsb if dm_kcsb is None else dm_kcsb)
+        self.queued_client = QueuedIngestClient(dm_kcsb if dm_kcsb is not None else engine_kcsb)
+        self.streaming_client = KustoStreamingIngestClient(engine_kcsb)
         self._set_retry_settings()
 
     def close(self) -> None:
