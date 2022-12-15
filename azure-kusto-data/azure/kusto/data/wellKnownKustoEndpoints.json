@@ -19,7 +19,6 @@
         ".playfabapi.com",
         ".playfab.com",
         ".kusto.data.microsoft.com"
-
       ],
       "AllowedKustoHostnames": [
         "ade.applicationinsights.io",
