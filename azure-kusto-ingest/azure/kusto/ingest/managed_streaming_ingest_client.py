@@ -39,6 +39,9 @@ class ManagedStreamingIngestClient(BaseIngestClient):
         For advanced use cases, use the constructor directly.
         :param engine_kcsb: KustoConnectionStringBuilder for the engine.
         :return: ManagedStreamingIngestClient
+
+        .. deprecated:: 4.1.0
+            Use the constructor instead, as it automatically infers the correct connection string.
         """
         kcsb = repr(engine_kcsb) if type(engine_kcsb) == KustoConnectionStringBuilder else engine_kcsb
         dm_kcsb = KustoConnectionStringBuilder(kcsb.replace("https://", "https://ingest-"))
@@ -53,15 +56,18 @@ class ManagedStreamingIngestClient(BaseIngestClient):
         For advanced use cases, use the constructor directly.
         :param dm_kcsb: KustoConnectionStringBuilder for the dm.
         :return: ManagedStreamingIngestClient
+
+        .. deprecated:: 4.1.0
+            Use the constructor instead, as it automatically infers the correct connection string.
         """
         kcsb = repr(dm_kcsb) if type(dm_kcsb) == KustoConnectionStringBuilder else dm_kcsb
         engine_kcsb = KustoConnectionStringBuilder(kcsb.replace("https://ingest-", "https://"))
         return ManagedStreamingIngestClient(engine_kcsb, dm_kcsb)
 
-    def __init__(self, engine_kcsb: Union[KustoConnectionStringBuilder, str], dm_kcsb: Union[KustoConnectionStringBuilder, str]):
+    def __init__(self, engine_kcsb: Union[KustoConnectionStringBuilder, str], dm_kcsb: Union[KustoConnectionStringBuilder, str, None] = None):
         super().__init__()
         self.queued_client = QueuedIngestClient(dm_kcsb)
-        self.streaming_client = KustoStreamingIngestClient(engine_kcsb)
+        self.streaming_client = KustoStreamingIngestClient(engine_kcsb if dm_kcsb is None else dm_kcsb)
         self._set_retry_settings()
 
     def close(self) -> None:

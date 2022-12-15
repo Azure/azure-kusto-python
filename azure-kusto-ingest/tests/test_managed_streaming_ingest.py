@@ -96,7 +96,7 @@ class TestManagedStreamingIngestClient:
         )
 
         data_format = DataFormat.ORC  # Using orc to avoid compression
-        ingest_client = ManagedStreamingIngestClient.from_dm_kcsb("https://ingest-somecluster.kusto.windows.net")
+        ingest_client = ManagedStreamingIngestClient("https://ingest-somecluster.kusto.windows.net")
         ingestion_properties = IngestionProperties(database="database", table="table", data_format=data_format)
 
         initial_bytes = bytearray(os.urandom(5 * 1024 * 1024))
@@ -290,7 +290,7 @@ class TestManagedStreamingIngestClient:
             content_type="application/json",
         )
 
-        ingest_client = ManagedStreamingIngestClient.from_dm_kcsb("https://ingest-somecluster.kusto.windows.net")
+        ingest_client = ManagedStreamingIngestClient("https://ingest-somecluster.kusto.windows.net")
         ingestion_properties = IngestionProperties(database="database", table="table", data_format=DataFormat.CSV)
 
         current_dir = os.getcwd()
@@ -315,7 +315,7 @@ class TestManagedStreamingIngestClient:
             responses.POST, "https://ingest-somecluster.kusto.windows.net/v1/rest/mgmt", callback=queued_request_callback, content_type="application/json"
         )
 
-        ingest_client = ManagedStreamingIngestClient.from_dm_kcsb("https://ingest-somecluster.kusto.windows.net")
+        ingest_client = ManagedStreamingIngestClient("https://ingest-somecluster.kusto.windows.net")
         ingestion_properties = IngestionProperties(database="database", table="table")
 
         blob_path = (

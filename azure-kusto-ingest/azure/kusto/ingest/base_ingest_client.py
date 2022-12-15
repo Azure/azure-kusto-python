@@ -10,10 +10,8 @@ from typing import TYPE_CHECKING, Union, IO, AnyStr, Optional, Tuple
 
 from azure.kusto.data.data_format import DataFormat
 from azure.kusto.data.exceptions import KustoClosedError
-
 from .descriptors import FileDescriptor, StreamDescriptor
 from .ingestion_properties import IngestionProperties
-
 
 if TYPE_CHECKING:
     import pandas
@@ -59,7 +57,11 @@ class IngestionResult:
         self.blob_uri = blob_uri
 
     def __repr__(self):
-        return f"IngestionResult(status={self.status}, database={self.database}, table={self.table}, source_id={self.source_id}, blob_uri={self.blob_uri})"
+        return f"IngestionResult(status={self.status}, database={self.database}, table={self.table}, source_id={self.source_id}, blob_uri={self.blob_uri}):"
+
+
+INGEST_PREFIX = "ingest-"
+PROTOCOL_SUFFIX = "://"
 
 
 class BaseIngestClient(metaclass=ABCMeta):
@@ -172,3 +174,34 @@ class BaseIngestClient(metaclass=ABCMeta):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
+
+    # Tranlsate the following methods to Python
+    #     static String getIngestionEndpoint(String clusterUrl) {
+    #         if (clusterUrl.contains(INGEST_PREFIX)) {
+    #             return clusterUrl;
+    #         } else {
+    #             return clusterUrl.replaceFirst(PROTOCOL_SUFFIX, PROTOCOL_SUFFIX + INGEST_PREFIX);
+    #         }
+    #     }
+    #
+    #     static String getQueryEndpoint(String clusterUrl) {
+    #         if (clusterUrl.contains(INGEST_PREFIX)) {
+    #             return clusterUrl.replaceFirst(INGEST_PREFIX, "");
+    #         } else {
+    #             return clusterUrl;
+    #         }
+    #     }
+
+    @staticmethod
+    def get_ingestion_endpoint(cluster_url: str) -> str:
+        if INGEST_PREFIX in cluster_url:
+            return cluster_url
+        else:
+            return cluster_url.replace(PROTOCOL_SUFFIX, PROTOCOL_SUFFIX + INGEST_PREFIX, 1)
+
+    @staticmethod
+    def get_query_endpoint(cluster_url: str) -> str:
+        if INGEST_PREFIX in cluster_url:
+            return cluster_url.replace(INGEST_PREFIX, "", 1)
+        else:
+            return cluster_url

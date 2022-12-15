@@ -22,6 +22,7 @@ class KustoStreamingIngestClient(BaseIngestClient):
         :param KustoConnectionStringBuilder kcsb: The connection string to initialize KustoClient.
         """
         super().__init__()
+        kcsb.data_source = self.get_query_endpoint(kcsb.data_source)
         self._kusto_client = KustoClient(kcsb)
 
     def close(self):
