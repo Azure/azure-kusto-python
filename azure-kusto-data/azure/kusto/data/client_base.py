@@ -53,9 +53,9 @@ class _KustoClientBase(abc.ABC):
             "x-ms-version": self.API_VERSION,
         }
 
-        self._application_for_tracing = kcsb.application_for_tracing
-        self._user_for_tracing = kcsb.user_for_tracing
-        self._client_version_for_tracing = kcsb.client_version_for_tracing
+        self._application_for_tracing = self._kcsb.application_for_tracing
+        self._user_for_tracing = self._kcsb.user_for_tracing
+        self._client_version_for_tracing = self._kcsb.client_version_for_tracing
 
         self._is_closed: bool = False
 
