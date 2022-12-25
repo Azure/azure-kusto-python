@@ -236,13 +236,16 @@ class AzureIdentityTokenProvider(TokenProviderBase, abc.ABC):
     def _get_options(self, censored: bool) -> dict:
         pass
 
+    def get_options_full(self, censored: bool) -> dict:
+        return {"proxies": self._proxy_dict, **self._get_options(censored)}
+
     def _context_impl(self) -> dict:
-        return {"authority": self.name(), "options": self._get_options(True)}
+        return {"authority": self.name(), "options": self.get_options_full(True)}
 
     def _get_token_impl(self) -> Optional[dict]:
         try:
             if self._sync_context is None:
-                self._sync_context = self._sync_type(**self._get_options(False))
+                self._sync_context = self._sync_type(**self.get_options_full(False))
 
             token = self._sync_context.get_token(self._scopes[0], tenant_id=self._tenant_id)
             return {TokenConstants.TOKEN_TYPE: TokenConstants.BEARER_TYPE, TokenConstants.ACCESS_TOKEN: token.token}
@@ -253,9 +256,9 @@ class AzureIdentityTokenProvider(TokenProviderBase, abc.ABC):
         try:
             if self._async_context is None:
                 if self._async_type is None:
-                    self._async_context = self._sync_type(**self._get_options(False))
+                    self._async_context = self._sync_type(**self.get_options_full(False))
                 else:
-                    self._async_context = self._async_type(**self._get_options(False))
+                    self._async_context = self._async_type(**self.get_options_full(False))
 
             if self._async_type is None:
                 token = await sync_to_async(self._async_context.get_token)(self._scopes[0], tenant_id=self._tenant_id)
