@@ -4,11 +4,11 @@ import json
 import uuid
 from copy import copy
 from datetime import timedelta
-from typing import Union, Optional, Any, NoReturn, ClassVar
+from typing import Union, Optional, Any, NoReturn, ClassVar, TYPE_CHECKING
 from urllib.parse import urljoin
 
 from azure.kusto.data._cloud_settings import CloudSettings
-from azure.kusto.data._token_providers import CloudInfoTokenProvider
+from azure.kusto.data._token_providers import AzureIdentityTokenProvider
 from requests import Response
 
 from ._version import VERSION
@@ -18,6 +18,9 @@ from .kcsb import KustoConnectionStringBuilder
 from .response import KustoResponseDataSet, KustoResponseDataSetV2, KustoResponseDataSetV1
 from .security import _AadHelper
 from .kusto_trusted_endpoints import well_known_kusto_endpoints
+
+if TYPE_CHECKING:
+    import aiohttp
 
 
 class _KustoClientBase(abc.ABC):
@@ -67,7 +70,7 @@ class _KustoClientBase(abc.ABC):
 
     def validate_endpoint(self):
         if not self._endpoint_validated and self._aad_helper is not None:
-            if isinstance(self._aad_helper.token_provider, CloudInfoTokenProvider):
+            if isinstance(self._aad_helper.token_provider, AzureIdentityTokenProvider):
                 well_known_kusto_endpoints.validate_trusted_endpoint(
                     self._kusto_cluster, CloudSettings.get_cloud_info_for_cluster(self._kusto_cluster).login_endpoint
                 )

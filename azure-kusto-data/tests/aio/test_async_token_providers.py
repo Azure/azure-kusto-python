@@ -4,7 +4,6 @@ import os
 
 import pytest
 
-from azure.kusto.data._cloud_settings import CloudInfo
 from azure.kusto.data._decorators import aio_documented_by
 from azure.kusto.data._token_providers import *
 from .test_kusto_client import run_aio_tests
@@ -29,50 +28,20 @@ class TestTokenProvider:
 
         token = await provider.get_token_async()
         assert provider.init_count == 1
-        assert TokenConstants.MSAL_ACCESS_TOKEN in token
+        assert TokenConstants.ACCESS_TOKEN in token
 
         token = provider._get_token_from_cache_impl()
-        assert TokenConstants.MSAL_ACCESS_TOKEN in token
+        assert TokenConstants.ACCESS_TOKEN in token
 
-        token = await provider.get_token_async()
+        await provider.get_token_async()
         assert provider.init_count == 1
-
-        good_token = {TokenConstants.MSAL_ACCESS_TOKEN: TOKEN_VALUE}
-        bad_token1 = None
-        bad_token2 = {"error": "something bad occurred"}
-
-        assert provider._valid_token_or_none(good_token) == good_token
-        assert provider._valid_token_or_none(bad_token1) is None
-        assert provider._valid_token_or_none(bad_token2) is None
-
-        assert provider._valid_token_or_throw(good_token) == good_token
-
-        exception_occurred = False
-        try:
-            provider._valid_token_or_throw(bad_token1)
-        except KustoClientError:
-            exception_occurred = True
-        finally:
-            assert exception_occurred
-
-        exception_occurred = False
-        try:
-            provider._valid_token_or_throw(bad_token2)
-        except KustoClientError:
-            exception_occurred = True
-        finally:
-            assert exception_occurred
 
     @aio_documented_by(TokenProviderTests.get_token_value)
     def get_token_value(self, token: dict):
         assert token is not None
-        assert TokenConstants.MSAL_ERROR not in token
 
-        value = None
-        if TokenConstants.MSAL_ACCESS_TOKEN in token:
-            return token[TokenConstants.MSAL_ACCESS_TOKEN]
-        elif TokenConstants.AZ_ACCESS_TOKEN in token:
-            return token[TokenConstants.AZ_ACCESS_TOKEN]
+        if TokenConstants.ACCESS_TOKEN in token:
+            return token[TokenConstants.ACCESS_TOKEN]
         else:
             assert False
 
@@ -104,7 +73,7 @@ class TestTokenProvider:
         token = await provider.get_token_async()
         assert self.get_token_value(token) == TOKEN_VALUE
 
-        provider = CallbackTokenProvider(token_callback=lambda: 0, async_token_callback=None, is_async=True)  # token is not a string
+        provider = CallbackTokenProvider(token_callback=lambda: 0, async_token_callback=None, is_async=True)
         exception_occurred = False
         try:
             await provider.get_token_async()
@@ -125,7 +94,7 @@ class TestTokenProvider:
         async def fail_callback():
             return 0
 
-        provider = CallbackTokenProvider(token_callback=None, async_token_callback=fail_callback, is_async=True)  # token is not a string
+        provider = CallbackTokenProvider(token_callback=None, async_token_callback=fail_callback, is_async=True)
         exception_occurred = False
         try:
             await provider.get_token_async()
@@ -245,35 +214,16 @@ class TestTokenProvider:
         # to run the test download the certs from Azure Portal
         cert_app_id = os.environ.get("CERT_APP_ID", "b699d721-4f6f-4320-bc9a-88d578dfe68f")
         cert_auth = os.environ.get("CERT_AUTH", "72f988bf-86f1-41af-91ab-2d7cd011db47")
-        thumbprint = os.environ.get("CERT_THUMBPRINT")
-        public_cert_path = os.environ.get("PUBLIC_CERT_PATH")
         pem_key_path = os.environ.get("CERT_PEM_KEY_PATH")
 
-        if pem_key_path and thumbprint and cert_app_id:
-            with open(pem_key_path, "rb") as file:
-                pem_key = file.read()
-
-            provider = ApplicationCertificateTokenProvider(KUSTO_URI, cert_app_id, cert_auth, pem_key, thumbprint, is_async=True)
+        if pem_key_path and cert_app_id:
+            provider = ApplicationCertificateTokenProvider(KUSTO_URI, cert_app_id, cert_auth, pem_key_path, is_async=True)
             token = await provider.get_token_async()
             assert self.get_token_value(token) is not None
 
             # Again through cache
             token = provider._get_token_from_cache_impl()
             assert self.get_token_value(token) is not None
-
-            if public_cert_path:
-                with open(public_cert_path, "r") as file:
-                    public_cert = file.read()
-
-                provider = ApplicationCertificateTokenProvider(KUSTO_URI, cert_app_id, cert_auth, pem_key, thumbprint, public_cert, is_async=True)
-                token = await provider.get_token_async()
-                assert self.get_token_value(token) is not None
-
-                # Again through cache
-                token = provider._get_token_from_cache_impl()
-                assert self.get_token_value(token) is not None
-            else:
-                print(" *** Skipped App Cert SNI Provider Test ***")
 
         else:
             print(" *** Skipped App Cert Provider Test ***")

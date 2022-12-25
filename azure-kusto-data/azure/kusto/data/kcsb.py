@@ -25,8 +25,6 @@ class KustoConnectionStringBuilder:
         application_client_id = "Application Client Id"
         application_key = "Application Key"
         application_certificate = "Application Certificate"
-        application_certificate_thumbprint = "Application Certificate Thumbprint"
-        public_application_certificate = "Public Application Certificate"
         authority_id = "Authority Id"
         application_token = "Application Token"
         user_token = "User Token"
@@ -36,6 +34,7 @@ class KustoConnectionStringBuilder:
         interactive_login = "Interactive Login"
         login_hint = "Login Hint"
         domain_hint = "Domain Hint"
+        default_token = "Default Token"
 
         @classmethod
         def parse(cls, key: str) -> "KustoConnectionStringBuilder.ValidKeywords":
@@ -53,10 +52,6 @@ class KustoConnectionStringBuilder:
                 return cls.application_key
             if key in ["application certificate"]:
                 return cls.application_certificate
-            if key in ["application certificate thumbprint"]:
-                return cls.application_certificate_thumbprint
-            if key in ["public application certificate"]:
-                return cls.public_application_certificate
             if key in ["authority id", "authorityid", "authority", "tenantid", "tenant", "tid"]:
                 return cls.authority_id
             if key in ["aad federated security", "federated security", "federated", "fed", "aadfed"]:
@@ -77,6 +72,8 @@ class KustoConnectionStringBuilder:
                 return cls.login_hint
             if key in ["domain hint"]:
                 return cls.domain_hint
+            if key in ["default token"]:
+                return cls.default_token
             raise KeyError(key)
 
         def is_secret(self) -> bool:
@@ -88,8 +85,6 @@ class KustoConnectionStringBuilder:
             return self in [
                 self.aad_user_id,
                 self.application_certificate,
-                self.application_certificate_thumbprint,
-                self.public_application_certificate,
                 self.application_client_id,
                 self.data_source,
                 self.password,
@@ -106,7 +101,7 @@ class KustoConnectionStringBuilder:
 
         def is_bool_type(self) -> bool:
             """States whether a word is of type bool or not."""
-            return self in [self.aad_federated_security, self.msi_auth, self.az_cli, self.interactive_login]
+            return self in [self.aad_federated_security, self.msi_auth, self.az_cli, self.interactive_login, self.default_token]
 
     def __init__(self, connection_string: str):
         """
@@ -426,6 +421,12 @@ class KustoConnectionStringBuilder:
 
         return kcsb
 
+    @classmethod
+    def with_default_token(cls, connection_string: str):
+        kcsb = cls(connection_string)
+        kcsb[kcsb.ValidKeywords.default_token] = True
+        return kcsb
+
     @property
     def data_source(self) -> Optional[str]:
         """The URI specifying the Kusto service endpoint.
@@ -465,24 +466,6 @@ class KustoConnectionStringBuilder:
     @application_certificate.setter
     def application_certificate(self, value: str):
         self[self.ValidKeywords.application_certificate] = value
-
-    @property
-    def application_certificate_thumbprint(self) -> Optional[str]:
-        """hex encoded thumbprint of the certificate."""
-        return self._internal_dict.get(self.ValidKeywords.application_certificate_thumbprint)
-
-    @application_certificate_thumbprint.setter
-    def application_certificate_thumbprint(self, value: str):
-        self[self.ValidKeywords.application_certificate_thumbprint] = value
-
-    @property
-    def application_public_certificate(self) -> Optional[str]:
-        """A public certificate matching the PEM encoded certificate private key."""
-        return self._internal_dict.get(self.ValidKeywords.public_application_certificate)
-
-    @application_public_certificate.setter
-    def application_public_certificate(self, value: str):
-        self[self.ValidKeywords.public_application_certificate] = value
 
     @property
     def authority_id(self) -> Optional[str]:
@@ -543,6 +526,15 @@ class KustoConnectionStringBuilder:
     @property
     def domain_hint(self) -> Optional[str]:
         return self._internal_dict.get(self.ValidKeywords.domain_hint)
+
+    @property
+    def default_token(self) -> bool:
+        val = self._internal_dict.get(self.ValidKeywords.default_token)
+        return val is not None and val
+
+    @default_token.setter
+    def default_token(self, value: bool):
+        self[self.ValidKeywords.default_token] = value
 
     def __str__(self) -> str:
         dict_copy = self._internal_dict.copy()

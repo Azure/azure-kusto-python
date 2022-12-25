@@ -15,6 +15,7 @@ from ._token_providers import (
     ApplicationKeyTokenProvider,
     ApplicationCertificateTokenProvider,
     TokenConstants,
+    DefaultTokenProvider,
 )
 from .exceptions import KustoAuthenticationError, KustoClientError
 
@@ -43,15 +44,13 @@ class _AadHelper:
             self.token_provider = ApplicationKeyTokenProvider(
                 self.kusto_uri, kcsb.authority_id, kcsb.application_client_id, kcsb.application_key, is_async=is_async
             )
-        elif all([kcsb.application_client_id, kcsb.application_certificate, kcsb.application_certificate_thumbprint]):
+        elif all([kcsb.application_client_id, kcsb.application_certificate]):
             # kcsb.application_public_certificate can be None if SNI is not used
             self.token_provider = ApplicationCertificateTokenProvider(
                 self.kusto_uri,
                 kcsb.application_client_id,
                 kcsb.authority_id,
                 kcsb.application_certificate,
-                kcsb.application_certificate_thumbprint,
-                kcsb.application_public_certificate,
                 is_async=is_async,
             )
         elif kcsb.msi_authentication:
@@ -64,6 +63,8 @@ class _AadHelper:
             self.token_provider = AzCliTokenProvider(self.kusto_uri, is_async=is_async)
         elif kcsb.token_provider or kcsb.async_token_provider:
             self.token_provider = CallbackTokenProvider(token_callback=kcsb.token_provider, async_token_callback=kcsb.async_token_provider, is_async=is_async)
+        elif kcsb.default_token:
+            self.token_provider = DefaultTokenProvider(self.kusto_uri, is_async=is_async)
         else:
             self.token_provider = DeviceLoginTokenProvider(self.kusto_uri, kcsb.authority_id, is_async=is_async)
 
@@ -88,10 +89,8 @@ class _AadHelper:
 
 
 def _get_header_from_dict(token: dict):
-    if TokenConstants.MSAL_ACCESS_TOKEN in token:
-        return _get_header(token[TokenConstants.MSAL_TOKEN_TYPE], token[TokenConstants.MSAL_ACCESS_TOKEN])
-    elif TokenConstants.AZ_ACCESS_TOKEN in token:
-        return _get_header(token[TokenConstants.AZ_TOKEN_TYPE], token[TokenConstants.AZ_ACCESS_TOKEN])
+    if TokenConstants.ACCESS_TOKEN in token:
+        return _get_header(token[TokenConstants.TOKEN_TYPE], token[TokenConstants.ACCESS_TOKEN])
     else:
         raise KustoClientError("Unable to determine the token type. Neither 'tokenType' nor 'token_type' property is present.")
 
