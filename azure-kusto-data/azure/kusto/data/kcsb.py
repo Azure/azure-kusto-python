@@ -1,3 +1,4 @@
+import datetime
 from enum import unique, Enum
 from typing import Union, Callable, Coroutine, Optional
 
@@ -35,6 +36,7 @@ class KustoConnectionStringBuilder:
         login_hint = "Login Hint"
         domain_hint = "Domain Hint"
         default_token = "Default Token"
+        device_code = "Device Code"
 
         @classmethod
         def parse(cls, key: str) -> "KustoConnectionStringBuilder.ValidKeywords":
@@ -60,20 +62,6 @@ class KustoConnectionStringBuilder:
                 return cls.application_token
             if key in ["user token", "usertoken", "usrtoken"]:
                 return cls.user_token
-            if key in ["msi_auth", "msi authentication"]:
-                return cls.msi_auth
-            if key in ["msi_type", "msi params"]:
-                return cls.msi_params
-            if key in ["az cli"]:
-                return cls.az_cli
-            if key in ["interactive login"]:
-                return cls.interactive_login
-            if key in ["login hint"]:
-                return cls.login_hint
-            if key in ["domain hint"]:
-                return cls.domain_hint
-            if key in ["default token"]:
-                return cls.default_token
             raise KeyError(key)
 
         def is_secret(self) -> bool:
@@ -115,6 +103,7 @@ class KustoConnectionStringBuilder:
         self._internal_dict = {}
         self._token_provider = None
         self._async_token_provider = None
+        self._device_code_callback = None
         if connection_string is not None and "=" not in connection_string.partition(";")[0]:
             connection_string = "Data Source=" + connection_string
 
@@ -292,16 +281,27 @@ class KustoConnectionStringBuilder:
         return kcsb
 
     @classmethod
-    def with_aad_device_authentication(cls, connection_string: str, authority_id: str = "organizations") -> "KustoConnectionStringBuilder":
+    def with_aad_device_authentication(
+        cls, connection_string: str, authority_id: str = "organizations", callback: Optional[Callable[[str, str, datetime.datetime], None]] = None
+    ) -> "KustoConnectionStringBuilder":
         """
         Creates a KustoConnection string builder that will authenticate with AAD application and
         password.
+        :param callback: A callback enabling control of how authentication
+        instructions are presented. Must accept arguments (``verification_uri``, ``user_code``, ``expires_on``):
+
+        - ``verification_uri`` (str) the URL the user must visit
+        - ``user_code`` (str) the code the user must enter there
+        - ``expires_on`` (datetime.datetime) the UTC time at which the code will expire
+        If this argument isn't provided, the credential will print instructions to stdout.
         :param str connection_string: Kusto connection string should be of the format: https://<clusterName>.kusto.windows.net
         :param str authority_id: optional param. defaults to "organizations"
         """
         kcsb = cls(connection_string)
         kcsb[kcsb.ValidKeywords.aad_federated_security] = True
         kcsb[kcsb.ValidKeywords.authority_id] = authority_id
+        kcsb[kcsb.ValidKeywords.device_code] = True
+        kcsb._device_code_callback = callback
 
         return kcsb
 
@@ -526,6 +526,19 @@ class KustoConnectionStringBuilder:
     @property
     def domain_hint(self) -> Optional[str]:
         return self._internal_dict.get(self.ValidKeywords.domain_hint)
+
+    @property
+    def device_code(self) -> bool:
+        val = self._internal_dict.get(self.ValidKeywords.device_code)
+        return val is not None and val
+
+    @device_code.setter
+    def device_code(self, value: bool):
+        self[self.ValidKeywords.device_code] = value
+
+    @property
+    def device_code_callback(self) -> Optional[Callable[[str, str, datetime.datetime], None]]:
+        return self._device_code_callback
 
     @property
     def default_token(self) -> bool:

@@ -140,10 +140,6 @@ class TokenProviderTests(unittest.TestCase):
         token = provider.get_token()
         assert TokenProviderTests.get_token_value(token) is not None
 
-        # another run to pass through the cache
-        token = provider._get_token_from_cache_impl()
-        assert TokenProviderTests.get_token_value(token) is not None
-
     @staticmethod
     def test_msi_provider():
         if not TEST_MSI_AUTH:
@@ -197,9 +193,9 @@ class TokenProviderTests(unittest.TestCase):
             print(" *** Skipped User Device Flow Test ***")
             return
 
-        def callback(x):
-            # break here if you debug this test, and get the code from 'x'
-            print(x)
+        def callback(x, y, z):
+            # break here if you debug this test, and get the code from 'y'
+            print(x, y, z)
 
         provider = DeviceLoginTokenProvider(KUSTO_URI, "organizations", callback)
         token = provider.get_token()
@@ -220,10 +216,6 @@ class TokenProviderTests(unittest.TestCase):
         token = provider.get_token()
         assert TokenProviderTests.get_token_value(token) is not None
 
-        # Again through cache
-        token = provider._get_token_from_cache_impl()
-        assert TokenProviderTests.get_token_value(token) is not None
-
     @staticmethod
     def test_app_key_provider():
         # default details are for kusto-client-e2e-test-app
@@ -235,10 +227,6 @@ class TokenProviderTests(unittest.TestCase):
         if app_id and app_key and auth_id:
             provider = ApplicationKeyTokenProvider(KUSTO_URI, auth_id, app_id, app_key)
             token = provider.get_token()
-            assert TokenProviderTests.get_token_value(token) is not None
-
-            # Again through cache
-            token = provider._get_token_from_cache_impl()
             assert TokenProviderTests.get_token_value(token) is not None
         else:
             print(" *** Skipped App Id & Key Provider Test ***")
@@ -254,10 +242,6 @@ class TokenProviderTests(unittest.TestCase):
         if pem_key_path and cert_app_id:
             provider = ApplicationCertificateTokenProvider(KUSTO_URI, cert_app_id, cert_auth, pem_key_path)
             token = provider.get_token()
-            assert TokenProviderTests.get_token_value(token) is not None
-
-            # Again through cache
-            token = provider._get_token_from_cache_impl()
             assert TokenProviderTests.get_token_value(token) is not None
         else:
             print(" *** Skipped App Cert Provider Test ***")
