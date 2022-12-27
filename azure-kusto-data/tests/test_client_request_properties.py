@@ -217,4 +217,4 @@ def test_set_connector_full():
     assert params.request_headers["x-ms-client-user"] == "myUser"
     assert params.request_headers["x-ms-client-version"].startswith("Kusto.Python.Client:")
 
-    assert params.request_headers["x-ms-client-application"] == " Kusto.myConnector:{myVersion}|App.{myApp}:{myAppVersion}|myField:{myValue}"
+    assert params.request_headers["x-ms-client-application"] == "Kusto.myConnector:{myVersion}|App.{myApp}:{myAppVersion}|myField:{myValue}"
