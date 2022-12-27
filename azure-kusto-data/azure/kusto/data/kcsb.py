@@ -1,5 +1,6 @@
 import functools
 import os
+import re
 import sys
 from enum import unique, Enum
 from typing import Union, Callable, Coroutine, Optional, Tuple, List
@@ -586,10 +587,12 @@ class KustoConnectionStringBuilder:
         except Exception:
             return "Unknown"
 
+    PATTERN = re.compile(r"[\r\n\s{}|]+")
+
     @staticmethod
     @functools.lru_cache()
     def _build_header_format(*args: Tuple[str, str]) -> str:
-        return "|".join(f"{k}:{{{v}}}" for k, v in args if v)
+        return "|".join(f"{k}:{{{KustoConnectionStringBuilder.PATTERN.sub('_', v)}}}" for k, v in args if v)
 
     def get_client_version(self) -> str:
         """Returns the version of the client"""
