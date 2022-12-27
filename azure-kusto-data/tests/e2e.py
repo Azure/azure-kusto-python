@@ -95,7 +95,7 @@ class TestE2E:
     def engine_kcsb_from_env(cls, app_insights=False) -> KustoConnectionStringBuilder:
         engine = cls.engine_cs if not app_insights else cls.ai_engine_cs
         if all([cls.app_id, cls.app_key, cls.auth_id]):
-            return KustoConnectionStringBuilder.with_aad_application_key_authentication(engine, cls.app_id, cls.app_key, cls.auth_id)
+            return KustoConnectionStringBuilder.with_azure_token_credential(engine)
         else:
             return KustoConnectionStringBuilder.with_interactive_login(engine)
 

@@ -15,6 +15,7 @@ from ._token_providers import (
     ApplicationKeyTokenProvider,
     ApplicationCertificateTokenProvider,
     TokenConstants,
+    AzureIdentityTokenProvider,
 )
 from .exceptions import KustoAuthenticationError, KustoClientError
 
@@ -64,7 +65,15 @@ class _AadHelper:
             self.token_provider = AzCliTokenProvider(self.kusto_uri, is_async=is_async)
         elif kcsb.token_provider or kcsb.async_token_provider:
             self.token_provider = CallbackTokenProvider(token_callback=kcsb.token_provider, async_token_callback=kcsb.async_token_provider, is_async=is_async)
-        else:
+        elif kcsb.is_cred_auth:
+            self.token_provider = AzureIdentityTokenProvider(
+                self.kusto_uri,
+                is_async=is_async,
+                cred_builder=kcsb.cred_builder,
+                async_cred_builder=kcsb.async_cred_builder,
+                additional_params=kcsb.cred_params,
+            )
+        else:  # TODO - next breaking change - remove this as default, make no auth the default
             self.token_provider = DeviceLoginTokenProvider(self.kusto_uri, kcsb.authority_id, is_async=is_async)
 
     def acquire_authorization_header(self):

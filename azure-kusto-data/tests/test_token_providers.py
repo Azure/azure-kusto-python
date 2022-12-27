@@ -6,7 +6,7 @@ from threading import Thread
 
 from asgiref.sync import async_to_sync
 
-from azure.kusto.data._cloud_settings import CloudInfo
+from azure.identity import ClientSecretCredential
 from azure.kusto.data._token_providers import *
 
 KUSTO_URI = "https://sdkse2etest.eastus.kusto.windows.net"
@@ -353,3 +353,18 @@ class TokenProviderTests(unittest.TestCase):
         assert context["authority"] == "https://login_endpoint/auth_test"
         assert context["client_id"] == "1234"
         assert provider._scopes == ["https://fakeurl.kustomfa.windows.net/.default"]
+
+    def test_azure_identity_token_provider(self):
+        app_id = os.environ.get("APP_ID", "b699d721-4f6f-4320-bc9a-88d578dfe68f")
+        auth_id = os.environ.get("APP_AUTH_ID", "72f988bf-86f1-41af-91ab-2d7cd011db47")
+        app_key = os.environ.get("APP_KEY")
+
+        provider = AzureIdentityTokenProvider(KUSTO_URI)
+        token = provider.get_token()
+        assert TokenProviderTests.get_token_value(token) is not None
+
+        provider = AzureIdentityTokenProvider(
+            KUSTO_URI, cred_builder=ClientSecretCredential, additional_params={"tenant_id": auth_id, "client_id": app_id, "client_secret": app_key}
+        )
+        token = provider.get_token()
+        assert TokenProviderTests.get_token_value(token) is not None

@@ -1,5 +1,5 @@
 from enum import unique, Enum
-from typing import Union, Callable, Coroutine, Optional
+from typing import Union, Callable, Coroutine, Optional, Type
 
 from ._string_utils import assert_string_is_not_empty
 
@@ -120,6 +120,10 @@ class KustoConnectionStringBuilder:
         self._internal_dict = {}
         self._token_provider = None
         self._async_token_provider = None
+        self.is_cred_auth = False
+        self.cred_builder: Optional[Type] = None
+        self.async_cred_builder: Optional[Type] = None
+        self.cred_params: dict = {}
         if connection_string is not None and "=" not in connection_string.partition(";")[0]:
             connection_string = "Data Source=" + connection_string
 
@@ -423,6 +427,27 @@ class KustoConnectionStringBuilder:
 
         if domain_hint is not None:
             kcsb[kcsb.ValidKeywords.domain_hint] = domain_hint
+
+        return kcsb
+
+    @classmethod
+    def with_azure_token_credential(
+        cls, connection_string: str, cred_builder: Type = None, async_cred_builder: Optional[Type] = None, params: Optional[dict] = None
+    ) -> "KustoConnectionStringBuilder":
+        """
+        Create a KustoConnectionStringBuilder that uses an azure token credential to obtain a connection token.
+        :param connection_string: Kusto connection string should be of the format: https://<clusterName>.kusto.windows.net
+        :param cred_builder: The type of the credential builder to use. The SDK will create an instance of this type. Defaults to DefaultAzureCredential.
+        :param async_cred_builder: The type of the credential builder to use. The SDK will create an instance of this type.
+            Defaults to the async DefaultAzureCredential, if no cred_builder is provided.
+            Otherwise, the sync version of the cred_builder will be used.
+        :param params: additional parameters to pass to the credential builder.
+        """
+        kcsb = cls(connection_string)
+        kcsb[kcsb.ValidKeywords.aad_federated_security] = True
+        kcsb.is_cred_auth = True
+        kcsb.cred_builder = cred_builder
+        kcsb.async_cred_builder = async_cred_builder
 
         return kcsb
 
