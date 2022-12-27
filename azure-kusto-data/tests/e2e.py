@@ -104,8 +104,14 @@ class TestE2E:
         cls.engine_cs = os.environ.get("ENGINE_CONNECTION_STRING") or ""
         cls.ai_engine_cs = os.environ.get("APPLICATION_INSIGHTS_ENGINE_CONNECTION_STRING") or ""
         cls.app_id = os.environ.get("APP_ID")
+        if cls.app_id:
+            os.environ["AZURE_CLIENT_ID"] = cls.app_id
         cls.app_key = os.environ.get("APP_KEY")
+        if cls.app_key:
+            os.environ["AZURE_CLIENT_SECRET"] = cls.app_key
         cls.auth_id = os.environ.get("AUTH_ID")
+        if cls.auth_id:
+            os.environ["AZURE_TENANT_ID"] = cls.auth_id
         cls.test_db = os.environ.get("TEST_DATABASE")
         cls.ai_test_db = os.environ.get("APPLICATION_INSIGHTS_TEST_DATABASE")  # name of e2e database could be changed
 
