@@ -112,6 +112,7 @@ class TestE2E:
         cls.auth_id = os.environ.get("AUTH_ID")
         if cls.auth_id:
             os.environ["AZURE_TENANT_ID"] = cls.auth_id
+        os.environ["AZURE_AUTHORITY_HOST"] = "login.microsoftonline.com"
         cls.test_db = os.environ.get("TEST_DATABASE")
         cls.ai_test_db = os.environ.get("APPLICATION_INSIGHTS_TEST_DATABASE")  # name of e2e database could be changed
 
