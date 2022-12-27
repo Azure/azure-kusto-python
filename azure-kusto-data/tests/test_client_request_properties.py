@@ -48,7 +48,7 @@ def test_default_tracing_properties():
         timedelta(seconds=10),
         kcsb.application_for_tracing,
         kcsb.user_for_tracing,
-        kcsb.client_version_for_tracing,
+        kcsb.get_client_version(),
     )
 
     assert params.request_headers["x-ms-client-request-id"] is not None
@@ -61,7 +61,7 @@ def test_custom_kcsb_tracing_properties():
     kcsb = KustoConnectionStringBuilder("test")
     kcsb.application_for_tracing = "myApp"
     kcsb.user_for_tracing = "myUser"
-    kcsb.client_version_for_tracing = "myVersion"
+    kcsb._package = "ingest"
 
     params = ExecuteRequestParams(
         "somedatabase",
@@ -74,22 +74,22 @@ def test_custom_kcsb_tracing_properties():
         timedelta(seconds=10),
         kcsb.application_for_tracing,
         kcsb.user_for_tracing,
-        kcsb.client_version_for_tracing,
+        kcsb.get_client_version(),
     )
 
     assert params.request_headers["x-ms-client-request-id"] is not None
 
     assert params.request_headers["x-ms-client-application"] == "myApp"
     assert params.request_headers["x-ms-client-user"] == "myUser"
-    assert params.request_headers["x-ms-client-version"] == "myVersion"
+    assert "ingest" in params.request_headers["x-ms-client-version"]
 
 
 def test_custom_crp_tracing_properties():
     kcsb = KustoConnectionStringBuilder("test")
+    kcsb._package = "data"
     crp = ClientRequestProperties()
     crp.application = "myApp2"
     crp.user = "myUser2"
-    crp.client_version = "myVersion2"
 
     params = ExecuteRequestParams(
         "somedatabase",
@@ -102,24 +102,23 @@ def test_custom_crp_tracing_properties():
         timedelta(seconds=10),
         kcsb.application_for_tracing,
         kcsb.user_for_tracing,
-        kcsb.client_version_for_tracing,
+        kcsb.get_client_version(),
     )
 
     assert params.request_headers["x-ms-client-request-id"] is not None
     assert params.request_headers["x-ms-client-application"] == "myApp2"
     assert params.request_headers["x-ms-client-user"] == "myUser2"
-    assert params.request_headers["x-ms-client-version"] == "myVersion2"
+    assert params.request_headers["x-ms-client-version"].startswith("Kusto.Python.Client:")
+    assert "data" in params.request_headers["x-ms-client-version"]
 
 
 def test_custom_crp_tracing_properties_override_kcsb():
     kcsb = KustoConnectionStringBuilder("test")
     kcsb.application_for_tracing = "myApp"
     kcsb.user_for_tracing = "myUser"
-    kcsb.client_version_for_tracing = "myVersion"
     crp = ClientRequestProperties()
     crp.application = "myApp2"
     crp.user = "myUser2"
-    crp.client_version = "myVersion2"
 
     params = ExecuteRequestParams(
         "somedatabase",
@@ -132,10 +131,90 @@ def test_custom_crp_tracing_properties_override_kcsb():
         timedelta(seconds=10),
         kcsb.application_for_tracing,
         kcsb.user_for_tracing,
-        kcsb.client_version_for_tracing,
+        kcsb.get_client_version(),
     )
 
     assert params.request_headers["x-ms-client-request-id"] is not None
     assert params.request_headers["x-ms-client-application"] == "myApp2"
     assert params.request_headers["x-ms-client-user"] == "myUser2"
-    assert params.request_headers["x-ms-client-version"] == "myVersion2"
+    assert params.request_headers["x-ms-client-version"].startswith("Kusto.Python.Client:")
+
+
+def test_set_connector_version_name_and_version():
+    kcsb = KustoConnectionStringBuilder("test")
+    kcsb._set_connector_details("myConnector", "myVersion", False)
+    crp = ClientRequestProperties()
+
+    params = ExecuteRequestParams(
+        "somedatabase",
+        None,
+        crp,
+        "somequery",
+        timedelta(seconds=10),
+        {},
+        timedelta(seconds=10),
+        timedelta(seconds=10),
+        kcsb.application_for_tracing,
+        kcsb.user_for_tracing,
+        kcsb.get_client_version(),
+    )
+
+    assert params.request_headers["x-ms-client-request-id"] is not None
+    assert params.request_headers["x-ms-client-user"] == "[none]"
+    assert params.request_headers["x-ms-client-version"].startswith("Kusto.Python.Client:")
+
+    assert params.request_headers["x-ms-client-application"] == "Kusto.myConnector:{myVersion}"
+
+
+def test_set_connector_no_app_version():
+    kcsb = KustoConnectionStringBuilder("test")
+    kcsb._set_connector_details("myConnector", "myVersion", True, app_name="myApp")
+    crp = ClientRequestProperties()
+
+    params = ExecuteRequestParams(
+        "somedatabase",
+        None,
+        crp,
+        "somequery",
+        timedelta(seconds=10),
+        {},
+        timedelta(seconds=10),
+        timedelta(seconds=10),
+        kcsb.application_for_tracing,
+        kcsb.user_for_tracing,
+        kcsb.get_client_version(),
+    )
+
+    assert params.request_headers["x-ms-client-request-id"] is not None
+    assert len(params.request_headers["x-ms-client-user"]) > 0
+    assert params.request_headers["x-ms-client-version"].startswith("Kusto.Python.Client:")
+
+    assert params.request_headers["x-ms-client-application"] == "Kusto.myConnector:{myVersion}"
+
+
+def test_set_connector_full():
+    kcsb = KustoConnectionStringBuilder("test")
+    kcsb._set_connector_details(
+        "myConnector", "myVersion", True, override_user="myUser", app_name="myApp", app_version="myAppVersion", additional_fields=[("myField", "myValue")]
+    )
+    crp = ClientRequestProperties()
+
+    params = ExecuteRequestParams(
+        "somedatabase",
+        None,
+        crp,
+        "somequery",
+        timedelta(seconds=10),
+        {},
+        timedelta(seconds=10),
+        timedelta(seconds=10),
+        kcsb.application_for_tracing,
+        kcsb.user_for_tracing,
+        kcsb.get_client_version(),
+    )
+
+    assert params.request_headers["x-ms-client-request-id"] is not None
+    assert params.request_headers["x-ms-client-user"] == "myUser"
+    assert params.request_headers["x-ms-client-version"].startswith("Kusto.Python.Client:")
+
+    assert params.request_headers["x-ms-client-application"] == " Kusto.myConnector:{myVersion}|App.{myApp}:{myAppVersion}|myField:{myValue}"

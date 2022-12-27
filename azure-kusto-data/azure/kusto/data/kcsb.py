@@ -2,7 +2,7 @@ import functools
 import os
 import sys
 from enum import unique, Enum
-from typing import Union, Callable, Coroutine, Optional
+from typing import Union, Callable, Coroutine, Optional, Tuple, List
 
 from ._string_utils import assert_string_is_not_empty
 from ._version import VERSION
@@ -129,7 +129,7 @@ class KustoConnectionStringBuilder:
 
         self._application_for_tracing: Optional[str] = None
         self._user_for_tracing: Optional[str] = None
-        self._client_version_for_tracing: Optional[str] = None
+        self._package = None
 
         self[self.ValidKeywords.authority_id] = "organizations"
 
@@ -568,14 +568,6 @@ class KustoConnectionStringBuilder:
     def user_for_tracing(self, value: str):
         self._user_for_tracing = value
 
-    @property
-    def client_version_for_tracing(self) -> Optional[str]:
-        return self._client_version_for_tracing if self._client_version_for_tracing else self.get_client_version()
-
-    @client_version_for_tracing.setter
-    def client_version_for_tracing(self, value: str):
-        self._client_version_for_tracing = value
-
     @staticmethod
     @functools.lru_cache(maxsize=1)
     def get_script_name() -> str:
@@ -595,10 +587,35 @@ class KustoConnectionStringBuilder:
             return "Unknown"
 
     @staticmethod
-    @functools.lru_cache(maxsize=1)
-    def get_client_version() -> str:
+    @functools.lru_cache()
+    def _build_header_format(*args: Tuple[str, str]) -> str:
+        return "|".join(f"{k}:{{{v}}}" for k, v in args if v)
+
+    def get_client_version(self) -> str:
         """Returns the version of the client"""
-        return "Kusto.Python.Client:" + VERSION
+        return self._build_header_format(("Kusto.Python.Client", VERSION), (sys.implementation.name, sys.version), ("Package", self._package))
+
+    def _set_connector_details(
+        self,
+        name: str,
+        version: str,
+        send_user: bool,
+        override_user: Optional[str] = None,
+        app_name: Optional[str] = None,
+        app_version: Optional[str] = None,
+        additional_fields: Optional[List[Tuple[str, str]]] = None,
+    ):
+        if additional_fields is None:
+            additional_fields = []
+
+        self.application_for_tracing = self._build_header_format(
+            ("Kusto." + name, version), (f"App.{{{app_name if app_name else self.get_script_name()}}}", app_version), *additional_fields
+        )
+
+        if send_user:
+            self.user_for_tracing = override_user if override_user else self.get_user_name()
+        else:
+            self.user_for_tracing = "[none]"
 
     def __str__(self) -> str:
         dict_copy = self._internal_dict.copy()

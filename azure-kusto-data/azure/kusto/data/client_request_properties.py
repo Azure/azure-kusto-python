@@ -19,7 +19,6 @@ class ClientRequestProperties:
         self.client_request_id = None
         self.application = None
         self.user = None
-        self.client_version = None
 
     def set_parameter(self, name: str, value: str):
         """Sets a parameter's value"""
