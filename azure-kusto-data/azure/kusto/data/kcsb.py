@@ -576,7 +576,7 @@ class KustoConnectionStringBuilder:
         try:
             return os.path.basename(sys.argv[0])
         except Exception:
-            return "Unknown"
+            return "[none]"
 
     @staticmethod
     @functools.lru_cache(maxsize=1)
@@ -585,7 +585,7 @@ class KustoConnectionStringBuilder:
         try:
             return os.getlogin()
         except Exception:
-            return "Unknown"
+            return "[none]"
 
     PATTERN = re.compile(r"[\r\n\s{}|]+")
 
