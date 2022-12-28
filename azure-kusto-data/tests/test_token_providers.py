@@ -356,8 +356,11 @@ class TokenProviderTests(unittest.TestCase):
 
     def test_azure_identity_token_provider(self):
         app_id = os.environ.get("APP_ID", "b699d721-4f6f-4320-bc9a-88d578dfe68f")
+        os.environ["AZURE_CLIENT_ID"] = app_id
         auth_id = os.environ.get("APP_AUTH_ID", "72f988bf-86f1-41af-91ab-2d7cd011db47")
+        os.environ["AZURE_TENANT_ID"] = auth_id
         app_key = os.environ.get("APP_KEY")
+        os.environ["AZURE_CLIENT_SECRET"] = os.environ.get("APP_KEY")
 
         provider = AzureIdentityTokenProvider(KUSTO_URI)
         token = provider.get_token()
