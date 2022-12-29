@@ -52,8 +52,8 @@ def test_default_tracing_properties():
     )
 
     assert params.request_headers["x-ms-client-request-id"] is not None
-    assert len(params.request_headers["x-ms-client-application"]) > 0
-    assert len(params.request_headers["x-ms-client-user"]) > 0
+    assert len(params.request_headers["x-ms-app"]) > 0
+    assert len(params.request_headers["x-ms-user"]) > 0
     assert params.request_headers["x-ms-client-version"].startswith("Kusto.Python.Client:")
 
 
@@ -78,8 +78,8 @@ def test_custom_kcsb_tracing_properties():
 
     assert params.request_headers["x-ms-client-request-id"] is not None
 
-    assert params.request_headers["x-ms-client-application"] == "myApp"
-    assert params.request_headers["x-ms-client-user"] == "myUser"
+    assert params.request_headers["x-ms-app"] == "myApp"
+    assert params.request_headers["x-ms-user"] == "myUser"
     assert "ingest" in params.request_headers["x-ms-client-version"]
 
 
@@ -104,8 +104,8 @@ def test_custom_crp_tracing_properties():
     )
 
     assert params.request_headers["x-ms-client-request-id"] is not None
-    assert params.request_headers["x-ms-client-application"] == "myApp2"
-    assert params.request_headers["x-ms-client-user"] == "myUser2"
+    assert params.request_headers["x-ms-app"] == "myApp2"
+    assert params.request_headers["x-ms-user"] == "myUser2"
     assert params.request_headers["x-ms-client-version"].startswith("Kusto.Python.Client:")
     assert "data" in params.request_headers["x-ms-client-version"]
 
@@ -133,8 +133,8 @@ def test_custom_crp_tracing_properties_override_kcsb():
     )
 
     assert params.request_headers["x-ms-client-request-id"] is not None
-    assert params.request_headers["x-ms-client-application"] == "myApp2"
-    assert params.request_headers["x-ms-client-user"] == "myUser2"
+    assert params.request_headers["x-ms-app"] == "myApp2"
+    assert params.request_headers["x-ms-user"] == "myUser2"
     assert params.request_headers["x-ms-client-version"].startswith("Kusto.Python.Client:")
 
 
@@ -158,10 +158,10 @@ def test_set_connector_name_and_version():
     )
 
     assert params.request_headers["x-ms-client-request-id"] is not None
-    assert params.request_headers["x-ms-client-user"] == "[none]"
+    assert params.request_headers["x-ms-user"] == "[none]"
     assert params.request_headers["x-ms-client-version"].startswith("Kusto.Python.Client:")
 
-    assert params.request_headers["x-ms-client-application"] == "Kusto.myConnector:{myVersion}"
+    assert params.request_headers["x-ms-app"] == "Kusto.myConnector:{myVersion}"
 
 
 def test_set_connector_no_app_version():
@@ -184,10 +184,10 @@ def test_set_connector_no_app_version():
     )
 
     assert params.request_headers["x-ms-client-request-id"] is not None
-    assert len(params.request_headers["x-ms-client-user"]) > 0
+    assert len(params.request_headers["x-ms-user"]) > 0
     assert params.request_headers["x-ms-client-version"].startswith("Kusto.Python.Client:")
 
-    assert params.request_headers["x-ms-client-application"] == "Kusto.myConnector:{myVersion}"
+    assert params.request_headers["x-ms-app"] == "Kusto.myConnector:{myVersion}"
 
 
 def test_set_connector_full():
@@ -212,7 +212,7 @@ def test_set_connector_full():
     )
 
     assert params.request_headers["x-ms-client-request-id"] is not None
-    assert params.request_headers["x-ms-client-user"] == "myUser"
+    assert params.request_headers["x-ms-user"] == "myUser"
     assert params.request_headers["x-ms-client-version"].startswith("Kusto.Python.Client:")
 
-    assert params.request_headers["x-ms-client-application"] == "Kusto.myConnector:{myVersion}|App.{myApp}:{myAppVersion}|myField:{myValue}"
+    assert params.request_headers["x-ms-app"] == "Kusto.myConnector:{myVersion}|App.{myApp}:{myAppVersion}|myField:{myValue}"

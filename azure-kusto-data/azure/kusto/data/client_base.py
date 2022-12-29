@@ -165,12 +165,12 @@ class ExecuteRequestParams:
                 "property": lambda p: _client_version_for_tracing,
             },
             {
-                "name": "x-ms-client-application",
+                "name": "x-ms-app",
                 "value": _application_for_tracing,
                 "property": lambda p: p.application,
             },
             {
-                "name": "x-ms-client-user",
+                "name": "x-ms-user",
                 "value": _user_for_tracing,
                 "property": lambda p: p.user,
             },
