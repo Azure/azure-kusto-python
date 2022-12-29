@@ -80,7 +80,6 @@ def test_custom_kcsb_tracing_properties():
 
     assert params.request_headers["x-ms-app"] == "myApp"
     assert params.request_headers["x-ms-user"] == "myUser"
-    assert "ingest" in params.request_headers["x-ms-client-version"]
 
 
 def test_custom_crp_tracing_properties():
@@ -107,7 +106,6 @@ def test_custom_crp_tracing_properties():
     assert params.request_headers["x-ms-app"] == "myApp2"
     assert params.request_headers["x-ms-user"] == "myUser2"
     assert params.request_headers["x-ms-client-version"].startswith("Kusto.Python.Client:")
-    assert "data" in params.request_headers["x-ms-client-version"]
 
 
 def test_custom_crp_tracing_properties_override_kcsb():
