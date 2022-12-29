@@ -138,7 +138,7 @@ def test_custom_crp_tracing_properties_override_kcsb():
     assert params.request_headers["x-ms-client-version"].startswith("Kusto.Python.Client:")
 
 
-def test_set_connector_version_name_and_version():
+def test_set_connector_name_and_version():
     kcsb = KustoConnectionStringBuilder("test")
     kcsb._set_connector_details("myConnector", "myVersion", False)
     crp = ClientRequestProperties()
