@@ -40,9 +40,6 @@ class _KustoClientBase(abc.ABC):
             self._kcsb = KustoConnectionStringBuilder(kcsb)
         self._kusto_cluster = self._kcsb.data_source
 
-        # TODO make this prettier when auto endpoint merges
-        self._kcsb._package = "ingest" if "ingest-" in self._kusto_cluster else "data"
-
         # notice that in this context, federated actually just stands for aad auth, not aad federated auth (legacy code)
         self._aad_helper = _AadHelper(self._kcsb, is_async) if self._kcsb.aad_federated_security else None
 

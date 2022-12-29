@@ -130,7 +130,6 @@ class KustoConnectionStringBuilder:
 
         self._application_for_tracing: Optional[str] = None
         self._user_for_tracing: Optional[str] = None
-        self._package = None
 
         self[self.ValidKeywords.authority_id] = "organizations"
 
@@ -596,7 +595,7 @@ class KustoConnectionStringBuilder:
 
     def get_client_version(self) -> str:
         """Returns the version of the client"""
-        return self._build_header_format(("Kusto.Python.Client", VERSION), (sys.implementation.name, sys.version), ("Package", self._package))
+        return self._build_header_format(("Kusto.Python.Client", VERSION), (sys.implementation.name, sys.version))
 
     def _set_connector_details(
         self,

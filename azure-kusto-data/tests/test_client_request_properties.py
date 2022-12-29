@@ -61,7 +61,6 @@ def test_custom_kcsb_tracing_properties():
     kcsb = KustoConnectionStringBuilder("test")
     kcsb.application_for_tracing = "myApp"
     kcsb.user_for_tracing = "myUser"
-    kcsb._package = "ingest"
 
     params = ExecuteRequestParams(
         "somedatabase",
@@ -86,7 +85,6 @@ def test_custom_kcsb_tracing_properties():
 
 def test_custom_crp_tracing_properties():
     kcsb = KustoConnectionStringBuilder("test")
-    kcsb._package = "data"
     crp = ClientRequestProperties()
     crp.application = "myApp2"
     crp.user = "myUser2"
