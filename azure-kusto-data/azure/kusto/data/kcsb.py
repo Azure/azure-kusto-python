@@ -147,6 +147,9 @@ class KustoConnectionStringBuilder:
                 else:
                     raise KeyError("Expected aad federated security to be bool. Recieved %s" % value)
 
+        self._application_for_tracing = self.get_script_name()
+        self._user_for_tracing = self.get_user_name()
+
     def __setitem__(self, key: "Union[KustoConnectionStringBuilder.ValidKeywords, str]", value: Union[str, bool, dict]):
         try:
             keyword = key if isinstance(key, self.ValidKeywords) else self.ValidKeywords.parse(key)
@@ -554,7 +557,7 @@ class KustoConnectionStringBuilder:
 
     @property
     def application_for_tracing(self) -> Optional[str]:
-        return self._application_for_tracing if self._application_for_tracing else self.get_script_name()
+        return self._application_for_tracing
 
     @application_for_tracing.setter
     def application_for_tracing(self, value: str):
@@ -562,7 +565,7 @@ class KustoConnectionStringBuilder:
 
     @property
     def user_for_tracing(self) -> Optional[str]:
-        return self._user_for_tracing if self._user_for_tracing else self.get_user_name()
+        return self._user_for_tracing
 
     @user_for_tracing.setter
     def user_for_tracing(self, value: str):
@@ -584,6 +587,13 @@ class KustoConnectionStringBuilder:
         try:
             return os.getlogin()
         except Exception:
+            # get from env
+            user = os.environ.get("USERNAME", None)
+            domain = os.environ.get("USERDOMAIN", None)
+            if domain and user:
+                user = domain + "\\" + user
+            if user:
+                return user
             return "[none]"
 
     PATTERN = re.compile(r"[\r\n\s{}|]+")
