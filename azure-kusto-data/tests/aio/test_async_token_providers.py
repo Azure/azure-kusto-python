@@ -371,7 +371,6 @@ class TestTokenProvider:
         provider = AzureIdentityTokenProvider(
             KUSTO_URI,
             is_async=True,
-            cred_builder=ClientSecretCredential,
             async_cred_builder=AsyncClientSecretCredential,
             additional_params={"tenant_id": auth_id, "client_id": app_id, "client_secret": app_key},
         )

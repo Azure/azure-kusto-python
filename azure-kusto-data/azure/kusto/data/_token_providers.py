@@ -638,7 +638,7 @@ class ApplicationCertificateTokenProvider(CloudInfoTokenProvider):
 
 
 class AzureIdentityTokenProvider(CloudInfoTokenProvider):
-    """Acquire a token from MSAL with Device Login flow"""
+    """Acquire a token using an Azure Identity credential"""
 
     def __init__(
         self,
@@ -650,13 +650,11 @@ class AzureIdentityTokenProvider(CloudInfoTokenProvider):
     ):
         super().__init__(kusto_uri, is_async)
 
-        DefaultAzureCredential()
-
         self._msal_client = None
         self._cred_builder = cred_builder
         self._async_cred_builder = async_cred_builder
         self._additional_params = additional_params
-        self.cred: TokenCredential
+        self.cred: Optional[TokenCredential] = None
         self.async_cred: Optional[AsyncTokenCredential] = None
 
     @staticmethod
@@ -667,16 +665,18 @@ class AzureIdentityTokenProvider(CloudInfoTokenProvider):
         return {"client_id": self._cloud_info.kusto_client_app_id}
 
     def _init_impl(self):
-        if self._cred_builder is None:
+        if self._cred_builder is None and self._async_cred_builder is None:
             self._cred_builder = DefaultAzureCredential
-            if self._async_cred_builder is None:
-                self._async_cred_builder = AsyncDefaultAzureCredential
+            self._async_cred_builder = AsyncDefaultAzureCredential
 
-        self._cred = self._cred_builder(authority=self._cloud_info.login_endpoint, proxies=self._proxy_dict, **(self._additional_params or {}))
+        if self._cred_builder is not None:
+            self._cred = self._cred_builder(authority=self._cloud_info.login_endpoint, proxies=self._proxy_dict, **(self._additional_params or {}))
         if self._async_cred_builder is not None:
             self.async_cred = self._async_cred_builder(authority=self._cloud_info.login_endpoint, proxies=self._proxy_dict, **(self._additional_params or {}))
 
     def _get_token_impl(self) -> Optional[dict]:
+        if self._cred is None:
+            raise KustoClientError("A synchronous credential builder was not provided")
         t = self._cred.get_token(self._scopes[0])
         return {TokenConstants.MSAL_TOKEN_TYPE: TokenConstants.BEARER_TYPE, TokenConstants.MSAL_ACCESS_TOKEN: t.token}
 
