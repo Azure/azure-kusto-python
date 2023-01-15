@@ -363,11 +363,11 @@ class TokenProviderTests(unittest.TestCase):
         app_key = os.environ.get("APP_KEY")
         os.environ["AZURE_CLIENT_SECRET"] = app_key
 
-        provider = AzureIdentityTokenProvider(KUSTO_URI)
+        provider = AzureIdentityTokenCredentialProvider(KUSTO_URI)
         token = provider.get_token()
         assert TokenProviderTests.get_token_value(token) is not None
 
-        provider = AzureIdentityTokenProvider(
+        provider = AzureIdentityTokenCredentialProvider(
             KUSTO_URI, cred_builder=ClientSecretCredential, additional_params={"tenant_id": auth_id, "client_id": app_id, "client_secret": app_key}
         )
         token = provider.get_token()

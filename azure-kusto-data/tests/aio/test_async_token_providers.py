@@ -355,11 +355,11 @@ class TestTokenProvider:
         app_key = os.environ.get("APP_KEY")
         os.environ["AZURE_CLIENT_SECRET"] = app_key
 
-        provider = AzureIdentityTokenProvider(KUSTO_URI, is_async=True)
+        provider = AzureIdentityTokenCredentialProvider(KUSTO_URI, is_async=True)
         token = await provider.get_token_async()
         assert TokenProviderTests.get_token_value(token) is not None
 
-        provider = AzureIdentityTokenProvider(
+        provider = AzureIdentityTokenCredentialProvider(
             KUSTO_URI,
             is_async=True,
             cred_builder=ClientSecretCredential,
@@ -368,7 +368,7 @@ class TestTokenProvider:
         token = await provider.get_token_async()
         assert TokenProviderTests.get_token_value(token) is not None
 
-        provider = AzureIdentityTokenProvider(
+        provider = AzureIdentityTokenCredentialProvider(
             KUSTO_URI,
             is_async=True,
             async_cred_builder=AsyncClientSecretCredential,

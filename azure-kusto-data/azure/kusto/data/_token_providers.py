@@ -637,7 +637,7 @@ class ApplicationCertificateTokenProvider(CloudInfoTokenProvider):
         return self._valid_token_or_none(token)
 
 
-class AzureIdentityTokenProvider(CloudInfoTokenProvider):
+class AzureIdentityTokenCredentialProvider(CloudInfoTokenProvider):
     """Acquire a token using an Azure Identity credential"""
 
     def __init__(
