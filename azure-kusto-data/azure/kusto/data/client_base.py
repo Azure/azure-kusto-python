@@ -55,7 +55,7 @@ class _KustoClientBase(abc.ABC):
             "x-ms-version": self.API_VERSION,
         }
 
-        self.client_details = kcsb.client_details
+        self.client_details = self._kcsb.client_details
 
         self._is_closed: bool = False
 
