@@ -1,12 +1,8 @@
-import functools
-import os
-import re
-import sys
 from enum import unique, Enum
 from typing import Union, Callable, Coroutine, Optional, Tuple, List
 
 from ._string_utils import assert_string_is_not_empty
-from ._version import VERSION
+from .client_details import ClientDetails
 
 
 class KustoConnectionStringBuilder:
@@ -146,9 +142,6 @@ class KustoConnectionStringBuilder:
                     self[keyword] = False
                 else:
                     raise KeyError("Expected aad federated security to be bool. Recieved %s" % value)
-
-        self._application_for_tracing = self.get_script_name()
-        self._user_for_tracing = self.get_user_name()
 
     def __setitem__(self, key: "Union[KustoConnectionStringBuilder.ValidKeywords, str]", value: Union[str, bool, dict]):
         try:
@@ -564,48 +557,16 @@ class KustoConnectionStringBuilder:
         self._application_for_tracing = value
 
     @property
-    def user_for_tracing(self) -> Optional[str]:
+    def user_name_for_tracing(self) -> Optional[str]:
         return self._user_for_tracing
 
-    @user_for_tracing.setter
-    def user_for_tracing(self, value: str):
+    @user_name_for_tracing.setter
+    def user_name_for_tracing(self, value: str):
         self._user_for_tracing = value
 
-    @staticmethod
-    @functools.lru_cache(maxsize=1)
-    def get_script_name() -> str:
-        """Returns the name of the script that is currently running"""
-        try:
-            return os.path.basename(sys.argv[0])
-        except Exception:
-            return "[none]"
-
-    @staticmethod
-    @functools.lru_cache(maxsize=1)
-    def get_user_name() -> str:
-        """Returns the name of the user that is currently logged in"""
-        try:
-            return os.getlogin()
-        except Exception:
-            # get from env
-            user = os.environ.get("USERNAME", None)
-            domain = os.environ.get("USERDOMAIN", None)
-            if domain and user:
-                user = domain + "\\" + user
-            if user:
-                return user
-            return "[none]"
-
-    PATTERN = re.compile(r"[\r\n\s{}|]+")
-
-    @staticmethod
-    @functools.lru_cache()
-    def _build_header_format(*args: Tuple[str, str]) -> str:
-        return "|".join(f"{k}:{{{KustoConnectionStringBuilder.PATTERN.sub('_', v)}}}" for k, v in args if v)
-
-    def get_client_version(self) -> str:
-        """Returns the version of the client"""
-        return self._build_header_format(("Kusto.Python.Client", VERSION), (sys.implementation.name, sys.version))
+    @property
+    def client_details(self) -> ClientDetails:
+        return ClientDetails(self.application_for_tracing, self.user_name_for_tracing)
 
     def _set_connector_details(
         self,
@@ -617,17 +578,20 @@ class KustoConnectionStringBuilder:
         app_version: Optional[str] = None,
         additional_fields: Optional[List[Tuple[str, str]]] = None,
     ):
-        if additional_fields is None:
-            additional_fields = []
+        """
+        Sets the connector details for tracing purposes.
+        :param name:  The name of the connector
+        :param version:  The version of the connector
+        :param send_user: Whether to send the user name
+        :param override_user: Override the user name ( if send_user is True )
+        :param app_name: The name of the containing application
+        :param app_version: The version of the containing application
+        :param additional_fields: Additional fields to add to the header
+        """
+        client_details = ClientDetails.set_connector_details(name, version, send_user, override_user, app_name, app_version, additional_fields)
 
-        self.application_for_tracing = self._build_header_format(
-            ("Kusto." + name, version), (f"App.{{{app_name if app_name else self.get_script_name()}}}", app_version), *additional_fields
-        )
-
-        if send_user:
-            self.user_for_tracing = override_user if override_user else self.get_user_name()
-        else:
-            self.user_for_tracing = "[none]"
+        self.application_for_tracing = client_details.application_for_tracing
+        self.user_name_for_tracing = client_details.user_name_for_tracing
 
     def __str__(self) -> str:
         dict_copy = self._internal_dict.copy()

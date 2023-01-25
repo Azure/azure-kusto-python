@@ -108,9 +108,7 @@ class KustoClient(_KustoClientBase):
             self._request_headers,
             self._mgmt_default_timeout,
             self._client_server_delta,
-            self._application_for_tracing,
-            self._user_for_tracing,
-            self._client_version_for_tracing,
+            self.client_details,
         )
         json_payload = request_params.json_payload
         request_headers = request_params.request_headers

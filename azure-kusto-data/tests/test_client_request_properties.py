@@ -46,9 +46,7 @@ def test_default_tracing_properties():
         {},
         timedelta(seconds=10),
         timedelta(seconds=10),
-        kcsb.application_for_tracing,
-        kcsb.user_for_tracing,
-        kcsb.get_client_version(),
+        kcsb.client_details,
     )
 
     assert params.request_headers["x-ms-client-request-id"] is not None
@@ -60,7 +58,7 @@ def test_default_tracing_properties():
 def test_custom_kcsb_tracing_properties():
     kcsb = KustoConnectionStringBuilder("test")
     kcsb.application_for_tracing = "myApp"
-    kcsb.user_for_tracing = "myUser"
+    kcsb.user_name_for_tracing = "myUser"
 
     params = ExecuteRequestParams(
         "somedatabase",
@@ -71,9 +69,7 @@ def test_custom_kcsb_tracing_properties():
         {},
         timedelta(seconds=10),
         timedelta(seconds=10),
-        kcsb.application_for_tracing,
-        kcsb.user_for_tracing,
-        kcsb.get_client_version(),
+        kcsb.client_details,
     )
 
     assert params.request_headers["x-ms-client-request-id"] is not None
@@ -97,9 +93,7 @@ def test_custom_crp_tracing_properties():
         {},
         timedelta(seconds=10),
         timedelta(seconds=10),
-        kcsb.application_for_tracing,
-        kcsb.user_for_tracing,
-        kcsb.get_client_version(),
+        kcsb.client_details,
     )
 
     assert params.request_headers["x-ms-client-request-id"] is not None
@@ -111,7 +105,7 @@ def test_custom_crp_tracing_properties():
 def test_custom_crp_tracing_properties_override_kcsb():
     kcsb = KustoConnectionStringBuilder("test")
     kcsb.application_for_tracing = "myApp"
-    kcsb.user_for_tracing = "myUser"
+    kcsb.user_name_for_tracing = "myUser"
     crp = ClientRequestProperties()
     crp.application = "myApp2"
     crp.user = "myUser2"
@@ -125,9 +119,7 @@ def test_custom_crp_tracing_properties_override_kcsb():
         {},
         timedelta(seconds=10),
         timedelta(seconds=10),
-        kcsb.application_for_tracing,
-        kcsb.user_for_tracing,
-        kcsb.get_client_version(),
+        kcsb.client_details,
     )
 
     assert params.request_headers["x-ms-client-request-id"] is not None
@@ -150,16 +142,14 @@ def test_set_connector_name_and_version():
         {},
         timedelta(seconds=10),
         timedelta(seconds=10),
-        kcsb.application_for_tracing,
-        kcsb.user_for_tracing,
-        kcsb.get_client_version(),
+        kcsb.client_details,
     )
 
     assert params.request_headers["x-ms-client-request-id"] is not None
     assert params.request_headers["x-ms-user"] == "[none]"
     assert params.request_headers["x-ms-client-version"].startswith("Kusto.Python.Client:")
 
-    assert params.request_headers["x-ms-app"] == "Kusto.myConnector:{myVersion}"
+    assert params.request_headers["x-ms-app"].startswith("Kusto.myConnector:{myVersion}|App.")
 
 
 def test_set_connector_no_app_version():
@@ -176,16 +166,14 @@ def test_set_connector_no_app_version():
         {},
         timedelta(seconds=10),
         timedelta(seconds=10),
-        kcsb.application_for_tracing,
-        kcsb.user_for_tracing,
-        kcsb.get_client_version(),
+        kcsb.client_details,
     )
 
     assert params.request_headers["x-ms-client-request-id"] is not None
     assert len(params.request_headers["x-ms-user"]) > 0
     assert params.request_headers["x-ms-client-version"].startswith("Kusto.Python.Client:")
 
-    assert params.request_headers["x-ms-app"] == "Kusto.myConnector:{myVersion}"
+    assert params.request_headers["x-ms-app"].startswith("Kusto.myConnector:{myVersion}|App.")
 
 
 def test_set_connector_full():
@@ -204,9 +192,7 @@ def test_set_connector_full():
         {},
         timedelta(seconds=10),
         timedelta(seconds=10),
-        kcsb.application_for_tracing,
-        kcsb.user_for_tracing,
-        kcsb.get_client_version(),
+        kcsb.client_details,
     )
 
     assert params.request_headers["x-ms-client-request-id"] is not None

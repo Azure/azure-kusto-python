@@ -17,6 +17,7 @@ from .kcsb import KustoConnectionStringBuilder
 from .kusto_trusted_endpoints import well_known_kusto_endpoints
 from .response import KustoResponseDataSet, KustoResponseDataSetV2, KustoResponseDataSetV1
 from .security import _AadHelper
+from .client_details import ClientDetails
 
 if TYPE_CHECKING:
     import aiohttp
@@ -31,6 +32,7 @@ class _KustoClientBase(abc.ABC):
     _client_server_delta: ClassVar[timedelta] = timedelta(seconds=30)
 
     _aad_helper: _AadHelper
+    client_details: ClientDetails
     _endpoint_validated = False
 
     def __init__(self, kcsb: Union[KustoConnectionStringBuilder, str], is_async):
@@ -53,9 +55,7 @@ class _KustoClientBase(abc.ABC):
             "x-ms-version": self.API_VERSION,
         }
 
-        self._application_for_tracing = self._kcsb.application_for_tracing
-        self._user_for_tracing = self._kcsb.user_for_tracing
-        self._client_version_for_tracing = self._kcsb.get_client_version()
+        self.client_details = kcsb.client_details
 
         self._is_closed: bool = False
 
@@ -131,9 +131,7 @@ class ExecuteRequestParams:
         request_headers: dict,
         mgmt_default_timeout: timedelta,
         client_server_delta: timedelta,
-        _application_for_tracing: Optional[str],
-        _user_for_tracing: Optional[str],
-        _client_version_for_tracing: Optional[str],
+        client_details: ClientDetails,
     ):
         request_headers = copy(request_headers)
         request_headers["Connection"] = "Keep-Alive"
@@ -161,17 +159,17 @@ class ExecuteRequestParams:
             },
             {
                 "name": "x-ms-client-version",
-                "value": _client_version_for_tracing,
-                "property": lambda p: _client_version_for_tracing,
+                "value": client_details.version_for_tracing,
+                "property": lambda p: client_details.version_for_tracing,
             },
             {
                 "name": "x-ms-app",
-                "value": _application_for_tracing,
+                "value": client_details.application_for_tracing,
                 "property": lambda p: p.application,
             },
             {
                 "name": "x-ms-user",
-                "value": _user_for_tracing,
+                "value": client_details.user_name_for_tracing,
                 "property": lambda p: p.user,
             },
         ]
