@@ -9,10 +9,12 @@ from datetime import datetime
 from typing import Optional, ClassVar
 
 import pytest
+from azure.identity import DefaultAzureCredential
 
 from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
 from azure.kusto.data._cloud_settings import CloudSettings
 from azure.kusto.data._models import WellKnownDataSet
+from azure.kusto.data._token_providers import AsyncDefaultAzureCredential
 from azure.kusto.data.aio import KustoClient as AsyncKustoClient
 from azure.kusto.data.streaming_response import FrameType
 
@@ -92,10 +94,12 @@ class TestE2E:
         return os.path.join(current_dir, *missing_path_parts)
 
     @classmethod
-    def engine_kcsb_from_env(cls, app_insights=False) -> KustoConnectionStringBuilder:
+    def engine_kcsb_from_env(cls, app_insights=False, is_async=False) -> KustoConnectionStringBuilder:
         engine = cls.engine_cs if not app_insights else cls.ai_engine_cs
         if all([cls.app_id, cls.app_key, cls.auth_id]):
-            return KustoConnectionStringBuilder.with_azure_token_credential(engine)
+            return KustoConnectionStringBuilder.with_azure_token_credential(
+                engine, credential=DefaultAzureCredential() if not is_async else AsyncDefaultAzureCredential()
+            )
         else:
             return KustoConnectionStringBuilder.with_interactive_login(engine)
 
@@ -142,11 +146,11 @@ class TestE2E:
 
     @classmethod
     async def get_async_client(cls, app_insights=False) -> AsyncKustoClient:
-        return AsyncKustoClient(cls.engine_kcsb_from_env(app_insights))
+        return AsyncKustoClient(cls.engine_kcsb_from_env(app_insights, is_async=True))
 
     @classmethod
     def get_client(cls, app_insights=False) -> KustoClient:
-        return KustoClient(cls.engine_kcsb_from_env(app_insights))
+        return KustoClient(cls.engine_kcsb_from_env(app_insights, is_async=False))
 
     @staticmethod
     def normalize_row(row):
