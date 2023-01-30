@@ -6,7 +6,7 @@ from threading import Thread
 
 from asgiref.sync import async_to_sync
 
-from azure.identity import ClientSecretCredential
+from azure.identity import ClientSecretCredential, DefaultAzureCredential
 from azure.kusto.data._token_providers import *
 
 KUSTO_URI = "https://sdkse2etest.eastus.kusto.windows.net"
@@ -363,12 +363,15 @@ class TokenProviderTests(unittest.TestCase):
         app_key = os.environ.get("APP_KEY")
         os.environ["AZURE_CLIENT_SECRET"] = app_key
 
-        provider = AzureIdentityTokenCredentialProvider(KUSTO_URI)
+        provider = AzureIdentityTokenCredentialProvider(KUSTO_URI, credential=DefaultAzureCredential())
         token = provider.get_token()
         assert TokenProviderTests.get_token_value(token) is not None
 
         provider = AzureIdentityTokenCredentialProvider(
-            KUSTO_URI, cred_builder=ClientSecretCredential, additional_params={"tenant_id": auth_id, "client_id": app_id, "client_secret": app_key}
+            KUSTO_URI,
+            credential_from_login_endpoint=lambda login_endpoint: ClientSecretCredential(
+                authority=login_endpoint, client_id=app_id, client_secret=app_key, tenant_id=auth_id
+            ),
         )
         token = provider.get_token()
         assert TokenProviderTests.get_token_value(token) is not None

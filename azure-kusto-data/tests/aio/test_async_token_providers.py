@@ -3,7 +3,6 @@
 import os
 
 import pytest
-from azure.identity import ClientSecretCredential
 from azure.identity.aio import ClientSecretCredential as AsyncClientSecretCredential
 
 from azure.kusto.data._decorators import aio_documented_by
@@ -355,24 +354,16 @@ class TestTokenProvider:
         app_key = os.environ.get("APP_KEY")
         os.environ["AZURE_CLIENT_SECRET"] = app_key
 
-        provider = AzureIdentityTokenCredentialProvider(KUSTO_URI, is_async=True)
+        provider = AzureIdentityTokenCredentialProvider(KUSTO_URI, is_async=True, credential=AsyncDefaultAzureCredential())
         token = await provider.get_token_async()
         assert TokenProviderTests.get_token_value(token) is not None
 
         provider = AzureIdentityTokenCredentialProvider(
             KUSTO_URI,
             is_async=True,
-            cred_builder=ClientSecretCredential,
-            additional_params={"tenant_id": auth_id, "client_id": app_id, "client_secret": app_key},
-        )
-        token = await provider.get_token_async()
-        assert TokenProviderTests.get_token_value(token) is not None
-
-        provider = AzureIdentityTokenCredentialProvider(
-            KUSTO_URI,
-            is_async=True,
-            async_cred_builder=AsyncClientSecretCredential,
-            additional_params={"tenant_id": auth_id, "client_id": app_id, "client_secret": app_key},
+            credential_from_login_endpoint=lambda login_endpoint: AsyncClientSecretCredential(
+                authority=login_endpoint, client_id=app_id, client_secret=app_key, tenant_id=auth_id
+            ),
         )
         token = await provider.get_token_async()
         assert TokenProviderTests.get_token_value(token) is not None

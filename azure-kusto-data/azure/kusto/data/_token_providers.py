@@ -5,11 +5,10 @@ import asyncio
 import time
 import webbrowser
 from threading import Lock
-from typing import Callable, Coroutine, List, Optional, Type
+from typing import Callable, Coroutine, List, Optional, Any
 
-from azure.core.credentials import TokenCredential
 from azure.core.exceptions import ClientAuthenticationError
-from azure.identity import AzureCliCredential, ManagedIdentityCredential, DefaultAzureCredential
+from azure.identity import AzureCliCredential, ManagedIdentityCredential
 from msal import ConfidentialClientApplication, PublicClientApplication
 
 from ._cloud_settings import CloudInfo, CloudSettings
@@ -644,48 +643,35 @@ class AzureIdentityTokenCredentialProvider(CloudInfoTokenProvider):
         self,
         kusto_uri: str,
         is_async: bool = False,
-        cred_builder: Optional[Type] = None,
-        async_cred_builder: Optional[Type] = None,
-        additional_params: Optional[dict] = None,
+        credential: Optional[Any] = None,
+        credential_from_login_endpoint: Optional[Callable[[str], Any]] = None,
     ):
         super().__init__(kusto_uri, is_async)
 
-        self._msal_client = None
-        self._cred_builder = cred_builder
-        self._async_cred_builder = async_cred_builder
-        self._additional_params = additional_params
-        self.cred: Optional[TokenCredential] = None
-        self.async_cred: Optional[AsyncTokenCredential] = None
+        self.credential = credential
+        self.credential_from_login_endpoint = credential_from_login_endpoint
+
+        if self.credential is None and self.credential_from_login_endpoint is None:
+            raise KustoClientError("Either a credential or a credential_from_login_endpoint must be provided")
 
     @staticmethod
     def name() -> str:
         return "AzureIdentityTokenProvider"
 
     def _context_impl(self) -> dict:
-        return {"client_id": self._cloud_info.kusto_client_app_id}
+        return {"credential": self.credential}
 
     def _init_impl(self):
-        if self._cred_builder is None and self._async_cred_builder is None:
-            self._cred_builder = DefaultAzureCredential
-            self._async_cred_builder = AsyncDefaultAzureCredential
-
-        if self._cred_builder is not None:
-            self._cred = self._cred_builder(authority=self._cloud_info.login_endpoint, proxies=self._proxy_dict, **(self._additional_params or {}))
-        if self._async_cred_builder is not None:
-            self.async_cred = self._async_cred_builder(authority=self._cloud_info.login_endpoint, proxies=self._proxy_dict, **(self._additional_params or {}))
+        if self.credential is None:
+            self.credential = self.credential_from_login_endpoint(self._cloud_info.login_endpoint)
 
     def _get_token_impl(self) -> Optional[dict]:
-        if self._cred is None:
-            raise KustoClientError("A synchronous credential builder was not provided")
-        t = self._cred.get_token(self._scopes[0])
+        t = self.credential.get_token(self._scopes[0])
         return {TokenConstants.MSAL_TOKEN_TYPE: TokenConstants.BEARER_TYPE, TokenConstants.MSAL_ACCESS_TOKEN: t.token}
 
     async def _get_token_impl_async(self) -> Optional[dict]:
-        if self.async_cred is None:
-            t = await sync_to_async(self._cred.get_token)(self._scopes[0])
-        else:
-            t = await self.async_cred.get_token(self._scopes[0])
+        t = await self.credential.get_token(self._scopes[0])
         return {TokenConstants.MSAL_TOKEN_TYPE: TokenConstants.BEARER_TYPE, TokenConstants.MSAL_ACCESS_TOKEN: t.token}
 
-    def _get_token_from_cache_impl(self) -> dict:
+    def _get_token_from_cache_impl(self) -> Optional[dict]:
         return None

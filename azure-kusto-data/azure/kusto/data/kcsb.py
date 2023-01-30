@@ -1,5 +1,5 @@
 from enum import unique, Enum
-from typing import Union, Callable, Coroutine, Optional, Type
+from typing import Union, Callable, Coroutine, Optional, Any
 
 from ._string_utils import assert_string_is_not_empty
 
@@ -120,10 +120,9 @@ class KustoConnectionStringBuilder:
         self._internal_dict = {}
         self._token_provider = None
         self._async_token_provider = None
-        self.is_cred_auth = False
-        self.cred_builder: Optional[Type] = None
-        self.async_cred_builder: Optional[Type] = None
-        self.cred_params: dict = {}
+        self.is_token_credential_auth = False
+        self.credential: Optional[Any] = None
+        self.credential_from_login_endpoint: Optional[Any] = None
         if connection_string is not None and "=" not in connection_string.partition(";")[0]:
             connection_string = "Data Source=" + connection_string
 
@@ -432,22 +431,22 @@ class KustoConnectionStringBuilder:
 
     @classmethod
     def with_azure_token_credential(
-        cls, connection_string: str, cred_builder: Type = None, async_cred_builder: Optional[Type] = None, params: Optional[dict] = None
+        cls,
+        connection_string: str,
+        credential: Optional[Any] = None,
+        credential_from_login_endpoint: Optional[Callable[[str], Any]] = None,
     ) -> "KustoConnectionStringBuilder":
         """
         Create a KustoConnectionStringBuilder that uses an azure token credential to obtain a connection token.
         :param connection_string: Kusto connection string should be of the format: https://<clusterName>.kusto.windows.net
-        :param cred_builder: The type of the credential builder to use. The SDK will create an instance of this type. Defaults to DefaultAzureCredential.
-        :param async_cred_builder: The type of the credential builder to use. The SDK will create an instance of this type.
-            Defaults to the async DefaultAzureCredential, if no cred_builder is provided.
-            Otherwise, the sync version of the cred_builder will be used.
-        :param params: additional parameters to pass to the credential builder.
+        :param credential: an optional token credential to use for authentication
+        :param credential_from_login_endpoint: an optional function that returns a token credential for the relevant kusto resource
         """
         kcsb = cls(connection_string)
         kcsb[kcsb.ValidKeywords.aad_federated_security] = True
-        kcsb.is_cred_auth = True
-        kcsb.cred_builder = cred_builder
-        kcsb.async_cred_builder = async_cred_builder
+        kcsb.is_token_credential_auth = True
+        kcsb.credential = credential
+        kcsb.credential_from_login_endpoint = credential_from_login_endpoint
 
         return kcsb
 
