@@ -51,14 +51,14 @@ def dataframe_from_result_table(table: "Union[KustoResultTable, KustoStreamingRe
     # fix types
     for col in table.columns:
         if col.column_type == "bool":
-            frame[col.column_name] = frame[col.column_name].astype("boolean" if nullable_bools else bool)
+            frame[col.column_name] = frame[col.column_name].astype(pd.BooleanDtype() if nullable_bools else bool)
         elif col.column_type == "int":
-            frame[col.column_name] = frame[col.column_name].astype("Int32")
+            frame[col.column_name] = frame[col.column_name].astype(pd.Int32Dtype())
         elif col.column_type == "long":
-            frame[col.column_name] = frame[col.column_name].astype("Int64")
+            frame[col.column_name] = frame[col.column_name].astype(pd.Int64Dtype())
         elif col.column_type == "real" or col.column_type == "decimal":
             frame[col.column_name] = frame[col.column_name].replace("NaN", np.NaN).replace("Infinity", np.PINF).replace("-Infinity", np.NINF)
-            frame[col.column_name] = pd.to_numeric(frame[col.column_name], errors="coerce").astype("Float64")
+            frame[col.column_name] = pd.to_numeric(frame[col.column_name], errors="coerce").astype(pd.Float64Dtype())
         elif col.column_type == "datetime":
             frame[col.column_name] = pd.to_datetime(frame[col.column_name], errors="coerce")
         elif col.column_type == "timespan":
