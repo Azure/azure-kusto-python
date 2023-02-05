@@ -73,10 +73,10 @@ class ClientDetails:
     def set_connector_details(
         name: str,
         version: str,
-        send_user: bool,
-        override_user: Optional[str] = None,
         app_name: Optional[str] = None,
         app_version: Optional[str] = None,
+        send_user: bool = False,
+        override_user: Optional[str] = None,
         additional_fields: Optional[List[Tuple[str, str]]] = None,
     ) -> "ClientDetails":
         params = [("Kusto." + name, version)]

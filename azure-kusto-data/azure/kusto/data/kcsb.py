@@ -572,10 +572,10 @@ class KustoConnectionStringBuilder:
         self,
         name: str,
         version: str,
-        send_user: bool,
-        override_user: Optional[str] = None,
         app_name: Optional[str] = None,
         app_version: Optional[str] = None,
+        send_user: bool = False,
+        override_user: Optional[str] = None,
         additional_fields: Optional[List[Tuple[str, str]]] = None,
     ):
         """
@@ -588,7 +588,7 @@ class KustoConnectionStringBuilder:
         :param app_version: The version of the containing application
         :param additional_fields: Additional fields to add to the header
         """
-        client_details = ClientDetails.set_connector_details(name, version, send_user, override_user, app_name, app_version, additional_fields)
+        client_details = ClientDetails.set_connector_details(name, version, app_name, app_version, send_user, override_user, additional_fields)
 
         self.application_for_tracing = client_details.application_for_tracing
         self.user_name_for_tracing = client_details.user_name_for_tracing
