@@ -25,7 +25,6 @@ except ImportError:
 try:
     from azure.identity.aio import ManagedIdentityCredential as AsyncManagedIdentityCredential, AzureCliCredential as AsyncAzureCliCredential
 except ImportError:
-
     # These are here in case the user doesn't have the aio optional dependency installed, but still tries to use async.
     # They will give them a useful error message, and will appease linters.
     class AsyncManagedIdentityCredential:
@@ -102,7 +101,7 @@ class TokenProviderBase(abc.ABC):
                 return
 
             if not self._resources_initialized:
-                await (sync_to_async(self._init_resources)())
+                await sync_to_async(self._init_resources)()
                 self._resources_initialized = True
 
             if init_only_resources:
