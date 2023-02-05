@@ -36,6 +36,10 @@ jobs:
       - name: Test with pytest
         run: |
           pytest -v . --junit-xml pytest.xml --cov=/home/runner/.local/lib/python${{ matrix.python-version }}/site-packages/azure/kusto --cov-report=xml
+        env:
+          APP_ID: ${{ secrets.APP_ID }}
+          APP_KEY: ${{ secrets.APP_KEY }}
+          AUTH_ID: ${{ secrets.AUTH_ID }}
       - name: EtoE Test with pytest
         env:
           APP_ID: ${{ secrets.APP_ID }}
@@ -54,7 +58,7 @@ jobs:
         with:
           name: Unit Test Results (Python ${{ matrix.python-version }})
           path: pytest*.xml
-          
+
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v2
         with:

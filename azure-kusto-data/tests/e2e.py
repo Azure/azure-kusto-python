@@ -9,10 +9,12 @@ from datetime import datetime
 from typing import Optional, ClassVar
 
 import pytest
+from azure.identity import DefaultAzureCredential
 
 from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
 from azure.kusto.data._cloud_settings import CloudSettings
 from azure.kusto.data._models import WellKnownDataSet
+from azure.kusto.data._token_providers import AsyncDefaultAzureCredential
 from azure.kusto.data.aio import KustoClient as AsyncKustoClient
 from azure.kusto.data.streaming_response import FrameType
 
@@ -92,10 +94,12 @@ class TestE2E:
         return os.path.join(current_dir, *missing_path_parts)
 
     @classmethod
-    def engine_kcsb_from_env(cls, app_insights=False) -> KustoConnectionStringBuilder:
+    def engine_kcsb_from_env(cls, app_insights=False, is_async=False) -> KustoConnectionStringBuilder:
         engine = cls.engine_cs if not app_insights else cls.ai_engine_cs
         if all([cls.app_id, cls.app_key, cls.auth_id]):
-            return KustoConnectionStringBuilder.with_aad_application_key_authentication(engine, cls.app_id, cls.app_key, cls.auth_id)
+            return KustoConnectionStringBuilder.with_azure_token_credential(
+                engine, credential=DefaultAzureCredential() if not is_async else AsyncDefaultAzureCredential()
+            )
         else:
             return KustoConnectionStringBuilder.with_interactive_login(engine)
 
@@ -104,8 +108,15 @@ class TestE2E:
         cls.engine_cs = os.environ.get("ENGINE_CONNECTION_STRING") or ""
         cls.ai_engine_cs = os.environ.get("APPLICATION_INSIGHTS_ENGINE_CONNECTION_STRING") or ""
         cls.app_id = os.environ.get("APP_ID")
+        if cls.app_id:
+            os.environ["AZURE_CLIENT_ID"] = cls.app_id
         cls.app_key = os.environ.get("APP_KEY")
+        if cls.app_key:
+            os.environ["AZURE_CLIENT_SECRET"] = cls.app_key
         cls.auth_id = os.environ.get("AUTH_ID")
+        if cls.auth_id:
+            os.environ["AZURE_TENANT_ID"] = cls.auth_id
+        os.environ["AZURE_AUTHORITY_HOST"] = "login.microsoftonline.com"
         cls.test_db = os.environ.get("TEST_DATABASE")
         cls.ai_test_db = os.environ.get("APPLICATION_INSIGHTS_TEST_DATABASE")  # name of e2e database could be changed
 
@@ -135,11 +146,11 @@ class TestE2E:
 
     @classmethod
     async def get_async_client(cls, app_insights=False) -> AsyncKustoClient:
-        return AsyncKustoClient(cls.engine_kcsb_from_env(app_insights))
+        return AsyncKustoClient(cls.engine_kcsb_from_env(app_insights, is_async=True))
 
     @classmethod
     def get_client(cls, app_insights=False) -> KustoClient:
-        return KustoClient(cls.engine_kcsb_from_env(app_insights))
+        return KustoClient(cls.engine_kcsb_from_env(app_insights, is_async=False))
 
     @staticmethod
     def normalize_row(row):

@@ -1,5 +1,5 @@
 from enum import unique, Enum
-from typing import Union, Callable, Coroutine, Optional, Tuple, List
+from typing import Union, Callable, Coroutine, Optional, Tuple, List, Any
 
 from ._string_utils import assert_string_is_not_empty
 from .client_details import ClientDetails
@@ -121,6 +121,9 @@ class KustoConnectionStringBuilder:
         self._internal_dict = {}
         self._token_provider = None
         self._async_token_provider = None
+        self.is_token_credential_auth = False
+        self.credential: Optional[Any] = None
+        self.credential_from_login_endpoint: Optional[Any] = None
         if connection_string is not None and "=" not in connection_string.partition(";")[0]:
             connection_string = "Data Source=" + connection_string
 
@@ -427,6 +430,27 @@ class KustoConnectionStringBuilder:
 
         if domain_hint is not None:
             kcsb[kcsb.ValidKeywords.domain_hint] = domain_hint
+
+        return kcsb
+
+    @classmethod
+    def with_azure_token_credential(
+        cls,
+        connection_string: str,
+        credential: Optional[Any] = None,
+        credential_from_login_endpoint: Optional[Callable[[str], Any]] = None,
+    ) -> "KustoConnectionStringBuilder":
+        """
+        Create a KustoConnectionStringBuilder that uses an azure token credential to obtain a connection token.
+        :param connection_string: Kusto connection string should be of the format: https://<clusterName>.kusto.windows.net
+        :param credential: an optional token credential to use for authentication
+        :param credential_from_login_endpoint: an optional function that returns a token credential for the relevant kusto resource
+        """
+        kcsb = cls(connection_string)
+        kcsb[kcsb.ValidKeywords.aad_federated_security] = True
+        kcsb.is_token_credential_auth = True
+        kcsb.credential = credential
+        kcsb.credential_from_login_endpoint = credential_from_login_endpoint
 
         return kcsb
 
