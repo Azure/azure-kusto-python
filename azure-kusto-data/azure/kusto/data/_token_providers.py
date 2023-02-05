@@ -5,7 +5,7 @@ import asyncio
 import time
 import webbrowser
 from threading import Lock
-from typing import Callable, Coroutine, List, Optional
+from typing import Callable, Coroutine, List, Optional, Any
 
 from azure.core.exceptions import ClientAuthenticationError
 from azure.identity import AzureCliCredential, ManagedIdentityCredential
@@ -23,7 +23,13 @@ except ImportError:
 
 
 try:
-    from azure.identity.aio import ManagedIdentityCredential as AsyncManagedIdentityCredential, AzureCliCredential as AsyncAzureCliCredential
+    from azure.identity.aio import (
+        ManagedIdentityCredential as AsyncManagedIdentityCredential,
+        AzureCliCredential as AsyncAzureCliCredential,
+        DefaultAzureCredential as AsyncDefaultAzureCredential,
+    )
+
+    from azure.core.credentials_async import AsyncTokenCredential
 except ImportError:
 
     # These are here in case the user doesn't have the aio optional dependency installed, but still tries to use async.
@@ -33,6 +39,14 @@ except ImportError:
             raise KustoAioSyntaxError()
 
     class AsyncAzureCliCredential:
+        def __init__(self):
+            raise KustoAioSyntaxError()
+
+    class AsyncDefaultAzureCredential:
+        def __init__(self):
+            raise KustoAioSyntaxError()
+
+    class AsyncTokenCredential:
         def __init__(self):
             raise KustoAioSyntaxError()
 
@@ -620,3 +634,44 @@ class ApplicationCertificateTokenProvider(CloudInfoTokenProvider):
     def _get_token_from_cache_impl(self) -> dict:
         token = self._msal_client.acquire_token_silent(scopes=self._scopes, account=None)
         return self._valid_token_or_none(token)
+
+
+class AzureIdentityTokenCredentialProvider(CloudInfoTokenProvider):
+    """Acquire a token using an Azure Identity credential"""
+
+    def __init__(
+        self,
+        kusto_uri: str,
+        is_async: bool = False,
+        credential: Optional[Any] = None,
+        credential_from_login_endpoint: Optional[Callable[[str], Any]] = None,
+    ):
+        super().__init__(kusto_uri, is_async)
+
+        self.credential = credential
+        self.credential_from_login_endpoint = credential_from_login_endpoint
+
+        if self.credential is None and self.credential_from_login_endpoint is None:
+            raise KustoClientError("Either a credential or a credential_from_login_endpoint must be provided")
+
+    @staticmethod
+    def name() -> str:
+        return "AzureIdentityTokenProvider"
+
+    def _context_impl(self) -> dict:
+        return {"credential": self.credential}
+
+    def _init_impl(self):
+        if self.credential is None:
+            self.credential = self.credential_from_login_endpoint(self._cloud_info.login_endpoint)
+
+    def _get_token_impl(self) -> Optional[dict]:
+        t = self.credential.get_token(self._scopes[0])
+        return {TokenConstants.MSAL_TOKEN_TYPE: TokenConstants.BEARER_TYPE, TokenConstants.MSAL_ACCESS_TOKEN: t.token}
+
+    async def _get_token_impl_async(self) -> Optional[dict]:
+        t = await self.credential.get_token(self._scopes[0])
+        return {TokenConstants.MSAL_TOKEN_TYPE: TokenConstants.BEARER_TYPE, TokenConstants.MSAL_ACCESS_TOKEN: t.token}
+
+    def _get_token_from_cache_impl(self) -> Optional[dict]:
+        return None

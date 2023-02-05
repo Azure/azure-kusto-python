@@ -99,6 +99,7 @@ def test_well_known_kusto_endpoints_random_kusto_clusters():
         "https://kustonryfjo5klvrh4.westeurope.kusto.windows.net",
         "https://kustowwqgogzpseg6o.eastus2.kusto.windows.net",
         "https://kustor3gjpwqum3olw.canadacentral.kusto.windows.net",
+        "https://dflskfdslfkdslkdsfldfs.westeurope.kusto.data.microsoft.com",
     ]:
         _validate_endpoint(c, DEFAULT_PUBLIC_LOGIN_URL)
 
@@ -107,12 +108,12 @@ def test_well_known_kusto_endpoints_random_kusto_clusters():
         _validate_endpoint(clusterName, DEFAULT_PUBLIC_LOGIN_URL)
 
         # Test MFA endpoints
-        if not "synapse" in c:
+        if not "synapse" in c and not "data.microsoft.com" in c:
             clusterName = c.replace(".kusto.", ".kustomfa.")
             _validate_endpoint(clusterName, DEFAULT_PUBLIC_LOGIN_URL)
 
         # Test dev endpoints
-        if not "synapse" in c:
+        if not "synapse" in c and not "data.microsoft.com" in c:
             clusterName = c.replace(".kusto.", ".kustodev.")
             _validate_endpoint(clusterName, DEFAULT_PUBLIC_LOGIN_URL)
 
