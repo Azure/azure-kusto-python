@@ -6,7 +6,7 @@ from threading import Thread
 
 from asgiref.sync import async_to_sync
 
-from azure.kusto.data._cloud_settings import CloudInfo
+from azure.identity import ClientSecretCredential, DefaultAzureCredential
 from azure.kusto.data._token_providers import *
 
 KUSTO_URI = "https://sdkse2etest.eastus.kusto.windows.net"
@@ -358,3 +358,25 @@ class TokenProviderTests(unittest.TestCase):
         assert context["authority"] == "https://login_endpoint/auth_test"
         assert context["client_id"] == "1234"
         assert provider._scopes == ["https://fakeurl.kustomfa.windows.net/.default"]
+
+    @staticmethod
+    def test_azure_identity_default_token_provider():
+        app_id = os.environ.get("APP_ID", "b699d721-4f6f-4320-bc9a-88d578dfe68f")
+        os.environ["AZURE_CLIENT_ID"] = app_id
+        auth_id = os.environ.get("APP_AUTH_ID", "72f988bf-86f1-41af-91ab-2d7cd011db47")
+        os.environ["AZURE_TENANT_ID"] = auth_id
+        app_key = os.environ.get("APP_KEY")
+        os.environ["AZURE_CLIENT_SECRET"] = app_key
+
+        provider = AzureIdentityTokenCredentialProvider(KUSTO_URI, credential=DefaultAzureCredential())
+        token = provider.get_token()
+        assert TokenProviderTests.get_token_value(token) is not None
+
+        provider = AzureIdentityTokenCredentialProvider(
+            KUSTO_URI,
+            credential_from_login_endpoint=lambda login_endpoint: ClientSecretCredential(
+                authority=login_endpoint, client_id=app_id, client_secret=app_key, tenant_id=auth_id
+            ),
+        )
+        token = provider.get_token()
+        assert TokenProviderTests.get_token_value(token) is not None

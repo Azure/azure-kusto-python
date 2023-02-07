@@ -411,7 +411,6 @@ def main():
         # Alternatively, you can use the client as a regular Python object and call close() on it.
         with KustoClient(kusto_connection_string) as kusto_client:
             with QueuedIngestClient(ingest_connection_string) as ingest_client:
-
                 app.pre_ingestion_querying(app.config, kusto_client)
 
                 if app.config.ingest_data:

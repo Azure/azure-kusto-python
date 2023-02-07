@@ -4,20 +4,23 @@ import json
 import uuid
 from copy import copy
 from datetime import timedelta
-from typing import Union, Optional, Any, NoReturn, ClassVar
+from typing import Union, Optional, Any, NoReturn, ClassVar, TYPE_CHECKING
 from urllib.parse import urljoin
+
+from requests import Response
 
 from azure.kusto.data._cloud_settings import CloudSettings
 from azure.kusto.data._token_providers import CloudInfoTokenProvider
-from requests import Response
-
-from ._version import VERSION
+from .client_details import ClientDetails
 from .client_request_properties import ClientRequestProperties
 from .exceptions import KustoServiceError, KustoThrottlingError, KustoApiError
 from .kcsb import KustoConnectionStringBuilder
+from .kusto_trusted_endpoints import well_known_kusto_endpoints
 from .response import KustoResponseDataSet, KustoResponseDataSetV2, KustoResponseDataSetV1
 from .security import _AadHelper
-from .kusto_trusted_endpoints import well_known_kusto_endpoints
+
+if TYPE_CHECKING:
+    import aiohttp
 
 
 class _KustoClientBase(abc.ABC):
@@ -29,6 +32,7 @@ class _KustoClientBase(abc.ABC):
     _client_server_delta: ClassVar[timedelta] = timedelta(seconds=30)
 
     _aad_helper: _AadHelper
+    client_details: ClientDetails
     _endpoint_validated = False
 
     def __init__(self, kcsb: Union[KustoConnectionStringBuilder, str], is_async):
@@ -48,10 +52,10 @@ class _KustoClientBase(abc.ABC):
         self._request_headers = {
             "Accept": "application/json",
             "Accept-Encoding": "gzip,deflate",
-            "x-ms-client-version": "Kusto.Python.Client:" + VERSION,
             "x-ms-version": self.API_VERSION,
         }
 
+        self.client_details = self._kcsb.client_details
         self._is_closed: bool = False
 
     def close(self):
@@ -89,7 +93,6 @@ class _KustoClientBase(abc.ABC):
         response_json: Any,
         response_text: Optional[str],
     ) -> NoReturn:
-
         if status == 404:
             if payload:
                 raise KustoServiceError("The ingestion endpoint does not exist. Please enable streaming ingestion on your cluster.", response) from exception
@@ -126,6 +129,7 @@ class ExecuteRequestParams:
         request_headers: dict,
         mgmt_default_timeout: timedelta,
         client_server_delta: timedelta,
+        client_details: ClientDetails,
     ):
         request_headers = copy(request_headers)
         request_headers["Connection"] = "Keep-Alive"
@@ -144,14 +148,40 @@ class ExecuteRequestParams:
             # Before 3.0 it was KPC.execute_streaming_ingest, but was changed to align with the other SDKs
             client_request_id_prefix = "KPC.executeStreamingIngest;"
             request_headers["Content-Encoding"] = "gzip"
-        request_headers["x-ms-client-request-id"] = client_request_id_prefix + str(uuid.uuid4())
+
+        special_headers = [
+            {
+                "name": "x-ms-client-request-id",
+                "value": client_request_id_prefix + str(uuid.uuid4()),
+                "property": lambda p: p.client_request_id,
+            },
+            {
+                "name": "x-ms-client-version",
+                "value": client_details.version_for_tracing,
+                "property": lambda p: None,
+            },
+            {
+                "name": "x-ms-app",
+                "value": client_details.application_for_tracing,
+                "property": lambda p: p.application,
+            },
+            {
+                "name": "x-ms-user",
+                "value": client_details.user_name_for_tracing,
+                "property": lambda p: p.user,
+            },
+        ]
+
+        for header in special_headers:
+            if properties and header["property"](properties) is not None:
+                value = header["property"](properties)
+            else:
+                value = header["value"]
+
+            if value is not None:
+                request_headers[header["name"]] = value
+
         if properties is not None:
-            if properties.client_request_id is not None:
-                request_headers["x-ms-client-request-id"] = properties.client_request_id
-            if properties.application is not None:
-                request_headers["x-ms-app"] = properties.application
-            if properties.user is not None:
-                request_headers["x-ms-user"] = properties.user
             if properties.get_option(ClientRequestProperties.no_request_timeout_option_name, False):
                 timeout = mgmt_default_timeout
             else:

@@ -132,7 +132,6 @@ class StatusQTests(unittest.TestCase):
         with mock.patch.object(client._resource_manager, "get_successful_ingestions_queues") as mocked_get_success_qs, mock.patch.object(
             client._resource_manager, "get_failed_ingestions_queues"
         ) as mocked_get_failed_qs, mock.patch.object(QueueClient, "peek_messages", autospec=True, side_effect=fake_peek) as q_mock:
-
             fake_failed_queue1 = _ResourceUri(
                 "mocked_storage_account_f1",
                 OBJECT_TYPE,
@@ -203,7 +202,6 @@ class StatusQTests(unittest.TestCase):
         ) as q_receive_mock, mock.patch.object(
             QueueClient, "delete_message", return_value=None
         ) as q_del_mock:
-
             fake_failed_queue1 = _ResourceUri(
                 "mocked_storage_account_f1",
                 OBJECT_TYPE,
@@ -272,7 +270,6 @@ class StatusQTests(unittest.TestCase):
         ) as q_receive_mock, mock.patch.object(
             QueueClient, "delete_message", return_value=None
         ):
-
             fake_failed_queue1 = _ResourceUri(
                 "mocked_storage_account_f1",
                 OBJECT_TYPE,
