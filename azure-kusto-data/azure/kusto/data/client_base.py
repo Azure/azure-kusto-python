@@ -11,13 +11,13 @@ from requests import Response
 
 from azure.kusto.data._cloud_settings import CloudSettings
 from azure.kusto.data._token_providers import CloudInfoTokenProvider
+from .client_details import ClientDetails
 from .client_request_properties import ClientRequestProperties
 from .exceptions import KustoServiceError, KustoThrottlingError, KustoApiError
 from .kcsb import KustoConnectionStringBuilder
 from .kusto_trusted_endpoints import well_known_kusto_endpoints
 from .response import KustoResponseDataSet, KustoResponseDataSetV2, KustoResponseDataSetV1
 from .security import _AadHelper
-from .client_details import ClientDetails
 
 if TYPE_CHECKING:
     import aiohttp
@@ -56,7 +56,6 @@ class _KustoClientBase(abc.ABC):
         }
 
         self.client_details = self._kcsb.client_details
-
         self._is_closed: bool = False
 
     def close(self):
@@ -159,7 +158,7 @@ class ExecuteRequestParams:
             {
                 "name": "x-ms-client-version",
                 "value": client_details.version_for_tracing,
-                "property": lambda p: client_details.version_for_tracing,
+                "property": lambda p: None,
             },
             {
                 "name": "x-ms-app",
@@ -174,9 +173,10 @@ class ExecuteRequestParams:
         ]
 
         for header in special_headers:
-            value = header["value"]
             if properties and header["property"](properties) is not None:
                 value = header["property"](properties)
+            else:
+                value = header["value"]
 
             if value is not None:
                 request_headers[header["name"]] = value
