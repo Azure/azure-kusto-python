@@ -1,7 +1,8 @@
 from enum import unique, Enum
-from typing import Union, Callable, Coroutine, Optional, Any
+from typing import Union, Callable, Coroutine, Optional, Tuple, List, Any
 
 from ._string_utils import assert_string_is_not_empty
+from .client_details import ClientDetails
 
 
 class KustoConnectionStringBuilder:
@@ -125,6 +126,9 @@ class KustoConnectionStringBuilder:
         self.credential_from_login_endpoint: Optional[Any] = None
         if connection_string is not None and "=" not in connection_string.partition(";")[0]:
             connection_string = "Data Source=" + connection_string
+
+        self._application_for_tracing: Optional[str] = None
+        self._user_for_tracing: Optional[str] = None
 
         self[self.ValidKeywords.authority_id] = "organizations"
 
@@ -567,6 +571,51 @@ class KustoConnectionStringBuilder:
     @property
     def domain_hint(self) -> Optional[str]:
         return self._internal_dict.get(self.ValidKeywords.domain_hint)
+
+    @property
+    def application_for_tracing(self) -> Optional[str]:
+        return self._application_for_tracing
+
+    @application_for_tracing.setter
+    def application_for_tracing(self, value: str):
+        self._application_for_tracing = value
+
+    @property
+    def user_name_for_tracing(self) -> Optional[str]:
+        return self._user_for_tracing
+
+    @user_name_for_tracing.setter
+    def user_name_for_tracing(self, value: str):
+        self._user_for_tracing = value
+
+    @property
+    def client_details(self) -> ClientDetails:
+        return ClientDetails(self.application_for_tracing, self.user_name_for_tracing)
+
+    def _set_connector_details(
+        self,
+        name: str,
+        version: str,
+        app_name: Optional[str] = None,
+        app_version: Optional[str] = None,
+        send_user: bool = False,
+        override_user: Optional[str] = None,
+        additional_fields: Optional[List[Tuple[str, str]]] = None,
+    ):
+        """
+        Sets the connector details for tracing purposes.
+        :param name:  The name of the connector
+        :param version:  The version of the connector
+        :param send_user: Whether to send the user name
+        :param override_user: Override the user name ( if send_user is True )
+        :param app_name: The name of the containing application
+        :param app_version: The version of the containing application
+        :param additional_fields: Additional fields to add to the header
+        """
+        client_details = ClientDetails.set_connector_details(name, version, app_name, app_version, send_user, override_user, additional_fields)
+
+        self.application_for_tracing = client_details.application_for_tracing
+        self.user_name_for_tracing = client_details.user_name_for_tracing
 
     def __str__(self) -> str:
         dict_copy = self._internal_dict.copy()

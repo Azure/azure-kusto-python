@@ -243,7 +243,15 @@ class KustoClient(_KustoClientBase):
             raise KustoClosedError()
         self.validate_endpoint()
         request_params = ExecuteRequestParams(
-            database, payload, properties, query, timeout, self._request_headers, self._mgmt_default_timeout, self._client_server_delta
+            database,
+            payload,
+            properties,
+            query,
+            timeout,
+            self._request_headers,
+            self._mgmt_default_timeout,
+            self._client_server_delta,
+            self.client_details,
         )
         json_payload = request_params.json_payload
         request_headers = request_params.request_headers
