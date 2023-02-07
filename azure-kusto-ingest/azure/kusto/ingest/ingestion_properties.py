@@ -127,7 +127,6 @@ class ColumnMapping:
             results.append(f"{kind} needs at least one of the required properties: {needed_props}")
 
         if self.properties.get(self.TRANSFORMATION_METHOD):
-
             if (self.properties.get(self.PATH) or self.properties.get(self.FIELD_NAME)) and self.properties.get(
                 self.TRANSFORMATION_METHOD
             ) in self.CONSTANT_TRANSFORMATION_METHODS:
@@ -172,7 +171,6 @@ class IngestionProperties:
         validation_policy: Optional[ValidationPolicy] = None,
         additional_properties: Optional[dict] = None,
     ):
-
         if ingestion_mapping_reference is None and column_mappings is None:
             if ingestion_mapping_kind is not None:
                 raise KustoMissingMappingError(f"When ingestion mapping kind is set ('{ingestion_mapping_kind.value}'), a mapping must be provided.")

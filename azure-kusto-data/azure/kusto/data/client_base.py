@@ -89,7 +89,6 @@ class _KustoClientBase(abc.ABC):
         response_json: Any,
         response_text: Optional[str],
     ) -> NoReturn:
-
         if status == 404:
             if payload:
                 raise KustoServiceError("The ingestion endpoint does not exist. Please enable streaming ingestion on your cluster.", response) from exception
