@@ -12,6 +12,8 @@ class KustoConnectionStringBuilder:
         https://github.com/Azure/azure-kusto-python/blob/master/azure-kusto-data/tests/sample.py
     """
 
+    kcsb_invalid_item_error = "%s is not supported as an item in KustoConnectionStringBuilder"
+
     @unique
     class ValidKeywords(Enum):
         """
@@ -134,7 +136,10 @@ class KustoConnectionStringBuilder:
 
         for kvp_string in connection_string.split(";"):
             key, _, value = kvp_string.partition("=")
-            keyword = self.ValidKeywords.parse(key)
+            try:
+                keyword = self.ValidKeywords.parse(key)
+            except KeyError:
+                raise KeyError(self.kcsb_invalid_item_error % key)
             value_stripped = value.strip()
             if keyword.is_str_type():
                 self[keyword] = value_stripped.rstrip("/")
@@ -150,7 +155,7 @@ class KustoConnectionStringBuilder:
         try:
             keyword = key if isinstance(key, self.ValidKeywords) else self.ValidKeywords.parse(key)
         except KeyError:
-            raise KeyError("%s is not supported as an item in KustoConnectionStringBuilder" % key)
+            raise KeyError(self.kcsb_invalid_item_error % key)
 
         if value is None:
             raise TypeError("Value cannot be None.")
@@ -182,6 +187,7 @@ class KustoConnectionStringBuilder:
         """
         assert_string_is_not_empty(user_id)
         assert_string_is_not_empty(password)
+
         kcsb = cls(connection_string)
         kcsb[kcsb.ValidKeywords.aad_federated_security] = True
         kcsb[kcsb.ValidKeywords.aad_user_id] = user_id
@@ -200,6 +206,7 @@ class KustoConnectionStringBuilder:
         :param str user_token: AAD user token.
         """
         assert_string_is_not_empty(user_token)
+
         kcsb = cls(connection_string)
         kcsb[kcsb.ValidKeywords.aad_federated_security] = True
         kcsb[kcsb.ValidKeywords.user_token] = user_token
@@ -220,6 +227,7 @@ class KustoConnectionStringBuilder:
         assert_string_is_not_empty(aad_app_id)
         assert_string_is_not_empty(app_key)
         assert_string_is_not_empty(authority_id)
+
         kcsb = cls(connection_string)
         kcsb[kcsb.ValidKeywords.aad_federated_security] = True
         kcsb[kcsb.ValidKeywords.application_client_id] = aad_app_id

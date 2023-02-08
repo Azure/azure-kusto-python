@@ -10,6 +10,11 @@ import requests.adapters
 from requests import Response
 from urllib3.connection import HTTPConnection
 
+from azure.core.tracing.decorator import distributed_trace
+from azure.core.tracing import SpanKind
+
+from azure.kusto.data._telemetry import KustoTracingAttributes, KustoTracing
+
 from .client_base import ExecuteRequestParams, _KustoClientBase
 from .client_request_properties import ClientRequestProperties
 from .data_format import DataFormat
@@ -154,6 +159,7 @@ class KustoClient(_KustoClientBase):
             return self.execute_mgmt(database, query, properties)
         return self.execute_query(database, query, properties)
 
+    @distributed_trace(name_of_span="KustoClient.query_cmd", kind=SpanKind.CLIENT)
     def execute_query(self, database: str, query: str, properties: Optional[ClientRequestProperties] = None) -> KustoResponseDataSet:
         """
         Execute a KQL query.
@@ -164,8 +170,11 @@ class KustoClient(_KustoClientBase):
         :return: Kusto response data set.
         :rtype: azure.kusto.data.response.KustoResponseDataSet
         """
+        KustoTracingAttributes.set_query_attributes(self._kusto_cluster, database, properties)
+
         return self._execute(self._query_endpoint, database, query, None, self._query_default_timeout, properties)
 
+    @distributed_trace(name_of_span="KustoClient.control_cmd", kind=SpanKind.CLIENT)
     def execute_mgmt(self, database: str, query: str, properties: Optional[ClientRequestProperties] = None) -> KustoResponseDataSet:
         """
         Execute a KQL control command.
@@ -176,8 +185,11 @@ class KustoClient(_KustoClientBase):
         :return: Kusto response data set.
         :rtype: azure.kusto.data.response.KustoResponseDataSet
         """
+        KustoTracingAttributes.set_query_attributes(self._kusto_cluster, database, properties)
+
         return self._execute(self._mgmt_endpoint, database, query, None, self._mgmt_default_timeout, properties)
 
+    @distributed_trace(name_of_span="KustoClient.streaming_ingest", kind=SpanKind.CLIENT)
     def execute_streaming_ingest(
         self,
         database: str,
@@ -199,6 +211,8 @@ class KustoClient(_KustoClientBase):
         :param ClientRequestProperties properties: additional request properties.
         :param str mapping_name: Pre-defined mapping of the table. Required when stream_format is json/avro.
         """
+        KustoTracingAttributes.set_streaming_ingest_attributes(self._kusto_cluster, database, table, properties)
+
         stream_format = stream_format.kusto_value if isinstance(stream_format, DataFormat) else DataFormat[stream_format.upper()].kusto_value
         endpoint = self._streaming_ingest_endpoint + database + "/" + table + "?streamFormat=" + stream_format
         if mapping_name is not None:
@@ -213,6 +227,7 @@ class KustoClient(_KustoClientBase):
         response.raw.decode_content = True
         return StreamingDataSetEnumerator(JsonTokenReader(response.raw))
 
+    @distributed_trace(name_of_span="KustoClient.streaming_query", kind=SpanKind.CLIENT)
     def execute_streaming_query(
         self, database: str, query: str, timeout: timedelta = _KustoClientBase._query_default_timeout, properties: Optional[ClientRequestProperties] = None
     ) -> KustoStreamingResponseDataSet:
@@ -226,6 +241,8 @@ class KustoClient(_KustoClientBase):
         :param azure.kusto.data.ClientRequestProperties properties: Optional additional properties.
         :return KustoStreamingResponseDataSet:
         """
+        KustoTracingAttributes.set_query_attributes(self._kusto_cluster, database, properties)
+
         return KustoStreamingResponseDataSet(self._execute_streaming_query_parsed(database, query, timeout, properties))
 
     def _execute(
@@ -258,7 +275,20 @@ class KustoClient(_KustoClientBase):
         timeout = request_params.timeout
         if self._aad_helper:
             request_headers["Authorization"] = self._aad_helper.acquire_authorization_header()
-        response = self._session.post(endpoint, headers=request_headers, json=json_payload, data=payload, timeout=timeout.seconds, stream=stream_response)
+
+        # trace http post call for response
+        http_trace_attributes = KustoTracingAttributes.create_http_attributes(url=endpoint, method="POST", headers=request_headers)
+        response = KustoTracing.call_func_tracing(
+            self._session.post,
+            endpoint,
+            headers=request_headers,
+            json=json_payload,
+            data=payload,
+            timeout=timeout.seconds,
+            stream=stream_response,
+            name_of_span="KustoClient.http_post",
+            tracing_attributes=http_trace_attributes,
+        )
 
         if stream_response:
             try:
@@ -273,5 +303,5 @@ class KustoClient(_KustoClientBase):
             response.raise_for_status()
         except Exception as e:
             raise self._handle_http_error(e, endpoint, payload, response, response.status_code, response_json, response.text)
-
-        return self._kusto_parse_by_endpoint(endpoint, response_json)
+        # trace response processing
+        return KustoTracing.call_func_tracing(self._kusto_parse_by_endpoint, endpoint, response_json, name_of_span="KustoClient.processing_response")

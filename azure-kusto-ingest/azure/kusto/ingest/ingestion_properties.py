@@ -152,6 +152,9 @@ class IngestionProperties:
     For more information check out https://docs.microsoft.com/en-us/azure/data-explorer/ingestion-properties
     """
 
+    _DATABASE = "database"
+    _TABLE = "table"
+
     def __init__(
         self,
         database: str,
@@ -215,3 +218,7 @@ class IngestionProperties:
         self.report_method = report_method
         self.validation_policy = validation_policy
         self.additional_properties = additional_properties
+
+    def get_tracing_attributes(self) -> dict:
+        """Gets dictionary of attributes to be documented during tracing"""
+        return {self._DATABASE: self.database, self._TABLE: self.table}

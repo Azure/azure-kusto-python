@@ -83,7 +83,12 @@ class TestTokenProvider:
             provider.get_token()
             assert False, "Expected KustoAsyncUsageError to occur"
         except KustoAsyncUsageError as e:
-            assert str(e) == "Method get_token can't be called from an asynchronous client"
+            assert (
+                str(e) == "Method get_token can't be called from an asynchronous client"
+                or str(e) == "Method context can't be called from an asynchronous client"
+            )
+            # context is called for tracing purposes
+
         try:
             provider.context()
             assert False, "Expected KustoAsyncUsageError to occur"

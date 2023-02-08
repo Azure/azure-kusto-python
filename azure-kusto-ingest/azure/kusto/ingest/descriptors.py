@@ -1,10 +1,12 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
+import abc
 import os
 import random
 import shutil
 import struct
 import uuid
+from copy import copy
 from gzip import GzipFile
 from io import BytesIO, SEEK_END
 from typing import Union, Optional, AnyStr, IO, List, Dict
@@ -28,7 +30,18 @@ def ensure_uuid(maybe_uuid: OptionalUUID) -> uuid.UUID:
     return uuid.UUID(f"{maybe_uuid}", version=4)
 
 
-class FileDescriptor:
+class DescriptorBase(abc.ABC):
+    """This base class abstracts tracing attributes for all implementations."""
+
+    _SOURCE_ID = "source_id"
+
+    @abc.abstractmethod
+    def get_tracing_attributes(self) -> dict:
+        """Gets dictionary of attributes to be documented during tracing"""
+        pass
+
+
+class FileDescriptor(DescriptorBase):
     """FileDescriptor is used to describe a file that will be used as an ingestion source."""
 
     # Gzip keeps the decompressed stream size as a UINT32 in the last 4 bytes of the stream, however this poses a limit to the expressed size which is 4GB
@@ -36,6 +49,7 @@ class FileDescriptor:
     # The below constant expresses the maximal size of a compressed stream that will not cause the UINT32 to rollover given a maximal compression ratio of 1:40
     GZIP_MAX_DISK_SIZE_FOR_DETECTION = int(4 * 1024 * 1024 * 1024 / 40)
     DEFAULT_COMPRESSION_RATIO = 11
+    _FILE_PATH = "file_path"
 
     def __init__(self, path: str, size: Optional[int] = None, source_id: OptionalUUID = None):
         """
@@ -107,9 +121,20 @@ class FileDescriptor:
         file_stream.seek(0)
         return file_stream
 
+    def get_tracing_attributes(self) -> dict:
+        return {self._FILE_PATH: self.stream_name, self._SOURCE_ID: str(self.source_id)}
 
-class BlobDescriptor:
+    @classmethod
+    def get_instance(cls, file_descriptor: Union["FileDescriptor", str]) -> "FileDescriptor":
+        if not isinstance(file_descriptor, cls):
+            return cls(file_descriptor)
+        return file_descriptor
+
+
+class BlobDescriptor(DescriptorBase):
     """BlobDescriptor is used to describe a blob that will be used as an ingestion source"""
+
+    _BLOB_URI = "blob_uri"
 
     def __init__(self, path: str, size: Optional[int] = None, source_id: OptionalUUID = None):
         """
@@ -155,9 +180,14 @@ class BlobDescriptor:
             raise KustoBlobError(e)
         return BlobDescriptor(blob_client.url, descriptor.size, descriptor.source_id)
 
+    def get_tracing_attributes(self) -> dict:
+        return {self._BLOB_URI: self.path, self._SOURCE_ID: str(self.source_id)}
 
-class StreamDescriptor:
+
+class StreamDescriptor(DescriptorBase):
     """StreamDescriptor is used to describe a stream that will be used as ingestion source"""
+
+    _STREAM_NAME = "stream_name"
 
     # TODO: currently we always assume that streams are gz compressed (will get compressed before sending), should we expand that?
     def __init__(
@@ -203,11 +233,19 @@ class StreamDescriptor:
         :param Union[FileDescriptor, str] file_descriptor: File Descriptor instance
         :return new StreamDescriptor instance
         """
-        if isinstance(file_descriptor, FileDescriptor):
-            descriptor = file_descriptor
-        else:
-            descriptor = FileDescriptor(file_descriptor)
+        descriptor = FileDescriptor.get_instance(file_descriptor)
         stream = open(descriptor.path, "rb")
         is_compressed = descriptor.path.endswith(".gz") or descriptor.path.endswith(".zip")
         stream_descriptor = StreamDescriptor(stream, descriptor.source_id, is_compressed, descriptor.stream_name, descriptor.size)
         return stream_descriptor
+
+    @classmethod
+    def get_instance(cls, stream_descriptor: Union["StreamDescriptor", IO[AnyStr]]) -> "StreamDescriptor":
+        if not isinstance(stream_descriptor, cls):
+            descriptor = cls(stream_descriptor)
+        else:
+            descriptor = copy(stream_descriptor)
+        return descriptor
+
+    def get_tracing_attributes(self) -> dict:
+        return {self._STREAM_NAME: self.stream_name, self._SOURCE_ID: str(self.source_id)}

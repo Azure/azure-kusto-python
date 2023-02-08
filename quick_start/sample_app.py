@@ -2,6 +2,7 @@ import dataclasses
 import enum
 import json
 import uuid
+import os
 from dataclasses import dataclass
 from typing import List
 
@@ -10,6 +11,48 @@ import inflection as inflection
 from azure.kusto.data import DataFormat, KustoClient
 from azure.kusto.ingest import QueuedIngestClient
 from utils import AuthenticationModeOptions, Utils
+
+# Declare OpenTelemetry as enabled tracing plugin for Azure SDKs
+from azure.core.settings import settings
+from azure.core.tracing import SpanKind
+from azure.core.tracing.decorator import distributed_trace
+from azure.core.tracing.ext.opentelemetry_span import OpenTelemetrySpan
+
+# See https://github.com/open-telemetry/opentelemetry-python for details on regular open telemetry usage
+from opentelemetry import trace
+from opentelemetry.trace import Tracer
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+
+from opentelemetry.sdk.trace.export import ConsoleSpanExporter
+
+# alternative azure monitor exporter for distributed tracing
+from azure.monitor.opentelemetry.exporter import AzureMonitorTraceExporter
+
+
+def enable_distributed_tracing() -> "Tracer":
+    """
+    Sets up distributed tracing environment for sample app
+
+    Returns a 'Tracer'
+    """
+
+    settings.tracing_implementation = OpenTelemetrySpan
+
+    # In the below example, we use a simple console exporter, but you can use anything OpenTelemetry supports. To use
+    # Azure Monitor Exporter uncomment the lines below and add the 'uuid of the instrumentation key (see your Azure
+    # Monitor account)'.
+
+    exporter = ConsoleSpanExporter()
+    # exporter = AzureMonitorTraceExporter.from_connection_string(conn_str=os.environ["APPLICATIONINSIGHTS_CONNECTION_STRING"])
+
+    trace.set_tracer_provider(TracerProvider())
+    tracer = trace.get_tracer(__name__)
+
+    span_processor = SimpleSpanProcessor(exporter)
+    tr: TracerProvider = trace.get_tracer_provider()
+    tr.add_span_processor(span_processor)
+    return tracer
 
 
 class SourceType(enum.Enum):
@@ -111,6 +154,7 @@ class KustoSampleApp:
             Utils.error_handler(f"Couldn't read load config file from file '{config_file_name}'", ex)
 
     @classmethod
+    @distributed_trace(kind=SpanKind.CLIENT)
     def pre_ingestion_querying(cls, config: ConfigJson, kusto_client: KustoClient) -> None:
         """
         First phase, pre ingestion - will reach the provided DB with several control commands and a query based on the configuration File.
@@ -159,6 +203,7 @@ class KustoSampleApp:
         Utils.Queries.execute_command(kusto_client, database_name, command)
 
     @classmethod
+    @distributed_trace(name_of_span="KustoSampleApp.query", kind=SpanKind.CLIENT)  # We can give similar spans the same name
     def query_existing_number_of_rows(cls, kusto_client: KustoClient, database_name: str, table_name: str) -> None:
         """
         Queries the data on the existing number of rows.
@@ -170,6 +215,7 @@ class KustoSampleApp:
         Utils.Queries.execute_command(kusto_client, database_name, command)
 
     @classmethod
+    @distributed_trace(name_of_span="KustoSampleApp.query", kind=SpanKind.CLIENT)  # We can give similar spans the same name
     def query_first_two_rows(cls, kusto_client: KustoClient, database_name: str, table_name: str) -> None:
         """
         Queries the first two rows of the table.
@@ -270,6 +316,7 @@ class KustoSampleApp:
         Utils.Queries.execute_command(kusto_client, database_name, mapping_command)
 
     @classmethod
+    @distributed_trace(kind=SpanKind.CLIENT)
     def ingest_data(
         cls,
         data_file: ConfigData,
@@ -309,6 +356,7 @@ class KustoSampleApp:
             Utils.error_handler(f"Unknown source '{source_type}' for file '{source_uri}'")
 
     @classmethod
+    @distributed_trace(kind=SpanKind.CLIENT)
     def post_ingestion_querying(cls, kusto_client: KustoClient, database_name: str, table_name: str, config_ingest_data: bool) -> None:
         """
         Third and final phase - simple queries to validate the script ran successfully.
@@ -342,6 +390,7 @@ class KustoSampleApp:
             input("Press ENTER to proceed with this operation...")
 
 
+@distributed_trace(name_of_span="KustoSampleApp.main", kind=SpanKind.CLIENT)
 def main():
     print("Kusto sample app is starting...")
 
@@ -374,4 +423,10 @@ def main():
 
 
 if __name__ == "__main__":
+    # Uncomment the lines below to enable distributed tracing
+
+    # tracer = enable_distributed_tracing()
+    # with tracer.start_as_current_span(name="KustoSampleApp"):
+    #     main()
+
     main()
