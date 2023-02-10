@@ -693,3 +693,9 @@ class AzureIdentityTokenCredentialProvider(CloudInfoTokenProvider):
 
     def _get_token_from_cache_impl(self) -> Optional[dict]:
         return None
+
+    def close(self):
+        if self.credential is not None:
+            self.credential.close()
+            self.credential = None
+            self.credential_from_login_endpoint = None
