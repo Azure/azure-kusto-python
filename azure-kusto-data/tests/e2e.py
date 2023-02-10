@@ -134,16 +134,6 @@ class TestE2E:
         with open(os.path.join(cls.input_folder_path, "big.json")) as f:
             cls.test_streaming_data = json.load(f)
 
-    @staticmethod
-    @pytest.fixture(scope="session")
-    def event_loop():
-        if platform.system() == "Windows":
-            asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-        policy = asyncio.get_event_loop_policy()
-        loop = policy.new_event_loop()
-        yield loop
-        loop.close()
-
     @classmethod
     async def get_async_client(cls, app_insights=False) -> AsyncKustoClient:
         return AsyncKustoClient(cls.engine_kcsb_from_env(app_insights, is_async=True))
