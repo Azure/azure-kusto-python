@@ -50,47 +50,49 @@ class TokenProviderTests(unittest.TestCase):
     def test_base_provider():
         # test init with no URI
         with MockProvider():
-            # Test provider with URI, No silent token
-            with MockProvider() as provider:
-                token = provider._get_token_from_cache_impl()
-                assert provider.init_count == 0
-                assert token is None
+            pass
 
-                token = provider.get_token()
-                assert provider.init_count == 1
-                assert TokenConstants.MSAL_ACCESS_TOKEN in token
+        # Test provider with URI, No silent token
+        with MockProvider() as provider:
+            token = provider._get_token_from_cache_impl()
+            assert provider.init_count == 0
+            assert token is None
 
-                token = provider._get_token_from_cache_impl()
-                assert TokenConstants.MSAL_ACCESS_TOKEN in token
+            token = provider.get_token()
+            assert provider.init_count == 1
+            assert TokenConstants.MSAL_ACCESS_TOKEN in token
 
-                token = provider.get_token()
-                assert provider.init_count == 1
+            token = provider._get_token_from_cache_impl()
+            assert TokenConstants.MSAL_ACCESS_TOKEN in token
 
-                good_token = {TokenConstants.MSAL_ACCESS_TOKEN: TOKEN_VALUE}
-                bad_token1 = None
-                bad_token2 = {"error": "something bad occurred"}
+            token = provider.get_token()
+            assert provider.init_count == 1
 
-                assert provider._valid_token_or_none(good_token) == good_token
-                assert provider._valid_token_or_none(bad_token1) is None
-                assert provider._valid_token_or_none(bad_token2) is None
+            good_token = {TokenConstants.MSAL_ACCESS_TOKEN: TOKEN_VALUE}
+            bad_token1 = None
+            bad_token2 = {"error": "something bad occurred"}
 
-                assert provider._valid_token_or_throw(good_token) == good_token
+            assert provider._valid_token_or_none(good_token) == good_token
+            assert provider._valid_token_or_none(bad_token1) is None
+            assert provider._valid_token_or_none(bad_token2) is None
 
-                exception_occurred = False
-                try:
-                    provider._valid_token_or_throw(bad_token1)
-                except KustoClientError:
-                    exception_occurred = True
-                finally:
-                    assert exception_occurred
+            assert provider._valid_token_or_throw(good_token) == good_token
 
-                exception_occurred = False
-                try:
-                    provider._valid_token_or_throw(bad_token2)
-                except KustoClientError:
-                    exception_occurred = True
-                finally:
-                    assert exception_occurred
+            exception_occurred = False
+            try:
+                provider._valid_token_or_throw(bad_token1)
+            except KustoClientError:
+                exception_occurred = True
+            finally:
+                assert exception_occurred
+
+            exception_occurred = False
+            try:
+                provider._valid_token_or_throw(bad_token2)
+            except KustoClientError:
+                exception_occurred = True
+            finally:
+                assert exception_occurred
 
     @staticmethod
     def get_token_value(token: dict):
@@ -153,7 +155,7 @@ class TokenProviderTests(unittest.TestCase):
             token = provider.get_token()
             assert TokenProviderTests.get_token_value(token) == TOKEN_VALUE
 
-        with CallbackTokenProvider(token_callback=lambda: 0, async_token_callback=None):  # token is not a string as provider:
+        with CallbackTokenProvider(token_callback=lambda: 0, async_token_callback=None) as provider:  # token is not a string
             exception_occurred = False
             try:
                 provider.get_token()
@@ -359,6 +361,11 @@ class TokenProviderTests(unittest.TestCase):
 
     @staticmethod
     def test_azure_identity_default_token_provider():
+        # Known issue - the socket may take some time to close, and the test will fail
+        import warnings
+
+        warnings.filterwarnings("ignore", category=ResourceWarning, message="unclosed.*")
+
         app_id = os.environ.get("APP_ID", "b699d721-4f6f-4320-bc9a-88d578dfe68f")
         os.environ["AZURE_CLIENT_ID"] = app_id
         auth_id = os.environ.get("APP_AUTH_ID", "72f988bf-86f1-41af-91ab-2d7cd011db47")
@@ -370,11 +377,11 @@ class TokenProviderTests(unittest.TestCase):
             token = provider.get_token()
             assert TokenProviderTests.get_token_value(token) is not None
 
-            with AzureIdentityTokenCredentialProvider(
-                KUSTO_URI,
-                credential_from_login_endpoint=lambda login_endpoint: ClientSecretCredential(
-                    authority=login_endpoint, client_id=app_id, client_secret=app_key, tenant_id=auth_id
-                ),
-            ) as provider:
-                token = provider.get_token()
-                assert TokenProviderTests.get_token_value(token) is not None
+        with AzureIdentityTokenCredentialProvider(
+            KUSTO_URI,
+            credential_from_login_endpoint=lambda login_endpoint: ClientSecretCredential(
+                authority=login_endpoint, client_id=app_id, client_secret=app_key, tenant_id=auth_id
+            ),
+        ) as provider:
+            token = provider.get_token()
+            assert TokenProviderTests.get_token_value(token) is not None

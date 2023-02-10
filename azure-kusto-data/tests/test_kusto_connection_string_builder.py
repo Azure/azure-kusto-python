@@ -285,21 +285,22 @@ class KustoConnectionStringBuilderTests(unittest.TestCase):
         finally:
             assert exception_occurred
 
-    @pytest.mark.asyncio
-    async def test_add_async_token_provider(self):
-        caller_token = "caller token"
 
-        async def async_token_provider():
-            return caller_token
+@pytest.mark.asyncio
+async def test_add_async_token_provider():
+    caller_token = "caller token"
 
-        kscb = KustoConnectionStringBuilder.with_async_token_provider("localhost", async_token_provider)
+    async def async_token_provider():
+        return caller_token
 
-        assert await kscb.async_token_provider() is not None
+    kscb = KustoConnectionStringBuilder.with_async_token_provider("localhost", async_token_provider)
 
-        exception_occurred = False
-        try:
-            kscb = KustoConnectionStringBuilder.with_async_token_provider("localhost", caller_token)
-        except AssertionError as ex:
-            exception_occurred = True
-        finally:
-            assert exception_occurred
+    assert await kscb.async_token_provider() is "caller token"
+
+    exception_occurred = False
+    try:
+        kscb = KustoConnectionStringBuilder.with_async_token_provider("localhost", caller_token)
+    except AssertionError as ex:
+        exception_occurred = True
+    finally:
+        assert exception_occurred

@@ -188,6 +188,12 @@ class TokenProviderBase(abc.ABC):
 
         return await _get_token_async()
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
+
     @staticmethod
     @abc.abstractmethod
     def name() -> str:
@@ -696,6 +702,9 @@ class AzureIdentityTokenCredentialProvider(CloudInfoTokenProvider):
 
     def close(self):
         if self.credential is not None:
-            self.credential.close()
+            if self.is_async:
+                asyncio.get_event_loop().run_in_executor(None, self.credential.close())
+            else:
+                self.credential.close()
             self.credential = None
             self.credential_from_login_endpoint = None
