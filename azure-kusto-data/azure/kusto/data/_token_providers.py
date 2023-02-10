@@ -167,7 +167,9 @@ class TokenProviderBase(abc.ABC):
     async def get_token_async(self):
         """Get a token asynchronously silently from cache or authenticate if cached token is not found"""
 
-        @distributed_trace_async(name_of_span=f"{self.name()}.get_token_async", tracing_attributes=self.context_async(), kind=SpanKind.CLIENT)
+        context = await self.context_async()
+
+        @distributed_trace_async(name_of_span=f"{self.name()}.get_token_async", tracing_attributes=context, kind=SpanKind.CLIENT)
         async def _get_token_async():
             if not self.is_async:
                 raise KustoAsyncUsageError("get_token_async", self.is_async)
@@ -179,7 +181,7 @@ class TokenProviderBase(abc.ABC):
             if token is None:
                 async with self._async_lock:
                     token = await KustoTracing.call_func_tracing_async(
-                        self._get_token_impl_async, name_of_span=f"{self.name()}.get_token_impl_async", tracing_attributes=self.context_async()
+                        self._get_token_impl_async, name_of_span=f"{self.name()}.get_token_impl_async", tracing_attributes=context
                     )
 
             return self._valid_token_or_throw(token)
