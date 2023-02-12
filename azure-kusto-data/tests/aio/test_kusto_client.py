@@ -36,7 +36,7 @@ if sys.version_info < (3, 6):
 # Known issue - the socket may take some time to close, and the test will fail
 import warnings
 
-warnings.filterwarnings("ignore", category=ResourceWarning, message="unclosed.*")
+warnings.filterwarnings("ignore", category=ResourceWarning, message=".*unclosed.*")
 
 
 @pytest.mark.skipif(not run_aio_tests, reason="requires aio")
