@@ -72,11 +72,11 @@ class TestKustoClient(KustoClientTestsMixin):
         warnings.simplefilter("ignore", ResourceWarning)
 
         with aioresponses() as aioresponses_mock:
-                self._mock_query(aioresponses_mock)
-                async with KustoClient(self.HOST) as client:
-                    response = await client.execute_query("PythonTest", "Deft")
-                first_request = next(iter(aioresponses_mock.requests.values()))
-                self._assert_client_request_id(first_request[0].kwargs)
+            self._mock_query(aioresponses_mock)
+            async with KustoClient(self.HOST) as client:
+                response = await client.execute_query("PythonTest", "Deft")
+            first_request = next(iter(aioresponses_mock.requests.values()))
+            self._assert_client_request_id(first_request[0].kwargs)
         self._assert_sanity_query_response(response)
 
     @aio_documented_by(KustoClientTestsSync.test_sanity_control_command)
