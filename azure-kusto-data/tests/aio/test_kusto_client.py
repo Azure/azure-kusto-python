@@ -155,6 +155,11 @@ range x from 1 to 10 step 1"""
     @aio_documented_by(KustoClientTestsSync.test_null_values_in_data)
     @pytest.mark.asyncio
     async def test_null_values_in_data(self):
+        # Known issue - the socket may take some time to close, and the test will fail
+        import warnings
+
+        warnings.simplefilter("ignore", ResourceWarning)
+
         with aioresponses() as aioresponses_mock:
             self._mock_query(aioresponses_mock)
             async with KustoClient(self.HOST) as client:
