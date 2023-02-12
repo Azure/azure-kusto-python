@@ -23,7 +23,7 @@ except:
 # Known issue - the socket may take some time to close, and the test will fail
 import warnings
 
-warnings.filterwarnings("ignore", category=ResourceWarning, message=".*unclosed.*")
+warnings.filterwarnings("ignore", category=ResourceWarning, message="unclosed.*")
 
 
 @pytest.fixture(params=[KustoClient.execute_query, KustoClient.execute_streaming_query])
