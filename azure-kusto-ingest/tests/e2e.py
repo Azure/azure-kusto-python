@@ -1,10 +1,8 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
-import asyncio
 import io
 import os
 import pathlib
-import platform
 import pytest
 import random
 import sys
@@ -223,16 +221,6 @@ class TestE2E:
         cls.ingest_client.close()
         cls.streaming_ingest_client.close()
         cls.managed_streaming_ingest_client.close()
-
-    @staticmethod
-    @pytest.fixture(scope="session")
-    def event_loop():
-        if platform.system() == "Windows":
-            asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-        policy = asyncio.get_event_loop_policy()
-        loop = policy.new_event_loop()
-        yield loop
-        loop.close()
 
     @classmethod
     async def get_async_client(cls) -> AsyncKustoClient:

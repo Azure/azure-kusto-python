@@ -82,7 +82,7 @@ class TestTokenProvider:
             assert False
 
     @staticmethod
-    def test_fail_async_call():
+    def test_fail_sync_call():
         with BasicTokenProvider(token=TOKEN_VALUE, is_async=True) as provider:
             try:
                 provider.get_token()
