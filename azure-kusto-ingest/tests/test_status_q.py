@@ -254,6 +254,8 @@ class StatusQTests(unittest.TestCase):
             assert actual[fake_failed_queue2.object_name] == 4
             assert actual[fake_failed_queue1.object_name] == 4
 
+        client.close()
+
     def test_pop_unbalanced_queues(self):
         client = QueuedIngestClient("some-cluster")
 

@@ -179,7 +179,7 @@ range x from 1 to 10 step 1"""
                 response = await client.execute_query("PythonTest", "Deft", properties=properties)
             first_request = next(iter(aioresponses_mock.requests.values()))
             self._assert_client_request_id(first_request[0].kwargs, value=request_id)
-        self._assert_sanity_query_response(response)
+            self._assert_sanity_query_response(response)
 
     @aio_documented_by(KustoClientTestsSync.test_proxy_token_providers)
     @pytest.mark.asyncio
