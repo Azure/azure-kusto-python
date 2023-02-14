@@ -33,11 +33,6 @@ except:
 if sys.version_info < (3, 6):
     run_aio_tests = False
 
-# Known issue - the socket may take some time to close, and the test will fail
-import warnings
-
-warnings.simplefilter("ignore", ResourceWarning)
-
 
 @pytest.mark.skipif(not run_aio_tests, reason="requires aio")
 @aio_documented_by(KustoClientTestsSync)
@@ -170,6 +165,11 @@ range x from 1 to 10 step 1"""
     @aio_documented_by(KustoClientTestsSync.test_sanity_query)
     @pytest.mark.asyncio
     async def test_request_id(self):
+        # Known issue - the socket may take some time to close, and the test will fail
+        import warnings
+
+        warnings.simplefilter("ignore", ResourceWarning)
+
         with aioresponses() as aioresponses_mock:
             properties = ClientRequestProperties()
             request_id = "test_request_id"

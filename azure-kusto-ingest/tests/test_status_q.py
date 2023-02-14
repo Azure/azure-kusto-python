@@ -11,12 +11,6 @@ from azure.kusto.ingest._resource_manager import _ResourceUri
 from azure.kusto.ingest.status import KustoIngestStatusQueues, SuccessMessage, FailureMessage
 from azure.storage.queue import QueueMessage, QueueClient
 
-# Known issue - the socket may take some time to close, and the test will fail
-import warnings
-
-warnings.simplefilter("ignore", ResourceWarning)
-
-
 ENDPOINT_SUFFIX = "sp=rl&st=2020-05-20T13:38:37Z&se=2020-05-21T13:38:37Z&sv=2019-10-10&sr=c&sig=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 OBJECT_TYPE = "core.windows.net"
 
@@ -190,6 +184,11 @@ class StatusQTests(unittest.TestCase):
             assert actual[fake_success_queue.object_name] == 2
 
     def test_pop(self):
+        # Known issue - the socket may take some time to close, and the test will fail
+        import warnings
+
+        warnings.simplefilter("ignore", ResourceWarning)
+
         client = QueuedIngestClient("some-cluster")
 
         fake_receive = fake_receive_factory(
