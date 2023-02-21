@@ -204,13 +204,13 @@ class FunctionalTests(unittest.TestCase):
                 assert value == expected_row[col_index]
 
     def test_invalid_table(self):
-        """Tests calling of table with index that doesn't exists."""
+        """Tests calling of table with index that doesn't exist."""
         response = KustoResponseDataSetV2(json.loads(RESPONSE_TEXT))
         self.assertRaises(IndexError, response.__getitem__, 7)
         self.assertRaises(IndexError, response.__getitem__, -6)
 
     def test_column_dont_exist(self):
-        """Tests accessing column that doesn't exists."""
+        """Tests accessing column that doesn't exist."""
         response = KustoResponseDataSetV2(json.loads(RESPONSE_TEXT))
         row = response.primary_results[0][0]
         self.assertRaises(IndexError, row.__getitem__, 10)

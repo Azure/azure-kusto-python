@@ -1,5 +1,6 @@
 import os
 from io import BytesIO
+from typing import Dict, Any
 
 import pytest
 
@@ -23,15 +24,16 @@ class MockAioFile:
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.file.close()
 
-    async def read(self, n=-1):
+    async def read(self, n: int = -1) -> bytes:
         return self.file.read(n)
 
 
 class AsyncBytesIO:
     def __init__(self, string):
+        super().__init__()
         self.bytes_io = BytesIO(string)
 
-    async def read(self, n=-1):
+    async def read(self, n: int = -1) -> bytes:
         return self.bytes_io.read(n)
 
 
@@ -95,7 +97,7 @@ class TestStreamingQuery(KustoClientTestsMixin):
             response = KustoStreamingResponseDataSet(reader)
             primary_tables = response.iter_primary_results()
 
-            # Before reading all of the tables these results won't be available
+            # Before reading all the tables these results won't be available
             with pytest.raises(KustoStreamingQueryError):
                 errors_count = response.errors_count
             with pytest.raises(KustoStreamingQueryError):
@@ -130,6 +132,7 @@ class TestStreamingQuery(KustoClientTestsMixin):
             reader = AsyncProgressiveDataSetEnumerator(AsyncJsonTokenReader(f))
 
             async for i in reader:
+                i: Dict[str, Any]
                 if i["FrameType"] == FrameType.DataTable and i["TableKind"] == WellKnownDataSet.PrimaryResult.value:
                     columns = [KustoResultColumn(column, index) for index, column in enumerate(i["Columns"])]
                     rows = [KustoResultRow(columns, r) async for r in i["Rows"]]
@@ -141,6 +144,7 @@ class TestStreamingQuery(KustoClientTestsMixin):
             reader = AsyncProgressiveDataSetEnumerator(AsyncJsonTokenReader(f))
 
             async for i in reader:
+                i: Dict[str, Any]
                 if i["FrameType"] == FrameType.DataTable and i["TableKind"] == WellKnownDataSet.PrimaryResult.value:
                     columns = [KustoResultColumn(column, index) for index, column in enumerate(i["Columns"])]
                     rows = [KustoResultRow(columns, r) async for r in i["Rows"]]
@@ -167,6 +171,7 @@ class TestStreamingQuery(KustoClientTestsMixin):
         with self.open_async_json_file("dynamic.json") as f:
             reader = AsyncProgressiveDataSetEnumerator(AsyncJsonTokenReader(f))
             async for i in reader:
+                i: Dict[str, Any]
                 if i["FrameType"] == FrameType.DataTable and i["TableKind"] == WellKnownDataSet.PrimaryResult.value:
                     row = await i["Rows"].__anext__()
                     self._assert_dynamic_response(row)
@@ -179,7 +184,7 @@ class TestStreamingQuery(KustoClientTestsMixin):
             response = AsyncKustoStreamingResponseDataSet(reader)
             primary_tables = response.iter_primary_results()
 
-            # Before reading all of the tables these results won't be available
+            # Before reading all the tables these results won't be available
             with pytest.raises(KustoStreamingQueryError):
                 errors_count = response.errors_count
             with pytest.raises(KustoStreamingQueryError):

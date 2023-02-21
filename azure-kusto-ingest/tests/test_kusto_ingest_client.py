@@ -205,7 +205,7 @@ class TestQueuedIngestClient:
     @responses.activate
     @patch(
         "azure.kusto.ingest.managed_streaming_ingest_client.ManagedStreamingIngestClient.MAX_STREAMING_SIZE_IN_BYTES", new=0
-    )  # Trick to always fallback to queued ingest
+    )  # Trick to always fall back to queued ingest
     @patch("azure.kusto.data.security._AadHelper.acquire_authorization_header", return_value=None)
     @patch("azure.storage.blob.BlobClient.upload_blob")
     @patch("azure.storage.queue.QueueClient.send_message")

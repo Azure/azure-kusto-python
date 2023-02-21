@@ -108,7 +108,8 @@ class KustoClient(_KustoClientBase):
 
     @staticmethod
     def compose_socket_options() -> List[Tuple[int, int, int]]:
-        # Sends TCP Keep-Alive after MAX_IDLE_SECONDS seconds of idleness, once every INTERVAL_SECONDS seconds, and closes the connection after MAX_FAILED_KEEPALIVES failed pings (e.g. 20 => 1:00:30)
+        # Sends TCP Keep-Alive after MAX_IDLE_SECONDS seconds of idleness, once every INTERVAL_SECONDS seconds, and closes the connection after
+        # MAX_FAILED_KEEPALIVES failed pings (e.g. 20 => 1:00:30)
         MAX_IDLE_SECONDS = 30
         INTERVAL_SECONDS = 180  # Corresponds to Azure Load Balancer Service 4 minute timeout, with 1 minute of slack
         MAX_FAILED_KEEPALIVES = 20

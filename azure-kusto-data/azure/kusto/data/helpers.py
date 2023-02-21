@@ -18,8 +18,8 @@ def to_pandas_timedelta(raw_value: Union[int, float, str]) -> "pandas.Timedelta"
         # Kusto saves up to ticks, 1 tick == 100 nanoseconds
         return pd.to_timedelta(raw_value * 100, unit="ns")
     if isinstance(raw_value, str):
-        # The timespan format Kusto returns is 'd.hh:mm:ss.ssssss' or 'hh:mm:ss.ssssss' or 'hh:mm:ss'
-        # Pandas expects 'd days hh:mm:ss.ssssss' or 'hh:mm:ss.ssssss' or 'hh:mm:ss'
+        # The timespan format Kusto returns is `d.hh:mm:ss.ssssss` or `hh:mm:ss.ssssss` or `hh:mm:ss`
+        # Pandas expects `d days hh:mm:ss.ssssss` or `hh:mm:ss.ssssss` or `hh:mm:ss`
         parts = raw_value.split(":")
         if "." not in parts[0]:
             return pd.to_timedelta(raw_value)

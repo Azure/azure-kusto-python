@@ -142,7 +142,7 @@ class BlobDescriptor(DescriptorBase):
         :type path: str.
         :param size: estimated size of file if known.
         :type size: Optional[int].
-        :param source_id: a v4 uuid to serve as the sources id.
+        :param source_id: a v4 uuid to serve as the sources' id.
         :type source_id: OptionalUUID
         """
         self.path: str = path
@@ -196,7 +196,7 @@ class StreamDescriptor(DescriptorBase):
         """
         :param stream: in-memory stream object.
         :type stream: io.BaseIO
-        :param source_id: a v4 uuid to serve as the sources id.
+        :param source_id: a v4 uuid to serve as the sources' id.
         :type source_id: OptionalUUID
         :param is_compressed: specify if the provided stream is compressed
         :type is_compressed: boolean

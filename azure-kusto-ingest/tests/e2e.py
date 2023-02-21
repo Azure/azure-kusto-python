@@ -165,7 +165,7 @@ class TestE2E:
 
     @classmethod
     def setup_class(cls):
-        # DM CS can be composed from engine CS
+        # DM CS can be composed of engine CS
         cls.engine_cs = os.environ.get("ENGINE_CONNECTION_STRING") or ""
         cls.dm_cs = os.environ.get("DM_CONNECTION_STRING") or cls.engine_cs.replace("//", "//ingest-")
         cls.app_id = os.environ.get("APP_ID")

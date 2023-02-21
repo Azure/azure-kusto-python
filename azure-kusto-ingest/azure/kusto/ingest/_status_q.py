@@ -1,11 +1,11 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
 import random
-
 from typing import List, Callable
 
+from azure.storage.queue import QueueServiceClient, QueueClient, QueueMessage, TextBase64DecodePolicy
+
 from azure.kusto.ingest._resource_manager import _ResourceUri
-from azure.storage.queue import QueueServiceClient, QueueClient, QueueMessage, TextBase64EncodePolicy, TextBase64DecodePolicy
 
 
 class QueueDetails:
@@ -82,7 +82,7 @@ class StatusQueue:
             if len(result) == n:
                 return result
 
-        # because we ask for n / len(qs) + 1, we might get more message then requests
+        # because we ask for n / len(qs) + 1, we might get more message than requests
         return result
 
     # TODO: current implementation takes a union top n /  len(queues), which is not ideal,
@@ -130,5 +130,5 @@ class StatusQueue:
             if len(result) == n:
                 return result
 
-        # because we ask for n / len(qs) + 1, we might get more message then requests
+        # because we ask for n / len(qs) + 1, we might get more message than requests
         return result

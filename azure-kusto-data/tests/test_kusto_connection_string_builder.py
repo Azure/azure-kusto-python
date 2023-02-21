@@ -60,7 +60,7 @@ class KustoConnectionStringBuilderTests(unittest.TestCase):
         ]
 
         try:
-            KustoConnectionStringBuilder.with_aad_application_key_authentication("localhost", uuid, key, None)
+            KustoConnectionStringBuilder.with_aad_application_key_authentication("localhost", uuid, key, None)  # type: ignore # for testing
         except Exception as e:
             # make sure error is raised when authority_id i none
             assert isinstance(e, ValueError)
@@ -279,8 +279,8 @@ class KustoConnectionStringBuilderTests(unittest.TestCase):
 
         exception_occurred = False
         try:
-            kscb = KustoConnectionStringBuilder.with_token_provider("localhost", caller_token)
-        except AssertionError as ex:
+            KustoConnectionStringBuilder.with_token_provider("localhost", caller_token)  # type: ignore # test for type error
+        except AssertionError:
             exception_occurred = True
         finally:
             assert exception_occurred
@@ -299,8 +299,8 @@ async def test_add_async_token_provider():
 
     exception_occurred = False
     try:
-        kscb = KustoConnectionStringBuilder.with_async_token_provider("localhost", caller_token)
-    except AssertionError as ex:
+        KustoConnectionStringBuilder.with_async_token_provider("localhost", caller_token)  # type: ignore # test for type error
+    except AssertionError:
         exception_occurred = True
     finally:
         assert exception_occurred

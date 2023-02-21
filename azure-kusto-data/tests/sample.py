@@ -48,7 +48,7 @@ kcsb = KustoConnectionStringBuilder.with_aad_application_certificate_sni_authent
 
 # No authentication - for rare cases where the cluster is defined to work without any need for auth. usually reserved for internal use.
 
-kcsb = KustoConnectionStringBuilder()
+kcsb = KustoConnectionStringBuilder(cluster)
 
 # Managed Identity - automatically injected into your machine by azure when running on an azure service.
 # It's the best way for any code that does such - it's automatic, and requires no saving of secrets.
@@ -61,7 +61,7 @@ user_assigned_client_id = "the AAD identity client id"
 kcsb = KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication(cluster, client_id=user_assigned_client_id)
 
 # In case you want to authenticate with Azure CLI.
-# Users are required to be in a logged in state in az-cli, for this authentication method to succeed. Run `az login` to login to azure cli.
+# Users are required to be in a logged in state in az-cli, for this authentication method to succeed. Run `az login` to log in to azure cli.
 
 kcsb = KustoConnectionStringBuilder.with_az_cli_authentication(cluster)
 

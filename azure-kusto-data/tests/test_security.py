@@ -85,7 +85,7 @@ def test_token_provider_auth():
     invalid_token_provider = lambda: 12345678
 
     valid_kcsb = KustoConnectionStringBuilder.with_token_provider(KUSTO_TEST_URI, valid_token_provider)
-    invalid_kcsb = KustoConnectionStringBuilder.with_token_provider(KUSTO_TEST_URI, invalid_token_provider)
+    invalid_kcsb = KustoConnectionStringBuilder.with_token_provider(KUSTO_TEST_URI, invalid_token_provider)  # type: ignore # test for type error
 
     valid_helper = _AadHelper(valid_kcsb, False)
     valid_helper.token_provider._init_resources()

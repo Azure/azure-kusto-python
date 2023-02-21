@@ -10,7 +10,7 @@ from azure.kusto.data._cloud_settings import CloudSettings
 from azure.kusto.data.exceptions import KustoClosedError, KustoMultiApiError
 from azure.kusto.data.helpers import dataframe_from_result_table
 from azure.kusto.data.response import KustoStreamingResponseDataSet
-from tests.kusto_client_common import KustoClientTestsMixin, mocked_requests_post, get_response_first_primary_result, get_table_first_row, proxy_kcsb
+from tests.kusto_client_common import KustoClientTestsMixin, mocked_requests_post, get_response_first_primary_result, get_table_first_row
 
 PANDAS = False
 try:
@@ -138,7 +138,7 @@ class TestKustoClient(KustoClientTestsMixin):
 
     @patch("requests.Session.post", side_effect=mocked_requests_post)
     def test_null_values_in_data(self, mock_post, method):
-        """Tests response with null values in non nullable column types"""
+        """Tests response with null values in non-nullable column types"""
         with KustoClient(self.HOST) as client:
             query = "PrimaryResultName"
             response = method.__call__(client, "PythonTest", query)

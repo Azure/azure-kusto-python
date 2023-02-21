@@ -19,3 +19,25 @@ from .ingestion_properties import (
 from .managed_streaming_ingest_client import ManagedStreamingIngestClient
 from .streaming_ingest_client import KustoStreamingIngestClient
 from .base_ingest_client import BaseIngestClient
+
+__all__ = [
+    "BaseIngestClient",
+    "BlobDescriptor",
+    "FileDescriptor",
+    "IngestionResult",
+    "IngestionStatus",
+    "IngestionProperties",
+    "IngestionMappingKind",
+    "KustoMissingMappingError",
+    "KustoStreamingIngestClient",
+    "ManagedStreamingIngestClient",
+    "QueuedIngestClient",
+    "ReportLevel",
+    "ReportMethod",
+    "StreamDescriptor",
+    "TransformationMethod",
+    "ValidationImplications",
+    "ValidationOptions",
+    "ValidationPolicy",
+    "ColumnMapping",
+]

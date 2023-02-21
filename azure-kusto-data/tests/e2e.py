@@ -1,10 +1,8 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
 
-import asyncio
 import json
 import os
-import platform
 from datetime import datetime
 from typing import Optional, ClassVar
 

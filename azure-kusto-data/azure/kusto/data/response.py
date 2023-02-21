@@ -222,7 +222,7 @@ class KustoStreamingResponseDataSet(BaseKustoResponseDataSet):
 
 
 class PrimaryResultsIterator:
-    # This class exists because you can't raise exception from an generator and keep working
+    # This class exists because you can't raise exception from a generator and keep working
     def __init__(self, dataset: KustoStreamingResponseDataSet):
         self.dataset = dataset
 

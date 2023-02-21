@@ -40,7 +40,7 @@ class KustoStreamingResponseDataSet(BaseKustoResponseDataSet):
                 table = await self.streamed_data.__anext__()
             except StopAsyncIteration:
                 self.finished = True
-                return
+                raise
             if table["FrameType"] == FrameType.DataTable:
                 break
 
@@ -79,7 +79,7 @@ class KustoStreamingResponseDataSet(BaseKustoResponseDataSet):
 
 
 class PrimaryResultsIterator:
-    # This class exists because you can't raise exception from an generator and keep working
+    # This class exists because you can't raise exception from a generator and keep working
     def __init__(self, dataset: KustoStreamingResponseDataSet):
         self.dataset = dataset
 
@@ -89,5 +89,5 @@ class PrimaryResultsIterator:
     async def __anext__(self) -> KustoStreamingResultTable:
         while True:
             table = await self.dataset.__anext__()
-            if type(table) is KustoStreamingResultTable:
+            if isinstance(table, KustoStreamingResultTable):
                 return table

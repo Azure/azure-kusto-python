@@ -417,7 +417,7 @@ class AzCliTokenProvider(CloudInfoTokenProvider):
             return {TokenConstants.AZ_TOKEN_TYPE: TokenConstants.BEARER_TYPE, TokenConstants.AZ_ACCESS_TOKEN: self._az_token.token}
         except Exception as e:
             raise KustoClientError(
-                "Failed to obtain Az Cli token for '{0}'.\nPlease be sure AzCli version 2.3.0 and above is intalled.\n{1}".format(self._kusto_uri, e)
+                "Failed to obtain Az Cli token for '{0}'.\nPlease be sure AzCli version 2.3.0 and above is installed.\n{1}".format(self._kusto_uri, e)
             )
 
     async def _get_token_impl_async(self) -> Optional[dict]:
@@ -581,7 +581,7 @@ class InteractiveLoginTokenProvider(CloudInfoTokenProvider):
 
 
 class ApplicationKeyTokenProvider(CloudInfoTokenProvider):
-    """Acquire a token from MSAL with application Id and Key"""
+    """Acquire a token from MSAL with application ID and Key"""
 
     def __init__(self, kusto_uri: str, authority_id: str, app_client_id: str, app_key: str, is_async: bool = False):
         super().__init__(kusto_uri, is_async)

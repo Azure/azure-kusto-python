@@ -1,13 +1,11 @@
 import copy
-import itertools
 import json
 import os
-from typing import List, Iterable, Dict
+from typing import List, Dict
 from urllib.parse import urlparse
 
 from azure.kusto.data.helpers import get_string_tail_lower_case
 from azure.kusto.data.security import _is_local_address
-
 from .exceptions import KustoClientInvalidConnectionStringException
 
 

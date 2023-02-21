@@ -98,7 +98,7 @@ class ColumnMapping:
         storage_data_type=None,
     ):
         """
-        :param columns: Deprecated. Columns is not used anymore.
+        :param columns: Deprecated. Columns field is not used anymore.
         :param storage_data_type: Deprecated. StorageDataType is not used anymore.
         """
         self.column = column_name

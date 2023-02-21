@@ -152,7 +152,7 @@ while True:
     pprint.pprint("SUCCESS : {}".format(success_messages))
     pprint.pprint("FAILURE : {}".format(failure_messages))
 
-    # you can of course separate them and dump them into a file for follow up investigations
+    # you can of course separate them and dump them into a file for follow-up investigations
     with open("successes.log", "w+") as sf:
         for sm in success_messages:
             sf.write(str(sm))

@@ -2,6 +2,9 @@
 # Licensed under the MIT License
 import os
 
+# Known issue - the socket may take some time to close, and the test will fail
+import warnings
+
 import pytest
 from azure.identity.aio import ClientSecretCredential as AsyncClientSecretCredential
 
@@ -9,9 +12,6 @@ from azure.kusto.data._decorators import aio_documented_by
 from azure.kusto.data._token_providers import *
 from .test_kusto_client import run_aio_tests
 from ..test_token_providers import KUSTO_URI, TOKEN_VALUE, TEST_AZ_AUTH, TEST_MSI_AUTH, TEST_DEVICE_AUTH, TokenProviderTests, MockProvider
-
-# Known issue - the socket may take some time to close, and the test will fail
-import warnings
 
 warnings.simplefilter("ignore", ResourceWarning)
 
@@ -47,14 +47,15 @@ class TestTokenProvider:
             bad_token2 = {"error": "something bad occurred"}
 
             assert provider._valid_token_or_none(good_token) == good_token
-            assert provider._valid_token_or_none(bad_token1) is None
+
+            assert provider._valid_token_or_none(bad_token1) is None  # type: ignore # test bad token
             assert provider._valid_token_or_none(bad_token2) is None
 
             assert provider._valid_token_or_throw(good_token) == good_token
 
             exception_occurred = False
             try:
-                provider._valid_token_or_throw(bad_token1)
+                provider._valid_token_or_throw(bad_token1)  # type: ignore # test bad token
             except KustoClientError:
                 exception_occurred = True
             finally:
@@ -114,7 +115,7 @@ class TestTokenProvider:
             token = await provider.get_token_async()
             assert self.get_token_value(token) == TOKEN_VALUE
 
-        with CallbackTokenProvider(token_callback=lambda: 0, async_token_callback=None, is_async=True) as provider:  # token is not a string
+        with CallbackTokenProvider(token_callback=lambda: 0, async_token_callback=None, is_async=True) as provider:  # type: ignore # token is not a string
             exception_occurred = False
             try:
                 await provider.get_token_async()
@@ -135,7 +136,7 @@ class TestTokenProvider:
         async def fail_callback():
             return 0
 
-        with CallbackTokenProvider(token_callback=None, async_token_callback=fail_callback, is_async=True) as provider:  # token is not a string
+        with CallbackTokenProvider(token_callback=None, async_token_callback=fail_callback, is_async=True) as provider:  # type: ignore  # token is not a string
             exception_occurred = False
             try:
                 await provider.get_token_async()
@@ -260,7 +261,7 @@ class TestTokenProvider:
         pem_key_path = os.environ.get("CERT_PEM_KEY_PATH")
 
         if pem_key_path and thumbprint and cert_app_id:
-            with open(pem_key_path, "rb") as file:
+            with open(pem_key_path, "r") as file:
                 pem_key = file.read()
 
             with ApplicationCertificateTokenProvider(KUSTO_URI, cert_app_id, cert_auth, pem_key, thumbprint, is_async=True) as provider:
@@ -334,7 +335,7 @@ class TestTokenProvider:
 
     def test_async_lock(self):
         """
-        This test makes sure that the lock inside of a TokenProvider, is created within the correct event loop.
+        This test makes sure that the lock inside a TokenProvider, is created within the correct event loop.
         Before this, the Lock was created once per class.
         This meant that if someone created a new event loop, and created a provider in it, awaiting on the lock would cause an exception because it belongs to
         a different loop.

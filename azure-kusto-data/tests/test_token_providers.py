@@ -5,8 +5,8 @@ import unittest
 from threading import Thread
 
 from asgiref.sync import async_to_sync
-
 from azure.identity import ClientSecretCredential, DefaultAzureCredential
+
 from azure.kusto.data._token_providers import *
 
 KUSTO_URI = "https://sdkse2etest.eastus.kusto.windows.net"
@@ -73,14 +73,14 @@ class TokenProviderTests(unittest.TestCase):
             bad_token2 = {"error": "something bad occurred"}
 
             assert provider._valid_token_or_none(good_token) == good_token
-            assert provider._valid_token_or_none(bad_token1) is None
+            assert provider._valid_token_or_none(bad_token1) is None  # type: ignore
             assert provider._valid_token_or_none(bad_token2) is None
 
             assert provider._valid_token_or_throw(good_token) == good_token
 
             exception_occurred = False
             try:
-                provider._valid_token_or_throw(bad_token1)
+                provider._valid_token_or_throw(bad_token1)  # type: ignore
             except KustoClientError:
                 exception_occurred = True
             finally:
@@ -155,7 +155,7 @@ class TokenProviderTests(unittest.TestCase):
             token = provider.get_token()
             assert TokenProviderTests.get_token_value(token) == TOKEN_VALUE
 
-        with CallbackTokenProvider(token_callback=lambda: 0, async_token_callback=None) as provider:  # token is not a string
+        with CallbackTokenProvider(token_callback=lambda: 0, async_token_callback=None) as provider:  # type: ignore  #token is not a string
             exception_occurred = False
             try:
                 provider.get_token()
@@ -289,7 +289,7 @@ class TokenProviderTests(unittest.TestCase):
         pem_key_path = os.environ.get("CERT_PEM_KEY_PATH")
 
         if pem_key_path and thumbprint and cert_app_id:
-            with open(pem_key_path, "rb") as file:
+            with open(pem_key_path, "r") as file:
                 pem_key = file.read()
 
             with ApplicationCertificateTokenProvider(KUSTO_URI, cert_app_id, cert_auth, pem_key, thumbprint) as provider:

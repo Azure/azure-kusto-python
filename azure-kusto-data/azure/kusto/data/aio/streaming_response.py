@@ -1,22 +1,27 @@
-from typing import Any, Tuple, Dict, Iterator
+import typing
+from typing import Any, Tuple, Dict, Iterator, Coroutine
 
-import aiohttp
 import ijson
 from ijson import IncompleteJSONError
 
 from azure.kusto.data._models import WellKnownDataSet
-from azure.kusto.data.exceptions import KustoTokenParsingError, KustoUnsupportedApiError, KustoApiError, KustoMultiApiError
+from azure.kusto.data.exceptions import KustoTokenParsingError, KustoUnsupportedApiError, KustoMultiApiError
 from azure.kusto.data.streaming_response import JsonTokenType, FrameType, JsonToken
 
 
+class AsyncReader(typing.Protocol):
+    async def read(self, n: int = -1) -> bytes:
+        ...
+
+
 class JsonTokenReader:
-    def __init__(self, stream: aiohttp.StreamReader):
+    def __init__(self, stream: AsyncReader):
         self.json_iter = ijson.parse_async(stream, use_float=True)
 
     def __aiter__(self) -> "JsonTokenReader":
         return self
 
-    def __anext__(self) -> JsonToken:
+    def __anext__(self) -> Coroutine[Any, Any, JsonToken]:
         return self.read_next_token_or_throw()
 
     async def read_next_token_or_throw(self) -> JsonToken:
@@ -56,6 +61,7 @@ class JsonTokenReader:
             prev_token = await self.read_next_token_or_throw()
         if prev_token.token_type in JsonTokenType.start_tokens():
             async for potential_end_token in self:
+                potential_end_token: JsonToken
                 if potential_end_token.token_path == prev_token.token_path and potential_end_token.token_type in JsonTokenType.end_tokens():
                     break
 
@@ -77,6 +83,7 @@ class JsonTokenReader:
 
     async def skip_until_property_name_or_end_object(self, *names: str) -> JsonToken:
         async for token in self:
+            token: JsonToken
             if token.token_type == JsonTokenType.END_MAP:
                 return token
 
@@ -91,6 +98,7 @@ class JsonTokenReader:
 
     async def skip_until_token_with_paths(self, *tokens: (JsonTokenType, str)) -> JsonToken:
         async for token in self:
+            token: JsonToken
             if any((token.token_type == t_type and token.token_path == t_path) for (t_type, t_path) in tokens):
                 return token
             await self.skip_children(token)

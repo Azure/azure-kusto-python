@@ -2,15 +2,10 @@ import dataclasses
 import enum
 import json
 import uuid
-import os
 from dataclasses import dataclass
-from typing import List
+from typing import List, Type
 
 import inflection as inflection
-
-from azure.kusto.data import DataFormat, KustoClient
-from azure.kusto.ingest import QueuedIngestClient
-from utils import AuthenticationModeOptions, Utils
 
 # Declare OpenTelemetry as enabled tracing plugin for Azure SDKs
 from azure.core.settings import settings
@@ -20,14 +15,17 @@ from azure.core.tracing.ext.opentelemetry_span import OpenTelemetrySpan
 
 # See https://github.com/open-telemetry/opentelemetry-python for details on regular open telemetry usage
 from opentelemetry import trace
-from opentelemetry.trace import Tracer
 from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import SimpleSpanProcessor
-
 from opentelemetry.sdk.trace.export import ConsoleSpanExporter
+from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+from opentelemetry.trace import Tracer
+
+from azure.kusto.data import DataFormat, KustoClient
+from azure.kusto.ingest import QueuedIngestClient
+from utils import AuthenticationModeOptions, Utils
+
 
 # alternative azure monitor exporter for distributed tracing
-from azure.monitor.opentelemetry.exporter import AzureMonitorTraceExporter
 
 
 def enable_distributed_tracing() -> "Tracer":
@@ -113,8 +111,7 @@ class ConfigJson:
         return data_class_from_json(json_dict, ConfigJson)
 
 
-def remove_extra_keys(json_dict: dict, data_type: type) -> dict:
-    assert dataclasses.is_dataclass(data_type)
+def remove_extra_keys(json_dict: dict, data_type: Type[dataclasses.dataclass]) -> dict:
     field_names = [field.name for field in dataclasses.fields(data_type)]
     return {key: value for key, value in json_dict.items() if key in field_names}
 
@@ -123,7 +120,7 @@ def keys_to_snake_case(json_dict: dict) -> dict:
     return {inflection.underscore(key): val for (key, val) in json_dict.items()}
 
 
-def data_class_from_json(json_dict: dict, data_type: type) -> dataclasses.dataclass:
+def data_class_from_json(json_dict: dict, data_type: Type[dataclasses.dataclass]) -> dataclasses.dataclass:
     assert dataclasses.is_dataclass(data_type)
     all_keys = keys_to_snake_case(json_dict)
     config_json_keys = remove_extra_keys(all_keys, data_type)
