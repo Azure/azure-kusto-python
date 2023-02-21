@@ -49,50 +49,50 @@ class TokenProviderTests(unittest.TestCase):
     @staticmethod
     def test_base_provider():
         # test init with no URI
-        provider = MockProvider()
+        with MockProvider():
+            pass
 
         # Test provider with URI, No silent token
-        provider = MockProvider()
+        with MockProvider() as provider:
+            token = provider._get_token_from_cache_impl()
+            assert provider.init_count == 0
+            assert token is None
 
-        token = provider._get_token_from_cache_impl()
-        assert provider.init_count == 0
-        assert token is None
+            token = provider.get_token()
+            assert provider.init_count == 1
+            assert TokenConstants.MSAL_ACCESS_TOKEN in token
 
-        token = provider.get_token()
-        assert provider.init_count == 1
-        assert TokenConstants.MSAL_ACCESS_TOKEN in token
+            token = provider._get_token_from_cache_impl()
+            assert TokenConstants.MSAL_ACCESS_TOKEN in token
 
-        token = provider._get_token_from_cache_impl()
-        assert TokenConstants.MSAL_ACCESS_TOKEN in token
+            token = provider.get_token()
+            assert provider.init_count == 1
 
-        token = provider.get_token()
-        assert provider.init_count == 1
+            good_token = {TokenConstants.MSAL_ACCESS_TOKEN: TOKEN_VALUE}
+            bad_token1 = None
+            bad_token2 = {"error": "something bad occurred"}
 
-        good_token = {TokenConstants.MSAL_ACCESS_TOKEN: TOKEN_VALUE}
-        bad_token1 = None
-        bad_token2 = {"error": "something bad occurred"}
+            assert provider._valid_token_or_none(good_token) == good_token
+            assert provider._valid_token_or_none(bad_token1) is None
+            assert provider._valid_token_or_none(bad_token2) is None
 
-        assert provider._valid_token_or_none(good_token) == good_token
-        assert provider._valid_token_or_none(bad_token1) is None
-        assert provider._valid_token_or_none(bad_token2) is None
+            assert provider._valid_token_or_throw(good_token) == good_token
 
-        assert provider._valid_token_or_throw(good_token) == good_token
+            exception_occurred = False
+            try:
+                provider._valid_token_or_throw(bad_token1)
+            except KustoClientError:
+                exception_occurred = True
+            finally:
+                assert exception_occurred
 
-        exception_occurred = False
-        try:
-            provider._valid_token_or_throw(bad_token1)
-        except KustoClientError:
-            exception_occurred = True
-        finally:
-            assert exception_occurred
-
-        exception_occurred = False
-        try:
-            provider._valid_token_or_throw(bad_token2)
-        except KustoClientError:
-            exception_occurred = True
-        finally:
-            assert exception_occurred
+            exception_occurred = False
+            try:
+                provider._valid_token_or_throw(bad_token2)
+            except KustoClientError:
+                exception_occurred = True
+            finally:
+                assert exception_occurred
 
     @staticmethod
     def get_token_value(token: dict):
@@ -109,28 +109,28 @@ class TokenProviderTests(unittest.TestCase):
 
     @staticmethod
     def test_fail_async_call():
-        provider = BasicTokenProvider(token=TOKEN_VALUE)
-        try:
-            async_to_sync(provider.get_token_async)()
-            assert False, "Expected KustoAsyncUsageError to occur"
-        except KustoAsyncUsageError as e:
-            assert (
-                str(e) == "Method get_token_async can't be called from a synchronous client"
-                or str(e) == "Method context_async can't be called from a synchronous client"
-            )
-            # context_async is called for tracing purposes
+        with BasicTokenProvider(token=TOKEN_VALUE) as provider:
+            try:
+                async_to_sync(provider.get_token_async)()
+                assert False, "Expected KustoAsyncUsageError to occur"
+            except KustoAsyncUsageError as e:
+                assert (
+                    str(e) == "Method get_token_async can't be called from a synchronous client"
+                    or str(e) == "Method context_async can't be called from a synchronous client"
+                )
+                # context_async is called for tracing purposes
 
-        try:
-            async_to_sync(provider.context_async)()
-            assert False, "Expected KustoAsyncUsageError to occur"
-        except KustoAsyncUsageError as e:
-            assert str(e) == "Method context_async can't be called from a synchronous client"
+            try:
+                async_to_sync(provider.context_async)()
+                assert False, "Expected KustoAsyncUsageError to occur"
+            except KustoAsyncUsageError as e:
+                assert str(e) == "Method context_async can't be called from a synchronous client"
 
     @staticmethod
     def test_basic_provider():
-        provider = BasicTokenProvider(token=TOKEN_VALUE)
-        token = provider.get_token()
-        assert TokenProviderTests.get_token_value(token) == TOKEN_VALUE
+        with BasicTokenProvider(token=TOKEN_VALUE) as provider:
+            token = provider.get_token()
+            assert TokenProviderTests.get_token_value(token) == TOKEN_VALUE
 
     @staticmethod
     def test_basic_provider_in_thread():
@@ -151,18 +151,18 @@ class TokenProviderTests(unittest.TestCase):
 
     @staticmethod
     def test_callback_token_provider():
-        provider = CallbackTokenProvider(token_callback=lambda: TOKEN_VALUE, async_token_callback=None)
-        token = provider.get_token()
-        assert TokenProviderTests.get_token_value(token) == TOKEN_VALUE
+        with CallbackTokenProvider(token_callback=lambda: TOKEN_VALUE, async_token_callback=None) as provider:
+            token = provider.get_token()
+            assert TokenProviderTests.get_token_value(token) == TOKEN_VALUE
 
-        provider = CallbackTokenProvider(token_callback=lambda: 0, async_token_callback=None)  # token is not a string
-        exception_occurred = False
-        try:
-            provider.get_token()
-        except KustoClientError:
-            exception_occurred = True
-        finally:
-            assert exception_occurred
+        with CallbackTokenProvider(token_callback=lambda: 0, async_token_callback=None) as provider:  # token is not a string
+            exception_occurred = False
+            try:
+                provider.get_token()
+            except KustoClientError:
+                exception_occurred = True
+            finally:
+                assert exception_occurred
 
     @staticmethod
     def test_az_provider():
@@ -171,13 +171,13 @@ class TokenProviderTests(unittest.TestCase):
             return
 
         print("Note!\nThe test 'test_az_provider' will fail if 'az login' was not called.")
-        provider = AzCliTokenProvider(KUSTO_URI)
-        token = provider.get_token()
-        assert TokenProviderTests.get_token_value(token) is not None
+        with AzCliTokenProvider(KUSTO_URI) as provider:
+            token = provider.get_token()
+            assert TokenProviderTests.get_token_value(token) is not None
 
-        # another run to pass through the cache
-        token = provider._get_token_from_cache_impl()
-        assert TokenProviderTests.get_token_value(token) is not None
+            # another run to pass through the cache
+            token = provider._get_token_from_cache_impl()
+            assert TokenProviderTests.get_token_value(token) is not None
 
     @staticmethod
     def test_msi_provider():
@@ -189,23 +189,23 @@ class TokenProviderTests(unittest.TestCase):
         user_msi_client_id = os.environ.get("MSI_CLIENT_ID")
 
         # system MSI
-        provider = MsiTokenProvider(KUSTO_URI)
-        token = provider.get_token()
-        assert TokenProviderTests.get_token_value(token) is not None
+        with MsiTokenProvider(KUSTO_URI) as provider:
+            token = provider.get_token()
+            assert TokenProviderTests.get_token_value(token) is not None
 
         if user_msi_object_id is not None:
             args = {"object_id": user_msi_object_id}
-            provider = MsiTokenProvider(KUSTO_URI, args)
-            token = provider.get_token()
-            assert TokenProviderTests.get_token_value(token) is not None
+            with MsiTokenProvider(KUSTO_URI, args) as provider:
+                token = provider.get_token()
+                assert TokenProviderTests.get_token_value(token) is not None
         else:
             print(" *** Skipped MSI Provider Client Id Test ***")
 
         if user_msi_client_id is not None:
             args = {"client_id": user_msi_client_id}
-            provider = MsiTokenProvider(KUSTO_URI, args)
-            token = provider.get_token()
-            assert TokenProviderTests.get_token_value(token) is not None
+            with MsiTokenProvider(KUSTO_URI, args) as provider:
+                token = provider.get_token()
+                assert TokenProviderTests.get_token_value(token) is not None
         else:
             print(" *** Skipped MSI Provider Object Id Test ***")
 
@@ -216,13 +216,13 @@ class TokenProviderTests(unittest.TestCase):
         auth = os.environ.get("USER_AUTH_ID", "organizations")
 
         if username and password and auth:
-            provider = UserPassTokenProvider(KUSTO_URI, auth, username, password)
-            token = provider.get_token()
-            assert TokenProviderTests.get_token_value(token) is not None
+            with UserPassTokenProvider(KUSTO_URI, auth, username, password) as provider:
+                token = provider.get_token()
+                assert TokenProviderTests.get_token_value(token) is not None
 
-            # Again through cache
-            token = provider._get_token_from_cache_impl()
-            assert TokenProviderTests.get_token_value(token) is not None
+                # Again through cache
+                token = provider._get_token_from_cache_impl()
+                assert TokenProviderTests.get_token_value(token) is not None
         else:
             print(" *** Skipped User & Pass Provider Test ***")
 
@@ -236,13 +236,13 @@ class TokenProviderTests(unittest.TestCase):
             # break here if you debug this test, and get the code from 'x'
             print(x)
 
-        provider = DeviceLoginTokenProvider(KUSTO_URI, "organizations", callback)
-        token = provider.get_token()
-        assert TokenProviderTests.get_token_value(token) is not None
+        with DeviceLoginTokenProvider(KUSTO_URI, "organizations", callback) as provider:
+            token = provider.get_token()
+            assert TokenProviderTests.get_token_value(token) is not None
 
-        # Again through cache
-        token = provider._get_token_from_cache_impl()
-        assert TokenProviderTests.get_token_value(token) is not None
+            # Again through cache
+            token = provider._get_token_from_cache_impl()
+            assert TokenProviderTests.get_token_value(token) is not None
 
     @staticmethod
     def test_interactive_login():
@@ -251,13 +251,13 @@ class TokenProviderTests(unittest.TestCase):
             return
 
         auth_id = os.environ.get("APP_AUTH_ID", "72f988bf-86f1-41af-91ab-2d7cd011db47")
-        provider = InteractiveLoginTokenProvider(KUSTO_URI, auth_id)
-        token = provider.get_token()
-        assert TokenProviderTests.get_token_value(token) is not None
+        with InteractiveLoginTokenProvider(KUSTO_URI, auth_id) as provider:
+            token = provider.get_token()
+            assert TokenProviderTests.get_token_value(token) is not None
 
-        # Again through cache
-        token = provider._get_token_from_cache_impl()
-        assert TokenProviderTests.get_token_value(token) is not None
+            # Again through cache
+            token = provider._get_token_from_cache_impl()
+            assert TokenProviderTests.get_token_value(token) is not None
 
     @staticmethod
     def test_app_key_provider():
@@ -268,13 +268,13 @@ class TokenProviderTests(unittest.TestCase):
         app_key = os.environ.get("APP_KEY")
 
         if app_id and app_key and auth_id:
-            provider = ApplicationKeyTokenProvider(KUSTO_URI, auth_id, app_id, app_key)
-            token = provider.get_token()
-            assert TokenProviderTests.get_token_value(token) is not None
+            with ApplicationKeyTokenProvider(KUSTO_URI, auth_id, app_id, app_key) as provider:
+                token = provider.get_token()
+                assert TokenProviderTests.get_token_value(token) is not None
 
-            # Again through cache
-            token = provider._get_token_from_cache_impl()
-            assert TokenProviderTests.get_token_value(token) is not None
+                # Again through cache
+                token = provider._get_token_from_cache_impl()
+                assert TokenProviderTests.get_token_value(token) is not None
         else:
             print(" *** Skipped App Id & Key Provider Test ***")
 
@@ -292,27 +292,27 @@ class TokenProviderTests(unittest.TestCase):
             with open(pem_key_path, "rb") as file:
                 pem_key = file.read()
 
-            provider = ApplicationCertificateTokenProvider(KUSTO_URI, cert_app_id, cert_auth, pem_key, thumbprint)
-            token = provider.get_token()
-            assert TokenProviderTests.get_token_value(token) is not None
-
-            # Again through cache
-            token = provider._get_token_from_cache_impl()
-            assert TokenProviderTests.get_token_value(token) is not None
-
-            if public_cert_path:
-                with open(public_cert_path, "r") as file:
-                    public_cert = file.read()
-
-                provider = ApplicationCertificateTokenProvider(KUSTO_URI, cert_app_id, cert_auth, pem_key, thumbprint, public_cert)
+            with ApplicationCertificateTokenProvider(KUSTO_URI, cert_app_id, cert_auth, pem_key, thumbprint) as provider:
                 token = provider.get_token()
                 assert TokenProviderTests.get_token_value(token) is not None
 
                 # Again through cache
                 token = provider._get_token_from_cache_impl()
                 assert TokenProviderTests.get_token_value(token) is not None
-            else:
-                print(" *** Skipped App Cert SNI Provider Test ***")
+
+                if public_cert_path:
+                    with open(public_cert_path, "r") as file:
+                        public_cert = file.read()
+
+                    with ApplicationCertificateTokenProvider(KUSTO_URI, cert_app_id, cert_auth, pem_key, thumbprint, public_cert) as provider:
+                        token = provider.get_token()
+                        assert TokenProviderTests.get_token_value(token) is not None
+
+                        # Again through cache
+                        token = provider._get_token_from_cache_impl()
+                        assert TokenProviderTests.get_token_value(token) is not None
+                else:
+                    print(" *** Skipped App Cert SNI Provider Test ***")
 
         else:
             print(" *** Skipped App Cert Provider Test ***")
@@ -331,12 +331,12 @@ class TokenProviderTests(unittest.TestCase):
         CloudSettings._cloud_cache[FAKE_URI] = cloud
         authority = "auth_test"
 
-        provider = UserPassTokenProvider(FAKE_URI, authority, "a", "b")
-        provider._init_once(init_only_resources=True)
-        context = provider.context()
-        assert context["authority"] == "https://login_endpoint/auth_test"
-        assert context["client_id"] == cloud.kusto_client_app_id
-        assert provider._scopes == ["https://fakeurl.kusto.windows.net/.default"]
+        with UserPassTokenProvider(FAKE_URI, authority, "a", "b") as provider:
+            provider._init_once(init_only_resources=True)
+            context = provider.context()
+            assert context["authority"] == "https://login_endpoint/auth_test"
+            assert context["client_id"] == cloud.kusto_client_app_id
+            assert provider._scopes == ["https://fakeurl.kusto.windows.net/.default"]
 
     @staticmethod
     def test_cloud_mfa_on():
@@ -352,12 +352,12 @@ class TokenProviderTests(unittest.TestCase):
         CloudSettings._cloud_cache[FAKE_URI] = cloud
         authority = "auth_test"
 
-        provider = UserPassTokenProvider(FAKE_URI, authority, "a", "b")
-        provider._init_once(init_only_resources=True)
-        context = provider.context()
-        assert context["authority"] == "https://login_endpoint/auth_test"
-        assert context["client_id"] == "1234"
-        assert provider._scopes == ["https://fakeurl.kustomfa.windows.net/.default"]
+        with UserPassTokenProvider(FAKE_URI, authority, "a", "b") as provider:
+            provider._init_once(init_only_resources=True)
+            context = provider.context()
+            assert context["authority"] == "https://login_endpoint/auth_test"
+            assert context["client_id"] == "1234"
+            assert provider._scopes == ["https://fakeurl.kustomfa.windows.net/.default"]
 
     @staticmethod
     def test_azure_identity_default_token_provider():
@@ -368,15 +368,15 @@ class TokenProviderTests(unittest.TestCase):
         app_key = os.environ.get("APP_KEY")
         os.environ["AZURE_CLIENT_SECRET"] = app_key
 
-        provider = AzureIdentityTokenCredentialProvider(KUSTO_URI, credential=DefaultAzureCredential())
-        token = provider.get_token()
-        assert TokenProviderTests.get_token_value(token) is not None
+        with AzureIdentityTokenCredentialProvider(KUSTO_URI, credential=DefaultAzureCredential()) as provider:
+            token = provider.get_token()
+            assert TokenProviderTests.get_token_value(token) is not None
 
-        provider = AzureIdentityTokenCredentialProvider(
+        with AzureIdentityTokenCredentialProvider(
             KUSTO_URI,
             credential_from_login_endpoint=lambda login_endpoint: ClientSecretCredential(
                 authority=login_endpoint, client_id=app_id, client_secret=app_key, tenant_id=auth_id
             ),
-        )
-        token = provider.get_token()
-        assert TokenProviderTests.get_token_value(token) is not None
+        ) as provider:
+            token = provider.get_token()
+            assert TokenProviderTests.get_token_value(token) is not None
