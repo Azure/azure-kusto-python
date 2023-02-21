@@ -1,4 +1,3 @@
-import typing
 from typing import Any, Tuple, Dict, Iterator, Coroutine
 
 import ijson
@@ -9,13 +8,8 @@ from azure.kusto.data.exceptions import KustoTokenParsingError, KustoUnsupported
 from azure.kusto.data.streaming_response import JsonTokenType, FrameType, JsonToken
 
 
-class AsyncReader(typing.Protocol):
-    async def read(self, n: int = -1) -> bytes:
-        ...
-
-
 class JsonTokenReader:
-    def __init__(self, stream: AsyncReader):
+    def __init__(self, stream: object):  # todo - when we have python 3.8, use a Protocol instead of object
         self.json_iter = ijson.parse_async(stream, use_float=True)
 
     def __aiter__(self) -> "JsonTokenReader":

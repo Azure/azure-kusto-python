@@ -1,6 +1,6 @@
 import copy
 import json
-import os
+from pathlib import Path
 from typing import List, Dict
 from urllib.parse import urlparse
 
@@ -101,6 +101,6 @@ class KustoTrustedEndpoints:
         self._override_matcher = matcher
 
 
-_filename = os.path.join(os.path.split(os.path.abspath(__file__))[0], "wellKnownKustoEndpoints.json")
-_well_known_kusto_endpoints_data = json.load(open(_filename))
+_filename = Path(__file__).absolute().parent / "wellKnownKustoEndpoints.json"
+_well_known_kusto_endpoints_data = json.load(_filename.open("r", encoding="utf-8"))
 well_known_kusto_endpoints = KustoTrustedEndpoints()
