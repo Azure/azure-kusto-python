@@ -1,8 +1,9 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
-import re
 from datetime import datetime, timedelta
 from typing import List
+from urllib.parse import urlparse
+
 from tenacity import retry_if_exception_type, stop_after_attempt, Retrying, wait_random_exponential
 
 from azure.kusto.data import KustoClient
@@ -10,35 +11,22 @@ from azure.kusto.data._models import KustoResultTable
 from azure.kusto.data._telemetry import KustoTracing, KustoTracingAttributes
 from azure.kusto.data.exceptions import KustoThrottlingError
 
-_URI_FORMAT = re.compile("https://(\\w+).(queue|blob|table).(core.\\w+.\\w+)/([\\w,-]+)\\?(.*)")
 _SHOW_VERSION = ".show version"
 _SERVICE_TYPE_COLUMN_NAME = "ServiceType"
 
 
 class _ResourceUri:
-    def __init__(self, storage_account_name: str, object_type: str, endpoint_suffix: str, object_name: str, sas: str):
-        self.storage_account_name = storage_account_name
-        self.object_type = object_type
-        self.endpoint_suffix = endpoint_suffix
-        self.object_name = object_name
-        self.sas = sas
-
-    @classmethod
-    def parse(cls, uri):
-        """Parses uri into a ResourceUri object"""
-        match = _URI_FORMAT.search(uri)
-        return cls(match.group(1), match.group(2), match.group(3), match.group(4), match.group(5))
-
-    @property
-    def uri(self) -> str:
-        return "https://{0.storage_account_name}.{0.object_type}.{0.endpoint_suffix}/{0.object_name}".format(self)
+    def __init__(self, url: str):
+        self.url = url
+        self.parsed = urlparse(url)
+        self.object_name = self.parsed.path.lstrip("/")
 
     @property
     def account_uri(self) -> str:
-        return "https://{0.storage_account_name}.{0.object_type}.{0.endpoint_suffix}/?{0.sas}".format(self)
+        return f"{self.parsed.scheme}://{self.parsed.netloc}/?{self.parsed.query}"
 
     def __str__(self):
-        return "https://{0.storage_account_name}.{0.object_type}.{0.endpoint_suffix}/{0.object_name}?{0.sas}"
+        return self.url
 
 
 class _IngestClientResources:
@@ -101,7 +89,7 @@ class _ResourceManager:
             self._ingest_client_resources_last_update = datetime.utcnow()
 
     def _get_resource_by_name(self, table: KustoResultTable, resource_name: str):
-        return [_ResourceUri.parse(row["StorageRoot"]) for row in table if row["ResourceTypeName"] == resource_name]
+        return [_ResourceUri(row["StorageRoot"]) for row in table if row["ResourceTypeName"] == resource_name]
 
     def _get_ingest_client_resources_from_service(self):
         # trace all calls to get ingestion resources

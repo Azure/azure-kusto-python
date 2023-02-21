@@ -6,13 +6,14 @@ import unittest
 from uuid import uuid4
 
 import mock
+from azure.storage.queue import QueueMessage, QueueClient
+
 from azure.kusto.ingest import QueuedIngestClient
 from azure.kusto.ingest._resource_manager import _ResourceUri
 from azure.kusto.ingest.status import KustoIngestStatusQueues, SuccessMessage, FailureMessage
-from azure.storage.queue import QueueMessage, QueueClient
 
-ENDPOINT_SUFFIX = "sp=rl&st=2020-05-20T13:38:37Z&se=2020-05-21T13:38:37Z&sv=2019-10-10&sr=c&sig=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-OBJECT_TYPE = "core.windows.net"
+SAS = "sp=rl&st=2020-05-20T13:38:37Z&se=2020-05-21T13:38:37Z&sv=2019-10-10&sr=c&sig=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+ENDPOINT_SUFFIX = "core.windows.net"
 
 
 def mock_message(success):
@@ -76,6 +77,10 @@ def fake_delete_factory(f):
     return fake_delete
 
 
+def get_resource_uri(account: str, container: str) -> _ResourceUri:
+    return _ResourceUri("https://{0}.{1}.{2}/{3}?{4}".format(account, "queue", ENDPOINT_SUFFIX, container, SAS))
+
+
 class StatusQTests(unittest.TestCase):
     def test_init(self):
         client = QueuedIngestClient("some-cluster")
@@ -93,20 +98,8 @@ class StatusQTests(unittest.TestCase):
         with mock.patch.object(client._resource_manager, "get_successful_ingestions_queues") as mocked_get_success_qs, mock.patch.object(
             client._resource_manager, "get_failed_ingestions_queues"
         ) as mocked_get_failed_qs, mock.patch.object(QueueClient, "peek_messages", autospec=True, side_effect=fake_peek) as q_mock:
-            fake_failed_queue = _ResourceUri(
-                "mocked_storage_account1",
-                OBJECT_TYPE,
-                "queue",
-                "mocked_qf_name",
-                ENDPOINT_SUFFIX,
-            )
-            fake_success_queue = _ResourceUri(
-                "mocked_storage_account2",
-                OBJECT_TYPE,
-                "queue",
-                "mocked_qs_name",
-                ENDPOINT_SUFFIX,
-            )
+            fake_failed_queue = get_resource_uri("mocked_storage_account_f1", "mocked_qf_name")
+            fake_success_queue = get_resource_uri("mocked_storage_account2", "mocked_qs_name")
 
             mocked_get_success_qs.return_value = [fake_success_queue]
             mocked_get_failed_qs.return_value = [fake_failed_queue]
@@ -132,27 +125,9 @@ class StatusQTests(unittest.TestCase):
         with mock.patch.object(client._resource_manager, "get_successful_ingestions_queues") as mocked_get_success_qs, mock.patch.object(
             client._resource_manager, "get_failed_ingestions_queues"
         ) as mocked_get_failed_qs, mock.patch.object(QueueClient, "peek_messages", autospec=True, side_effect=fake_peek) as q_mock:
-            fake_failed_queue1 = _ResourceUri(
-                "mocked_storage_account_f1",
-                OBJECT_TYPE,
-                "queue",
-                "mocked_qf_1_name",
-                ENDPOINT_SUFFIX,
-            )
-            fake_failed_queue2 = _ResourceUri(
-                "mocked_storage_account_f2",
-                OBJECT_TYPE,
-                "queue",
-                "mocked_qf_2_name",
-                ENDPOINT_SUFFIX,
-            )
-            fake_success_queue = _ResourceUri(
-                "mocked_storage_account2",
-                OBJECT_TYPE,
-                "queue",
-                "mocked_qs_name",
-                ENDPOINT_SUFFIX,
-            )
+            fake_failed_queue1 = get_resource_uri("mocked_storage_account_f1", "mocked_qf_name")
+            fake_failed_queue2 = get_resource_uri("mocked_storage_account_f2", "mocked_qf_2_name")
+            fake_success_queue = get_resource_uri("mocked_storage_account2", "mocked_qs_name")
 
             mocked_get_success_qs.return_value = [fake_success_queue]
             mocked_get_failed_qs.return_value = [fake_failed_queue1, fake_failed_queue2]
@@ -202,27 +177,9 @@ class StatusQTests(unittest.TestCase):
         ) as q_receive_mock, mock.patch.object(
             QueueClient, "delete_message", return_value=None
         ) as q_del_mock:
-            fake_failed_queue1 = _ResourceUri(
-                "mocked_storage_account_f1",
-                OBJECT_TYPE,
-                "queue",
-                "mocked_qf_1_name",
-                ENDPOINT_SUFFIX,
-            )
-            fake_failed_queue2 = _ResourceUri(
-                "mocked_storage_account_f2",
-                OBJECT_TYPE,
-                "queue",
-                "mocked_qf_2_name",
-                ENDPOINT_SUFFIX,
-            )
-            fake_success_queue = _ResourceUri(
-                "mocked_storage_account2",
-                OBJECT_TYPE,
-                "queue",
-                "mocked_qs_name",
-                ENDPOINT_SUFFIX,
-            )
+            fake_failed_queue1 = get_resource_uri("mocked_storage_account_f1", "mocked_qf_name")
+            fake_failed_queue2 = get_resource_uri("mocked_storage_account_f2", "mocked_qf_2_name")
+            fake_success_queue = get_resource_uri("mocked_storage_account2", "mocked_qs_name")
 
             mocked_get_success_qs.return_value = [fake_success_queue]
             mocked_get_failed_qs.return_value = [fake_failed_queue1, fake_failed_queue2]
@@ -270,20 +227,8 @@ class StatusQTests(unittest.TestCase):
         ) as q_receive_mock, mock.patch.object(
             QueueClient, "delete_message", return_value=None
         ):
-            fake_failed_queue1 = _ResourceUri(
-                "mocked_storage_account_f1",
-                OBJECT_TYPE,
-                "queue",
-                "mocked_qf_1_name",
-                ENDPOINT_SUFFIX,
-            )
-            fake_failed_queue2 = _ResourceUri(
-                "mocked_storage_account_f2",
-                OBJECT_TYPE,
-                "queue",
-                "mocked_qf_2_name",
-                ENDPOINT_SUFFIX,
-            )
+            fake_failed_queue1 = get_resource_uri("mocked_storage_account_f1", "mocked_qf_1_name")
+            fake_failed_queue2 = get_resource_uri("mocked_storage_account_f2", "mocked_qf_2_name")
 
             mocked_get_failed_qs.return_value = [fake_failed_queue1, fake_failed_queue2]
 
