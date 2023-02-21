@@ -102,5 +102,6 @@ class KustoTrustedEndpoints:
 
 
 _filename = Path(__file__).absolute().parent / "wellKnownKustoEndpoints.json"
-_well_known_kusto_endpoints_data = json.load(_filename.open("r", encoding="utf-8"))
+with _filename.open("r", encoding="utf-8") as data:
+    _well_known_kusto_endpoints_data = json.load(data)
 well_known_kusto_endpoints = KustoTrustedEndpoints()
