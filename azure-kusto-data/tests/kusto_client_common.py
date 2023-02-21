@@ -4,7 +4,7 @@ import json
 import os
 import uuid
 from datetime import datetime, timedelta
-from io import StringIO
+from io import BytesIO
 from typing import Optional, Any, Dict, Union, Iterator, Tuple
 
 import pytest
@@ -27,9 +27,9 @@ except:
 def mocked_requests_post(*args, **kwargs):
     """Mock to replace requests.Session.post"""
 
-    class Raw(StringIO):
-        def __init__(self, initial_value: Optional[str]) -> None:
-            super().__init__(initial_value, None)
+    class Raw(BytesIO):
+        def __init__(self, initial_value: Optional[bytes]) -> None:
+            super().__init__(initial_value)
             self.decode_content = False
 
     class MockResponse:
@@ -42,7 +42,7 @@ def mocked_requests_post(*args, **kwargs):
             self.headers = None
             self.reason = ""
             self.url = url
-            self.raw = Raw(json.dumps(json_data))
+            self.raw = Raw(json.dumps(json_data).encode("utf-8"))
 
         def json(self) -> Optional[Dict[str, Any]]:
             """Get json data from response."""

@@ -1,5 +1,5 @@
 import os
-from io import StringIO
+from io import BytesIO
 
 import pytest
 
@@ -27,12 +27,12 @@ class MockAioFile:
         return self.file.read(n)
 
 
-class AsyncStringIO:
+class AsyncBytesIO:
     def __init__(self, string):
-        self.string_io = StringIO(string)
+        self.bytes_io = BytesIO(string)
 
     async def read(self, n=-1):
-        return self.string_io.read(n)
+        return self.bytes_io.read(n)
 
 
 class TestStreamingQuery(KustoClientTestsMixin):
@@ -213,10 +213,10 @@ class TestStreamingQuery(KustoClientTestsMixin):
 
 class TestJsonTokenReader:
     def get_reader(self, data) -> JsonTokenReader:
-        return JsonTokenReader(StringIO(data))
+        return JsonTokenReader(BytesIO(data.encode("utf-8")))
 
     def get_async_reader(self, data) -> AsyncJsonTokenReader:
-        return AsyncJsonTokenReader(AsyncStringIO(data))
+        return AsyncJsonTokenReader(AsyncBytesIO(data.encode("utf-8")))
 
     def test_reading_token(self):
         reader = self.get_reader("{")
