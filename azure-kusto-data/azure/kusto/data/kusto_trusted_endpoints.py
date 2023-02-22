@@ -101,7 +101,7 @@ class KustoTrustedEndpoints:
         self._override_matcher = matcher
 
 
-_filename = Path(__file__).absolute().parent / "wellKnownKustoEndpoints.json"
+_filename = Path(__file__).absolute().parent.joinpath("wellKnownKustoEndpoints.json")
 with _filename.open("r", encoding="utf-8") as data:
     _well_known_kusto_endpoints_data = json.load(data)
 well_known_kusto_endpoints = KustoTrustedEndpoints()
