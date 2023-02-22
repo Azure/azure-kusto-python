@@ -213,10 +213,10 @@ class TestStreamingQuery(KustoClientTestsMixin):
 
 class TestJsonTokenReader:
     def get_reader(self, data) -> JsonTokenReader:
-        return JsonTokenReader(BytesIO(data.encode("utf-8")))
+        return JsonTokenReader(BytesIO(data.encode()))
 
     def get_async_reader(self, data) -> AsyncJsonTokenReader:
-        return AsyncJsonTokenReader(AsyncBytesIO(data.encode("utf-8")))
+        return AsyncJsonTokenReader(AsyncBytesIO(data.encode()))
 
     def test_reading_token(self):
         reader = self.get_reader("{")

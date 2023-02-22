@@ -42,7 +42,7 @@ def mocked_requests_post(*args, **kwargs):
             self.headers = None
             self.reason = ""
             self.url = url
-            self.raw = Raw(json.dumps(json_data).encode("utf-8"))
+            self.raw = Raw(json.dumps(json_data).encode())
 
         def json(self) -> Optional[Dict[str, Any]]:
             """Get json data from response."""
