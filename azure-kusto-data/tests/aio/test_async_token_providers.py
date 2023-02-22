@@ -18,50 +18,50 @@ class TestTokenProvider:
     @pytest.mark.asyncio
     async def test_base_provider(self):
         # test init with no URI
-        provider = MockProvider(is_async=True)
+        with MockProvider(is_async=True):
+            pass
 
         # Test provider with URI, No silent token
-        provider = MockProvider(is_async=True)
+        with MockProvider(is_async=True) as provider:
+            token = provider._get_token_from_cache_impl()
+            assert provider.init_count == 0
+            assert token is None
 
-        token = provider._get_token_from_cache_impl()
-        assert provider.init_count == 0
-        assert token is None
+            token = await provider.get_token_async()
+            assert provider.init_count == 1
+            assert TokenConstants.MSAL_ACCESS_TOKEN in token
 
-        token = await provider.get_token_async()
-        assert provider.init_count == 1
-        assert TokenConstants.MSAL_ACCESS_TOKEN in token
+            token = provider._get_token_from_cache_impl()
+            assert TokenConstants.MSAL_ACCESS_TOKEN in token
 
-        token = provider._get_token_from_cache_impl()
-        assert TokenConstants.MSAL_ACCESS_TOKEN in token
+            token = await provider.get_token_async()
+            assert provider.init_count == 1
 
-        token = await provider.get_token_async()
-        assert provider.init_count == 1
+            good_token = {TokenConstants.MSAL_ACCESS_TOKEN: TOKEN_VALUE}
+            bad_token1 = None
+            bad_token2 = {"error": "something bad occurred"}
 
-        good_token = {TokenConstants.MSAL_ACCESS_TOKEN: TOKEN_VALUE}
-        bad_token1 = None
-        bad_token2 = {"error": "something bad occurred"}
+            assert provider._valid_token_or_none(good_token) == good_token
+            assert provider._valid_token_or_none(bad_token1) is None
+            assert provider._valid_token_or_none(bad_token2) is None
 
-        assert provider._valid_token_or_none(good_token) == good_token
-        assert provider._valid_token_or_none(bad_token1) is None
-        assert provider._valid_token_or_none(bad_token2) is None
+            assert provider._valid_token_or_throw(good_token) == good_token
 
-        assert provider._valid_token_or_throw(good_token) == good_token
+            exception_occurred = False
+            try:
+                provider._valid_token_or_throw(bad_token1)
+            except KustoClientError:
+                exception_occurred = True
+            finally:
+                assert exception_occurred
 
-        exception_occurred = False
-        try:
-            provider._valid_token_or_throw(bad_token1)
-        except KustoClientError:
-            exception_occurred = True
-        finally:
-            assert exception_occurred
-
-        exception_occurred = False
-        try:
-            provider._valid_token_or_throw(bad_token2)
-        except KustoClientError:
-            exception_occurred = True
-        finally:
-            assert exception_occurred
+            exception_occurred = False
+            try:
+                provider._valid_token_or_throw(bad_token2)
+            except KustoClientError:
+                exception_occurred = True
+            finally:
+                assert exception_occurred
 
     @aio_documented_by(TokenProviderTests.get_token_value)
     def get_token_value(self, token: dict):
@@ -77,67 +77,67 @@ class TestTokenProvider:
             assert False
 
     @staticmethod
-    def test_fail_async_call():
-        provider = BasicTokenProvider(token=TOKEN_VALUE, is_async=True)
-        try:
-            provider.get_token()
-            assert False, "Expected KustoAsyncUsageError to occur"
-        except KustoAsyncUsageError as e:
-            assert (
-                str(e) == "Method get_token can't be called from an asynchronous client"
-                or str(e) == "Method context can't be called from an asynchronous client"
-            )
-            # context is called for tracing purposes
+    def test_fail_sync_call():
+        with BasicTokenProvider(token=TOKEN_VALUE, is_async=True) as provider:
+            try:
+                provider.get_token()
+                assert False, "Expected KustoAsyncUsageError to occur"
+            except KustoAsyncUsageError as e:
+                assert (
+                    str(e) == "Method get_token can't be called from an asynchronous client"
+                    or str(e) == "Method context can't be called from an asynchronous client"
+                )
+                # context is called for tracing purposes
 
-        try:
-            provider.context()
-            assert False, "Expected KustoAsyncUsageError to occur"
-        except KustoAsyncUsageError as e:
-            assert str(e) == "Method context can't be called from an asynchronous client"
+            try:
+                provider.context()
+                assert False, "Expected KustoAsyncUsageError to occur"
+            except KustoAsyncUsageError as e:
+                assert str(e) == "Method context can't be called from an asynchronous client"
 
     @aio_documented_by(TokenProviderTests.test_basic_provider)
     @pytest.mark.asyncio
     async def test_basic_provider(self):
-        provider = BasicTokenProvider(token=TOKEN_VALUE, is_async=True)
-        token = await provider.get_token_async()
-        assert self.get_token_value(token) == TOKEN_VALUE
+        with BasicTokenProvider(token=TOKEN_VALUE, is_async=True) as provider:
+            token = await provider.get_token_async()
+            assert self.get_token_value(token) == TOKEN_VALUE
 
     @aio_documented_by(TokenProviderTests.test_callback_token_provider)
     @pytest.mark.asyncio
     async def test_callback_token_provider(self):
-        provider = CallbackTokenProvider(token_callback=lambda: TOKEN_VALUE, async_token_callback=None, is_async=True)
-        token = await provider.get_token_async()
-        assert self.get_token_value(token) == TOKEN_VALUE
+        with CallbackTokenProvider(token_callback=lambda: TOKEN_VALUE, async_token_callback=None, is_async=True) as provider:
+            token = await provider.get_token_async()
+            assert self.get_token_value(token) == TOKEN_VALUE
 
-        provider = CallbackTokenProvider(token_callback=lambda: 0, async_token_callback=None, is_async=True)  # token is not a string
-        exception_occurred = False
-        try:
-            await provider.get_token_async()
-        except KustoClientError:
-            exception_occurred = True
-        finally:
-            assert exception_occurred
+        with CallbackTokenProvider(token_callback=lambda: 0, async_token_callback=None, is_async=True) as provider:  # token is not a string
+            exception_occurred = False
+            try:
+                await provider.get_token_async()
+            except KustoClientError:
+                exception_occurred = True
+            finally:
+                assert exception_occurred
 
     @pytest.mark.asyncio
     async def test_callback_token_provider_with_async_method(self):
         async def callback():
             return TOKEN_VALUE
 
-        provider = CallbackTokenProvider(token_callback=None, async_token_callback=callback, is_async=True)
-        token = await provider.get_token_async()
-        assert self.get_token_value(token) == TOKEN_VALUE
+        with CallbackTokenProvider(token_callback=None, async_token_callback=callback, is_async=True) as provider:
+            token = await provider.get_token_async()
+            assert self.get_token_value(token) == TOKEN_VALUE
 
         async def fail_callback():
             return 0
 
-        provider = CallbackTokenProvider(token_callback=None, async_token_callback=fail_callback, is_async=True)  # token is not a string
-        exception_occurred = False
-        try:
-            await provider.get_token_async()
-        except KustoClientError:
-            exception_occurred = True
-        finally:
-            assert exception_occurred
+        with CallbackTokenProvider(token_callback=None, async_token_callback=fail_callback, is_async=True) as provider:  # token is not a string
+            exception_occurred = False
+            try:
+                await provider.get_token_async()
+            except KustoClientError:
+                exception_occurred = True
+            finally:
+                assert exception_occurred
 
     @aio_documented_by(TokenProviderTests.test_az_provider)
     @pytest.mark.asyncio
@@ -147,13 +147,13 @@ class TestTokenProvider:
             return
 
         print("Note!\nThe test 'test_az_provider' will fail if 'az login' was not called.")
-        provider = AzCliTokenProvider(KUSTO_URI, is_async=True)
-        token = await provider.get_token_async()
-        assert self.get_token_value(token) is not None
+        with AzCliTokenProvider(KUSTO_URI, is_async=True) as provider:
+            token = await provider.get_token_async()
+            assert self.get_token_value(token) is not None
 
-        # another run to pass through the cache
-        token = provider._get_token_from_cache_impl()
-        assert self.get_token_value(token) is not None
+            # another run to pass through the cache
+            token = provider._get_token_from_cache_impl()
+            assert self.get_token_value(token) is not None
 
     @aio_documented_by(TokenProviderTests.test_msi_provider)
     @pytest.mark.asyncio
@@ -166,25 +166,25 @@ class TestTokenProvider:
         user_msi_client_id = os.environ.get("MSI_CLIENT_ID")
 
         # system MSI
-        provider = MsiTokenProvider(KUSTO_URI, is_async=True)
-        token = await provider.get_token_async()
-        assert self.get_token_value(token) is not None
-
-        if user_msi_object_id is not None:
-            args = {"object_id": user_msi_object_id}
-            provider = MsiTokenProvider(KUSTO_URI, args, is_async=True)
+        with MsiTokenProvider(KUSTO_URI, is_async=True) as provider:
             token = await provider.get_token_async()
             assert self.get_token_value(token) is not None
-        else:
-            print(" *** Skipped MSI Provider Client Id Test ***")
 
-        if user_msi_client_id is not None:
-            args = {"client_id": user_msi_client_id}
-            provider = MsiTokenProvider(KUSTO_URI, args, is_async=True)
-            token = await provider.get_token_async()
-            assert self.get_token_value(token) is not None
-        else:
-            print(" *** Skipped MSI Provider Object Id Test ***")
+            if user_msi_object_id is not None:
+                args = {"object_id": user_msi_object_id}
+                with MsiTokenProvider(KUSTO_URI, args, is_async=True) as provider:
+                    token = await provider.get_token_async()
+                    assert self.get_token_value(token) is not None
+            else:
+                print(" *** Skipped MSI Provider Client Id Test ***")
+
+            if user_msi_client_id is not None:
+                args = {"client_id": user_msi_client_id}
+                with MsiTokenProvider(KUSTO_URI, args, is_async=True) as provider:
+                    token = await provider.get_token_async()
+                    assert self.get_token_value(token) is not None
+            else:
+                print(" *** Skipped MSI Provider Object Id Test ***")
 
     @aio_documented_by(TokenProviderTests.test_user_pass_provider)
     @pytest.mark.asyncio
@@ -194,13 +194,13 @@ class TestTokenProvider:
         auth = os.environ.get("USER_AUTH_ID", "organizations")
 
         if username and password and auth:
-            provider = UserPassTokenProvider(KUSTO_URI, auth, username, password, is_async=True)
-            token = await provider.get_token_async()
-            assert self.get_token_value(token) is not None
+            with UserPassTokenProvider(KUSTO_URI, auth, username, password, is_async=True) as provider:
+                token = await provider.get_token_async()
+                assert self.get_token_value(token) is not None
 
-            # Again through cache
-            token = provider._get_token_from_cache_impl()
-            assert self.get_token_value(token) is not None
+                # Again through cache
+                token = provider._get_token_from_cache_impl()
+                assert self.get_token_value(token) is not None
         else:
             print(" *** Skipped User & Pass Provider Test ***")
 
@@ -215,13 +215,13 @@ class TestTokenProvider:
             # break here if you debug this test, and get the code from 'x'
             print(x)
 
-        provider = DeviceLoginTokenProvider(KUSTO_URI, "organizations", callback, is_async=True)
-        token = await provider.get_token_async()
-        assert self.get_token_value(token) is not None
+        with DeviceLoginTokenProvider(KUSTO_URI, "organizations", callback, is_async=True) as provider:
+            token = await provider.get_token_async()
+            assert self.get_token_value(token) is not None
 
-        # Again through cache
-        token = provider._get_token_from_cache_impl()
-        assert self.get_token_value(token) is not None
+            # Again through cache
+            token = provider._get_token_from_cache_impl()
+            assert self.get_token_value(token) is not None
 
     @aio_documented_by(TokenProviderTests.test_app_key_provider)
     @pytest.mark.asyncio
@@ -233,13 +233,13 @@ class TestTokenProvider:
         app_key = os.environ.get("APP_KEY")
 
         if app_id and app_key and auth_id:
-            provider = ApplicationKeyTokenProvider(KUSTO_URI, auth_id, app_id, app_key, is_async=True)
-            token = await provider.get_token_async()
-            assert self.get_token_value(token) is not None
+            with ApplicationKeyTokenProvider(KUSTO_URI, auth_id, app_id, app_key, is_async=True) as provider:
+                token = await provider.get_token_async()
+                assert self.get_token_value(token) is not None
 
-            # Again through cache
-            token = provider._get_token_from_cache_impl()
-            assert self.get_token_value(token) is not None
+                # Again through cache
+                token = provider._get_token_from_cache_impl()
+                assert self.get_token_value(token) is not None
         else:
             print(" *** Skipped App Id & Key Provider Test ***")
 
@@ -258,27 +258,27 @@ class TestTokenProvider:
             with open(pem_key_path, "rb") as file:
                 pem_key = file.read()
 
-            provider = ApplicationCertificateTokenProvider(KUSTO_URI, cert_app_id, cert_auth, pem_key, thumbprint, is_async=True)
-            token = await provider.get_token_async()
-            assert self.get_token_value(token) is not None
-
-            # Again through cache
-            token = provider._get_token_from_cache_impl()
-            assert self.get_token_value(token) is not None
-
-            if public_cert_path:
-                with open(public_cert_path, "r") as file:
-                    public_cert = file.read()
-
-                provider = ApplicationCertificateTokenProvider(KUSTO_URI, cert_app_id, cert_auth, pem_key, thumbprint, public_cert, is_async=True)
+            with ApplicationCertificateTokenProvider(KUSTO_URI, cert_app_id, cert_auth, pem_key, thumbprint, is_async=True) as provider:
                 token = await provider.get_token_async()
                 assert self.get_token_value(token) is not None
 
                 # Again through cache
                 token = provider._get_token_from_cache_impl()
                 assert self.get_token_value(token) is not None
-            else:
-                print(" *** Skipped App Cert SNI Provider Test ***")
+
+                if public_cert_path:
+                    with open(public_cert_path, "r") as file:
+                        public_cert = file.read()
+
+                    with ApplicationCertificateTokenProvider(KUSTO_URI, cert_app_id, cert_auth, pem_key, thumbprint, public_cert, is_async=True) as provider:
+                        token = await provider.get_token_async()
+                        assert self.get_token_value(token) is not None
+
+                        # Again through cache
+                        token = provider._get_token_from_cache_impl()
+                        assert self.get_token_value(token) is not None
+                else:
+                    print(" *** Skipped App Cert SNI Provider Test ***")
 
         else:
             print(" *** Skipped App Cert Provider Test ***")
@@ -298,12 +298,12 @@ class TestTokenProvider:
         CloudSettings._cloud_cache[FAKE_URI] = cloud
         authority = "auth_test"
 
-        provider = UserPassTokenProvider(FAKE_URI, authority, "a", "b", is_async=True)
-        await provider._init_once_async(init_only_resources=True)
-        context = await provider.context_async()
-        assert context["authority"] == "https://login_endpoint/auth_test"
-        assert context["client_id"] == "1234"
-        assert provider._scopes == ["https://fakeurl.kusto.windows.net/.default"]
+        with UserPassTokenProvider(FAKE_URI, authority, "a", "b", is_async=True) as provider:
+            await provider._init_once_async(init_only_resources=True)
+            context = await provider.context_async()
+            assert context["authority"] == "https://login_endpoint/auth_test"
+            assert context["client_id"] == "1234"
+            assert provider._scopes == ["https://fakeurl.kusto.windows.net/.default"]
 
     @aio_documented_by(TokenProviderTests.test_cloud_mfa_off)
     @pytest.mark.asyncio
@@ -320,12 +320,12 @@ class TestTokenProvider:
         CloudSettings._cloud_cache[FAKE_URI] = cloud
         authority = "auth_test"
 
-        provider = UserPassTokenProvider(FAKE_URI, authority, "a", "b", is_async=True)
-        await provider._init_once_async(init_only_resources=True)
-        context = await provider.context_async()
-        assert context["authority"] == "https://login_endpoint/auth_test"
-        assert context["client_id"] == "1234"
-        assert provider._scopes == ["https://fakeurl.kustomfa.windows.net/.default"]
+        with UserPassTokenProvider(FAKE_URI, authority, "a", "b", is_async=True) as provider:
+            await provider._init_once_async(init_only_resources=True)
+            context = await provider.context_async()
+            assert context["authority"] == "https://login_endpoint/auth_test"
+            assert context["client_id"] == "1234"
+            assert provider._scopes == ["https://fakeurl.kustomfa.windows.net/.default"]
 
     def test_async_lock(self):
         """
@@ -341,9 +341,8 @@ class TestTokenProvider:
                 await asyncio.sleep(0.1)
                 return ""
 
-            provider = CallbackTokenProvider(token_callback=None, async_token_callback=inner, is_async=True)
-
-            await asyncio.gather(provider.get_token_async(), provider.get_token_async(), provider.get_token_async())
+            with CallbackTokenProvider(token_callback=None, async_token_callback=inner, is_async=True) as provider:
+                await asyncio.gather(provider.get_token_async(), provider.get_token_async(), provider.get_token_async())
 
         loop = asyncio.events.new_event_loop()
         asyncio.events.set_event_loop(loop)
@@ -359,16 +358,16 @@ class TestTokenProvider:
         app_key = os.environ.get("APP_KEY")
         os.environ["AZURE_CLIENT_SECRET"] = app_key
 
-        provider = AzureIdentityTokenCredentialProvider(KUSTO_URI, is_async=True, credential=AsyncDefaultAzureCredential())
-        token = await provider.get_token_async()
-        assert TokenProviderTests.get_token_value(token) is not None
+        with AzureIdentityTokenCredentialProvider(KUSTO_URI, is_async=True, credential=AsyncDefaultAzureCredential()) as provider:
+            token = await provider.get_token_async()
+            assert TokenProviderTests.get_token_value(token) is not None
 
-        provider = AzureIdentityTokenCredentialProvider(
+        with AzureIdentityTokenCredentialProvider(
             KUSTO_URI,
             is_async=True,
             credential_from_login_endpoint=lambda login_endpoint: AsyncClientSecretCredential(
                 authority=login_endpoint, client_id=app_id, client_secret=app_key, tenant_id=auth_id
             ),
-        )
-        token = await provider.get_token_async()
-        assert TokenProviderTests.get_token_value(token) is not None
+        ) as provider:
+            token = await provider.get_token_async()
+            assert TokenProviderTests.get_token_value(token) is not None

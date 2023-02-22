@@ -1,13 +1,11 @@
 import copy
-import itertools
 import json
-import os
-from typing import List, Iterable, Dict
+from pathlib import Path
+from typing import List, Dict
 from urllib.parse import urlparse
 
 from azure.kusto.data.helpers import get_string_tail_lower_case
 from azure.kusto.data.security import _is_local_address
-
 from .exceptions import KustoClientInvalidConnectionStringException
 
 
@@ -103,6 +101,7 @@ class KustoTrustedEndpoints:
         self._override_matcher = matcher
 
 
-_filename = os.path.join(os.path.split(os.path.abspath(__file__))[0], "wellKnownKustoEndpoints.json")
-_well_known_kusto_endpoints_data = json.load(open(_filename))
+_filename = Path(__file__).absolute().parent.joinpath("wellKnownKustoEndpoints.json")
+with _filename.open("r", encoding="utf-8") as data:
+    _well_known_kusto_endpoints_data = json.load(data)
 well_known_kusto_endpoints = KustoTrustedEndpoints()

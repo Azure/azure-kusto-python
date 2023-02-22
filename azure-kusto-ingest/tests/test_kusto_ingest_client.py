@@ -238,6 +238,8 @@ class TestQueuedIngestClient:
             "https://storageaccount.blob.core.windows.net/tempstorage/database__table__11111111-1111-1111-1111-111111111111__dataset.csv.gz?",
         )
 
+        ingest_client.close()
+
     @responses.activate
     @patch("azure.kusto.ingest.managed_streaming_ingest_client.ManagedStreamingIngestClient.MAX_STREAMING_SIZE_IN_BYTES", new=0)
     def test_ingest_from_file_wrong_endpoint(self, ingest_client_class):
