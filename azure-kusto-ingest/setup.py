@@ -31,8 +31,6 @@ setup(
     url="https://github.com/Azure/azure-kusto-python",
     namespace_packages=["azure"],
     classifiers=[
-        # 5 - Production/Stable depends on multi-threading / aio / perf
-        "Development Status :: 4 - Beta",
         "Programming Language :: Python",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",

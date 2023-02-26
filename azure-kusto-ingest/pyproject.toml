@@ -1,0 +1,36 @@
+[tool.poetry]
+name = "azure-kusto-ingest"
+version = "4.1.2"
+readme = "README.rst"
+description="Kusto Ingest Client"
+license="MIT"
+authors= ["Microsoft <kustalk@microsoft.com>"]
+urls={ "Project" = "https://github.com/Azure/azure-kusto-python"}
+classifiers=[
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "License :: OSI Approved :: MIT License",
+]
+keywords=["kusto", "wrapper", "client", "azure", "ingest"]
+packages = [
+    { include = "azure/kusto/ingest"},
+    { include = "tests"}
+]
+
+[tool.poetry.dependencies]
+python = "^3.7.1"
+azure-kusto-data = { path = "../azure-kusto-data", develop = true }
+azure-storage-blob = "^12.15.0"
+azure-storage-queue = "^12.6.0"
+tenacity = "^8.2.1"
+
+[tool.poetry.extras]
+pandas = ["pandas"]
+aio = []
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
