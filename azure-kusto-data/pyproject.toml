@@ -1,0 +1,42 @@
+[tool.poetry]
+name = "azure-kusto-data"
+version = "4.1.2"
+readme = "README.rst"
+description="Kusto Data Client"
+license="MIT"
+authors= ["Microsoft <kustalk@microsoft.com>"]
+urls={ "Project" = "https://github.com/Azure/azure-kusto-python"}
+classifiers=[
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "License :: OSI Approved :: MIT License",
+]
+keywords=["kusto", "wrapper", "client", "azure", "data", "query"]
+packages = [
+    { include = "azure/kusto/data"},
+    { include = "tests"}
+]
+
+[tool.poetry.dependencies]
+python = "^3.7.1"
+python-dateutil = "^2.8.2"
+requests = "^2.28.2"
+azure-identity = "^1.12.0"
+msal = "^1.21.0"
+ijson = "^3.2.0.post0"
+azure-core = "^1.26.3"
+
+pandas = {version = "^1.3.4", optional = true}
+asgiref = {version = "^3.6.0", optional = true}
+aiohttp = {version = "^3.8.4", optional = true}
+
+[tool.poetry.extras]
+pandas = ["pandas"]
+aio = ["aiohttp", "asgiref"]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
