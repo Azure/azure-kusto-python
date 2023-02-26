@@ -10,7 +10,7 @@ python = "^3.8.0"
 azure-kusto-data = { path = "azure-kusto-data", develop = true, extras=["pandas", "aio"] }
 azure-kusto-ingest = { path = "azure-kusto-ingest", develop = true, extras=["pandas", "aio"] }
 azure-kusto-quick-start = { path = "quick_start", develop = true }
-
+pyright = "^1.1.295"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.2.1"
@@ -23,7 +23,6 @@ azure-storage-blob = "^12.15.0"
 pandas = "~1.3.0"
 asgiref = "^3.6.0"
 poethepoet = "^0.18.1"
-ruff = "^0.0.252"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
@@ -32,17 +31,9 @@ build-backend = "poetry.core.masonry.api"
 [tool.black]
 line-length = 160
 
-[tool.ruff]
-line-length = 160
-
-[tool.poe]
-default_task_type = "shell"
-
 [tool.poe.tasks]
 black = "black ."
 black-check = "black --check ."
-ruff = "ruff --check ."
-ruff-fix = "ruff --fix ."
 pyright = "pyright"
 build.ref = "do 'poetry build'"
 test = "pytest"
@@ -57,9 +48,6 @@ shell = """
     ${command} &&
     cd ../quick_start &&
     ${command} &&
-    cd .. &&
-    mkdir -p dist &&
-    mv */dist/* dist/ &&
-    rmdir */dist
+    cd ..
 """
 args = [{ name = "command", positional = true }]
