@@ -309,3 +309,5 @@ build/
 
 
 */.tox/
+
+.venv
