@@ -7,8 +7,8 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.8.0"
-azure-kusto-data = { path = "azure-kusto-data", develop = true, extras=["pandas", "aio"] }
-azure-kusto-ingest = { path = "azure-kusto-ingest", develop = true, extras=["pandas", "aio"] }
+azure-kusto-data = { path = "azure-kusto-data", develop = true, extras = ["pandas", "aio"] }
+azure-kusto-ingest = { path = "azure-kusto-ingest", develop = true, extras = ["pandas", "aio"] }
 azure-kusto-quick-start = { path = "quick_start", develop = true }
 pyright = "^1.1.295"
 
@@ -34,16 +34,17 @@ line-length = 160
 
 [tool.poe.tasks]
 black = "black ."
-black-check = "black --check ."
+black-check = "black --check --diff ."
 pyright = "pyright"
 build = [
-    {ref = "do 'rm -rf dist'"},
-    {ref = "do 'poetry build'"},
-    {script = "fix_monorepo:main"},
+    { ref = "do 'rm -rf dist'" },
+    { ref = "do 'poetry build'" },
+    { script = "fix_monorepo:main" },
 ]
 test = "pytest"
 test-e2e = "pytest -k 'E2E'"
 test-no-e2e = "pytest -k 'not E2E'"
+lint.ref = "black-check"
 
 [tool.poe.tasks.do]
 shell = """

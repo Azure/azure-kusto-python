@@ -18,29 +18,33 @@ jobs:
       PYTHON: ${{ matrix.python-version }}
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
+
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip --user
-          pip install -r dev_requirements.txt --user
-          pip install pytest-cov --user
-          pip install ./azure-kusto-data[aio,pandas] ./azure-kusto-ingest[aio,pandas] --user
-          pip freeze
-      - uses: psf/black@stable
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+
+      - name: Load cached venv
+        id: cached-poetry-dependencies
+        uses: actions/cache@v3
         with:
-          options: "--check --diff --line-length 160"
-      - name: Test with pytest
+          path: .venv
+          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+
+      - name: Install dependencies
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+        run: poetry install --no-interaction
+
+      - name: lint
+        run: poe lint
+
+      - name: Test
         run: |
           pytest -v . --junit-xml pytest.xml --cov=/home/runner/.local/lib/python${{ matrix.python-version }}/site-packages/azure/kusto --cov-report=xml
-        env:
-          APP_ID: ${{ secrets.APP_ID }}
-          APP_KEY: ${{ secrets.APP_KEY }}
-          AUTH_ID: ${{ secrets.AUTH_ID }}
-      - name: EtoE Test with pytest
         env:
           APP_ID: ${{ secrets.APP_ID }}
           APP_KEY: ${{ secrets.APP_KEY }}
@@ -50,8 +54,7 @@ jobs:
           ENGINE_CONNECTION_STRING: ${{ secrets.ENGINE_CONNECTION_STRING }}
           APPLICATION_INSIGHTS_ENGINE_CONNECTION_STRING: https://ade.applicationinsights.io/subscriptions/12534eb3-8109-4d84-83ad-576c0d5e1d06/resourcegroups/clients_e2e_test/providers/microsoft.insights/components/kusto-e2e-app-insights
           APPLICATION_INSIGHTS_TEST_DATABASE: kusto-e2e-app-insights
-        run: |
-          pytest -v ./azure-kusto-data/tests/e2e.py ./azure-kusto-ingest/tests/e2e.py --junit-xml pytest.xml --cov=/home/runner/.local/lib/python${{ matrix.python-version }}/site-packages/azure/kusto --cov-report=xml:coverage2.xml
+
       - name: Upload Unit Test Results
         if: always()
         uses: actions/upload-artifact@v2
@@ -66,9 +69,12 @@ jobs:
 
 
   publish-test-results:
-    name: "Publish Unit Tests Results"
-    needs: build
+    name: "Publish Tests Results"
+    needs: build-and-test
     runs-on: ubuntu-latest
+    permissions:
+      checks: write
+      pull-requests: write
     if: always()
 
     steps:
@@ -77,7 +83,7 @@ jobs:
         with:
           path: artifacts
 
-      - name: Publish Unit Test Results
-        uses: EnricoMi/publish-unit-test-result-action@v1
+      - name: Publish Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v2
         with:
-          files: artifacts/**/*.xml
+          files: "artifacts/**/*.xml"
