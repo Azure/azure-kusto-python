@@ -12,7 +12,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [ '3.7', '3.8', '3.9', '3.10' ]
+        python-version: [ '3.8', '3.9', '3.10', "3.11" ]
     env:
       PYTHON: ${{ matrix.python-version }}
 
@@ -24,7 +24,15 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      - name: Load cached Poetry installation
+        id: cached-poetry
+        uses: actions/cache@v3
+        with:
+          path: ~/.local  # the path depends on the OS
+          key: poetry-0  # increment to reset cache
+
       - name: Install Poetry
+        if: steps.cached-poetry.outputs.cache-hit != 'true'
         uses: snok/install-poetry@v1
 
       - name: Load cached venv
@@ -43,7 +51,7 @@ jobs:
 
       - name: Test
         run: |
-          poetry run pytest -v . --junit-xml pytest.xml --cov=/home/runner/.local/lib/python${{ matrix.python-version }}/site-packages/azure/kusto --cov-report=xml
+          poetry run poe test-ci /home/runner/.local/lib/python${{ matrix.python-version }}/site-packages/azure/kusto
         env:
           APP_ID: ${{ secrets.APP_ID }}
           APP_KEY: ${{ secrets.APP_KEY }}
