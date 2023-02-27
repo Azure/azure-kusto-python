@@ -3,11 +3,11 @@
 import sys
 import uuid
 from io import BytesIO
-from os import path
 
 import pytest
 
 from azure.kusto.ingest import FileDescriptor, BlobDescriptor, StreamDescriptor
+from .common import get_input_folder_path
 
 
 class TestDescriptors:
@@ -25,8 +25,8 @@ class TestDescriptors:
 
     def test_unzipped_file_with_size(self):
         """Tests FileDescriptor with size and unzipped file."""
-        filePath = path.join(path.dirname(path.abspath(__file__)), "input", "dataset.csv")
-        descriptor = FileDescriptor(filePath, self.mock_size)
+        file_path = str(get_input_folder_path("dataset.csv"))
+        descriptor = FileDescriptor(file_path, self.mock_size)
         with descriptor.open(True) as stream:
             assert descriptor.size == self.mock_size
             assert descriptor.stream_name.endswith(".csv.gz")
@@ -38,8 +38,8 @@ class TestDescriptors:
 
     def test_unzipped_file_without_size(self):
         """Tests FileDescriptor without size and unzipped file."""
-        filePath = path.join(path.dirname(path.abspath(__file__)), "input", "dataset.csv")
-        descriptor = FileDescriptor(filePath, 0)
+        file_path = str(get_input_folder_path("dataset.csv"))
+        descriptor = FileDescriptor(file_path, 0)
         with descriptor.open(True) as stream:
             # TODO: since we don't know if the file is opened on CRLF system or an LF system, allow both sizes
             #   a more robust approach would be to open the file and check
@@ -53,8 +53,8 @@ class TestDescriptors:
 
     def test_zipped_file_with_size(self):
         """Tests FileDescriptor with size and zipped file."""
-        filePath = path.join(path.dirname(path.abspath(__file__)), "input", "dataset.csv.gz")
-        descriptor = FileDescriptor(filePath, self.mock_size)
+        file_path = str(get_input_folder_path("dataset.csv.gz"))
+        descriptor = FileDescriptor(file_path, self.mock_size)
         with descriptor.open(False) as stream:
             assert descriptor.size == self.mock_size
             assert descriptor.stream_name.endswith(".csv.gz")
@@ -66,8 +66,8 @@ class TestDescriptors:
 
     def test_gzip_file_without_size(self):
         """Tests FileDescriptor without size and zipped file."""
-        filePath = path.join(path.dirname(path.abspath(__file__)), "input", "dataset.csv.gz")
-        descriptor = FileDescriptor(filePath, 0)
+        file_path = str(get_input_folder_path("dataset.csv.gz"))
+        descriptor = FileDescriptor(file_path, 0)
         with descriptor.open(False) as stream:
             assert descriptor.size == self.uncompressed_size
             assert descriptor.stream_name.endswith(".csv.gz")
@@ -79,8 +79,8 @@ class TestDescriptors:
 
     def test_zip_file_without_size(self):
         """Tests FileDescriptor without size and zipped file."""
-        filePath = path.join(path.dirname(path.abspath(__file__)), "input", "dataset.csv.zip")
-        descriptor = FileDescriptor(filePath, 0)
+        file_path = str(get_input_folder_path("dataset.csv.zip"))
+        descriptor = FileDescriptor(file_path, 0)
         with descriptor.open(False) as stream:
             # the zip archive contains 2 copies of the source file
             assert descriptor.size == self.uncompressed_size * 2
@@ -93,8 +93,8 @@ class TestDescriptors:
 
     def test_unzipped_file_dont_compress(self):
         """Tests FileDescriptor with size and unzipped file."""
-        filePath = path.join(path.dirname(path.abspath(__file__)), "input", "dataset.csv")
-        descriptor = FileDescriptor(filePath, self.mock_size)
+        file_path = str(get_input_folder_path("dataset.csv"))
+        descriptor = FileDescriptor(file_path, self.mock_size)
         with descriptor.open(False) as stream:
             assert descriptor.size == self.mock_size
             assert descriptor.stream_name.endswith(".csv")

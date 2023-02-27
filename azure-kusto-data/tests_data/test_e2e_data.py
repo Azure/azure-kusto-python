@@ -17,6 +17,7 @@ from azure.kusto.data._models import WellKnownDataSet
 from azure.kusto.data._token_providers import AsyncDefaultAzureCredential
 from azure.kusto.data.aio import KustoClient as AsyncKustoClient
 from azure.kusto.data.streaming_response import FrameType
+from .kusto_client_common import get_input_folder_path
 
 
 @pytest.fixture(params=["ManagedStreaming", "NormalClient"])
@@ -27,7 +28,6 @@ def is_managed_streaming(request):
 class TestE2E:
     """A class to define mappings to deft table."""
 
-    input_folder_path: ClassVar[str]
     streaming_test_table: ClassVar[str]
     streaming_test_table_query: ClassVar[str]
     ai_test_table_cmd: ClassVar[str]
@@ -83,16 +83,6 @@ class TestE2E:
             "traces",
         ]
 
-    @staticmethod
-    def get_file_path() -> str:
-        current_dir = os.getcwd()
-        path_parts = ["azure-kusto-data", "tests", "input"]
-        missing_path_parts = []
-        for path_part in path_parts:
-            if path_part not in current_dir:
-                missing_path_parts.append(path_part)
-        return os.path.join(current_dir, *missing_path_parts)
-
     @classmethod
     def engine_kcsb_from_env(cls, app_insights=False, is_async=False) -> KustoConnectionStringBuilder:
         engine = cls.engine_cs if not app_insights else cls.ai_engine_cs
@@ -129,9 +119,7 @@ class TestE2E:
 
         cls.ai_test_table_cmd = ".show tables"
 
-        cls.input_folder_path = cls.get_file_path()
-
-        with open(os.path.join(cls.input_folder_path, "big.json")) as f:
+        with get_input_folder_path("big.json").open() as f:
             cls.test_streaming_data = json.load(f)
 
     @staticmethod
@@ -293,6 +281,8 @@ class TestE2E:
 
     def test_cloud_info(self):
         cloud_info = CloudSettings.get_cloud_info_for_cluster(self.engine_cs)
+        # Make the test pass for dev clusters
+        cloud_info.kusto_service_resource_id = cloud_info.kusto_service_resource_id.replace(".dev.", ".")
         assert cloud_info is not CloudSettings.DEFAULT_CLOUD
         assert cloud_info == CloudSettings.DEFAULT_CLOUD
         assert cloud_info is CloudSettings.get_cloud_info_for_cluster(self.engine_cs)

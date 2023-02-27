@@ -15,6 +15,7 @@ from azure.kusto.data.data_format import DataFormat
 from azure.kusto.ingest import QueuedIngestClient, IngestionProperties, IngestionStatus
 from azure.kusto.ingest.exceptions import KustoInvalidEndpointError
 from azure.kusto.ingest.managed_streaming_ingest_client import ManagedStreamingIngestClient
+from .common import get_input_folder_path
 
 pandas_installed = False
 try:
@@ -218,15 +219,7 @@ class TestQueuedIngestClient:
         ingest_client = ingest_client_class("https://ingest-somecluster.kusto.windows.net")
         ingestion_properties = IngestionProperties(database="database", table="table", data_format=DataFormat.CSV)
 
-        # ensure test can work when executed from within directories
-        current_dir = os.getcwd()
-        path_parts = ["azure-kusto-ingest", "tests", "input", "dataset.csv"]
-        missing_path_parts = []
-        for path_part in path_parts:
-            if path_part not in current_dir:
-                missing_path_parts.append(path_part)
-
-        file_path = os.path.join(current_dir, *missing_path_parts)
+        file_path = str(get_input_folder_path("dataset.csv"))
 
         result = ingest_client.ingest_from_file(file_path, ingestion_properties=ingestion_properties)
 
@@ -250,14 +243,7 @@ class TestQueuedIngestClient:
         ingest_client = ingest_client_class("https://somecluster.kusto.windows.net")
         ingestion_properties = IngestionProperties(database="database", table="table", data_format=DataFormat.CSV)
 
-        current_dir = os.getcwd()
-        path_parts = ["azure-kusto-ingest", "tests", "input", "dataset.csv"]
-        missing_path_parts = []
-        for path_part in path_parts:
-            if path_part not in current_dir:
-                missing_path_parts.append(path_part)
-
-        file_path = os.path.join(current_dir, *missing_path_parts)
+        file_path = str(get_input_folder_path("dataset.csv"))
 
         with pytest.raises(KustoInvalidEndpointError) as ex:
             ingest_client.ingest_from_file(file_path, ingestion_properties=ingestion_properties)
@@ -312,16 +298,7 @@ class TestQueuedIngestClient:
         ingest_client = ingest_client_class("https://ingest-somecluster.kusto.windows.net")
         ingestion_properties = IngestionProperties(database="database", table="table", data_format=DataFormat.CSV)
 
-        # ensure test can work when executed from within directories
-        current_dir = os.getcwd()
-        path_parts = ["azure-kusto-ingest", "tests", "input", "dataset.csv"]
-        missing_path_parts = []
-
-        for path_part in path_parts:
-            if path_part not in current_dir:
-                missing_path_parts.append(path_part)
-
-        file_path = os.path.join(current_dir, *missing_path_parts)
+        file_path = str(get_input_folder_path("dataset.csv"))
 
         result = ingest_client.ingest_from_stream(io.StringIO(Path(file_path).read_text()), ingestion_properties=ingestion_properties)
         assert result.status == IngestionStatus.QUEUED

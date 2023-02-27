@@ -33,6 +33,7 @@ from azure.kusto.ingest import (
     StreamDescriptor,
     ManagedStreamingIngestClient,
 )
+from .common import get_input_folder_path
 
 
 @pytest.fixture(params=["ManagedStreaming", "NormalClient"])
@@ -43,7 +44,7 @@ def is_managed_streaming(request):
 class TestE2E:
     """A class to define mappings to deft table."""
 
-    input_folder_path: ClassVar[str]
+    input_folder_path: ClassVar[pathlib.Path]
     engine_cs: ClassVar[Optional[str]]
     dm_cs: ClassVar[Optional[str]]
     app_id: ClassVar[Optional[str]]
@@ -139,16 +140,6 @@ class TestE2E:
                     '    { "column" : "xdynamicWithNulls", "datatype" : "dynamic", "Properties":{"Path":"$.xdynamicWithNulls"}},'
                     ']'"""
 
-    @staticmethod
-    def get_file_path() -> str:
-        current_dir = os.getcwd()
-        path_parts = ["azure-kusto-ingest", "tests", "input"]
-        missing_path_parts = []
-        for path_part in path_parts:
-            if path_part not in current_dir:
-                missing_path_parts.append(path_part)
-        return os.path.join(current_dir, *missing_path_parts)
-
     @classmethod
     def engine_kcsb_from_env(cls, is_async=False) -> KustoConnectionStringBuilder:
         if all([cls.app_id, cls.app_key, cls.auth_id]):
@@ -194,13 +185,13 @@ class TestE2E:
         cls.streaming_ingest_client = KustoStreamingIngestClient(cls.engine_kcsb_from_env())
         cls.managed_streaming_ingest_client = ManagedStreamingIngestClient(cls.engine_kcsb_from_env(), cls.dm_kcsb_from_env())
 
-        cls.input_folder_path = cls.get_file_path()
+        cls.input_folder_path = get_input_folder_path()
 
-        cls.csv_file_path = os.path.join(cls.input_folder_path, "dataset.csv")
-        cls.tsv_file_path = os.path.join(cls.input_folder_path, "dataset.tsv")
-        cls.zipped_csv_file_path = os.path.join(cls.input_folder_path, "dataset.csv.gz")
-        cls.json_file_path = os.path.join(cls.input_folder_path, "dataset.json")
-        cls.zipped_json_file_path = os.path.join(cls.input_folder_path, "dataset.jsonz.gz")
+        cls.csv_file_path = str(cls.input_folder_path.joinpath("dataset.csv"))
+        cls.tsv_file_path = str(cls.input_folder_path.joinpath("dataset.tsv"))
+        cls.zipped_csv_file_path = str(cls.input_folder_path.joinpath("dataset.csv.gz"))
+        cls.json_file_path = str(cls.input_folder_path.joinpath("dataset.json"))
+        cls.zipped_json_file_path = str(cls.input_folder_path.joinpath("dataset.jsonz.gz"))
 
         cls.current_count = 0
 

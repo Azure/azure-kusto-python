@@ -9,7 +9,7 @@ from azure.kusto.data.aio.streaming_response import JsonTokenReader as AsyncJson
 from azure.kusto.data.exceptions import KustoServiceError, KustoStreamingQueryError, KustoTokenParsingError, KustoUnsupportedApiError, KustoMultiApiError
 from azure.kusto.data.response import KustoStreamingResponseDataSet
 from azure.kusto.data.streaming_response import JsonTokenReader, StreamingDataSetEnumerator, FrameType, JsonTokenType
-from tests.kusto_client_common import KustoClientTestsMixin
+from tests_data.kusto_client_common import KustoClientTestsMixin
 
 
 class MockAioFile:

@@ -2,6 +2,7 @@
 # Licensed under the MIT License
 import json
 import os
+import pathlib
 import uuid
 from datetime import datetime, timedelta
 from io import BytesIO
@@ -22,6 +23,13 @@ try:
     PANDAS = True
 except:
     pass
+
+
+def get_input_folder_path(file: Optional[str] = None) -> pathlib.Path:
+    path = pathlib.Path(__file__).parent.joinpath("input")
+    if file:
+        path = path.joinpath(file)
+    return path
 
 
 def mocked_requests_post(*args, **kwargs):

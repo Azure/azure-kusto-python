@@ -11,8 +11,9 @@ from mock import patch
 from azure.kusto.data.data_format import DataFormat
 from azure.kusto.data.exceptions import KustoApiError
 from azure.kusto.ingest import ManagedStreamingIngestClient, IngestionProperties, IngestionStatus, BlobDescriptor
-from test_kusto_ingest_client import request_callback as queued_request_callback, assert_queued_upload
-from test_kusto_streaming_ingest_client import request_callback as streaming_request_callback, assert_managed_streaming_request_id
+from .common import get_input_folder_path
+from .test_kusto_ingest_client import request_callback as queued_request_callback, assert_queued_upload
+from .test_kusto_streaming_ingest_client import request_callback as streaming_request_callback, assert_managed_streaming_request_id
 
 
 class TransientResponseHelper:
@@ -195,15 +196,7 @@ class TestManagedStreamingIngestClient:
             content_type="application/json",
         )
 
-        # ensure test can work when executed from within directories
-        current_dir = os.getcwd()
-        path_parts = ["azure-kusto-ingest", "tests", "input", "dataset.csv"]
-        missing_path_parts = []
-        for path_part in path_parts:
-            if path_part not in current_dir:
-                missing_path_parts.append(path_part)
-
-        file_path = os.path.join(current_dir, *missing_path_parts)
+        file_path = str(get_input_folder_path("dataset.csv"))
 
         result = ingest_client.ingest_from_file(file_path, ingestion_properties=ingestion_properties)
 
@@ -240,15 +233,7 @@ class TestManagedStreamingIngestClient:
         ingest_client._set_retry_settings(0)
         ingestion_properties = IngestionProperties(database="database", table="table")
 
-        # ensure test can work when executed from within directories
-        current_dir = os.getcwd()
-        path_parts = ["azure-kusto-ingest", "tests", "input", "dataset.csv"]
-        missing_path_parts = []
-        for path_part in path_parts:
-            if path_part not in current_dir:
-                missing_path_parts.append(path_part)
-
-        file_path = os.path.join(current_dir, *missing_path_parts)
+        file_path = str(get_input_folder_path("dataset.csv"))
 
         result = ingest_client.ingest_from_file(file_path, ingestion_properties=ingestion_properties)
 
@@ -293,14 +278,7 @@ class TestManagedStreamingIngestClient:
         ingest_client = ManagedStreamingIngestClient.from_dm_kcsb("https://ingest-somecluster.kusto.windows.net")
         ingestion_properties = IngestionProperties(database="database", table="table", data_format=DataFormat.CSV)
 
-        current_dir = os.getcwd()
-        path_parts = ["azure-kusto-ingest", "tests", "input", "dataset.csv"]
-        missing_path_parts = []
-        for path_part in path_parts:
-            if path_part not in current_dir:
-                missing_path_parts.append(path_part)
-
-        file_path = os.path.join(current_dir, *missing_path_parts)
+        file_path = str(get_input_folder_path("dataset.csv"))
 
         with pytest.raises(KustoApiError) as ex:
             ingest_client.ingest_from_file(file_path, ingestion_properties=ingestion_properties)

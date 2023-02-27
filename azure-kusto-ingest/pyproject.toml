@@ -17,7 +17,6 @@ classifiers=[
 keywords=["kusto", "wrapper", "client", "azure", "ingest"]
 packages = [
     { include = "azure/kusto/ingest"},
-    { include = "tests"}
 ]
 
 [tool.poetry.dependencies]
