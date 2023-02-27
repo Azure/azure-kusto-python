@@ -39,11 +39,11 @@ jobs:
         run: poetry install --no-interaction
 
       - name: lint
-        run: poe lint
+        run: poetry run poe lint
 
       - name: Test
         run: |
-          pytest -v . --junit-xml pytest.xml --cov=/home/runner/.local/lib/python${{ matrix.python-version }}/site-packages/azure/kusto --cov-report=xml
+          poetry run pytest -v . --junit-xml pytest.xml --cov=/home/runner/.local/lib/python${{ matrix.python-version }}/site-packages/azure/kusto --cov-report=xml
         env:
           APP_ID: ${{ secrets.APP_ID }}
           APP_KEY: ${{ secrets.APP_KEY }}
