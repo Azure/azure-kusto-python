@@ -2,15 +2,10 @@ import dataclasses
 import enum
 import json
 import uuid
-import os
 from dataclasses import dataclass
 from typing import List
 
 import inflection as inflection
-
-from azure.kusto.data import DataFormat, KustoClient
-from azure.kusto.ingest import QueuedIngestClient
-from utils import AuthenticationModeOptions, Utils
 
 # Declare OpenTelemetry as enabled tracing plugin for Azure SDKs
 from azure.core.settings import settings
@@ -20,14 +15,17 @@ from azure.core.tracing.ext.opentelemetry_span import OpenTelemetrySpan
 
 # See https://github.com/open-telemetry/opentelemetry-python for details on regular open telemetry usage
 from opentelemetry import trace
-from opentelemetry.trace import Tracer
 from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import SimpleSpanProcessor
-
 from opentelemetry.sdk.trace.export import ConsoleSpanExporter
+from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+from opentelemetry.trace import Tracer
+
+from azure.kusto.data import DataFormat, KustoClient
+from azure.kusto.ingest import QueuedIngestClient
+from utils import AuthenticationModeOptions, Utils
+
 
 # alternative azure monitor exporter for distributed tracing
-from azure.monitor.opentelemetry.exporter import AzureMonitorTraceExporter
 
 
 def enable_distributed_tracing() -> "Tracer":
@@ -502,7 +500,7 @@ class KustoSampleApp:
 
 @distributed_trace(name_of_span="KustoSampleApp.main", kind=SpanKind.CLIENT)
 def main():
-    print("Kusto sample app  is starting...")
+    print("Kusto sample app is starting...")
 
     app = KustoSampleApp()
     app.load_configs(app.CONFIG_FILE_NAME)
