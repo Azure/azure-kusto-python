@@ -29,7 +29,7 @@ python = "^3.7.1"
 azure-kusto-data = { path = "../azure-kusto-data", develop = true }
 azure-kusto-ingest = { path = "../azure-kusto-ingest", develop = true }
 azure-core-tracing-opentelemetry = "^1.0.0b9"
-azure-monitor-opentelemetry-exporter = "^1.0.0b7"
+azure-monitor-opentelemetry-exporter = "^1.0.0b12"
 inflection = "^0.5.1"
 opentelemetry-sdk = "^1.12.0"
 tqdm = "^4.64.0"
