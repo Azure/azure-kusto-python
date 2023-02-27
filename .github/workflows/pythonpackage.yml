@@ -7,8 +7,7 @@ on:
     branches: [ master ]
   pull_request:
 jobs:
-  build:
-
+  build-and-test:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
