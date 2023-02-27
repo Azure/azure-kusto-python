@@ -7,7 +7,7 @@ on:
     branches: [ master ]
   pull_request:
 jobs:
-  build-and-test:
+  build:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -77,7 +77,7 @@ jobs:
 
   publish-test-results:
     name: "Publish Tests Results"
-    needs: build-and-test
+    needs: build
     runs-on: ubuntu-latest
     permissions:
       checks: write
