@@ -78,9 +78,7 @@ class ConfigData:
 
     @staticmethod
     def from_json(json_dict: dict) -> "ConfigData":
-        json_dict["sourceType"] = SourceType[
-            inflection.underscore(json_dict.pop("sourceType"))
-        ]
+        json_dict["sourceType"] = SourceType[inflection.underscore(json_dict.pop("sourceType"))]
         json_dict["dataFormat"] = DataFormat[json_dict.pop("format").upper()]
         return data_class_from_json(json_dict, ConfigData)
 
@@ -109,9 +107,7 @@ class ConfigJson:
 
     @staticmethod
     def from_json(json_dict: dict) -> "ConfigJson":
-        json_dict["dataToIngest"] = [
-            ConfigData.from_json(j) for j in json_dict.pop("data")
-        ]
+        json_dict["dataToIngest"] = [ConfigData.from_json(j) for j in json_dict.pop("data")]
         return data_class_from_json(json_dict, ConfigJson)
 
 
@@ -153,15 +149,11 @@ class KustoSampleApp:
                 cls.config = ConfigJson.from_json(json_dict)
 
         except Exception as ex:
-            Utils.error_handler(
-                f"Couldn't read load config file from file '{config_file_name}'", ex
-            )
+            Utils.error_handler(f"Couldn't read load config file from file '{config_file_name}'", ex)
 
     @classmethod
     @distributed_trace(kind=SpanKind.CLIENT)
-    def pre_ingestion_querying(
-        cls, config: ConfigJson, kusto_client: KustoClient
-    ) -> None:
+    def pre_ingestion_querying(cls, config: ConfigJson, kusto_client: KustoClient) -> None:
         """
         First phase, pre ingestion - will reach the provided DB with several control commands and a query based on the configuration File.
         :param config: ConfigJson object containing the SampleApp configuration
@@ -172,9 +164,7 @@ class KustoSampleApp:
                 # Tip: Usually table was originally created with a schema appropriate for the data being ingested, so this wouldn't be needed.
                 # Learn More: For more information about altering table schemas,
                 #  see: https://docs.microsoft.com/azure/data-explorer/kusto/management/alter-table-command
-                cls.wait_for_user_to_proceed(
-                    f"Alter-merge existing table '{config.database_name}.{config.table_name}' to align with the provided schema"
-                )
+                cls.wait_for_user_to_proceed(f"Alter-merge existing table '{config.database_name}.{config.table_name}' to align with the provided schema")
                 cls.alter_merge_existing_table_to_provided_schema(
                     kusto_client,
                     config.database_name,
@@ -183,18 +173,12 @@ class KustoSampleApp:
                 )
             if config.query_data:
                 # Learn More: For more information about Kusto Query Language (KQL), see: https://docs.microsoft.com/azure/data-explorer/write-queries
-                cls.wait_for_user_to_proceed(
-                    f"Get existing row count in '{config.database_name}.{config.table_name}'"
-                )
-                cls.query_existing_number_of_rows(
-                    kusto_client, config.database_name, config.table_name
-                )
+                cls.wait_for_user_to_proceed(f"Get existing row count in '{config.database_name}.{config.table_name}'")
+                cls.query_existing_number_of_rows(kusto_client, config.database_name, config.table_name)
         else:
             # Tip: This is generally a one-time configuration
             # Learn More: For more information about creating tables, see: https://docs.microsoft.com/azure/data-explorer/one-click-table
-            cls.wait_for_user_to_proceed(
-                f"Create table '{config.database_name}.{config.table_name}'"
-            )
+            cls.wait_for_user_to_proceed(f"Create table '{config.database_name}.{config.table_name}'")
             cls.create_new_table(
                 kusto_client,
                 config.database_name,
@@ -211,9 +195,7 @@ class KustoSampleApp:
 
         # TODO: Change if needed. Disabled to prevent an existing batching policy from being unintentionally changed
         if False and config.batching_policy:
-            cls.wait_for_user_to_proceed(
-                f"Alter the batching policy for table '{config.database_name}.{config.table_name}'"
-            )
+            cls.wait_for_user_to_proceed(f"Alter the batching policy for table '{config.database_name}.{config.table_name}'")
             cls.alter_batching_policy(
                 kusto_client,
                 config.database_name,
@@ -240,12 +222,8 @@ class KustoSampleApp:
         Utils.Queries.execute_command(kusto_client, database_name, command)
 
     @classmethod
-    @distributed_trace(
-        name_of_span="KustoSampleApp.query", kind=SpanKind.CLIENT
-    )  # We can give similar spans the same name
-    def query_existing_number_of_rows(
-        cls, kusto_client: KustoClient, database_name: str, table_name: str
-    ) -> None:
+    @distributed_trace(name_of_span="KustoSampleApp.query", kind=SpanKind.CLIENT)  # We can give similar spans the same name
+    def query_existing_number_of_rows(cls, kusto_client: KustoClient, database_name: str, table_name: str) -> None:
         """
         Queries the data on the existing number of rows.
         :param kusto_client: Client to run commands
@@ -256,12 +234,8 @@ class KustoSampleApp:
         Utils.Queries.execute_command(kusto_client, database_name, command)
 
     @classmethod
-    @distributed_trace(
-        name_of_span="KustoSampleApp.query", kind=SpanKind.CLIENT
-    )  # We can give similar spans the same name
-    def query_first_two_rows(
-        cls, kusto_client: KustoClient, database_name: str, table_name: str
-    ) -> None:
+    @distributed_trace(name_of_span="KustoSampleApp.query", kind=SpanKind.CLIENT)  # We can give similar spans the same name
+    def query_first_two_rows(cls, kusto_client: KustoClient, database_name: str, table_name: str) -> None:
         """
         Queries the first two rows of the table.
         :param kusto_client: Client to run commands
@@ -308,9 +282,7 @@ class KustoSampleApp:
         # we opt to modify the default ingestion policy to ingest data after at most 10 seconds.
         # Tip 2: This is generally a one-time configuration.
         # Tip 3: You can skip the batching for some files using the Flush-Immediately property, though this option should be used with care as it is inefficient
-        command = (
-            f".alter table {table_name} policy ingestionbatching @'{batching_policy}'"
-        )
+        command = f".alter table {table_name} policy ingestionbatching @'{batching_policy}'"
         Utils.Queries.execute_command(kusto_client, database_name, command)
 
     @classmethod
@@ -379,15 +351,9 @@ class KustoSampleApp:
             return
 
         ingestion_mapping_kind = data_format.ingestion_mapping_kind.value.lower()
-        cls.wait_for_user_to_proceed(
-            f"Create a '{ingestion_mapping_kind}' mapping reference named '{mapping_name}'"
-        )
+        cls.wait_for_user_to_proceed(f"Create a '{ingestion_mapping_kind}' mapping reference named '{mapping_name}'")
 
-        mapping_name = (
-            mapping_name
-            if mapping_name
-            else "DefaultQuickstartMapping" + str(uuid.UUID())[:5]
-        )
+        mapping_name = mapping_name if mapping_name else "DefaultQuickstartMapping" + str(uuid.UUID())[:5]
         mapping_command = f".create-or-alter table {table_name} ingestion {ingestion_mapping_kind} mapping '{mapping_name}' '{mapping_value}'"
         Utils.Queries.execute_command(kusto_client, database_name, mapping_command)
 
@@ -419,9 +385,7 @@ class KustoSampleApp:
 
         # Tip: When ingesting json files, if each line represents a single-line json, use MULTIJSON format even if the file only contains one line.
         # If the json contains whitespace formatting, use SINGLEJSON. In this case, only one data row json object is allowed per file.
-        data_format = (
-            DataFormat.MULTIJSON if data_format == data_format.JSON else data_format
-        )
+        data_format = DataFormat.MULTIJSON if data_format == data_format.JSON else data_format
 
         # Tip: Kusto's Python SDK can ingest data from files, blobs, open streams and pandas dataframes.
         # See the SDK's samples and the E2E tests in azure.kusto.ingest for additional references.
@@ -447,9 +411,7 @@ class KustoSampleApp:
                 mapping_name,
             )
         else:
-            Utils.error_handler(
-                f"Unknown source '{source_type}' for file '{source_uri}'"
-            )
+            Utils.error_handler(f"Unknown source '{source_type}' for file '{source_uri}'")
 
     @classmethod
     @distributed_trace(kind=SpanKind.CLIENT)
@@ -467,22 +429,16 @@ class KustoSampleApp:
         :param table_name: Table Name
         :param config_ingest_data: Flag noting whether any data was ingested by the script
         """
-        optional_post_ingestion_message = (
-            "post-ingestion " if config_ingest_data else ""
-        )
+        optional_post_ingestion_message = "post-ingestion " if config_ingest_data else ""
 
         # Note: We poll here the ingestion's target table because monitoring successful ingestions is expensive and not recommended.
         #   Instead, the recommended ingestion monitoring approach is to monitor failures.
         # Learn more: https://docs.microsoft.com/azure/data-explorer/kusto/api/netfx/kusto-ingest-client-status#tracking-ingestion-status-kustoqueuedingestclient
         #   and https://docs.microsoft.com/azure/data-explorer/using-diagnostic-logs
-        cls.wait_for_user_to_proceed(
-            f"Get {optional_post_ingestion_message}row count for '{database_name}.{table_name}':"
-        )
+        cls.wait_for_user_to_proceed(f"Get {optional_post_ingestion_message}row count for '{database_name}.{table_name}':")
         cls.query_existing_number_of_rows(kusto_client, database_name, table_name)
 
-        cls.wait_for_user_to_proceed(
-            f"Get {optional_post_ingestion_message}row count for '{database_name}.{table_name}':"
-        )
+        cls.wait_for_user_to_proceed(f"Get {optional_post_ingestion_message}row count for '{database_name}.{table_name}':")
         cls.query_first_two_rows(kusto_client, database_name, table_name)
 
     @classmethod
@@ -506,22 +462,14 @@ def main():
     app.load_configs(app.CONFIG_FILE_NAME)
 
     if app.config.authentication_mode == "UserPrompt":
-        app.wait_for_user_to_proceed(
-            "You will be prompted *twice* for credentials during this script. Please return to the console after authenticating."
-        )
+        app.wait_for_user_to_proceed("You will be prompted *twice* for credentials during this script. Please return to the console after authenticating.")
 
-    kusto_connection_string = Utils.Authentication.generate_connection_string(
-        app.config.kusto_uri, app.config.authentication_mode
-    )
-    ingest_connection_string = Utils.Authentication.generate_connection_string(
-        app.config.ingest_uri, app.config.authentication_mode
-    )
+    kusto_connection_string = Utils.Authentication.generate_connection_string(app.config.kusto_uri, app.config.authentication_mode)
+    ingest_connection_string = Utils.Authentication.generate_connection_string(app.config.ingest_uri, app.config.authentication_mode)
 
     # Tip: Avoid creating a new Kusto/ingest client for each use.Instead, create the clients once and reuse them.
     if not kusto_connection_string or not ingest_connection_string:
-        Utils.error_handler(
-            "Connection String error. Please validate your configuration file."
-        )
+        Utils.error_handler("Connection String error. Please validate your configuration file.")
     else:
         # Make sure to use context manager for the Kusto client, as it will close the underlying resources properly.
         # Alternatively, you can use the client as a regular Python object and call close() on it.
