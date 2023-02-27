@@ -38,19 +38,25 @@ black = "black ."
 black-check = "black --check --diff ."
 pyright = "pyright"
 build = [
-    { ref = "do 'rm -rf dist'" },
-    { ref = "do 'poetry build'" },
+    { ref = "do-parallel 'rm -rf dist'" },
+    { ref = "do-parallel 'poetry build'" },
     { script = "fix_monorepo:main" },
 ]
 test = "pytest"
 test-e2e = "pytest -k 'E2E'"
 test-no-e2e = "pytest -k 'not E2E'"
 lint.ref = "black-check"
+update = [
+    { ref = "do-parallel 'poetry update'" },
+    { shell = "poetry update" },
+]
 
 [tool.poe.tasks.version]
 sequence = [
     { shell = "poetry version ${version}" },
-    { ref = "do 'poetry version ${version}'" },
+    { ref = "do-parallel 'poetry version ${version}'" },
+    { shell = "poetry update" },
+    { ref = "do-parallel 'poetry update'" },
 ]
 args = [{ name = "version", positional = true }]
 
@@ -70,4 +76,13 @@ shell = """
     ${command} &&
     cd ..
 """
+[tool.poe.tasks.do-parallel]
+shell = """
+    (cd azure-kusto-data && ${command}) &
+    (cd azure-kusto-ingest && ${command}) &
+    (cd quick_start && ${command}) &
+    wait
+"""
+
+
 args = [{ name = "command", positional = true }]

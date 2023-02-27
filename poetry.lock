@@ -242,11 +242,11 @@ six = ">=1.12.0"
 
 [[package]]
 name = "azure-kusto-data"
-version = "5.0.0"
+version = "4.1.2"
 description = "Kusto Data Client"
 category = "main"
 optional = false
-python-versions = "^3.7.1"
+python-versions = "^3.8"
 files = []
 develop = true
 
@@ -271,11 +271,11 @@ url = "azure-kusto-data"
 
 [[package]]
 name = "azure-kusto-ingest"
-version = "5.0.0"
+version = "4.1.2"
 description = "Kusto Ingest Client"
 category = "main"
 optional = false
-python-versions = "^3.7.1"
+python-versions = "^3.8"
 files = []
 develop = true
 
@@ -295,11 +295,11 @@ url = "azure-kusto-ingest"
 
 [[package]]
 name = "azure-kusto-quick-start"
-version = "5.0.0"
+version = "4.1.2"
 description = "Kusto Data Client"
 category = "main"
 optional = false
-python-versions = "^3.7.1"
+python-versions = "^3.8"
 files = []
 develop = true
 
@@ -309,7 +309,7 @@ azure-kusto-data = {path = "../azure-kusto-data", develop = true}
 azure-kusto-ingest = {path = "../azure-kusto-ingest", develop = true}
 azure-monitor-opentelemetry-exporter = "^1.0.0b12"
 inflection = "^0.5.1"
-opentelemetry-sdk = "^1.12.0"
+opentelemetry-sdk = "^1.15.0"
 tqdm = "^4.64.0"
 
 [package.extras]

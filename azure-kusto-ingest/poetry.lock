@@ -45,7 +45,7 @@ version = "4.1.2"
 description = "Kusto Data Client"
 category = "main"
 optional = false
-python-versions = "^3.7.1"
+python-versions = "^3.8"
 files = []
 develop = true
 
@@ -59,7 +59,7 @@ requests = "^2.28.2"
 
 [package.extras]
 aio = ["aiohttp (>=3.8.4,<4.0.0)", "asgiref (>=3.6.0,<4.0.0)"]
-pandas = ["pandas (>=1.3.4,<2.0.0)"]
+pandas = ["pandas (>=1.5.3,<2.0.0)"]
 
 [package.source]
 type = "directory"
@@ -670,5 +670,5 @@ pandas = []
 
 [metadata]
 lock-version = "2.0"
-python-versions = "^3.7.1"
-content-hash = "97116c7e96b0b6a022425e97f0c5102fb6be98454306fa6a4830abb171f02c8c"
+python-versions = "^3.8"
+content-hash = "7c46239e5a00ded2bd679aef9ef097db62a26c2b47ce91ee6576961e0fe41f94"

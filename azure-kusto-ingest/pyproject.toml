@@ -20,7 +20,7 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.7.1"
+python = "^3.8"
 azure-kusto-data = { path = "../azure-kusto-data", develop = true }
 azure-storage-blob = "^12.15.0"
 azure-storage-queue = "^12.6.0"
