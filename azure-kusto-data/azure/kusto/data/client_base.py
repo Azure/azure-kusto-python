@@ -69,6 +69,10 @@ class _KustoClientBase(abc.ABC):
         if self._aad_helper:
             self._aad_helper.token_provider.set_proxy(proxy_url)
 
+    @abc.abstractmethod
+    def set_redirect_count(self, redirect_count: int):
+        pass
+
     def validate_endpoint(self):
         if not self._endpoint_validated and self._aad_helper is not None:
             if isinstance(self._aad_helper.token_provider, CloudInfoTokenProvider):

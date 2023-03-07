@@ -72,6 +72,7 @@ class KustoClient(_KustoClientBase):
 
         # Create a session object for connection pooling
         self._session = requests.Session()
+        self._session.max_redirects = 0
 
         adapter = HTTPAdapterWithSocketOptions(
             socket_options=(HTTPConnection.default_socket_options or []) + self.compose_socket_options(), pool_maxsize=self._max_pool_size
@@ -93,6 +94,9 @@ class KustoClient(_KustoClientBase):
     def set_proxy(self, proxy_url: str):
         super().set_proxy(proxy_url)
         self._session.proxies = {"http": proxy_url, "https": proxy_url}
+
+    def set_redirect_count(self, redirect_count: int):
+        self._session.max_redirects = redirect_count
 
     def set_http_retries(self, max_retries: int):
         """

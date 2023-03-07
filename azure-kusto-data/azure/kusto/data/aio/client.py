@@ -31,6 +31,7 @@ class KustoClient(_KustoClientBase):
         super().__init__(kcsb, True)
 
         self._session = ClientSession()
+        self._max_redirects = 0
 
     async def __aenter__(self) -> "KustoClient":
         return self
@@ -144,6 +145,8 @@ class KustoClient(_KustoClientBase):
             proxy=self._proxy_url,
             name_of_span="KustoClient.http_post",
             tracing_attributes=http_trace_attributes,
+            allow_redirects=self._max_redirects > 0,
+            max_redirects=self._max_redirects,
         )
 
         if stream_response:
