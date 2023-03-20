@@ -2,13 +2,12 @@ import io
 from datetime import timedelta
 from typing import Optional, Union
 
-from azure.core.tracing.decorator_async import distributed_trace_async
 from azure.core.tracing import SpanKind
+from azure.core.tracing.decorator_async import distributed_trace_async
 
 from .response import KustoStreamingResponseDataSet
-
-from .._telemetry import KustoTracing, KustoTracingAttributes
 from .._decorators import aio_documented_by, documented_by
+from .._telemetry import KustoTracing, KustoTracingAttributes
 from ..aio.streaming_response import JsonTokenReader, StreamingDataSetEnumerator
 from ..client import KustoClient as KustoClientSync
 from ..client_base import ExecuteRequestParams, _KustoClientBase
@@ -31,6 +30,9 @@ class KustoClient(_KustoClientBase):
         super().__init__(kcsb, True)
 
         self._session = ClientSession()
+
+        # Note: Our async client, aiohttp, does not support setting max redirects on a session level.
+        # We therefore use a field to store the max redirects value, and pass it to the request method.
         self._max_redirects = 0
 
     async def __aenter__(self) -> "KustoClient":
@@ -137,7 +139,9 @@ class KustoClient(_KustoClientBase):
         if self._aad_helper:
             request_headers["Authorization"] = await self._aad_helper.acquire_authorization_header_async()
 
-        http_trace_attributes = KustoTracingAttributes.create_http_attributes(url=endpoint, method="POST", headers=request_headers)
+        http_trace_attributes = KustoTracingAttributes.create_http_attributes(
+            url=endpoint, method="POST", max_redirects=self._max_redirects, headers=request_headers
+        )
         response = await KustoTracing.call_func_tracing_async(
             self._session.post,
             endpoint,

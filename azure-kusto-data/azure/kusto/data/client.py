@@ -281,7 +281,9 @@ class KustoClient(_KustoClientBase):
             request_headers["Authorization"] = self._aad_helper.acquire_authorization_header()
 
         # trace http post call for response
-        http_trace_attributes = KustoTracingAttributes.create_http_attributes(url=endpoint, method="POST", headers=request_headers)
+        http_trace_attributes = KustoTracingAttributes.create_http_attributes(
+            url=endpoint, method="POST", max_redirects=self._session.max_redirects, headers=request_headers
+        )
         response = KustoTracing.call_func_tracing(
             self._session.post,
             endpoint,

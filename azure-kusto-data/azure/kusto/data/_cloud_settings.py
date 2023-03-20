@@ -87,9 +87,9 @@ class CloudSettings:
             url = urljoin(kusto_uri, METADATA_ENDPOINT)
 
             # trace http get call for result
-            http_trace_attributes = KustoTracingAttributes.create_http_attributes(url=url, method="GET")
+            http_trace_attributes = KustoTracingAttributes.create_http_attributes(url=url, method="GET", max_redirects=0)
             result = KustoTracing.call_func_tracing(
-                requests.get, url, proxies=proxies, name_of_span="CloudSettings.http_get", tracing_attributes=http_trace_attributes
+                requests.get, url, proxies=proxies, name_of_span="CloudSettings.http_get", tracing_attributes=http_trace_attributes, allow_redirects=False
             )
 
             if result.status_code == 200:
