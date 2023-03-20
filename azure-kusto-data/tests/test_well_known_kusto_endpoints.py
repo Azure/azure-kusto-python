@@ -14,14 +14,14 @@ def test_well_known_kusto_endpoints_data():
             assert suffix.startswith(".")
 
         # Check for duplicates
-        suffixSet = set(v["AllowedKustoSuffixes"])
-        hostSet = set(v["AllowedKustoHostnames"])
-        diff = len(v["AllowedKustoSuffixes"]) - len(suffixSet)
+        suffix_set = set(v["AllowedKustoSuffixes"])
+        host_set = set(v["AllowedKustoHostnames"])
+        diff = len(v["AllowedKustoSuffixes"]) - len(suffix_set)
         assert 0 == diff
 
         # Search for one expected URL in one of the lists
-        locate_suffix |= ".kusto.windows.net" in suffixSet
-        locate_host |= "kusto.aria.microsoft.com" in hostSet
+        locate_suffix |= ".kusto.windows.net" in suffix_set
+        locate_host |= "kusto.aria.microsoft.com" in host_set
     assert locate_suffix
     assert locate_host
 
@@ -100,22 +100,24 @@ def test_well_known_kusto_endpoints_random_kusto_clusters():
         "https://kustowwqgogzpseg6o.eastus2.kusto.windows.net",
         "https://kustor3gjpwqum3olw.canadacentral.kusto.windows.net",
         "https://dflskfdslfkdslkdsfldfs.westeurope.kusto.data.microsoft.com",
+        "https://dflskfdslfkdslkdsfldfs.z7.kusto.fabric.microsoft.com",
     ]:
         _validate_endpoint(c, DEFAULT_PUBLIC_LOGIN_URL)
 
         # Test case sensitivity
-        clusterName = c.upper()
-        _validate_endpoint(clusterName, DEFAULT_PUBLIC_LOGIN_URL)
+        cluster_name = c.upper()
+        _validate_endpoint(cluster_name, DEFAULT_PUBLIC_LOGIN_URL)
 
+        special_urls = "synapse" in c or "data.microsoft.com" in c or "fabric.microsoft.com" in c
         # Test MFA endpoints
-        if not "synapse" in c and not "data.microsoft.com" in c:
-            clusterName = c.replace(".kusto.", ".kustomfa.")
-            _validate_endpoint(clusterName, DEFAULT_PUBLIC_LOGIN_URL)
+        if not special_urls:
+            cluster_name = c.replace(".kusto.", ".kustomfa.")
+            _validate_endpoint(cluster_name, DEFAULT_PUBLIC_LOGIN_URL)
 
         # Test dev endpoints
-        if not "synapse" in c and not "data.microsoft.com" in c:
-            clusterName = c.replace(".kusto.", ".kustodev.")
-            _validate_endpoint(clusterName, DEFAULT_PUBLIC_LOGIN_URL)
+        if not special_urls:
+            cluster_name = c.replace(".kusto.", ".kustodev.")
+            _validate_endpoint(cluster_name, DEFAULT_PUBLIC_LOGIN_URL)
 
 
 def test_well_known_kusto_endpoints_national_clouds():
@@ -129,10 +131,10 @@ def test_well_known_kusto_endpoints_national_clouds():
         "https://kusto7j53clqswr4he.kusto.core.eaglex.ic.gov,https://login.microsoftonline.eaglex.ic.gov",
         "https://rpe2e0422132101fct2.kusto.core.microsoft.scloud,https://login.microsoftonline.microsoft.scloud",
     ]:
-        clusterAndLoginEndpoint = c.split(",")
-        _validate_endpoint(clusterAndLoginEndpoint[0], clusterAndLoginEndpoint[1])
+        cluster_and_login_endpoint = c.split(",")
+        _validate_endpoint(cluster_and_login_endpoint[0], cluster_and_login_endpoint[1])
         # Test case sensitivity
-        _validate_endpoint(clusterAndLoginEndpoint[0].upper(), clusterAndLoginEndpoint[1].upper())
+        _validate_endpoint(cluster_and_login_endpoint[0].upper(), cluster_and_login_endpoint[1].upper())
 
 
 def test_well_known_kusto_endpoints_proxy_test():
@@ -146,10 +148,10 @@ def test_well_known_kusto_endpoints_proxy_test():
         "https://cluster.playfabapi.com,{0}".format(DEFAULT_PUBLIC_LOGIN_URL),
         "https://cluster.playfab.cn,{0}".format(CHINA_CLOUD_LOGIN),
     ]:
-        clusterAndLoginEndpoint = c.split(",")
-        _validate_endpoint(clusterAndLoginEndpoint[0], clusterAndLoginEndpoint[1])
+        cluster_and_login_endpoint = c.split(",")
+        _validate_endpoint(cluster_and_login_endpoint[0], cluster_and_login_endpoint[1])
         # Test case sensitivity
-        _validate_endpoint(clusterAndLoginEndpoint[0].upper(), clusterAndLoginEndpoint[1].upper())
+        _validate_endpoint(cluster_and_login_endpoint[0].upper(), cluster_and_login_endpoint[1].upper())
 
 
 def test_well_known_kusto_endpoints_proxy_negative_test():
@@ -194,7 +196,7 @@ def test_well_known_kusto_endpoints_override():
         well_known_kusto_endpoints.set_override_policy(None)
 
 
-def test_wellKnownKustoEndpoints_AdditionalWebsites():
+def test_well_known_kusto_endpoints_additional_websites():
     well_known_kusto_endpoints.add_trusted_hosts([MatchRule(".someotherdomain1.net", False)], True)
 
     # 2nd call - to validate that addition works
@@ -214,14 +216,14 @@ def test_wellKnownKustoEndpoints_AdditionalWebsites():
         _check_endpoint(clusterName, DEFAULT_PUBLIC_LOGIN_URL, True)
 
 
-def _check_endpoint(clusterName, defaultPublicLoginUrl, expectFail):
-    if expectFail:
+def _check_endpoint(cluster_name, default_public_login_url, expect_fail):
+    if expect_fail:
         try:
-            _validate_endpoint(clusterName, defaultPublicLoginUrl)
+            _validate_endpoint(cluster_name, default_public_login_url)
         except KustoClientInvalidConnectionStringException:
             pass
     else:
-        _validate_endpoint(clusterName, defaultPublicLoginUrl)
+        _validate_endpoint(cluster_name, default_public_login_url)
 
 
 def _validate_endpoint(address, login_endpoint):
