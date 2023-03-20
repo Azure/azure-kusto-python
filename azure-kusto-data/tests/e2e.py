@@ -10,8 +10,9 @@ from typing import Optional, ClassVar
 
 import pytest
 from azure.identity import DefaultAzureCredential
-
 from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
+from requests import TooManyRedirects
+
 from azure.kusto.data._cloud_settings import CloudSettings
 from azure.kusto.data._models import WellKnownDataSet
 from azure.kusto.data._token_providers import AsyncDefaultAzureCredential
@@ -300,3 +301,17 @@ class TestE2E:
     def test_cloud_info_404(self):
         cloud_info = CloudSettings.get_cloud_info_for_cluster("https://www.microsoft.com")
         assert cloud_info is CloudSettings.DEFAULT_CLOUD
+
+    def test_redirects(self):
+        redirect_codes = [301, 302, 303, 307, 308]
+        with KustoClient("https://httpstat.us/") as client:
+            for code in redirect_codes:
+                client._query_endpoint = f"https://httpstat.us/{code}"
+                with pytest.raises(TooManyRedirects):
+                    client.execute("db", "table")
+            client.set_redirect_count(1)
+            for code in redirect_codes:
+                client._query_endpoint = f"https://httpstat.us/{code}"
+                with pytest.raises(Exception) as ex:
+                    client.execute("db", "table")
+                    assert not isinstance(ex, TooManyRedirects)
