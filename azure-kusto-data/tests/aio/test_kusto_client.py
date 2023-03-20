@@ -192,4 +192,4 @@ range x from 1 to 10 step 1"""
             with patch("requests.get", side_effect=mocked_requests_post) as mock_get:
                 client._aad_helper.token_provider._init_resources()
 
-                mock_get.assert_called_with("https://somecluster.kusto.windows.net/v1/rest/auth/metadata", proxies=expected_dict)
+                mock_get.assert_called_with("https://somecluster.kusto.windows.net/v1/rest/auth/metadata", allow_redirects=False, proxies=expected_dict)

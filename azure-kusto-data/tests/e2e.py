@@ -18,6 +18,7 @@ from azure.kusto.data._models import WellKnownDataSet
 from azure.kusto.data._token_providers import AsyncDefaultAzureCredential
 from azure.kusto.data.aio import KustoClient as AsyncKustoClient
 from azure.kusto.data.streaming_response import FrameType
+from kusto.data import aio
 
 
 @pytest.fixture(params=["ManagedStreaming", "NormalClient"])
@@ -314,4 +315,19 @@ class TestE2E:
                 client._query_endpoint = f"https://httpstat.us/{code}"
                 with pytest.raises(Exception) as ex:
                     client.execute("db", "table")
+                    assert not isinstance(ex, TooManyRedirects)
+
+    @pytest.mark.asyncio
+    async def test_redirects_async(self):
+        redirect_codes = [301, 302, 303, 307, 308]
+        with aio.KustoClient("https://httpstat.us/") as client:
+            for code in redirect_codes:
+                client._query_endpoint = f"https://httpstat.us/{code}"
+                with pytest.raises(TooManyRedirects):
+                    await client.execute("db", "table")
+            client.set_redirect_count(1)
+            for code in redirect_codes:
+                client._query_endpoint = f"https://httpstat.us/{code}"
+                with pytest.raises(Exception) as ex:
+                    await client.execute("db", "table")
                     assert not isinstance(ex, TooManyRedirects)
