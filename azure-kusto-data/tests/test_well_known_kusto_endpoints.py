@@ -100,7 +100,7 @@ def test_well_known_kusto_endpoints_random_kusto_clusters():
         "https://kustowwqgogzpseg6o.eastus2.kusto.windows.net",
         "https://kustor3gjpwqum3olw.canadacentral.kusto.windows.net",
         "https://dflskfdslfkdslkdsfldfs.westeurope.kusto.data.microsoft.com",
-        "https://dflskfdslfkdslkdsfldfs.westeurope.kusto.fabric.microsoft.com",
+        "https://dflskfdslfkdslkdsfldfs.z7.kusto.fabric.microsoft.com",
     ]:
         _validate_endpoint(c, DEFAULT_PUBLIC_LOGIN_URL)
 
