@@ -18,8 +18,8 @@ from azure.kusto.data._models import WellKnownDataSet
 from azure.kusto.data._token_providers import AsyncDefaultAzureCredential
 from azure.kusto.data.aio import KustoClient as AsyncKustoClient
 from azure.kusto.data.streaming_response import FrameType
-from kusto.data import aio
-from kusto.data.exceptions import KustoServiceError
+from azure.kusto.data import aio
+from azure.kusto.data.exceptions import KustoServiceError
 
 
 @pytest.fixture(params=["ManagedStreaming", "NormalClient"])
