@@ -10,16 +10,16 @@ from typing import Optional, ClassVar
 
 import pytest
 from azure.identity import DefaultAzureCredential
-from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
 from requests import TooManyRedirects
 
+from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
+from azure.kusto.data import aio
 from azure.kusto.data._cloud_settings import CloudSettings
 from azure.kusto.data._models import WellKnownDataSet
 from azure.kusto.data._token_providers import AsyncDefaultAzureCredential
 from azure.kusto.data.aio import KustoClient as AsyncKustoClient
-from azure.kusto.data.streaming_response import FrameType
-from azure.kusto.data import aio
 from azure.kusto.data.exceptions import KustoServiceError
+from azure.kusto.data.streaming_response import FrameType
 
 
 @pytest.fixture(params=["ManagedStreaming", "NormalClient"])
@@ -311,7 +311,9 @@ class TestE2E:
                 client._query_endpoint = f"https://httpstat.us/{code}"
                 with pytest.raises(TooManyRedirects):
                     client.execute("db", "table")
+
             client.set_redirect_count(5)
+
             for code in redirect_codes:
                 client._query_endpoint = f"https://httpstat.us/{code}"
                 with pytest.raises(Exception) as ex:
@@ -327,7 +329,9 @@ class TestE2E:
                 with pytest.raises(KustoServiceError) as ex:
                     await client.execute("db", "table")
                 assert str(code) in str(ex)
+
             client.set_redirect_count(5)
+
             for code in redirect_codes:
                 client._query_endpoint = f"https://httpstat.us/{code}"
                 with pytest.raises(Exception) as ex:
