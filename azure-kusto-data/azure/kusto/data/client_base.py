@@ -70,7 +70,7 @@ class _KustoClientBase(abc.ABC):
             self._aad_helper.token_provider.set_proxy(proxy_url)
 
     @abc.abstractmethod
-    def set_redirect_count(self, redirect_count: int):
+    def set_max_redirects(self, max_redirects: int):
         pass
 
     def validate_endpoint(self):

@@ -95,8 +95,8 @@ class KustoClient(_KustoClientBase):
         super().set_proxy(proxy_url)
         self._session.proxies = {"http": proxy_url, "https": proxy_url}
 
-    def set_redirect_count(self, redirect_count: int):
-        self._session.max_redirects = redirect_count
+    def set_max_redirects(self, max_redirects: int):
+        self._session.max_redirects = max_redirects
 
     def set_http_retries(self, max_retries: int):
         """

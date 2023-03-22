@@ -25,7 +25,7 @@ class KustoTracingAttributes:
     _HTTP_USER_AGENT = "http.user_agent"
     _HTTP_METHOD = "http.method"
     _HTTP_URL = "http.url"
-    _HTTP_REDIRECT_COUNT = "http.redirect_count"
+    _HTTP_MAX_REDIRECTS = "http.max_redirects"
 
     @classmethod
     def add_attributes(cls, **kwargs) -> None:
@@ -81,7 +81,7 @@ class KustoTracingAttributes:
             cls._SPAN_COMPONENT: cls._HTTP,
             cls._HTTP_METHOD: method,
             cls._HTTP_URL: url,
-            cls._HTTP_REDIRECT_COUNT: max_redirects,
+            cls._HTTP_MAX_REDIRECTS: max_redirects,
         }
         user_agent = headers.get("User-Agent")
         if user_agent:

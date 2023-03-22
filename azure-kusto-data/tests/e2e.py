@@ -312,7 +312,7 @@ class TestE2E:
                 with pytest.raises(TooManyRedirects):
                     client.execute("db", "table")
 
-            client.set_redirect_count(5)
+            client.set_max_redirects(5)
 
             for code in redirect_codes:
                 client._query_endpoint = f"https://httpstat.us/{code}"
@@ -330,7 +330,7 @@ class TestE2E:
                     await client.execute("db", "table")
                 assert str(code) in str(ex)
 
-            client.set_redirect_count(5)
+            client.set_max_redirects(5)
 
             for code in redirect_codes:
                 client._query_endpoint = f"https://httpstat.us/{code}"

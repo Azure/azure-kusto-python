@@ -46,8 +46,8 @@ class KustoClient(_KustoClientBase):
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         await self.close()
 
-    def set_redirect_count(self, redirect_count: int):
-        self._max_redirects = redirect_count
+    def set_max_redirects(self, max_redirects: int):
+        self._max_redirects = max_redirects
 
     @aio_documented_by(KustoClientSync.execute)
     async def execute(self, database: str, query: str, properties: ClientRequestProperties = None) -> KustoResponseDataSet:
