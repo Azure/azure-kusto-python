@@ -18,7 +18,8 @@
         ".kustomfa.windows.net",
         ".playfabapi.com",
         ".playfab.com",
-        ".kusto.data.microsoft.com"
+        ".kusto.data.microsoft.com",
+        ".kusto.fabric.microsoft.com"
       ],
       "AllowedKustoHostnames": [
         "ade.applicationinsights.io",
