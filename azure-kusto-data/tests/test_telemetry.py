@@ -82,14 +82,8 @@ class TestTelemetry:
 
     @staticmethod
     def test_create_http_attributes():
-        attributes = KustoTracingAttributes.create_http_attributes("method_test", "url_test", 0)
-        assert attributes == {"component": "http", "http.method": "method_test", "http.url": "url_test", "http.max_redirects": 0}
+        attributes = KustoTracingAttributes.create_http_attributes("method_test", "url_test")
+        assert attributes == {"component": "http", "http.method": "method_test", "http.url": "url_test"}
         headers = {"User-Agent": "user_agent_test"}
-        attributes = KustoTracingAttributes.create_http_attributes("method_test", "url_test", 0, headers)
-        assert attributes == {
-            "component": "http",
-            "http.method": "method_test",
-            "http.url": "url_test",
-            "http.user_agent": "user_agent_test",
-            "http.max_redirects": 0,
-        }
+        attributes = KustoTracingAttributes.create_http_attributes("method_test", "url_test", headers)
+        assert attributes == {"component": "http", "http.method": "method_test", "http.url": "url_test", "http.user_agent": "user_agent_test"}

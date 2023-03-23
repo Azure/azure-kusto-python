@@ -31,10 +31,6 @@ class KustoClient(_KustoClientBase):
 
         self._session = ClientSession()
 
-        # Note: Our async client, aiohttp, does not support setting max redirects on a session level.
-        # We therefore use a field to store the max redirects value, and pass it to the request method.
-        self._max_redirects = 0
-
     async def __aenter__(self) -> "KustoClient":
         return self
 
@@ -45,9 +41,6 @@ class KustoClient(_KustoClientBase):
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         await self.close()
-
-    def set_max_redirects(self, max_redirects: int):
-        self._max_redirects = max_redirects
 
     @aio_documented_by(KustoClientSync.execute)
     async def execute(self, database: str, query: str, properties: ClientRequestProperties = None) -> KustoResponseDataSet:
@@ -139,9 +132,7 @@ class KustoClient(_KustoClientBase):
         if self._aad_helper:
             request_headers["Authorization"] = await self._aad_helper.acquire_authorization_header_async()
 
-        http_trace_attributes = KustoTracingAttributes.create_http_attributes(
-            url=endpoint, method="POST", max_redirects=self._max_redirects, headers=request_headers
-        )
+        http_trace_attributes = KustoTracingAttributes.create_http_attributes(url=endpoint, method="POST", headers=request_headers)
         response = await KustoTracing.call_func_tracing_async(
             self._session.post,
             endpoint,
@@ -152,8 +143,7 @@ class KustoClient(_KustoClientBase):
             proxy=self._proxy_url,
             name_of_span="KustoClient.http_post",
             tracing_attributes=http_trace_attributes,
-            allow_redirects=self._max_redirects > 0,
-            max_redirects=self._max_redirects,
+            allow_redirects=False,
         )
 
         if stream_response:

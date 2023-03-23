@@ -10,7 +10,6 @@ from typing import Optional, ClassVar
 
 import pytest
 from azure.identity import DefaultAzureCredential
-from requests import TooManyRedirects
 
 from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
 from azure.kusto.data import aio
@@ -304,24 +303,17 @@ class TestE2E:
         cloud_info = CloudSettings.get_cloud_info_for_cluster("https://www.microsoft.com")
         assert cloud_info is CloudSettings.DEFAULT_CLOUD
 
-    def test_redirects(self):
+    def test_no_redirects(self):
         redirect_codes = [301, 302, 303, 307, 308]
         with KustoClient("https://httpstat.us/") as client:
             for code in redirect_codes:
                 client._query_endpoint = f"https://httpstat.us/{code}"
-                with pytest.raises(TooManyRedirects):
+                with pytest.raises(KustoServiceError) as ex:
                     client.execute("db", "table")
-
-            client.set_max_redirects(5)
-
-            for code in redirect_codes:
-                client._query_endpoint = f"https://httpstat.us/{code}"
-                with pytest.raises(Exception) as ex:
-                    client.execute("db", "table")
-                assert not isinstance(ex, TooManyRedirects)
+                assert str(code) in str(ex)
 
     @pytest.mark.asyncio
-    async def test_redirects_async(self):
+    async def test_no_redirects_async(self):
         redirect_codes = [301, 302, 303, 307, 308]
         async with aio.KustoClient("https://httpstat.us/") as client:
             for code in redirect_codes:
@@ -329,11 +321,3 @@ class TestE2E:
                 with pytest.raises(KustoServiceError) as ex:
                     await client.execute("db", "table")
                 assert str(code) in str(ex)
-
-            client.set_max_redirects(5)
-
-            for code in redirect_codes:
-                client._query_endpoint = f"https://httpstat.us/{code}"
-                with pytest.raises(Exception) as ex:
-                    await client.execute("db", "table")
-                assert str(code) not in str(ex)

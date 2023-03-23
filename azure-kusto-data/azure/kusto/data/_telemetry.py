@@ -25,7 +25,6 @@ class KustoTracingAttributes:
     _HTTP_USER_AGENT = "http.user_agent"
     _HTTP_METHOD = "http.method"
     _HTTP_URL = "http.url"
-    _HTTP_MAX_REDIRECTS = "http.max_redirects"
 
     @classmethod
     def add_attributes(cls, **kwargs) -> None:
@@ -74,14 +73,13 @@ class KustoTracingAttributes:
         return ingest_attributes
 
     @classmethod
-    def create_http_attributes(cls, method: str, url: str, max_redirects: int, headers: dict = None) -> dict:
+    def create_http_attributes(cls, method: str, url: str, headers: dict = None) -> dict:
         if headers is None:
             headers = {}
         http_tracing_attributes: dict = {
             cls._SPAN_COMPONENT: cls._HTTP,
             cls._HTTP_METHOD: method,
             cls._HTTP_URL: url,
-            cls._HTTP_MAX_REDIRECTS: max_redirects,
         }
         user_agent = headers.get("User-Agent")
         if user_agent:

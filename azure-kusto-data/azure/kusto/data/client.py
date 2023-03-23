@@ -72,7 +72,6 @@ class KustoClient(_KustoClientBase):
 
         # Create a session object for connection pooling
         self._session = requests.Session()
-        self._session.max_redirects = 0
 
         adapter = HTTPAdapterWithSocketOptions(
             socket_options=(HTTPConnection.default_socket_options or []) + self.compose_socket_options(), pool_maxsize=self._max_pool_size
@@ -94,9 +93,6 @@ class KustoClient(_KustoClientBase):
     def set_proxy(self, proxy_url: str):
         super().set_proxy(proxy_url)
         self._session.proxies = {"http": proxy_url, "https": proxy_url}
-
-    def set_max_redirects(self, max_redirects: int):
-        self._session.max_redirects = max_redirects
 
     def set_http_retries(self, max_retries: int):
         """
@@ -281,9 +277,7 @@ class KustoClient(_KustoClientBase):
             request_headers["Authorization"] = self._aad_helper.acquire_authorization_header()
 
         # trace http post call for response
-        http_trace_attributes = KustoTracingAttributes.create_http_attributes(
-            url=endpoint, method="POST", max_redirects=self._session.max_redirects, headers=request_headers
-        )
+        http_trace_attributes = KustoTracingAttributes.create_http_attributes(url=endpoint, method="POST", headers=request_headers)
         response = KustoTracing.call_func_tracing(
             self._session.post,
             endpoint,
@@ -292,6 +286,7 @@ class KustoClient(_KustoClientBase):
             data=payload,
             timeout=timeout.seconds,
             stream=stream_response,
+            allow_redirects=False,
             name_of_span="KustoClient.http_post",
             tracing_attributes=http_trace_attributes,
         )
@@ -299,14 +294,18 @@ class KustoClient(_KustoClientBase):
         if stream_response:
             try:
                 response.raise_for_status()
+                if 300 <= response.status < 400:
+                    raise Exception("Unexpected redirection, got status code: " + str(response.status))
                 return response
             except Exception as e:
                 raise self._handle_http_error(e, self._query_endpoint, None, response, response.status_code, response.json(), response.text)
 
         response_json = None
         try:
-            response_json = response.json()
             response.raise_for_status()
+            if 300 <= response.status < 400:
+                raise Exception("Unexpected redirection, got status code: " + str(response.status))
+            response_json = response.json()
         except Exception as e:
             raise self._handle_http_error(e, endpoint, payload, response, response.status_code, response_json, response.text)
         # trace response processing
