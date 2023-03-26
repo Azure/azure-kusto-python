@@ -180,11 +180,7 @@ class TestManagedStreamingIngestClient:
         total_attempts = 3
 
         responses.add_callback(
-            responses.POST,
-            "https://ingest-somecluster.kusto.windows.net/v1/rest/mgmt",
-            callback=queued_request_callback,
-            content_type="application/json",
-            allow_redirects=False,
+            responses.POST, "https://ingest-somecluster.kusto.windows.net/v1/rest/mgmt", callback=queued_request_callback, content_type="application/json"
         )
 
         ingest_client = ManagedStreamingIngestClient.from_engine_kcsb("https://somecluster.kusto.windows.net")
@@ -292,7 +288,6 @@ class TestManagedStreamingIngestClient:
                 }
             },
             content_type="application/json",
-            allow_redirects=False,
         )
 
         ingest_client = ManagedStreamingIngestClient.from_dm_kcsb("https://ingest-somecluster.kusto.windows.net")
