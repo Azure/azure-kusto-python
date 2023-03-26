@@ -166,10 +166,10 @@ class KustoClient(_KustoClientBase):
         async with response:
             response_json = None
             try:
-                response.raise_for_status()
                 if 300 <= response.status < 400:
                     raise Exception("Unexpected redirection, got status code: " + str(response.status))
                 response_json = await response.json()
+                response.raise_for_status()
             except Exception as e:
                 try:
                     response_text = await response.text()
