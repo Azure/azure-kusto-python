@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [4.1.3] - 2023-03-19
 ### Added
 - Add new trident endpoint support
+### Security
+- Redirects are no longer allowed
 
 ## [4.1.2] - 2023-02-22
 
