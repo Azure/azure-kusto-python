@@ -12,10 +12,12 @@ import pytest
 from azure.identity import DefaultAzureCredential
 
 from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
+from azure.kusto.data import aio
 from azure.kusto.data._cloud_settings import CloudSettings
 from azure.kusto.data._models import WellKnownDataSet
 from azure.kusto.data._token_providers import AsyncDefaultAzureCredential
 from azure.kusto.data.aio import KustoClient as AsyncKustoClient
+from azure.kusto.data.exceptions import KustoServiceError
 from azure.kusto.data.streaming_response import FrameType
 
 
@@ -300,3 +302,22 @@ class TestE2E:
     def test_cloud_info_404(self):
         cloud_info = CloudSettings.get_cloud_info_for_cluster("https://www.microsoft.com")
         assert cloud_info is CloudSettings.DEFAULT_CLOUD
+
+    def test_no_redirects(self):
+        redirect_codes = [301, 302, 303, 307, 308]
+        with KustoClient("https://httpstat.us/") as client:
+            for code in redirect_codes:
+                client._query_endpoint = f"https://httpstat.us/{code}"
+                with pytest.raises(KustoServiceError) as ex:
+                    client.execute("db", "table")
+                assert str(code) in str(ex)
+
+    @pytest.mark.asyncio
+    async def test_no_redirects_async(self):
+        redirect_codes = [301, 302, 303, 307, 308]
+        async with aio.KustoClient("https://httpstat.us/") as client:
+            for code in redirect_codes:
+                client._query_endpoint = f"https://httpstat.us/{code}"
+                with pytest.raises(KustoServiceError) as ex:
+                    await client.execute("db", "table")
+                assert str(code) in str(ex)
