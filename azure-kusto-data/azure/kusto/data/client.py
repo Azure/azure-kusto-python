@@ -294,7 +294,7 @@ class KustoClient(_KustoClientBase):
         if stream_response:
             try:
                 response.raise_for_status()
-                if 300 <= response.status < 400:
+                if 300 <= response.status_code < 400:
                     raise Exception("Unexpected redirection, got status code: " + str(response.status))
                 return response
             except Exception as e:
@@ -303,7 +303,7 @@ class KustoClient(_KustoClientBase):
         response_json = None
         try:
             response.raise_for_status()
-            if 300 <= response.status < 400:
+            if 300 <= response.status_code < 400:
                 raise Exception("Unexpected redirection, got status code: " + str(response.status))
             response_json = response.json()
         except Exception as e:
