@@ -195,7 +195,7 @@ class TestKustoClient(KustoClientTestsMixin):
 
             client._aad_helper.token_provider._init_resources()
 
-            mock_get.assert_called_with("https://somecluster.kusto.windows.net/v1/rest/auth/metadata", proxies=expected_dict)
+            mock_get.assert_called_with("https://somecluster.kusto.windows.net/v1/rest/auth/metadata", proxies=expected_dict, allow_redirects=False)
 
     def test_proxy_url_parsing(self):
         """Test Proxy URL Parsing"""
