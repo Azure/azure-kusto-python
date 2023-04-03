@@ -152,7 +152,9 @@ class TestE2E:
 
     @classmethod
     def get_client(cls, app_insights=False) -> KustoClient:
-        return KustoClient(cls.engine_kcsb_from_env(app_insights, is_async=False))
+        kcsb = cls.engine_kcsb_from_env(app_insights, is_async=False)
+        kcsb.user_name_for_tracing = "E2E_Test_ø"
+        return KustoClient(kcsb)
 
     @staticmethod
     def normalize_row(row):
