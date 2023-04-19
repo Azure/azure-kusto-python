@@ -285,6 +285,23 @@ class TestE2E:
         await self.assert_rows_added(20)
 
     @pytest.mark.asyncio
+    async def test_csv_ingest_ignore_first_record(self, is_managed_streaming):
+        csv_ingest_props = IngestionProperties(
+            self.test_db,
+            self.test_table,
+            data_format=DataFormat.CSV,
+            column_mappings=self.get_test_table_csv_mappings(),
+            report_level=ReportLevel.FailuresAndSuccesses,
+            flush_immediately=True,
+            ignore_first_record=True,
+        )
+
+        for f in [self.csv_file_path, self.zipped_csv_file_path]:
+            self.ingest_client.ingest_from_file(f, csv_ingest_props)
+
+        await self.assert_rows_added(18)
+
+    @pytest.mark.asyncio
     async def test_json_ingest_existing_table(self):
         json_ingestion_props = IngestionProperties(
             self.test_db,
