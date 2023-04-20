@@ -286,6 +286,7 @@ class KustoClient(_KustoClientBase):
             data=payload,
             timeout=timeout.seconds,
             stream=stream_response,
+            allow_redirects=False,
             name_of_span="KustoClient.http_post",
             tracing_attributes=http_trace_attributes,
         )
@@ -293,12 +294,16 @@ class KustoClient(_KustoClientBase):
         if stream_response:
             try:
                 response.raise_for_status()
+                if 300 <= response.status_code < 400:
+                    raise Exception("Unexpected redirection, got status code: " + str(response.status))
                 return response
             except Exception as e:
                 raise self._handle_http_error(e, self._query_endpoint, None, response, response.status_code, response.json(), response.text)
 
         response_json = None
         try:
+            if 300 <= response.status_code < 400:
+                raise Exception("Unexpected redirection, got status code: " + str(response.status))
             response_json = response.json()
             response.raise_for_status()
         except Exception as e:

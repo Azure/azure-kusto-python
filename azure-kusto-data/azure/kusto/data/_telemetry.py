@@ -52,11 +52,6 @@ class KustoTracingAttributes:
         cls.add_attributes(tracing_attributes=ingest_attributes)
 
     @classmethod
-    def set_http_attributes(cls, url: str, method: str, headers: dict) -> None:
-        http_tracing_attributes: dict = cls.create_http_attributes(method, url, headers)
-        cls.add_attributes(tracing_attributes=http_tracing_attributes)
-
-    @classmethod
     def set_cloud_info_attributes(cls, url: str) -> None:
         cloud_info_attributes: dict = cls.create_cloud_info_attributes(url)
         cls.add_attributes(tracing_attributes=cloud_info_attributes)

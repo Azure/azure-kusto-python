@@ -173,12 +173,15 @@ class ExecuteRequestParams:
         ]
 
         for header in special_headers:
+            value: str
             if properties and header["property"](properties) is not None:
                 value = header["property"](properties)
             else:
                 value = header["value"]
 
             if value is not None:
+                # Replace any characters that aren't ascii with '?'
+                value = value.encode("ascii", "replace").decode("ascii", "strict")
                 request_headers[header["name"]] = value
 
         if properties is not None:

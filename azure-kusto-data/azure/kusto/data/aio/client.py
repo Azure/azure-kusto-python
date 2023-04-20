@@ -2,13 +2,12 @@ import io
 from datetime import timedelta
 from typing import Optional, Union
 
-from azure.core.tracing.decorator_async import distributed_trace_async
 from azure.core.tracing import SpanKind
+from azure.core.tracing.decorator_async import distributed_trace_async
 
 from .response import KustoStreamingResponseDataSet
-
-from .._telemetry import KustoTracing, KustoTracingAttributes
 from .._decorators import aio_documented_by, documented_by
+from .._telemetry import KustoTracing, KustoTracingAttributes
 from ..aio.streaming_response import JsonTokenReader, StreamingDataSetEnumerator
 from ..client import KustoClient as KustoClientSync
 from ..client_base import ExecuteRequestParams, _KustoClientBase
@@ -144,11 +143,14 @@ class KustoClient(_KustoClientBase):
             proxy=self._proxy_url,
             name_of_span="KustoClient.http_post",
             tracing_attributes=http_trace_attributes,
+            allow_redirects=False,
         )
 
         if stream_response:
             try:
                 response.raise_for_status()
+                if 300 <= response.status < 400:
+                    raise Exception("Unexpected redirection, got status code: " + str(response.status))
                 return response
             except Exception as e:
                 try:
@@ -164,6 +166,8 @@ class KustoClient(_KustoClientBase):
         async with response:
             response_json = None
             try:
+                if 300 <= response.status < 400:
+                    raise Exception("Unexpected redirection, got status code: " + str(response.status))
                 response_json = await response.json()
                 response.raise_for_status()
             except Exception as e:

@@ -16,6 +16,8 @@ from azure.kusto.data._cloud_settings import CloudSettings
 from azure.kusto.data._models import WellKnownDataSet
 from azure.kusto.data._token_providers import AsyncDefaultAzureCredential
 from azure.kusto.data.aio import KustoClient as AsyncKustoClient
+from azure.kusto.data.exceptions import KustoServiceError
+from azure.kusto.data.kusto_trusted_endpoints import MatchRule, well_known_kusto_endpoints
 from azure.kusto.data.streaming_response import FrameType
 
 
@@ -140,7 +142,9 @@ class TestE2E:
 
     @classmethod
     def get_client(cls, app_insights=False) -> KustoClient:
-        return KustoClient(cls.engine_kcsb_from_env(app_insights, is_async=False))
+        kcsb = cls.engine_kcsb_from_env(app_insights, is_async=False)
+        kcsb.user_name_for_tracing = "E2E_Test_ø"
+        return KustoClient(kcsb)
 
     @staticmethod
     def normalize_row(row):
@@ -288,5 +292,47 @@ class TestE2E:
         assert cloud_info is CloudSettings.get_cloud_info_for_cluster(self.engine_cs)
 
     def test_cloud_info_404(self):
-        cloud_info = CloudSettings.get_cloud_info_for_cluster("https://www.microsoft.com")
+        cloud_info = CloudSettings.get_cloud_info_for_cluster("https://httpstat.us/404")
         assert cloud_info is CloudSettings.DEFAULT_CLOUD
+
+    @pytest.mark.parametrize("code", [301, 302, 307, 308])
+    def test_no_redirects_fail_in_cloud(self, code):
+        with KustoClient(
+            KustoConnectionStringBuilder.with_azure_token_credential(f"https://statusreturner.azurewebsites.net/{code}/nocloud/test", DefaultAzureCredential())
+        ) as client:
+            with pytest.raises(KustoServiceError) as ex:
+                client.execute("db", "table")
+            assert ex.value.http_response.status_code == code
+
+    @pytest.mark.parametrize("code", [301, 302, 307, 308])
+    def test_no_redirects_fail_in_client(self, code):
+        well_known_kusto_endpoints.add_trusted_hosts([MatchRule("statusreturner.azurewebsites.net", False)], False)
+        with KustoClient(
+            KustoConnectionStringBuilder.with_azure_token_credential(f"https://statusreturner.azurewebsites.net/{code}/test", DefaultAzureCredential())
+        ) as client:
+            with pytest.raises(KustoServiceError) as ex:
+                client.execute("db", "table")
+            assert ex.value.http_response.status_code == code
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("code", [301, 302, 307, 308])
+    async def test_no_redirects_fail_in_cloud(self, code):
+        async with AsyncKustoClient(
+            KustoConnectionStringBuilder.with_azure_token_credential(
+                f"https://statusreturner.azurewebsites.net/{code}/nocloud/test", AsyncDefaultAzureCredential()
+            )
+        ) as client:
+            with pytest.raises(KustoServiceError) as ex:
+                await client.execute("db", "table")
+            assert ex.value.http_response.status_code == code
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("code", [301, 302, 307, 308])
+    async def test_no_redirects_fail_in_client(self, code):
+        well_known_kusto_endpoints.add_trusted_hosts([MatchRule("statusreturner.azurewebsites.net", False)], False)
+        async with AsyncKustoClient(
+            KustoConnectionStringBuilder.with_azure_token_credential(f"https://statusreturner.azurewebsites.net/{code}/test", AsyncDefaultAzureCredential())
+        ) as client:
+            with pytest.raises(KustoServiceError) as ex:
+                await client.execute("db", "table")
+            assert ex.value.http_response.status == code
