@@ -63,6 +63,34 @@ jobs:
         uses: codecov/codecov-action@v2
         with:
           env_vars: PYTHON
+      - name: Codeball
+        if: always()
+        uses: sturdy-dev/codeball-action@v2
+        with:
+          approvePullRequests: "false"
+          labelPullRequestsWhenApproved: "true"
+          labelPullRequestsWhenReviewNeeded: "true"
+          failJobsWhenReviewNeeded: "false"
+      - name: AI Code Reviewer
+        if: always()
+        uses: freeedcom/ai-code-reviewer@main
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      - uses: feiskyer/ChatGPT-Reviewer@v0
+        if: always()
+        name: ChatGPT Review
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      - uses: purvesh-d/AIReviewRadar@1.0.2
+        if: always()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        with:
+          debug: false
+          review_comment_lgtm: false
 
   publish-test-results:
     name: "Publish Unit Tests Results"
