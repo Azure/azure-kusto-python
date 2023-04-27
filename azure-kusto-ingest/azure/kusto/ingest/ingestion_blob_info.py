@@ -51,6 +51,8 @@ class IngestionBlobInfo:
             additional_properties["ValidationPolicy"] = _convert_dict_to_json(ingestion_properties.validation_policy)
         if ingestion_properties.format:
             additional_properties["format"] = ingestion_properties.format.kusto_value
+        if ingestion_properties.ignore_first_record:
+            additional_properties["ignoreFirstRecord"] = ingestion_properties.ignore_first_record
 
         if additional_properties:
             self.properties["AdditionalProperties"] = additional_properties
