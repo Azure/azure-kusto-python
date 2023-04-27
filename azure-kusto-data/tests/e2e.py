@@ -302,7 +302,7 @@ class TestE2E:
         assert cloud_info is CloudSettings.get_cloud_info_for_cluster(self.engine_cs)
 
     def test_cloud_info_404(self):
-        cloud_info = CloudSettings.get_cloud_info_for_cluster("https://httpstat.us/404")
+        cloud_info = CloudSettings.get_cloud_info_for_cluster("https://statusreturner.azurewebsites.net/404")
         assert cloud_info is CloudSettings.DEFAULT_CLOUD
 
     @pytest.mark.parametrize("code", [301, 302, 307, 308])
