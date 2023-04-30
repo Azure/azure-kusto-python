@@ -14,7 +14,7 @@ from azure.core.tracing import SpanKind
 from azure.identity import AzureCliCredential, ManagedIdentityCredential
 from msal import ConfidentialClientApplication, PublicClientApplication
 
-from kcsb import DeviceCallbackType
+from .kcsb import DeviceCallbackType
 from ._cloud_settings import CloudInfo, CloudSettings
 from ._telemetry import KustoTracing
 from .exceptions import KustoAioSyntaxError, KustoAsyncUsageError, KustoClientError
