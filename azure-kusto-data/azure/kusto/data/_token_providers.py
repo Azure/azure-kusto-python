@@ -14,6 +14,7 @@ from azure.core.tracing import SpanKind
 from azure.identity import AzureCliCredential, ManagedIdentityCredential
 from msal import ConfidentialClientApplication, PublicClientApplication
 
+from kcsb import DeviceCallbackType
 from ._cloud_settings import CloudInfo, CloudSettings
 from ._telemetry import KustoTracing
 from .exceptions import KustoAioSyntaxError, KustoAsyncUsageError, KustoClientError
@@ -488,7 +489,7 @@ class UserPassTokenProvider(CloudInfoTokenProvider):
 class DeviceLoginTokenProvider(CloudInfoTokenProvider):
     """Acquire a token from MSAL with Device Login flow"""
 
-    def __init__(self, kusto_uri: str, authority_id: str, device_code_callback=None, is_async: bool = False):
+    def __init__(self, kusto_uri: str, authority_id: str, device_code_callback: DeviceCallbackType = None, is_async: bool = False):
         super().__init__(kusto_uri, is_async)
         self._msal_client = None
         self._auth = authority_id
