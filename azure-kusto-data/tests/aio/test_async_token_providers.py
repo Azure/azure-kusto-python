@@ -211,9 +211,9 @@ class TestTokenProvider:
             print(" *** Skipped User Device Flow Test ***")
             return
 
-        def callback(x):
+        def callback(x, x2, x3):
             # break here if you debug this test, and get the code from 'x'
-            print(x)
+            print(f"Please go to {x} and enter code {x2} to authenticate, expires in {x3}")
 
         with DeviceLoginTokenProvider(KUSTO_URI, "organizations", callback, is_async=True) as provider:
             token = await provider.get_token_async()

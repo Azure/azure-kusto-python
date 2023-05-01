@@ -1,10 +1,9 @@
 from enum import unique, Enum
 from typing import Union, Callable, Coroutine, Optional, Tuple, List, Any
 
+from _token_providers import DeviceCallbackType
 from ._string_utils import assert_string_is_not_empty
 from .client_details import ClientDetails
-
-DeviceCallbackType = Optional[Callable[[dict], None]]
 
 
 class KustoConnectionStringBuilder:
@@ -324,7 +323,10 @@ class KustoConnectionStringBuilder:
         password.
         :param str connection_string: Kusto connection string should be of the format: https://<clusterName>.kusto.windows.net
         :param str authority_id: optional param. defaults to "organizations"
-        :param Callable callback: callback function to be called when authentication is required, accepts a dictionary.
+        :param DeviceCallbackType callback: options callback function to be called when authentication is required, accepts three parameters:
+                - ``verification_uri`` (str) the URL the user must visit
+                - ``user_code`` (str) the code the user must enter there
+                - ``expires_on`` (datetime.datetime) the UTC time at which the code will expire
         """
         kcsb = cls(connection_string)
         kcsb[kcsb.ValidKeywords.aad_federated_security] = True
