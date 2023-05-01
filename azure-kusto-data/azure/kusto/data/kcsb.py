@@ -1,7 +1,7 @@
 from enum import unique, Enum
 from typing import Union, Callable, Coroutine, Optional, Tuple, List, Any
 
-from _token_providers import DeviceCallbackType
+from ._token_providers import DeviceCallbackType
 from ._string_utils import assert_string_is_not_empty
 from .client_details import ClientDetails
 
