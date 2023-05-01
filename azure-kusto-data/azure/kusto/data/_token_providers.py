@@ -9,16 +9,15 @@ from threading import Lock
 from typing import Callable, Coroutine, List, Optional, Any
 
 from azure.core.exceptions import ClientAuthenticationError
+from azure.core.tracing import SpanKind
 from azure.core.tracing.decorator import distributed_trace
 from azure.core.tracing.decorator_async import distributed_trace_async
-from azure.core.tracing import SpanKind
 from azure.identity import AzureCliCredential, ManagedIdentityCredential, DeviceCodeCredential
 from msal import ConfidentialClientApplication, PublicClientApplication
 
 from ._cloud_settings import CloudInfo, CloudSettings
 from ._telemetry import KustoTracing
 from .exceptions import KustoAioSyntaxError, KustoAsyncUsageError, KustoClientError
-
 
 DeviceCallbackType = Callable[[str, str, datetime], None]
 """A callback enabling control of how authentication
@@ -494,6 +493,7 @@ class UserPassTokenProvider(CloudInfoTokenProvider):
 
         token = self._msal_client.acquire_token_silent(scopes=self._scopes, account=account)
         return self._valid_token_or_none(token)
+
 
 class InteractiveLoginTokenProvider(CloudInfoTokenProvider):
     """Acquire a token from MSAL with Device Login flow"""
