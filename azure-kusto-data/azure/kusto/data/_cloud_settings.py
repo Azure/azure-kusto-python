@@ -25,13 +25,13 @@ class CloudInfo:
     """This class holds the data for a specific cloud instance."""
 
     def __init__(
-            self,
-            login_endpoint: str,
-            login_mfa_required: bool,
-            kusto_client_app_id: str,
-            kusto_client_redirect_uri: str,
-            kusto_service_resource_id: str,
-            first_party_authority_url: str,
+        self,
+        login_endpoint: str,
+        login_mfa_required: bool,
+        kusto_client_app_id: str,
+        kusto_client_redirect_uri: str,
+        kusto_service_resource_id: str,
+        first_party_authority_url: str,
     ):
         self.login_endpoint = login_endpoint
         self.login_mfa_required = login_mfa_required
@@ -47,12 +47,12 @@ class CloudInfo:
         if not isinstance(other, self.__class__):
             return False
         return (
-                self.login_endpoint == other.login_endpoint
-                and self.login_mfa_required == other.login_mfa_required
-                and self.kusto_client_app_id == other.kusto_client_app_id
-                and self.kusto_client_redirect_uri == other.kusto_client_redirect_uri
-                and self.kusto_service_resource_id == other.kusto_service_resource_id
-                and self.first_party_authority_url == other.first_party_authority_url
+            self.login_endpoint == other.login_endpoint
+            and self.login_mfa_required == other.login_mfa_required
+            and self.kusto_client_app_id == other.kusto_client_app_id
+            and self.kusto_client_redirect_uri == other.kusto_client_redirect_uri
+            and self.kusto_service_resource_id == other.kusto_service_resource_id
+            and self.first_party_authority_url == other.first_party_authority_url
         )
 
 

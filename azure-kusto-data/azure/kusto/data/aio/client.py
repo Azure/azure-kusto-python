@@ -132,7 +132,9 @@ class KustoClient(_KustoClientBase):
         if self._aad_helper:
             request_headers["Authorization"] = await self._aad_helper.acquire_authorization_header_async()
 
-        invoker = lambda: self._session.post(endpoint, headers=request_headers, json=json_payload, data=payload, timeout=timeout.seconds, proxy=self._proxy_url, allow_redirects=False)
+        invoker = lambda: self._session.post(
+            endpoint, headers=request_headers, json=json_payload, data=payload, timeout=timeout.seconds, proxy=self._proxy_url, allow_redirects=False
+        )
         http_trace_attributes = SpanAttributes.create_http_attributes(url=endpoint, method="POST", headers=request_headers)
         span: Span = Span("KustoClient.http_post", http_trace_attributes)
         response = await span.run_span_async(invoker)

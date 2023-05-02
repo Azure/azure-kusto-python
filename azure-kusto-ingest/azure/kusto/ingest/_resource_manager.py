@@ -31,12 +31,12 @@ class _ResourceUri:
 
 class _IngestClientResources:
     def __init__(
-            self,
-            secured_ready_for_aggregation_queues: List[_ResourceUri] = None,
-            failed_ingestions_queues: List[_ResourceUri] = None,
-            successful_ingestions_queues: List[_ResourceUri] = None,
-            containers: List[_ResourceUri] = None,
-            status_tables: List[_ResourceUri] = None,
+        self,
+        secured_ready_for_aggregation_queues: List[_ResourceUri] = None,
+        failed_ingestions_queues: List[_ResourceUri] = None,
+        successful_ingestions_queues: List[_ResourceUri] = None,
+        containers: List[_ResourceUri] = None,
+        status_tables: List[_ResourceUri] = None,
     ):
         self.secured_ready_for_aggregation_queues = secured_ready_for_aggregation_queues
         self.failed_ingestions_queues = failed_ingestions_queues
@@ -81,9 +81,9 @@ class _ResourceManager:
 
     def _refresh_ingest_client_resources(self):
         if (
-                not self._ingest_client_resources
-                or (self._ingest_client_resources_last_update + self._refresh_period) <= datetime.utcnow()
-                or not self._ingest_client_resources.is_applicable()
+            not self._ingest_client_resources
+            or (self._ingest_client_resources_last_update + self._refresh_period) <= datetime.utcnow()
+            or not self._ingest_client_resources.is_applicable()
         ):
             self._ingest_client_resources = self._get_ingest_client_resources_from_service()
             self._ingest_client_resources_last_update = datetime.utcnow()
@@ -94,8 +94,10 @@ class _ResourceManager:
     def _get_ingest_client_resources_from_service(self):
         # trace all calls to get ingestion resources
         def invoker():
-            with Span(name_of_span="_ResourceManager.get_ingestion_resources",
-                      tracing_attributes=SpanAttributes.create_cluster_attributes(self._kusto_client._kusto_cluster)):
+            with Span(
+                name_of_span="_ResourceManager.get_ingestion_resources",
+                tracing_attributes=SpanAttributes.create_cluster_attributes(self._kusto_client._kusto_cluster),
+            ):
                 return self._kusto_client.execute("NetDefaultDB", ".get ingestion resources")
 
         result = self._retryer(invoker)
@@ -107,14 +109,13 @@ class _ResourceManager:
         containers = self._get_resource_by_name(table, "TempStorage")
         status_tables = self._get_resource_by_name(table, "IngestionsStatusTable")
 
-        return _IngestClientResources(secured_ready_for_aggregation_queues, failed_ingestions_queues,
-                                      successful_ingestions_queues, containers, status_tables)
+        return _IngestClientResources(secured_ready_for_aggregation_queues, failed_ingestions_queues, successful_ingestions_queues, containers, status_tables)
 
     def _refresh_authorization_context(self):
         if (
-                not self._authorization_context
-                or self._authorization_context.isspace()
-                or (self._authorization_context_last_update + self._refresh_period) <= datetime.utcnow()
+            not self._authorization_context
+            or self._authorization_context.isspace()
+            or (self._authorization_context_last_update + self._refresh_period) <= datetime.utcnow()
         ):
             self._authorization_context = self._get_authorization_context_from_service()
             self._authorization_context_last_update = datetime.utcnow()
@@ -122,8 +123,10 @@ class _ResourceManager:
     def _get_authorization_context_from_service(self):
         # trace all calls to get identity token
         def invoker():
-            with Span(name_of_span="_ResourceManager.get_identity_token",
-                      tracing_attributes=SpanAttributes.create_cluster_attributes(self._kusto_client._kusto_cluster)):
+            with Span(
+                name_of_span="_ResourceManager.get_identity_token",
+                tracing_attributes=SpanAttributes.create_cluster_attributes(self._kusto_client._kusto_cluster),
+            ):
                 return self._kusto_client.execute("NetDefaultDB", ".get kusto identity token")
 
         result = self._retryer(invoker)
