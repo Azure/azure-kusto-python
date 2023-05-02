@@ -73,7 +73,7 @@ class _AadHelper:
                 credential_from_login_endpoint=kcsb.credential_from_login_endpoint,
             )
         else:  # TODO - next breaking change - remove this as default, make no auth the default
-            self.token_provider = DeviceLoginTokenProvider(self.kusto_uri, kcsb.authority_id, is_async=is_async)
+            self.token_provider = DeviceLoginTokenProvider(self.kusto_uri, kcsb.authority_id, kcsb.device_callback, is_async=is_async)
 
     def acquire_authorization_header(self):
         try:

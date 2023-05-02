@@ -5,8 +5,8 @@ import unittest
 from threading import Thread
 
 from asgiref.sync import async_to_sync
-
 from azure.identity import ClientSecretCredential, DefaultAzureCredential
+
 from azure.kusto.data._token_providers import *
 
 KUSTO_URI = "https://sdkse2etest.eastus.kusto.windows.net"
@@ -232,9 +232,9 @@ class TokenProviderTests(unittest.TestCase):
             print(" *** Skipped User Device Flow Test ***")
             return
 
-        def callback(x):
+        def callback(x, x2, x3):
             # break here if you debug this test, and get the code from 'x'
-            print(x)
+            print(f"Please go to {x} and enter code {x2} to authenticate, expires in {x3}")
 
         with DeviceLoginTokenProvider(KUSTO_URI, "organizations", callback) as provider:
             token = provider.get_token()

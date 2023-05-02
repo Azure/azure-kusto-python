@@ -2,21 +2,31 @@
 # Licensed under the MIT License
 import abc
 import asyncio
+import inspect
 import time
-import webbrowser
+from datetime import datetime
 from threading import Lock
 from typing import Callable, Coroutine, List, Optional, Any
 
 from azure.core.exceptions import ClientAuthenticationError
+from azure.core.tracing import SpanKind
 from azure.core.tracing.decorator import distributed_trace
 from azure.core.tracing.decorator_async import distributed_trace_async
-from azure.core.tracing import SpanKind
-from azure.identity import AzureCliCredential, ManagedIdentityCredential
+from azure.identity import AzureCliCredential, ManagedIdentityCredential, DeviceCodeCredential
 from msal import ConfidentialClientApplication, PublicClientApplication
 
 from ._cloud_settings import CloudInfo, CloudSettings
 from ._telemetry import KustoTracing
 from .exceptions import KustoAioSyntaxError, KustoAsyncUsageError, KustoClientError
+
+DeviceCallbackType = Callable[[str, str, datetime], None]
+"""A callback enabling control of how authentication
+        instructions are presented. Must accept arguments (``verification_uri``, ``user_code``, ``expires_on``):
+
+        - ``verification_uri`` (str) the URL the user must visit
+        - ``user_code`` (str) the code the user must enter there
+        - ``expires_on`` (datetime.datetime) the UTC time at which the code will expire
+        If this argument isn't provided, the credential will print instructions to stdout."""
 
 try:
     from asgiref.sync import sync_to_async
@@ -485,55 +495,6 @@ class UserPassTokenProvider(CloudInfoTokenProvider):
         return self._valid_token_or_none(token)
 
 
-class DeviceLoginTokenProvider(CloudInfoTokenProvider):
-    """Acquire a token from MSAL with Device Login flow"""
-
-    def __init__(self, kusto_uri: str, authority_id: str, device_code_callback=None, is_async: bool = False):
-        super().__init__(kusto_uri, is_async)
-        self._msal_client = None
-        self._auth = authority_id
-        self._account = None
-        self._device_code_callback = device_code_callback
-
-    @staticmethod
-    def name() -> str:
-        return "DeviceLoginTokenProvider"
-
-    def _context_impl(self) -> dict:
-        return {"authority": self._cloud_info.authority_uri(self._auth), "client_id": self._cloud_info.kusto_client_app_id}
-
-    def _init_impl(self):
-        self._msal_client = PublicClientApplication(
-            client_id=self._cloud_info.kusto_client_app_id, authority=self._cloud_info.authority_uri(self._auth), proxies=self._proxy_dict
-        )
-
-    def _get_token_impl(self) -> Optional[dict]:
-        flow = self._msal_client.initiate_device_flow(scopes=self._scopes)
-        try:
-            if self._device_code_callback:
-                self._device_code_callback(flow[TokenConstants.MSAL_DEVICE_MSG])
-            else:
-                print(flow[TokenConstants.MSAL_DEVICE_MSG])
-
-            webbrowser.open(flow[TokenConstants.MSAL_DEVICE_URI])
-        except KeyError:
-            raise KustoClientError("Failed to initiate device code flow")
-
-        token = self._msal_client.acquire_token_by_device_flow(flow)
-
-        # Keep the account for silent login
-        if self._valid_token_or_none(token) is not None:
-            accounts = self._msal_client.get_accounts()
-            if len(accounts) == 1:
-                self._account = accounts[0]
-
-        return self._valid_token_or_throw(token)
-
-    def _get_token_from_cache_impl(self) -> dict:
-        token = self._msal_client.acquire_token_silent(scopes=self._scopes, account=self._account)
-        return self._valid_token_or_none(token)
-
-
 class InteractiveLoginTokenProvider(CloudInfoTokenProvider):
     """Acquire a token from MSAL with Device Login flow"""
 
@@ -694,7 +655,11 @@ class AzureIdentityTokenCredentialProvider(CloudInfoTokenProvider):
         return {TokenConstants.MSAL_TOKEN_TYPE: TokenConstants.BEARER_TYPE, TokenConstants.MSAL_ACCESS_TOKEN: t.token}
 
     async def _get_token_impl_async(self) -> Optional[dict]:
-        t = await self.credential.get_token(self._scopes[0])
+        # check if get_token is async
+        if inspect.iscoroutinefunction(self.credential.get_token):
+            t = await self.credential.get_token(self._scopes[0])
+        else:
+            t = await sync_to_async(self.credential.get_token)(self._scopes[0])
         return {TokenConstants.MSAL_TOKEN_TYPE: TokenConstants.BEARER_TYPE, TokenConstants.MSAL_ACCESS_TOKEN: t.token}
 
     def _get_token_from_cache_impl(self) -> Optional[dict]:
@@ -708,3 +673,32 @@ class AzureIdentityTokenCredentialProvider(CloudInfoTokenProvider):
                 self.credential.close()
             self.credential = None
             self.credential_from_login_endpoint = None
+
+
+class DeviceLoginTokenProvider(AzureIdentityTokenCredentialProvider):
+    """Acquire a token from MSAL with Device Login flow"""
+
+    def __init__(self, kusto_uri: str, authority_id: str, device_code_callback: DeviceCallbackType = None, is_async: bool = False):
+        self._msal_client = None
+        self._auth = authority_id
+        self._account = None
+        self._device_code_callback = device_code_callback
+
+        def credential_from_login_endpoint(endpoint: str):
+            cred = DeviceCodeCredential(
+                authority=endpoint,
+                tenant_id=self._auth,
+                client_id=self._cloud_info.kusto_client_app_id,
+                prompt_callback=self._device_code_callback,
+            )
+
+            return cred
+
+        super().__init__(kusto_uri, is_async, credential_from_login_endpoint=credential_from_login_endpoint)
+
+    @staticmethod
+    def name() -> str:
+        return "DeviceLoginTokenProvider"
+
+    def _context_impl(self) -> dict:
+        return {"authority": self._cloud_info.authority_uri(self._auth), "client_id": self._cloud_info.kusto_client_app_id}

@@ -1,6 +1,7 @@
 from enum import unique, Enum
 from typing import Union, Callable, Coroutine, Optional, Tuple, List, Any
 
+from ._token_providers import DeviceCallbackType
 from ._string_utils import assert_string_is_not_empty
 from .client_details import ClientDetails
 
@@ -11,6 +12,8 @@ class KustoConnectionStringBuilder:
     For usages, check out the sample at:
         https://github.com/Azure/azure-kusto-python/blob/master/azure-kusto-data/tests/sample.py
     """
+
+    device_callback: DeviceCallbackType = None
 
     kcsb_invalid_item_error = "%s is not supported as an item in KustoConnectionStringBuilder"
 
@@ -312,16 +315,23 @@ class KustoConnectionStringBuilder:
         return kcsb
 
     @classmethod
-    def with_aad_device_authentication(cls, connection_string: str, authority_id: str = "organizations") -> "KustoConnectionStringBuilder":
+    def with_aad_device_authentication(
+        cls, connection_string: str, authority_id: str = "organizations", callback: DeviceCallbackType = None
+    ) -> "KustoConnectionStringBuilder":
         """
         Creates a KustoConnection string builder that will authenticate with AAD application and
         password.
         :param str connection_string: Kusto connection string should be of the format: https://<clusterName>.kusto.windows.net
         :param str authority_id: optional param. defaults to "organizations"
+        :param DeviceCallbackType callback: options callback function to be called when authentication is required, accepts three parameters:
+                - ``verification_uri`` (str) the URL the user must visit
+                - ``user_code`` (str) the code the user must enter there
+                - ``expires_on`` (datetime.datetime) the UTC time at which the code will expire
         """
         kcsb = cls(connection_string)
         kcsb[kcsb.ValidKeywords.aad_federated_security] = True
         kcsb[kcsb.ValidKeywords.authority_id] = authority_id
+        kcsb.device_callback = callback
 
         return kcsb
 
