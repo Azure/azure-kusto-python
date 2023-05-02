@@ -34,7 +34,7 @@ class TestTelemetry:
         async def invoker():
             return "Hello World"
 
-        span = Span.run_async(invoker, "test_span")
+        span = await Span.run_async(invoker, "test_span")
         assert span is not None
 
     @staticmethod
@@ -47,7 +47,7 @@ class TestTelemetry:
     def test_run_async_none_invoker():
         # Edge case test for run_async method with None invoker function
         with pytest.raises(TypeError):
-            Span.run_async(None, "test_span")
+            await Span.run_async(None, "test_span")
 
     @staticmethod
     def test_run_sync_behavior():
