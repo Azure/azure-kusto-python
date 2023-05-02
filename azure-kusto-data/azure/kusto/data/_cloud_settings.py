@@ -87,10 +87,9 @@ class CloudSettings:
             url = urljoin(kusto_uri, METADATA_ENDPOINT)
 
             # trace http get call for result
-            invoker = lambda: requests.get(url, proxies=proxies, allow_redirects=False)
             http_trace_attributes = SpanAttributes.create_http_attributes(url=url, method="GET")
-            span: Span = Span("CloudSettings.http_get", http_trace_attributes)
-            result = span.run_span(invoker)
+            result = Span.run(lambda: requests.get(url, proxies=proxies, allow_redirects=False),
+                              "CloudSettings.http_get", http_trace_attributes)
 
             if result.status_code == 200:
                 content = result.json()

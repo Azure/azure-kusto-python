@@ -134,8 +134,9 @@ class QueuedIngestClient(BaseIngestClient):
                 # trace enqueuing of blob for ingestion
                 invoker = lambda: queue_client.send_message(content=ingestion_blob_info_json, timeout=self._SERVICE_CLIENT_TIMEOUT_SECONDS)
                 enqueue_trace_attributes = IngestTracingAttributes.create_enqueue_request_attributes(queue_client.queue_name, blob_descriptor.source_id)
-                span: Span = Span(name_of_span="QueuedIngestClient.enqueue_request", tracing_attributes=enqueue_trace_attributes)
-                span.run_span(invoker)
+                Span.run(invoker,
+                         name_of_span="QueuedIngestClient.enqueue_request",
+                         tracing_attributes=enqueue_trace_attributes)
 
         return IngestionResult(
             IngestionStatus.QUEUED, ingestion_properties.database, ingestion_properties.table, blob_descriptor.source_id, blob_descriptor.path

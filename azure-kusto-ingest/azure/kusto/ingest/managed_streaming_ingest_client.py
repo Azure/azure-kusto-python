@@ -126,8 +126,7 @@ class ManagedStreamingIngestClient(BaseIngestClient):
                     invoker = lambda: self.streaming_client._ingest_from_stream_with_client_request_id(
                         stream_descriptor, ingestion_properties, client_request_id
                     )
-                    span: Span = Span(name_of_span="ManagedStreamingIngestClient.ingest_from_stream_attempt")
-                    return span.run_span(invoker)
+                    return Span.run(invoker, name_of_span="ManagedStreamingIngestClient.ingest_from_stream_attempt")
 
         except KustoApiError as ex:
             error = ex.get_api_error()

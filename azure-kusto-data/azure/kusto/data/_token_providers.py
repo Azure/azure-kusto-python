@@ -143,8 +143,7 @@ class TokenProviderBase(abc.ABC):
             token = self._get_token_from_cache_impl()
             if token is None:
                 with self._lock:
-                    span: Span = Span(f"{self.name()}.get_token_impl", self.context())
-                    token = span.run_span(self._get_token_impl)
+                    token = Span.run(self._get_token_impl, f"{self.name()}.get_token_impl", self.context())
             return self._valid_token_or_throw(token)
 
         return _get_token()
@@ -179,7 +178,7 @@ class TokenProviderBase(abc.ABC):
             if token is None:
                 async with self._async_lock:
                     span: Span = Span(f"{self.name()}.get_token_impl_async", context)
-                    token = await span.run_span_async(self._get_token_impl_async)
+                    token = await span.run_async(self._get_token_impl_async)
 
             return self._valid_token_or_throw(token)
 

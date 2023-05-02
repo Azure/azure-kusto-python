@@ -98,72 +98,27 @@ class SpanAttributes:
 
 
 class Span:
-    def __init__(self, name_of_span: str = None, tracing_attributes=None, kind: str = SpanKind.INTERNAL):
-        if tracing_attributes is None:
-            tracing_attributes = {}
-        self._name_of_span = name_of_span
-        self._tracing_attributes = tracing_attributes
-        self._kind = kind
-
-    def run_span(self, invoker: Callable):
+    """
+    Span class for telemetry
+    """
+    @staticmethod
+    def run(invoker: Callable, name_of_span: str = None, tracing_attributes=None, kind: str = SpanKind.INTERNAL):
         """
         Runs the span on given function
         """
-        span_shell: Callable = distributed_trace(name_of_span=self._name_of_span, tracing_attributes=self._tracing_attributes, kind=self._kind)
+        if tracing_attributes is None:
+            tracing_attributes = {}
+        span_shell: Callable = distributed_trace(name_of_span=name_of_span, tracing_attributes=tracing_attributes, kind=kind)
         span = span_shell(invoker)
         return span()
 
-    def run_span_async(self, invoker: Callable):
+    @staticmethod
+    def run_async(invoker: Callable, name_of_span: str = None, tracing_attributes=None, kind: str = SpanKind.INTERNAL):
         """
         Runs a span on given function
         """
-        span_shell: Callable = distributed_trace_async(name_of_span=self._name_of_span, tracing_attributes=self._tracing_attributes, kind=self._kind)
+        if tracing_attributes is None:
+            tracing_attributes = {}
+        span_shell: Callable = distributed_trace_async(name_of_span=name_of_span, tracing_attributes=tracing_attributes, kind=kind)
         span = span_shell(invoker)
         return span()
-
-    # def _call_func_tracing(self, name_of_span: str, tracing_attributes: dict, kind: str):
-    #     """
-    #     Prepares function for tracing and calls it
-    #     :param func: function to trace
-    #     :type func: Callable
-    #     :param name_of_span: name of the trace span
-    #     :param tracing_attributes: key/value dictionary of attributes to include in span of trace
-    #     :param  kind: the type of span
-    #     """
-    #
-    #     self._span_shell: Callable = distributed_trace(name_of_span=name_of_span, tracing_attributes=tracing_attributes,
-    #                                                    kind=kind)
-    #     return self
-    #
-    # async def _call_func_tracing_async(self, name_of_span: str, tracing_attributes: dict, kind: str):
-    #     """
-    #     Prepares function for tracing and calls it
-    #     :param func: function to trace
-    #     :type func: Callable
-    #     :key str name_of_span: name of the trace span
-    #     :key dict tracing_attributes: key/value dictionary of attributes to include in span of trace
-    #     :key str kind: the type of span
-    #     :param kwargs: function arguments
-    #     """
-    #
-    #     self._span_shell: Callable = distributed_trace_async(name_of_span=name_of_span,
-    #                                                          tracing_attributes=tracing_attributes, kind=kind)
-    #     return self
-
-    # @staticmethod
-    # def prepare_func_tracing(func: Callable, **kwargs):
-    #     """
-    #     Prepares function for tracing
-    #     :param func: function to trace
-    #     :type func: Callable
-    #     :key str name_of_span: name of the trace span
-    #     :key dict tracing_attributes: key/value dictionary of attributes to include in span of trace
-    #     :key str kind: the type of span
-    #     """
-    #     name_of_span: str = kwargs.pop("name_of_span", None)
-    #     tracing_attributes: dict = kwargs.pop("tracing_attributes", {})
-    #     kind: str = kwargs.pop("kind", SpanKind.CLIENT)
-    #
-    #     span_shell: Callable = distributed_trace(name_of_span=name_of_span, tracing_attributes=tracing_attributes,
-    #                                          kind=kind)
-    #     return span_shell(func)

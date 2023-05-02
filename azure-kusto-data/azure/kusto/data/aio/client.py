@@ -137,7 +137,7 @@ class KustoClient(_KustoClientBase):
         )
         http_trace_attributes = SpanAttributes.create_http_attributes(url=endpoint, method="POST", headers=request_headers)
         span: Span = Span("KustoClient.http_post", http_trace_attributes)
-        response = await span.run_span_async(invoker)
+        response = await span.run_async(invoker)
 
         if stream_response:
             try:
@@ -169,6 +169,4 @@ class KustoClient(_KustoClientBase):
                 except Exception:
                     response_text = None
                 raise self._handle_http_error(e, endpoint, payload, response, response.status, response_json, response_text)
-            invoker = lambda: self._kusto_parse_by_endpoint(endpoint, response_json)
-            span: Span = Span("KustoClient.processing_response")
-            return span.run_span(invoker)
+            return Span.run(lambda: self._kusto_parse_by_endpoint(endpoint, response_json), "KustoClient.processing_response")

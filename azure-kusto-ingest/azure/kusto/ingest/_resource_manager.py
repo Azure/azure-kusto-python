@@ -94,11 +94,9 @@ class _ResourceManager:
     def _get_ingest_client_resources_from_service(self):
         # trace all calls to get ingestion resources
         def invoker():
-            span: Span = Span(
-                name_of_span="_ResourceManager.get_ingestion_resources",
-                tracing_attributes=SpanAttributes.create_cluster_attributes(self._kusto_client._kusto_cluster),
-            )
-            return span.run_span(lambda: self._kusto_client.execute("NetDefaultDB", ".get ingestion resources"))
+            return Span.run(lambda: self._kusto_client.execute("NetDefaultDB", ".get ingestion resources"),
+                            name_of_span="_ResourceManager.get_ingestion_resources",
+                            tracing_attributes=SpanAttributes.create_cluster_attributes(self._kusto_client._kusto_cluster))
 
         result = self._retryer(invoker)
         table = result.primary_results[0]
@@ -123,11 +121,9 @@ class _ResourceManager:
     def _get_authorization_context_from_service(self):
         # trace all calls to get identity token
         def invoker():
-            span: Span = Span(
-                name_of_span="_ResourceManager.get_identity_token",
-                tracing_attributes=SpanAttributes.create_cluster_attributes(self._kusto_client._kusto_cluster),
-            )
-            return span.run_span(lambda: self._kusto_client.execute("NetDefaultDB", ".get kusto identity token"))
+            return Span.run(lambda: self._kusto_client.execute("NetDefaultDB", ".get kusto identity token"),
+                            name_of_span="_ResourceManager.get_identity_token",
+                            tracing_attributes=SpanAttributes.create_cluster_attributes(self._kusto_client._kusto_cluster))
 
         result = self._retryer(invoker)
         return result.primary_results[0][0]["AuthorizationContext"]
