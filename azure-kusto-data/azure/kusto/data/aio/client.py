@@ -136,8 +136,7 @@ class KustoClient(_KustoClientBase):
             endpoint, headers=request_headers, json=json_payload, data=payload, timeout=timeout.seconds, proxy=self._proxy_url, allow_redirects=False
         )
         http_trace_attributes = SpanAttributes.create_http_attributes(url=endpoint, method="POST", headers=request_headers)
-        span: Span = Span("KustoClient.http_post", http_trace_attributes)
-        response = await span.run_async(invoker)
+        response = await Span.run_async(invoker, "KustoClient.http_post", http_trace_attributes)
 
         if stream_response:
             try:
