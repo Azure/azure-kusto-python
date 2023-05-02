@@ -9,7 +9,7 @@ from azure.core.tracing import SpanKind
 from azure.storage.queue import QueueServiceClient, TextBase64EncodePolicy
 
 from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
-from azure.kusto.data._telemetry import KustoTracing
+from azure.kusto.data._telemetry import Span
 from azure.kusto.data.exceptions import KustoClosedError, KustoServiceError
 
 from ._ingest_telemetry import IngestTracingAttributes
@@ -132,14 +132,10 @@ class QueuedIngestClient(BaseIngestClient):
             ingestion_blob_info_json = ingestion_blob_info.to_json()
             with queue_service.get_queue_client(queue=random_queue.object_name, message_encode_policy=TextBase64EncodePolicy()) as queue_client:
                 # trace enqueuing of blob for ingestion
+                invoker = lambda: queue_client.send_message(content=ingestion_blob_info_json, timeout=self._SERVICE_CLIENT_TIMEOUT_SECONDS)
                 enqueue_trace_attributes = IngestTracingAttributes.create_enqueue_request_attributes(queue_client.queue_name, blob_descriptor.source_id)
-                KustoTracing.call_func_tracing(
-                    queue_client.send_message,
-                    content=ingestion_blob_info_json,
-                    timeout=self._SERVICE_CLIENT_TIMEOUT_SECONDS,
-                    name_of_span="QueuedIngestClient.enqueue_request",
-                    tracing_attributes=enqueue_trace_attributes,
-                )
+                span: Span = Span(name_of_span="QueuedIngestClient.enqueue_request", tracing_attributes=enqueue_trace_attributes)
+                span.run_span(invoker)
 
         return IngestionResult(
             IngestionStatus.QUEUED, ingestion_properties.database, ingestion_properties.table, blob_descriptor.source_id, blob_descriptor.path

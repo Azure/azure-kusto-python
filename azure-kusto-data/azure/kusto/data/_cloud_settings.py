@@ -8,7 +8,7 @@ import requests
 from azure.core.tracing.decorator import distributed_trace
 from azure.core.tracing import SpanKind
 
-from ._telemetry import KustoTracingAttributes, KustoTracing
+from ._telemetry import SpanAttributes, Span
 from .exceptions import KustoServiceError
 
 METADATA_ENDPOINT = "v1/rest/auth/metadata"
@@ -25,13 +25,13 @@ class CloudInfo:
     """This class holds the data for a specific cloud instance."""
 
     def __init__(
-        self,
-        login_endpoint: str,
-        login_mfa_required: bool,
-        kusto_client_app_id: str,
-        kusto_client_redirect_uri: str,
-        kusto_service_resource_id: str,
-        first_party_authority_url: str,
+            self,
+            login_endpoint: str,
+            login_mfa_required: bool,
+            kusto_client_app_id: str,
+            kusto_client_redirect_uri: str,
+            kusto_service_resource_id: str,
+            first_party_authority_url: str,
     ):
         self.login_endpoint = login_endpoint
         self.login_mfa_required = login_mfa_required
@@ -47,12 +47,12 @@ class CloudInfo:
         if not isinstance(other, self.__class__):
             return False
         return (
-            self.login_endpoint == other.login_endpoint
-            and self.login_mfa_required == other.login_mfa_required
-            and self.kusto_client_app_id == other.kusto_client_app_id
-            and self.kusto_client_redirect_uri == other.kusto_client_redirect_uri
-            and self.kusto_service_resource_id == other.kusto_service_resource_id
-            and self.first_party_authority_url == other.first_party_authority_url
+                self.login_endpoint == other.login_endpoint
+                and self.login_mfa_required == other.login_mfa_required
+                and self.kusto_client_app_id == other.kusto_client_app_id
+                and self.kusto_client_redirect_uri == other.kusto_client_redirect_uri
+                and self.kusto_service_resource_id == other.kusto_service_resource_id
+                and self.first_party_authority_url == other.first_party_authority_url
         )
 
 
@@ -76,7 +76,7 @@ class CloudSettings:
     @distributed_trace(name_of_span="CloudSettings.get_cloud_info", kind=SpanKind.CLIENT)
     def get_cloud_info_for_cluster(cls, kusto_uri: str, proxies: Optional[Dict[str, str]] = None) -> CloudInfo:
         # tracing attributes for cloud info
-        KustoTracingAttributes.set_cloud_info_attributes(kusto_uri)
+        SpanAttributes.set_cloud_info_attributes(kusto_uri)
 
         if kusto_uri in cls._cloud_cache:  # Double-checked locking to avoid unnecessary lock access
             return cls._cloud_cache[kusto_uri]
@@ -87,11 +87,10 @@ class CloudSettings:
             url = urljoin(kusto_uri, METADATA_ENDPOINT)
 
             # trace http get call for result
-            http_trace_attributes = KustoTracingAttributes.create_http_attributes(url=url, method="GET")
-
-            result = KustoTracing.call_func_tracing(
-                requests.get, url, proxies=proxies, allow_redirects=False, name_of_span="CloudSettings.http_get", tracing_attributes=http_trace_attributes
-            )
+            invoker = lambda: requests.get(url, proxies=proxies, allow_redirects=False)
+            http_trace_attributes = SpanAttributes.create_http_attributes(url=url, method="GET")
+            span: Span = Span("CloudSettings.http_get", http_trace_attributes)
+            result = span.run_span(invoker)
 
             if result.status_code == 200:
                 content = result.json()

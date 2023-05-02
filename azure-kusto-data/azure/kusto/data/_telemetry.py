@@ -8,7 +8,7 @@ from azure.core.tracing import SpanKind
 from .client_request_properties import ClientRequestProperties
 
 
-class KustoTracingAttributes:
+class SpanAttributes:
     """
     Additional ADX attributes for telemetry spans
     """
@@ -42,12 +42,14 @@ class KustoTracingAttributes:
             span.add_attribute(key, val)
 
     @classmethod
-    def set_query_attributes(cls, cluster: str, database: str, properties: Optional[ClientRequestProperties] = None) -> None:
+    def set_query_attributes(cls, cluster: str, database: str,
+                             properties: Optional[ClientRequestProperties] = None) -> None:
         query_attributes: dict = cls.create_query_attributes(cluster, database, properties)
         cls.add_attributes(tracing_attributes=query_attributes)
 
     @classmethod
-    def set_streaming_ingest_attributes(cls, cluster: str, database: str, table: str, properties: Optional[ClientRequestProperties] = None) -> None:
+    def set_streaming_ingest_attributes(cls, cluster: str, database: str, table: str,
+                                        properties: Optional[ClientRequestProperties] = None) -> None:
         ingest_attributes: dict = cls.create_streaming_ingest_attributes(cluster, database, table, properties)
         cls.add_attributes(tracing_attributes=ingest_attributes)
 
@@ -57,7 +59,8 @@ class KustoTracingAttributes:
         cls.add_attributes(tracing_attributes=cloud_info_attributes)
 
     @classmethod
-    def create_query_attributes(cls, cluster: str, database: str, properties: Optional[ClientRequestProperties] = None) -> dict:
+    def create_query_attributes(cls, cluster: str, database: str,
+                                properties: Optional[ClientRequestProperties] = None) -> dict:
         query_attributes: dict = {cls._KUSTO_CLUSTER: cluster, cls._DATABASE: database}
         if properties:
             query_attributes.update(properties.get_tracing_attributes())
@@ -65,7 +68,8 @@ class KustoTracingAttributes:
         return query_attributes
 
     @classmethod
-    def create_streaming_ingest_attributes(cls, cluster: str, database: str, table: str, properties: Optional[ClientRequestProperties] = None) -> dict:
+    def create_streaming_ingest_attributes(cls, cluster: str, database: str, table: str,
+                                           properties: Optional[ClientRequestProperties] = None) -> dict:
         ingest_attributes: dict = {cls._KUSTO_CLUSTER: cluster, cls._DATABASE: database, cls._TABLE: table}
         if properties:
             ingest_attributes.update(properties.get_tracing_attributes())
@@ -97,58 +101,78 @@ class KustoTracingAttributes:
         return cluster_attributes
 
 
-class KustoTracing:
-    @staticmethod
-    def call_func_tracing(func: Callable, *args, **kwargs):
-        """
-        Prepares function for tracing and calls it
-        :param func: function to trace
-        :type func: Callable
-        :key str name_of_span: name of the trace span
-        :key dict tracing_attributes: key/value dictionary of attributes to include in span of trace
-        :key str kind: the type of span
-        :param kwargs: function arguments
-        """
-        name_of_span: str = kwargs.pop("name_of_span", None)
-        tracing_attributes: dict = kwargs.pop("tracing_attributes", {})
-        kind: str = kwargs.pop("kind", SpanKind.CLIENT)
+class Span:
+    def __init__(self, name_of_span: str = None, tracing_attributes=None,
+                 kind: str = SpanKind.INTERNAL):
+        if tracing_attributes is None:
+            tracing_attributes = {}
+        self._name_of_span = name_of_span
+        self._tracing_attributes = tracing_attributes
+        self._kind = kind
 
-        kusto_trace: Callable = distributed_trace(name_of_span=name_of_span, tracing_attributes=tracing_attributes, kind=kind)
-        kusto_func: Callable = kusto_trace(func)
-        return kusto_func(*args, **kwargs)
-
-    @staticmethod
-    async def call_func_tracing_async(func: Callable, *args, **kwargs):
+    def run_span(self, invoker: Callable):
         """
-        Prepares function for tracing and calls it
-        :param func: function to trace
-        :type func: Callable
-        :key str name_of_span: name of the trace span
-        :key dict tracing_attributes: key/value dictionary of attributes to include in span of trace
-        :key str kind: the type of span
-        :param kwargs: function arguments
+        Runs the span on given function
         """
-        name_of_span: str = kwargs.pop("name_of_span", None)
-        tracing_attributes: dict = kwargs.pop("tracing_attributes", {})
-        kind: str = kwargs.pop("kind", SpanKind.CLIENT)
+        span_shell: Callable = distributed_trace(name_of_span=self._name_of_span,
+                                                 tracing_attributes=self._tracing_attributes,
+                                                 kind=self._kind)
+        span = span_shell(invoker)
+        return span()
 
-        kusto_trace: Callable = distributed_trace_async(name_of_span=name_of_span, tracing_attributes=tracing_attributes, kind=kind)
-        kusto_func: Callable = kusto_trace(func)
-        return await kusto_func(*args, **kwargs)
-
-    @staticmethod
-    def prepare_func_tracing(func: Callable, **kwargs):
+    def run_span_async(self, invoker: Callable):
         """
-        Prepares function for tracing
-        :param func: function to trace
-        :type func: Callable
-        :key str name_of_span: name of the trace span
-        :key dict tracing_attributes: key/value dictionary of attributes to include in span of trace
-        :key str kind: the type of span
+        Runs a span on given function
         """
-        name_of_span: str = kwargs.pop("name_of_span", None)
-        tracing_attributes: dict = kwargs.pop("tracing_attributes", {})
-        kind: str = kwargs.pop("kind", SpanKind.CLIENT)
+        span_shell: Callable = distributed_trace_async(name_of_span=self._name_of_span,
+                                                       tracing_attributes=self._tracing_attributes,
+                                                       kind=self._kind)
+        span = span_shell(invoker)
+        return span()
 
-        kusto_trace: Callable = distributed_trace(name_of_span=name_of_span, tracing_attributes=tracing_attributes, kind=kind)
-        return kusto_trace(func)
+    # def _call_func_tracing(self, name_of_span: str, tracing_attributes: dict, kind: str):
+    #     """
+    #     Prepares function for tracing and calls it
+    #     :param func: function to trace
+    #     :type func: Callable
+    #     :param name_of_span: name of the trace span
+    #     :param tracing_attributes: key/value dictionary of attributes to include in span of trace
+    #     :param  kind: the type of span
+    #     """
+    #
+    #     self._span_shell: Callable = distributed_trace(name_of_span=name_of_span, tracing_attributes=tracing_attributes,
+    #                                                    kind=kind)
+    #     return self
+    #
+    # async def _call_func_tracing_async(self, name_of_span: str, tracing_attributes: dict, kind: str):
+    #     """
+    #     Prepares function for tracing and calls it
+    #     :param func: function to trace
+    #     :type func: Callable
+    #     :key str name_of_span: name of the trace span
+    #     :key dict tracing_attributes: key/value dictionary of attributes to include in span of trace
+    #     :key str kind: the type of span
+    #     :param kwargs: function arguments
+    #     """
+    #
+    #     self._span_shell: Callable = distributed_trace_async(name_of_span=name_of_span,
+    #                                                          tracing_attributes=tracing_attributes, kind=kind)
+    #     return self
+
+    # @staticmethod
+    # def prepare_func_tracing(func: Callable, **kwargs):
+    #     """
+    #     Prepares function for tracing
+    #     :param func: function to trace
+    #     :type func: Callable
+    #     :key str name_of_span: name of the trace span
+    #     :key dict tracing_attributes: key/value dictionary of attributes to include in span of trace
+    #     :key str kind: the type of span
+    #     """
+    #     name_of_span: str = kwargs.pop("name_of_span", None)
+    #     tracing_attributes: dict = kwargs.pop("tracing_attributes", {})
+    #     kind: str = kwargs.pop("kind", SpanKind.CLIENT)
+    #
+    #     span_shell: Callable = distributed_trace(name_of_span=name_of_span, tracing_attributes=tracing_attributes,
+    #                                          kind=kind)
+    #     return span_shell(func)
