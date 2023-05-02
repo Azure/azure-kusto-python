@@ -177,8 +177,7 @@ class TokenProviderBase(abc.ABC):
 
             if token is None:
                 async with self._async_lock:
-                    token = await Span.run_async(self._get_token_impl_async,
-                                                 f"{self.name()}.get_token_impl_async", context)
+                    token = await Span.run_async(self._get_token_impl_async, f"{self.name()}.get_token_impl_async", context)
 
             return self._valid_token_or_throw(token)
 
