@@ -101,6 +101,7 @@ class Span:
     """
     Span class for telemetry
     """
+
     @staticmethod
     def run(invoker: Callable, name_of_span: str = None, tracing_attributes=None, kind: str = SpanKind.INTERNAL):
         """

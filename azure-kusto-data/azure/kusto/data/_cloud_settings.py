@@ -88,8 +88,7 @@ class CloudSettings:
 
             # trace http get call for result
             http_trace_attributes = SpanAttributes.create_http_attributes(url=url, method="GET")
-            result = Span.run(lambda: requests.get(url, proxies=proxies, allow_redirects=False),
-                              "CloudSettings.http_get", http_trace_attributes)
+            result = Span.run(lambda: requests.get(url, proxies=proxies, allow_redirects=False), "CloudSettings.http_get", http_trace_attributes)
 
             if result.status_code == 200:
                 content = result.json()

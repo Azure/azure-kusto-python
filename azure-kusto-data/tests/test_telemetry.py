@@ -71,6 +71,7 @@ class TestTelemetry:
     def test_tracing_attributes_parameter():
         def invoker():
             return "Hello World"
+
         tracing_attributes = {"key": "value"}
         result = Span.run(invoker, tracing_attributes=tracing_attributes)
         assert result == "Hello World"
@@ -105,8 +106,7 @@ class TestTelemetry:
 
     @staticmethod
     def test_create_ingest_attributes():
-        attributes = SpanAttributes.create_streaming_ingest_attributes("cluster_test", "database_test", "table",
-                                                                       ClientRequestProperties())
+        attributes = SpanAttributes.create_streaming_ingest_attributes("cluster_test", "database_test", "table", ClientRequestProperties())
         keynames = {"kusto_cluster", "database", "table", "client_request_id"}
         assert isinstance(attributes, dict)
         for key, val in attributes.items():
@@ -127,5 +127,4 @@ class TestTelemetry:
         assert attributes == {"component": "http", "http.method": "method_test", "http.url": "url_test"}
         headers = {"User-Agent": "user_agent_test"}
         attributes = SpanAttributes.create_http_attributes("method_test", "url_test", headers)
-        assert attributes == {"component": "http", "http.method": "method_test", "http.url": "url_test",
-                              "http.user_agent": "user_agent_test"}
+        assert attributes == {"component": "http", "http.method": "method_test", "http.url": "url_test", "http.user_agent": "user_agent_test"}
