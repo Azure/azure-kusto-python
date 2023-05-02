@@ -94,11 +94,11 @@ class _ResourceManager:
     def _get_ingest_client_resources_from_service(self):
         # trace all calls to get ingestion resources
         def invoker():
-            with Span(
+            span: Span = Span(
                 name_of_span="_ResourceManager.get_ingestion_resources",
                 tracing_attributes=SpanAttributes.create_cluster_attributes(self._kusto_client._kusto_cluster),
-            ):
-                return self._kusto_client.execute("NetDefaultDB", ".get ingestion resources")
+            )
+            return span.run_span(lambda: self._kusto_client.execute("NetDefaultDB", ".get ingestion resources"))
 
         result = self._retryer(invoker)
         table = result.primary_results[0]
