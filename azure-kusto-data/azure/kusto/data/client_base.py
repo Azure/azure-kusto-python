@@ -63,7 +63,7 @@ class _KustoClientBase(abc.ABC):
 
         self.default_database = self._kcsb.initial_catalog
 
-    def get_database(self, database_name: str) -> str:
+    def _get_database_or_default(self, database_name: Optional[str]) -> str:
         return database_name or self.default_database
 
     def close(self):

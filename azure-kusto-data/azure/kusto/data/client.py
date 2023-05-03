@@ -170,7 +170,7 @@ class KustoClient(_KustoClientBase):
         :return: Kusto response data set.
         :rtype: azure.kusto.data.response.KustoResponseDataSet
         """
-        database = self.get_database(database)
+        database = self._get_database_or_default(database)
         KustoTracingAttributes.set_query_attributes(self._kusto_cluster, database, properties)
 
         return self._execute(self._query_endpoint, database, query, None, self._query_default_timeout, properties)
@@ -186,7 +186,7 @@ class KustoClient(_KustoClientBase):
         :return: Kusto response data set.
         :rtype: azure.kusto.data.response.KustoResponseDataSet
         """
-        database = self.get_database(database)
+        database = self._get_database_or_default(database)
         KustoTracingAttributes.set_query_attributes(self._kusto_cluster, database, properties)
 
         return self._execute(self._mgmt_endpoint, database, query, None, self._mgmt_default_timeout, properties)
@@ -213,7 +213,7 @@ class KustoClient(_KustoClientBase):
         :param ClientRequestProperties properties: additional request properties.
         :param str mapping_name: Pre-defined mapping of the table. Required when stream_format is json/avro.
         """
-        database = self.get_database(database)
+        database = self._get_database_or_default(database)
         KustoTracingAttributes.set_streaming_ingest_attributes(self._kusto_cluster, database, table, properties)
 
         stream_format = stream_format.kusto_value if isinstance(stream_format, DataFormat) else DataFormat[stream_format.upper()].kusto_value
