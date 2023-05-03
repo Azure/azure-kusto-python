@@ -328,7 +328,7 @@ class TokenProviderTests(unittest.TestCase):
             kusto_service_resource_id="https://fakeurl.kusto.windows.net",
             first_party_authority_url="",
         )
-        CloudSettings._cloud_cache[FAKE_URI] = cloud
+        CloudSettings.add_to_cache(FAKE_URI, cloud)
         authority = "auth_test"
 
         with UserPassTokenProvider(FAKE_URI, authority, "a", "b") as provider:
@@ -349,7 +349,7 @@ class TokenProviderTests(unittest.TestCase):
             kusto_service_resource_id="https://fakeurl.kusto.windows.net",
             first_party_authority_url="",
         )
-        CloudSettings._cloud_cache[FAKE_URI] = cloud
+        CloudSettings.add_to_cache(FAKE_URI, cloud)
         authority = "auth_test"
 
         with UserPassTokenProvider(FAKE_URI, authority, "a", "b") as provider:

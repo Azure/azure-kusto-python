@@ -75,6 +75,8 @@ class CloudSettings:
     @classmethod
     @distributed_trace(name_of_span="CloudSettings.get_cloud_info", kind=SpanKind.CLIENT)
     def get_cloud_info_for_cluster(cls, kusto_uri: str, proxies: Optional[Dict[str, str]] = None) -> CloudInfo:
+        kusto_uri = cls._normalize_uri(kusto_uri)
+
         # tracing attributes for cloud info
         KustoTracingAttributes.set_cloud_info_attributes(kusto_uri)
 
@@ -115,3 +117,14 @@ class CloudSettings:
             else:
                 raise KustoServiceError("Kusto returned an invalid cloud metadata response", result)
             return cls._cloud_cache[kusto_uri]
+
+    @classmethod
+    def add_to_cache(cls, url: str, cloud_info: CloudInfo):
+        with cls._cloud_cache_lock:
+            cls._cloud_cache[cls._normalize_uri(url)] = cloud_info
+
+    @classmethod
+    def _normalize_uri(cls, kusto_uri):
+        if not kusto_uri.endswith("/"):
+            kusto_uri += "/"
+        return kusto_uri

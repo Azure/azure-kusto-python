@@ -145,10 +145,10 @@ class KustoClient(_KustoClientBase):
         else:
             return []
 
-    def execute(self, database: str, query: str, properties: Optional[ClientRequestProperties] = None) -> KustoResponseDataSet:
+    def execute(self, database: Optional[str], query: str, properties: Optional[ClientRequestProperties] = None) -> KustoResponseDataSet:
         """
         Executes a query or management command.
-        :param str database: Database against query will be executed.
+        :param Optional[str] database: Database against query will be executed. If not provided, will default to the "Initial Catalog" value in the connection string
         :param str query: Query to be executed.
         :param azure.kusto.data.ClientRequestProperties properties: Optional additional properties.
         :return: Kusto response data set.
@@ -160,31 +160,33 @@ class KustoClient(_KustoClientBase):
         return self.execute_query(database, query, properties)
 
     @distributed_trace(name_of_span="KustoClient.query_cmd", kind=SpanKind.CLIENT)
-    def execute_query(self, database: str, query: str, properties: Optional[ClientRequestProperties] = None) -> KustoResponseDataSet:
+    def execute_query(self, database: Optional[str], query: str, properties: Optional[ClientRequestProperties] = None) -> KustoResponseDataSet:
         """
         Execute a KQL query.
         To learn more about KQL go to https://docs.microsoft.com/en-us/azure/kusto/query/
-        :param str database: Database against query will be executed.
+        :param Optional[str] database: Database against query will be executed. If not provided, will default to the "Initial Catalog" value in the connection string
         :param str query: Query to be executed.
         :param azure.kusto.data.ClientRequestProperties properties: Optional additional properties.
         :return: Kusto response data set.
         :rtype: azure.kusto.data.response.KustoResponseDataSet
         """
+        database = self.get_database(database)
         KustoTracingAttributes.set_query_attributes(self._kusto_cluster, database, properties)
 
         return self._execute(self._query_endpoint, database, query, None, self._query_default_timeout, properties)
 
     @distributed_trace(name_of_span="KustoClient.control_cmd", kind=SpanKind.CLIENT)
-    def execute_mgmt(self, database: str, query: str, properties: Optional[ClientRequestProperties] = None) -> KustoResponseDataSet:
+    def execute_mgmt(self, database: Optional[str], query: str, properties: Optional[ClientRequestProperties] = None) -> KustoResponseDataSet:
         """
         Execute a KQL control command.
         To learn more about KQL control commands go to  https://docs.microsoft.com/en-us/azure/kusto/management/
-        :param str database: Database against query will be executed.
+        :param Optional[str] database: Database against query will be executed. If not provided, will default to the "Initial Catalog" value in the connection string
         :param str query: Query to be executed.
         :param azure.kusto.data.ClientRequestProperties properties: Optional additional properties.
         :return: Kusto response data set.
         :rtype: azure.kusto.data.response.KustoResponseDataSet
         """
+        database = self.get_database(database)
         KustoTracingAttributes.set_query_attributes(self._kusto_cluster, database, properties)
 
         return self._execute(self._mgmt_endpoint, database, query, None, self._mgmt_default_timeout, properties)
@@ -192,7 +194,7 @@ class KustoClient(_KustoClientBase):
     @distributed_trace(name_of_span="KustoClient.streaming_ingest", kind=SpanKind.CLIENT)
     def execute_streaming_ingest(
         self,
-        database: str,
+        database: Optional[str],
         table: str,
         stream: IO[AnyStr],
         stream_format: Union[DataFormat, str],
@@ -204,13 +206,14 @@ class KustoClient(_KustoClientBase):
         If the Kusto service is not configured to allow streaming ingestion, this may raise an error
         To learn more about streaming ingestion go to:
         https://docs.microsoft.com/en-us/azure/data-explorer/ingest-data-streaming
-        :param str database: Target database.
+        :param Optional[str] database: Target database. If not provided, will default to the "Initial Catalog" value in the connection string
         :param str table: Target table.
         :param io.BaseIO stream: stream object which contains the data to ingest.
         :param DataFormat stream_format: Format of the data in the stream.
         :param ClientRequestProperties properties: additional request properties.
         :param str mapping_name: Pre-defined mapping of the table. Required when stream_format is json/avro.
         """
+        database = self.get_database(database)
         KustoTracingAttributes.set_streaming_ingest_attributes(self._kusto_cluster, database, table, properties)
 
         stream_format = stream_format.kusto_value if isinstance(stream_format, DataFormat) else DataFormat[stream_format.upper()].kusto_value
@@ -221,7 +224,11 @@ class KustoClient(_KustoClientBase):
         self._execute(endpoint, database, None, stream, self._streaming_ingest_default_timeout, properties)
 
     def _execute_streaming_query_parsed(
-        self, database: str, query: str, timeout: timedelta = _KustoClientBase._query_default_timeout, properties: Optional[ClientRequestProperties] = None
+        self,
+        database: Optional[str],
+        query: str,
+        timeout: timedelta = _KustoClientBase._query_default_timeout,
+        properties: Optional[ClientRequestProperties] = None,
     ) -> StreamingDataSetEnumerator:
         response = self._execute(self._query_endpoint, database, query, None, timeout, properties, stream_response=True)
         response.raw.decode_content = True
@@ -229,13 +236,17 @@ class KustoClient(_KustoClientBase):
 
     @distributed_trace(name_of_span="KustoClient.streaming_query", kind=SpanKind.CLIENT)
     def execute_streaming_query(
-        self, database: str, query: str, timeout: timedelta = _KustoClientBase._query_default_timeout, properties: Optional[ClientRequestProperties] = None
+        self,
+        database: Optional[str],
+        query: str,
+        timeout: timedelta = _KustoClientBase._query_default_timeout,
+        properties: Optional[ClientRequestProperties] = None,
     ) -> KustoStreamingResponseDataSet:
         """
         Execute a KQL query without reading it all to memory.
         The resulting KustoStreamingResponseDataSet will stream one table at a time, and the rows can be retrieved sequentially.
 
-        :param str database: Database against query will be executed.
+        :param Optional[str] database: Database against query will be executed. If not provided, will default to the "Initial Catalog" value in the connection string
         :param str query: Query to be executed.
         :param timedelta timeout: timeout for the query to be executed
         :param azure.kusto.data.ClientRequestProperties properties: Optional additional properties.
@@ -248,7 +259,7 @@ class KustoClient(_KustoClientBase):
     def _execute(
         self,
         endpoint: str,
-        database: str,
+        database: Optional[str],
         query: Optional[str],
         payload: Optional[IO[AnyStr]],
         timeout: timedelta,

@@ -1,8 +1,9 @@
 from enum import unique, Enum
 from typing import Union, Callable, Coroutine, Optional, Tuple, List, Any
+from urllib.parse import urlparse
 
-from ._token_providers import DeviceCallbackType
 from ._string_utils import assert_string_is_not_empty
+from ._token_providers import DeviceCallbackType
 from .client_details import ClientDetails
 
 
@@ -13,8 +14,8 @@ class KustoConnectionStringBuilder:
         https://github.com/Azure/azure-kusto-python/blob/master/azure-kusto-data/tests/sample.py
     """
 
+    DEFAULT_DATABASE_NAME = "NetDefaultDB"
     device_callback: DeviceCallbackType = None
-
     kcsb_invalid_item_error = "%s is not supported as an item in KustoConnectionStringBuilder"
 
     @unique
@@ -25,6 +26,7 @@ class KustoConnectionStringBuilder:
         """
 
         data_source = "Data Source"
+        initial_catalog = "Initial Catalog"
         aad_federated_security = "AAD Federated Security"
         aad_user_id = "AAD User ID"
         password = "Password"
@@ -49,6 +51,8 @@ class KustoConnectionStringBuilder:
             key = key.lower().strip()
             if key in ["data source", "addr", "address", "network address", "server"]:
                 return cls.data_source
+            if key in ["initial catalog"]:
+                return cls.initial_catalog
             if key in ["aad user id"]:
                 return cls.aad_user_id
             if key in ["password", "pwd"]:
@@ -105,6 +109,7 @@ class KustoConnectionStringBuilder:
                 self.user_token,
                 self.login_hint,
                 self.domain_hint,
+                self.initial_catalog,
             ]
 
         def is_dict_type(self) -> bool:
@@ -146,6 +151,8 @@ class KustoConnectionStringBuilder:
             value_stripped = value.strip()
             if keyword.is_str_type():
                 self[keyword] = value_stripped.rstrip("/")
+                if keyword == self.ValidKeywords.data_source:
+                    self._parse_data_source(self.data_source)
             elif keyword.is_bool_type():
                 if value_stripped in ["True", "true"]:
                     self[keyword] = True
@@ -153,6 +160,9 @@ class KustoConnectionStringBuilder:
                     self[keyword] = False
                 else:
                     raise KeyError("Expected aad federated security to be bool. Recieved %s" % value)
+
+        if self.initial_catalog is None:
+            self.initial_catalog = self.DEFAULT_DATABASE_NAME
 
     def __setitem__(self, key: "Union[KustoConnectionStringBuilder.ValidKeywords, str]", value: Union[str, bool, dict]):
         try:
@@ -480,6 +490,17 @@ class KustoConnectionStringBuilder:
         return self._internal_dict.get(self.ValidKeywords.data_source)
 
     @property
+    def initial_catalog(self) -> Optional[str]:
+        """The default database to be used for requests.
+        By default, it is set to 'NetDefaultDB'.
+        """
+        return self._internal_dict.get(self.ValidKeywords.initial_catalog)
+
+    @initial_catalog.setter
+    def initial_catalog(self, value: str) -> None:
+        self._internal_dict[self.ValidKeywords.initial_catalog] = value
+
+    @property
     def aad_user_id(self) -> Optional[str]:
         """The username to use for AAD Federated AuthN."""
         return self._internal_dict.get(self.ValidKeywords.aad_user_id)
@@ -647,3 +668,12 @@ class KustoConnectionStringBuilder:
 
     def _build_connection_string(self, kcsb_as_dict: dict) -> str:
         return ";".join(["{0}={1}".format(word.value, kcsb_as_dict[word]) for word in self.ValidKeywords if word in kcsb_as_dict])
+
+    def _parse_data_source(self, url: str):
+        url = urlparse(url)
+        if not url.netloc:
+            return
+        segments = url.path.lstrip("/").split("/")
+        if len(segments) == 1 and segments[0] and not self.initial_catalog:
+            self.initial_catalog = segments[0]
+            self._internal_dict[self.ValidKeywords.data_source] = url._replace(path="").geturl()

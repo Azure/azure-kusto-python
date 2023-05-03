@@ -308,7 +308,7 @@ class TestE2E:
     @pytest.mark.parametrize("code", [301, 302, 307, 308])
     def test_no_redirects_fail_in_cloud(self, code):
         with KustoClient(
-            KustoConnectionStringBuilder.with_azure_token_credential(f"https://statusreturner.azurewebsites.net/{code}/nocloud/test", DefaultAzureCredential())
+            KustoConnectionStringBuilder.with_azure_token_credential(f"https://statusreturner.azurewebsites.net/{code}/nocloud", DefaultAzureCredential())
         ) as client:
             with pytest.raises(KustoServiceError) as ex:
                 client.execute("db", "table")
@@ -318,7 +318,7 @@ class TestE2E:
     def test_no_redirects_fail_in_client(self, code):
         well_known_kusto_endpoints.add_trusted_hosts([MatchRule("statusreturner.azurewebsites.net", False)], False)
         with KustoClient(
-            KustoConnectionStringBuilder.with_azure_token_credential(f"https://statusreturner.azurewebsites.net/{code}/test", DefaultAzureCredential())
+            KustoConnectionStringBuilder.with_azure_token_credential(f"https://statusreturner.azurewebsites.net/{code}/segment", DefaultAzureCredential())
         ) as client:
             with pytest.raises(KustoServiceError) as ex:
                 client.execute("db", "table")
@@ -329,7 +329,7 @@ class TestE2E:
     async def test_no_redirects_fail_in_cloud(self, code):
         async with AsyncKustoClient(
             KustoConnectionStringBuilder.with_azure_token_credential(
-                f"https://statusreturner.azurewebsites.net/{code}/nocloud/test", AsyncDefaultAzureCredential()
+                f"https://statusreturner.azurewebsites.net/{code}/nocloud", AsyncDefaultAzureCredential()
             )
         ) as client:
             with pytest.raises(KustoServiceError) as ex:
@@ -341,7 +341,7 @@ class TestE2E:
     async def test_no_redirects_fail_in_client(self, code):
         well_known_kusto_endpoints.add_trusted_hosts([MatchRule("statusreturner.azurewebsites.net", False)], False)
         async with AsyncKustoClient(
-            KustoConnectionStringBuilder.with_azure_token_credential(f"https://statusreturner.azurewebsites.net/{code}/test", AsyncDefaultAzureCredential())
+            KustoConnectionStringBuilder.with_azure_token_credential(f"https://statusreturner.azurewebsites.net/{code}/segment", AsyncDefaultAzureCredential())
         ) as client:
             with pytest.raises(KustoServiceError) as ex:
                 await client.execute("db", "table")

@@ -10,8 +10,8 @@ from azure.kusto.data.security import _AadHelper
 KUSTO_TEST_URI = "https://thisclusterdoesnotexist.kusto.windows.net"
 TEST_INTERACTIVE_AUTH = False  # User interaction required, enable this when running test manually
 
-CloudSettings._cloud_cache[KUSTO_TEST_URI] = CloudSettings.DEFAULT_CLOUD
-CloudSettings._cloud_cache["https://somecluster.kusto.windows.net"] = CloudSettings.DEFAULT_CLOUD
+CloudSettings.add_to_cache(KUSTO_TEST_URI, CloudSettings.DEFAULT_CLOUD)
+CloudSettings.add_to_cache("https://somecluster.kusto.windows.net", CloudSettings.DEFAULT_CLOUD)
 
 
 def test_unauthorized_exception():
