@@ -200,36 +200,52 @@ class TestKustoClient(KustoClientTestsMixin):
     def test_proxy_url_parsing(self):
         """Test Proxy URL Parsing"""
         tests = {
-            "https://kusto.test.com": "https://kusto.test.com",
-            "https://kusto.test.com/": "https://kusto.test.com",
-            "https://kusto.test.com/test": "https://kusto.test.com/test",
-            "https://kusto.test.com:4242": "https://kusto.test.com:4242",
-            "https://kusto.test.com:4242/": "https://kusto.test.com:4242",
-            "https://kusto.test.com:4242/test": "https://kusto.test.com:4242/test",
-            "https://kusto.test.com;fed=true": "https://kusto.test.com",
-            "https://kusto.test.com/;fed=true": "https://kusto.test.com",
-            "https://kusto.test.com/test;fed=true": "https://kusto.test.com/test",
-            "https://kusto.test.com:4242;fed=true": "https://kusto.test.com:4242",
-            "https://kusto.test.com:4242/;fed=true": "https://kusto.test.com:4242",
-            "https://kusto.test.com:4242/test;fed=true": "https://kusto.test.com:4242/test",
+            "https://kusto.test.com": ("https://kusto.test.com", "NetDefaultDB"),
+            "https://kusto.test.com/": ("https://kusto.test.com", "NetDefaultDB"),
+            "https://kusto.test.com/test": ("https://kusto.test.com", "test"),
+            "https://kusto.test.com/test/test2": ("https://kusto.test.com/test/test2", "NetDefaultDB"),
+            "https://kusto.test.com:4242": ("https://kusto.test.com:4242", "NetDefaultDB"),
+            "https://kusto.test.com:4242/": ("https://kusto.test.com:4242", "NetDefaultDB"),
+            "https://kusto.test.com:4242/test": ("https://kusto.test.com:4242", "test"),
+            "https://kusto.test.com:4242/test/test2": ("https://kusto.test.com:4242/test/test2", "NetDefaultDB"),
+            "https://kusto.test.com;fed=true": ("https://kusto.test.com", "NetDefaultDB"),
+            "https://kusto.test.com/;fed=true": ("https://kusto.test.com", "NetDefaultDB"),
+            "https://kusto.test.com/test;fed=true": ("https://kusto.test.com", "test"),
+            "https://kusto.test.com/test/test2;fed=true": ("https://kusto.test.com/test/test2", "NetDefaultDB"),
+            "https://kusto.test.com:4242;fed=true": ("https://kusto.test.com:4242", "NetDefaultDB"),
+            "https://kusto.test.com:4242/;fed=true": ("https://kusto.test.com:4242", "NetDefaultDB"),
+            "https://kusto.test.com:4242/test;fed=true": ("https://kusto.test.com:4242", "test"),
+            "https://kusto.test.com:4242/test/test2;fed=true": ("https://kusto.test.com:4242/test/test2", "NetDefaultDB"),
             "https://ade.loganalytics.io/subscriptions/da45f7ac-97c0-4fff-ac66-3b6810eb4f65/resourcegroups"
-            "/some_resource_group/providers/microsoft.operationalinsights/workspaces/some_workspace": "https://ade.loganalytics.io/subscriptions/da45f7ac-97c0-4fff-ac66-3b6810eb4f65/resourcegroups"
-            "/some_resource_group/providers/microsoft.operationalinsights/workspaces/some_workspace",
+            "/some_resource_group/providers/microsoft.operationalinsights/workspaces/some_workspace": (
+                "https://ade.loganalytics.io/subscriptions/da45f7ac-97c0-4fff-ac66-3b6810eb4f65/resourcegroups"
+                "/some_resource_group/providers/microsoft.operationalinsights/workspaces/some_workspace",
+                "NetDefaultDB",
+            ),
             "https://ade.loganalytics.io/subscriptions/da45f7ac-97c0-4fff-ac66-3b6810eb4f65/resourcegroups"
-            "/some_resource_group/providers/microsoft.operationalinsights/workspaces/some_workspace/": "https://ade.loganalytics.io/subscriptions/da45f7ac-97c0-4fff-ac66-3b6810eb4f65/resourcegroups"
-            "/some_resource_group/providers/microsoft.operationalinsights/workspaces/some_workspace",
+            "/some_resource_group/providers/microsoft.operationalinsights/workspaces/some_workspace/": (
+                "https://ade.loganalytics.io/subscriptions/da45f7ac-97c0-4fff-ac66-3b6810eb4f65/resourcegroups"
+                "/some_resource_group/providers/microsoft.operationalinsights/workspaces/some_workspace",
+                "NetDefaultDB",
+            ),
             "https://ade.loganalytics.io:4242/subscriptions/da45f7ac-97c0-4fff-ac66-3b6810eb4f65/resourcegroups"
-            "/some_resource_group/providers/microsoft.operationalinsights/workspaces/some_workspace/": "https://ade.loganalytics.io:4242/subscriptions/da45f7ac-97c0-4fff-ac66-3b6810eb4f65/resourcegroups"
-            "/some_resource_group/providers/microsoft.operationalinsights/workspaces/some_workspace",
+            "/some_resource_group/providers/microsoft.operationalinsights/workspaces/some_workspace/": (
+                "https://ade.loganalytics.io:4242/subscriptions/da45f7ac-97c0-4fff-ac66-3b6810eb4f65/resourcegroups"
+                "/some_resource_group/providers/microsoft.operationalinsights/workspaces/some_workspace",
+                "NetDefaultDB",
+            ),
             "https://ade.loganalytics.io:4242/subscriptions/da45f7ac-97c0-4fff-ac66-3b6810eb4f65/resourcegroups"
-            "/some_resource_group/providers/microsoft.operationalinsights/workspaces/some_workspace/;fed=true": "https://ade.loganalytics.io:4242/subscriptions/da45f7ac-97c0-4fff-ac66-3b6810eb4f65"
-            "/resourcegroups/some_resource_group/providers/microsoft.operationalinsights/workspaces"
-            "/some_workspace",
-            "https://kusto.aria.microsoft.com": "https://kusto.aria.microsoft.com",
-            "https://kusto.aria.microsoft.com/": "https://kusto.aria.microsoft.com",
-            "https://kusto.aria.microsoft.com/;fed=true": "https://kusto.aria.microsoft.com",
+            "/some_resource_group/providers/microsoft.operationalinsights/workspaces/some_workspace/;fed=true": (
+                "https://ade.loganalytics.io:4242/subscriptions/da45f7ac-97c0-4fff-ac66-3b6810eb4f65"
+                "/resourcegroups/some_resource_group/providers/microsoft.operationalinsights/workspaces"
+                "/some_workspace",
+                "NetDefaultDB",
+            ),
+            "https://kusto.aria.microsoft.com": ("https://kusto.aria.microsoft.com", "NetDefaultDB"),
+            "https://kusto.aria.microsoft.com/": ("https://kusto.aria.microsoft.com", "NetDefaultDB"),
+            "https://kusto.aria.microsoft.com/;fed=true": ("https://kusto.aria.microsoft.com", "NetDefaultDB"),
         }
 
-        for actual_url, expected_url in tests.items():
+        for actual_url, expected in tests.items():
             kcsb = KustoConnectionStringBuilder(actual_url)
-            assert kcsb.data_source == expected_url
+            assert (kcsb.data_source, kcsb.initial_catalog) == expected

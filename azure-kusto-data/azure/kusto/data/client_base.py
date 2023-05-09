@@ -45,6 +45,9 @@ class _KustoClientBase(abc.ABC):
         # notice that in this context, federated actually just stands for aad auth, not aad federated auth (legacy code)
         self._aad_helper = _AadHelper(self._kcsb, is_async) if self._kcsb.aad_federated_security else None
 
+        if not self._kusto_cluster.endswith("/"):
+            self._kusto_cluster += "/"
+
         # Create a session object for connection pooling
         self._mgmt_endpoint = urljoin(self._kusto_cluster, "v1/rest/mgmt")
         self._query_endpoint = urljoin(self._kusto_cluster, "v2/rest/query")
@@ -57,6 +60,11 @@ class _KustoClientBase(abc.ABC):
 
         self.client_details = self._kcsb.client_details
         self._is_closed: bool = False
+
+        self.default_database = self._kcsb.initial_catalog
+
+    def _get_database_or_default(self, database_name: Optional[str]) -> str:
+        return database_name or self.default_database
 
     def close(self):
         if not self._is_closed:
