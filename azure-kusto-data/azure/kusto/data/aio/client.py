@@ -147,8 +147,9 @@ class KustoClient(_KustoClientBase):
         invoker = lambda: self._session.post(
             endpoint, headers=request_headers, json=json_payload, data=payload, timeout=timeout.seconds, proxy=self._proxy_url, allow_redirects=False
         )
-        http_trace_attributes = Span.create_http_attributes(url=endpoint, method="POST", headers=request_headers)
-        response = await MonitoredActivity.invoke_async(invoker, name_of_span="KustoClient.http_post", tracing_attributes=http_trace_attributes)
+        response = await MonitoredActivity.invoke_async(
+            invoker, name_of_span="KustoClient.http_post", tracing_attributes=Span.create_http_attributes("POST", endpoint, request_headers)
+        )
 
         if stream_response:
             try:
