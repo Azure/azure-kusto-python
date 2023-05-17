@@ -8,7 +8,7 @@ from tenacity import retry_if_exception_type, stop_after_attempt, Retrying, wait
 
 from azure.kusto.data import KustoClient
 from azure.kusto.data._models import KustoResultTable
-from azure.kusto.data._telemetry import Span, SpanAttributes
+from azure.kusto.data._telemetry import MonitoredActivity, Span
 from azure.kusto.data.exceptions import KustoThrottlingError
 
 _SHOW_VERSION = ".show version"
@@ -94,10 +94,10 @@ class _ResourceManager:
     def _get_ingest_client_resources_from_service(self):
         # trace all calls to get ingestion resources
         def invoker():
-            return Span.run(
+            return MonitoredActivity.invoke(
                 lambda: self._kusto_client.execute("NetDefaultDB", ".get ingestion resources"),
                 name_of_span="_ResourceManager.get_ingestion_resources",
-                tracing_attributes=SpanAttributes.create_cluster_attributes(self._kusto_client._kusto_cluster),
+                tracing_attributes=Span.create_cluster_attributes(self._kusto_client._kusto_cluster),
             )
 
         result = self._retryer(invoker)
@@ -123,10 +123,10 @@ class _ResourceManager:
     def _get_authorization_context_from_service(self):
         # trace all calls to get identity token
         def invoker():
-            return Span.run(
+            return MonitoredActivity.invoke(
                 lambda: self._kusto_client.execute("NetDefaultDB", ".get kusto identity token"),
                 name_of_span="_ResourceManager.get_identity_token",
-                tracing_attributes=SpanAttributes.create_cluster_attributes(self._kusto_client._kusto_cluster),
+                tracing_attributes=Span.create_cluster_attributes(self._kusto_client._kusto_cluster),
             )
 
         result = self._retryer(invoker)

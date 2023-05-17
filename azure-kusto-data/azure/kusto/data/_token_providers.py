@@ -15,7 +15,7 @@ from azure.identity import AzureCliCredential, ManagedIdentityCredential
 from msal import ConfidentialClientApplication, PublicClientApplication
 
 from ._cloud_settings import CloudInfo, CloudSettings
-from ._telemetry import Span
+from ._telemetry import MonitoredActivity
 from .exceptions import KustoAioSyntaxError, KustoAsyncUsageError, KustoClientError
 
 try:
@@ -143,7 +143,7 @@ class TokenProviderBase(abc.ABC):
             token = self._get_token_from_cache_impl()
             if token is None:
                 with self._lock:
-                    token = Span.run(self._get_token_impl, f"{self.name()}.get_token_impl", self.context())
+                    token = MonitoredActivity.invoke(self._get_token_impl, name_of_span=f"{self.name()}.get_token_impl", tracing_attributes=self.context())
             return self._valid_token_or_throw(token)
 
         return _get_token()
@@ -177,7 +177,9 @@ class TokenProviderBase(abc.ABC):
 
             if token is None:
                 async with self._async_lock:
-                    token = await Span.run_async(self._get_token_impl_async, f"{self.name()}.get_token_impl_async", context)
+                    token = await MonitoredActivity.invoke_async(
+                        self._get_token_impl_async, name_of_span=f"{self.name()}.get_token_impl_async", tracing_attributes=context
+                    )
 
             return self._valid_token_or_throw(token)
 

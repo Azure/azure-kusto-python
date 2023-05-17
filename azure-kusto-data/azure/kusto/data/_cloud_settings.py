@@ -8,7 +8,7 @@ import requests
 from azure.core.tracing.decorator import distributed_trace
 from azure.core.tracing import SpanKind
 
-from ._telemetry import SpanAttributes, Span
+from ._telemetry import Span, MonitoredActivity
 from .exceptions import KustoServiceError
 
 METADATA_ENDPOINT = "v1/rest/auth/metadata"
@@ -76,7 +76,7 @@ class CloudSettings:
     @distributed_trace(name_of_span="CloudSettings.get_cloud_info", kind=SpanKind.CLIENT)
     def get_cloud_info_for_cluster(cls, kusto_uri: str, proxies: Optional[Dict[str, str]] = None) -> CloudInfo:
         # tracing attributes for cloud info
-        SpanAttributes.set_cloud_info_attributes(kusto_uri)
+        Span.set_cloud_info_attributes(kusto_uri)
 
         if kusto_uri in cls._cloud_cache:  # Double-checked locking to avoid unnecessary lock access
             return cls._cloud_cache[kusto_uri]
@@ -87,8 +87,11 @@ class CloudSettings:
             url = urljoin(kusto_uri, METADATA_ENDPOINT)
 
             # trace http get call for result
-            http_trace_attributes = SpanAttributes.create_http_attributes(url=url, method="GET")
-            result = Span.run(lambda: requests.get(url, proxies=proxies, allow_redirects=False), "CloudSettings.http_get", http_trace_attributes)
+            result = MonitoredActivity.invoke(
+                lambda: requests.get(url, proxies=proxies, allow_redirects=False),
+                name_of_span="CloudSettings.http_get",
+                tracing_attributes=Span.create_http_attributes(url=url, method="GET"),
+            )
 
             if result.status_code == 200:
                 content = result.json()

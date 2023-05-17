@@ -1,4 +1,4 @@
-# This workflow will install the dependencies, run tests and lint every push
+# This workflow will install the dependencies, invoke tests and lint every push
 
 name: Python package
 

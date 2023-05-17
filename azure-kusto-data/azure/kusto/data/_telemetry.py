@@ -1,4 +1,4 @@
-from typing import Callable, Optional
+from typing import Callable, Optional, TypeVar
 
 from azure.core.settings import settings
 from azure.core.tracing.decorator import distributed_trace
@@ -8,7 +8,7 @@ from azure.core.tracing import SpanKind
 from .client_request_properties import ClientRequestProperties
 
 
-class SpanAttributes:
+class Span:
     """
     Additional ADX attributes for telemetry spans
     """
@@ -97,13 +97,15 @@ class SpanAttributes:
         return cluster_attributes
 
 
-class Span:
+class MonitoredActivity:
     """
-    Span class for telemetry
+    Invoker class for telemetry
     """
 
+    T = TypeVar("T")
+
     @staticmethod
-    def run(invoker: Callable, name_of_span: str = None, tracing_attributes=None, kind: str = SpanKind.INTERNAL):
+    def invoke(invoker: Callable[[], T], name_of_span: str = None, tracing_attributes=None, kind: str = SpanKind.INTERNAL) -> T:
         """
         Runs the span on given function
         """
@@ -114,7 +116,7 @@ class Span:
         return span()
 
     @staticmethod
-    def run_async(invoker: Callable, name_of_span: str = None, tracing_attributes=None, kind: str = SpanKind.INTERNAL):
+    async def invoke_async(invoker: Callable[[], T], name_of_span: str = None, tracing_attributes=None, kind: str = SpanKind.INTERNAL) -> T:
         """
         Runs a span on given function
         """
@@ -122,4 +124,4 @@ class Span:
             tracing_attributes = {}
         span_shell: Callable = distributed_trace_async(name_of_span=name_of_span, tracing_attributes=tracing_attributes, kind=kind)
         span = span_shell(invoker)
-        return span()
+        return await span()
