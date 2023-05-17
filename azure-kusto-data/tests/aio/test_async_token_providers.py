@@ -151,7 +151,7 @@ class TestTokenProvider:
             token = await provider.get_token_async()
             assert self.get_token_value(token) is not None
 
-            # another invoke to pass through the cache
+            # another run to pass through the cache
             token = provider._get_token_from_cache_impl()
             assert self.get_token_value(token) is not None
 
@@ -227,7 +227,7 @@ class TestTokenProvider:
     @pytest.mark.asyncio
     async def test_app_key_provider(self):
         # default details are for kusto-client-e2e-test-app
-        # to invoke the test, get the key from Azure portal
+        # to run the test, get the key from Azure portal
         app_id = os.environ.get("APP_ID", "b699d721-4f6f-4320-bc9a-88d578dfe68f")
         auth_id = os.environ.get("APP_AUTH_ID", "72f988bf-86f1-41af-91ab-2d7cd011db47")
         app_key = os.environ.get("APP_KEY")
