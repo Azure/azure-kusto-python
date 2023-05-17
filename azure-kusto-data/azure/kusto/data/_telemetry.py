@@ -1,4 +1,4 @@
-from typing import Callable, Optional
+from typing import Callable, Optional, TypeVar
 
 from azure.core.settings import settings
 from azure.core.tracing.decorator import distributed_trace
@@ -8,7 +8,7 @@ from azure.core.tracing import SpanKind
 from .client_request_properties import ClientRequestProperties
 
 
-class KustoTracingAttributes:
+class Span:
     """
     Additional ADX attributes for telemetry spans
     """
@@ -97,58 +97,31 @@ class KustoTracingAttributes:
         return cluster_attributes
 
 
-class KustoTracing:
-    @staticmethod
-    def call_func_tracing(func: Callable, *args, **kwargs):
-        """
-        Prepares function for tracing and calls it
-        :param func: function to trace
-        :type func: Callable
-        :key str name_of_span: name of the trace span
-        :key dict tracing_attributes: key/value dictionary of attributes to include in span of trace
-        :key str kind: the type of span
-        :param kwargs: function arguments
-        """
-        name_of_span: str = kwargs.pop("name_of_span", None)
-        tracing_attributes: dict = kwargs.pop("tracing_attributes", {})
-        kind: str = kwargs.pop("kind", SpanKind.CLIENT)
+class MonitoredActivity:
+    """
+    Invoker class for telemetry
+    """
 
-        kusto_trace: Callable = distributed_trace(name_of_span=name_of_span, tracing_attributes=tracing_attributes, kind=kind)
-        kusto_func: Callable = kusto_trace(func)
-        return kusto_func(*args, **kwargs)
+    T = TypeVar("T")
 
     @staticmethod
-    async def call_func_tracing_async(func: Callable, *args, **kwargs):
+    def invoke(invoker: Callable[[], T], name_of_span: str = None, tracing_attributes=None, kind: str = SpanKind.INTERNAL) -> T:
         """
-        Prepares function for tracing and calls it
-        :param func: function to trace
-        :type func: Callable
-        :key str name_of_span: name of the trace span
-        :key dict tracing_attributes: key/value dictionary of attributes to include in span of trace
-        :key str kind: the type of span
-        :param kwargs: function arguments
+        Runs the span on given function
         """
-        name_of_span: str = kwargs.pop("name_of_span", None)
-        tracing_attributes: dict = kwargs.pop("tracing_attributes", {})
-        kind: str = kwargs.pop("kind", SpanKind.CLIENT)
-
-        kusto_trace: Callable = distributed_trace_async(name_of_span=name_of_span, tracing_attributes=tracing_attributes, kind=kind)
-        kusto_func: Callable = kusto_trace(func)
-        return await kusto_func(*args, **kwargs)
+        if tracing_attributes is None:
+            tracing_attributes = {}
+        span_shell: Callable = distributed_trace(name_of_span=name_of_span, tracing_attributes=tracing_attributes, kind=kind)
+        span = span_shell(invoker)
+        return span()
 
     @staticmethod
-    def prepare_func_tracing(func: Callable, **kwargs):
+    async def invoke_async(invoker: Callable[[], T], name_of_span: str = None, tracing_attributes=None, kind: str = SpanKind.INTERNAL) -> T:
         """
-        Prepares function for tracing
-        :param func: function to trace
-        :type func: Callable
-        :key str name_of_span: name of the trace span
-        :key dict tracing_attributes: key/value dictionary of attributes to include in span of trace
-        :key str kind: the type of span
+        Runs a span on given function
         """
-        name_of_span: str = kwargs.pop("name_of_span", None)
-        tracing_attributes: dict = kwargs.pop("tracing_attributes", {})
-        kind: str = kwargs.pop("kind", SpanKind.CLIENT)
-
-        kusto_trace: Callable = distributed_trace(name_of_span=name_of_span, tracing_attributes=tracing_attributes, kind=kind)
-        return kusto_trace(func)
+        if tracing_attributes is None:
+            tracing_attributes = {}
+        span_shell: Callable = distributed_trace_async(name_of_span=name_of_span, tracing_attributes=tracing_attributes, kind=kind)
+        span = span_shell(invoker)
+        return await span()

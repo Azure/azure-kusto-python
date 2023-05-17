@@ -8,7 +8,7 @@ from tenacity import retry_if_exception_type, stop_after_attempt, Retrying, wait
 
 from azure.kusto.data import KustoClient
 from azure.kusto.data._models import KustoResultTable
-from azure.kusto.data._telemetry import KustoTracing, KustoTracingAttributes
+from azure.kusto.data._telemetry import MonitoredActivity, Span
 from azure.kusto.data.exceptions import KustoThrottlingError
 
 _SHOW_VERSION = ".show version"
@@ -93,12 +93,14 @@ class _ResourceManager:
 
     def _get_ingest_client_resources_from_service(self):
         # trace all calls to get ingestion resources
-        trace_get_ingestion_resources = KustoTracing.prepare_func_tracing(
-            self._kusto_client.execute,
-            name_of_span="_ResourceManager.get_ingestion_resources",
-            tracing_attributes=KustoTracingAttributes.create_cluster_attributes(self._kusto_client._kusto_cluster),
-        )
-        result = self._retryer(trace_get_ingestion_resources, "NetDefaultDB", ".get ingestion resources")
+        def invoker():
+            return MonitoredActivity.invoke(
+                lambda: self._kusto_client.execute("NetDefaultDB", ".get ingestion resources"),
+                name_of_span="_ResourceManager.get_ingestion_resources",
+                tracing_attributes=Span.create_cluster_attributes(self._kusto_client._kusto_cluster),
+            )
+
+        result = self._retryer(invoker)
         table = result.primary_results[0]
 
         secured_ready_for_aggregation_queues = self._get_resource_by_name(table, "SecuredReadyForAggregationQueue")
@@ -120,12 +122,14 @@ class _ResourceManager:
 
     def _get_authorization_context_from_service(self):
         # trace all calls to get identity token
-        trace_get_identity_token = KustoTracing.prepare_func_tracing(
-            self._kusto_client.execute,
-            name_of_span="_ResourceManager.get_identity_token",
-            tracing_attributes=KustoTracingAttributes.create_cluster_attributes(self._kusto_client._kusto_cluster),
-        )
-        result = self._retryer(trace_get_identity_token, "NetDefaultDB", ".get kusto identity token")
+        def invoker():
+            return MonitoredActivity.invoke(
+                lambda: self._kusto_client.execute("NetDefaultDB", ".get kusto identity token"),
+                name_of_span="_ResourceManager.get_identity_token",
+                tracing_attributes=Span.create_cluster_attributes(self._kusto_client._kusto_cluster),
+            )
+
+        result = self._retryer(invoker)
         return result.primary_results[0][0]["AuthorizationContext"]
 
     def get_ingestion_queues(self) -> List[_ResourceUri]:

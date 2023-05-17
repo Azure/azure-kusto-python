@@ -247,7 +247,7 @@ class TestTokenProvider:
     @pytest.mark.asyncio
     async def test_app_cert_provider(self):
         # default details are for kusto-client-e2e-test-app
-        # to run the test download the certs from Azure Portal
+        # to invoke the test download the certs from Azure Portal
         cert_app_id = os.environ.get("CERT_APP_ID", "b699d721-4f6f-4320-bc9a-88d578dfe68f")
         cert_auth = os.environ.get("CERT_AUTH", "72f988bf-86f1-41af-91ab-2d7cd011db47")
         thumbprint = os.environ.get("CERT_THUMBPRINT")

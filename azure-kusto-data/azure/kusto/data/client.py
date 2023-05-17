@@ -13,7 +13,7 @@ from urllib3.connection import HTTPConnection
 from azure.core.tracing.decorator import distributed_trace
 from azure.core.tracing import SpanKind
 
-from azure.kusto.data._telemetry import KustoTracingAttributes, KustoTracing
+from azure.kusto.data._telemetry import Span, MonitoredActivity
 
 from .client_base import ExecuteRequestParams, _KustoClientBase
 from .client_request_properties import ClientRequestProperties
@@ -171,7 +171,7 @@ class KustoClient(_KustoClientBase):
         :rtype: azure.kusto.data.response.KustoResponseDataSet
         """
         database = self._get_database_or_default(database)
-        KustoTracingAttributes.set_query_attributes(self._kusto_cluster, database, properties)
+        Span.set_query_attributes(self._kusto_cluster, database, properties)
 
         return self._execute(self._query_endpoint, database, query, None, self._query_default_timeout, properties)
 
@@ -187,7 +187,7 @@ class KustoClient(_KustoClientBase):
         :rtype: azure.kusto.data.response.KustoResponseDataSet
         """
         database = self._get_database_or_default(database)
-        KustoTracingAttributes.set_query_attributes(self._kusto_cluster, database, properties)
+        Span.set_query_attributes(self._kusto_cluster, database, properties)
 
         return self._execute(self._mgmt_endpoint, database, query, None, self._mgmt_default_timeout, properties)
 
@@ -214,7 +214,7 @@ class KustoClient(_KustoClientBase):
         :param str mapping_name: Pre-defined mapping of the table. Required when stream_format is json/avro.
         """
         database = self._get_database_or_default(database)
-        KustoTracingAttributes.set_streaming_ingest_attributes(self._kusto_cluster, database, table, properties)
+        Span.set_streaming_ingest_attributes(self._kusto_cluster, database, table, properties)
 
         stream_format = stream_format.kusto_value if isinstance(stream_format, DataFormat) else DataFormat[stream_format.upper()].kusto_value
         endpoint = self._streaming_ingest_endpoint + database + "/" + table + "?streamFormat=" + stream_format
@@ -252,7 +252,7 @@ class KustoClient(_KustoClientBase):
         :param azure.kusto.data.ClientRequestProperties properties: Optional additional properties.
         :return KustoStreamingResponseDataSet:
         """
-        KustoTracingAttributes.set_query_attributes(self._kusto_cluster, database, properties)
+        Span.set_query_attributes(self._kusto_cluster, database, properties)
 
         return KustoStreamingResponseDataSet(self._execute_streaming_query_parsed(database, query, timeout, properties))
 
@@ -288,9 +288,7 @@ class KustoClient(_KustoClientBase):
             request_headers["Authorization"] = self._aad_helper.acquire_authorization_header()
 
         # trace http post call for response
-        http_trace_attributes = KustoTracingAttributes.create_http_attributes(url=endpoint, method="POST", headers=request_headers)
-        response = KustoTracing.call_func_tracing(
-            self._session.post,
+        invoker = lambda: self._session.post(
             endpoint,
             headers=request_headers,
             json=json_payload,
@@ -298,8 +296,9 @@ class KustoClient(_KustoClientBase):
             timeout=timeout.seconds,
             stream=stream_response,
             allow_redirects=False,
-            name_of_span="KustoClient.http_post",
-            tracing_attributes=http_trace_attributes,
+        )
+        response = MonitoredActivity.invoke(
+            invoker, name_of_span="KustoClient.http_post", tracing_attributes=Span.create_http_attributes("POST", endpoint, request_headers)
         )
 
         if stream_response:
@@ -320,4 +319,4 @@ class KustoClient(_KustoClientBase):
         except Exception as e:
             raise self._handle_http_error(e, endpoint, payload, response, response.status_code, response_json, response.text)
         # trace response processing
-        return KustoTracing.call_func_tracing(self._kusto_parse_by_endpoint, endpoint, response_json, name_of_span="KustoClient.processing_response")
+        return MonitoredActivity.invoke(lambda: self._kusto_parse_by_endpoint(endpoint, response_json), name_of_span="KustoClient.processing_response")

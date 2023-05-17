@@ -16,7 +16,7 @@ from azure.identity import AzureCliCredential, ManagedIdentityCredential, Device
 from msal import ConfidentialClientApplication, PublicClientApplication
 
 from ._cloud_settings import CloudInfo, CloudSettings
-from ._telemetry import KustoTracing
+from ._telemetry import MonitoredActivity
 from .exceptions import KustoAioSyntaxError, KustoAsyncUsageError, KustoClientError
 
 DeviceCallbackType = Callable[[str, str, datetime], None]
@@ -153,10 +153,7 @@ class TokenProviderBase(abc.ABC):
             token = self._get_token_from_cache_impl()
             if token is None:
                 with self._lock:
-                    token = KustoTracing.call_func_tracing(
-                        self._get_token_impl, name_of_span=f"{self.name()}.get_token_impl", tracing_attributes=self.context()
-                    )
-
+                    token = MonitoredActivity.invoke(self._get_token_impl, name_of_span=f"{self.name()}.get_token_impl", tracing_attributes=self.context())
             return self._valid_token_or_throw(token)
 
         return _get_token()
@@ -190,7 +187,7 @@ class TokenProviderBase(abc.ABC):
 
             if token is None:
                 async with self._async_lock:
-                    token = await KustoTracing.call_func_tracing_async(
+                    token = await MonitoredActivity.invoke_async(
                         self._get_token_impl_async, name_of_span=f"{self.name()}.get_token_impl_async", tracing_attributes=context
                     )
 

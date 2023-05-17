@@ -9,7 +9,7 @@ from azure.core.tracing import SpanKind
 
 from azure.kusto.data import KustoConnectionStringBuilder
 from azure.kusto.data.exceptions import KustoApiError, KustoClosedError
-from azure.kusto.data._telemetry import KustoTracing
+from azure.kusto.data._telemetry import MonitoredActivity
 
 
 from . import BlobDescriptor, FileDescriptor, IngestionProperties, StreamDescriptor
@@ -123,13 +123,11 @@ class ManagedStreamingIngestClient(BaseIngestClient):
                     stream.seek(0, SEEK_SET)
                     client_request_id = ManagedStreamingIngestClient._get_request_id(stream_descriptor.source_id, attempt.retry_state.attempt_number - 1)
                     # trace attempt to ingest from stream
-                    return KustoTracing.call_func_tracing(
-                        self.streaming_client._ingest_from_stream_with_client_request_id,
-                        stream_descriptor,
-                        ingestion_properties,
-                        client_request_id,
-                        name_of_span="ManagedStreamingIngestClient.ingest_from_stream_attempt",
+                    invoker = lambda: self.streaming_client._ingest_from_stream_with_client_request_id(
+                        stream_descriptor, ingestion_properties, client_request_id
                     )
+                    return MonitoredActivity.invoke(invoker, name_of_span="ManagedStreamingIngestClient.ingest_from_stream_attempt")
+
         except KustoApiError as ex:
             error = ex.get_api_error()
             if error.permanent:
