@@ -43,7 +43,7 @@ class KustoClient(_KustoClientBase):
         await self.close()
 
     @aio_documented_by(KustoClientSync.execute)
-    async def execute(self, database: str, query: str, properties: ClientRequestProperties = None) -> KustoResponseDataSet:
+    async def execute(self, database: Optional[str], query: str, properties: ClientRequestProperties = None) -> KustoResponseDataSet:
         query = query.strip()
         if query.startswith("."):
             return await self.execute_mgmt(database, query, properties)
@@ -52,6 +52,7 @@ class KustoClient(_KustoClientBase):
     @distributed_trace_async(name_of_span="KustoClient.query_cmd", kind=SpanKind.CLIENT)
     @aio_documented_by(KustoClientSync.execute_query)
     async def execute_query(self, database: str, query: str, properties: ClientRequestProperties = None) -> KustoResponseDataSet:
+        database = self._get_database_or_default(database)
         Span.set_query_attributes(self._kusto_cluster, database, properties)
 
         return await self._execute(self._query_endpoint, database, query, None, KustoClient._query_default_timeout, properties)
@@ -59,6 +60,7 @@ class KustoClient(_KustoClientBase):
     @distributed_trace_async(name_of_span="KustoClient.control_cmd", kind=SpanKind.CLIENT)
     @aio_documented_by(KustoClientSync.execute_mgmt)
     async def execute_mgmt(self, database: str, query: str, properties: ClientRequestProperties = None) -> KustoResponseDataSet:
+        database = self._get_database_or_default(database)
         Span.set_query_attributes(self._kusto_cluster, database, properties)
 
         return await self._execute(self._mgmt_endpoint, database, query, None, KustoClient._mgmt_default_timeout, properties)
@@ -67,13 +69,14 @@ class KustoClient(_KustoClientBase):
     @aio_documented_by(KustoClientSync.execute_streaming_ingest)
     async def execute_streaming_ingest(
         self,
-        database: str,
+        database: Optional[str],
         table: str,
         stream: io.IOBase,
         stream_format: Union[DataFormat, str],
         properties: ClientRequestProperties = None,
         mapping_name: str = None,
     ):
+        database = self._get_database_or_default(database)
         Span.set_streaming_ingest_attributes(self._kusto_cluster, database, table, properties)
 
         stream_format = stream_format.kusto_value if isinstance(stream_format, DataFormat) else DataFormat[stream_format.upper()].kusto_value
@@ -85,7 +88,11 @@ class KustoClient(_KustoClientBase):
 
     @aio_documented_by(KustoClientSync._execute_streaming_query_parsed)
     async def _execute_streaming_query_parsed(
-        self, database: str, query: str, timeout: timedelta = _KustoClientBase._query_default_timeout, properties: Optional[ClientRequestProperties] = None
+        self,
+        database: Optional[str],
+        query: str,
+        timeout: timedelta = _KustoClientBase._query_default_timeout,
+        properties: Optional[ClientRequestProperties] = None,
     ) -> StreamingDataSetEnumerator:
         response = await self._execute(self._query_endpoint, database, query, None, timeout, properties, stream_response=True)
         return StreamingDataSetEnumerator(JsonTokenReader(response.content))
@@ -93,8 +100,13 @@ class KustoClient(_KustoClientBase):
     @distributed_trace_async(name_of_span="KustoClient.streaming_query", kind=SpanKind.CLIENT)
     @aio_documented_by(KustoClientSync.execute_streaming_query)
     async def execute_streaming_query(
-        self, database: str, query: str, timeout: timedelta = _KustoClientBase._query_default_timeout, properties: Optional[ClientRequestProperties] = None
+        self,
+        database: Optional[str],
+        query: str,
+        timeout: timedelta = _KustoClientBase._query_default_timeout,
+        properties: Optional[ClientRequestProperties] = None,
     ) -> KustoStreamingResponseDataSet:
+        database = self._get_database_or_default(database)
         Span.set_query_attributes(self._kusto_cluster, database, properties)
 
         response = await self._execute_streaming_query_parsed(database, query, timeout, properties)
@@ -104,7 +116,7 @@ class KustoClient(_KustoClientBase):
     async def _execute(
         self,
         endpoint: str,
-        database: str,
+        database: Optional[str],
         query: Optional[str],
         payload: Optional[io.IOBase],
         timeout: timedelta,

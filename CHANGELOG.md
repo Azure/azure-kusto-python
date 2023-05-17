@@ -3,6 +3,17 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+## Unreleased
+### Added
+- Added Initial Catalog (Default Database) parameter to ConnectionStringBuilder
+- Added callback parameter to device code
+- Added method to manually set the cache for CloudSettings
+### Changed
+- Urls with one item after the path (i.e https://test.com/abc) will now be treated as cluster and initial catalog (ie. the cluster is "https://test.com" and the initial catalog is "abc").
+    * This is to align our behaviour with the .NET SDK
+### Fixed
+- Some edge cases in url parsing
+
 ## [4.1.4] - 2023-04-16
 ### Fixed
 - Unicode headers are now espaced using '?', to align with the service

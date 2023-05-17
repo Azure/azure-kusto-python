@@ -211,9 +211,9 @@ class TestTokenProvider:
             print(" *** Skipped User Device Flow Test ***")
             return
 
-        def callback(x):
+        def callback(x, x2, x3):
             # break here if you debug this test, and get the code from 'x'
-            print(x)
+            print(f"Please go to {x} and enter code {x2} to authenticate, expires in {x3}")
 
         with DeviceLoginTokenProvider(KUSTO_URI, "organizations", callback, is_async=True) as provider:
             token = await provider.get_token_async()
@@ -295,7 +295,7 @@ class TestTokenProvider:
             kusto_service_resource_id="https://fakeurl.kusto.windows.net",
             first_party_authority_url="",
         )
-        CloudSettings._cloud_cache[FAKE_URI] = cloud
+        CloudSettings.add_to_cache(FAKE_URI, cloud)
         authority = "auth_test"
 
         with UserPassTokenProvider(FAKE_URI, authority, "a", "b", is_async=True) as provider:
@@ -317,7 +317,7 @@ class TestTokenProvider:
             kusto_service_resource_id="https://fakeurl.kusto.windows.net",
             first_party_authority_url="",
         )
-        CloudSettings._cloud_cache[FAKE_URI] = cloud
+        CloudSettings.add_to_cache(FAKE_URI, cloud)
         authority = "auth_test"
 
         with UserPassTokenProvider(FAKE_URI, authority, "a", "b", is_async=True) as provider:
