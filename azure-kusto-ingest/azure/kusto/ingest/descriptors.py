@@ -142,7 +142,7 @@ class BlobDescriptor(DescriptorBase):
         :type path: str.
         :param size: estimated size of file if known.
         :type size: Optional[int].
-        :param source_id: a v4 uuid to serve as the sources id.
+        :param source_id: a v4 uuid to serve as the source's id.
         :type source_id: OptionalUUID
         """
         self.path: str = path
@@ -181,7 +181,10 @@ class BlobDescriptor(DescriptorBase):
         return BlobDescriptor(blob_client.url, descriptor.size, descriptor.source_id)
 
     def get_tracing_attributes(self) -> dict:
-        return {self._BLOB_URI: self.path, self._SOURCE_ID: str(self.source_id)}
+        # Remove query parameters from self.path, if exists
+        if self.path:
+            obfuscated_path = self.path.split("?")[0]
+        return {self._BLOB_URI: obfuscated_path, self._SOURCE_ID: str(self.source_id)}
 
 
 class StreamDescriptor(DescriptorBase):
@@ -214,13 +217,13 @@ class StreamDescriptor(DescriptorBase):
     def compress_stream(self) -> None:
         stream = self.stream
         zipped_stream = BytesIO()
-        buffer = stream.read()
+        stream_buffer = stream.read()
         with GzipFile(filename="data", fileobj=zipped_stream, mode="wb") as f_out:
-            if isinstance(buffer, str):
-                data = bytes(buffer, "utf-8")
+            if isinstance(stream_buffer, str):
+                data = bytes(stream_buffer, "utf-8")
                 f_out.write(data)
             else:
-                f_out.write(buffer)
+                f_out.write(stream_buffer)
         zipped_stream.seek(0)
         self.is_compressed = True
         self.stream_name += ".gz"
