@@ -111,6 +111,10 @@ class KustoMultiApiError(KustoServiceError):
                     parsed_errors.append(OneApiError.from_dict(error_dict))
         return parsed_errors
 
+class KustoNetworkError(KustoServiceError):
+    """ Raised when a Kusto client fails to connect to network."""
+    def __init__(self):
+        super().__init__("Failed to process network request")
 
 class KustoApiError(KustoServiceError):
     """
