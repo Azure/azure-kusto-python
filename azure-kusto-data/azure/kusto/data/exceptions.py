@@ -111,6 +111,7 @@ class KustoMultiApiError(KustoServiceError):
                     parsed_errors.append(OneApiError.from_dict(error_dict))
         return parsed_errors
 
+
 class KustoApiError(KustoServiceError):
     """
     Represents a standard API error from kusto. Use `get_api_error()` to retrieve more details.
@@ -123,10 +124,13 @@ class KustoApiError(KustoServiceError):
     def get_api_error(self) -> OneApiError:
         return self.error
 
+
 class KustoNetworkError(KustoServiceError):
-    """ Raised when a Kusto client fails to connect to network."""
+    """Raised when a Kusto client fails to connect to network."""
+
     def __init__(self):
         super().__init__("Failed to process network request")
+
 
 class KustoClientError(KustoError):
     """Raised when a Kusto client is unable to send or complete a request."""
