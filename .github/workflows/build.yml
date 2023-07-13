@@ -33,6 +33,7 @@ jobs:
       - uses: psf/black@stable
         with:
           options: "--check --diff --line-length 160"
+          version: "23.3.0"
       - name: Test with pytest
         run: |
           pytest -v . --junit-xml pytest.xml --cov=/home/runner/.local/lib/python${{ matrix.python-version }}/site-packages/azure/kusto --cov-report=xml

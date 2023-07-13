@@ -2,6 +2,7 @@
 # Licensed under the MIT License
 
 import asyncio
+import dataclasses
 import json
 import os
 import platform
@@ -12,7 +13,7 @@ import pytest
 from azure.identity import DefaultAzureCredential
 
 from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
-from azure.kusto.data._cloud_settings import CloudSettings
+from azure.kusto.data._cloud_settings import CloudSettings, DEFAULT_DEV_KUSTO_SERVICE_RESOURCE_ID
 from azure.kusto.data._models import WellKnownDataSet
 from azure.kusto.data._token_providers import AsyncDefaultAzureCredential
 from azure.kusto.data.aio import KustoClient as AsyncKustoClient
@@ -303,7 +304,8 @@ class TestE2E:
 
     def test_cloud_info_404(self):
         cloud_info = CloudSettings.get_cloud_info_for_cluster("https://statusreturner.azurewebsites.net/404/test")
-        assert cloud_info is CloudSettings.DEFAULT_CLOUD
+        default_dev_cloud = dataclasses.replace(CloudSettings.DEFAULT_CLOUD, kusto_service_resource_id=DEFAULT_DEV_KUSTO_SERVICE_RESOURCE_ID)
+        assert cloud_info == CloudSettings.DEFAULT_CLOUD or cloud_info == default_dev_cloud
 
     @pytest.mark.parametrize("code", [301, 302, 307, 308])
     def test_no_redirects_fail_in_cloud(self, code):
