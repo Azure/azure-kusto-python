@@ -1,2 +1,2 @@
-pip install --upgrade black
-black . --line-length 160 
+pip install --upgrade black==23.3.0
+black . --line-length 160

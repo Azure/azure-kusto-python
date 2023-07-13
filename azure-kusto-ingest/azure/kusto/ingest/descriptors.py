@@ -183,7 +183,7 @@ class BlobDescriptor(DescriptorBase):
     def get_tracing_attributes(self) -> dict:
         # Remove query parameters from self.path, if exists
         if self.path:
-            obfuscated_path = self.path.split("?")[0]
+            obfuscated_path = self.path.split("?")[0].split(";")[0]
         return {self._BLOB_URI: obfuscated_path, self._SOURCE_ID: str(self.source_id)}
 
 

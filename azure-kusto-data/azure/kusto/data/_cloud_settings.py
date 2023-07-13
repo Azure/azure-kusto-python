@@ -1,3 +1,4 @@
+import dataclasses
 import os
 from threading import Lock
 from typing import Optional, Dict
@@ -18,42 +19,23 @@ DEFAULT_KUSTO_CLIENT_APP_ID = "db662dc1-0cfe-4e1c-a843-19a68e65be58"
 DEFAULT_PUBLIC_LOGIN_URL = "https://login.microsoftonline.com"
 DEFAULT_REDIRECT_URI = "https://microsoft/kustoclient"
 DEFAULT_KUSTO_SERVICE_RESOURCE_ID = "https://kusto.kusto.windows.net"
+DEFAULT_DEV_KUSTO_SERVICE_RESOURCE_ID = "https://kusto.dev.kusto.windows.net"
 DEFAULT_FIRST_PARTY_AUTHORITY_URL = "https://login.microsoftonline.com/f8cdef31-a31e-4b4a-93e4-5f571e91255a"
 
 
+@dataclasses.dataclass
 class CloudInfo:
     """This class holds the data for a specific cloud instance."""
 
-    def __init__(
-        self,
-        login_endpoint: str,
-        login_mfa_required: bool,
-        kusto_client_app_id: str,
-        kusto_client_redirect_uri: str,
-        kusto_service_resource_id: str,
-        first_party_authority_url: str,
-    ):
-        self.login_endpoint = login_endpoint
-        self.login_mfa_required = login_mfa_required
-        self.kusto_client_app_id = kusto_client_app_id
-        self.kusto_client_redirect_uri = kusto_client_redirect_uri  # will be used for interactive login
-        self.kusto_service_resource_id = kusto_service_resource_id
-        self.first_party_authority_url = first_party_authority_url
+    login_endpoint: str
+    login_mfa_required: bool
+    kusto_client_app_id: str
+    kusto_client_redirect_uri: str
+    kusto_service_resource_id: str
+    first_party_authority_url: str
 
     def authority_uri(self, authority_id: Optional[str]):
         return self.login_endpoint + "/" + (authority_id or "organizations")
-
-    def __eq__(self, other):
-        if not isinstance(other, self.__class__):
-            return False
-        return (
-            self.login_endpoint == other.login_endpoint
-            and self.login_mfa_required == other.login_mfa_required
-            and self.kusto_client_app_id == other.kusto_client_app_id
-            and self.kusto_client_redirect_uri == other.kusto_client_redirect_uri
-            and self.kusto_service_resource_id == other.kusto_service_resource_id
-            and self.first_party_authority_url == other.first_party_authority_url
-        )
 
 
 class CloudSettings:
