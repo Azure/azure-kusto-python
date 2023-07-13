@@ -4,10 +4,12 @@ import os
 import unittest
 from threading import Thread
 
+import pytest
 from asgiref.sync import async_to_sync
 from azure.identity import ClientSecretCredential, DefaultAzureCredential
 
 from azure.kusto.data._token_providers import *
+from azure.kusto.data.exceptions import KustoNetworkError
 
 KUSTO_URI = "https://sdkse2etest.eastus.kusto.windows.net"
 TOKEN_VALUE = "little miss sunshine"
@@ -277,6 +279,20 @@ class TokenProviderTests(unittest.TestCase):
                 assert TokenProviderTests.get_token_value(token) is not None
         else:
             print(" *** Skipped App Id & Key Provider Test ***")
+
+    @staticmethod
+    def test_app_key_provider_whenURLnotValid():
+        # default details are for kusto-client-e2e-test-app
+        # to run the test, get the key from Azure portal
+        app_id = os.environ.get("APP_ID", "b699d721-4f6f-4320-bc9a-88d578dfe68f")
+        auth_id = os.environ.get("APP_AUTH_ID", "72f988bf-86f1-41af-91ab-2d7cd011db47")
+        app_key = os.environ.get("APP_KEY")
+
+        if app_id and app_key and auth_id:
+            with pytest.raises(KustoNetworkError):
+                 with ApplicationKeyTokenProvider("NoURI", auth_id, app_id, app_key) as provider:
+                    token = provider.get_token()
+
 
     @staticmethod
     def test_app_cert_provider():

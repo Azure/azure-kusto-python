@@ -89,6 +89,8 @@ def mocked_requests_post(*args, **kwargs):
             file_name = "zero_results.json"
         elif "PrimaryResultName" in kwargs["json"]["csl"]:
             file_name = "null_values.json"
+        elif "raiseNetowrk" in kwargs["json"]["csl"]:
+            file_name = "noFile.json"
         else:
             raise Exception("Invalid file name")
 

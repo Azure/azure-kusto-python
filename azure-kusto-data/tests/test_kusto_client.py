@@ -7,7 +7,7 @@ from mock import patch
 
 from azure.kusto.data import ClientRequestProperties, KustoClient, KustoConnectionStringBuilder
 from azure.kusto.data._cloud_settings import CloudSettings
-from azure.kusto.data.exceptions import KustoClosedError, KustoMultiApiError
+from azure.kusto.data.exceptions import KustoClosedError, KustoMultiApiError, KustoNetworkError
 from azure.kusto.data.helpers import dataframe_from_result_table
 from azure.kusto.data.response import KustoStreamingResponseDataSet
 from tests.kusto_client_common import KustoClientTestsMixin, mocked_requests_post, get_response_first_primary_result, get_table_first_row, proxy_kcsb
@@ -43,6 +43,14 @@ class TestKustoClient(KustoClientTestsMixin):
             response = method.__call__(client, "PythonTest", "Deft")
             self._assert_sanity_query_response(response)
             self._assert_client_request_id(mock_post.call_args.kwargs)
+
+    @patch("requests.Session.post", side_effect=mocked_requests_post)
+    def test_raise_network(self, mock_post, method):
+        """Test query V2."""
+        with KustoClient(self.HOST) as client:
+            with pytest.raises(KustoNetworkError):
+                response = method.__call__(client, "PythonTest", "raiseNetowrk")
+
 
     @patch("requests.Session.post", side_effect=mocked_requests_post)
     def test_sanity_control_command(self, mock_post):
