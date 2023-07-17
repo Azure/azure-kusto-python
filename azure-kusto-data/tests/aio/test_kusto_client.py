@@ -82,7 +82,6 @@ class TestKustoClient(KustoClientTestsMixin):
                 with pytest.raises(KustoNetworkError):
                     response = await client.execute_query("PythonTest", "raiseNetowrk")
 
-
     @aio_documented_by(KustoClientTestsSync.test_sanity_control_command)
     @pytest.mark.asyncio
     async def test_sanity_control_command(self):

@@ -51,7 +51,6 @@ class TestKustoClient(KustoClientTestsMixin):
             with pytest.raises(KustoNetworkError):
                 response = method.__call__(client, "PythonTest", "raiseNetowrk")
 
-
     @patch("requests.Session.post", side_effect=mocked_requests_post)
     def test_sanity_control_command(self, mock_post):
         """Tests contol command."""

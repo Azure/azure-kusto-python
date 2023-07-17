@@ -290,9 +290,8 @@ class TokenProviderTests(unittest.TestCase):
 
         if app_id and app_key and auth_id:
             with pytest.raises(KustoNetworkError):
-                 with ApplicationKeyTokenProvider("NoURI", auth_id, app_id, app_key) as provider:
+                with ApplicationKeyTokenProvider("NoURI", auth_id, app_id, app_key) as provider:
                     token = provider.get_token()
-
 
     @staticmethod
     def test_app_cert_provider():
