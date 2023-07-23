@@ -128,8 +128,8 @@ class KustoApiError(KustoServiceError):
 class KustoNetworkError(KustoServiceError):
     """Raised when a Kusto client fails to connect to network."""
 
-    def __init__(self):
-        super().__init__("Failed to process network request")
+    def __init__(self, endpoint: str):
+        super().__init__("Failed to process network request for the endpoint: " + endpoint)
 
 
 class KustoClientError(KustoError):
