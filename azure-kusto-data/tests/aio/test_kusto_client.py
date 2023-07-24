@@ -80,7 +80,7 @@ class TestKustoClient(KustoClientTestsMixin):
             self._mock_query(aioresponses_mock)
             async with KustoClient(self.HOST) as client:
                 with pytest.raises(KustoNetworkError):
-                    response = await client.execute_query("PythonTest", "raiseNetowrk")
+                    response = await client.execute_query("PythonTest", "raiseNetwork")
 
     @aio_documented_by(KustoClientTestsSync.test_sanity_control_command)
     @pytest.mark.asyncio

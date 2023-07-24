@@ -78,7 +78,7 @@ class CloudSettings:
                     tracing_attributes=Span.create_http_attributes(url=url, method="GET"),
                 )
             except Exception as e:
-                raise KustoNetworkError() from e
+                raise KustoNetworkError(url) from e
 
             if result.status_code == 200:
                 content = result.json()
