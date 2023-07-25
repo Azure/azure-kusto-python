@@ -5,6 +5,7 @@ import sys
 from dataclasses import dataclass
 from typing import List, Tuple, Optional
 
+import env_utils
 from azure.kusto.data._version import VERSION
 
 NONE = "[none]"
@@ -23,8 +24,8 @@ def default_script() -> str:
 
 @functools.lru_cache(maxsize=1)
 def get_user_from_env() -> str:
-    user = os.environ.get("USERNAME", None)
-    domain = os.environ.get("USERDOMAIN", None)
+    user = env_utils.get_env("USERNAME", optional=True)
+    domain = env_utils.get_env("USERDOMAIN", optional=True)
     if domain and user:
         user = domain + "\\" + user
     if user:

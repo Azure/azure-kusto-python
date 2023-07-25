@@ -1,12 +1,12 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
-import os
 import unittest
 from threading import Thread
 
 from asgiref.sync import async_to_sync
 from azure.identity import ClientSecretCredential, DefaultAzureCredential
 
+import env_utils
 from azure.kusto.data._token_providers import *
 
 KUSTO_URI = "https://sdkse2etest.eastus.kusto.windows.net"
@@ -185,8 +185,8 @@ class TokenProviderTests(unittest.TestCase):
             print(" *** Skipped MSI Provider Test ***")
             return
 
-        user_msi_object_id = os.environ.get("MSI_OBJECT_ID")
-        user_msi_client_id = os.environ.get("MSI_CLIENT_ID")
+        user_msi_object_id = env_utils.get_env("MSI_OBJECT_ID")
+        user_msi_client_id = env_utils.get_env("MSI_CLIENT_ID")
 
         # system MSI
         with MsiTokenProvider(KUSTO_URI) as provider:
@@ -211,9 +211,9 @@ class TokenProviderTests(unittest.TestCase):
 
     @staticmethod
     def test_user_pass_provider():
-        username = os.environ.get("USER_NAME")
-        password = os.environ.get("USER_PASS")
-        auth = os.environ.get("USER_AUTH_ID", "organizations")
+        username = env_utils.get_env("USER_NAME")
+        password = env_utils.get_env("USER_PASS")
+        auth = env_utils.get_env("USER_AUTH_ID", default="organizations")
 
         if username and password and auth:
             with UserPassTokenProvider(KUSTO_URI, auth, username, password) as provider:
@@ -250,7 +250,7 @@ class TokenProviderTests(unittest.TestCase):
             print(" *** Skipped interactive login Test ***")
             return
 
-        auth_id = os.environ.get("APP_AUTH_ID", "72f988bf-86f1-41af-91ab-2d7cd011db47")
+        auth_id = env_utils.get_auth_id()
         with InteractiveLoginTokenProvider(KUSTO_URI, auth_id) as provider:
             token = provider.get_token()
             assert TokenProviderTests.get_token_value(token) is not None
@@ -263,9 +263,9 @@ class TokenProviderTests(unittest.TestCase):
     def test_app_key_provider():
         # default details are for kusto-client-e2e-test-app
         # to run the test, get the key from Azure portal
-        app_id = os.environ.get("APP_ID", "b699d721-4f6f-4320-bc9a-88d578dfe68f")
-        auth_id = os.environ.get("APP_AUTH_ID", "72f988bf-86f1-41af-91ab-2d7cd011db47")
-        app_key = os.environ.get("APP_KEY")
+        app_id = env_utils.get_app_id()
+        auth_id = env_utils.get_auth_id()
+        app_key = env_utils.get_app_key()
 
         if app_id and app_key and auth_id:
             with ApplicationKeyTokenProvider(KUSTO_URI, auth_id, app_id, app_key) as provider:
@@ -280,13 +280,11 @@ class TokenProviderTests(unittest.TestCase):
 
     @staticmethod
     def test_app_cert_provider():
-        # default details are for kusto-client-e2e-test-app
-        # to run the test download the certs from Azure Portal
-        cert_app_id = os.environ.get("CERT_APP_ID", "b699d721-4f6f-4320-bc9a-88d578dfe68f")
-        cert_auth = os.environ.get("CERT_AUTH", "72f988bf-86f1-41af-91ab-2d7cd011db47")
-        thumbprint = os.environ.get("CERT_THUMBPRINT")
-        public_cert_path = os.environ.get("PUBLIC_CERT_PATH")
-        pem_key_path = os.environ.get("CERT_PEM_KEY_PATH")
+        cert_app_id = env_utils.get_app_id(optional=True)
+        cert_auth = env_utils.get_auth_id(optional=True)
+        thumbprint = env_utils.get_env("CERT_THUMBPRINT", optional=True)
+        public_cert_path = env_utils.get_env("CERT_PUBLIC_CERT_PATH", optional=True)
+        pem_key_path = env_utils.get_env("CERT_PEM_KEY_PATH", optional=True)
 
         if pem_key_path and thumbprint and cert_app_id:
             with open(pem_key_path, "rb") as file:
@@ -361,12 +359,9 @@ class TokenProviderTests(unittest.TestCase):
 
     @staticmethod
     def test_azure_identity_default_token_provider():
-        app_id = os.environ.get("APP_ID", "b699d721-4f6f-4320-bc9a-88d578dfe68f")
-        os.environ["AZURE_CLIENT_ID"] = app_id
-        auth_id = os.environ.get("APP_AUTH_ID", "72f988bf-86f1-41af-91ab-2d7cd011db47")
-        os.environ["AZURE_TENANT_ID"] = auth_id
-        app_key = os.environ.get("APP_KEY")
-        os.environ["AZURE_CLIENT_SECRET"] = app_key
+        app_id = env_utils.get_app_id()
+        auth_id = env_utils.get_auth_id()
+        app_key = env_utils.get_app_key()
 
         with AzureIdentityTokenCredentialProvider(KUSTO_URI, credential=DefaultAzureCredential()) as provider:
             token = provider.get_token()
