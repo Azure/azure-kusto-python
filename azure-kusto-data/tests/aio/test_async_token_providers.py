@@ -161,8 +161,8 @@ class TestTokenProvider:
             print(" *** Skipped MSI Provider Test ***")
             return
 
-        user_msi_object_id = get_env("MSI_OBJECT_ID")
-        user_msi_client_id = get_env("MSI_CLIENT_ID")
+        user_msi_object_id = get_env("MSI_OBJECT_ID", optional=True)
+        user_msi_client_id = get_env("MSI_CLIENT_ID", optional=True)
 
         # system MSI
         with MsiTokenProvider(KUSTO_URI, is_async=True) as provider:
@@ -253,7 +253,7 @@ class TestTokenProvider:
         public_cert_path = get_env("CERT_PUBLIC_CERT_PATH", optional=True)
         pem_key_path = get_env("CERT_PEM_KEY_PATH", optional=True)
 
-        if pem_key_path and thumbprint and cert_app_id:
+        if pem_key_path and thumbprint and cert_app_id and cert_auth:
             with open(pem_key_path, "rb") as file:
                 pem_key = file.read()
 

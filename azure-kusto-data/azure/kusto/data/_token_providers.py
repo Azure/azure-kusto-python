@@ -564,9 +564,8 @@ class ApplicationKeyTokenProvider(CloudInfoTokenProvider):
         token = self._msal_client.acquire_token_for_client(scopes=self._scopes)
         return self._valid_token_or_throw(token)
 
-    def _get_token_from_cache_impl(self) -> dict:
-        token = self._msal_client.acquire_token_for_client(scopes=self._scopes)
-        return self._valid_token_or_none(token)
+    def _get_token_from_cache_impl(self) -> None:
+        return None
 
 
 class ApplicationCertificateTokenProvider(CloudInfoTokenProvider):
@@ -613,9 +612,8 @@ class ApplicationCertificateTokenProvider(CloudInfoTokenProvider):
         token = self._msal_client.acquire_token_for_client(scopes=self._scopes)
         return self._valid_token_or_throw(token)
 
-    def _get_token_from_cache_impl(self) -> dict:
-        token = self._msal_client.acquire_token_for_client(scopes=self._scopes)
-        return self._valid_token_or_none(token)
+    def _get_token_from_cache_impl(self) -> None:
+        return None
 
 
 class AzureIdentityTokenCredentialProvider(CloudInfoTokenProvider):
