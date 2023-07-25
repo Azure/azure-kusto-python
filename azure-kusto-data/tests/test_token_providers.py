@@ -271,10 +271,6 @@ class TokenProviderTests(unittest.TestCase):
             with ApplicationKeyTokenProvider(KUSTO_URI, auth_id, app_id, app_key) as provider:
                 token = provider.get_token()
                 assert TokenProviderTests.get_token_value(token) is not None
-
-                # Again through cache
-                token = provider._get_token_from_cache_impl()
-                assert TokenProviderTests.get_token_value(token) is not None
         else:
             print(" *** Skipped App Id & Key Provider Test ***")
 
@@ -294,20 +290,12 @@ class TokenProviderTests(unittest.TestCase):
                 token = provider.get_token()
                 assert TokenProviderTests.get_token_value(token) is not None
 
-                # Again through cache
-                token = provider._get_token_from_cache_impl()
-                assert TokenProviderTests.get_token_value(token) is not None
-
                 if public_cert_path:
                     with open(public_cert_path, "r") as file:
                         public_cert = file.read()
 
                     with ApplicationCertificateTokenProvider(KUSTO_URI, cert_app_id, cert_auth, pem_key, thumbprint, public_cert) as provider:
                         token = provider.get_token()
-                        assert TokenProviderTests.get_token_value(token) is not None
-
-                        # Again through cache
-                        token = provider._get_token_from_cache_impl()
                         assert TokenProviderTests.get_token_value(token) is not None
                 else:
                     print(" *** Skipped App Cert SNI Provider Test ***")

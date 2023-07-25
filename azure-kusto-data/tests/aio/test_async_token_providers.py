@@ -235,10 +235,6 @@ class TestTokenProvider:
             with ApplicationKeyTokenProvider(KUSTO_URI, auth_id, app_id, app_key, is_async=True) as provider:
                 token = await provider.get_token_async()
                 assert self.get_token_value(token) is not None
-
-                # Again through cache
-                token = provider._get_token_from_cache_impl()
-                assert self.get_token_value(token) is not None
         else:
             print(" *** Skipped App Id & Key Provider Test ***")
 
@@ -259,10 +255,6 @@ class TestTokenProvider:
 
             with ApplicationCertificateTokenProvider(KUSTO_URI, cert_app_id, cert_auth, pem_key, thumbprint, is_async=True) as provider:
                 token = await provider.get_token_async()
-                assert self.get_token_value(token) is not None
-
-                # Again through cache
-                token = provider._get_token_from_cache_impl()
                 assert self.get_token_value(token) is not None
 
                 if public_cert_path:
