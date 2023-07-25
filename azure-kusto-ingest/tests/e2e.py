@@ -170,6 +170,7 @@ class TestE2E:
     def setup_class(cls):
         # DM CS can be composed from engine CS
         cls.engine_cs = get_env("ENGINE_CONNECTION_STRING")
+        cls.dm_cs = get_env("DM_CONNECTION_STRING", default=cls.engine_cs.replace("//", "//ingest-"))
         cls.ai_engine_cs = get_env("APPLICATION_INSIGHTS_ENGINE_CONNECTION_STRING")
 
         cls.app_id = get_app_id()
