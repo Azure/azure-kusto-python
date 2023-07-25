@@ -234,6 +234,7 @@ class TokenProviderBase(abc.ABC):
     @staticmethod
     def _valid_token_or_none(token: dict) -> Optional[dict]:
         if token is None or TokenConstants.MSAL_ERROR in token:
+            print("token error - " + str(token))
             return None
         return token
 

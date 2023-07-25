@@ -6,8 +6,8 @@ from threading import Thread
 from asgiref.sync import async_to_sync
 from azure.identity import ClientSecretCredential, DefaultAzureCredential
 
-from azure.kusto.data.env_utils import get_env, get_app_id, get_auth_id, get_app_key
 from azure.kusto.data._token_providers import *
+from azure.kusto.data.env_utils import get_env, get_app_id, get_auth_id, get_app_key
 
 KUSTO_URI = "https://sdkse2etest.eastus.kusto.windows.net"
 TOKEN_VALUE = "little miss sunshine"
@@ -211,8 +211,8 @@ class TokenProviderTests(unittest.TestCase):
 
     @staticmethod
     def test_user_pass_provider():
-        username = get_env("USER_NAME")
-        password = get_env("USER_PASS")
+        username = get_env("USER_NAME", optional=True)
+        password = get_env("USER_PASS", optional=True)
         auth = get_env("USER_AUTH_ID", default="organizations")
 
         if username and password and auth:

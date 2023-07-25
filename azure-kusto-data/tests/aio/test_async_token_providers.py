@@ -188,8 +188,8 @@ class TestTokenProvider:
     @aio_documented_by(TokenProviderTests.test_user_pass_provider)
     @pytest.mark.asyncio
     async def test_user_pass_provider(self):
-        username = get_env("USER_NAME")
-        password = get_env("USER_PASS")
+        username = get_env("USER_NAME", optional=True)
+        password = get_env("USER_PASS", optional=True)
         auth = get_env("USER_AUTH_ID", default="organizations")
 
         if username and password and auth:
