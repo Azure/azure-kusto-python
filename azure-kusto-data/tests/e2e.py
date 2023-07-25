@@ -12,7 +12,7 @@ from typing import Optional, ClassVar
 import pytest
 from azure.identity import DefaultAzureCredential
 
-import env_utils
+from azure.kusto.data.env_utils import get_env, get_app_id, get_auth_id, get_app_key, set_env
 from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
 from azure.kusto.data._cloud_settings import CloudSettings, DEFAULT_DEV_KUSTO_SERVICE_RESOURCE_ID
 from azure.kusto.data._models import WellKnownDataSet
@@ -109,17 +109,17 @@ class TestE2E:
 
     @classmethod
     def setup_class(cls):
-        cls.engine_cs = env_utils.get_env("ENGINE_CONNECTION_STRING")
-        cls.ai_engine_cs = env_utils.get_env("APPLICATION_INSIGHTS_ENGINE_CONNECTION_STRING")
+        cls.engine_cs = get_env("ENGINE_CONNECTION_STRING")
+        cls.ai_engine_cs = get_env("APPLICATION_INSIGHTS_ENGINE_CONNECTION_STRING")
 
-        cls.app_id = env_utils.get_app_id()
-        cls.auth_id = env_utils.get_auth_id()
-        cls.app_key = env_utils.get_app_key()
+        cls.app_id = get_app_id()
+        cls.auth_id = get_auth_id()
+        cls.app_key = get_app_key()
 
-        env_utils.set_env("AZURE_AUTHORITY_HOST", "login.microsoftonline.com")
+        set_env("AZURE_AUTHORITY_HOST", "login.microsoftonline.com")
 
-        cls.test_db = env_utils.get_env("TEST_DATABASE")
-        cls.ai_test_db = env_utils.get_env("APPLICATION_INSIGHTS_TEST_DATABASE")  # name of e2e database could be changed
+        cls.test_db = get_env("TEST_DATABASE")
+        cls.ai_test_db = get_env("APPLICATION_INSIGHTS_TEST_DATABASE")  # name of e2e database could be changed
 
         # Init clients
         cls.streaming_test_table = "BigChunkus"

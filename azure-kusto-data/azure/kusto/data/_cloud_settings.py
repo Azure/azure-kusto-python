@@ -8,7 +8,7 @@ import requests
 from azure.core.tracing.decorator import distributed_trace
 from azure.core.tracing import SpanKind
 
-import env_utils
+from .env_utils import get_env
 from ._telemetry import Span, MonitoredActivity
 from .exceptions import KustoServiceError
 
@@ -46,7 +46,7 @@ class CloudSettings:
     _cloud_cache_lock = Lock()
 
     DEFAULT_CLOUD = CloudInfo(
-        login_endpoint=env_utils.get_env(DEFAULT_AUTH_ENV_VAR_NAME, default=DEFAULT_PUBLIC_LOGIN_URL),
+        login_endpoint=get_env(DEFAULT_AUTH_ENV_VAR_NAME, default=DEFAULT_PUBLIC_LOGIN_URL),
         login_mfa_required=False,
         kusto_client_app_id=DEFAULT_KUSTO_CLIENT_APP_ID,
         kusto_client_redirect_uri=DEFAULT_REDIRECT_URI,
