@@ -274,6 +274,7 @@ class TokenProviderTests(unittest.TestCase):
 
                 # Again through cache
                 token = provider._get_token_from_cache_impl()
+                print("token error - " + str(token))
                 assert TokenProviderTests.get_token_value(token) is not None
         else:
             print(" *** Skipped App Id & Key Provider Test ***")
