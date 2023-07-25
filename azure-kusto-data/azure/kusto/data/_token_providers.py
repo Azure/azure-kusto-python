@@ -565,7 +565,7 @@ class ApplicationKeyTokenProvider(CloudInfoTokenProvider):
         return self._valid_token_or_throw(token)
 
     def _get_token_from_cache_impl(self) -> dict:
-        token = self._msal_client.acquire_token_silent(scopes=self._scopes, account=None)
+        token = self._msal_client.acquire_token_for_client(scopes=self._scopes)
         return self._valid_token_or_none(token)
 
 
@@ -614,7 +614,7 @@ class ApplicationCertificateTokenProvider(CloudInfoTokenProvider):
         return self._valid_token_or_throw(token)
 
     def _get_token_from_cache_impl(self) -> dict:
-        token = self._msal_client.acquire_token_silent(scopes=self._scopes, account=None)
+        token = self._msal_client.acquire_token_for_client(scopes=self._scopes)
         return self._valid_token_or_none(token)
 
 
