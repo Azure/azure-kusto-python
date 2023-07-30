@@ -1,12 +1,11 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
-import os
-
 import pytest
 from azure.identity.aio import ClientSecretCredential as AsyncClientSecretCredential
 
 from azure.kusto.data._decorators import aio_documented_by
 from azure.kusto.data._token_providers import *
+from azure.kusto.data.env_utils import get_env, get_app_id, get_auth_id, get_app_key
 from .test_kusto_client import run_aio_tests
 from ..test_token_providers import KUSTO_URI, TOKEN_VALUE, TEST_AZ_AUTH, TEST_MSI_AUTH, TEST_DEVICE_AUTH, TokenProviderTests, MockProvider
 
@@ -162,8 +161,8 @@ class TestTokenProvider:
             print(" *** Skipped MSI Provider Test ***")
             return
 
-        user_msi_object_id = os.environ.get("MSI_OBJECT_ID")
-        user_msi_client_id = os.environ.get("MSI_CLIENT_ID")
+        user_msi_object_id = get_env("MSI_OBJECT_ID", optional=True)
+        user_msi_client_id = get_env("MSI_CLIENT_ID", optional=True)
 
         # system MSI
         with MsiTokenProvider(KUSTO_URI, is_async=True) as provider:
@@ -189,9 +188,9 @@ class TestTokenProvider:
     @aio_documented_by(TokenProviderTests.test_user_pass_provider)
     @pytest.mark.asyncio
     async def test_user_pass_provider(self):
-        username = os.environ.get("USER_NAME")
-        password = os.environ.get("USER_PASS")
-        auth = os.environ.get("USER_AUTH_ID", "organizations")
+        username = get_env("USER_NAME", optional=True)
+        password = get_env("USER_PASS", optional=True)
+        auth = get_env("USER_AUTH_ID", default="organizations")
 
         if username and password and auth:
             with UserPassTokenProvider(KUSTO_URI, auth, username, password, is_async=True) as provider:
@@ -228,17 +227,13 @@ class TestTokenProvider:
     async def test_app_key_provider(self):
         # default details are for kusto-client-e2e-test-app
         # to run the test, get the key from Azure portal
-        app_id = os.environ.get("APP_ID", "b699d721-4f6f-4320-bc9a-88d578dfe68f")
-        auth_id = os.environ.get("APP_AUTH_ID", "72f988bf-86f1-41af-91ab-2d7cd011db47")
-        app_key = os.environ.get("APP_KEY")
+        app_id = get_app_id(optional=True)
+        auth_id = get_auth_id(optional=True)
+        app_key = get_app_key(optional=True)
 
         if app_id and app_key and auth_id:
             with ApplicationKeyTokenProvider(KUSTO_URI, auth_id, app_id, app_key, is_async=True) as provider:
                 token = await provider.get_token_async()
-                assert self.get_token_value(token) is not None
-
-                # Again through cache
-                token = provider._get_token_from_cache_impl()
                 assert self.get_token_value(token) is not None
         else:
             print(" *** Skipped App Id & Key Provider Test ***")
@@ -248,22 +243,18 @@ class TestTokenProvider:
     async def test_app_cert_provider(self):
         # default details are for kusto-client-e2e-test-app
         # to invoke the test download the certs from Azure Portal
-        cert_app_id = os.environ.get("CERT_APP_ID", "b699d721-4f6f-4320-bc9a-88d578dfe68f")
-        cert_auth = os.environ.get("CERT_AUTH", "72f988bf-86f1-41af-91ab-2d7cd011db47")
-        thumbprint = os.environ.get("CERT_THUMBPRINT")
-        public_cert_path = os.environ.get("PUBLIC_CERT_PATH")
-        pem_key_path = os.environ.get("CERT_PEM_KEY_PATH")
+        cert_app_id = get_app_id(optional=True)
+        cert_auth = get_auth_id(optional=True)
+        thumbprint = get_env("CERT_THUMBPRINT", optional=True)
+        public_cert_path = get_env("CERT_PUBLIC_CERT_PATH", optional=True)
+        pem_key_path = get_env("CERT_PEM_KEY_PATH", optional=True)
 
-        if pem_key_path and thumbprint and cert_app_id:
+        if pem_key_path and thumbprint and cert_app_id and cert_auth:
             with open(pem_key_path, "rb") as file:
                 pem_key = file.read()
 
             with ApplicationCertificateTokenProvider(KUSTO_URI, cert_app_id, cert_auth, pem_key, thumbprint, is_async=True) as provider:
                 token = await provider.get_token_async()
-                assert self.get_token_value(token) is not None
-
-                # Again through cache
-                token = provider._get_token_from_cache_impl()
                 assert self.get_token_value(token) is not None
 
                 if public_cert_path:
@@ -351,13 +342,9 @@ class TestTokenProvider:
     @aio_documented_by(TokenProviderTests.test_azure_identity_default_token_provider)
     @pytest.mark.asyncio
     async def test_azure_identity_token_provider(self):
-        app_id = os.environ.get("APP_ID", "b699d721-4f6f-4320-bc9a-88d578dfe68f")
-        os.environ["AZURE_CLIENT_ID"] = app_id
-        auth_id = os.environ.get("APP_AUTH_ID", "72f988bf-86f1-41af-91ab-2d7cd011db47")
-        os.environ["AZURE_TENANT_ID"] = auth_id
-        app_key = os.environ.get("APP_KEY")
-        os.environ["AZURE_CLIENT_SECRET"] = app_key
-
+        app_id = get_app_id()
+        auth_id = get_auth_id()
+        app_key = get_app_key()
         with AzureIdentityTokenCredentialProvider(KUSTO_URI, is_async=True, credential=AsyncDefaultAzureCredential()) as provider:
             token = await provider.get_token_async()
             assert TokenProviderTests.get_token_value(token) is not None

@@ -13,6 +13,7 @@ import uuid
 from azure.identity import DefaultAzureCredential
 from typing import Optional, ClassVar
 
+from azure.kusto.data.env_utils import get_env, get_app_id, get_auth_id, get_app_key
 from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
 from azure.kusto.data._token_providers import AsyncDefaultAzureCredential
 from azure.kusto.data.aio import KustoClient as AsyncKustoClient
@@ -168,22 +169,16 @@ class TestE2E:
     @classmethod
     def setup_class(cls):
         # DM CS can be composed from engine CS
-        cls.engine_cs = os.environ.get("ENGINE_CONNECTION_STRING") or ""
-        cls.dm_cs = os.environ.get("DM_CONNECTION_STRING") or cls.engine_cs.replace("//", "//ingest-")
-        cls.app_id = os.environ.get("APP_ID")
-        if cls.app_id:
-            os.environ["AZURE_CLIENT_ID"] = cls.app_id
-        cls.app_key = os.environ.get("APP_KEY")
-        if cls.app_key:
-            os.environ["AZURE_CLIENT_SECRET"] = cls.app_key
-        cls.auth_id = os.environ.get("AUTH_ID")
-        if cls.auth_id:
-            os.environ["AZURE_TENANT_ID"] = cls.auth_id
-        cls.test_db = os.environ.get("TEST_DATABASE")
-        cls.test_blob = os.environ.get("TEST_BLOB")
+        cls.engine_cs = get_env("ENGINE_CONNECTION_STRING")
+        cls.dm_cs = get_env("DM_CONNECTION_STRING", default=cls.engine_cs.replace("//", "//ingest-"))
+        cls.ai_engine_cs = get_env("APPLICATION_INSIGHTS_ENGINE_CONNECTION_STRING")
 
-        if not all([cls.engine_cs, cls.dm_cs, cls.test_db]):
-            pytest.skip("E2E environment is missing")
+        cls.app_id = get_app_id()
+        cls.auth_id = get_auth_id()
+        cls.app_key = get_app_key()
+
+        cls.test_db = get_env("TEST_DATABASE")
+        cls.test_blob = get_env("TEST_BLOB", optional=True)
 
         # Init clients
         python_version = "_".join([str(v) for v in sys.version_info[:3]])
