@@ -44,9 +44,10 @@ class MockProvider(TokenProviderBase):
         return None
 
 
-class TokenProviderTests(unittest.TestCase):
-    KUSTO_URI = get_env("ENGINE_CONNECTION_STRING", optional=True)
+KUSTO_URI = get_env("ENGINE_CONNECTION_STRING", None)
 
+
+class TokenProviderTests(unittest.TestCase):
     @staticmethod
     def test_base_provider():
         # test init with no URI
@@ -172,7 +173,7 @@ class TokenProviderTests(unittest.TestCase):
             return
 
         print("Note!\nThe test 'test_az_provider' will fail if 'az login' was not called.")
-        with AzCliTokenProvider(self.KUSTO_URI) as provider:
+        with AzCliTokenProvider(KUSTO_URI) as provider:
             token = provider.get_token()
             assert TokenProviderTests.get_token_value(token) is not None
 
@@ -190,13 +191,13 @@ class TokenProviderTests(unittest.TestCase):
         user_msi_client_id = get_env("MSI_CLIENT_ID", optional=True)
 
         # system MSI
-        with MsiTokenProvider(self.KUSTO_URI) as provider:
+        with MsiTokenProvider(KUSTO_URI) as provider:
             token = provider.get_token()
             assert TokenProviderTests.get_token_value(token) is not None
 
         if user_msi_object_id is not None:
             args = {"object_id": user_msi_object_id}
-            with MsiTokenProvider(self.KUSTO_URI, args) as provider:
+            with MsiTokenProvider(KUSTO_URI, args) as provider:
                 token = provider.get_token()
                 assert TokenProviderTests.get_token_value(token) is not None
         else:
@@ -204,7 +205,7 @@ class TokenProviderTests(unittest.TestCase):
 
         if user_msi_client_id is not None:
             args = {"client_id": user_msi_client_id}
-            with MsiTokenProvider(self.KUSTO_URI, args) as provider:
+            with MsiTokenProvider(KUSTO_URI, args) as provider:
                 token = provider.get_token()
                 assert TokenProviderTests.get_token_value(token) is not None
         else:
@@ -217,7 +218,7 @@ class TokenProviderTests(unittest.TestCase):
         auth = get_env("USER_AUTH_ID", default="organizations")
 
         if username and password and auth:
-            with UserPassTokenProvider(self.KUSTO_URI, auth, username, password) as provider:
+            with UserPassTokenProvider(KUSTO_URI, auth, username, password) as provider:
                 token = provider.get_token()
                 assert TokenProviderTests.get_token_value(token) is not None
 
@@ -237,7 +238,7 @@ class TokenProviderTests(unittest.TestCase):
             # break here if you debug this test, and get the code from 'x'
             print(f"Please go to {x} and enter code {x2} to authenticate, expires in {x3}")
 
-        with DeviceLoginTokenProvider(self.KUSTO_URI, "organizations", callback) as provider:
+        with DeviceLoginTokenProvider(KUSTO_URI, "organizations", callback) as provider:
             token = provider.get_token()
             assert TokenProviderTests.get_token_value(token) is not None
 
@@ -252,7 +253,7 @@ class TokenProviderTests(unittest.TestCase):
             return
 
         auth_id = get_auth_id()
-        with InteractiveLoginTokenProvider(self.KUSTO_URI, auth_id) as provider:
+        with InteractiveLoginTokenProvider(KUSTO_URI, auth_id) as provider:
             token = provider.get_token()
             assert TokenProviderTests.get_token_value(token) is not None
 
@@ -269,7 +270,7 @@ class TokenProviderTests(unittest.TestCase):
         app_key = get_app_key()
 
         if app_id and app_key and auth_id:
-            with ApplicationKeyTokenProvider(self.KUSTO_URI, auth_id, app_id, app_key) as provider:
+            with ApplicationKeyTokenProvider(KUSTO_URI, auth_id, app_id, app_key) as provider:
                 token = provider.get_token()
                 assert TokenProviderTests.get_token_value(token) is not None
         else:
@@ -287,7 +288,7 @@ class TokenProviderTests(unittest.TestCase):
             with open(pem_key_path, "rb") as file:
                 pem_key = file.read()
 
-            with ApplicationCertificateTokenProvider(self.KUSTO_URI, cert_app_id, cert_auth, pem_key, thumbprint) as provider:
+            with ApplicationCertificateTokenProvider(KUSTO_URI, cert_app_id, cert_auth, pem_key, thumbprint) as provider:
                 token = provider.get_token()
                 assert TokenProviderTests.get_token_value(token) is not None
 
@@ -295,7 +296,7 @@ class TokenProviderTests(unittest.TestCase):
                     with open(public_cert_path, "r") as file:
                         public_cert = file.read()
 
-                    with ApplicationCertificateTokenProvider(self.KUSTO_URI, cert_app_id, cert_auth, pem_key, thumbprint, public_cert) as provider:
+                    with ApplicationCertificateTokenProvider(KUSTO_URI, cert_app_id, cert_auth, pem_key, thumbprint, public_cert) as provider:
                         token = provider.get_token()
                         assert TokenProviderTests.get_token_value(token) is not None
                 else:
@@ -352,12 +353,12 @@ class TokenProviderTests(unittest.TestCase):
         auth_id = get_auth_id()
         app_key = get_app_key()
 
-        with AzureIdentityTokenCredentialProvider(self.KUSTO_URI, credential=DefaultAzureCredential()) as provider:
+        with AzureIdentityTokenCredentialProvider(KUSTO_URI, credential=DefaultAzureCredential()) as provider:
             token = provider.get_token()
             assert TokenProviderTests.get_token_value(token) is not None
 
         with AzureIdentityTokenCredentialProvider(
-            self.KUSTO_URI,
+            KUSTO_URI,
             credential_from_login_endpoint=lambda login_endpoint: ClientSecretCredential(
                 authority=login_endpoint, client_id=app_id, client_secret=app_key, tenant_id=auth_id
             ),
