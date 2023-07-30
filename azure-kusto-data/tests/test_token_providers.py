@@ -9,7 +9,6 @@ from azure.identity import ClientSecretCredential, DefaultAzureCredential
 from azure.kusto.data._token_providers import *
 from azure.kusto.data.env_utils import get_env, get_app_id, get_auth_id, get_app_key
 
-KUSTO_URI = "https://sdkse2etest.eastus.kusto.windows.net"
 TOKEN_VALUE = "little miss sunshine"
 
 TEST_AZ_AUTH = False  # enable this in environments with az cli installed, and make sure to call 'az login' first
@@ -46,6 +45,8 @@ class MockProvider(TokenProviderBase):
 
 
 class TokenProviderTests(unittest.TestCase):
+    KUSTO_URI = get_env("ENGINE_CONNECTION_STRING")
+
     @staticmethod
     def test_base_provider():
         # test init with no URI
