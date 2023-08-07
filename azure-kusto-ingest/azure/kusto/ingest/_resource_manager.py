@@ -184,25 +184,27 @@ class _ResourceManager:
         return resources_by_storage_account
 
     def select_with_round_robin(self, original_dict):
-        import copy
-
-        dictionary_copy = copy.deepcopy(original_dict)
-        self.shuffle_lists_in_dict(dictionary_copy)
+        dictionary_shuffled = self.shuffle_dictionary_keys_and_values(original_dict)
         result = []
         while True:
-            # Check if all lists in the dictionary are empty
-            if all(not lst for lst in dictionary_copy.values()):
+            if all(not lst for lst in dictionary_shuffled.values()):
                 break
 
-            # Extract the first element from each list and add it to the result
-            for key, lst in dictionary_copy.items():
+            for key, lst in dictionary_shuffled.items():
                 if lst:
                     result.append(lst.pop(0))
         return result
 
-    def shuffle_lists_in_dict(self, dictionary):
+    def shuffle_dictionary_keys_and_values(self, dictionary):
         import random
 
-        for key in dictionary:
-            if isinstance(dictionary[key], list):
-                random.shuffle(dictionary[key])
+        keys = list(dictionary.keys())
+        random.shuffle(keys)
+
+        shuffled_dict = {}
+        for key in keys:
+            shuffled_values = list(dictionary[key])
+            random.shuffle(shuffled_values)
+            shuffled_dict[key] = shuffled_values
+
+        return shuffled_dict
