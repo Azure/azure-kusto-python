@@ -208,3 +208,6 @@ class _ResourceManager:
             shuffled_dict[key] = shuffled_values
 
         return shuffled_dict
+
+    def Report_resource_usage_result(self, storage_account_name, success_status):
+        pass

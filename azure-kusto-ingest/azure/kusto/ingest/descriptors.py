@@ -15,7 +15,7 @@ from zipfile import ZipFile
 from azure.storage.blob import BlobServiceClient
 
 from azure.kusto.data.exceptions import KustoBlobError
-from azure.kusto.ingest._resource_manager import _ResourceUri
+from azure.kusto.ingest._resource_manager import _ResourceUri, _ResourceManager
 
 OptionalUUID = Optional[Union[str, uuid.UUID]]
 
@@ -159,6 +159,7 @@ class BlobDescriptor(DescriptorBase):
         proxy_dict: Optional[Dict[str, str]],
         timeout: int,
         max_retries: int,
+        resource_manager: _ResourceManager,
     ) -> "BlobDescriptor":
         """
         Uploads and transforms FileDescriptor or StreamDescriptor into a BlobDescriptor instance
@@ -179,11 +180,11 @@ class BlobDescriptor(DescriptorBase):
                 blob_service = BlobServiceClient(container.account_uri, proxies=proxy_dict)
                 blob_client = blob_service.get_blob_client(container=container.object_name, blob=blob_name)
                 blob_client.upload_blob(data=stream, timeout=timeout)
-                # Report_resource_usage_result(container.account_uri,True)
+                resource_manager.Report_resource_usage_result(container.storage_account_name,True)
                 return BlobDescriptor(blob_client.url, descriptor.size, descriptor.source_id)
             except Exception as e:
                 retries_left = retries_left - 1
-                #  Report_resource_usage_result(container.account_uri,False)
+                resource_manager.Report_resource_usage_result(container.storage_account_name,False)
                 if retries_left == 0:
                     raise KustoBlobError(e)
 
