@@ -34,3 +34,12 @@ class KustoInvalidEndpointError(KustoClientError):
         if suggested_endpoint_url:
             message = message + ": '" + suggested_endpoint_url + "'"
         super(KustoInvalidEndpointError, self).__init__(message)
+
+
+class KustoQueueError(KustoClientError):
+
+    """Raised when not succeeding to upload message to queue in all retries"""
+
+    def __init__(self):
+        message = "Not succeeding to upload message to queue in all retries."
+        super(KustoQueueError, self).__init__(message)

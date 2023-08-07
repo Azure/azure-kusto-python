@@ -158,6 +158,7 @@ class BlobDescriptor(DescriptorBase):
         stream: IO[AnyStr],
         proxy_dict: Optional[Dict[str, str]],
         timeout: int,
+        max_retries: int,
     ) -> "BlobDescriptor":
         """
         Uploads and transforms FileDescriptor or StreamDescriptor into a BlobDescriptor instance
@@ -171,14 +172,20 @@ class BlobDescriptor(DescriptorBase):
         :return new BlobDescriptor instance
         """
         blob_name = "{db}__{table}__{guid}__{file}".format(db=database, table=table, guid=descriptor.source_id, file=descriptor.stream_name)
-        random_container = random.choice(containers)
-        try:
-            blob_service = BlobServiceClient(random_container.account_uri, proxies=proxy_dict)
-            blob_client = blob_service.get_blob_client(container=random_container.object_name, blob=blob_name)
-            blob_client.upload_blob(data=stream, timeout=timeout)
-        except Exception as e:
-            raise KustoBlobError(e)
-        return BlobDescriptor(blob_client.url, descriptor.size, descriptor.source_id)
+
+        retries_left = max_retries
+        for container in containers:
+            try:
+                blob_service = BlobServiceClient(container.account_uri, proxies=proxy_dict)
+                blob_client = blob_service.get_blob_client(container=container.object_name, blob=blob_name)
+                blob_client.upload_blob(data=stream, timeout=timeout)
+                # Report_resource_usage_result(container.account_uri,True)
+                return BlobDescriptor(blob_client.url, descriptor.size, descriptor.source_id)
+            except Exception as e:
+                retries_left = retries_left - 1
+                #  Report_resource_usage_result(container.account_uri,False)
+                if retries_left == 0:
+                    raise KustoBlobError(e)
 
     def get_tracing_attributes(self) -> dict:
         # Remove query parameters from self.path, if exists

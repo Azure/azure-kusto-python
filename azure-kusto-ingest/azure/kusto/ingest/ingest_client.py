@@ -16,7 +16,7 @@ from ._ingest_telemetry import IngestTracingAttributes
 from ._resource_manager import _ResourceManager, _ResourceUri
 from .base_ingest_client import BaseIngestClient, IngestionResult, IngestionStatus
 from .descriptors import BlobDescriptor, FileDescriptor, StreamDescriptor
-from .exceptions import KustoInvalidEndpointError
+from .exceptions import KustoInvalidEndpointError, KustoQueueError
 from .ingestion_blob_info import IngestionBlobInfo
 from .ingestion_properties import IngestionProperties
 
@@ -31,6 +31,7 @@ class QueuedIngestClient(BaseIngestClient):
     _INGEST_PREFIX = "ingest-"
     _EXPECTED_SERVICE_TYPE = "DataManagement"
     _SERVICE_CLIENT_TIMEOUT_SECONDS = 10 * 60
+    _MAX_RETRIES = 3
 
     def __init__(self, kcsb: Union[str, KustoConnectionStringBuilder]):
         """Kusto Ingest Client constructor.
@@ -78,6 +79,7 @@ class QueuedIngestClient(BaseIngestClient):
                 stream,
                 self._proxy_dict,
                 self._SERVICE_CLIENT_TIMEOUT_SECONDS,
+                self._MAX_RETRIES,
             )
         return self.ingest_from_blob(blob_descriptor, ingestion_properties=ingestion_properties)
 
@@ -103,6 +105,7 @@ class QueuedIngestClient(BaseIngestClient):
             stream_descriptor.stream,
             self._proxy_dict,
             self._SERVICE_CLIENT_TIMEOUT_SECONDS,
+            self._MAX_RETRIES,
         )
         return self.ingest_from_blob(blob_descriptor, ingestion_properties=ingestion_properties)
 
@@ -125,20 +128,27 @@ class QueuedIngestClient(BaseIngestClient):
             self._validate_endpoint_service_type()
             raise ex
 
-        random_queue = random.choice(queues)
-        with QueueServiceClient(random_queue.account_uri, proxies=self._proxy_dict) as queue_service:
-            authorization_context = self._resource_manager.get_authorization_context()
-            ingestion_blob_info = IngestionBlobInfo(blob_descriptor, ingestion_properties=ingestion_properties, auth_context=authorization_context)
-            ingestion_blob_info_json = ingestion_blob_info.to_json()
-            with queue_service.get_queue_client(queue=random_queue.object_name, message_encode_policy=TextBase64EncodePolicy()) as queue_client:
-                # trace enqueuing of blob for ingestion
-                invoker = lambda: queue_client.send_message(content=ingestion_blob_info_json, timeout=self._SERVICE_CLIENT_TIMEOUT_SECONDS)
-                enqueue_trace_attributes = IngestTracingAttributes.create_enqueue_request_attributes(queue_client.queue_name, blob_descriptor.source_id)
-                MonitoredActivity.invoke(invoker, name_of_span="QueuedIngestClient.enqueue_request", tracing_attributes=enqueue_trace_attributes)
+        retries_left = self._MAX_RETRIES
+        for queue in queues:
+            try:
+                with QueueServiceClient(queue.account_uri, proxies=self._proxy_dict) as queue_service:
+                    authorization_context = self._resource_manager.get_authorization_context()
+                    ingestion_blob_info = IngestionBlobInfo(blob_descriptor, ingestion_properties=ingestion_properties, auth_context=authorization_context)
+                    ingestion_blob_info_json = ingestion_blob_info.to_json()
+                    with queue_service.get_queue_client(queue=queue.object_name, message_encode_policy=TextBase64EncodePolicy()) as queue_client:
+                        # trace enqueuing of blob for ingestion
+                        invoker = lambda: queue_client.send_message(content=ingestion_blob_info_json, timeout=self._SERVICE_CLIENT_TIMEOUT_SECONDS)
+                        enqueue_trace_attributes = IngestTracingAttributes.create_enqueue_request_attributes(queue_client.queue_name, blob_descriptor.source_id)
+                        MonitoredActivity.invoke(invoker, name_of_span="QueuedIngestClient.enqueue_request", tracing_attributes=enqueue_trace_attributes)
 
-        return IngestionResult(
-            IngestionStatus.QUEUED, ingestion_properties.database, ingestion_properties.table, blob_descriptor.source_id, blob_descriptor.path
-        )
+                return IngestionResult(
+                    IngestionStatus.QUEUED, ingestion_properties.database, ingestion_properties.table, blob_descriptor.source_id, blob_descriptor.path
+                )
+            except Exception as e:
+                retries_left = retries_left - 1
+                #  Report_resource_usage_result(container.account_uri,False)
+                if retries_left == 0:
+                    raise KustoQueueError() from e
 
     def _get_containers(self) -> List[_ResourceUri]:
         try:
