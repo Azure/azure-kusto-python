@@ -41,6 +41,7 @@ jobs:
           APP_ID: ${{ secrets.APP_ID }}
           APP_KEY: ${{ secrets.APP_KEY }}
           AUTH_ID: ${{ secrets.AUTH_ID }}
+          ENGINE_CONNECTION_STRING: ${{ secrets.ENGINE_CONNECTION_STRING }}
       - name: EtoE Test with pytest
         env:
           APP_ID: ${{ secrets.APP_ID }}

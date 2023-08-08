@@ -12,6 +12,7 @@ from typing import Optional, ClassVar
 import pytest
 from azure.identity import DefaultAzureCredential
 
+from azure.kusto.data.env_utils import get_env, get_app_id, get_auth_id, get_app_key, set_env
 from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
 from azure.kusto.data._cloud_settings import CloudSettings, DEFAULT_DEV_KUSTO_SERVICE_RESOURCE_ID
 from azure.kusto.data._models import WellKnownDataSet
@@ -108,23 +109,17 @@ class TestE2E:
 
     @classmethod
     def setup_class(cls):
-        cls.engine_cs = os.environ.get("ENGINE_CONNECTION_STRING") or ""
-        cls.ai_engine_cs = os.environ.get("APPLICATION_INSIGHTS_ENGINE_CONNECTION_STRING") or ""
-        cls.app_id = os.environ.get("APP_ID")
-        if cls.app_id:
-            os.environ["AZURE_CLIENT_ID"] = cls.app_id
-        cls.app_key = os.environ.get("APP_KEY")
-        if cls.app_key:
-            os.environ["AZURE_CLIENT_SECRET"] = cls.app_key
-        cls.auth_id = os.environ.get("AUTH_ID")
-        if cls.auth_id:
-            os.environ["AZURE_TENANT_ID"] = cls.auth_id
-        os.environ["AZURE_AUTHORITY_HOST"] = "login.microsoftonline.com"
-        cls.test_db = os.environ.get("TEST_DATABASE")
-        cls.ai_test_db = os.environ.get("APPLICATION_INSIGHTS_TEST_DATABASE")  # name of e2e database could be changed
+        cls.engine_cs = get_env("ENGINE_CONNECTION_STRING")
+        cls.ai_engine_cs = get_env("APPLICATION_INSIGHTS_ENGINE_CONNECTION_STRING")
 
-        if not all([cls.engine_cs, cls.test_db, cls.ai_engine_cs, cls.ai_test_db]):
-            pytest.skip("E2E environment is missing")
+        cls.app_id = get_app_id()
+        cls.auth_id = get_auth_id()
+        cls.app_key = get_app_key()
+
+        set_env("AZURE_AUTHORITY_HOST", "login.microsoftonline.com")
+
+        cls.test_db = get_env("TEST_DATABASE")
+        cls.ai_test_db = get_env("APPLICATION_INSIGHTS_TEST_DATABASE")  # name of e2e database could be changed
 
         # Init clients
         cls.streaming_test_table = "BigChunkus"
