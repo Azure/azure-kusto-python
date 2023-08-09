@@ -130,26 +130,26 @@ class QueuedIngestClient(BaseIngestClient):
             self._validate_endpoint_service_type()
             raise ex
 
+        authorization_context = self._resource_manager.get_authorization_context()
+        ingestion_blob_info = IngestionBlobInfo(blob_descriptor, ingestion_properties=ingestion_properties, auth_context=authorization_context)
+        ingestion_blob_info_json = ingestion_blob_info.to_json()
         retries_left = self._MAX_RETRIES
         for queue in queues:
             try:
                 with QueueServiceClient(queue.account_uri, proxies=self._proxy_dict) as queue_service:
-                    authorization_context = self._resource_manager.get_authorization_context()
-                    ingestion_blob_info = IngestionBlobInfo(blob_descriptor, ingestion_properties=ingestion_properties, auth_context=authorization_context)
-                    ingestion_blob_info_json = ingestion_blob_info.to_json()
                     with queue_service.get_queue_client(queue=queue.object_name, message_encode_policy=TextBase64EncodePolicy()) as queue_client:
                         # trace enqueuing of blob for ingestion
                         invoker = lambda: queue_client.send_message(content=ingestion_blob_info_json, timeout=self._SERVICE_CLIENT_TIMEOUT_SECONDS)
                         enqueue_trace_attributes = IngestTracingAttributes.create_enqueue_request_attributes(queue_client.queue_name, blob_descriptor.source_id)
                         MonitoredActivity.invoke(invoker, name_of_span="QueuedIngestClient.enqueue_request", tracing_attributes=enqueue_trace_attributes)
 
-                self._resource_manager.Report_resource_usage_result(queue.storage_account_name,True)
+                self._resource_manager.Report_resource_usage_result(queue.storage_account_name, True)
                 return IngestionResult(
                     IngestionStatus.QUEUED, ingestion_properties.database, ingestion_properties.table, blob_descriptor.source_id, blob_descriptor.path
                 )
             except Exception as e:
                 retries_left = retries_left - 1
-                self._resource_manager.Report_resource_usage_result(queue.storage_account_name,False)
+                self._resource_manager.Report_resource_usage_result(queue.storage_account_name, False)
                 if retries_left == 0:
                     raise KustoQueueError() from e
 
