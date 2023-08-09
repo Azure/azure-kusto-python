@@ -133,7 +133,7 @@ class QueuedIngestClient(BaseIngestClient):
         authorization_context = self._resource_manager.get_authorization_context()
         ingestion_blob_info = IngestionBlobInfo(blob_descriptor, ingestion_properties=ingestion_properties, auth_context=authorization_context)
         ingestion_blob_info_json = ingestion_blob_info.to_json()
-        retries_left = self._MAX_RETRIES
+        retries_left = min(self._MAX_RETRIES, len(queues))
         for queue in queues:
             try:
                 with QueueServiceClient(queue.account_uri, proxies=self._proxy_dict) as queue_service:

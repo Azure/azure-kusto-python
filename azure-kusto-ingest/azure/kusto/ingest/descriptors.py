@@ -174,7 +174,7 @@ class BlobDescriptor(DescriptorBase):
         """
         blob_name = "{db}__{table}__{guid}__{file}".format(db=database, table=table, guid=descriptor.source_id, file=descriptor.stream_name)
 
-        retries_left = max_retries
+        retries_left = min(max_retries, len(containers))
         for container in containers:
             try:
                 blob_service = BlobServiceClient(container.account_uri, proxies=proxy_dict)

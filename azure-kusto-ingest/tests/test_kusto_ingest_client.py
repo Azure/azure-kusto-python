@@ -13,7 +13,7 @@ from mock import patch
 from azure.kusto.data.data_format import DataFormat
 
 from azure.kusto.ingest import QueuedIngestClient, IngestionProperties, IngestionStatus
-from azure.kusto.ingest.exceptions import KustoInvalidEndpointError
+from azure.kusto.ingest.exceptions import KustoInvalidEndpointError, KustoQueueError
 from azure.kusto.ingest.managed_streaming_ingest_client import ManagedStreamingIngestClient
 
 pandas_installed = False
@@ -29,6 +29,19 @@ BLOB_NAME_REGEX = "database__table__" + UUID_REGEX + "__dataset.csv.gz"
 BLOB_URL_REGEX = "https://storageaccount.blob.core.windows.net/tempstorage/database__table__" + UUID_REGEX + "__dataset.csv.gz[?]sas"
 STORAGE_QUEUE_URL = "https://storageaccount.queue.core.windows.net/readyforaggregation-secured?sp=rl&st=2020-05-20T13:38:37Z&se=2020-05-21T13:38:37Z&sv=2019-10-10&sr=c&sig=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 TEMP_STORAGE_URL = "https://storageaccount.blob.core.windows.net/tempstorage?sp=rl&st=2020-05-20T13:38:37Z&se=2020-05-21T13:38:37Z&sv=2019-10-10&sr=c&sig=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+TEMP_STORAGE2_URL = "https://storageaccount2.blob.core.windows.net/tempstorage2?sp=2"
+TEMP_STORAGE3_URL = "https://storageaccount2.blob.core.windows.net/tempstorage2?sp=3"
+TEMP_STORAGE4_URL = "https://storageaccount2.blob.core.windows.net/tempstorage2?sp=4"
+TEMP_STORAGE5_URL = "https://storageaccount2.blob.core.windows.net/tempstorage2?sp=5"
+TEMP_STORAGE6_URL = "https://storageaccount3.blob.core.windows.net/tempstorage3?sp=6"
+TEMP_STORAGE7_URL = "https://storageaccount3.blob.core.windows.net/tempstorage3?sp=7"
+TEMP_STORAGE8_URL = "https://storageaccount3.blob.core.windows.net/tempstorage3?sp=8"
+TEMP_STORAGE9_URL = "https://storageaccount3.blob.core.windows.net/tempstorage4?sp=9"
+
+STORAGE_QUEUE2_URL = "https://storageaccount3.queue.core.windows.net/readyforaggregation-secured?2"
+STORAGE_QUEUE3_URL = "https://storageaccount3.queue.core.windows.net/readyforaggregation-secured?3"
+STORAGE_QUEUE4_URL = "https://storageaccount2.queue.core.windows.net/readyforaggregation-secured?4"
+STORAGE_QUEUE5_URL = "https://storageaccount2.queue.core.windows.net/readyforaggregation-secured?5"
 
 
 def request_callback(request):
@@ -92,6 +105,138 @@ def request_callback(request):
                         [
                             "TempStorage",
                             TEMP_STORAGE_URL,
+                        ],
+                        [
+                            "IngestionsStatusTable",
+                            "https://storageaccount.table.core.windows.net/ingestionsstatus?sp=rl&st=2020-05-20T13:38:37Z&se=2020-05-21T13:38:37Z&sv=2019-10-10&sr=c&sig=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+                        ],
+                    ],
+                }
+            ]
+        }
+
+    if ".get kusto identity token" in body["csl"]:
+        response_status = 200
+        response_body = {
+            "Tables": [{"TableName": "Table_0", "Columns": [{"ColumnName": "AuthorizationContext", "DataType": "String"}], "Rows": [["authorization_context"]]}]
+        }
+
+    return response_status, response_headers, json.dumps(response_body)
+
+
+def request_callback_check_retries(request):
+    body = json.loads(request.body.decode()) if type(request.body) == bytes else json.loads(request.body)
+    response_status = 400
+    response_headers = dict()
+    response_body = {}
+
+    if ".get ingestion resources" in body["csl"]:
+        response_status = 200
+        response_body = {
+            "Tables": [
+                {
+                    "TableName": "Table_0",
+                    "Columns": [{"ColumnName": "ResourceTypeName", "DataType": "String"}, {"ColumnName": "StorageRoot", "DataType": "String"}],
+                    "Rows": [
+                        [
+                            "SecuredReadyForAggregationQueue",
+                            STORAGE_QUEUE2_URL,
+                        ],
+                        [
+                            "SecuredReadyForAggregationQueue",
+                            STORAGE_QUEUE3_URL,
+                        ],
+                        [
+                            "SecuredReadyForAggregationQueue",
+                            STORAGE_QUEUE_URL,
+                        ],
+                        [
+                            "SecuredReadyForAggregationQueue",
+                            STORAGE_QUEUE4_URL,
+                        ],
+                        [
+                            "SecuredReadyForAggregationQueue",
+                            STORAGE_QUEUE5_URL,
+                        ],
+                        [
+                            "FailedIngestionsQueue",
+                            "https://storageaccount.queue.core.windows.net/failedingestions?sp=rl&st=2020-05-20T13:38:37Z&se=2020-05-21T13:38:37Z&sv=2019-10-10&sr=c&sig=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+                        ],
+                        [
+                            "SuccessfulIngestionsQueue",
+                            "https://storageaccount.queue.core.windows.net/successfulingestions?sp=rl&st=2020-05-20T13:38:37Z&se=2020-05-21T13:38:37Z&sv=2019-10-10&sr=c&sig=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+                        ],
+                        [
+                            "TempStorage",
+                            TEMP_STORAGE_URL,
+                        ],
+                        [
+                            "TempStorage",
+                            TEMP_STORAGE2_URL,
+                        ],
+                        [
+                            "TempStorage",
+                            TEMP_STORAGE3_URL,
+                        ],
+                        [
+                            "TempStorage",
+                            TEMP_STORAGE4_URL,
+                        ],
+                        [
+                            "TempStorage",
+                            TEMP_STORAGE5_URL,
+                        ],
+                        [
+                            "TempStorage",
+                            TEMP_STORAGE6_URL,
+                        ],
+                        [
+                            "IngestionsStatusTable",
+                            "https://storageaccount.table.core.windows.net/ingestionsstatus?sp=rl&st=2020-05-20T13:38:37Z&se=2020-05-21T13:38:37Z&sv=2019-10-10&sr=c&sig=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+                        ],
+                    ],
+                }
+            ]
+        }
+
+    if ".get kusto identity token" in body["csl"]:
+        response_status = 200
+        response_body = {
+            "Tables": [{"TableName": "Table_0", "Columns": [{"ColumnName": "AuthorizationContext", "DataType": "String"}], "Rows": [["authorization_context"]]}]
+        }
+
+    return response_status, response_headers, json.dumps(response_body)
+
+
+def request_callback_all_retries_failed(request):
+    body = json.loads(request.body.decode()) if type(request.body) == bytes else json.loads(request.body)
+    response_status = 400
+    response_headers = dict()
+    response_body = {}
+
+    if ".get ingestion resources" in body["csl"]:
+        response_status = 200
+        response_body = {
+            "Tables": [
+                {
+                    "TableName": "Table_0",
+                    "Columns": [{"ColumnName": "ResourceTypeName", "DataType": "String"}, {"ColumnName": "StorageRoot", "DataType": "String"}],
+                    "Rows": [
+                        [
+                            "SecuredReadyForAggregationQueue",
+                            STORAGE_QUEUE2_URL,
+                        ],
+                        [
+                            "FailedIngestionsQueue",
+                            "https://storageaccount.queue.core.windows.net/failedingestions?sp=rl&st=2020-05-20T13:38:37Z&se=2020-05-21T13:38:37Z&sv=2019-10-10&sr=c&sig=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+                        ],
+                        [
+                            "SuccessfulIngestionsQueue",
+                            "https://storageaccount.queue.core.windows.net/successfulingestions?sp=rl&st=2020-05-20T13:38:37Z&se=2020-05-21T13:38:37Z&sv=2019-10-10&sr=c&sig=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+                        ],
+                        [
+                            "TempStorage",
+                            TEMP_STORAGE6_URL,
                         ],
                         [
                             "IngestionsStatusTable",
@@ -241,6 +386,48 @@ class TestQueuedIngestClient:
         ingest_client.close()
 
     @responses.activate
+    @patch(
+        "azure.kusto.ingest.managed_streaming_ingest_client.ManagedStreamingIngestClient.MAX_STREAMING_SIZE_IN_BYTES", new=0
+    )  # Trick to always fallback to queued ingest
+    @patch("azure.kusto.data.security._AadHelper.acquire_authorization_header", return_value=None)
+    @patch("azure.storage.blob.BlobClient.upload_blob")
+    @patch("azure.storage.queue.QueueClient.send_message")
+    def test_sanity_ingest_from_file_when_different_storage_accounts(
+        self, mock_put_message_in_queue, mock_upload_blob_from_stream, mock_aad, ingest_client_class
+    ):
+        responses.add_callback(
+            responses.POST,
+            "https://ingest-somecluster.kusto.windows.net/v1/rest/mgmt",
+            callback=request_callback_check_retries,
+            content_type="application/json",
+        )
+
+        ingest_client = ingest_client_class("https://ingest-somecluster.kusto.windows.net")
+        ingestion_properties = IngestionProperties(database="database", table="table", data_format=DataFormat.CSV)
+
+        # ensure test can work when executed from within directories
+        current_dir = os.getcwd()
+        path_parts = ["azure-kusto-ingest", "tests", "input", "dataset.csv"]
+        missing_path_parts = []
+        for path_part in path_parts:
+            if path_part not in current_dir:
+                missing_path_parts.append(path_part)
+
+        file_path = os.path.join(current_dir, *missing_path_parts)
+
+        result = ingest_client.ingest_from_file(file_path, ingestion_properties=ingestion_properties)
+
+        assert result.status == IngestionStatus.QUEUED
+
+        assert_queued_upload(
+            mock_put_message_in_queue,
+            mock_upload_blob_from_stream,
+            "https://storageaccount",
+        )
+
+        ingest_client.close()
+
+    @responses.activate
     @patch("azure.kusto.ingest.managed_streaming_ingest_client.ManagedStreamingIngestClient.MAX_STREAMING_SIZE_IN_BYTES", new=0)
     def test_ingest_from_file_wrong_endpoint(self, ingest_client_class):
         responses.add_callback(
@@ -332,3 +519,62 @@ class TestQueuedIngestClient:
             "https://storageaccount.blob.core.windows.net/tempstorage/database__table__11111111-1111-1111-1111-111111111111__stream.gz?",
             check_raw_data=False,
         )
+
+    def test_containers(self):
+        import _resource_manager
+
+        containers = list()
+        containers.append(_resource_manager._ResourceUri(TEMP_STORAGE_URL))
+        containers.append(_resource_manager._ResourceUri(TEMP_STORAGE2_URL))
+        containers.append(_resource_manager._ResourceUri(TEMP_STORAGE3_URL))
+        containers.append(_resource_manager._ResourceUri(TEMP_STORAGE4_URL))
+        containers.append(_resource_manager._ResourceUri(TEMP_STORAGE5_URL))
+        containers.append(_resource_manager._ResourceUri(TEMP_STORAGE6_URL))
+        containers.append(_resource_manager._ResourceUri(TEMP_STORAGE7_URL))
+        containers.append(_resource_manager._ResourceUri(TEMP_STORAGE8_URL))
+        containers.append(_resource_manager._ResourceUri(TEMP_STORAGE9_URL))
+        containers_empty = list()
+
+        kustoClient = _resource_manager.KustoClient("https://somecluster.kusto.windows.net")
+        ResourceManager = _resource_manager._ResourceManager(kustoClient)
+        containers_by_storage_account = ResourceManager.create_resources_by_storage_account(containers)
+        assert len(containers_by_storage_account) == 3
+        containers_selected_with_round_robin = ResourceManager.select_with_round_robin(containers_by_storage_account)
+        assert containers_selected_with_round_robin[0].storage_account_name != containers_selected_with_round_robin[1].storage_account_name
+        assert containers_selected_with_round_robin[2].storage_account_name != containers_selected_with_round_robin[1].storage_account_name
+
+        containers_by_storage_account_for_empty = ResourceManager.create_resources_by_storage_account(containers_empty)
+        containers_selected_with_round_robin_for_empty = ResourceManager.select_with_round_robin(containers_by_storage_account_for_empty)
+
+        assert len(containers_selected_with_round_robin_for_empty) == 0
+
+    @responses.activate
+    @patch(
+        "azure.kusto.ingest.managed_streaming_ingest_client.ManagedStreamingIngestClient.MAX_STREAMING_SIZE_IN_BYTES", new=0
+    )  # Trick to always fallback to queued ingest
+    @patch("azure.kusto.data.security._AadHelper.acquire_authorization_header", return_value=None)
+    @patch("azure.storage.blob.BlobClient.upload_blob")
+    def test_queue_all_retries_failed(self, mock_upload_blob_from_stream, mock_aad, ingest_client_class):
+        responses.add_callback(
+            responses.POST,
+            "https://ingest-somecluster.kusto.windows.net/v1/rest/mgmt",
+            callback=request_callback_all_retries_failed,
+            content_type="application/json",
+        )
+
+        ingest_client = ingest_client_class("https://ingest-somecluster.kusto.windows.net")
+        ingestion_properties = IngestionProperties(database="database", table="table", data_format=DataFormat.CSV)
+
+        # ensure test can work when executed from within directories
+        current_dir = os.getcwd()
+        path_parts = ["azure-kusto-ingest", "tests", "input", "dataset.csv"]
+        missing_path_parts = []
+        for path_part in path_parts:
+            if path_part not in current_dir:
+                missing_path_parts.append(path_part)
+
+        file_path = os.path.join(current_dir, *missing_path_parts)
+        with pytest.raises(KustoQueueError):
+            ingest_client.ingest_from_file(file_path, ingestion_properties=ingestion_properties)
+
+        ingest_client.close()
