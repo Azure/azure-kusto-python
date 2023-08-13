@@ -130,7 +130,7 @@ class KustoNetworkError(KustoServiceError):
 
     def __init__(self, endpoint: str, client_request_id=None):
         super().__init__(
-            "Failed to process network request for the endpoint: " + endpoint + "" if client_request_id is None else "Client Request ID:" + client_request_id
+            "Failed to process network request for the endpoint: " + endpoint + ( "" if client_request_id is None else ("Client Request ID:" + client_request_id) )
         )
         self.endpoint = endpoint
         self.client_request_id = client_request_id
