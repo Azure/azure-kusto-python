@@ -304,7 +304,7 @@ class KustoClient(_KustoClientBase):
                 invoker, name_of_span="KustoClient.http_post", tracing_attributes=Span.create_http_attributes("POST", endpoint, request_headers)
             )
         except Exception as e:
-            raise KustoNetworkError(endpoint) from e
+            raise KustoNetworkError(endpoint, None if properties is None else properties.client_request_id) from e
 
         if stream_response:
             try:
