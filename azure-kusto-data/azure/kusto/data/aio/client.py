@@ -13,7 +13,7 @@ from ..client import KustoClient as KustoClientSync
 from ..client_base import ExecuteRequestParams, _KustoClientBase
 from ..client_request_properties import ClientRequestProperties
 from ..data_format import DataFormat
-from ..exceptions import KustoAioSyntaxError, KustoClosedError
+from ..exceptions import KustoAioSyntaxError, KustoClosedError, KustoNetworkError
 from ..kcsb import KustoConnectionStringBuilder
 from ..response import KustoResponseDataSet
 
@@ -147,9 +147,13 @@ class KustoClient(_KustoClientBase):
         invoker = lambda: self._session.post(
             endpoint, headers=request_headers, json=json_payload, data=payload, timeout=timeout.seconds, proxy=self._proxy_url, allow_redirects=False
         )
-        response = await MonitoredActivity.invoke_async(
-            invoker, name_of_span="KustoClient.http_post", tracing_attributes=Span.create_http_attributes("POST", endpoint, request_headers)
-        )
+
+        try:
+            response = await MonitoredActivity.invoke_async(
+                invoker, name_of_span="KustoClient.http_post", tracing_attributes=Span.create_http_attributes("POST", endpoint, request_headers)
+            )
+        except Exception as e:
+            raise KustoNetworkError(endpoint, None if properties is None else properties.client_request_id) from e
 
         if stream_response:
             try:

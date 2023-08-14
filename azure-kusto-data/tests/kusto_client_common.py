@@ -89,6 +89,8 @@ def mocked_requests_post(*args, **kwargs):
             file_name = "zero_results.json"
         elif "PrimaryResultName" in kwargs["json"]["csl"]:
             file_name = "null_values.json"
+        elif "raiseNetwork" in kwargs["json"]["csl"]:
+            raise Exception("Could not process network request")
         else:
             raise Exception("Invalid file name")
 

@@ -10,7 +10,7 @@ from azure.core.tracing import SpanKind
 
 from .env_utils import get_env
 from ._telemetry import Span, MonitoredActivity
-from .exceptions import KustoServiceError
+from .exceptions import KustoServiceError, KustoNetworkError
 
 METADATA_ENDPOINT = "v1/rest/auth/metadata"
 
@@ -70,12 +70,15 @@ class CloudSettings:
                 return cls._cloud_cache[kusto_uri]
             url = urljoin(kusto_uri, METADATA_ENDPOINT)
 
-            # trace http get call for result
-            result = MonitoredActivity.invoke(
-                lambda: requests.get(url, proxies=proxies, allow_redirects=False),
-                name_of_span="CloudSettings.http_get",
-                tracing_attributes=Span.create_http_attributes(url=url, method="GET"),
-            )
+            try:
+                # trace http get call for result
+                result = MonitoredActivity.invoke(
+                    lambda: requests.get(url, proxies=proxies, allow_redirects=False),
+                    name_of_span="CloudSettings.http_get",
+                    tracing_attributes=Span.create_http_attributes(url=url, method="GET"),
+                )
+            except Exception as e:
+                raise KustoNetworkError(url) from e
 
             if result.status_code == 200:
                 content = result.json()

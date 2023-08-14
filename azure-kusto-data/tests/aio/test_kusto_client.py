@@ -8,7 +8,7 @@ import pytest
 from azure.kusto.data._cloud_settings import CloudSettings
 from azure.kusto.data._decorators import aio_documented_by
 from azure.kusto.data.client_request_properties import ClientRequestProperties
-from azure.kusto.data.exceptions import KustoClosedError, KustoMultiApiError
+from azure.kusto.data.exceptions import KustoClosedError, KustoMultiApiError, KustoNetworkError
 from azure.kusto.data.helpers import dataframe_from_result_table
 from ..kusto_client_common import KustoClientTestsMixin, mocked_requests_post, proxy_kcsb
 from ..test_kusto_client import TestKustoClient as KustoClientTestsSync
@@ -73,6 +73,14 @@ class TestKustoClient(KustoClientTestsMixin):
             first_request = next(iter(aioresponses_mock.requests.values()))
             self._assert_client_request_id(first_request[0].kwargs)
         self._assert_sanity_query_response(response)
+
+    @pytest.mark.asyncio
+    async def test_raise_network(self):
+        with aioresponses() as aioresponses_mock:
+            self._mock_query(aioresponses_mock)
+            async with KustoClient(self.HOST) as client:
+                with pytest.raises(KustoNetworkError):
+                    response = await client.execute_query("PythonTest", "raiseNetwork")
 
     @aio_documented_by(KustoClientTestsSync.test_sanity_control_command)
     @pytest.mark.asyncio

@@ -18,7 +18,8 @@ from azure.kusto.data._telemetry import Span, MonitoredActivity
 from .client_base import ExecuteRequestParams, _KustoClientBase
 from .client_request_properties import ClientRequestProperties
 from .data_format import DataFormat
-from .exceptions import KustoClosedError
+from .exceptions import KustoClosedError, KustoNetworkError
+
 from .kcsb import KustoConnectionStringBuilder
 from .response import KustoResponseDataSet, KustoStreamingResponseDataSet
 from .streaming_response import JsonTokenReader, StreamingDataSetEnumerator
@@ -297,9 +298,13 @@ class KustoClient(_KustoClientBase):
             stream=stream_response,
             allow_redirects=False,
         )
-        response = MonitoredActivity.invoke(
-            invoker, name_of_span="KustoClient.http_post", tracing_attributes=Span.create_http_attributes("POST", endpoint, request_headers)
-        )
+
+        try:
+            response = MonitoredActivity.invoke(
+                invoker, name_of_span="KustoClient.http_post", tracing_attributes=Span.create_http_attributes("POST", endpoint, request_headers)
+            )
+        except Exception as e:
+            raise KustoNetworkError(endpoint, None if properties is None else properties.client_request_id) from e
 
         if stream_response:
             try:
