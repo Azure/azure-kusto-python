@@ -143,13 +143,13 @@ class QueuedIngestClient(BaseIngestClient):
                         enqueue_trace_attributes = IngestTracingAttributes.create_enqueue_request_attributes(queue_client.queue_name, blob_descriptor.source_id)
                         MonitoredActivity.invoke(invoker, name_of_span="QueuedIngestClient.enqueue_request", tracing_attributes=enqueue_trace_attributes)
 
-                self._resource_manager.Report_resource_usage_result(queue.storage_account_name, True)
+                self._resource_manager.report_resource_usage_result(queue.storage_account_name, True)
                 return IngestionResult(
                     IngestionStatus.QUEUED, ingestion_properties.database, ingestion_properties.table, blob_descriptor.source_id, blob_descriptor.path
                 )
             except Exception as e:
                 retries_left = retries_left - 1
-                self._resource_manager.Report_resource_usage_result(queue.storage_account_name, False)
+                self._resource_manager.report_resource_usage_result(queue.storage_account_name, False)
                 if retries_left == 0:
                     raise KustoQueueError() from e
 

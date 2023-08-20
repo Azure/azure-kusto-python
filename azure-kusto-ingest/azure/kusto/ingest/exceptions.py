@@ -41,5 +41,5 @@ class KustoQueueError(KustoClientError):
     """Raised when not succeeding to upload message to queue in all retries"""
 
     def __init__(self):
-        message = "Not succeeding to upload message to queue in all retries."
+        message = "Failed to upload message to queues in all reties."
         super(KustoQueueError, self).__init__(message)

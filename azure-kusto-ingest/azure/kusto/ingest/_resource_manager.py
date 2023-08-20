@@ -110,10 +110,10 @@ class _ResourceManager:
         containers = self._get_resource_by_name(table, "TempStorage")
         status_tables = self._get_resource_by_name(table, "IngestionsStatusTable")
 
-        containers_by_storage_account = self.create_resources_by_storage_account(containers)
-        containers_selected_with_round_robin = self.select_with_round_robin(containers_by_storage_account)
-        secured_ready_for_aggregation_queues_by_storage_account = self.create_resources_by_storage_account(secured_ready_for_aggregation_queues)
-        queues_selected_with_round_robin = self.select_with_round_robin(secured_ready_for_aggregation_queues_by_storage_account)
+        containers_by_storage_account = self.group_resources_by_storage_account(containers)
+        containers_selected_with_round_robin = self.shuffle_and_select_with_round_robin(containers_by_storage_account)
+        secured_ready_for_aggregation_queues_by_storage_account = self.group_resources_by_storage_account(secured_ready_for_aggregation_queues)
+        queues_selected_with_round_robin = self.shuffle_and_select_with_round_robin(secured_ready_for_aggregation_queues_by_storage_account)
 
         return _IngestClientResources(
             queues_selected_with_round_robin, failed_ingestions_queues, successful_ingestions_queues, containers_selected_with_round_robin, status_tables
@@ -174,8 +174,8 @@ class _ResourceManager:
     def set_proxy(self, proxy_url: str):
         self._kusto_client.set_proxy(proxy_url)
 
-    def create_resources_by_storage_account(self, resources):
-        resources_by_storage_account = dict()
+    def group_resources_by_storage_account(self, resources: list[_ResourceUri]):
+        resources_by_storage_account = {}
         for resource in resources:
             if resource.storage_account_name not in resources_by_storage_account:
                 resources_by_storage_account[resource.storage_account_name] = list()
@@ -183,7 +183,7 @@ class _ResourceManager:
 
         return resources_by_storage_account
 
-    def select_with_round_robin(self, original_dict):
+    def shuffle_and_select_with_round_robin(self, original_dict: dict):
         dictionary_shuffled = self.shuffle_dictionary_keys_and_values(original_dict)
         result = []
         while True:
@@ -195,7 +195,7 @@ class _ResourceManager:
                     result.append(lst.pop(0))
         return result
 
-    def shuffle_dictionary_keys_and_values(self, dictionary):
+    def shuffle_dictionary_keys_and_values(self, dictionary: dict):
         import random
 
         keys = list(dictionary.keys())
@@ -209,5 +209,5 @@ class _ResourceManager:
 
         return shuffled_dict
 
-    def Report_resource_usage_result(self, storage_account_name, success_status):
+    def report_resource_usage_result(self, storage_account_name, success_status):
         pass

@@ -535,14 +535,14 @@ class TestQueuedIngestClient:
 
         kustoClient = _resource_manager.KustoClient("https://somecluster.kusto.windows.net")
         ResourceManager = _resource_manager._ResourceManager(kustoClient)
-        containers_by_storage_account = ResourceManager.create_resources_by_storage_account(containers)
+        containers_by_storage_account = ResourceManager.group_resources_by_storage_account(containers)
         assert len(containers_by_storage_account) == 3
-        containers_selected_with_round_robin = ResourceManager.select_with_round_robin(containers_by_storage_account)
+        containers_selected_with_round_robin = ResourceManager.shuffle_and_select_with_round_robin(containers_by_storage_account)
         assert containers_selected_with_round_robin[0].storage_account_name != containers_selected_with_round_robin[1].storage_account_name
         assert containers_selected_with_round_robin[2].storage_account_name != containers_selected_with_round_robin[1].storage_account_name
 
-        containers_by_storage_account_for_empty = ResourceManager.create_resources_by_storage_account(containers_empty)
-        containers_selected_with_round_robin_for_empty = ResourceManager.select_with_round_robin(containers_by_storage_account_for_empty)
+        containers_by_storage_account_for_empty = ResourceManager.group_resources_by_storage_account(containers_empty)
+        containers_selected_with_round_robin_for_empty = ResourceManager.shuffle_and_select_with_round_robin(containers_by_storage_account_for_empty)
 
         assert len(containers_selected_with_round_robin_for_empty) == 0
 
