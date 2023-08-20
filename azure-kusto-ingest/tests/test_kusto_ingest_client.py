@@ -12,7 +12,7 @@ from mock import patch
 
 from azure.kusto.data.data_format import DataFormat
 
-from azure.kusto.ingest import QueuedIngestClient, IngestionProperties, IngestionStatus
+from azure.kusto.ingest import QueuedIngestClient, IngestionProperties, IngestionStatus, _resource_manager
 from azure.kusto.ingest.exceptions import KustoInvalidEndpointError, KustoQueueError
 from azure.kusto.ingest.managed_streaming_ingest_client import ManagedStreamingIngestClient
 
@@ -521,8 +521,6 @@ class TestQueuedIngestClient:
         )
 
     def test_containers(self):
-        import _resource_manager
-
         containers = list()
         containers.append(_resource_manager._ResourceUri(TEMP_STORAGE_URL))
         containers.append(_resource_manager._ResourceUri(TEMP_STORAGE2_URL))
