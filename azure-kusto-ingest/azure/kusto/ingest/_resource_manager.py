@@ -174,7 +174,7 @@ class _ResourceManager:
     def set_proxy(self, proxy_url: str):
         self._kusto_client.set_proxy(proxy_url)
 
-    def group_resources_by_storage_account(self, resources: list[_ResourceUri]):
+    def group_resources_by_storage_account(self, resources: list):
         resources_by_storage_account = {}
         for resource in resources:
             if resource.storage_account_name not in resources_by_storage_account:
