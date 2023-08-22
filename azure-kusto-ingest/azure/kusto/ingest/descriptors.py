@@ -12,9 +12,6 @@ from io import BytesIO, SEEK_END
 from typing import Union, Optional, AnyStr, IO, List, Dict
 from zipfile import ZipFile
 
-from azure.storage.blob import BlobServiceClient
-
-from azure.kusto.data.exceptions import KustoBlobError
 from azure.kusto.ingest._resource_manager import _ResourceUri, _ResourceManager
 
 OptionalUUID = Optional[Union[str, uuid.UUID]]
@@ -148,45 +145,6 @@ class BlobDescriptor(DescriptorBase):
         self.path: str = path
         self.size: Optional[int] = size
         self.source_id: uuid.UUID = ensure_uuid(source_id)
-
-    @staticmethod
-    def upload_from_different_descriptor(
-        containers: List[_ResourceUri],
-        descriptor: Union[FileDescriptor, "StreamDescriptor"],
-        database: str,
-        table: str,
-        stream: IO[AnyStr],
-        proxy_dict: Optional[Dict[str, str]],
-        timeout: int,
-        max_retries: int,
-        resource_manager: _ResourceManager,
-    ) -> "BlobDescriptor":
-        """
-        Uploads and transforms FileDescriptor or StreamDescriptor into a BlobDescriptor instance
-        :param List[_ResourceUri] containers: blob containers
-        :param Union[FileDescriptor, "StreamDescriptor"] descriptor:
-        :param string database: database to be ingested to
-        :param string table: table to be ingested to
-        :param IO[AnyStr] stream: stream to be ingested from
-        :param Optional[Dict[str, str]] proxy_dict: proxy urls
-        :param int timeout: Azure service call timeout in seconds
-        :return new BlobDescriptor instance
-        """
-        blob_name = "{db}__{table}__{guid}__{file}".format(db=database, table=table, guid=descriptor.source_id, file=descriptor.stream_name)
-
-        retries_left = min(max_retries, len(containers))
-        for container in containers:
-            try:
-                blob_service = BlobServiceClient(container.account_uri, proxies=proxy_dict)
-                blob_client = blob_service.get_blob_client(container=container.object_name, blob=blob_name)
-                blob_client.upload_blob(data=stream, timeout=timeout)
-                resource_manager.report_resource_usage_result(container.storage_account_name, True)
-                return BlobDescriptor(blob_client.url, descriptor.size, descriptor.source_id)
-            except Exception as e:
-                retries_left = retries_left - 1
-                resource_manager.report_resource_usage_result(container.storage_account_name, False)
-                if retries_left == 0:
-                    raise KustoBlobError(e)
 
     def get_tracing_attributes(self) -> dict:
         # Remove query parameters from self.path, if exists

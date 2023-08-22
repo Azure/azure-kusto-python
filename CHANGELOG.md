@@ -6,8 +6,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 ### Added
 - Added retry ability for posting messages to the queue and uploading blobs.
-- Added function to group resources by storage account
-- Added function to shuffle resources and select with round robin
 ### Fixed
 - Fixed exception handling in web requests
 - Internal fixes for environment variables
