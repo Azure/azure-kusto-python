@@ -12,8 +12,6 @@ from io import BytesIO, SEEK_END
 from typing import Union, Optional, AnyStr, IO, List, Dict
 from zipfile import ZipFile
 
-from azure.kusto.ingest._resource_manager import _ResourceUri, _ResourceManager
-
 OptionalUUID = Optional[Union[str, uuid.UUID]]
 
 
