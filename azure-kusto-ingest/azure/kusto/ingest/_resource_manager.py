@@ -19,6 +19,7 @@ class _ResourceUri:
     def __init__(self, url: str):
         self.url = url
         self.parsed = urlparse(url)
+        self.storage_account_name = self.parsed.netloc.split(".", 1)[0]
         self.object_name = self.parsed.path.lstrip("/")
 
     @property
@@ -109,7 +110,14 @@ class _ResourceManager:
         containers = self._get_resource_by_name(table, "TempStorage")
         status_tables = self._get_resource_by_name(table, "IngestionsStatusTable")
 
-        return _IngestClientResources(secured_ready_for_aggregation_queues, failed_ingestions_queues, successful_ingestions_queues, containers, status_tables)
+        containers_by_storage_account = self.group_resources_by_storage_account(containers)
+        containers_selected_with_round_robin = self.shuffle_and_select_with_round_robin(containers_by_storage_account)
+        secured_ready_for_aggregation_queues_by_storage_account = self.group_resources_by_storage_account(secured_ready_for_aggregation_queues)
+        queues_selected_with_round_robin = self.shuffle_and_select_with_round_robin(secured_ready_for_aggregation_queues_by_storage_account)
+
+        return _IngestClientResources(
+            queues_selected_with_round_robin, failed_ingestions_queues, successful_ingestions_queues, containers_selected_with_round_robin, status_tables
+        )
 
     def _refresh_authorization_context(self):
         if (
@@ -165,3 +173,41 @@ class _ResourceManager:
 
     def set_proxy(self, proxy_url: str):
         self._kusto_client.set_proxy(proxy_url)
+
+    def group_resources_by_storage_account(self, resources: list):
+        resources_by_storage_account = {}
+        for resource in resources:
+            if resource.storage_account_name not in resources_by_storage_account:
+                resources_by_storage_account[resource.storage_account_name] = list()
+            resources_by_storage_account[resource.storage_account_name].append(resource)
+
+        return resources_by_storage_account
+
+    def shuffle_and_select_with_round_robin(self, original_dict: dict):
+        dictionary_shuffled = self.shuffle_dictionary_keys_and_values(original_dict)
+        result = []
+        while True:
+            if all(not lst for lst in dictionary_shuffled.values()):
+                break
+
+            for key, lst in dictionary_shuffled.items():
+                if lst:
+                    result.append(lst.pop(0))
+        return result
+
+    def shuffle_dictionary_keys_and_values(self, dictionary: dict):
+        import random
+
+        keys = list(dictionary.keys())
+        random.shuffle(keys)
+
+        shuffled_dict = {}
+        for key in keys:
+            shuffled_values = list(dictionary[key])
+            random.shuffle(shuffled_values)
+            shuffled_dict[key] = shuffled_values
+
+        return shuffled_dict
+
+    def report_resource_usage_result(self, storage_account_name, success_status):
+        pass
