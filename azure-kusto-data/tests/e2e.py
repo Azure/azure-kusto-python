@@ -110,7 +110,7 @@ class TestE2E:
     @classmethod
     def setup_class(cls):
         cls.engine_cs = get_env("ENGINE_CONNECTION_STRING")
-        cls.ai_engine_cs = get_env("APPLICATION_INSIGHTS_ENGINE_CONNECTION_STRING")
+        cls.ai_engine_cs = get_env("APPLICATION_INSIGHTS_ENGINE_CONNECTION_STRING", optional=True)
 
         cls.app_id = get_app_id()
         cls.auth_id = get_auth_id()
@@ -119,7 +119,7 @@ class TestE2E:
         set_env("AZURE_AUTHORITY_HOST", "login.microsoftonline.com")
 
         cls.test_db = get_env("TEST_DATABASE")
-        cls.ai_test_db = get_env("APPLICATION_INSIGHTS_TEST_DATABASE")  # name of e2e database could be changed
+        cls.ai_test_db = get_env("APPLICATION_INSIGHTS_TEST_DATABASE", optional=True)  # name of e2e database could be changed
 
         # Init clients
         cls.streaming_test_table = "BigChunkus"
@@ -261,6 +261,8 @@ class TestE2E:
             assert len(row) == len(primary_result["Columns"])
 
     def test_log_analytics_query(self):
+        if not self.ai_engine_cs:
+            pytest.skip("No application insights connection string provided")
         with self.get_client(True) as client:
             result = client.execute_mgmt(self.ai_test_db, self.ai_test_table_cmd)
             counter = 0
@@ -277,6 +279,8 @@ class TestE2E:
 
     @pytest.mark.asyncio
     async def test_log_analytics_query_async(self):
+        if not self.ai_engine_cs:
+            pytest.skip("No application insights connection string provided")
         async with await self.get_async_client(True) as ai_client:
             result = await ai_client.execute_mgmt(self.ai_test_db, self.ai_test_table_cmd)
             counter = 0
