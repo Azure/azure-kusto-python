@@ -3,6 +3,18 @@
 If you would like to become an active contributor to this project please
 follow the instructions provided in [Microsoft Azure Projects Contribution Guidelines](https://azure.github.io/azure-sdk/python_documentation.html).
 
+## Prerequisites
+In order to run E2E tests, you need a Kusto database you have admin rights on.
+A Kusto free cluster is the easiest way to acquire one.
+You can cerate a free Kusto cluster here: https://dataexplorer.azure.com/home
+
+You should set then following environment vars where you run E2Es (in IDE run config, shell window, computer, etc).
+```shell
+ENGINE_CONNECTION_STRING=<Your cluster URI>
+DM_CONNECTION_STRING=<Your ingest cluster URI>
+TEST_DATABASE=<The name of the database>
+```
+
 ## Requirements
 
 In order to work on this project, we recommend using the dev requirements:
