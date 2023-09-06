@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 ### Added
 - Added retry ability for posting messages to the queue and uploading blobs.
+- Support new playfab domain
 ### Fixed
 - Fixed exception handling in web requests
 - Internal fixes for environment variables

@@ -145,6 +145,7 @@ def test_well_known_kusto_endpoints_proxy_test():
         "https://kusto.aria.microsoft.com,{0}".format(DEFAULT_PUBLIC_LOGIN_URL),
         "https://adx.monitor.azure.com,{0}".format(DEFAULT_PUBLIC_LOGIN_URL),
         "https://cluster.playfab.com,{0}".format(DEFAULT_PUBLIC_LOGIN_URL),
+        "https://cluster.azureplayfab.com,{0}".format(DEFAULT_PUBLIC_LOGIN_URL),
         "https://cluster.playfabapi.com,{0}".format(DEFAULT_PUBLIC_LOGIN_URL),
         "https://cluster.playfab.cn,{0}".format(CHINA_CLOUD_LOGIN),
     ]:
