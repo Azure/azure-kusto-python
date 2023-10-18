@@ -81,7 +81,8 @@ class _KustoClientBase(abc.ABC):
         if not self._endpoint_validated and self._aad_helper is not None:
             if isinstance(self._aad_helper.token_provider, CloudInfoTokenProvider):
                 well_known_kusto_endpoints.validate_trusted_endpoint(
-                    self._kusto_cluster, CloudSettings.get_cloud_info_for_cluster(self._kusto_cluster).login_endpoint
+                    self._kusto_cluster,
+                    CloudSettings.get_cloud_info_for_cluster(self._kusto_cluster, self._aad_helper.token_provider._proxy_dict).login_endpoint,
                 )
             self._endpoint_validated = True
 
