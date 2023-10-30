@@ -7,6 +7,7 @@ import dataclasses
 import json
 import os
 import platform
+import random
 from datetime import datetime
 from typing import Optional, ClassVar
 
@@ -138,7 +139,7 @@ class TestE2E:
     @classmethod
     def create_streaming_table(cls):
         with cls.get_client() as client:
-            table_name = "StreamingTestTable" + datetime.now().strftime("%Y%m%d%H%M%S")
+            table_name = f"StreamingTestTable{datetime.now():'%Y%m%d%H%M%S')}{random.randint(0, 10000)}"
             streaming_table_format = (
                 "AvgTicketPrice:real,Cancelled:bool,Carrier:string,Dest:string,DestAirportID:string,DestCityName:string,"
                 "DestCountry:string,DestLocation:dynamic,DestRegion:string,DestWeather:string,DistanceKilometers:real,"
