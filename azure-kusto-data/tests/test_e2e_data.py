@@ -2,6 +2,7 @@
 # Licensed under the MIT License
 
 import asyncio
+import csv
 import dataclasses
 import json
 import os
@@ -35,8 +36,7 @@ class TestE2E:
     streaming_test_table: ClassVar[str]
     streaming_test_table_query: ClassVar[str]
     ai_test_table_cmd: ClassVar[str]
-    test_streaming_data_json: ClassVar[list]
-    test_streaming_data_csv: ClassVar[str]
+    test_streaming_data_csv_raw: ClassVar[str]
     engine_cs: ClassVar[Optional[str]]
     ai_engine_cs: ClassVar[Optional[str]]
     app_id: ClassVar[Optional[str]]
@@ -122,19 +122,18 @@ class TestE2E:
         cls.test_db = get_env("TEST_DATABASE")
         cls.ai_test_db = get_env("APPLICATION_INSIGHTS_TEST_DATABASE", optional=True)  # name of e2e database could be changed
 
-        # Init clients
-        cls.streaming_test_table = cls.create_streaming_table()
-        cls.streaming_test_table_query = cls.streaming_test_table + " | order by timestamp"
-
-        cls.ai_test_table_cmd = ".show tables"
-
         cls.input_folder_path = cls.get_file_path()
 
-        with open(os.path.join(cls.input_folder_path, "big.json")) as f:
-            cls.test_streaming_data_json = json.load(f)
+        with open(os.path.join(cls.input_folder_path, "big_source.csv")) as f:
+            cls.test_streaming_data_csv_raw = f.read()
+            reader = csv.reader(cls.test_streaming_data_csv_raw.splitlines())
+            cls.test_streaming_data = sorted(reader, key=lambda x: (float(x[0]), x[3]))  # sort by AvgTicketPrice, Dest
 
-        with open(os.path.join(cls.input_folder_path, "big_source.json")) as f:
-            cls.test_streaming_data_csv = f.read()
+        # Init clients
+        cls.streaming_test_table = cls.create_streaming_table()
+        cls.streaming_test_table_query = cls.streaming_test_table + "| order by AvgTicketPrice asc, Dest asc"
+
+        cls.ai_test_table_cmd = ".show tables"
 
     @classmethod
     def create_streaming_table(cls):
@@ -147,8 +146,9 @@ class TestE2E:
                 "FlightTimeMin:real,Origin:string,OriginAirportID:string,OriginCityName:string,OriginCountry:string,"
                 "OriginLocation:dynamic,OriginRegion:string,OriginWeather:string,dayOfWeek:int,timestamp:datetime"
             )
-            client.execute_mgmt(cls.test_db, ".create table {} {}".format(table_name, streaming_table_format))
-            client.execute_mgmt(cls.test_db, ".ingest inline into table {} <| {}".format(table_name, cls.test_streaming_data_csv))
+            client.execute_mgmt(cls.test_db, f".create table {table_name} ({streaming_table_format})")
+            client.execute_mgmt(cls.test_db, f".ingest inline into table {table_name} <| {cls.test_streaming_data_csv_raw}")
+
             return table_name
 
     @classmethod
@@ -181,11 +181,15 @@ class TestE2E:
         result = []
         for r in row:
             if type(r) == bool:
-                result.append(int(r))
+                result.append(str(r).lower())
             elif type(r) == datetime:
                 result.append(r.strftime("%Y-%m-%dT%H:%M:%SZ"))
-            else:
+            elif type(r) == float:
                 result.append(r)
+            elif type(r) == dict:
+                result.append(json.dumps(r).replace(" ", ""))
+            else:
+                result.append(str(r))
         return result
 
     # assertions
@@ -198,8 +202,13 @@ class TestE2E:
             result.set_skip_incomplete_tables(True)
             for primary in result.iter_primary_results():
                 counter += 1
-                for row in self.test_streaming_data_json:
-                    assert row == self.normalize_row(next(primary).to_list())
+                for expected_row in self.test_streaming_data:
+                    actual_row = self.normalize_row(next(primary).to_list())
+                    for i in range(len(expected_row)):
+                        if type(actual_row[i]) == float:
+                            assert pytest.approx(float(expected_row[i]), 0.1) == actual_row[i]
+                        else:
+                            assert expected_row[i] == actual_row[i]
 
             assert counter == 2
 
@@ -216,13 +225,18 @@ class TestE2E:
             result.set_skip_incomplete_tables(True)
             async for primary in result.iter_primary_results():
                 counter += 1
-                streaming_data_iter = iter(self.test_streaming_data_json)
+                streaming_data_iter = iter(self.test_streaming_data)
                 async for row in primary:
                     expected_row = next(streaming_data_iter, None)
                     if expected_row is None:
                         break
 
-                    assert expected_row == self.normalize_row(row.to_list())
+                    actual_row = self.normalize_row(row.to_list())
+                    for i in range(len(expected_row)):
+                        if type(actual_row[i]) == float:
+                            assert pytest.approx(float(expected_row[i]), 0.1) == actual_row[i]
+                        else:
+                            assert expected_row[i] == actual_row[i]
 
             assert counter == 2
             assert result.finished
