@@ -35,7 +35,8 @@ class TestE2E:
     streaming_test_table: ClassVar[str]
     streaming_test_table_query: ClassVar[str]
     ai_test_table_cmd: ClassVar[str]
-    test_streaming_data: ClassVar[list]
+    test_streaming_data_json: ClassVar[list]
+    test_streaming_data_csv: ClassVar[str]
     engine_cs: ClassVar[Optional[str]]
     ai_engine_cs: ClassVar[Optional[str]]
     app_id: ClassVar[Optional[str]]
@@ -100,12 +101,12 @@ class TestE2E:
     @classmethod
     def engine_kcsb_from_env(cls, app_insights=False, is_async=False) -> KustoConnectionStringBuilder:
         engine = cls.engine_cs if not app_insights else cls.ai_engine_cs
-        if all([cls.app_id, cls.app_key, cls.auth_id]):
-            return KustoConnectionStringBuilder.with_azure_token_credential(
-                engine, credential=DefaultAzureCredential() if not is_async else AsyncDefaultAzureCredential()
-            )
-        else:
-            return KustoConnectionStringBuilder.with_interactive_login(engine)
+        return KustoConnectionStringBuilder.with_azure_token_credential(
+            engine,
+            credential=DefaultAzureCredential(exclude_interactive_browser_credential=False)
+            if not is_async
+            else AsyncDefaultAzureCredential(exclude_interactive_browser_credential=False),
+        )
 
     @classmethod
     def setup_class(cls):
@@ -122,7 +123,7 @@ class TestE2E:
         cls.ai_test_db = get_env("APPLICATION_INSIGHTS_TEST_DATABASE", optional=True)  # name of e2e database could be changed
 
         # Init clients
-        cls.streaming_test_table = "BigChunkus"
+        cls.streaming_test_table = cls.create_streaming_table()
         cls.streaming_test_table_query = cls.streaming_test_table + " | order by timestamp"
 
         cls.ai_test_table_cmd = ".show tables"
@@ -130,7 +131,30 @@ class TestE2E:
         cls.input_folder_path = cls.get_file_path()
 
         with open(os.path.join(cls.input_folder_path, "big.json")) as f:
-            cls.test_streaming_data = json.load(f)
+            cls.test_streaming_data_json = json.load(f)
+
+        with open(os.path.join(cls.input_folder_path, "big_source.json")) as f:
+            cls.test_streaming_data_csv = f.read()
+
+    @classmethod
+    def create_streaming_table(cls):
+        with cls.get_client() as client:
+            table_name = "StreamingTestTable" + datetime.now().strftime("%Y%m%d%H%M%S")
+            streaming_table_format = (
+                "AvgTicketPrice:real,Cancelled:bool,Carrier:string,Dest:string,DestAirportID:string,DestCityName:string,"
+                "DestCountry:string,DestLocation:dynamic,DestRegion:string,DestWeather:string,DistanceKilometers:real,"
+                "DistanceMiles:real,FlightDelay:bool,FlightDelayMin:long,FlightDelayType:string,FlightNum:string,FlightTimeHour:real,"
+                "FlightTimeMin:real,Origin:string,OriginAirportID:string,OriginCityName:string,OriginCountry:string,"
+                "OriginLocation:dynamic,OriginRegion:string,OriginWeather:string,dayOfWeek:int,timestamp:datetime"
+            )
+            client.execute_mgmt(cls.test_db, ".create table {} {}".format(table_name, streaming_table_format))
+            client.execute_mgmt(cls.test_db, ".ingest inline into table {} <| {}".format(table_name, cls.test_streaming_data_csv))
+            return table_name
+
+    @classmethod
+    def teardown_class(cls):
+        with cls.get_client() as client:
+            client.execute_mgmt(cls.test_db, ".drop table {}".format(cls.streaming_test_table))
 
     @staticmethod
     @pytest.fixture(scope="session")
@@ -174,7 +198,7 @@ class TestE2E:
             result.set_skip_incomplete_tables(True)
             for primary in result.iter_primary_results():
                 counter += 1
-                for row in self.test_streaming_data:
+                for row in self.test_streaming_data_json:
                     assert row == self.normalize_row(next(primary).to_list())
 
             assert counter == 2
@@ -192,7 +216,7 @@ class TestE2E:
             result.set_skip_incomplete_tables(True)
             async for primary in result.iter_primary_results():
                 counter += 1
-                streaming_data_iter = iter(self.test_streaming_data)
+                streaming_data_iter = iter(self.test_streaming_data_json)
                 async for row in primary:
                     expected_row = next(streaming_data_iter, None)
                     if expected_row is None:

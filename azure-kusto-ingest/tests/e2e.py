@@ -152,19 +152,18 @@ class TestE2E:
 
     @classmethod
     def engine_kcsb_from_env(cls, is_async=False) -> KustoConnectionStringBuilder:
-        if all([cls.app_id, cls.app_key, cls.auth_id]):
-            return KustoConnectionStringBuilder.with_azure_token_credential(
-                cls.engine_cs, credential=DefaultAzureCredential() if not is_async else AsyncDefaultAzureCredential()
-            )
-        else:
-            return KustoConnectionStringBuilder.with_interactive_login(cls.engine_cs)
+        return KustoConnectionStringBuilder.with_azure_token_credential(
+            cls.engine_cs,
+            credential=DefaultAzureCredential(exclude_interactive_browser_credential=False)
+            if not is_async
+            else AsyncDefaultAzureCredential(exclude_interactive_browser_credential=False),
+        )
 
     @classmethod
     def dm_kcsb_from_env(cls) -> KustoConnectionStringBuilder:
-        if all([cls.app_id, cls.app_key, cls.auth_id]):
-            return KustoConnectionStringBuilder.with_azure_token_credential(cls.dm_cs, credential=DefaultAzureCredential())
-        else:
-            return KustoConnectionStringBuilder.with_interactive_login(cls.dm_cs)
+        return KustoConnectionStringBuilder.with_azure_token_credential(
+            cls.dm_cs, credential=DefaultAzureCredential(exclude_interactive_browser_credential=False)
+        )
 
     @classmethod
     def setup_class(cls):

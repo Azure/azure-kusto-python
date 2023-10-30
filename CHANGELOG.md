@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Fixed exception handling in web requests
 - Internal fixes for environment variables
+- Fixed documentation on E2E tests, and made it possible to test on a clean cluster
 ## [4.2.0] - 2023-04-16
 ### Added
 - Added Initial Catalog (Default Database) parameter to ConnectionStringBuilder
