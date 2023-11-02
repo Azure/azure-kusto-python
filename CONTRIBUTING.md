@@ -8,11 +8,39 @@ In order to run E2E tests, you need a Kusto database you have admin rights on.
 A Kusto free cluster is the easiest way to acquire one.
 You can cerate a free Kusto cluster here: https://dataexplorer.azure.com/home
 
+Make sure you set streaming ingestion to enabled in the cluster's configuration:  
+https://learn.microsoft.com/en-us/azure/data-explorer/ingest-data-streaming?tabs=azure-portal%2Ccsharp
+
 You should set then following environment vars where you run E2Es (in IDE run config, shell window, computer, etc).
 ```shell
 ENGINE_CONNECTION_STRING=<Your cluster URI>
-DM_CONNECTION_STRING=<Your ingest cluster URI>
+DM_CONNECTION_STRING=<Your ingest cluster URI> # Optional - if not set, will infer from ENGINE_CONNECTION_STRING
 TEST_DATABASE=<The name of the database>
+```
+
+The E2E tests authenticate with DefaultAzureCredential, and will fall back to interactive login if needed.
+
+
+For more information on DefaultAzureCredential, see:  
+https://learn.microsoft.com/en-us/python/api/azure-identity/azure.identity.defaultazurecredential?view=azure-python
+
+To run the optional `token_provider` tests, you will need to set the booleans at the top of the file `test_token_providers.py` and the following environment variables in addition to the previous ones:
+```shell
+# app key provider:
+AZURE_CLIENT_ID=<Your client ID>
+AZURE_CLIENT_SECRET=<Your client secret>
+AZURE_TENANT_ID=<Your tenant ID>
+# certificate provider:
+CERT_THUMBPRINT=<Your certificate thumbprint>
+CERT_PUBLIC_CERT_PATH=<Your certificate public cert path>
+CERT_PEM_KEY_PATH=<Your certificate private key path>
+# managed identity provider:
+MSI_OBJECT_ID=<Your managed identity object ID>
+MSI_CLIENT_ID=<Your managed identity client ID>
+# user password provider:
+USER_NAME=<Your user name>
+USER_PASS=<Your user password>
+USER_AUTH_ID=<Your user auth ID> # optional
 ```
 
 ## Requirements

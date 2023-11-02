@@ -34,14 +34,6 @@ jobs:
         with:
           options: "--check --diff --line-length 160"
           version: "23.3.0"
-      - name: Test with pytest
-        run: |
-          pytest -v . --junit-xml pytest.xml --cov=/home/runner/.local/lib/python${{ matrix.python-version }}/site-packages/azure/kusto --cov-report=xml
-        env:
-          APP_ID: ${{ secrets.APP_ID }}
-          APP_KEY: ${{ secrets.APP_KEY }}
-          AUTH_ID: ${{ secrets.AUTH_ID }}
-          ENGINE_CONNECTION_STRING: ${{ secrets.ENGINE_CONNECTION_STRING }}
       - name: EtoE Test with pytest
         env:
           APP_ID: ${{ secrets.APP_ID }}
@@ -53,7 +45,7 @@ jobs:
           APPLICATION_INSIGHTS_ENGINE_CONNECTION_STRING: https://ade.applicationinsights.io/subscriptions/12534eb3-8109-4d84-83ad-576c0d5e1d06/resourcegroups/clients_e2e_test/providers/microsoft.insights/components/kusto-e2e-app-insights
           APPLICATION_INSIGHTS_TEST_DATABASE: kusto-e2e-app-insights
         run: |
-          pytest -v ./azure-kusto-data/tests/e2e.py ./azure-kusto-ingest/tests/e2e.py --junit-xml pytest.xml --cov=/home/runner/.local/lib/python${{ matrix.python-version }}/site-packages/azure/kusto --cov-report=xml:coverage2.xml
+          pytest -v . --junit-xml pytest.xml --cov=/home/runner/.local/lib/python${{ matrix.python-version }}/site-packages/azure/kusto --cov-report=xml:coverage2.xml
       - name: Upload Unit Test Results
         if: always()
         uses: actions/upload-artifact@v2
