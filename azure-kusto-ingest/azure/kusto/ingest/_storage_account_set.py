@@ -1,6 +1,5 @@
 import random
-from typing import Callable
-from typing import List
+from typing import Callable, Dict, List, Tuple
 import time
 
 from azure.kusto.data.exceptions import KustoClientError
@@ -9,18 +8,18 @@ from azure.kusto.ingest._ranked_storage_account import _RankedStorageAccount
 
 class _RankedStorageAccountSet:
     DEFAULT_NUMBER_OF_BUCKETS: int = 6
-    DEFAULT_BUCKET_DURATION_IN_SECONDS: int = 1
-    DEFAULT_TIERS: List[int] = [90, 70, 30, 0]
-    DEFAULT_TIME_PROVIDER_IN_SECONDS: Callable[[None], float] = time.time
+    DEFAULT_BUCKET_DURATION_IN_SECONDS: int = 10
+    DEFAULT_TIERS: Tuple[int, int, int, int] = (90, 70, 30, 0)
+    DEFAULT_TIME_PROVIDER_IN_SECONDS: Callable[[], float] = time.time
 
     def __init__(
         self,
         number_of_buckets: int = DEFAULT_NUMBER_OF_BUCKETS,
         bucket_duration: float = DEFAULT_BUCKET_DURATION_IN_SECONDS,
-        tiers: List[int] = DEFAULT_TIERS,
-        time_provider: Callable[[None], float] = DEFAULT_TIME_PROVIDER_IN_SECONDS,
+        tiers: Tuple[int, int, int, int] = DEFAULT_TIERS,
+        time_provider: Callable[[], float] = DEFAULT_TIME_PROVIDER_IN_SECONDS,
     ):
-        self.accounts = dict()
+        self.accounts: Dict[str, _RankedStorageAccount] = dict()
         self.number_of_buckets = number_of_buckets
         self.bucket_duration = bucket_duration
         self.tiers = tiers

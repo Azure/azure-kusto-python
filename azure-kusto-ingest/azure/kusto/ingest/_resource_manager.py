@@ -64,7 +64,7 @@ class _ResourceManager:
 
         self._ingest_client_resources = None
         self._ingest_client_resources_last_update = None
-        self._storageAccountSet = _RankedStorageAccountSet()
+        self._ranked_storage_account_set = _RankedStorageAccountSet()
 
         self._authorization_context = None
         self._authorization_context_last_update = None
@@ -138,9 +138,9 @@ class _ResourceManager:
 
     def _populate_ranked_storage_account_set(self):
         for resource in self._ingest_client_resources.containers:
-            self._storageAccountSet.add_storage_account(resource.storage_account_name)
+            self._ranked_storage_account_set.add_storage_account(resource.storage_account_name)
         for resource in self._ingest_client_resources.secured_ready_for_aggregation_queues:
-            self._storageAccountSet.add_storage_account(resource.storage_account_name)
+            self._ranked_storage_account_set.add_storage_account(resource.storage_account_name)
 
     def _group_resources_by_storage_account(self, resources: List[_ResourceUri]) -> Dict[str, List[_ResourceUri]]:
         resources_by_storage_account = {}
@@ -153,20 +153,21 @@ class _ResourceManager:
 
     def _get_shuffled_and_ranked_resources(self, resources: List[_ResourceUri]) -> List[List[_ResourceUri]]:
         resources_by_storage_account = self._group_resources_by_storage_account(resources)
-        ranked_storage_accounts = self._storageAccountSet.get_ranked_shuffled_accounts()
+        ranked_storage_accounts = self._ranked_storage_account_set.get_ranked_shuffled_accounts()
 
         # sort resources by storage account rank
         ranked_resources = list()
         for storage_account in ranked_storage_accounts:
-            if storage_account.account_name in resources_by_storage_account:
+            if storage_account.account_name in resources_by_storage_account.keys():
                 ranked_resources.append(resources_by_storage_account[storage_account.account_name])
 
         return ranked_resources
 
     def _shuffle_and_select_with_round_robin(self, resources: List[_ResourceUri]) -> List[_ResourceUri]:
-        # get
+        # get list of resources sorted by storage account rank
         rank_shuffled_resources_list = self._get_shuffled_and_ranked_resources(resources)
 
+        # select resources with non-repeating round robin and flatten the list
         result = []
         while True:
             if all(not lst for lst in rank_shuffled_resources_list):
@@ -213,4 +214,4 @@ class _ResourceManager:
         self._kusto_client.set_proxy(proxy_url)
 
     def report_resource_usage_result(self, storage_account_name: str, success_status: bool):
-        self._storageAccountSet.add_account_result(storage_account_name, success_status)
+        self._ranked_storage_account_set.add_account_result(storage_account_name, success_status)

@@ -21,7 +21,7 @@ class _RankedStorageAccount:
     The rank is used to determine the order in which the storage accounts are used for ingestion.
     """
 
-    def __init__(self, account_name: str, number_of_buckets: int, bucket_duration: float, time_provider: Callable[[None], float]):
+    def __init__(self, account_name: str, number_of_buckets: int, bucket_duration: float, time_provider: Callable[[], float]):
         self.account_name = account_name
         self.number_of_buckets = number_of_buckets
         self.bucket_duration = bucket_duration
@@ -38,9 +38,9 @@ class _RankedStorageAccount:
         return self.account_name
 
     def get_rank(self) -> float:
-        bucketWeight = self.number_of_buckets
+        bucket_weight = self.number_of_buckets
         rank = 0
-        totalWeight = 0
+        total_weight = 0
 
         # For each bucket, calculate the success rate ( success / total ) and multiply it by the bucket weight.
         # The older the bucket, the less weight it has. For example, if there are 3 buckets, the oldest bucket will have
@@ -50,18 +50,18 @@ class _RankedStorageAccount:
             bucket_index = (self.current_bucket_index + i) % self.number_of_buckets
             bucket = self.buckets[bucket_index]
             if bucket.total_count == 0:
-                bucketWeight -= 1
+                bucket_weight -= 1
                 continue
             success_rate = bucket.success_count / bucket.total_count
-            rank += success_rate * bucketWeight
-            totalWeight += bucketWeight
-            bucketWeight -= 1
+            rank += success_rate * bucket_weight
+            total_weight += bucket_weight
+            bucket_weight -= 1
 
         # If there are no buckets with data, return 1 (highest rank)
-        if totalWeight == 0:
+        if total_weight == 0:
             return 1
 
-        return rank / totalWeight
+        return rank / total_weight
 
     def _adjust_for_time_passed(self) -> int:
         # Get the current window (bucket) index and reset old windows.
