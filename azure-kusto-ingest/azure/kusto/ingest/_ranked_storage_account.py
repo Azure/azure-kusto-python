@@ -38,7 +38,6 @@ class _RankedStorageAccount:
         return self.account_name
 
     def get_rank(self) -> float:
-        bucket_weight = self.number_of_buckets
         rank = 0
         total_weight = 0
 
@@ -46,16 +45,14 @@ class _RankedStorageAccount:
         # The older the bucket, the less weight it has. For example, if there are 3 buckets, the oldest bucket will have
         # a weight of 1, the middle bucket will have a weight of 2 and the newest bucket will have a weight of 3.
 
-        for i in range(self.number_of_buckets):
+        for i in range(1, self.number_of_buckets + 1):
             bucket_index = (self.current_bucket_index + i) % self.number_of_buckets
             bucket = self.buckets[bucket_index]
             if bucket.total_count == 0:
-                bucket_weight -= 1
                 continue
             success_rate = bucket.success_count / bucket.total_count
-            rank += success_rate * bucket_weight
-            total_weight += bucket_weight
-            bucket_weight -= 1
+            rank += success_rate * i
+            total_weight += i
 
         # If there are no buckets with data, return 1 (highest rank)
         if total_weight == 0:

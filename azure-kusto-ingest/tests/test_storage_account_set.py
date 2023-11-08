@@ -85,15 +85,46 @@ def test_check_rank_when_success_rate_is_different():
     for current_time in range(60):
         storage_account_set.add_account_result(ACCOUNT_1, True)  # 100% success
         storage_account_set.add_account_result(ACCOUNT_2, current_time % 10 != 0)  # ~90% success
-        storage_account_set.add_account_result(ACCOUNT_4, current_time % 2 == 0)  # ~40% success
-        storage_account_set.add_account_result(ACCOUNT_3, current_time % 3 == 0)  # ~33% success
+        storage_account_set.add_account_result(ACCOUNT_3, current_time % 2 == 0)  # ~50% success
+        storage_account_set.add_account_result(ACCOUNT_4, current_time % 3 == 0)  # ~33% success
         storage_account_set.add_account_result(ACCOUNT_5, False)  # 0% success
 
     # Get shuffled accounts
     ranked_accounts = storage_account_set.get_ranked_shuffled_accounts()
     # Verify that the accounts are ranked in the correct order
-    assert ranked_accounts[0].get_account_name() in [ACCOUNT_1, ACCOUNT_2]
-    assert ranked_accounts[1].get_account_name() in [ACCOUNT_1, ACCOUNT_2]
+    assert ranked_accounts[0].get_account_name() == ACCOUNT_1
+    assert ranked_accounts[1].get_account_name() == ACCOUNT_2
     assert ranked_accounts[2].get_account_name() in [ACCOUNT_3, ACCOUNT_4]
     assert ranked_accounts[3].get_account_name() in [ACCOUNT_3, ACCOUNT_4]
     assert ranked_accounts[4].get_account_name() == ACCOUNT_5
+
+    # Verify the rank itself
+    assert ranked_accounts[0].get_rank() == 1
+    assert ranked_accounts[1].get_rank() > 0.88
+    assert storage_account_set.accounts[ACCOUNT_3].get_rank() >= 0.5
+    assert storage_account_set.accounts[ACCOUNT_4].get_rank() > 0.3
+    assert ranked_accounts[4].get_rank() == 0
+
+
+def test_old_results_count_for_less():
+    current_time = 0
+
+    def time_provider():
+        return current_time
+
+    storage_account_set = create_storage_account_set(time_provider)
+
+    storage_account_set.add_account_result(ACCOUNT_1, True)
+    current_time += 11
+    storage_account_set.add_account_result(ACCOUNT_1, True)
+    current_time += 11
+    storage_account_set.add_account_result(ACCOUNT_1, True)
+    current_time += 11
+    storage_account_set.add_account_result(ACCOUNT_1, False)
+    current_time += 11
+    storage_account_set.add_account_result(ACCOUNT_1, False)
+    current_time += 11
+    storage_account_set.add_account_result(ACCOUNT_1, False)
+
+    # rank should be smaller than 0.5 as new samples are more important
+    assert storage_account_set.accounts[ACCOUNT_1].get_rank() < 0.5
