@@ -69,8 +69,8 @@ class _RankedStorageAccount:
 
         if time_delta >= self.bucket_duration:
             self.last_update_time = current_time
-            window_size = int(time_delta / self.bucket_duration)
-            for i in range(1, window_size):
+            window_size = min(int(time_delta / self.bucket_duration), self.number_of_buckets)
+            for i in range(1, window_size + 1):
                 index_to_reset = (self.current_bucket_index + i) % self.number_of_buckets
                 self.buckets[index_to_reset].reset()
 

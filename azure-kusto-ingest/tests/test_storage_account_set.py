@@ -1,4 +1,5 @@
 import time
+from pytest import approx
 
 from azure.kusto.ingest._storage_account_set import _RankedStorageAccountSet
 
@@ -100,9 +101,9 @@ def test_check_rank_when_success_rate_is_different():
 
     # Verify the rank itself
     assert ranked_accounts[0].get_rank() == 1
-    assert ranked_accounts[1].get_rank() > 0.88
-    assert storage_account_set.accounts[ACCOUNT_3].get_rank() >= 0.5
-    assert storage_account_set.accounts[ACCOUNT_4].get_rank() > 0.3
+    assert ranked_accounts[1].get_rank() == approx(0.9, 0.01)
+    assert storage_account_set.accounts[ACCOUNT_3].get_rank() == 0.5
+    assert storage_account_set.accounts[ACCOUNT_4].get_rank() == approx(0.32, 0.1)
     assert ranked_accounts[4].get_rank() == 0
 
 
@@ -128,3 +129,77 @@ def test_old_results_count_for_less():
 
     # rank should be smaller than 0.5 as new samples are more important
     assert storage_account_set.accounts[ACCOUNT_1].get_rank() < 0.5
+
+
+def test_multiple_results():
+    current_time = 0
+
+    def time_provider():
+        return current_time
+
+    storage_account_set = create_storage_account_set(time_provider)
+
+    # all results go to the same bucket
+    storage_account_set.add_account_result(ACCOUNT_1, True)
+    storage_account_set.add_account_result(ACCOUNT_1, True)
+    storage_account_set.add_account_result(ACCOUNT_1, True)
+    storage_account_set.add_account_result(ACCOUNT_1, False)
+    storage_account_set.add_account_result(ACCOUNT_1, False)
+    storage_account_set.add_account_result(ACCOUNT_1, False)
+
+    assert storage_account_set.accounts[ACCOUNT_1].get_rank() == 0.5
+
+
+def test_buckets_are_recycled():
+    current_time = 0
+
+    def time_provider():
+        return current_time
+
+    storage_account_set = create_storage_account_set(time_provider)
+
+    storage_account_set.add_account_result(ACCOUNT_1, True)
+    current_time += 10
+    storage_account_set.add_account_result(ACCOUNT_1, True)
+    current_time += 10
+    storage_account_set.add_account_result(ACCOUNT_1, True)
+
+    # rank should be greater than 0 as we have 3 successful results
+    assert storage_account_set.accounts[ACCOUNT_1].get_rank() > 0
+
+    current_time += 10
+    storage_account_set.add_account_result(ACCOUNT_1, False)
+    current_time += 10
+    storage_account_set.add_account_result(ACCOUNT_1, False)
+    current_time += 10
+    storage_account_set.add_account_result(ACCOUNT_1, False)
+    current_time += 10
+    storage_account_set.add_account_result(ACCOUNT_1, False)
+    current_time += 10
+    storage_account_set.add_account_result(ACCOUNT_1, False)
+    current_time += 10
+    storage_account_set.add_account_result(ACCOUNT_1, False)
+
+    assert storage_account_set.accounts[ACCOUNT_1].get_rank() == 0
+
+
+def test_big_break():
+    current_time = 0
+
+    def time_provider():
+        return current_time
+
+    storage_account_set = create_storage_account_set(time_provider)
+
+    storage_account_set.add_account_result(ACCOUNT_1, True)
+    current_time += 11
+    storage_account_set.add_account_result(ACCOUNT_1, True)
+    current_time += 11
+    storage_account_set.add_account_result(ACCOUNT_1, True)
+
+    assert storage_account_set.accounts[ACCOUNT_1].get_rank() > 0
+
+    current_time += 90
+    storage_account_set.add_account_result(ACCOUNT_1, False)
+
+    assert storage_account_set.accounts[ACCOUNT_1].get_rank() == 0
