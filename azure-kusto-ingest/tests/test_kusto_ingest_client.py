@@ -256,6 +256,42 @@ def request_callback_all_retries_failed(request):
     return response_status, response_headers, json.dumps(response_body)
 
 
+def request_callback_containers(request):
+    body = json.loads(request.body.decode()) if type(request.body) == bytes else json.loads(request.body)
+    response_headers = dict()
+
+    if ".get ingestion resources" in body["csl"]:
+        response_status = 200
+        response_body = {
+            "Tables": [
+                {
+                    "TableName": "Table_0",
+                    "Columns": [{"ColumnName": "ResourceTypeName", "DataType": "String"}, {"ColumnName": "StorageRoot", "DataType": "String"}],
+                    "Rows": [
+                        [
+                            "TempStorage",
+                            TEMP_STORAGE2_URL,
+                        ],
+                        [
+                            "TempStorage",
+                            TEMP_STORAGE3_URL,
+                        ],
+                        [
+                            "TempStorage",
+                            TEMP_STORAGE6_URL,
+                        ],
+                        [
+                            "TempStorage",
+                            TEMP_STORAGE7_URL,
+                        ],
+                    ],
+                }
+            ]
+        }
+
+    return response_status, response_headers, json.dumps(response_body)
+
+
 def request_error_callback(request):
     body = json.loads(request.body.decode()) if type(request.body) == bytes else json.loads(request.body)
     response_status = 400
@@ -520,31 +556,23 @@ class TestQueuedIngestClient:
             check_raw_data=False,
         )
 
+    @responses.activate
     def test_containers(self):
-        containers = list()
-        containers.append(_resource_manager._ResourceUri(TEMP_STORAGE_URL))
-        containers.append(_resource_manager._ResourceUri(TEMP_STORAGE2_URL))
-        containers.append(_resource_manager._ResourceUri(TEMP_STORAGE3_URL))
-        containers.append(_resource_manager._ResourceUri(TEMP_STORAGE4_URL))
-        containers.append(_resource_manager._ResourceUri(TEMP_STORAGE5_URL))
-        containers.append(_resource_manager._ResourceUri(TEMP_STORAGE6_URL))
-        containers.append(_resource_manager._ResourceUri(TEMP_STORAGE7_URL))
-        containers.append(_resource_manager._ResourceUri(TEMP_STORAGE8_URL))
-        containers.append(_resource_manager._ResourceUri(TEMP_STORAGE9_URL))
-        containers_empty = list()
+        responses.add_callback(
+            responses.POST, "https://ingest-somecluster.kusto.windows.net/v1/rest/mgmt", callback=request_callback_containers, content_type="application/json"
+        )
 
-        kustoClient = _resource_manager.KustoClient("https://somecluster.kusto.windows.net")
+        kustoClient = _resource_manager.KustoClient("https://ingest-somecluster.kusto.windows.net")
         ResourceManager = _resource_manager._ResourceManager(kustoClient)
-        containers_by_storage_account = ResourceManager.group_resources_by_storage_account(containers)
-        assert len(containers_by_storage_account) == 3
-        containers_selected_with_round_robin = ResourceManager.shuffle_and_select_with_round_robin(containers_by_storage_account)
-        assert containers_selected_with_round_robin[0].storage_account_name != containers_selected_with_round_robin[1].storage_account_name
-        assert containers_selected_with_round_robin[2].storage_account_name != containers_selected_with_round_robin[1].storage_account_name
 
-        containers_by_storage_account_for_empty = ResourceManager.group_resources_by_storage_account(containers_empty)
-        containers_selected_with_round_robin_for_empty = ResourceManager.shuffle_and_select_with_round_robin(containers_by_storage_account_for_empty)
+        containers_selected_with_round_robin = ResourceManager.get_containers()
 
-        assert len(containers_selected_with_round_robin_for_empty) == 0
+        # Verify correct number of containers
+        assert len(containers_selected_with_round_robin) == 4
+        # Verify correct distribution of containers
+        assert containers_selected_with_round_robin[0].storage_account_name == containers_selected_with_round_robin[2].storage_account_name
+        assert containers_selected_with_round_robin[1].storage_account_name == containers_selected_with_round_robin[3].storage_account_name
+        assert containers_selected_with_round_robin[1].storage_account_name != containers_selected_with_round_robin[2].storage_account_name
 
     @responses.activate
     @patch(
