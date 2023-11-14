@@ -482,6 +482,19 @@ class KustoConnectionStringBuilder:
 
         return kcsb
 
+    @classmethod
+    def with_no_authentication(cls, connection_string: str) -> "KustoConnectionStringBuilder":
+        """
+        Create a KustoConnectionStringBuilder that uses no authentication.
+        :param connection_string: Kusto's connection string should be of the format: http://<clusterName>.kusto.windows.net
+        """
+        if not connection_string.startswith("http://"):
+            raise ValueError("Connection string must start with http://")
+        kcsb = cls(connection_string)
+        kcsb[kcsb.ValidKeywords.aad_federated_security] = False
+
+        return kcsb
+
     @property
     def data_source(self) -> Optional[str]:
         """The URI specifying the Kusto service endpoint.
