@@ -9,7 +9,7 @@ from azure.identity import ClientSecretCredential, DefaultAzureCredential
 
 from azure.kusto.data._token_providers import *
 from azure.kusto.data.exceptions import KustoNetworkError
-from azure.kusto.data.env_utils import get_env, get_app_id, get_auth_id, get_app_key
+from azure.kusto.data.env_utils import get_env, get_app_id, get_auth_id, get_app_key, prepare_app_key_auth
 
 TOKEN_VALUE = "little miss sunshine"
 
@@ -171,8 +171,7 @@ class TokenProviderTests(unittest.TestCase):
     @staticmethod
     def test_az_provider():
         if not TEST_AZ_AUTH:
-            print(" *** Skipped Az-Cli Provider Test ***")
-            return
+            pytest.skip(" *** Skipped Az-Cli Provider Test ***")
 
         print("Note!\nThe test 'test_az_provider' will fail if 'az login' was not called.")
         with AzCliTokenProvider(KUSTO_URI) as provider:
@@ -186,8 +185,7 @@ class TokenProviderTests(unittest.TestCase):
     @staticmethod
     def test_msi_provider():
         if not TEST_MSI_AUTH:
-            print(" *** Skipped MSI Provider Test ***")
-            return
+            pytest.skip(" *** Skipped MSI Provider Test ***")
 
         user_msi_object_id = get_env("MSI_OBJECT_ID", optional=True)
         user_msi_client_id = get_env("MSI_CLIENT_ID", optional=True)
@@ -203,7 +201,7 @@ class TokenProviderTests(unittest.TestCase):
                 token = provider.get_token()
                 assert TokenProviderTests.get_token_value(token) is not None
         else:
-            print(" *** Skipped MSI Provider Client Id Test ***")
+            pytest.skip(" *** Skipped MSI Provider Client Id Test ***")
 
         if user_msi_client_id is not None:
             args = {"client_id": user_msi_client_id}
@@ -211,7 +209,7 @@ class TokenProviderTests(unittest.TestCase):
                 token = provider.get_token()
                 assert TokenProviderTests.get_token_value(token) is not None
         else:
-            print(" *** Skipped MSI Provider Object Id Test ***")
+            pytest.skip(" *** Skipped MSI Provider Object Id Test ***")
 
     @staticmethod
     def test_user_pass_provider():
@@ -228,13 +226,12 @@ class TokenProviderTests(unittest.TestCase):
                 token = provider._get_token_from_cache_impl()
                 assert TokenProviderTests.get_token_value(token) is not None
         else:
-            print(" *** Skipped User & Pass Provider Test ***")
+            pytest.skip(" *** Skipped User & Pass Provider Test ***")
 
     @staticmethod
     def test_device_auth_provider():
         if not TEST_DEVICE_AUTH:
-            print(" *** Skipped User Device Flow Test ***")
-            return
+            pytest.skip(" *** Skipped User Device Flow Test ***")
 
         def callback(x, x2, x3):
             # break here if you debug this test, and get the code from 'x'
@@ -251,8 +248,7 @@ class TokenProviderTests(unittest.TestCase):
     @staticmethod
     def test_interactive_login():
         if not TEST_INTERACTIVE_AUTH:
-            print(" *** Skipped interactive login Test ***")
-            return
+            pytest.skip(" *** Skipped interactive login Test ***")
 
         auth_id = get_auth_id()
         with InteractiveLoginTokenProvider(KUSTO_URI, auth_id) as provider:
@@ -265,30 +261,22 @@ class TokenProviderTests(unittest.TestCase):
 
     @staticmethod
     def test_app_key_provider():
-        # default details are for kusto-client-e2e-test-app
-        # to run the test, get the key from Azure portal
-        app_id = get_app_id()
-        auth_id = get_auth_id()
-        app_key = get_app_key()
+        app_auth = prepare_app_key_auth(optional=True)
 
-        if app_id and app_key and auth_id:
-            with ApplicationKeyTokenProvider(KUSTO_URI, auth_id, app_id, app_key) as provider:
+        if app_auth:
+            with ApplicationKeyTokenProvider(KUSTO_URI, app_auth.auth_id, app_auth.app_id, app_auth.app_key) as provider:
                 token = provider.get_token()
                 assert TokenProviderTests.get_token_value(token) is not None
         else:
-            print(" *** Skipped App Id & Key Provider Test ***")
+            pytest.skip(" *** Skipped App Id & Key Provider Test ***")
 
     @staticmethod
     def test_app_key_provider_when_url_not_valid():
-        # default details are for kusto-client-e2e-test-app
-        # to run the test, get the key from Azure portal
-        app_id = get_app_id()
-        auth_id = get_auth_id()
-        app_key = get_app_key()
+        app_auth = prepare_app_key_auth(optional=True)
 
-        if app_id and app_key and auth_id:
+        if app_auth:
             with pytest.raises(KustoNetworkError):
-                with ApplicationKeyTokenProvider("NoURI", auth_id, app_id, app_key) as provider:
+                with ApplicationKeyTokenProvider("NoURI", app_auth.auth_id, app_auth.app_id, app_auth.app_key) as provider:
                     token = provider.get_token()
 
     @staticmethod
@@ -300,7 +288,7 @@ class TokenProviderTests(unittest.TestCase):
         pem_key_path = get_env("CERT_PEM_KEY_PATH", optional=True)
 
         if pem_key_path and thumbprint and cert_app_id and cert_auth:
-            with open(pem_key_path, "rb") as file:
+            with open(pem_key_path, "r") as file:
                 pem_key = file.read()
 
             with ApplicationCertificateTokenProvider(KUSTO_URI, cert_app_id, cert_auth, pem_key, thumbprint) as provider:
@@ -315,10 +303,10 @@ class TokenProviderTests(unittest.TestCase):
                         token = provider.get_token()
                         assert TokenProviderTests.get_token_value(token) is not None
                 else:
-                    print(" *** Skipped App Cert SNI Provider Test ***")
+                    pytest.skip(" *** Skipped App Cert SNI Provider Test ***")
 
         else:
-            print(" *** Skipped App Cert Provider Test ***")
+            pytest.skip(" *** Skipped App Cert Provider Test ***")
 
     @staticmethod
     def test_cloud_mfa_off():
