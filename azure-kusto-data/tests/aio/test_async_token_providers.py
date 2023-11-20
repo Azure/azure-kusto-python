@@ -335,7 +335,9 @@ class TestTokenProvider:
     @aio_documented_by(TokenProviderTests.test_azure_identity_default_token_provider)
     @pytest.mark.asyncio
     async def test_azure_identity_token_provider(self):
-        app_id, app_key, auth_id = prepare_app_key_auth(optional=False)
+        app_id, app_key, auth_id = prepare_app_key_auth(optional=True)
+        if not app_id or not app_key or not auth_id:
+            pytest.skip(" *** Skipped Azure Identity Provider Test ***")
 
         with AzureIdentityTokenCredentialProvider(KUSTO_URI, is_async=True, credential=AsyncDefaultAzureCredential()) as provider:
             token = await provider.get_token_async()

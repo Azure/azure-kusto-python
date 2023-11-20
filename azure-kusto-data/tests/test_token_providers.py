@@ -352,9 +352,9 @@ class TokenProviderTests(unittest.TestCase):
 
     @staticmethod
     def test_azure_identity_default_token_provider():
-        app_id = get_app_id()
-        auth_id = get_auth_id()
-        app_key = get_app_key()
+        app_id, app_key, auth_id = prepare_app_key_auth(optional=True)
+        if not app_id or not app_key or not auth_id:
+            pytest.skip(" *** Skipped Azure Identity Provider Test ***")
 
         with AzureIdentityTokenCredentialProvider(KUSTO_URI, credential=DefaultAzureCredential()) as provider:
             token = provider.get_token()
