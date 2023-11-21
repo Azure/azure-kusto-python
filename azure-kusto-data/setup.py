@@ -48,5 +48,5 @@ setup(
     package_data={"": ["wellKnownKustoEndpoints.json"]},
     include_package_data=True,
     install_requires=["python-dateutil>=2.8.0", "requests>=2.13.0", "azure-identity>=1.5.0,<2", "msal>=1.9.0,<2", "ijson~=3.1", "azure-core>=1.11.0,<2"],
-    extras_require={"pandas": ["pandas"], "aio": ["aiohttp>=3.9.0b2,<4", "asgiref>=3.2.3,<4"]},
+    extras_require={"pandas": ["pandas"], "aio": ["aiohttp>=3.8.0,<4", "asgiref>=3.2.3,<4"]},
 )
