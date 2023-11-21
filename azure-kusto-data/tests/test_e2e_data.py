@@ -9,7 +9,7 @@ import os
 import platform
 import random
 from datetime import datetime
-from typing import Optional, ClassVar
+from typing import Optional, ClassVar, Callable
 
 import pytest
 from azure.identity import DefaultAzureCredential
@@ -40,8 +40,8 @@ class TestE2E:
     ai_engine_cs: ClassVar[Optional[str]]
     test_db: ClassVar[Optional[str]]
     ai_test_db: ClassVar[Optional[str]]
-    cred: ClassVar[DefaultAzureCredential]
-    async_cred: ClassVar[DefaultAzureCredential]
+    cred: ClassVar[Callable[[], DefaultAzureCredential]]
+    async_cred: ClassVar[Callable[[], DefaultAzureCredential]]
 
     CHUNK_SIZE = 1024
 
@@ -101,7 +101,7 @@ class TestE2E:
         engine = cls.engine_cs if not app_insights else cls.ai_engine_cs
         return KustoConnectionStringBuilder.with_azure_token_credential(
             engine,
-            credential=cls.cred if not is_async else cls.async_cred,
+            credential=cls.cred() if not is_async else cls.async_cred(),
         )
 
     @classmethod
@@ -110,16 +110,16 @@ class TestE2E:
         cls.ai_engine_cs = get_env("APPLICATION_INSIGHTS_ENGINE_CONNECTION_STRING", optional=True)
 
         # Called to set the env variables for the default azure credentials
-        print(prepare_app_key_auth(optional=True))
+        prepare_app_key_auth(optional=True)
 
         set_env("AZURE_AUTHORITY_HOST", "login.microsoftonline.com")
 
         cls.test_db = get_env("TEST_DATABASE")
         cls.ai_test_db = get_env("APPLICATION_INSIGHTS_TEST_DATABASE", optional=True)  # name of e2e database could be changed
 
-        cls.cred = DefaultAzureCredential(exclude_interactive_browser_credential=False)
+        cls.cred = lambda: DefaultAzureCredential(exclude_interactive_browser_credential=False)
         # Async credentials don't support interactive browser authentication for now, so until they do, we'll use the sync default credential for async tests
-        cls.async_cred = cls.cred
+        cls.async_cred = lambda: DefaultAzureCredential(exclude_interactive_browser_credential=False)
 
         cls.input_folder_path = cls.get_file_path()
 
@@ -347,7 +347,7 @@ class TestE2E:
     @pytest.mark.parametrize("code", [301, 302, 307, 308])
     def test_no_redirects_fail_in_cloud(self, code):
         with KustoClient(
-            KustoConnectionStringBuilder.with_azure_token_credential(f"https://statusreturner.azurewebsites.net/{code}/nocloud", self.cred)
+            KustoConnectionStringBuilder.with_azure_token_credential(f"https://statusreturner.azurewebsites.net/{code}/nocloud", self.__class__.cred())
         ) as client:
             with pytest.raises(KustoServiceError) as ex:
                 client.execute("db", "table")
@@ -357,7 +357,7 @@ class TestE2E:
     def test_no_redirects_fail_in_client(self, code):
         well_known_kusto_endpoints.add_trusted_hosts([MatchRule("statusreturner.azurewebsites.net", False)], False)
         with KustoClient(
-            KustoConnectionStringBuilder.with_azure_token_credential(f"https://statusreturner.azurewebsites.net/{code}/segment", self.cred)
+            KustoConnectionStringBuilder.with_azure_token_credential(f"https://statusreturner.azurewebsites.net/{code}/segment", self.__class__.cred())
         ) as client:
             with pytest.raises(KustoServiceError) as ex:
                 client.execute("db", "table")
@@ -365,9 +365,9 @@ class TestE2E:
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize("code", [301, 302, 307, 308])
-    async def test_no_redirects_fail_in_cloud(self, code):
+    async def test_no_redirects_fail_in_cloud_async(self, code):
         async with AsyncKustoClient(
-            KustoConnectionStringBuilder.with_azure_token_credential(f"https://statusreturner.azurewebsites.net/{code}/nocloud", self.async_cred)
+            KustoConnectionStringBuilder.with_azure_token_credential(f"https://statusreturner.azurewebsites.net/{code}/nocloud", self.__class__.async_cred())
         ) as client:
             with pytest.raises(KustoServiceError) as ex:
                 await client.execute("db", "table")
@@ -375,10 +375,10 @@ class TestE2E:
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize("code", [301, 302, 307, 308])
-    async def test_no_redirects_fail_in_client(self, code):
+    async def test_no_redirects_fail_in_client_async(self, code):
         well_known_kusto_endpoints.add_trusted_hosts([MatchRule("statusreturner.azurewebsites.net", False)], False)
         async with AsyncKustoClient(
-            KustoConnectionStringBuilder.with_azure_token_credential(f"https://statusreturner.azurewebsites.net/{code}/segment", self.async_cred)
+            KustoConnectionStringBuilder.with_azure_token_credential(f"https://statusreturner.azurewebsites.net/{code}/segment", self.__class__.async_cred())
         ) as client:
             with pytest.raises(KustoServiceError) as ex:
                 await client.execute("db", "table")
