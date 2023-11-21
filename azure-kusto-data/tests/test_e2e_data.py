@@ -110,7 +110,7 @@ class TestE2E:
         cls.ai_engine_cs = get_env("APPLICATION_INSIGHTS_ENGINE_CONNECTION_STRING", optional=True)
 
         # Called to set the env variables for the default azure credentials
-        print(prepare_app_key_auth(optional=True))
+        prepare_app_key_auth(optional=True)
 
         set_env("AZURE_AUTHORITY_HOST", "login.microsoftonline.com")
 
@@ -364,7 +364,7 @@ class TestE2E:
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize("code", [301, 302, 307, 308])
-    async def test_no_redirects_fail_in_cloud(self, code):
+    async def test_no_redirects_fail_in_cloud_async(self, code):
         async with AsyncKustoClient(
             KustoConnectionStringBuilder.with_azure_token_credential(f"https://statusreturner.azurewebsites.net/{code}/nocloud", self.async_cred)
         ) as client:
@@ -374,7 +374,7 @@ class TestE2E:
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize("code", [301, 302, 307, 308])
-    async def test_no_redirects_fail_in_client(self, code):
+    async def test_no_redirects_fail_in_client_async(self, code):
         well_known_kusto_endpoints.add_trusted_hosts([MatchRule("statusreturner.azurewebsites.net", False)], False)
         async with AsyncKustoClient(
             KustoConnectionStringBuilder.with_azure_token_credential(f"https://statusreturner.azurewebsites.net/{code}/segment", self.async_cred)
