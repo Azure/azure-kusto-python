@@ -13,13 +13,11 @@ from typing import Optional, ClassVar
 
 import pytest
 from azure.identity import DefaultAzureCredential
-
-from azure.kusto.data.env_utils import get_env, get_app_id, get_auth_id, get_app_key, set_env, prepare_app_key_auth
 from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
 from azure.kusto.data._cloud_settings import CloudSettings, DEFAULT_DEV_KUSTO_SERVICE_RESOURCE_ID
 from azure.kusto.data._models import WellKnownDataSet
-from azure.kusto.data._token_providers import AsyncDefaultAzureCredential
 from azure.kusto.data.aio import KustoClient as AsyncKustoClient
+from azure.kusto.data.env_utils import get_env, set_env, prepare_app_key_auth
 from azure.kusto.data.exceptions import KustoServiceError
 from azure.kusto.data.kusto_trusted_endpoints import MatchRule, well_known_kusto_endpoints
 from azure.kusto.data.streaming_response import FrameType
@@ -43,7 +41,7 @@ class TestE2E:
     test_db: ClassVar[Optional[str]]
     ai_test_db: ClassVar[Optional[str]]
     cred: ClassVar[DefaultAzureCredential]
-    async_cred: ClassVar[AsyncDefaultAzureCredential]
+    async_cred: ClassVar[DefaultAzureCredential]
 
     CHUNK_SIZE = 1024
 
@@ -112,7 +110,7 @@ class TestE2E:
         cls.ai_engine_cs = get_env("APPLICATION_INSIGHTS_ENGINE_CONNECTION_STRING", optional=True)
 
         # Called to set the env variables for the default azure credentials
-        prepare_app_key_auth(optional=True)
+        print(prepare_app_key_auth(optional=True))
 
         set_env("AZURE_AUTHORITY_HOST", "login.microsoftonline.com")
 
@@ -120,7 +118,8 @@ class TestE2E:
         cls.ai_test_db = get_env("APPLICATION_INSIGHTS_TEST_DATABASE", optional=True)  # name of e2e database could be changed
 
         cls.cred = DefaultAzureCredential(exclude_interactive_browser_credential=False)
-        cls.async_cred = AsyncDefaultAzureCredential(exclude_interactive_browser_credential=False)
+        # Async credentials don't support interactive browser authentication for now, so until they do, we'll use the sync default credential for async tests
+        cls.async_cred = cls.cred
 
         cls.input_folder_path = cls.get_file_path()
 

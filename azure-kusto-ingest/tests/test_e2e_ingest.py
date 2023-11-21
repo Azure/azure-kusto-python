@@ -15,7 +15,6 @@ from typing import Optional, ClassVar
 
 from azure.kusto.data.env_utils import get_env, prepare_app_key_auth
 from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
-from azure.kusto.data._token_providers import AsyncDefaultAzureCredential
 from azure.kusto.data.aio import KustoClient as AsyncKustoClient
 from azure.kusto.data.data_format import DataFormat, IngestionMappingKind
 from azure.kusto.data.exceptions import KustoServiceError
@@ -60,7 +59,7 @@ class TestE2E:
     json_file_path: ClassVar[str]
     zipped_json_file_path: ClassVar[str]
     cred: ClassVar[DefaultAzureCredential]
-    async_cred: ClassVar[AsyncDefaultAzureCredential]
+    async_cred: ClassVar[DefaultAzureCredential]
 
     CHUNK_SIZE = 1024
 
@@ -173,7 +172,8 @@ class TestE2E:
         cls.test_blob = get_env("TEST_BLOB", optional=True)
 
         cls.cred = DefaultAzureCredential(exclude_interactive_browser_credential=False)
-        cls.async_cred = AsyncDefaultAzureCredential(exclude_interactive_browser_credential=False)
+        # Async credentials don't support interactive browser authentication for now, so until they do, we'll use the sync default credential for async tests
+        cls.async_cred = cls.cred
 
         # Init clients
         python_version = "_".join([str(v) for v in sys.version_info[:3]])
