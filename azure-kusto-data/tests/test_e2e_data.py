@@ -339,6 +339,7 @@ class TestE2E:
         assert cloud_info is CloudSettings.get_cloud_info_for_cluster(self.engine_cs)
 
     def test_cloud_info_404(self):
+        pytest.skip("This test is currently wrong - until all cluster are updated to the redirect uri, this test will fail")
         cloud_info = CloudSettings.get_cloud_info_for_cluster("https://statusreturner.azurewebsites.net/404/test")
         default_dev_cloud = dataclasses.replace(CloudSettings.DEFAULT_CLOUD, kusto_service_resource_id=DEFAULT_DEV_KUSTO_SERVICE_RESOURCE_ID)
         assert cloud_info == CloudSettings.DEFAULT_CLOUD or cloud_info == default_dev_cloud
