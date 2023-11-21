@@ -13,9 +13,8 @@ import uuid
 from azure.identity import DefaultAzureCredential
 from typing import Optional, ClassVar
 
-from azure.kusto.data.env_utils import get_env, get_app_id, get_auth_id, get_app_key
+from azure.kusto.data.env_utils import get_env, prepare_app_key_auth
 from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
-from azure.kusto.data._token_providers import AsyncDefaultAzureCredential
 from azure.kusto.data.aio import KustoClient as AsyncKustoClient
 from azure.kusto.data.data_format import DataFormat, IngestionMappingKind
 from azure.kusto.data.exceptions import KustoServiceError
@@ -47,9 +46,6 @@ class TestE2E:
     input_folder_path: ClassVar[str]
     engine_cs: ClassVar[Optional[str]]
     dm_cs: ClassVar[Optional[str]]
-    app_id: ClassVar[Optional[str]]
-    app_key: ClassVar[Optional[str]]
-    auth_id: ClassVar[Optional[str]]
     test_db: ClassVar[Optional[str]]
     client: ClassVar[KustoClient]
     test_table: ClassVar[str]
@@ -62,6 +58,8 @@ class TestE2E:
     zipped_csv_file_path: ClassVar[str]
     json_file_path: ClassVar[str]
     zipped_json_file_path: ClassVar[str]
+    cred: ClassVar[DefaultAzureCredential]
+    async_cred: ClassVar[DefaultAzureCredential]
 
     CHUNK_SIZE = 1024
 
@@ -154,16 +152,12 @@ class TestE2E:
     def engine_kcsb_from_env(cls, is_async=False) -> KustoConnectionStringBuilder:
         return KustoConnectionStringBuilder.with_azure_token_credential(
             cls.engine_cs,
-            credential=DefaultAzureCredential(exclude_interactive_browser_credential=False)
-            if not is_async
-            else AsyncDefaultAzureCredential(exclude_interactive_browser_credential=False),
+            credential=cls.cred if not is_async else cls.async_cred,
         )
 
     @classmethod
     def dm_kcsb_from_env(cls) -> KustoConnectionStringBuilder:
-        return KustoConnectionStringBuilder.with_azure_token_credential(
-            cls.dm_cs, credential=DefaultAzureCredential(exclude_interactive_browser_credential=False)
-        )
+        return KustoConnectionStringBuilder.with_azure_token_credential(cls.dm_cs, credential=cls.cred)
 
     @classmethod
     def setup_class(cls):
@@ -171,12 +165,15 @@ class TestE2E:
         cls.engine_cs = get_env("ENGINE_CONNECTION_STRING")
         cls.dm_cs = get_env("DM_CONNECTION_STRING", default=cls.engine_cs.replace("//", "//ingest-"))
 
-        cls.app_id = get_app_id()
-        cls.auth_id = get_auth_id()
-        cls.app_key = get_app_key()
+        # Called to set the env variables for the default azure credentials
+        prepare_app_key_auth(optional=True)
 
         cls.test_db = get_env("TEST_DATABASE")
         cls.test_blob = get_env("TEST_BLOB", optional=True)
+
+        cls.cred = DefaultAzureCredential(exclude_interactive_browser_credential=False)
+        # Async credentials don't support interactive browser authentication for now, so until they do, we'll use the sync default credential for async tests
+        cls.async_cred = cls.cred
 
         # Init clients
         python_version = "_".join([str(v) for v in sys.version_info[:3]])

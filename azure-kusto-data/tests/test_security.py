@@ -121,8 +121,7 @@ def test_user_app_token_auth():
 
 def test_interactive_login():
     if not TEST_INTERACTIVE_AUTH:
-        print(" *** Skipped interactive login Test ***")
-        return
+        pytest.skip(" *** Skipped interactive login Test ***")
 
     kcsb = KustoConnectionStringBuilder.with_interactive_login(KUSTO_TEST_URI)
     aad_helper = _AadHelper(kcsb, False)
