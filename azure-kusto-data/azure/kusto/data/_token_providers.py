@@ -625,11 +625,13 @@ class AzureIdentityTokenCredentialProvider(CloudInfoTokenProvider):
         is_async: bool = False,
         credential: Optional[Any] = None,
         credential_from_login_endpoint: Optional[Callable[[str], Any]] = None,
+        credential_keep_open: bool = False
     ):
         super().__init__(kusto_uri, is_async)
 
         self.credential = credential
         self.credential_from_login_endpoint = credential_from_login_endpoint
+        self.credential_keep_open = credential_keep_open
 
         if self.credential is None and self.credential_from_login_endpoint is None:
             raise KustoClientError("Either a credential or a credential_from_login_endpoint must be provided")
@@ -661,6 +663,9 @@ class AzureIdentityTokenCredentialProvider(CloudInfoTokenProvider):
         return None
 
     def close(self):
+        if self.credential_keep_open:
+            return
+
         if self.credential is not None:
             if self.is_async:
                 asyncio.get_event_loop().run_in_executor(None, self.credential.close())

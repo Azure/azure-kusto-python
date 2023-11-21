@@ -133,6 +133,7 @@ class KustoConnectionStringBuilder:
         self._async_token_provider = None
         self.is_token_credential_auth = False
         self.credential: Optional[Any] = None
+        self.credential_keep_open: bool = False
         self.credential_from_login_endpoint: Optional[Any] = None
         if connection_string is not None and "=" not in connection_string.partition(";")[0]:
             connection_string = "Data Source=" + connection_string
@@ -188,7 +189,7 @@ class KustoConnectionStringBuilder:
 
     @classmethod
     def with_aad_user_password_authentication(
-        cls, connection_string: str, user_id: str, password: str, authority_id: str = "organizations"
+            cls, connection_string: str, user_id: str, password: str, authority_id: str = "organizations"
     ) -> "KustoConnectionStringBuilder":
         """
         Creates a KustoConnection string builder that will authenticate with AAD user name and
@@ -228,7 +229,7 @@ class KustoConnectionStringBuilder:
 
     @classmethod
     def with_aad_application_key_authentication(
-        cls, connection_string: str, aad_app_id: str, app_key: str, authority_id: str
+            cls, connection_string: str, aad_app_id: str, app_key: str, authority_id: str
     ) -> "KustoConnectionStringBuilder":
         """
         Creates a KustoConnection string builder that will authenticate with AAD application and key.
@@ -251,7 +252,7 @@ class KustoConnectionStringBuilder:
 
     @classmethod
     def with_aad_application_certificate_authentication(
-        cls, connection_string: str, aad_app_id: str, certificate: str, thumbprint: str, authority_id: str
+            cls, connection_string: str, aad_app_id: str, certificate: str, thumbprint: str, authority_id: str
     ) -> "KustoConnectionStringBuilder":
         """
         Creates a KustoConnection string builder that will authenticate with AAD application using
@@ -279,7 +280,7 @@ class KustoConnectionStringBuilder:
 
     @classmethod
     def with_aad_application_certificate_sni_authentication(
-        cls, connection_string: str, aad_app_id: str, private_certificate: str, public_certificate: str, thumbprint: str, authority_id: str
+            cls, connection_string: str, aad_app_id: str, private_certificate: str, public_certificate: str, thumbprint: str, authority_id: str
     ) -> "KustoConnectionStringBuilder":
         """
         Creates a KustoConnection string builder that will authenticate with AAD application using
@@ -326,7 +327,7 @@ class KustoConnectionStringBuilder:
 
     @classmethod
     def with_aad_device_authentication(
-        cls, connection_string: str, authority_id: str = "organizations", callback: DeviceCallbackType = None
+            cls, connection_string: str, authority_id: str = "organizations", callback: DeviceCallbackType = None
     ) -> "KustoConnectionStringBuilder":
         """
         Creates a KustoConnection string builder that will authenticate with AAD application and
@@ -360,7 +361,7 @@ class KustoConnectionStringBuilder:
 
     @classmethod
     def with_aad_managed_service_identity_authentication(
-        cls, connection_string: str, client_id: str = None, object_id: str = None, msi_res_id: str = None, timeout: int = None
+            cls, connection_string: str, client_id: str = None, object_id: str = None, msi_res_id: str = None, timeout: int = None
     ) -> "KustoConnectionStringBuilder":
         """
         Creates a KustoConnection string builder that will authenticate with AAD application, using
@@ -428,9 +429,9 @@ class KustoConnectionStringBuilder:
 
     @classmethod
     def with_async_token_provider(
-        cls,
-        connection_string: str,
-        async_token_provider: Callable[[], Coroutine[None, None, str]],
+            cls,
+            connection_string: str,
+            async_token_provider: Callable[[], Coroutine[None, None, str]],
     ) -> "KustoConnectionStringBuilder":
         """
         Create a KustoConnectionStringBuilder that uses an async callback function to obtain a connection token
@@ -448,7 +449,7 @@ class KustoConnectionStringBuilder:
 
     @classmethod
     def with_interactive_login(
-        cls, connection_string: str, login_hint: Optional[str] = None, domain_hint: Optional[str] = None
+            cls, connection_string: str, login_hint: Optional[str] = None, domain_hint: Optional[str] = None
     ) -> "KustoConnectionStringBuilder":
         kcsb = cls(connection_string)
         kcsb[kcsb.ValidKeywords.interactive_login] = True
@@ -463,22 +464,25 @@ class KustoConnectionStringBuilder:
 
     @classmethod
     def with_azure_token_credential(
-        cls,
-        connection_string: str,
-        credential: Optional[Any] = None,
-        credential_from_login_endpoint: Optional[Callable[[str], Any]] = None,
+            cls,
+            connection_string: str,
+            credential: Optional[Any] = None,
+            credential_from_login_endpoint: Optional[Callable[[str], Any]] = None,
+            credential_keep_open: bool = False
     ) -> "KustoConnectionStringBuilder":
         """
         Create a KustoConnectionStringBuilder that uses an azure token credential to obtain a connection token.
         :param connection_string: Kusto connection string should be of the format: https://<clusterName>.kusto.windows.net
         :param credential: an optional token credential to use for authentication
         :param credential_from_login_endpoint: an optional function that returns a token credential for the relevant kusto resource
+        :param credential_keep_open: Don't close the credential when the client is closed
         """
         kcsb = cls(connection_string)
         kcsb[kcsb.ValidKeywords.aad_federated_security] = True
         kcsb.is_token_credential_auth = True
         kcsb.credential = credential
         kcsb.credential_from_login_endpoint = credential_from_login_endpoint
+        kcsb.credential_keep_open = credential_keep_open
 
         return kcsb
 
@@ -632,14 +636,14 @@ class KustoConnectionStringBuilder:
         return ClientDetails(self.application_for_tracing, self.user_name_for_tracing)
 
     def _set_connector_details(
-        self,
-        name: str,
-        version: str,
-        app_name: Optional[str] = None,
-        app_version: Optional[str] = None,
-        send_user: bool = False,
-        override_user: Optional[str] = None,
-        additional_fields: Optional[List[Tuple[str, str]]] = None,
+            self,
+            name: str,
+            version: str,
+            app_name: Optional[str] = None,
+            app_version: Optional[str] = None,
+            send_user: bool = False,
+            override_user: Optional[str] = None,
+            additional_fields: Optional[List[Tuple[str, str]]] = None,
     ):
         """
         Sets the connector details for tracing purposes.
