@@ -5,7 +5,7 @@ from azure.identity.aio import ClientSecretCredential as AsyncClientSecretCreden
 
 from azure.kusto.data._decorators import aio_documented_by
 from azure.kusto.data._token_providers import *
-from azure.kusto.data.env_utils import get_env, get_app_id, get_auth_id, get_app_key
+from azure.kusto.data.env_utils import get_env, get_app_id, get_auth_id, get_app_key, prepare_app_key_auth
 from .test_kusto_client import run_aio_tests
 from ..test_token_providers import KUSTO_URI, TOKEN_VALUE, TEST_AZ_AUTH, TEST_MSI_AUTH, TEST_DEVICE_AUTH, TokenProviderTests, MockProvider
 
@@ -142,8 +142,7 @@ class TestTokenProvider:
     @pytest.mark.asyncio
     async def test_az_provider(self):
         if not TEST_AZ_AUTH:
-            print(" *** Skipped Az-Cli Provider Test ***")
-            return
+            pytest.skip(" *** Skipped Az-Cli Provider Test ***")
 
         print("Note!\nThe test 'test_az_provider' will fail if 'az login' was not called.")
         with AzCliTokenProvider(KUSTO_URI, is_async=True) as provider:
@@ -158,8 +157,7 @@ class TestTokenProvider:
     @pytest.mark.asyncio
     async def test_msi_provider(self):
         if not TEST_MSI_AUTH:
-            print(" *** Skipped MSI Provider Test ***")
-            return
+            pytest.skip(" *** Skipped MSI Provider Test ***")
 
         user_msi_object_id = get_env("MSI_OBJECT_ID", optional=True)
         user_msi_client_id = get_env("MSI_CLIENT_ID", optional=True)
@@ -175,7 +173,7 @@ class TestTokenProvider:
                     token = await provider.get_token_async()
                     assert self.get_token_value(token) is not None
             else:
-                print(" *** Skipped MSI Provider Client Id Test ***")
+                pytest.skip(" *** Skipped MSI Provider Client Id Test ***")
 
             if user_msi_client_id is not None:
                 args = {"client_id": user_msi_client_id}
@@ -183,7 +181,7 @@ class TestTokenProvider:
                     token = await provider.get_token_async()
                     assert self.get_token_value(token) is not None
             else:
-                print(" *** Skipped MSI Provider Object Id Test ***")
+                pytest.skip(" *** Skipped MSI Provider Object Id Test ***")
 
     @aio_documented_by(TokenProviderTests.test_user_pass_provider)
     @pytest.mark.asyncio
@@ -201,14 +199,13 @@ class TestTokenProvider:
                 token = provider._get_token_from_cache_impl()
                 assert self.get_token_value(token) is not None
         else:
-            print(" *** Skipped User & Pass Provider Test ***")
+            pytest.skip(" *** Skipped User & Pass Provider Test ***")
 
     @aio_documented_by(TokenProviderTests.test_device_auth_provider)
     @pytest.mark.asyncio
     async def test_device_auth_provider(self):
         if not TEST_DEVICE_AUTH:
-            print(" *** Skipped User Device Flow Test ***")
-            return
+            pytest.skip(" *** Skipped User Device Flow Test ***")
 
         def callback(x, x2, x3):
             # break here if you debug this test, and get the code from 'x'
@@ -225,18 +222,14 @@ class TestTokenProvider:
     @aio_documented_by(TokenProviderTests.test_app_key_provider)
     @pytest.mark.asyncio
     async def test_app_key_provider(self):
-        # default details are for kusto-client-e2e-test-app
-        # to run the test, get the key from Azure portal
-        app_id = get_app_id(optional=True)
-        auth_id = get_auth_id(optional=True)
-        app_key = get_app_key(optional=True)
+        app_auth = prepare_app_key_auth(optional=True)
 
-        if app_id and app_key and auth_id:
-            with ApplicationKeyTokenProvider(KUSTO_URI, auth_id, app_id, app_key, is_async=True) as provider:
+        if app_auth:
+            with ApplicationKeyTokenProvider(KUSTO_URI, app_auth.auth_id, app_auth.app_id, app_auth.app_key, is_async=True) as provider:
                 token = await provider.get_token_async()
                 assert self.get_token_value(token) is not None
         else:
-            print(" *** Skipped App Id & Key Provider Test ***")
+            pytest.skip(" *** Skipped App Id & Key Provider Test ***")
 
     @aio_documented_by(TokenProviderTests.test_app_cert_provider)
     @pytest.mark.asyncio
@@ -269,10 +262,10 @@ class TestTokenProvider:
                         token = provider._get_token_from_cache_impl()
                         assert self.get_token_value(token) is not None
                 else:
-                    print(" *** Skipped App Cert SNI Provider Test ***")
+                    pytest.skip(" *** Skipped App Cert SNI Provider Test ***")
 
         else:
-            print(" *** Skipped App Cert Provider Test ***")
+            pytest.skip(" *** Skipped App Cert Provider Test ***")
 
     @aio_documented_by(TokenProviderTests.test_cloud_mfa_off)
     @pytest.mark.asyncio
@@ -342,9 +335,10 @@ class TestTokenProvider:
     @aio_documented_by(TokenProviderTests.test_azure_identity_default_token_provider)
     @pytest.mark.asyncio
     async def test_azure_identity_token_provider(self):
-        app_id = get_app_id()
-        auth_id = get_auth_id()
-        app_key = get_app_key()
+        app_id, app_key, auth_id = prepare_app_key_auth(optional=True)
+        if not app_id or not app_key or not auth_id:
+            pytest.skip(" *** Skipped Azure Identity Provider Test ***")
+
         with AzureIdentityTokenCredentialProvider(KUSTO_URI, is_async=True, credential=AsyncDefaultAzureCredential()) as provider:
             token = await provider.get_token_async()
             assert TokenProviderTests.get_token_value(token) is not None
