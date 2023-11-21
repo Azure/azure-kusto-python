@@ -11,7 +11,7 @@ import sys
 import time
 import uuid
 from azure.identity import DefaultAzureCredential
-from typing import Optional, ClassVar
+from typing import Optional, ClassVar, Callable
 
 from azure.kusto.data.env_utils import get_env, prepare_app_key_auth
 from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
@@ -58,8 +58,8 @@ class TestE2E:
     zipped_csv_file_path: ClassVar[str]
     json_file_path: ClassVar[str]
     zipped_json_file_path: ClassVar[str]
-    cred: ClassVar[DefaultAzureCredential]
-    async_cred: ClassVar[DefaultAzureCredential]
+    cred: ClassVar[Callable[[], DefaultAzureCredential]]
+    async_cred: ClassVar[Callable[[], DefaultAzureCredential]]
 
     CHUNK_SIZE = 1024
 
@@ -152,12 +152,12 @@ class TestE2E:
     def engine_kcsb_from_env(cls, is_async=False) -> KustoConnectionStringBuilder:
         return KustoConnectionStringBuilder.with_azure_token_credential(
             cls.engine_cs,
-            credential=cls.cred if not is_async else cls.async_cred,
+            credential=cls.cred() if not is_async else cls.async_cred(),
         )
 
     @classmethod
     def dm_kcsb_from_env(cls) -> KustoConnectionStringBuilder:
-        return KustoConnectionStringBuilder.with_azure_token_credential(cls.dm_cs, credential=cls.cred)
+        return KustoConnectionStringBuilder.with_azure_token_credential(cls.dm_cs, credential=cls.cred())
 
     @classmethod
     def setup_class(cls):
@@ -171,9 +171,9 @@ class TestE2E:
         cls.test_db = get_env("TEST_DATABASE")
         cls.test_blob = get_env("TEST_BLOB", optional=True)
 
-        cls.cred = DefaultAzureCredential(exclude_interactive_browser_credential=False)
+        cls.cred = lambda: DefaultAzureCredential(exclude_interactive_browser_credential=False)
         # Async credentials don't support interactive browser authentication for now, so until they do, we'll use the sync default credential for async tests
-        cls.async_cred = cls.cred
+        cls.async_cred = lambda: DefaultAzureCredential(exclude_interactive_browser_credential=False)
 
         # Init clients
         python_version = "_".join([str(v) for v in sys.version_info[:3]])
