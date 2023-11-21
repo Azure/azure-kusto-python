@@ -157,7 +157,7 @@ class TestE2E:
 
     @classmethod
     def dm_kcsb_from_env(cls) -> KustoConnectionStringBuilder:
-        return KustoConnectionStringBuilder.with_azure_token_credential(cls.dm_cs, credential=cls.cred)
+        return KustoConnectionStringBuilder.with_azure_token_credential(cls.dm_cs, credential=cls.cred())
 
     @classmethod
     def setup_class(cls):
