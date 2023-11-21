@@ -1,7 +1,7 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
 from datetime import datetime, timedelta
-from typing import List
+from typing import List, Dict
 from urllib.parse import urlparse
 
 from tenacity import retry_if_exception_type, stop_after_attempt, Retrying, wait_random_exponential
@@ -10,6 +10,7 @@ from azure.kusto.data import KustoClient
 from azure.kusto.data._models import KustoResultTable
 from azure.kusto.data._telemetry import MonitoredActivity, Span
 from azure.kusto.data.exceptions import KustoThrottlingError
+from azure.kusto.ingest._storage_account_set import _RankedStorageAccountSet
 
 _SHOW_VERSION = ".show version"
 _SERVICE_TYPE_COLUMN_NAME = "ServiceType"
@@ -63,6 +64,7 @@ class _ResourceManager:
 
         self._ingest_client_resources = None
         self._ingest_client_resources_last_update = None
+        self._ranked_storage_account_set = _RankedStorageAccountSet()
 
         self._authorization_context = None
         self._authorization_context_last_update = None
@@ -88,6 +90,7 @@ class _ResourceManager:
         ):
             self._ingest_client_resources = self._get_ingest_client_resources_from_service()
             self._ingest_client_resources_last_update = datetime.utcnow()
+            self._populate_ranked_storage_account_set()
 
     def _get_resource_by_name(self, table: KustoResultTable, resource_name: str):
         return [_ResourceUri(row["StorageRoot"]) for row in table if row["ResourceTypeName"] == resource_name]
@@ -110,14 +113,7 @@ class _ResourceManager:
         containers = self._get_resource_by_name(table, "TempStorage")
         status_tables = self._get_resource_by_name(table, "IngestionsStatusTable")
 
-        containers_by_storage_account = self.group_resources_by_storage_account(containers)
-        containers_selected_with_round_robin = self.shuffle_and_select_with_round_robin(containers_by_storage_account)
-        secured_ready_for_aggregation_queues_by_storage_account = self.group_resources_by_storage_account(secured_ready_for_aggregation_queues)
-        queues_selected_with_round_robin = self.shuffle_and_select_with_round_robin(secured_ready_for_aggregation_queues_by_storage_account)
-
-        return _IngestClientResources(
-            queues_selected_with_round_robin, failed_ingestions_queues, successful_ingestions_queues, containers_selected_with_round_robin, status_tables
-        )
+        return _IngestClientResources(secured_ready_for_aggregation_queues, failed_ingestions_queues, successful_ingestions_queues, containers, status_tables)
 
     def _refresh_authorization_context(self):
         if (
@@ -140,9 +136,52 @@ class _ResourceManager:
         result = self._retryer(invoker)
         return result.primary_results[0][0]["AuthorizationContext"]
 
+    def _populate_ranked_storage_account_set(self):
+        for resource in self._ingest_client_resources.containers:
+            self._ranked_storage_account_set.add_storage_account(resource.storage_account_name)
+        for resource in self._ingest_client_resources.secured_ready_for_aggregation_queues:
+            self._ranked_storage_account_set.add_storage_account(resource.storage_account_name)
+
+    def _group_resources_by_storage_account(self, resources: List[_ResourceUri]) -> Dict[str, List[_ResourceUri]]:
+        resources_by_storage_account = {}
+        for resource in resources:
+            if resource.storage_account_name not in resources_by_storage_account:
+                resources_by_storage_account[resource.storage_account_name] = list()
+            resources_by_storage_account[resource.storage_account_name].append(resource)
+
+        return resources_by_storage_account
+
+    def _get_shuffled_and_ranked_resources(self, resources: List[_ResourceUri]) -> List[List[_ResourceUri]]:
+        resources_by_storage_account = self._group_resources_by_storage_account(resources)
+        ranked_storage_accounts = self._ranked_storage_account_set.get_ranked_shuffled_accounts()
+
+        # sort resources by storage account rank
+        ranked_resources = list()
+        for storage_account in ranked_storage_accounts:
+            if storage_account.account_name in resources_by_storage_account.keys():
+                ranked_resources.append(resources_by_storage_account[storage_account.account_name])
+
+        return ranked_resources
+
+    def _shuffle_and_select_with_round_robin(self, resources: List[_ResourceUri]) -> List[_ResourceUri]:
+        # get list of resources sorted by storage account rank
+        rank_shuffled_resources_list = self._get_shuffled_and_ranked_resources(resources)
+
+        # select resources with non-repeating round robin and flatten the list
+        result = []
+        while True:
+            if all(not lst for lst in rank_shuffled_resources_list):
+                break
+
+            for lst in rank_shuffled_resources_list:
+                if lst:
+                    result.append(lst.pop(0))
+
+        return result
+
     def get_ingestion_queues(self) -> List[_ResourceUri]:
         self._refresh_ingest_client_resources()
-        return self._ingest_client_resources.secured_ready_for_aggregation_queues
+        return self._shuffle_and_select_with_round_robin(self._ingest_client_resources.secured_ready_for_aggregation_queues)
 
     def get_failed_ingestions_queues(self) -> List[_ResourceUri]:
         self._refresh_ingest_client_resources()
@@ -154,7 +193,7 @@ class _ResourceManager:
 
     def get_containers(self) -> List[_ResourceUri]:
         self._refresh_ingest_client_resources()
-        return self._ingest_client_resources.containers
+        return self._shuffle_and_select_with_round_robin(self._ingest_client_resources.containers)
 
     def get_ingestions_status_tables(self) -> List[_ResourceUri]:
         self._refresh_ingest_client_resources()
@@ -174,40 +213,5 @@ class _ResourceManager:
     def set_proxy(self, proxy_url: str):
         self._kusto_client.set_proxy(proxy_url)
 
-    def group_resources_by_storage_account(self, resources: list):
-        resources_by_storage_account = {}
-        for resource in resources:
-            if resource.storage_account_name not in resources_by_storage_account:
-                resources_by_storage_account[resource.storage_account_name] = list()
-            resources_by_storage_account[resource.storage_account_name].append(resource)
-
-        return resources_by_storage_account
-
-    def shuffle_and_select_with_round_robin(self, original_dict: dict):
-        dictionary_shuffled = self.shuffle_dictionary_keys_and_values(original_dict)
-        result = []
-        while True:
-            if all(not lst for lst in dictionary_shuffled.values()):
-                break
-
-            for key, lst in dictionary_shuffled.items():
-                if lst:
-                    result.append(lst.pop(0))
-        return result
-
-    def shuffle_dictionary_keys_and_values(self, dictionary: dict):
-        import random
-
-        keys = list(dictionary.keys())
-        random.shuffle(keys)
-
-        shuffled_dict = {}
-        for key in keys:
-            shuffled_values = list(dictionary[key])
-            random.shuffle(shuffled_values)
-            shuffled_dict[key] = shuffled_values
-
-        return shuffled_dict
-
-    def report_resource_usage_result(self, storage_account_name, success_status):
-        pass
+    def report_resource_usage_result(self, storage_account_name: str, success_status: bool):
+        self._ranked_storage_account_set.add_account_result(storage_account_name, success_status)
