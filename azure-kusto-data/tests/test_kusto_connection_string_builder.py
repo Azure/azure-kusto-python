@@ -3,7 +3,10 @@
 import unittest
 from uuid import uuid4
 
+import pytest
 from azure.kusto.data import KustoConnectionStringBuilder, KustoClient
+
+local_emulator = False
 
 
 class KustoConnectionStringBuilderTests(unittest.TestCase):
@@ -325,6 +328,12 @@ class KustoConnectionStringBuilderTests(unittest.TestCase):
             exception_occurred = True
         finally:
             assert exception_occurred
+
+    @pytest.mark.skipif(not local_emulator, reason="requires local emulator")
+    def test_no_authentication(self):
+        kscb = KustoConnectionStringBuilder.with_no_authentication("http://localhost:8080")
+        assert kscb.data_source == "http://localhost:8080"
+        assert kscb.aad_federated_security is False
 
     def test_initial_catalog_default(self):
         kcsb = KustoConnectionStringBuilder.with_az_cli_authentication("https://help.kusto.windows.net")
