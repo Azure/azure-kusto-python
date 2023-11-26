@@ -132,6 +132,7 @@ class KustoConnectionStringBuilder:
         self._token_provider = None
         self._async_token_provider = None
         self.is_token_credential_auth = False
+        self.is_device_login_auth = False
         self.credential: Optional[Any] = None
         self.credential_from_login_endpoint: Optional[Any] = None
         if connection_string is not None and "=" not in connection_string.partition(";")[0]:
@@ -339,6 +340,7 @@ class KustoConnectionStringBuilder:
                 - ``expires_on`` (datetime.datetime) the UTC time at which the code will expire
         """
         kcsb = cls(connection_string)
+        kcsb.is_device_login_auth = True
         kcsb[kcsb.ValidKeywords.aad_federated_security] = True
         kcsb[kcsb.ValidKeywords.authority_id] = authority_id
         kcsb.device_callback = callback
