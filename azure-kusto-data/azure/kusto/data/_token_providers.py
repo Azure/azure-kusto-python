@@ -29,13 +29,10 @@ DeviceCallbackType = Callable[[str, str, datetime], None]
         If this argument isn't provided, the credential will print instructions to stdout."""
 
 try:
-    from asgiref.sync import sync_to_async, async_to_sync
+    from asgiref.sync import sync_to_async
 except ImportError:
 
     def sync_to_async(f):
-        raise KustoAioSyntaxError()
-
-    def async_to_sync(f):
         raise KustoAioSyntaxError()
 
 
@@ -103,6 +100,9 @@ class TokenProviderBase(abc.ABC):
             self._lock = Lock()
 
     def close(self):
+        pass
+
+    async def close_async(self):
         pass
 
     def _init_once(self, init_only_resources=False):
@@ -203,6 +203,12 @@ class TokenProviderBase(abc.ABC):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        await self.close_async()
 
     @staticmethod
     @abc.abstractmethod
@@ -395,8 +401,15 @@ class MsiTokenProvider(CloudInfoTokenProvider):
     def close(self):
         if self._msi_auth_context is not None:
             self._msi_auth_context.close()
+        if self._msi_auth_context is not None:
+            raise KustoAsyncUsageError("Can't close async token provider with sync close", self.is_async)
+
+    async def close_async(self):
+        if self._msi_auth_context is not None:
+            sync_to_async(self._msi_auth_context.close())
+
         if self._msi_auth_context_async is not None:
-            async_to_sync(self._msi_auth_context_async.close)()
+            await self._msi_auth_context_async.close()
 
 
 class AzCliTokenProvider(CloudInfoTokenProvider):
@@ -455,7 +468,14 @@ class AzCliTokenProvider(CloudInfoTokenProvider):
         if self._az_auth_context is not None:
             self._az_auth_context.close()
         if self._az_auth_context_async is not None:
-            async_to_sync(self._az_auth_context_async.close())
+            raise KustoAsyncUsageError("Can't close async token provider with sync close", self.is_async)
+
+    async def close_async(self):
+        if self._az_auth_context is not None:
+            sync_to_async(self._az_auth_context.close())
+
+        if self._az_auth_context_async is not None:
+            await self._az_auth_context_async.close()
 
 
 class UserPassTokenProvider(CloudInfoTokenProvider):
@@ -665,10 +685,19 @@ class AzureIdentityTokenCredentialProvider(CloudInfoTokenProvider):
 
     def close(self):
         if self.credential is not None:
-            if self.is_async:
-                async_to_sync(self.credential.close)()
+            if inspect.iscoroutinefunction(self.credential.close):
+                raise KustoAsyncUsageError("Can't close async token provider with sync close", self.is_async)
             else:
                 self.credential.close()
+            self.credential = None
+            self.credential_from_login_endpoint = None
+
+    async def close_async(self):
+        if self.credential is not None:
+            if inspect.iscoroutinefunction(self.credential.close):
+                await self.credential.close()
+            else:
+                sync_to_async(self.credential.close)()
             self.credential = None
             self.credential_from_login_endpoint = None
 
