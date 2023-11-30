@@ -29,10 +29,13 @@ DeviceCallbackType = Callable[[str, str, datetime], None]
         If this argument isn't provided, the credential will print instructions to stdout."""
 
 try:
-    from asgiref.sync import sync_to_async
+    from asgiref.sync import sync_to_async, async_to_sync
 except ImportError:
 
     def sync_to_async(f):
+        raise KustoAioSyntaxError()
+
+    def async_to_sync(f):
         raise KustoAioSyntaxError()
 
 
@@ -346,9 +349,9 @@ class MsiTokenProvider(CloudInfoTokenProvider):
 
     def __init__(self, kusto_uri: str, msi_args: dict = None, is_async: bool = False):
         super().__init__(kusto_uri, is_async)
-        self._msi_args = msi_args
-        self._msi_auth_context = None
-        self._msi_auth_context_async = None
+        self._msi_args: dict = msi_args
+        self._msi_auth_context: Optional[ManagedIdentityCredential] = None
+        self._msi_auth_context_async: Optional[AsyncManagedIdentityCredential] = None
 
     @staticmethod
     def name() -> str:
@@ -393,7 +396,7 @@ class MsiTokenProvider(CloudInfoTokenProvider):
         if self._msi_auth_context is not None:
             self._msi_auth_context.close()
         if self._msi_auth_context_async is not None:
-            self._msi_auth_context_async.close()
+            async_to_sync(self._msi_auth_context_async.close)()
 
 
 class AzCliTokenProvider(CloudInfoTokenProvider):
@@ -452,7 +455,7 @@ class AzCliTokenProvider(CloudInfoTokenProvider):
         if self._az_auth_context is not None:
             self._az_auth_context.close()
         if self._az_auth_context_async is not None:
-            self._az_auth_context_async.close()
+            async_to_sync(self._az_auth_context_async.close())
 
 
 class UserPassTokenProvider(CloudInfoTokenProvider):
@@ -663,7 +666,7 @@ class AzureIdentityTokenCredentialProvider(CloudInfoTokenProvider):
     def close(self):
         if self.credential is not None:
             if self.is_async:
-                asyncio.get_event_loop().run_in_executor(None, self.credential.close())
+                async_to_sync(self.credential.close)()
             else:
                 self.credential.close()
             self.credential = None
