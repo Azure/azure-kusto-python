@@ -96,6 +96,9 @@ class _AadHelper:
     def close(self):
         self.token_provider.close()
 
+    async def close_async(self):
+        await self.token_provider.close_async()
+
 
 def _get_header_from_dict(token: dict):
     if TokenConstants.MSAL_ACCESS_TOKEN in token:

@@ -83,6 +83,8 @@ class KustoClient(_KustoClientBase):
     def close(self):
         if not self._is_closed:
             self._session.close()
+            if self._aad_helper:
+                self._aad_helper.close()
         super().close()
 
     def __enter__(self):

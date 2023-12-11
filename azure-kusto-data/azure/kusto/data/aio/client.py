@@ -37,6 +37,8 @@ class KustoClient(_KustoClientBase):
     async def close(self):
         if not self._is_closed:
             await self._session.close()
+            if self._aad_helper:
+                await self._aad_helper.close_async()
         super().close()
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
