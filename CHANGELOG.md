@@ -3,22 +3,27 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
-## Unreleased
+## [4.3.0] - 2023-12-12
 ### Added
-- Added retry ability for posting messages to the queue and uploading blobs.
+- Added smart retry ability for queued ingestion.
 - Support new playfab domain
+- Added no-authenticaion option
 ### Fixed
+- Santaize secrets from blob urls
+- Correctly handle closing of token providers in async (NOTE: now using async providers in sync clients will correctly raise an exception)
+- Fixed proxy not passing correctly in some cases
 - Fixed exception handling in web requests
 - Internal fixes for environment variables
 - Fixed documentation on E2E tests, and made it possible to test on a clean cluster
-## [4.2.0] - 2023-04-16
+
+## [4.2.0] - 2023-05-18
 ### Added
 - Added Initial Catalog (Default Database) parameter to ConnectionStringBuilder
 - Added callback parameter to device code
 - Added method to manually set the cache for CloudSettings
 ### Changed
 - Urls with one item after the path (i.e https://test.com/abc) will now be treated as cluster and initial catalog (ie. the cluster is "https://test.com" and the initial catalog is "abc").
-    * This is to align our behaviour with the .NET SDK
+    - This is to align our behaviour with the .NET SDK
 ### Fixed
 - Some edge cases in url parsing
 - IgnoreFirstRecord now works properly
