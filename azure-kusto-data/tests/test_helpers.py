@@ -65,18 +65,20 @@ def test_dataframe_from_result_table():
 
 
 def test_pandas_mixed_date():
-    df = dataframe_from_result_table(KustoResultTable(
-        {
-            "TableName": "Table_0",
-            "Columns": [
-                {"ColumnName": "Date", "ColumnType": "datetime"},
-            ],
-            "Rows": [
-                ["2023-12-12T01:59:59.352"],
-                ["2023-12-12T01:54:44Z"],
-            ],
-        }
-    ))
-    
+    df = dataframe_from_result_table(
+        KustoResultTable(
+            {
+                "TableName": "Table_0",
+                "Columns": [
+                    {"ColumnName": "Date", "ColumnType": "datetime"},
+                ],
+                "Rows": [
+                    ["2023-12-12T01:59:59.352"],
+                    ["2023-12-12T01:54:44Z"],
+                ],
+            }
+        )
+    )
+
     assert df["Date"][0] == pandas.Timestamp("2023-12-12T01:59:59.352", tz="UTC")
     assert df["Date"][1] == pandas.Timestamp("2023-12-12T01:54:44Z", tz="UTC")
