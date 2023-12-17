@@ -73,7 +73,7 @@ def test_pandas_mixed_date():
                     {"ColumnName": "Date", "ColumnType": "datetime"},
                 ],
                 "Rows": [
-                    ["2023-12-12T01:59:59.352"],
+                    ["2023-12-12T01:59:59.352Z"],
                     ["2023-12-12T01:54:44Z"],
                 ],
             }
