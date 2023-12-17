@@ -60,7 +60,7 @@ def dataframe_from_result_table(table: "Union[KustoResultTable, KustoStreamingRe
             frame[col.column_name] = frame[col.column_name].replace("NaN", np.NaN).replace("Infinity", np.PINF).replace("-Infinity", np.NINF)
             frame[col.column_name] = pd.to_numeric(frame[col.column_name], errors="coerce").astype(pd.Float64Dtype())
         elif col.column_type == "datetime":
-            frame[col.column_name] = pd.to_datetime(frame[col.column_name], errors="coerce")
+            frame[col.column_name] = pd.to_datetime(frame[col.column_name], format="ISO8601", utc=True)
         elif col.column_type == "timespan":
             frame[col.column_name] = frame[col.column_name].apply(to_pandas_timedelta)
 
