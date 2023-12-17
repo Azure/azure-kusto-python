@@ -80,5 +80,5 @@ def test_pandas_mixed_date():
         )
     )
 
-    assert df["Date"][0] == pandas.Timestamp("2023-12-12T01:59:59.352", tz="UTC")
+    assert df["Date"][0] == pandas.Timestamp("2023-12-12T01:59:59.352Z", tz="UTC")
     assert df["Date"][1] == pandas.Timestamp("2023-12-12T01:54:44Z", tz="UTC")
