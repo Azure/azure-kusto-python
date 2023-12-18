@@ -2,6 +2,7 @@
 # Licensed under the MIT License
 import sys
 
+import pandas
 import pytest
 from mock import patch
 
@@ -11,14 +12,6 @@ from azure.kusto.data.exceptions import KustoClosedError, KustoMultiApiError, Ku
 from azure.kusto.data.helpers import dataframe_from_result_table
 from azure.kusto.data.response import KustoStreamingResponseDataSet
 from tests.kusto_client_common import KustoClientTestsMixin, mocked_requests_post, get_response_first_primary_result, get_table_first_row, proxy_kcsb
-
-PANDAS = False
-try:
-    import pandas
-
-    PANDAS = True
-except:
-    pass
 
 
 @pytest.fixture(params=[KustoClient.execute_query, KustoClient.execute_streaming_query])
@@ -58,7 +51,6 @@ class TestKustoClient(KustoClientTestsMixin):
             response = client.execute_mgmt("NetDefaultDB", ".show version")
             self._assert_sanity_control_command_response(response)
 
-    @pytest.mark.skipif(not PANDAS, reason="requires pandas")
     @patch("requests.Session.post", side_effect=mocked_requests_post)
     def test_sanity_data_frame(self, mock_post, method):
         """Tests KustoResponse to pandas.DataFrame."""
@@ -67,7 +59,6 @@ class TestKustoClient(KustoClientTestsMixin):
             data_frame = dataframe_from_result_table(get_response_first_primary_result(response))
             self._assert_sanity_data_frame_response(data_frame)
 
-    @pytest.mark.skipif(not PANDAS, reason="requires pandas")
     @patch("requests.Session.post", side_effect=mocked_requests_post)
     def test_pandas_bool(self, mock_post):
         """Tests KustoResponse to pandas.DataFrame."""

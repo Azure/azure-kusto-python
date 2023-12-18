@@ -1,6 +1,6 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
-
+import datetime
 import json
 import os
 
@@ -80,5 +80,5 @@ def test_pandas_mixed_date():
         )
     )
 
-    assert df["Date"][0] == pandas.Timestamp("2023-12-12T01:59:59.352Z", tz="UTC")
-    assert df["Date"][1] == pandas.Timestamp("2023-12-12T01:54:44Z", tz="UTC")
+    assert df["Date"][0] == pandas.Timestamp(year=2023, month=12, day=12, hour=1, minute=59, second=59, microsecond=352000, tzinfo=datetime.timezone.utc)
+    assert df["Date"][1] == pandas.Timestamp(year=2023, month=12, day=12, hour=1, minute=54, second=44, tzinfo=datetime.timezone.utc)
