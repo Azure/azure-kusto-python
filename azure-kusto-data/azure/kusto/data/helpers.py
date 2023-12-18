@@ -68,8 +68,8 @@ def dataframe_from_result_table(table: "Union[KustoResultTable, KustoStreamingRe
             else:
                 # if frame contains ".", replace "Z" with ".000Z"
                 # == False is not a mistake - that's the pandas way to do it
-                not_contains_dot = frame[col.column_name].str.contains(".") == False
-                frame.loc[not_contains_dot, col.column_name] = frame.loc[not_contains_dot, col.column_name].str.replace("Z", ".000Z")
+                contains_dot = frame[col.column_name].str.contains(".")
+                frame.loc[contains_dot == False, col.column_name] = frame.loc[contains_dot == False, col.column_name].str.replace("Z", ".000Z")
             frame[col.column_name] = pd.to_datetime(frame[col.column_name], errors="coerce", **args)
         elif col.column_type == "timespan":
             frame[col.column_name] = frame[col.column_name].apply(to_pandas_timedelta)
