@@ -1,3 +1,4 @@
+import sys
 from typing import TYPE_CHECKING, Union
 
 if TYPE_CHECKING:
@@ -60,7 +61,16 @@ def dataframe_from_result_table(table: "Union[KustoResultTable, KustoStreamingRe
             frame[col.column_name] = frame[col.column_name].replace("NaN", np.NaN).replace("Infinity", np.PINF).replace("-Infinity", np.NINF)
             frame[col.column_name] = pd.to_numeric(frame[col.column_name], errors="coerce").astype(pd.Float64Dtype())
         elif col.column_type == "datetime":
-            frame[col.column_name] = pd.to_datetime(frame[col.column_name], errors="coerce")
+            # Pandas before version 2 doesn't support the "format" arg
+            args = {}
+            if pd.__version__.startswith("2."):
+                args = {"format": "ISO8601", "utc": True}
+            else:
+                # if frame contains ".", replace "Z" with ".000Z"
+                # == False is not a mistake - that's the pandas way to do it
+                contains_dot = frame[col.column_name].str.contains(".")
+                frame.loc[contains_dot == False, col.column_name] = frame.loc[contains_dot == False, col.column_name].str.replace("Z", ".000Z")
+            frame[col.column_name] = pd.to_datetime(frame[col.column_name], errors="coerce", **args)
         elif col.column_type == "timespan":
             frame[col.column_name] = frame[col.column_name].apply(to_pandas_timedelta)
 
