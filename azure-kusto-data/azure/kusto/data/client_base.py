@@ -79,7 +79,8 @@ class _KustoClientBase(abc.ABC):
             if isinstance(self._aad_helper.token_provider, CloudInfoTokenProvider):
                 well_known_kusto_endpoints.validate_trusted_endpoint(
                     self._kusto_cluster,
-                    CloudSettings.get_cloud_info_for_cluster(self._kusto_cluster, self._aad_helper.token_provider._proxy_dict).login_endpoint,
+                    CloudSettings.get_cloud_info_for_cluster(self._kusto_cluster,
+                                                             self._aad_helper.token_provider._proxy_dict).login_endpoint,
                 )
             self._endpoint_validated = True
 
@@ -91,17 +92,19 @@ class _KustoClientBase(abc.ABC):
 
     @staticmethod
     def _handle_http_error(
-        exception: Exception,
-        endpoint: Optional[str],
-        payload: Optional[io.IOBase],
-        response: "Union[Response, aiohttp.ClientResponse]",
-        status: int,
-        response_json: Any,
-        response_text: Optional[str],
+            exception: Exception,
+            endpoint: Optional[str],
+            payload: Optional[io.IOBase],
+            response: "Union[Response, aiohttp.ClientResponse]",
+            status: int,
+            response_json: Any,
+            response_text: Optional[str],
     ) -> NoReturn:
         if status == 404:
             if payload:
-                raise KustoServiceError("The ingestion endpoint does not exist. Please enable streaming ingestion on your cluster.", response) from exception
+                raise KustoServiceError(
+                    "The ingestion endpoint does not exist. Please enable streaming ingestion on your cluster.",
+                    response) from exception
 
             raise KustoServiceError(f"The requested endpoint '{endpoint}' does not exist.", response) from exception
 
@@ -126,34 +129,42 @@ class _KustoClientBase(abc.ABC):
 
 class ExecuteRequestParams:
     def __init__(
-        self,
-        database: str,
-        payload: Optional[io.IOBase],
-        properties: ClientRequestProperties,
-        query: str,
-        timeout: timedelta,
-        request_headers: dict,
-        mgmt_default_timeout: timedelta,
-        client_server_delta: timedelta,
-        client_details: ClientDetails,
+            self,
+            database: str,
+            payload: Union[Optional[io.IOBase], str],
+            properties: ClientRequestProperties,
+            query: Optional[str],
+            timeout: timedelta,
+            request_headers: dict,
+            mgmt_default_timeout: timedelta,
+            client_server_delta: timedelta,
+            client_details: ClientDetails,
     ):
         request_headers = copy(request_headers)
         request_headers["Connection"] = "Keep-Alive"
         json_payload = None
-        if not payload:
+
+        if query:
             json_payload = {"db": database, "csl": query}
             if properties:
                 json_payload["properties"] = properties.to_json()
 
             client_request_id_prefix = "KPC.execute;"
             request_headers["Content-Type"] = "application/json; charset=utf-8"
-        else:
+        elif not payload:
+            raise ValueError("empty payload and query")
+        elif isinstance(payload, str):
+            json_payload = {"sourceUri": payload}
+            client_request_id_prefix = "KPC.executeStreamingIngestFromBlob;"
+            request_headers["Content-Type"] = "application/json; charset=utf-8"
             if properties:
                 request_headers.update(json.loads(properties.to_json())["Options"])
-
+        else:
             # Before 3.0 it was KPC.execute_streaming_ingest, but was changed to align with the other SDKs
             client_request_id_prefix = "KPC.executeStreamingIngest;"
             request_headers["Content-Encoding"] = "gzip"
+            if properties:
+                request_headers.update(json.loads(properties.to_json())["Options"])
 
         special_headers = [
             {

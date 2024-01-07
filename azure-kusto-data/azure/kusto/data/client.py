@@ -199,7 +199,7 @@ class KustoClient(_KustoClientBase):
         self,
         database: Optional[str],
         table: str,
-        stream: IO[AnyStr],
+        data: Union[IO[AnyStr], str],
         stream_format: Union[DataFormat, str],
         properties: Optional[ClientRequestProperties] = None,
         mapping_name: str = None,
@@ -211,7 +211,7 @@ class KustoClient(_KustoClientBase):
         https://docs.microsoft.com/en-us/azure/data-explorer/ingest-data-streaming
         :param Optional[str] database: Target database. If not provided, will default to the "Initial Catalog" value in the connection string
         :param str table: Target table.
-        :param io.BaseIO stream: stream object which contains the data to ingest.
+        :param Union[IO[AnyStr],str] data: either a stream object or blob url which contains the data to ingest.
         :param DataFormat stream_format: Format of the data in the stream.
         :param ClientRequestProperties properties: additional request properties.
         :param str mapping_name: Pre-defined mapping of the table. Required when stream_format is json/avro.
@@ -223,8 +223,10 @@ class KustoClient(_KustoClientBase):
         endpoint = self._streaming_ingest_endpoint + database + "/" + table + "?streamFormat=" + stream_format
         if mapping_name is not None:
             endpoint = endpoint + "&mappingName=" + mapping_name
+        if isinstance(data, str):
+            endpoint += "&sourceKind=uri"
 
-        self._execute(endpoint, database, None, stream, self._streaming_ingest_default_timeout, properties)
+        self._execute(endpoint, database, None, data, self._streaming_ingest_default_timeout, properties)
 
     def _execute_streaming_query_parsed(
         self,
@@ -264,7 +266,7 @@ class KustoClient(_KustoClientBase):
         endpoint: str,
         database: Optional[str],
         query: Optional[str],
-        payload: Optional[IO[AnyStr]],
+        payload: Optional[Union[IO[AnyStr],str]],
         timeout: timedelta,
         properties: Optional[ClientRequestProperties] = None,
         stream_response: bool = False,
@@ -295,7 +297,7 @@ class KustoClient(_KustoClientBase):
             endpoint,
             headers=request_headers,
             json=json_payload,
-            data=payload,
+            data=payload if json_payload is None else None,
             timeout=timeout.seconds,
             stream=stream_response,
             allow_redirects=False,

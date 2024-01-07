@@ -10,7 +10,7 @@ from azure.kusto.data import KustoClient, KustoConnectionStringBuilder, ClientRe
 
 from ._ingest_telemetry import IngestTracingAttributes
 from .base_ingest_client import BaseIngestClient, IngestionResult, IngestionStatus
-from .descriptors import FileDescriptor, StreamDescriptor
+from .descriptors import FileDescriptor, StreamDescriptor, BlobDescriptor
 from .ingestion_properties import IngestionProperties
 
 
@@ -85,3 +85,21 @@ class KustoStreamingIngestClient(BaseIngestClient):
         )
 
         return IngestionResult(IngestionStatus.SUCCESS, ingestion_properties.database, ingestion_properties.table, stream_descriptor.source_id)
+
+    def ingest_from_blob(self, blob_descriptor: BlobDescriptor,
+                         ingestion_properties: IngestionProperties, client_request_id: Optional[str]) -> IngestionResult:
+        IngestTracingAttributes.set_ingest_descriptor_attributes(blob_descriptor, ingestion_properties)
+        additional_properties = None
+        if client_request_id:
+            additional_properties = ClientRequestProperties()
+            additional_properties.client_request_id = client_request_id
+
+        self._kusto_client.execute_streaming_ingest(
+            ingestion_properties.database,
+            ingestion_properties.table,
+            blob_descriptor.path,
+            ingestion_properties.format.name,
+            additional_properties,
+            mapping_name=ingestion_properties.ingestion_mapping_reference,
+        )
+        return IngestionResult(IngestionStatus.SUCCESS, ingestion_properties.database, ingestion_properties.table, blob_descriptor.source_id)
