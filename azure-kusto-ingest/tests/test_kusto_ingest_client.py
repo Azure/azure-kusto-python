@@ -44,6 +44,36 @@ STORAGE_QUEUE4_URL = "https://storageaccount2.queue.core.windows.net/readyforagg
 STORAGE_QUEUE5_URL = "https://storageaccount2.queue.core.windows.net/readyforaggregation-secured?5"
 
 
+def request_callback_throw_transient(request):
+    response_status = 400
+    response_body = {
+        "error": {
+            "code": "BadRequest",
+            "message": "Request is invalid and cannot be executed.",
+            "@type": "Kusto.Common.Svc.Exceptions.AdminCommandWrongEndpointException",
+            "@message": "Cannot get ingestion resources from this service endpoint. The appropriate endpoint is most likely "
+            "'https://ingest-somecluster.kusto.windows.net/'.",
+            "@context": {
+                "timestamp": "2021-10-12T06:05:35.6602087Z",
+                "serviceAlias": "SomeCluster",
+                "machineName": "KEngine000000",
+                "processName": "Kusto.WinSvc.Svc",
+                "processId": 2648,
+                "threadId": 472,
+                "appDomainName": "Kusto.WinSvc.Svc.exe",
+                "clientRequestId": "KPC.execute;a3dfb878-9d2b-49d6-89a5-e9b3a9f1f674",
+                "activityId": "87eb8fc9-78b3-4580-bcc8-6c90482f9118",
+                "subActivityId": "bbfb038b-4467-4f96-afd4-945904fc6278",
+                "activityType": "DN.AdminCommand.IngestionResourcesGetCommand",
+                "parentActivityId": "00e678e9-4204-4143-8c94-6afd94c27430",
+                "activityStack": "(Activity stack: CRID=KPC.execute;a3dfb878-9d2b-49d6-89a5-e9b3a9f1f674 ARID=87eb8fc9-78b3-4580-bcc8-6c90482f9118 > DN.Admin.Client.ExecuteControlCommand/833dfb85-5d67-44b7-882d-eb2283e65780 > P.WCF.Service.ExecuteControlCommand..IInterNodeCommunicationAdminContract/3784e74f-1d89-4c15-adef-0a360c4c431e > DN.FE.ExecuteControlCommand/00e678e9-4204-4143-8c94-6afd94c27430 > DN.AdminCommand.IngestionResourcesGetCommand/bbfb038b-4467-4f96-afd4-945904fc6278)",
+            },
+            "@permanent": False,
+        }
+    }
+    return response_status, {}, json.dumps(response_body)
+
+
 def request_callback(request):
     body = json.loads(request.body.decode()) if type(request.body) == bytes else json.loads(request.body)
     response_status = 400

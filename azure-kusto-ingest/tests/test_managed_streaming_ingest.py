@@ -11,7 +11,7 @@ from mock import patch
 from azure.kusto.data.data_format import DataFormat
 from azure.kusto.data.exceptions import KustoApiError
 from azure.kusto.ingest import ManagedStreamingIngestClient, IngestionProperties, IngestionStatus, BlobDescriptor
-from test_kusto_ingest_client import request_callback as queued_request_callback, assert_queued_upload
+from test_kusto_ingest_client import request_callback as queued_request_callback, assert_queued_upload, request_callback_throw_transient
 from test_kusto_streaming_ingest_client import request_callback as streaming_request_callback, assert_managed_streaming_request_id
 
 
@@ -313,6 +313,12 @@ class TestManagedStreamingIngestClient:
     def test_blob_ingestion(self, mock_uuid, mock_put_message_in_queue, mock_aad):
         responses.add_callback(
             responses.POST, "https://ingest-somecluster.kusto.windows.net/v1/rest/mgmt", callback=queued_request_callback, content_type="application/json"
+        )
+        responses.add_callback(
+            responses.POST,
+            "https://somecluster.kusto.windows.net/v1/rest/ingest/database/table?streamFormat=csv&sourceKind=uri",
+            callback=request_callback_throw_transient,
+            content_type="application/json",
         )
 
         ingest_client = ManagedStreamingIngestClient.from_dm_kcsb("https://ingest-somecluster.kusto.windows.net")

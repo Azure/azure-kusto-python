@@ -139,13 +139,18 @@ class ManagedStreamingIngestClient(BaseIngestClient):
         """
         IngestTracingAttributes.set_ingest_descriptor_attributes(blob_descriptor, ingestion_properties)
 
-        blob_descriptor.fillSize()
         if self._is_closed:
             raise KustoClosedError()
+        blob_descriptor.fillSize()
+        try:
+            res = self._stream_with_retries(blob_descriptor.size, blob_descriptor, ingestion_properties)
+            if res:
+                return res
+        except KustoApiError as ex:
+            error = ex.get_api_error()
+            if error.permanent:
+                raise
 
-        res = self._stream_with_retries(blob_descriptor.size, blob_descriptor, ingestion_properties)
-        if res:
-            return res
         return self.queued_client.ingest_from_blob(blob_descriptor, ingestion_properties)
 
     def _stream_with_retries(
