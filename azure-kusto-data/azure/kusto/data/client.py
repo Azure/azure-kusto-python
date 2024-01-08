@@ -266,7 +266,7 @@ class KustoClient(_KustoClientBase):
         endpoint: str,
         database: Optional[str],
         query: Optional[str],
-        payload: Optional[Union[IO[AnyStr],str]],
+        payload: Optional[Union[IO[AnyStr], str]],
         timeout: timedelta,
         properties: Optional[ClientRequestProperties] = None,
         stream_response: bool = False,

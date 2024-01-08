@@ -156,6 +156,7 @@ class BlobDescriptor(DescriptorBase):
         if not self.size:
             self.size = BlobClient.from_blob_url(self.path).get_blob_properties().size
 
+
 class StreamDescriptor(DescriptorBase):
     """StreamDescriptor is used to describe a stream that will be used as ingestion source"""
 

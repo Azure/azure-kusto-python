@@ -65,8 +65,7 @@ class ManagedStreamingIngestClient(BaseIngestClient):
         engine_kcsb = KustoConnectionStringBuilder(kcsb.replace("https://ingest-", "https://"))
         return ManagedStreamingIngestClient(engine_kcsb, dm_kcsb)
 
-    def __init__(self, engine_kcsb: Union[KustoConnectionStringBuilder, str],
-                 dm_kcsb: Union[KustoConnectionStringBuilder, str]):
+    def __init__(self, engine_kcsb: Union[KustoConnectionStringBuilder, str], dm_kcsb: Union[KustoConnectionStringBuilder, str]):
         super().__init__()
         self.queued_client = QueuedIngestClient(dm_kcsb)
         self.streaming_client = KustoStreamingIngestClient(engine_kcsb)
@@ -87,8 +86,7 @@ class ManagedStreamingIngestClient(BaseIngestClient):
         self.streaming_client.set_proxy(proxy_url)
 
     @distributed_trace(kind=SpanKind.CLIENT)
-    def ingest_from_file(self, file_descriptor: Union[FileDescriptor, str],
-                         ingestion_properties: IngestionProperties) -> IngestionResult:
+    def ingest_from_file(self, file_descriptor: Union[FileDescriptor, str], ingestion_properties: IngestionProperties) -> IngestionResult:
         file_descriptor = FileDescriptor.get_instance(file_descriptor)
         IngestTracingAttributes.set_ingest_descriptor_attributes(file_descriptor, ingestion_properties)
 
@@ -100,8 +98,7 @@ class ManagedStreamingIngestClient(BaseIngestClient):
             return self.ingest_from_stream(stream_descriptor, ingestion_properties)
 
     @distributed_trace(kind=SpanKind.CLIENT)
-    def ingest_from_stream(self, stream_descriptor: Union[StreamDescriptor, IO[AnyStr]],
-                           ingestion_properties: IngestionProperties) -> IngestionResult:
+    def ingest_from_stream(self, stream_descriptor: Union[StreamDescriptor, IO[AnyStr]], ingestion_properties: IngestionProperties) -> IngestionResult:
         stream_descriptor = StreamDescriptor.get_instance(stream_descriptor)
         IngestTracingAttributes.set_ingest_descriptor_attributes(stream_descriptor, ingestion_properties)
 
@@ -151,31 +148,24 @@ class ManagedStreamingIngestClient(BaseIngestClient):
             return res
         return self.queued_client.ingest_from_blob(blob_descriptor, ingestion_properties)
 
-    def _stream_with_retries(self,
-                             length: int,
-                             descriptor: DescriptorBase,
-                             props: IngestionProperties,
-                             ) -> Optional[IngestionResult]:
+    def _stream_with_retries(
+        self,
+        length: int,
+        descriptor: DescriptorBase,
+        props: IngestionProperties,
+    ) -> Optional[IngestionResult]:
         if length > self.MAX_STREAMING_SIZE_IN_BYTES:
             return None
-        for attempt in Retrying(
-                stop=stop_after_attempt(self._num_of_attempts),
-                wait=wait_random_exponential(max=self._max_seconds_per_retry), reraise=True
-        ):
-            with (attempt):
-                client_request_id = ManagedStreamingIngestClient._get_request_id(descriptor.source_id,
-                                                                                 attempt.retry_state.attempt_number - 1)
+        for attempt in Retrying(stop=stop_after_attempt(self._num_of_attempts), wait=wait_random_exponential(max=self._max_seconds_per_retry), reraise=True):
+            with attempt:
+                client_request_id = ManagedStreamingIngestClient._get_request_id(descriptor.source_id, attempt.retry_state.attempt_number - 1)
                 # trace attempt to ingest from stream
                 if isinstance(descriptor, StreamDescriptor):
                     descriptor.stream.seek(0, SEEK_SET)
-                    invoker = lambda: self.streaming_client._ingest_from_stream_with_client_request_id(
-                        descriptor, props, client_request_id)
+                    invoker = lambda: self.streaming_client._ingest_from_stream_with_client_request_id(descriptor, props, client_request_id)
                 else:
-                    invoker = lambda: self.streaming_client.ingest_from_blob(
-                            descriptor, props, client_request_id
-                        )
-                return MonitoredActivity.invoke(invoker,
-                                                name_of_span="ManagedStreamingIngestClient.ingest_from_stream_attempt")
+                    invoker = lambda: self.streaming_client.ingest_from_blob(descriptor, props, client_request_id)
+                return MonitoredActivity.invoke(invoker, name_of_span="ManagedStreamingIngestClient.ingest_from_stream_attempt")
 
     @staticmethod
     def _get_request_id(source_id: uuid.UUID, attempt: int):

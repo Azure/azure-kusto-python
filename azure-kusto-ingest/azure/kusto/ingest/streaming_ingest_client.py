@@ -86,8 +86,9 @@ class KustoStreamingIngestClient(BaseIngestClient):
 
         return IngestionResult(IngestionStatus.SUCCESS, ingestion_properties.database, ingestion_properties.table, stream_descriptor.source_id)
 
-    def ingest_from_blob(self, blob_descriptor: BlobDescriptor,
-                         ingestion_properties: IngestionProperties, client_request_id: Optional[str] = None) -> IngestionResult:
+    def ingest_from_blob(
+        self, blob_descriptor: BlobDescriptor, ingestion_properties: IngestionProperties, client_request_id: Optional[str] = None
+    ) -> IngestionResult:
         IngestTracingAttributes.set_ingest_descriptor_attributes(blob_descriptor, ingestion_properties)
         additional_properties = None
         if client_request_id:
