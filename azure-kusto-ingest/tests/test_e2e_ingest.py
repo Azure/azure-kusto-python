@@ -539,7 +539,8 @@ class TestE2E:
 
         await self.assert_rows_added(1, timeout=120)
 
-    def test_streaming_ingest_from_blob(self):
+    @pytest.mark.asyncio
+    def test_streaming_ingest_from_blob(self, is_managed_streaming):
         ingestion_properties = IngestionProperties(
             database=self.test_db,
             table=self.test_table,
@@ -548,6 +549,7 @@ class TestE2E:
             ingestion_mapping_kind=IngestionMappingKind.JSON,
         )
         containers = self.ingest_client._resource_manager.get_containers()
+
         with FileDescriptor(self.json_file_path).open(False) as stream:
             blob_descriptor = self.ingest_client.upload_blob(
                 containers,
@@ -559,6 +561,7 @@ class TestE2E:
                 10 * 60,
                 3,
             )
-            self.streaming_ingest_client.ingest_from_blob(blob_descriptor, ingestion_properties, None)
+            client = self.managed_streaming_ingest_client if is_managed_streaming else self.streaming_ingest_client
+            client.ingest_from_blob(blob_descriptor, ingestion_properties)
 
         self.assert_rows_added(2, timeout=120)

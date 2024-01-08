@@ -1,7 +1,8 @@
 import uuid
 from io import SEEK_SET
-from typing import AnyStr, IO, TYPE_CHECKING, Union
+from typing import AnyStr, IO, TYPE_CHECKING, Union, Optional
 
+from azure.kusto.ingest.descriptors import DescriptorBase
 from tenacity import Retrying, _utils, stop_after_attempt, wait_random_exponential
 
 from azure.core.tracing.decorator import distributed_trace
@@ -10,7 +11,6 @@ from azure.core.tracing import SpanKind
 from azure.kusto.data import KustoConnectionStringBuilder
 from azure.kusto.data.exceptions import KustoApiError, KustoClosedError
 from azure.kusto.data._telemetry import MonitoredActivity
-
 
 from . import BlobDescriptor, FileDescriptor, IngestionProperties, StreamDescriptor
 from ._ingest_telemetry import IngestTracingAttributes
@@ -65,7 +65,8 @@ class ManagedStreamingIngestClient(BaseIngestClient):
         engine_kcsb = KustoConnectionStringBuilder(kcsb.replace("https://ingest-", "https://"))
         return ManagedStreamingIngestClient(engine_kcsb, dm_kcsb)
 
-    def __init__(self, engine_kcsb: Union[KustoConnectionStringBuilder, str], dm_kcsb: Union[KustoConnectionStringBuilder, str]):
+    def __init__(self, engine_kcsb: Union[KustoConnectionStringBuilder, str],
+                 dm_kcsb: Union[KustoConnectionStringBuilder, str]):
         super().__init__()
         self.queued_client = QueuedIngestClient(dm_kcsb)
         self.streaming_client = KustoStreamingIngestClient(engine_kcsb)
@@ -86,7 +87,8 @@ class ManagedStreamingIngestClient(BaseIngestClient):
         self.streaming_client.set_proxy(proxy_url)
 
     @distributed_trace(kind=SpanKind.CLIENT)
-    def ingest_from_file(self, file_descriptor: Union[FileDescriptor, str], ingestion_properties: IngestionProperties) -> IngestionResult:
+    def ingest_from_file(self, file_descriptor: Union[FileDescriptor, str],
+                         ingestion_properties: IngestionProperties) -> IngestionResult:
         file_descriptor = FileDescriptor.get_instance(file_descriptor)
         IngestTracingAttributes.set_ingest_descriptor_attributes(file_descriptor, ingestion_properties)
 
@@ -98,7 +100,8 @@ class ManagedStreamingIngestClient(BaseIngestClient):
             return self.ingest_from_stream(stream_descriptor, ingestion_properties)
 
     @distributed_trace(kind=SpanKind.CLIENT)
-    def ingest_from_stream(self, stream_descriptor: Union[StreamDescriptor, IO[AnyStr]], ingestion_properties: IngestionProperties) -> IngestionResult:
+    def ingest_from_stream(self, stream_descriptor: Union[StreamDescriptor, IO[AnyStr]],
+                           ingestion_properties: IngestionProperties) -> IngestionResult:
         stream_descriptor = StreamDescriptor.get_instance(stream_descriptor)
         IngestTracingAttributes.set_ingest_descriptor_attributes(stream_descriptor, ingestion_properties)
 
@@ -108,30 +111,20 @@ class ManagedStreamingIngestClient(BaseIngestClient):
         stream = stream_descriptor.stream
 
         buffered_stream = read_until_size_or_end(stream, self.MAX_STREAMING_SIZE_IN_BYTES + 1)
-
-        if len(buffered_stream.getbuffer()) > self.MAX_STREAMING_SIZE_IN_BYTES:
-            stream_descriptor.stream = chain_streams([buffered_stream, stream])
-            return self.queued_client.ingest_from_stream(stream_descriptor, ingestion_properties)
+        length = len(buffered_stream.getbuffer())
 
         stream_descriptor.stream = buffered_stream
 
         try:
-            for attempt in Retrying(
-                stop=stop_after_attempt(self._num_of_attempts), wait=wait_random_exponential(max=self._max_seconds_per_retry), reraise=True
-            ):
-                with attempt:
-                    stream.seek(0, SEEK_SET)
-                    client_request_id = ManagedStreamingIngestClient._get_request_id(stream_descriptor.source_id, attempt.retry_state.attempt_number - 1)
-                    # trace attempt to ingest from stream
-                    invoker = lambda: self.streaming_client._ingest_from_stream_with_client_request_id(
-                        stream_descriptor, ingestion_properties, client_request_id
-                    )
-                    return MonitoredActivity.invoke(invoker, name_of_span="ManagedStreamingIngestClient.ingest_from_stream_attempt")
-
+            res = self._stream_with_retries(length, stream_descriptor, ingestion_properties)
+            if res:
+                return res
+            stream_descriptor.stream = chain_streams([buffered_stream, stream])
         except KustoApiError as ex:
             error = ex.get_api_error()
             if error.permanent:
                 raise
+            buffered_stream.seek(0, SEEK_SET)
 
         return self.queued_client.ingest_from_stream(stream_descriptor, ingestion_properties)
 
@@ -149,10 +142,40 @@ class ManagedStreamingIngestClient(BaseIngestClient):
         """
         IngestTracingAttributes.set_ingest_descriptor_attributes(blob_descriptor, ingestion_properties)
 
+        blob_descriptor.fillSize()
         if self._is_closed:
             raise KustoClosedError()
 
+        res = self._stream_with_retries(blob_descriptor.size, blob_descriptor, ingestion_properties)
+        if res:
+            return res
         return self.queued_client.ingest_from_blob(blob_descriptor, ingestion_properties)
+
+    def _stream_with_retries(self,
+                             length: int,
+                             descriptor: DescriptorBase,
+                             props: IngestionProperties,
+                             ) -> Optional[IngestionResult]:
+        if length > self.MAX_STREAMING_SIZE_IN_BYTES:
+            return None
+        for attempt in Retrying(
+                stop=stop_after_attempt(self._num_of_attempts),
+                wait=wait_random_exponential(max=self._max_seconds_per_retry), reraise=True
+        ):
+            with (attempt):
+                client_request_id = ManagedStreamingIngestClient._get_request_id(descriptor.source_id,
+                                                                                 attempt.retry_state.attempt_number - 1)
+                # trace attempt to ingest from stream
+                if isinstance(descriptor, StreamDescriptor):
+                    descriptor.stream.seek(0, SEEK_SET)
+                    invoker = lambda: self.streaming_client._ingest_from_stream_with_client_request_id(
+                        descriptor, props, client_request_id)
+                else:
+                    invoker = lambda: self.streaming_client.ingest_from_blob(
+                            descriptor, props, client_request_id
+                        )
+                return MonitoredActivity.invoke(invoker,
+                                                name_of_span="ManagedStreamingIngestClient.ingest_from_stream_attempt")
 
     @staticmethod
     def _get_request_id(source_id: uuid.UUID, attempt: int):

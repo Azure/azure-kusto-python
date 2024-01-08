@@ -12,6 +12,8 @@ from io import BytesIO, SEEK_END
 from typing import Union, Optional, AnyStr, IO, List, Dict
 from zipfile import ZipFile
 
+from azure.storage.blob import BlobClient
+
 OptionalUUID = Optional[Union[str, uuid.UUID]]
 
 
@@ -150,6 +152,9 @@ class BlobDescriptor(DescriptorBase):
             obfuscated_path = self.path.split("?")[0].split(";")[0]
         return {self._BLOB_URI: obfuscated_path, self._SOURCE_ID: str(self.source_id)}
 
+    def fillSize(self):
+        if not self.size:
+            self.size = BlobClient.from_blob_url(self.path).get_blob_properties().size
 
 class StreamDescriptor(DescriptorBase):
     """StreamDescriptor is used to describe a stream that will be used as ingestion source"""
