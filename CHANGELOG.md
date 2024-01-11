@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unversioned
+## Unreleased
 
 ### Added
 - Streaming ingestion from blob
@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Managed streaming fallback to queued
 - 
+### Changed
+- Changed binary files data format compression to false
+
 ## [4.3.1] - 2023-12-18
 ### Fixed
 - Pandas now correctly parses all dates
