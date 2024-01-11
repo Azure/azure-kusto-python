@@ -91,13 +91,13 @@ class _KustoClientBase(abc.ABC):
 
     @staticmethod
     def _handle_http_error(
-            exception: Exception,
-            endpoint: Optional[str],
-            payload: Optional[io.IOBase],
-            response: "Union[Response, aiohttp.ClientResponse]",
-            status: int,
-            response_json: Any,
-            response_text: Optional[str],
+        exception: Exception,
+        endpoint: Optional[str],
+        payload: Optional[io.IOBase],
+        response: "Union[Response, aiohttp.ClientResponse]",
+        status: int,
+        response_json: Any,
+        response_text: Optional[str],
     ) -> NoReturn:
         if status == 404:
             if payload:
@@ -126,29 +126,34 @@ class _KustoClientBase(abc.ABC):
 
 class ExecuteRequestParams:
     @staticmethod
-    def from_stream(stream: io.IOBase,
-                    request_headers: Any,
-                    properties: ClientRequestProperties,
-                    mgmt_default_timeout: timedelta,
-                    client_server_delta: timedelta,
-                    client_details: ClientDetails):
+    def from_stream(
+        stream: io.IOBase,
+        properties: ClientRequestProperties,
+        request_headers: Any,
+        timeout: timedelta,
+        mgmt_default_timeout: timedelta,
+        client_server_delta: timedelta,
+        client_details: ClientDetails,
+    ):
         # Before 3.0 it was KPC.execute_streaming_ingest, but was changed to align with the other SDKs
         client_request_id_prefix = "KPC.executeStreamingIngest;"
         request_headers["Content-Encoding"] = "gzip"
         if properties:
             request_headers.update(json.loads(properties.to_json())["Options"])
 
-        return ExecuteRequestParams(stream, None, request_headers, client_request_id_prefix, mgmt_default_timeout, client_server_delta, client_details)
+        return ExecuteRequestParams(stream, None, request_headers, client_request_id_prefix, timeout, mgmt_default_timeout, client_server_delta, client_details)
 
     @staticmethod
-    def from_query(query: str,
-                   database: str,
-                   request_headers: Any,
-                   properties: ClientRequestProperties,
-                   timeout: timedelta,
-                   mgmt_default_timeout: timedelta,
-                   client_server_delta: timedelta,
-                   client_details: ClientDetails):
+    def from_query(
+        query: str,
+        database: str,
+        properties: ClientRequestProperties,
+        request_headers: Any,
+        timeout: timedelta,
+        mgmt_default_timeout: timedelta,
+        client_server_delta: timedelta,
+        client_details: ClientDetails,
+    ):
         json_payload = {"db": database, "csl": query}
         if properties:
             json_payload["properties"] = properties.to_json()
@@ -156,31 +161,37 @@ class ExecuteRequestParams:
         client_request_id_prefix = "KPC.execute;"
         request_headers["Content-Type"] = "application/json; charset=utf-8"
 
-        return ExecuteRequestParams(None, json_payload, client_request_id_prefix, timeout, timedelta,mgmt_default_timeout, client_server_delta, client_details)
+        return ExecuteRequestParams(None, json_payload, client_request_id_prefix, timeout, timedelta, mgmt_default_timeout, client_server_delta, client_details)
 
     @staticmethod
-    def from_blob_url(blob: str,
-                   request_headers: Any,
-                   properties: ClientRequestProperties,
-                   timeout: timedelta,
-                   mgmt_default_timeout: timedelta,
-                   client_server_delta: timedelta,
-                   client_details: ClientDetails):
+    def from_blob_url(
+        blob: str,
+        properties: ClientRequestProperties,
+        request_headers: Any,
+        timeout: timedelta,
+        mgmt_default_timeout: timedelta,
+        client_server_delta: timedelta,
+        client_details: ClientDetails,
+    ):
         json_payload = {"sourceUri": blob}
         client_request_id_prefix = "KPC.executeStreamingIngestFromBlob;"
         request_headers["Content-Type"] = "application/json; charset=utf-8"
         if properties:
             request_headers.update(json.loads(properties.to_json())["Options"])
-        return ExecuteRequestParams(None, json_payload, client_request_id_prefix, timeout, timedelta,mgmt_default_timeout, client_server_delta, client_details)
+        return ExecuteRequestParams(None, json_payload, client_request_id_prefix, timeout, timedelta, mgmt_default_timeout, client_server_delta, client_details)
 
-    def __init__(self, payload, json_payload,
-                 request_headers,
-                 client_request_id_prefix,
-                 properties: ClientRequestProperties,
-                 timeout: timedelta,
-                 mgmt_default_timeout: timedelta,
-                 client_server_delta: timedelta,
-                 client_details: ClientDetails):
+    def __init__(
+        self,
+        payload,
+        json_payload,
+        request_headers,
+        client_request_id_prefix,
+        properties: ClientRequestProperties,
+        timeout: timedelta,
+        mgmt_default_timeout: timedelta,
+        client_server_delta: timedelta,
+        client_details: ClientDetails,
+    ):
         special_headers = [
             {
                 "name": "x-ms-client-request-id",

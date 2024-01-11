@@ -175,8 +175,17 @@ class KustoClient(_KustoClientBase):
         """
         database = self._get_database_or_default(database)
         Span.set_query_attributes(self._kusto_cluster, database, properties)
-
-        return self._execute(self._query_endpoint, database, query, None, self._query_default_timeout, properties)
+        request = ExecuteRequestParams.from_query(
+            query,
+            database,
+            properties,
+            self._request_headers,
+            self._query_default_timeout,
+            self._mgmt_default_timeout,
+            self._client_server_delta,
+            self.client_details,
+        )
+        return self._execute(self._query_endpoint, request, properties)
 
     @distributed_trace(name_of_span="KustoClient.control_cmd", kind=SpanKind.CLIENT)
     def execute_mgmt(self, database: Optional[str], query: str, properties: Optional[ClientRequestProperties] = None) -> KustoResponseDataSet:
@@ -191,8 +200,17 @@ class KustoClient(_KustoClientBase):
         """
         database = self._get_database_or_default(database)
         Span.set_query_attributes(self._kusto_cluster, database, properties)
-
-        return self._execute(self._mgmt_endpoint, database, query, None, self._mgmt_default_timeout, properties)
+        request = ExecuteRequestParams.from_query(
+            query,
+            database,
+            properties,
+            self._request_headers,
+            self._mgmt_default_timeout,
+            self._mgmt_default_timeout,
+            self._client_server_delta,
+            self.client_details,
+        )
+        return self._execute(self._mgmt_endpoint, request, properties)
 
     @distributed_trace(name_of_span="KustoClient.streaming_ingest", kind=SpanKind.CLIENT)
     def execute_streaming_ingest(
@@ -227,8 +245,29 @@ class KustoClient(_KustoClientBase):
             endpoint = endpoint + "&mappingName=" + mapping_name
         if blob_url:
             endpoint += "&sourceKind=uri"
+            request = ExecuteRequestParams.from_blob_url(
+                blob_url,
+                properties,
+                self._request_headers,
+                self._streaming_ingest_default_timeout,
+                self._mgmt_default_timeout,
+                self._client_server_delta,
+                self.client_details,
+            )
+        elif stream:
+            request = ExecuteRequestParams.from_stream(
+                stream,
+                properties,
+                self._request_headers,
+                self._streaming_ingest_default_timeout,
+                self._mgmt_default_timeout,
+                self._client_server_delta,
+                self.client_details,
+            )
+        else:
+            raise Exception("execute_streaming_ingest is expecting either a stream or blob url")
 
-        self._execute(endpoint, database, None, data, self._streaming_ingest_default_timeout, properties)
+        self._execute(endpoint, request, properties)
 
     def _execute_streaming_query_parsed(
         self,
@@ -237,7 +276,10 @@ class KustoClient(_KustoClientBase):
         timeout: timedelta = _KustoClientBase._query_default_timeout,
         properties: Optional[ClientRequestProperties] = None,
     ) -> StreamingDataSetEnumerator:
-        response = self._execute(self._query_endpoint, database, query, None, timeout, properties, stream_response=True)
+        request = ExecuteRequestParams.from_query(
+            query, database, properties, self._request_headers, timeout, self._mgmt_default_timeout, self._client_server_delta, self.client_details
+        )
+        response = self._execute(self._query_endpoint, request, properties, stream_response=True)
         response.raw.decode_content = True
         return StreamingDataSetEnumerator(JsonTokenReader(response.raw))
 
@@ -267,7 +309,6 @@ class KustoClient(_KustoClientBase):
         self,
         endpoint: str,
         request: ExecuteRequestParams,
-        timeout: timedelta,
         properties: Optional[ClientRequestProperties] = None,
         stream_response: bool = False,
     ) -> Union[KustoResponseDataSet, Response]:
@@ -278,7 +319,6 @@ class KustoClient(_KustoClientBase):
 
         json_payload = request.json_payload
         request_headers = request.request_headers
-        timeout = request.timeout
         if self._aad_helper:
             request_headers["Authorization"] = self._aad_helper.acquire_authorization_header()
 
@@ -287,8 +327,8 @@ class KustoClient(_KustoClientBase):
             endpoint,
             headers=request_headers,
             json=json_payload,
-            data=repayload if json_payload is None else None,
-            timeout=timeout.seconds,
+            data=request.payload if json_payload is None else None,
+            timeout=request.timeout.seconds,
             stream=stream_response,
             allow_redirects=False,
         )
@@ -316,6 +356,6 @@ class KustoClient(_KustoClientBase):
             response_json = response.json()
             response.raise_for_status()
         except Exception as e:
-            raise self._handle_http_error(e, endpoint, payload, response, response.status_code, response_json, response.text)
+            raise self._handle_http_error(e, endpoint, request.payload, response, response.status_code, response_json, response.text)
         # trace response processing
         return MonitoredActivity.invoke(lambda: self._kusto_parse_by_endpoint(endpoint, response_json), name_of_span="KustoClient.processing_response")

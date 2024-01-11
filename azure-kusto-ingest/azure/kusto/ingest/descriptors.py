@@ -152,7 +152,7 @@ class BlobDescriptor(DescriptorBase):
             obfuscated_path = self.path.split("?")[0].split(";")[0]
         return {self._BLOB_URI: obfuscated_path, self._SOURCE_ID: str(self.source_id)}
 
-    def fillSize(self):
+    def fill_size(self):
         if not self.size:
             self.size = BlobClient.from_blob_url(self.path).get_blob_properties().size
 
