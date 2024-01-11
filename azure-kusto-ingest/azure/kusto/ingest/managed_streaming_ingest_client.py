@@ -159,18 +159,25 @@ class ManagedStreamingIngestClient(BaseIngestClient):
         descriptor: DescriptorBase,
         props: IngestionProperties,
     ) -> Optional[IngestionResult]:
+        from_stream = isinstance(descriptor, StreamDescriptor)
         if length > self.MAX_STREAMING_SIZE_IN_BYTES:
             return None
-        for attempt in Retrying(stop=stop_after_attempt(self._num_of_attempts), wait=wait_random_exponential(max=self._max_seconds_per_retry), reraise=True):
+        for attempt in Retrying(stop=stop_after_attempt(self._num_of_attempts), wait=wait_random_exponential(
+                max=self._max_seconds_per_retry), reraise=True):
             with attempt:
-                client_request_id = ManagedStreamingIngestClient._get_request_id(descriptor.source_id, attempt.retry_state.attempt_number - 1)
+                client_request_id = ManagedStreamingIngestClient._get_request_id(descriptor.source_id,
+                                                                                 attempt.retry_state.attempt_number - 1)
                 # trace attempt to ingest from stream
-                if isinstance(descriptor, StreamDescriptor):
+                if from_stream:
                     descriptor.stream.seek(0, SEEK_SET)
-                    invoker = lambda: self.streaming_client._ingest_from_stream_with_client_request_id(descriptor, props, client_request_id)
+                    invoker = lambda: self.streaming_client._ingest_from_stream_with_client_request_id(
+                        descriptor, props, client_request_id)
                 else:
                     invoker = lambda: self.streaming_client.ingest_from_blob(descriptor, props, client_request_id)
-                return MonitoredActivity.invoke(invoker, name_of_span="ManagedStreamingIngestClient.ingest_from_stream_attempt")
+                return MonitoredActivity.invoke(invoker,
+                                                name_of_span="ManagedStreamingIngestClient.ingest_from_stream_attempt",
+                                                tracing_attributes={"attemptNumber": attempt,
+                                                                    "sourceIsStream": from_stream})
 
     @staticmethod
     def _get_request_id(source_id: uuid.UUID, attempt: int):
