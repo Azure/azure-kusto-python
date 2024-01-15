@@ -3,9 +3,9 @@
 import json
 import time
 import unittest
+from unittest import mock
 from uuid import uuid4
 
-import mock
 from azure.storage.queue import QueueMessage, QueueClient
 
 from azure.kusto.ingest import QueuedIngestClient
