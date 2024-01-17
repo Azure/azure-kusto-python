@@ -56,16 +56,34 @@ class KustoClient(_KustoClientBase):
     async def execute_query(self, database: str, query: str, properties: ClientRequestProperties = None) -> KustoResponseDataSet:
         database = self._get_database_or_default(database)
         Span.set_query_attributes(self._kusto_cluster, database, properties)
-
-        return await self._execute(self._query_endpoint, database, query, None, KustoClient._query_default_timeout, properties)
+        request = ExecuteRequestParams.from_query(
+            query,
+            database,
+            properties,
+            self._request_headers,
+            self._query_default_timeout,
+            self._mgmt_default_timeout,
+            self._client_server_delta,
+            self.client_details,
+        )
+        return await self._execute(self._query_endpoint, request, properties)
 
     @distributed_trace_async(name_of_span="KustoClient.control_cmd", kind=SpanKind.CLIENT)
     @aio_documented_by(KustoClientSync.execute_mgmt)
     async def execute_mgmt(self, database: str, query: str, properties: ClientRequestProperties = None) -> KustoResponseDataSet:
         database = self._get_database_or_default(database)
         Span.set_query_attributes(self._kusto_cluster, database, properties)
-
-        return await self._execute(self._mgmt_endpoint, database, query, None, KustoClient._mgmt_default_timeout, properties)
+        request = ExecuteRequestParams._from_query(
+            query,
+            database,
+            properties,
+            self._request_headers,
+            self._mgmt_default_timeout,
+            self._mgmt_default_timeout,
+            self._client_server_delta,
+            self.client_details,
+        )
+        return await self._execute(self._mgmt_endpoint, request, properties)
 
     @distributed_trace_async(name_of_span="KustoClient.streaming_ingest", kind=SpanKind.CLIENT)
     @aio_documented_by(KustoClientSync.execute_streaming_ingest)
@@ -73,7 +91,8 @@ class KustoClient(_KustoClientBase):
         self,
         database: Optional[str],
         table: str,
-        stream: io.IOBase,
+        stream: Optional[io.IOBase],
+        blob_url: Optional[str],
         stream_format: Union[DataFormat, str],
         properties: ClientRequestProperties = None,
         mapping_name: str = None,
@@ -86,7 +105,31 @@ class KustoClient(_KustoClientBase):
         if mapping_name is not None:
             endpoint = endpoint + "&mappingName=" + mapping_name
 
-        await self._execute(endpoint, database, None, stream, self._streaming_ingest_default_timeout, properties)
+        if blob_url:
+            endpoint += "&sourceKind=uri"
+            request = ExecuteRequestParams._from_blob_url(
+                blob_url,
+                properties,
+                self._request_headers,
+                self._streaming_ingest_default_timeout,
+                self._mgmt_default_timeout,
+                self._client_server_delta,
+                self.client_details,
+            )
+        elif stream:
+            request = ExecuteRequestParams._from_stream(
+                stream,
+                properties,
+                self._request_headers,
+                self._streaming_ingest_default_timeout,
+                self._mgmt_default_timeout,
+                self._client_server_delta,
+                self.client_details,
+            )
+        else:
+            raise Exception("execute_streaming_ingest is expecting either a stream or blob url")
+
+        await self._execute(endpoint, request, properties)
 
     @aio_documented_by(KustoClientSync._execute_streaming_query_parsed)
     async def _execute_streaming_query_parsed(
@@ -96,7 +139,11 @@ class KustoClient(_KustoClientBase):
         timeout: timedelta = _KustoClientBase._query_default_timeout,
         properties: Optional[ClientRequestProperties] = None,
     ) -> StreamingDataSetEnumerator:
-        response = await self._execute(self._query_endpoint, database, query, None, timeout, properties, stream_response=True)
+
+        request = ExecuteRequestParams._from_query(
+            query, database, properties, self._request_headers, timeout, self._mgmt_default_timeout, self._client_server_delta, self.client_details
+        )
+        response = await self._execute(self._query_endpoint, request, properties, stream_response=True)
         return StreamingDataSetEnumerator(JsonTokenReader(response.content))
 
     @distributed_trace_async(name_of_span="KustoClient.streaming_query", kind=SpanKind.CLIENT)
@@ -115,39 +162,25 @@ class KustoClient(_KustoClientBase):
         return KustoStreamingResponseDataSet(response)
 
     @aio_documented_by(KustoClientSync._execute)
-    async def _execute(
+    async  def _execute(
         self,
         endpoint: str,
-        database: Optional[str],
-        query: Optional[str],
-        payload: Optional[io.IOBase],
-        timeout: timedelta,
-        properties: ClientRequestProperties = None,
+        request: ExecuteRequestParams,
+        properties: Optional[ClientRequestProperties] = None,
         stream_response: bool = False,
     ) -> Union[KustoResponseDataSet, ClientResponse]:
         """Executes given query against this client"""
         if self._is_closed:
             raise KustoClosedError()
         self.validate_endpoint()
-        request_params = ExecuteRequestParams(
-            database,
-            payload,
-            properties,
-            query,
-            timeout,
-            self._request_headers,
-            self._mgmt_default_timeout,
-            self._client_server_delta,
-            self.client_details,
-        )
-        json_payload = request_params.json_payload
-        request_headers = request_params.request_headers
-        timeout = request_params.timeout
+
+        request_headers = request.request_headers
+        timeout = request.timeout
         if self._aad_helper:
             request_headers["Authorization"] = await self._aad_helper.acquire_authorization_header_async()
 
         invoker = lambda: self._session.post(
-            endpoint, headers=request_headers, json=json_payload, data=payload, timeout=timeout.seconds, proxy=self._proxy_url, allow_redirects=False
+            endpoint, headers=request_headers, json=request.json_payload, data=request.payload, timeout=timeout.seconds, proxy=self._proxy_url, allow_redirects=False
         )
 
         try:

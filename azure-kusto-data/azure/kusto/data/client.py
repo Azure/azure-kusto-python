@@ -175,7 +175,7 @@ class KustoClient(_KustoClientBase):
         """
         database = self._get_database_or_default(database)
         Span.set_query_attributes(self._kusto_cluster, database, properties)
-        request = ExecuteRequestParams.from_query(
+        request = ExecuteRequestParams._from_query(
             query,
             database,
             properties,
@@ -200,7 +200,7 @@ class KustoClient(_KustoClientBase):
         """
         database = self._get_database_or_default(database)
         Span.set_query_attributes(self._kusto_cluster, database, properties)
-        request = ExecuteRequestParams.from_query(
+        request = ExecuteRequestParams._from_query(
             query,
             database,
             properties,
@@ -245,7 +245,7 @@ class KustoClient(_KustoClientBase):
             endpoint = endpoint + "&mappingName=" + mapping_name
         if blob_url:
             endpoint += "&sourceKind=uri"
-            request = ExecuteRequestParams.from_blob_url(
+            request = ExecuteRequestParams._from_blob_url(
                 blob_url,
                 properties,
                 self._request_headers,
@@ -255,7 +255,7 @@ class KustoClient(_KustoClientBase):
                 self.client_details,
             )
         elif stream:
-            request = ExecuteRequestParams.from_stream(
+            request = ExecuteRequestParams._from_stream(
                 stream,
                 properties,
                 self._request_headers,
@@ -276,7 +276,7 @@ class KustoClient(_KustoClientBase):
         timeout: timedelta = _KustoClientBase._query_default_timeout,
         properties: Optional[ClientRequestProperties] = None,
     ) -> StreamingDataSetEnumerator:
-        request = ExecuteRequestParams.from_query(
+        request = ExecuteRequestParams._from_query(
             query, database, properties, self._request_headers, timeout, self._mgmt_default_timeout, self._client_server_delta, self.client_details
         )
         response = self._execute(self._query_endpoint, request, properties, stream_response=True)
@@ -317,7 +317,6 @@ class KustoClient(_KustoClientBase):
             raise KustoClosedError()
         self.validate_endpoint()
 
-        json_payload = request.json_payload
         request_headers = request.request_headers
         if self._aad_helper:
             request_headers["Authorization"] = self._aad_helper.acquire_authorization_header()
@@ -326,8 +325,8 @@ class KustoClient(_KustoClientBase):
         invoker = lambda: self._session.post(
             endpoint,
             headers=request_headers,
-            json=json_payload,
-            data=request.payload if json_payload is None else None,
+            json=request.json_payload,
+            data=request.payload,
             timeout=request.timeout.seconds,
             stream=stream_response,
             allow_redirects=False,

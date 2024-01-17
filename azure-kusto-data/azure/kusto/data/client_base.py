@@ -126,7 +126,7 @@ class _KustoClientBase(abc.ABC):
 
 class ExecuteRequestParams:
     @staticmethod
-    def from_stream(
+    def _from_stream(
         stream: io.IOBase,
         properties: ClientRequestProperties,
         request_headers: Any,
@@ -144,7 +144,7 @@ class ExecuteRequestParams:
         return ExecuteRequestParams(stream, None, request_headers, client_request_id_prefix, timeout, mgmt_default_timeout, client_server_delta, client_details)
 
     @staticmethod
-    def from_query(
+    def _from_query(
         query: str,
         database: str,
         properties: ClientRequestProperties,
@@ -161,10 +161,12 @@ class ExecuteRequestParams:
         client_request_id_prefix = "KPC.execute;"
         request_headers["Content-Type"] = "application/json; charset=utf-8"
 
-        return ExecuteRequestParams(None, json_payload, client_request_id_prefix, timeout, timedelta, mgmt_default_timeout, client_server_delta, client_details)
+        return ExecuteRequestParams(
+            None, json_payload, request_headers, client_request_id_prefix, properties, timeout, mgmt_default_timeout, client_server_delta, client_details
+        )
 
     @staticmethod
-    def from_blob_url(
+    def _from_blob_url(
         blob: str,
         properties: ClientRequestProperties,
         request_headers: Any,
