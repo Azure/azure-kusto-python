@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Changed binary files data format compression to false
 
+### Fixed
+- Removed test folders from wheel
+
 ## [4.3.1] - 2023-12-18
 ### Fixed
 - Pandas now correctly parses all dates
