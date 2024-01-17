@@ -540,7 +540,7 @@ class TestE2E:
         await self.assert_rows_added(1, timeout=120)
 
     @pytest.mark.asyncio
-    def test_streaming_ingest_from_blob(self, is_managed_streaming):
+    async def test_streaming_ingest_from_blob(self, is_managed_streaming):
         ingestion_properties = IngestionProperties(
             database=self.test_db,
             table=self.test_table,
@@ -564,4 +564,4 @@ class TestE2E:
             client = self.managed_streaming_ingest_client if is_managed_streaming else self.streaming_ingest_client
             client.ingest_from_blob(blob_descriptor, ingestion_properties)
 
-        self.assert_rows_added(2, timeout=120)
+        await self.assert_rows_added(2, timeout=120)

@@ -56,7 +56,7 @@ class KustoClient(_KustoClientBase):
     async def execute_query(self, database: str, query: str, properties: ClientRequestProperties = None) -> KustoResponseDataSet:
         database = self._get_database_or_default(database)
         Span.set_query_attributes(self._kusto_cluster, database, properties)
-        request = ExecuteRequestParams.from_query(
+        request = ExecuteRequestParams._from_query(
             query,
             database,
             properties,
