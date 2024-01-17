@@ -79,6 +79,7 @@ class KustoStreamingIngestClient(BaseIngestClient):
             ingestion_properties.database,
             ingestion_properties.table,
             stream_descriptor.stream,
+            None,
             ingestion_properties.format.name,
             additional_properties,
             mapping_name=ingestion_properties.ingestion_mapping_reference,
@@ -98,6 +99,7 @@ class KustoStreamingIngestClient(BaseIngestClient):
         self._kusto_client.execute_streaming_ingest(
             ingestion_properties.database,
             ingestion_properties.table,
+            None,
             blob_descriptor.path,
             ingestion_properties.format.name,
             additional_properties,

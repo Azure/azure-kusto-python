@@ -141,7 +141,9 @@ class ExecuteRequestParams:
         if properties:
             request_headers.update(json.loads(properties.to_json())["Options"])
 
-        return ExecuteRequestParams(stream, None, request_headers, client_request_id_prefix, timeout, mgmt_default_timeout, client_server_delta, client_details)
+        return ExecuteRequestParams(
+            stream, None, request_headers, client_request_id_prefix, properties, timeout, mgmt_default_timeout, client_server_delta, client_details
+        )
 
     @staticmethod
     def _from_query(
@@ -180,7 +182,9 @@ class ExecuteRequestParams:
         request_headers["Content-Type"] = "application/json; charset=utf-8"
         if properties:
             request_headers.update(json.loads(properties.to_json())["Options"])
-        return ExecuteRequestParams(None, json_payload, client_request_id_prefix, timeout, timedelta, mgmt_default_timeout, client_server_delta, client_details)
+        return ExecuteRequestParams(
+            None, json_payload, request_headers, client_request_id_prefix, properties, timeout, mgmt_default_timeout, client_server_delta, client_details
+        )
 
     def __init__(
         self,
