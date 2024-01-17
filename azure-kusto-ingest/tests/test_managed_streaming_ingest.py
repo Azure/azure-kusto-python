@@ -25,6 +25,7 @@ class TransientResponseHelper:
 def is_blob(request):
     return request.param == "Blob"
 
+
 def transient_error_callback(helper: TransientResponseHelper, request, custom_request_id=None):
     if custom_request_id:
         assert request.headers["x-ms-client-request-id"] == custom_request_id
@@ -113,8 +114,8 @@ class TestManagedStreamingIngestClient:
 
         f = NamedTemporaryFile(dir=".", mode="wb", delete=False)
         blob_url = "https://storageaccount.blob.core.windows.net/tempstorage/database__table__11111111-1111-1111-1111-111111111111__{}?".format(
-                os.path.basename(f.name)
-            )
+            os.path.basename(f.name)
+        )
 
         try:
             if is_blob:

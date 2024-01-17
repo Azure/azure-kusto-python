@@ -139,7 +139,6 @@ class KustoClient(_KustoClientBase):
         timeout: timedelta = _KustoClientBase._query_default_timeout,
         properties: Optional[ClientRequestProperties] = None,
     ) -> StreamingDataSetEnumerator:
-
         request = ExecuteRequestParams._from_query(
             query, database, properties, self._request_headers, timeout, self._mgmt_default_timeout, self._client_server_delta, self.client_details
         )
@@ -162,7 +161,7 @@ class KustoClient(_KustoClientBase):
         return KustoStreamingResponseDataSet(response)
 
     @aio_documented_by(KustoClientSync._execute)
-    async  def _execute(
+    async def _execute(
         self,
         endpoint: str,
         request: ExecuteRequestParams,
@@ -180,7 +179,13 @@ class KustoClient(_KustoClientBase):
             request_headers["Authorization"] = await self._aad_helper.acquire_authorization_header_async()
 
         invoker = lambda: self._session.post(
-            endpoint, headers=request_headers, json=request.json_payload, data=request.payload, timeout=timeout.seconds, proxy=self._proxy_url, allow_redirects=False
+            endpoint,
+            headers=request_headers,
+            json=request.json_payload,
+            data=request.payload,
+            timeout=timeout.seconds,
+            proxy=self._proxy_url,
+            allow_redirects=False,
         )
 
         try:
