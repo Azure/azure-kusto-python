@@ -51,7 +51,7 @@ class Span:
 
     @classmethod
     def set_streaming_ingest_attributes(
-        cls, cluster: str, database: str, table: str, properties: Optional[ClientRequestProperties] = None, request_headers: Optional[dict[str]] = None
+            cls, cluster: str, database: str, table: str, properties: Optional[ClientRequestProperties] = None, request_headers: Optional[dict[str, str]] = None
     ) -> None:
         ingest_attributes: dict = cls.create_streaming_ingest_attributes(cluster, database, table, properties, request_headers)
         cls.add_attributes(tracing_attributes=ingest_attributes)
@@ -71,7 +71,7 @@ class Span:
 
     @classmethod
     def create_streaming_ingest_attributes(
-        cls, cluster: str, database: str, table: str, properties: Optional[ClientRequestProperties] = None, request_headers: Optional[dict[str]] = None
+            cls, cluster: str, database: str, table: str, properties: Optional[ClientRequestProperties] = None, request_headers: Optional[dict] = None
     ) -> dict:
         ingest_attributes: dict = {
             cls._KUSTO_CLUSTER: cluster,
