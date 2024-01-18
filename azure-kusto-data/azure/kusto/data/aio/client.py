@@ -51,7 +51,7 @@ class KustoClient(_KustoClientBase):
             return await self.execute_mgmt(database, query, properties)
         return await self.execute_query(database, query, properties)
 
-    @distributed_trace_async(name_of_span="KustoClient.query_cmd", kind=SpanKind.CLIENT)
+    @distributed_trace_async(name_of_span="AioKustoClient.query_cmd", kind=SpanKind.CLIENT)
     @aio_documented_by(KustoClientSync.execute_query)
     async def execute_query(self, database: str, query: str, properties: ClientRequestProperties = None) -> KustoResponseDataSet:
         database = self._get_database_or_default(database)
@@ -68,7 +68,7 @@ class KustoClient(_KustoClientBase):
         )
         return await self._execute(self._query_endpoint, request, properties)
 
-    @distributed_trace_async(name_of_span="KustoClient.control_cmd", kind=SpanKind.CLIENT)
+    @distributed_trace_async(name_of_span="AioKustoClient.control_cmd", kind=SpanKind.CLIENT)
     @aio_documented_by(KustoClientSync.execute_mgmt)
     async def execute_mgmt(self, database: str, query: str, properties: ClientRequestProperties = None) -> KustoResponseDataSet:
         database = self._get_database_or_default(database)
@@ -85,7 +85,7 @@ class KustoClient(_KustoClientBase):
         )
         return await self._execute(self._mgmt_endpoint, request, properties)
 
-    @distributed_trace_async(name_of_span="KustoClient.streaming_ingest", kind=SpanKind.CLIENT)
+    @distributed_trace_async(name_of_span="AioKustoClient.streaming_ingest", kind=SpanKind.CLIENT)
     @aio_documented_by(KustoClientSync.execute_streaming_ingest)
     async def execute_streaming_ingest(
         self,
@@ -98,7 +98,6 @@ class KustoClient(_KustoClientBase):
         mapping_name: str = None,
     ):
         database = self._get_database_or_default(database)
-        Span.set_streaming_ingest_attributes(self._kusto_cluster, database, table, properties)
 
         stream_format = stream_format.kusto_value if isinstance(stream_format, DataFormat) else DataFormat[stream_format.upper()].kusto_value
         endpoint = self._streaming_ingest_endpoint + database + "/" + table + "?streamFormat=" + stream_format
@@ -129,6 +128,7 @@ class KustoClient(_KustoClientBase):
         else:
             raise Exception("execute_streaming_ingest is expecting either a stream or blob url")
 
+        Span.set_streaming_ingest_attributes(self._kusto_cluster, database, table, properties, request.request_headers)
         await self._execute(endpoint, request, properties)
 
     @aio_documented_by(KustoClientSync._execute_streaming_query_parsed)
@@ -145,7 +145,7 @@ class KustoClient(_KustoClientBase):
         response = await self._execute(self._query_endpoint, request, properties, stream_response=True)
         return StreamingDataSetEnumerator(JsonTokenReader(response.content))
 
-    @distributed_trace_async(name_of_span="KustoClient.streaming_query", kind=SpanKind.CLIENT)
+    @distributed_trace_async(name_of_span="AioKustoClient.streaming_query", kind=SpanKind.CLIENT)
     @aio_documented_by(KustoClientSync.execute_streaming_query)
     async def execute_streaming_query(
         self,
@@ -172,6 +172,7 @@ class KustoClient(_KustoClientBase):
         if self._is_closed:
             raise KustoClosedError()
         self.validate_endpoint()
+        
 
         request_headers = request.request_headers
         timeout = request.timeout
@@ -190,7 +191,7 @@ class KustoClient(_KustoClientBase):
 
         try:
             response = await MonitoredActivity.invoke_async(
-                invoker, name_of_span="KustoClient.http_post", tracing_attributes=Span.create_http_attributes("POST", endpoint, request_headers)
+                invoker, name_of_span="AioKustoClient.http_post", tracing_attributes=Span.create_http_attributes("POST", endpoint, request_headers)
             )
         except Exception as e:
             raise KustoNetworkError(endpoint, None if properties is None else properties.client_request_id) from e
@@ -225,4 +226,4 @@ class KustoClient(_KustoClientBase):
                 except Exception:
                     response_text = None
                 raise self._handle_http_error(e, endpoint, request.payload, response, response.status, response_json, response_text)
-            return MonitoredActivity.invoke(lambda: self._kusto_parse_by_endpoint(endpoint, response_json), name_of_span="KustoClient.processing_response")
+            return MonitoredActivity.invoke(lambda: self._kusto_parse_by_endpoint(endpoint, response_json), name_of_span="AioKustoClient.processing_response")

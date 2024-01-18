@@ -25,6 +25,7 @@ class Span:
     _HTTP_USER_AGENT = "http.user_agent"
     _HTTP_METHOD = "http.method"
     _HTTP_URL = "http.url"
+    _HEADERS = "headers"
 
     @classmethod
     def add_attributes(cls, **kwargs) -> None:
@@ -47,8 +48,8 @@ class Span:
         cls.add_attributes(tracing_attributes=query_attributes)
 
     @classmethod
-    def set_streaming_ingest_attributes(cls, cluster: str, database: str, table: str, properties: Optional[ClientRequestProperties] = None) -> None:
-        ingest_attributes: dict = cls.create_streaming_ingest_attributes(cluster, database, table, properties)
+    def set_streaming_ingest_attributes(cls, cluster: str, database: str, table: str, properties: Optional[ClientRequestProperties] = None, request_headers: Optional[dict[str]]=None)-> None:
+        ingest_attributes: dict = cls.create_streaming_ingest_attributes(cluster, database, table, properties,request_headers)
         cls.add_attributes(tracing_attributes=ingest_attributes)
 
     @classmethod
@@ -65,8 +66,8 @@ class Span:
         return query_attributes
 
     @classmethod
-    def create_streaming_ingest_attributes(cls, cluster: str, database: str, table: str, properties: Optional[ClientRequestProperties] = None) -> dict:
-        ingest_attributes: dict = {cls._KUSTO_CLUSTER: cluster, cls._DATABASE: database, cls._TABLE: table}
+    def create_streaming_ingest_attributes(cls, cluster: str, database: str, table: str, properties: Optional[ClientRequestProperties] = None, request_headers: Optional[dict[str]]=None) -> dict:
+        ingest_attributes: dict = {cls._KUSTO_CLUSTER: cluster, cls._DATABASE: database, cls._TABLE: table, cls._HEADERS: request_headers}
         if properties:
             ingest_attributes.update(properties.get_tracing_attributes())
 
