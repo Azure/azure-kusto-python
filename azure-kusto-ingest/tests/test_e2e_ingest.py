@@ -561,7 +561,9 @@ class TestE2E:
                 10 * 60,
                 3,
             )
-            client = self.managed_streaming_ingest_client if is_managed_streaming else self.streaming_ingest_client
-            client.ingest_from_blob(blob_descriptor, ingestion_properties)
+            if is_managed_streaming:
+                self.managed_streaming_ingest_client.ingest_from_blob(blob_descriptor, ingestion_properties)
+            else:
+                self.streaming_ingest_client.ingest_from_blob(blob_descriptor, ingestion_properties)
 
         await self.assert_rows_added(2, timeout=120)

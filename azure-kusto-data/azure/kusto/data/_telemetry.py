@@ -7,8 +7,6 @@ from azure.core.tracing import SpanKind
 
 from .client_request_properties import ClientRequestProperties
 
-import json
-
 
 class Span:
     """
@@ -27,7 +25,6 @@ class Span:
     _HTTP_USER_AGENT = "http.user_agent"
     _HTTP_METHOD = "http.method"
     _HTTP_URL = "http.url"
-    _HEADERS = "headers"
 
     @classmethod
     def add_attributes(cls, **kwargs) -> None:
@@ -50,10 +47,8 @@ class Span:
         cls.add_attributes(tracing_attributes=query_attributes)
 
     @classmethod
-    def set_streaming_ingest_attributes(
-        cls, cluster: str, database: str, table: str, properties: Optional[ClientRequestProperties] = None, request_headers: Optional[dict[str, str]] = None
-    ) -> None:
-        ingest_attributes: dict = cls.create_streaming_ingest_attributes(cluster, database, table, properties, request_headers)
+    def set_streaming_ingest_attributes(cls, cluster: str, database: str, table: str, properties: Optional[ClientRequestProperties] = None) -> None:
+        ingest_attributes: dict = cls.create_streaming_ingest_attributes(cluster, database, table, properties)
         cls.add_attributes(tracing_attributes=ingest_attributes)
 
     @classmethod
@@ -70,15 +65,8 @@ class Span:
         return query_attributes
 
     @classmethod
-    def create_streaming_ingest_attributes(
-        cls, cluster: str, database: str, table: str, properties: Optional[ClientRequestProperties] = None, request_headers: Optional[dict] = None
-    ) -> dict:
-        ingest_attributes: dict = {
-            cls._KUSTO_CLUSTER: cluster,
-            cls._DATABASE: database,
-            cls._TABLE: table,
-            cls._HEADERS: json.dumps(request_headers, default=str),
-        }
+    def create_streaming_ingest_attributes(cls, cluster: str, database: str, table: str, properties: Optional[ClientRequestProperties] = None) -> dict:
+        ingest_attributes: dict = {cls._KUSTO_CLUSTER: cluster, cls._DATABASE: database, cls._TABLE: table}
         if properties:
             ingest_attributes.update(properties.get_tracing_attributes())
 

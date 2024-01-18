@@ -266,7 +266,7 @@ class KustoClient(_KustoClientBase):
         else:
             raise Exception("execute_streaming_ingest is expecting either a stream or blob url")
 
-        Span.set_streaming_ingest_attributes(self._kusto_cluster, database, table, properties, request.request_headers)
+        Span.set_streaming_ingest_attributes(self._kusto_cluster, database, table, properties)
         self._execute(endpoint, request, properties)
 
     def _execute_streaming_query_parsed(
