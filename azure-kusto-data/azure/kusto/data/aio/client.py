@@ -177,6 +177,7 @@ class KustoClient(_KustoClientBase):
         timeout = request.timeout
         if self._aad_helper:
             request_headers["Authorization"] = await self._aad_helper.acquire_authorization_header_async()
+        print("request headers: " + str(request_headers))
 
         invoker = lambda: self._session.post(
             endpoint,
