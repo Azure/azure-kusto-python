@@ -137,6 +137,7 @@ class ExecuteRequestParams:
     ):
         # Before 3.0 it was KPC.execute_streaming_ingest, but was changed to align with the other SDKs
         client_request_id_prefix = "KPC.executeStreamingIngest;"
+        request_headers = request_headers.copy()
         request_headers["Content-Encoding"] = "gzip"
         if properties:
             request_headers.update(json.loads(properties.to_json())["Options"])
@@ -161,6 +162,7 @@ class ExecuteRequestParams:
             json_payload["properties"] = properties.to_json()
 
         client_request_id_prefix = "KPC.execute;"
+        request_headers = request_headers.copy()
         request_headers["Content-Type"] = "application/json; charset=utf-8"
 
         return ExecuteRequestParams(
@@ -179,6 +181,7 @@ class ExecuteRequestParams:
     ):
         json_payload = {"sourceUri": blob}
         client_request_id_prefix = "KPC.executeStreamingIngestFromBlob;"
+        request_headers = request_headers.copy()
         request_headers["Content-Type"] = "application/json; charset=utf-8"
         if properties:
             request_headers.update(json.loads(properties.to_json())["Options"])
