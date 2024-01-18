@@ -7,6 +7,8 @@ from azure.core.tracing import SpanKind
 
 from .client_request_properties import ClientRequestProperties
 
+import json
+
 
 class Span:
     """
@@ -71,7 +73,12 @@ class Span:
     def create_streaming_ingest_attributes(
         cls, cluster: str, database: str, table: str, properties: Optional[ClientRequestProperties] = None, request_headers: Optional[dict[str]] = None
     ) -> dict:
-        ingest_attributes: dict = {cls._KUSTO_CLUSTER: cluster, cls._DATABASE: database, cls._TABLE: table, cls._HEADERS: request_headers}
+        ingest_attributes: dict = {
+            cls._KUSTO_CLUSTER: cluster,
+            cls._DATABASE: database,
+            cls._TABLE: table,
+            cls._HEADERS: json.dumps(request_headers, default=str),
+        }
         if properties:
             ingest_attributes.update(properties.get_tracing_attributes())
 
