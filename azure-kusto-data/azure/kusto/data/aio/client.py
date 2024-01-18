@@ -172,7 +172,6 @@ class KustoClient(_KustoClientBase):
         if self._is_closed:
             raise KustoClosedError()
         self.validate_endpoint()
-        
 
         request_headers = request.request_headers
         timeout = request.timeout
