@@ -35,7 +35,7 @@ class TestKustoClient(KustoClientTestsMixin):
         with KustoClient(self.HOST) as client:
             response = method.__call__(client, "PythonTest", "Deft")
             self._assert_sanity_query_response(response)
-            self._assert_client_request_id(mock_post.call_args[:-1])
+            self._assert_client_request_id(mock_post.call_args[-1])
 
     @patch("requests.Session.post", side_effect=mocked_requests_post)
     def test_raise_network(self, mock_post, method):
@@ -170,7 +170,7 @@ class TestKustoClient(KustoClientTestsMixin):
             properties.client_request_id = request_id
             response = method.__call__(client, "PythonTest", "Deft", properties=properties)
             self._assert_sanity_query_response(response)
-            self._assert_client_request_id(mock_post.call_args[:-1], value=request_id)
+            self._assert_client_request_id(mock_post.call_args[-1], value=request_id)
 
     @patch("requests.get", side_effect=mocked_requests_post)
     def test_proxy_token_providers(self, mock_get, proxy_kcsb):
