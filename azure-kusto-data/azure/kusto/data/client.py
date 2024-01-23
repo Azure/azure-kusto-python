@@ -321,7 +321,6 @@ class KustoClient(_KustoClientBase):
         if self._aad_helper:
             request_headers["Authorization"] = self._aad_helper.acquire_authorization_header()
 
-        print("request headers: " + str(request_headers))
         # trace http post call for response
         invoker = lambda: self._session.post(
             endpoint,
