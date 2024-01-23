@@ -1,10 +1,10 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
 import sys
+from unittest.mock import patch
 
 import pandas
 import pytest
-from mock import patch
 
 from azure.kusto.data import ClientRequestProperties, KustoClient, KustoConnectionStringBuilder
 from azure.kusto.data._cloud_settings import CloudSettings

@@ -5,10 +5,10 @@ import json
 import os
 import uuid
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 import responses
-from mock import patch
 
 from azure.kusto.data.data_format import DataFormat
 
