@@ -37,13 +37,12 @@ def test_properties():
 
 def test_default_tracing_properties():
     kcsb = KustoConnectionStringBuilder("test")
-    params = ExecuteRequestParams(
-        "somedatabase",
-        None,
-        ClientRequestProperties(),
+    params = ExecuteRequestParams._from_query(
         "somequery",
-        timedelta(seconds=10),
+        "somedatabase",
+        ClientRequestProperties(),
         {},
+        timedelta(seconds=10),
         timedelta(seconds=10),
         timedelta(seconds=10),
         kcsb.client_details,
@@ -60,13 +59,12 @@ def test_custom_kcsb_tracing_properties():
     kcsb.application_for_tracing = "myApp"
     kcsb.user_name_for_tracing = "myUser"
 
-    params = ExecuteRequestParams(
-        "somedatabase",
-        None,
-        ClientRequestProperties(),
+    params = ExecuteRequestParams._from_query(
         "somequery",
-        timedelta(seconds=10),
+        "somedatabase",
+        ClientRequestProperties(),
         {},
+        timedelta(seconds=10),
         timedelta(seconds=10),
         timedelta(seconds=10),
         kcsb.client_details,
@@ -84,13 +82,12 @@ def test_custom_crp_tracing_properties():
     crp.application = "myApp2"
     crp.user = "myUser2"
 
-    params = ExecuteRequestParams(
-        "somedatabase",
-        None,
-        crp,
+    params = ExecuteRequestParams._from_query(
         "somequery",
-        timedelta(seconds=10),
+        "somedatabase",
+        crp,
         {},
+        timedelta(seconds=10),
         timedelta(seconds=10),
         timedelta(seconds=10),
         kcsb.client_details,
@@ -110,13 +107,12 @@ def test_custom_crp_tracing_properties_override_kcsb():
     crp.application = "myApp2"
     crp.user = "myUser2"
 
-    params = ExecuteRequestParams(
-        "somedatabase",
-        None,
-        crp,
+    params = ExecuteRequestParams._from_query(
         "somequery",
-        timedelta(seconds=10),
+        "somedatabase",
+        crp,
         {},
+        timedelta(seconds=10),
         timedelta(seconds=10),
         timedelta(seconds=10),
         kcsb.client_details,
@@ -133,13 +129,12 @@ def test_set_connector_name_and_version():
     kcsb._set_connector_details("myConnector", "myVersion", send_user=False)
     crp = ClientRequestProperties()
 
-    params = ExecuteRequestParams(
-        "somedatabase",
-        None,
-        crp,
+    params = ExecuteRequestParams._from_query(
         "somequery",
-        timedelta(seconds=10),
+        "somedatabase",
+        ClientRequestProperties(),
         {},
+        timedelta(seconds=10),
         timedelta(seconds=10),
         timedelta(seconds=10),
         kcsb.client_details,
@@ -157,13 +152,12 @@ def test_set_connector_no_app_version():
     kcsb._set_connector_details("myConnector", "myVersion", app_name="myApp", send_user=True)
     crp = ClientRequestProperties()
 
-    params = ExecuteRequestParams(
-        "somedatabase",
-        None,
-        crp,
+    params = ExecuteRequestParams._from_query(
         "somequery",
-        timedelta(seconds=10),
+        "somedatabase",
+        ClientRequestProperties(),
         {},
+        timedelta(seconds=10),
         timedelta(seconds=10),
         timedelta(seconds=10),
         kcsb.client_details,
@@ -189,13 +183,12 @@ def test_set_connector_full():
     )
     crp = ClientRequestProperties()
 
-    params = ExecuteRequestParams(
-        "somedatabase",
-        None,
-        crp,
+    params = ExecuteRequestParams._from_query(
         "somequery",
-        timedelta(seconds=10),
+        "somedatabase",
+        crp,
         {},
+        timedelta(seconds=10),
         timedelta(seconds=10),
         timedelta(seconds=10),
         kcsb.client_details,

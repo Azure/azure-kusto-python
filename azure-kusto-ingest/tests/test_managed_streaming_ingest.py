@@ -11,7 +11,7 @@ import responses
 from azure.kusto.data.data_format import DataFormat
 from azure.kusto.data.exceptions import KustoApiError
 from azure.kusto.ingest import ManagedStreamingIngestClient, IngestionProperties, IngestionStatus, BlobDescriptor
-from test_kusto_ingest_client import request_callback as queued_request_callback, assert_queued_upload
+from test_kusto_ingest_client import request_callback as queued_request_callback, assert_queued_upload, request_callback_throw_transient
 from test_kusto_streaming_ingest_client import request_callback as streaming_request_callback, assert_managed_streaming_request_id
 
 
@@ -19,6 +19,11 @@ class TransientResponseHelper:
     def __init__(self, times_to_fail):
         self.times_to_fail = times_to_fail
         self.total_calls = 0
+
+
+@pytest.fixture(params=["Blob", "File"])
+def is_blob(request):
+    return request.param == "Blob"
 
 
 def transient_error_callback(helper: TransientResponseHelper, request, custom_request_id=None):
@@ -84,7 +89,7 @@ class TestManagedStreamingIngestClient:
     @patch("azure.storage.blob.BlobClient.upload_blob")
     @patch("azure.storage.queue.QueueClient.send_message")
     @patch("uuid.uuid4", return_value=MOCKED_UUID_4)
-    def test_fallback_big_file(self, mock_uuid, mock_put_message_in_queue, mock_upload_blob_from_stream, mock_aad):
+    def test_fallback_big_file(self, mock_uuid, mock_put_message_in_queue, mock_upload_blob_from_stream, mock_aad, is_blob):
         responses.add_callback(
             responses.POST, "https://ingest-somecluster.kusto.windows.net/v1/rest/mgmt", callback=queued_request_callback, content_type="application/json"
         )
@@ -108,10 +113,20 @@ class TestManagedStreamingIngestClient:
         mock_upload_blob_from_stream.side_effect = check_bytes
 
         f = NamedTemporaryFile(dir=".", mode="wb", delete=False)
+        blob_url = "https://storageaccount.blob.core.windows.net/tempstorage/database__table__11111111-1111-1111-1111-111111111111__{}?".format(
+            os.path.basename(f.name)
+        )
+
         try:
-            f.write(initial_bytes)
-            f.close()
-            result = ingest_client.ingest_from_file(f.name, ingestion_properties=ingestion_properties)
+            if is_blob:
+                result = ingest_client.ingest_from_blob(BlobDescriptor(blob_url + "sas", 5 * 1024 * 1024), ingestion_properties=ingestion_properties)
+                f.close()
+            else:
+                f.write(initial_bytes)
+                f.close()
+                result = ingest_client.ingest_from_file(f.name, ingestion_properties=ingestion_properties)
+        except Exception as e:
+            print(e)
         finally:
             os.unlink(f.name)
 
@@ -119,14 +134,13 @@ class TestManagedStreamingIngestClient:
 
         assert_queued_upload(
             mock_put_message_in_queue,
-            mock_upload_blob_from_stream,
-            "https://storageaccount.blob.core.windows.net/tempstorage/database__table__11111111-1111-1111-1111-111111111111__{}?".format(
-                os.path.basename(f.name)
-            ),
+            mock_upload_blob_from_stream if not is_blob else None,
+            blob_url,
             format=data_format.kusto_value,
         )
 
-        mock_upload_blob_from_stream.assert_called()
+        if not is_blob:
+            mock_upload_blob_from_stream.assert_called()
 
     @responses.activate
     @patch("azure.kusto.data.security._AadHelper.acquire_authorization_header", return_value=None)
@@ -313,6 +327,12 @@ class TestManagedStreamingIngestClient:
     def test_blob_ingestion(self, mock_uuid, mock_put_message_in_queue, mock_aad):
         responses.add_callback(
             responses.POST, "https://ingest-somecluster.kusto.windows.net/v1/rest/mgmt", callback=queued_request_callback, content_type="application/json"
+        )
+        responses.add_callback(
+            responses.POST,
+            "https://somecluster.kusto.windows.net/v1/rest/ingest/database/table?streamFormat=csv&sourceKind=uri",
+            callback=request_callback_throw_transient,
+            content_type="application/json",
         )
 
         ingest_client = ManagedStreamingIngestClient.from_dm_kcsb("https://ingest-somecluster.kusto.windows.net")

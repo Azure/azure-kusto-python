@@ -125,36 +125,82 @@ class _KustoClientBase(abc.ABC):
 
 
 class ExecuteRequestParams:
-    def __init__(
-        self,
-        database: str,
-        payload: Optional[io.IOBase],
+    @staticmethod
+    def _from_stream(
+        stream: io.IOBase,
         properties: ClientRequestProperties,
-        query: str,
+        request_headers: Any,
         timeout: timedelta,
-        request_headers: dict,
         mgmt_default_timeout: timedelta,
         client_server_delta: timedelta,
         client_details: ClientDetails,
     ):
-        request_headers = copy(request_headers)
-        request_headers["Connection"] = "Keep-Alive"
-        json_payload = None
-        if not payload:
-            json_payload = {"db": database, "csl": query}
-            if properties:
-                json_payload["properties"] = properties.to_json()
+        # Before 3.0 it was KPC.execute_streaming_ingest, but was changed to align with the other SDKs
+        client_request_id_prefix = "KPC.executeStreamingIngest;"
+        request_headers = request_headers.copy()
+        request_headers["Content-Encoding"] = "gzip"
+        if properties:
+            request_headers.update(json.loads(properties.to_json())["Options"])
 
-            client_request_id_prefix = "KPC.execute;"
-            request_headers["Content-Type"] = "application/json; charset=utf-8"
-        else:
-            if properties:
-                request_headers.update(json.loads(properties.to_json())["Options"])
+        return ExecuteRequestParams(
+            stream, None, request_headers, client_request_id_prefix, properties, timeout, mgmt_default_timeout, client_server_delta, client_details
+        )
 
-            # Before 3.0 it was KPC.execute_streaming_ingest, but was changed to align with the other SDKs
-            client_request_id_prefix = "KPC.executeStreamingIngest;"
-            request_headers["Content-Encoding"] = "gzip"
+    @staticmethod
+    def _from_query(
+        query: str,
+        database: str,
+        properties: ClientRequestProperties,
+        request_headers: Any,
+        timeout: timedelta,
+        mgmt_default_timeout: timedelta,
+        client_server_delta: timedelta,
+        client_details: ClientDetails,
+    ):
+        json_payload = {"db": database, "csl": query}
+        if properties:
+            json_payload["properties"] = properties.to_json()
 
+        client_request_id_prefix = "KPC.execute;"
+        request_headers = request_headers.copy()
+        request_headers["Content-Type"] = "application/json; charset=utf-8"
+
+        return ExecuteRequestParams(
+            None, json_payload, request_headers, client_request_id_prefix, properties, timeout, mgmt_default_timeout, client_server_delta, client_details
+        )
+
+    @staticmethod
+    def _from_blob_url(
+        blob: str,
+        properties: ClientRequestProperties,
+        request_headers: Any,
+        timeout: timedelta,
+        mgmt_default_timeout: timedelta,
+        client_server_delta: timedelta,
+        client_details: ClientDetails,
+    ):
+        json_payload = {"sourceUri": blob}
+        client_request_id_prefix = "KPC.executeStreamingIngestFromBlob;"
+        request_headers = request_headers.copy()
+        request_headers["Content-Type"] = "application/json; charset=utf-8"
+        if properties:
+            request_headers.update(json.loads(properties.to_json())["Options"])
+        return ExecuteRequestParams(
+            None, json_payload, request_headers, client_request_id_prefix, properties, timeout, mgmt_default_timeout, client_server_delta, client_details
+        )
+
+    def __init__(
+        self,
+        payload,
+        json_payload,
+        request_headers,
+        client_request_id_prefix,
+        properties: ClientRequestProperties,
+        timeout: timedelta,
+        mgmt_default_timeout: timedelta,
+        client_server_delta: timedelta,
+        client_details: ClientDetails,
+    ):
         special_headers = [
             {
                 "name": "x-ms-client-request-id",
@@ -201,3 +247,4 @@ class ExecuteRequestParams:
         self.json_payload = json_payload
         self.request_headers = request_headers
         self.timeout = timeout
+        self.payload = payload
