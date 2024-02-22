@@ -65,7 +65,7 @@ def assert_managed_streaming_request_id(request_id: str, retry: int = 0):
 @pytest.fixture(params=[KustoStreamingIngestClient, ManagedStreamingIngestClient])
 def ingest_client_class(request):
     if request.param == ManagedStreamingIngestClient:
-        return ManagedStreamingIngestClient.from_engine_kcsb
+        return ManagedStreamingIngestClient
     return request.param
 
 
