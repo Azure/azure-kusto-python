@@ -38,10 +38,10 @@ class ManagedStreamingIngestClient(BaseIngestClient):
     MAX_STREAMING_SIZE_IN_BYTES = 4 * 1024 * 1024
 
     def __init__(
-        self, engine_kcsb: Union[KustoConnectionStringBuilder, str], dm_kcsb: Union[KustoConnectionStringBuilder, str], auto_correct_endpoint: bool = True
+        self, engine_kcsb: Union[KustoConnectionStringBuilder, str], dm_kcsb: Union[KustoConnectionStringBuilder, str,None]=None, auto_correct_endpoint: bool = True
     ):
         super().__init__()
-        self.queued_client = QueuedIngestClient(dm_kcsb, auto_correct_endpoint)
+        self.queued_client = QueuedIngestClient(dm_kcsb if dm_kcsb is not None else engine_kcsb, auto_correct_endpoint)
         self.streaming_client = KustoStreamingIngestClient(engine_kcsb, auto_correct_endpoint)
         self._set_retry_settings()
 

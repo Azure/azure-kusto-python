@@ -49,8 +49,6 @@ class QueuedIngestClient(BaseIngestClient):
         self._proxy_dict: Optional[Dict[str, str]] = None
         self._connection_datasource = kcsb.data_source
         self._resource_manager = _ResourceManager(KustoClient(kcsb))
-        self._endpoint_service_type = None
-        self._suggested_endpoint_uri = None
 
     def close(self) -> None:
         self._resource_manager.close()
