@@ -37,38 +37,12 @@ class ManagedStreamingIngestClient(BaseIngestClient):
 
     MAX_STREAMING_SIZE_IN_BYTES = 4 * 1024 * 1024
 
-    @staticmethod
-    def from_engine_kcsb(engine_kcsb: Union[KustoConnectionStringBuilder, str]) -> "ManagedStreamingIngestClient":
-        """
-        Create a ManagedStreamingIngestClient from a KustoConnectionStringBuilder for the engine.
-        This Connection String is used for the streaming ingest client.
-        This method will infer the dm connection string (by using the same authentication and adding the ingest- prefix)
-        For advanced use cases, use the constructor directly.
-        :param engine_kcsb: KustoConnectionStringBuilder for the engine.
-        :return: ManagedStreamingIngestClient
-        """
-        kcsb = repr(engine_kcsb) if type(engine_kcsb) == KustoConnectionStringBuilder else engine_kcsb
-        dm_kcsb = KustoConnectionStringBuilder(kcsb.replace("https://", "https://ingest-"))
-        return ManagedStreamingIngestClient(engine_kcsb, dm_kcsb)
-
-    @staticmethod
-    def from_dm_kcsb(dm_kcsb: Union[KustoConnectionStringBuilder, str]) -> "ManagedStreamingIngestClient":
-        """
-        Create a ManagedStreamingIngestClient from a KustoConnectionStringBuilder for the dm.
-        This Connection String is used for the queued ingest client.
-        This method will infer the engine connection string (by using the same authentication and removing the ingest- prefix)
-        For advanced use cases, use the constructor directly.
-        :param dm_kcsb: KustoConnectionStringBuilder for the dm.
-        :return: ManagedStreamingIngestClient
-        """
-        kcsb = repr(dm_kcsb) if type(dm_kcsb) == KustoConnectionStringBuilder else dm_kcsb
-        engine_kcsb = KustoConnectionStringBuilder(kcsb.replace("https://ingest-", "https://"))
-        return ManagedStreamingIngestClient(engine_kcsb, dm_kcsb)
-
-    def __init__(self, engine_kcsb: Union[KustoConnectionStringBuilder, str], dm_kcsb: Union[KustoConnectionStringBuilder, str]):
+    def __init__(
+        self, engine_kcsb: Union[KustoConnectionStringBuilder, str], dm_kcsb: Union[KustoConnectionStringBuilder, str], auto_correct_endpoint: bool = True
+    ):
         super().__init__()
-        self.queued_client = QueuedIngestClient(dm_kcsb)
-        self.streaming_client = KustoStreamingIngestClient(engine_kcsb)
+        self.queued_client = QueuedIngestClient(dm_kcsb, auto_correct_endpoint)
+        self.streaming_client = KustoStreamingIngestClient(engine_kcsb, auto_correct_endpoint)
         self._set_retry_settings()
 
     def close(self) -> None:

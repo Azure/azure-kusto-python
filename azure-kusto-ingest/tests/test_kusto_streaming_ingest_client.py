@@ -192,3 +192,13 @@ class TestKustoStreamingIngestClient:
         str_stream = io.StringIO(str_sequence)
         result = ingest_client.ingest_from_stream(str_stream, ingestion_properties=ingestion_properties)
         assert result.status == IngestionStatus.SUCCESS
+
+    def test_client_uri_from_query_endpoint(self):
+        assert (
+            KustoStreamingIngestClient("https://somecluster.kusto.windows.net")._kusto_client._kusto_cluster == "https://somecluster.kusto.windows.net"
+        ), "Client URI was not extracted correctly from query endpoint"
+
+    def test_client_uri_from_ingestion_endpoint(self):
+        assert (
+            KustoStreamingIngestClient("https://ingest-somecluster.kusto.windows.net")._kusto_client._kusto_cluster == "https://somecluster.kusto.windows.net"
+        ), "Client URI was not extracted correctly from ingestion endpoint"

@@ -634,3 +634,15 @@ class TestQueuedIngestClient:
             ingest_client.ingest_from_file(file_path, ingestion_properties=ingestion_properties)
 
         ingest_client.close()
+
+    def test_client_uri_from_query_endpoint(self):
+        client = QueuedIngestClient("https://somecluster.kusto.windows.net")
+        assert client._connection_datasource == "https://ingest-somecluster.kusto.windows.net", "Client URI was not extracted correctly from query endpoint"
+
+        assert client._resource_manager._kusto_client._kusto_cluster == "https://ingest-somecluster.kusto.windows.net"
+
+    def test_client_uri_from_ingestion_endpoint(self):
+        client = QueuedIngestClient("https://ingest-somecluster.kusto.windows.net")
+        assert client._connection_datasource == "https://ingest-somecluster.kusto.windows.net", "Client URI was not extracted correctly from query endpoint"
+
+        assert client._resource_manager._kusto_client._kusto_cluster == "https://ingest-somecluster.kusto.windows.net"

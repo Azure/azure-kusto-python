@@ -21,11 +21,13 @@ class KustoStreamingIngestClient(BaseIngestClient):
     Tests are run using pytest.
     """
 
-    def __init__(self, kcsb: Union[KustoConnectionStringBuilder, str]):
+    def __init__(self, kcsb: Union[KustoConnectionStringBuilder, str], auto_correct_endpoint: bool = True):
         """Kusto Streaming Ingest Client constructor.
         :param KustoConnectionStringBuilder kcsb: The connection string to initialize KustoClient.
         """
         super().__init__()
+        if auto_correct_endpoint:
+            kcsb.data_source = BaseIngestClient.get_query_endpoint(kcsb.data_source)
         self._kusto_client = KustoClient(kcsb)
 
     def close(self):

@@ -1,3 +1,4 @@
+import ipaddress
 import os
 import tempfile
 import time
@@ -7,6 +8,7 @@ from copy import copy
 from enum import Enum
 from io import TextIOWrapper
 from typing import TYPE_CHECKING, Union, IO, AnyStr, Optional, Tuple
+from urllib.parse import urlparse
 
 from azure.kusto.data.data_format import DataFormat
 from azure.kusto.data.exceptions import KustoClosedError
@@ -17,6 +19,9 @@ from .ingestion_properties import IngestionProperties
 
 if TYPE_CHECKING:
     import pandas
+
+INGEST_PREFIX = "ingest-"
+PROTOCOL_SUFFIX = "://"
 
 
 class IngestionStatus(Enum):
@@ -169,3 +174,30 @@ class BaseIngestClient(metaclass=ABCMeta):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
+
+    @staticmethod
+    def get_ingestion_endpoint(cluster_url: str) -> str:
+        if INGEST_PREFIX in cluster_url or not cluster_url or BaseIngestClient.is_reserved_hostname(cluster_url):
+            return cluster_url
+        else:
+            return cluster_url.replace(PROTOCOL_SUFFIX, PROTOCOL_SUFFIX + INGEST_PREFIX, 1)
+
+    @staticmethod
+    def get_query_endpoint(cluster_url: str) -> str:
+        if INGEST_PREFIX in cluster_url:
+            return cluster_url.replace(INGEST_PREFIX, "", 1)
+        else:
+            return cluster_url
+
+    @staticmethod
+    def is_reserved_hostname(raw_uri: str) -> bool:
+        url = urlparse(raw_uri)
+        if not url.netloc:
+            return True
+        authority = url.netloc.split(":")[0]  # removes port if exists
+        try:
+            is_ip = ipaddress.ip_address(authority)
+        except ValueError:
+            is_ip = False
+        is_localhost = "localhost" in authority
+        return is_localhost or is_ip or authority.lower() == "onebox.dev.kusto.windows.net"
