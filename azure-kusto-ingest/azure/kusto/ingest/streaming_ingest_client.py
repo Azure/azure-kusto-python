@@ -31,7 +31,7 @@ class KustoStreamingIngestClient(BaseIngestClient):
             kcsb = KustoConnectionStringBuilder(kcsb)
 
         if auto_correct_endpoint:
-            kcsb.data_source = BaseIngestClient.get_query_endpoint(kcsb.data_source)
+            kcsb["Data Source"] = BaseIngestClient.get_query_endpoint(kcsb.data_source)
         self._kusto_client = KustoClient(kcsb)
 
     def close(self):

@@ -44,7 +44,7 @@ class QueuedIngestClient(BaseIngestClient):
             kcsb = KustoConnectionStringBuilder(kcsb)
 
         if auto_correct_endpoint:
-            kcsb.data_source = BaseIngestClient.get_ingestion_endpoint(kcsb.data_source)
+            kcsb["Data Source"] = BaseIngestClient.get_ingestion_endpoint(kcsb.data_source)
 
         self._proxy_dict: Optional[Dict[str, str]] = None
         self._connection_datasource = kcsb.data_source

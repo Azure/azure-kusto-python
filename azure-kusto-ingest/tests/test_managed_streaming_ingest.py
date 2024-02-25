@@ -358,10 +358,10 @@ class TestManagedStreamingIngestClient:
             client.queued_client._connection_datasource == "https://ingest-somecluster.kusto.windows.net"
         ), "Client URI was not extracted correctly from query endpoint"
 
-        assert client.queued_client._resource_manager._kusto_client._kusto_cluster == "https://ingest-somecluster.kusto.windows.net"
+        assert client.queued_client._resource_manager._kusto_client._kusto_cluster == "https://ingest-somecluster.kusto.windows.net/"
 
         assert (
-            client.streaming_client._kusto_client._kusto_cluster == "https://somecluster.kusto.windows.net"
+            client.streaming_client._kusto_client._kusto_cluster == "https://somecluster.kusto.windows.net/"
         ), "Client URI was not extracted correctly from ingestion endpoint"
 
     def test_client_uri_from_ingestion_endpoint(self):
@@ -370,8 +370,8 @@ class TestManagedStreamingIngestClient:
             client.queued_client._connection_datasource == "https://ingest-somecluster.kusto.windows.net"
         ), "Client URI was not extracted correctly from query endpoint"
 
-        assert client.queued_client._resource_manager._kusto_client._kusto_cluster == "https://ingest-somecluster.kusto.windows.net"
+        assert client.queued_client._resource_manager._kusto_client._kusto_cluster == "https://ingest-somecluster.kusto.windows.net/"
 
         assert (
-            client.streaming_client._kusto_client._kusto_cluster == "https://somecluster.kusto.windows.net"
+            client.streaming_client._kusto_client._kusto_cluster == "https://somecluster.kusto.windows.net/"
         ), "Client URI was not extracted correctly from ingestion endpoint"
