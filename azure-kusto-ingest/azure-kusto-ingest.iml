@@ -1,18 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<module type="WEB_MODULE" version="4">
-  <component name="FacetManager">
-    <facet type="Python" name="Python">
-      <configuration sdkName="Python 3.8 (azure-kusto-python)" />
-    </facet>
-  </component>
+<module type="PYTHON_MODULE" version="4">
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
-    <content url="file://$MODULE_DIR$/../azure-kusto-data/src">
-      <sourceFolder url="file://$MODULE_DIR$/../azure-kusto-data/src" isTestSource="false" />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
     </content>
-    <content url="file://$MODULE_DIR$" />
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="Python 3.8 (azure-kusto-python) interpreter library" level="application" />
+    <orderEntry type="module" module-name="azure-kusto-data" />
+  </component>
+  <component name="PyNamespacePackagesService">
+    <option name="namespacePackageFolders">
+      <list>
+        <option value="$MODULE_DIR$/src/azure" />
+        <option value="$MODULE_DIR$/src/azure/kusto" />
+        <option value="$MODULE_DIR$/src/azure/kusto/ingest" />
+      </list>
+    </option>
   </component>
 </module>
