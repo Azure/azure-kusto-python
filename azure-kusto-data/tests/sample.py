@@ -1,4 +1,4 @@
-﻿# Copyright (c) Microsoft Corporation.
+# Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
 """A simple example how to use KustoClient."""
 

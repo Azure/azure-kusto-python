@@ -488,7 +488,7 @@ class TestQueuedIngestClient:
         assert (
             ex.value.args[0] == "You are using 'DataManagement' client type, but the provided endpoint is of ServiceType 'Engine'. Initialize the "
             "client with the appropriate endpoint URI: 'https://ingest-somecluster.kusto.windows.net'"
-        ), ("Expected exception was " "not raised")
+        ), "Expected exception was " "not raised"
 
     @responses.activate
     @pytest.mark.skipif(not pandas_installed, reason="requires pandas")
