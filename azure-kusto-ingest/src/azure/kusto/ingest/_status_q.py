@@ -4,7 +4,7 @@ import random
 
 from typing import List, Callable
 
-from azure.kusto.ingest._resource_manager import _ResourceUri
+from ._resource_manager import _ResourceUri
 from azure.storage.queue import QueueServiceClient, QueueClient, QueueMessage, TextBase64EncodePolicy, TextBase64DecodePolicy
 
 

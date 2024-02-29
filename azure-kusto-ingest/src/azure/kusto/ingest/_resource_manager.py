@@ -10,7 +10,7 @@ from azure.kusto.data import KustoClient
 from azure.kusto.data._models import KustoResultTable
 from azure.kusto.data._telemetry import MonitoredActivity, Span
 from azure.kusto.data.exceptions import KustoThrottlingError
-from azure.kusto.ingest._storage_account_set import _RankedStorageAccountSet
+from ._storage_account_set import _RankedStorageAccountSet
 
 _SHOW_VERSION = ".show version"
 _SERVICE_TYPE_COLUMN_NAME = "ServiceType"

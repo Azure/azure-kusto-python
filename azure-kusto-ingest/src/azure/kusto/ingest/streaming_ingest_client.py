@@ -46,7 +46,7 @@ class KustoStreamingIngestClient(BaseIngestClient):
     def ingest_from_file(self, file_descriptor: Union[FileDescriptor, str], ingestion_properties: IngestionProperties) -> IngestionResult:
         """Ingest from local files.
         :param file_descriptor: a FileDescriptor to be ingested.
-        :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
+        :param .IngestionProperties ingestion_properties: Ingestion properties.
         """
         file_descriptor = FileDescriptor.get_instance(file_descriptor)
         IngestTracingAttributes.set_ingest_descriptor_attributes(file_descriptor, ingestion_properties)
@@ -61,9 +61,9 @@ class KustoStreamingIngestClient(BaseIngestClient):
     @distributed_trace(kind=SpanKind.CLIENT)
     def ingest_from_stream(self, stream_descriptor: Union[StreamDescriptor, IO[AnyStr]], ingestion_properties: IngestionProperties) -> IngestionResult:
         """Ingest from io streams.
-        :param azure.kusto.ingest.StreamDescriptor stream_descriptor: An object that contains a description of the stream to
+        :param .StreamDescriptor stream_descriptor: An object that contains a description of the stream to
                be ingested.
-        :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
+        :param .IngestionProperties ingestion_properties: Ingestion properties.
         """
         stream_descriptor = StreamDescriptor.get_instance(stream_descriptor)
         IngestTracingAttributes.set_ingest_descriptor_attributes(stream_descriptor, ingestion_properties)

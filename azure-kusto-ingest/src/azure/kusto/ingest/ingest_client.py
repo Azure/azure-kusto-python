@@ -68,7 +68,7 @@ class QueuedIngestClient(BaseIngestClient):
         To learn more about ingestion methods go to:
         https://docs.microsoft.com/en-us/azure/data-explorer/ingest-data-overview#ingestion-methods
         :param file_descriptor: a FileDescriptor to be ingested.
-        :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
+        :param .IngestionProperties ingestion_properties: Ingestion properties.
         """
         file_descriptor = FileDescriptor.get_instance(file_descriptor)
         IngestTracingAttributes.set_ingest_descriptor_attributes(file_descriptor, ingestion_properties)
@@ -95,7 +95,7 @@ class QueuedIngestClient(BaseIngestClient):
     def ingest_from_stream(self, stream_descriptor: Union[StreamDescriptor, IO[AnyStr]], ingestion_properties: IngestionProperties) -> IngestionResult:
         """Ingest from io streams.
         :param stream_descriptor: An object that contains a description of the stream to be ingested.
-        :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
+        :param .IngestionProperties ingestion_properties: Ingestion properties.
         """
         stream_descriptor = StreamDescriptor.get_instance(stream_descriptor)
         IngestTracingAttributes.set_ingest_descriptor_attributes(stream_descriptor, ingestion_properties)
@@ -122,8 +122,8 @@ class QueuedIngestClient(BaseIngestClient):
         """Enqueue an ingest command from azure blobs.
         To learn more about ingestion methods go to:
         https://docs.microsoft.com/en-us/azure/data-explorer/ingest-data-overview#ingestion-methods
-        :param azure.kusto.ingest.BlobDescriptor blob_descriptor: An object that contains a description of the blob to be ingested.
-        :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
+        :param .BlobDescriptor blob_descriptor: An object that contains a description of the blob to be ingested.
+        :param .IngestionProperties ingestion_properties: Ingestion properties.
         """
         IngestTracingAttributes.set_ingest_descriptor_attributes(blob_descriptor, ingestion_properties)
 

@@ -111,8 +111,8 @@ class ManagedStreamingIngestClient(BaseIngestClient):
 
         To learn more about ingestion methods go to:
         https://docs.microsoft.com/en-us/azure/data-explorer/ingest-data-overview#ingestion-methods
-        :param azure.kusto.ingest.BlobDescriptor blob_descriptor: An object that contains a description of the blob to be ingested.
-        :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
+        :param .BlobDescriptor blob_descriptor: An object that contains a description of the blob to be ingested.
+        :param .IngestionProperties ingestion_properties: Ingestion properties.
         """
         IngestTracingAttributes.set_ingest_descriptor_attributes(blob_descriptor, ingestion_properties)
 

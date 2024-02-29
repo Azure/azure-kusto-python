@@ -3,7 +3,7 @@ from typing import Callable, Dict, List, Tuple
 import time
 
 from azure.kusto.data.exceptions import KustoClientError
-from azure.kusto.ingest._ranked_storage_account import _RankedStorageAccount
+from ._ranked_storage_account import _RankedStorageAccount
 
 
 class _RankedStorageAccountSet:
