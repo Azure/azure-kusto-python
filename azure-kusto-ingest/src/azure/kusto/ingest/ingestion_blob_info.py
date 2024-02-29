@@ -6,7 +6,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from src.azure.kusto.ingest import BlobDescriptor, IngestionProperties
+    from . import BlobDescriptor, IngestionProperties
 
 
 class IngestionBlobInfo:

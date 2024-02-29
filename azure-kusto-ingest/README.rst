@@ -4,7 +4,7 @@ Microsoft Azure Kusto Ingest Library for Python
 .. code-block:: python
 
     from azure.kusto.data import KustoConnectionStringBuilder, DataFormat
-    from src.azure.kusto.ingest import QueuedIngestClient, IngestionProperties, FileDescriptor, BlobDescriptor
+    from azure.kusto.ingest import QueuedIngestClient, IngestionProperties, FileDescriptor, BlobDescriptor
 
     ingestion_props = IngestionProperties(database="{database_name}", table="{table_name}", data_format=DataFormat.CSV)
     client = QueuedIngestClient(KustoConnectionStringBuilder.with_interactive_login("https://ingest-{cluster_name}.kusto.windows.net"))

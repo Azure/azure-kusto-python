@@ -90,4 +90,4 @@ dev-dependencies = []
 allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/azure/kusto/data"]
+packages = ["src/azure"]
