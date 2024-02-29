@@ -11,8 +11,8 @@ import responses
 from azure.kusto.data.data_format import DataFormat
 from azure.kusto.data.exceptions import KustoApiError
 from azure.kusto.ingest import ManagedStreamingIngestClient, IngestionProperties, IngestionStatus, BlobDescriptor
-from test_kusto_ingest_client import request_callback as queued_request_callback, assert_queued_upload, request_callback_throw_transient
-from test_kusto_streaming_ingest_client import request_callback as streaming_request_callback, assert_managed_streaming_request_id
+from .test_kusto_ingest_client import request_callback as queued_request_callback, assert_queued_upload, request_callback_throw_transient
+from .test_kusto_streaming_ingest_client import request_callback as streaming_request_callback, assert_managed_streaming_request_id
 
 
 class TransientResponseHelper:

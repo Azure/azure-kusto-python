@@ -80,4 +80,8 @@ dev-dependencies = []
 allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/azure_kusto_ingest"]
+packages = ["src/azure"]
+
+[tool.pytest.ini_options]
+pythonpath = "src/azure/kusto/ingest"
+addopts = "--import-mode=importlib"
