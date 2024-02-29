@@ -72,7 +72,7 @@ class BaseIngestClient(metaclass=ABCMeta):
     def ingest_from_file(self, file_descriptor: Union[FileDescriptor, str], ingestion_properties: IngestionProperties) -> IngestionResult:
         """Ingest from local files.
         :param file_descriptor: a FileDescriptor to be ingested.
-        :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
+        :param .IngestionProperties ingestion_properties: Ingestion properties.
         """
         if self._is_closed:
             raise KustoClosedError()
@@ -81,7 +81,7 @@ class BaseIngestClient(metaclass=ABCMeta):
     def ingest_from_stream(self, stream_descriptor: Union[StreamDescriptor, IO[AnyStr]], ingestion_properties: IngestionProperties) -> IngestionResult:
         """Ingest from io streams.
         :param stream_descriptor: An object that contains a description of the stream to be ingested.
-        :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
+        :param .IngestionProperties ingestion_properties: Ingestion properties.
         """
         if self._is_closed:
             raise KustoClosedError()
@@ -99,7 +99,7 @@ class BaseIngestClient(metaclass=ABCMeta):
         To learn more about ingestion methods go to:
         https://docs.microsoft.com/en-us/azure/data-explorer/ingest-data-overview#ingestion-methods
         :param pandas.DataFrame df: input dataframe to ingest.
-        :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
+        :param .IngestionProperties ingestion_properties: Ingestion properties.
         """
 
         if self._is_closed:
@@ -127,7 +127,7 @@ class BaseIngestClient(metaclass=ABCMeta):
         """
         Prepares a StreamDescriptor instance for ingest operation based on ingestion properties
         :param StreamDescriptor stream_descriptor: Stream descriptor instance
-        :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
+        :param .IngestionProperties ingestion_properties: Ingestion properties.
         :return prepared stream descriptor
         """
         new_descriptor = StreamDescriptor.get_instance(stream_descriptor)
@@ -146,7 +146,7 @@ class BaseIngestClient(metaclass=ABCMeta):
         """
         Prepares a FileDescriptor instance for ingest operation based on ingestion properties
         :param FileDescriptor file_descriptor: File descriptor instance
-        :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
+        :param .IngestionProperties ingestion_properties: Ingestion properties.
         :return prepared file descriptor
         """
         descriptor = FileDescriptor.get_instance(file_descriptor)
