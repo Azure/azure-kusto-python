@@ -36,3 +36,5 @@ target-version = ['py38']
 
 [tool.pytest.ini_options]
 testpaths = ["azure-kusto-data/tests", "azure-kusto-ingest/tests"]
+addopts = ["-s", "--import-mode=importlib"]
+pythonpath = ["."]
