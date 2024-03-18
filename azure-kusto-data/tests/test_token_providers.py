@@ -119,8 +119,8 @@ class TokenProviderTests(unittest.TestCase):
                 assert False, "Expected KustoAsyncUsageError to occur"
             except KustoAsyncUsageError as e:
                 assert (
-                    str(e) == "Method get_token_async can't be called from a synchronous client"
-                    or str(e) == "Method context_async can't be called from a synchronous client"
+                        str(e) == "Method get_token_async can't be called from a synchronous client"
+                        or str(e) == "Method context_async can't be called from a synchronous client"
                 )
                 # context_async is called for tracing purposes
 
@@ -363,10 +363,10 @@ class TokenProviderTests(unittest.TestCase):
             assert TokenProviderTests.get_token_value(token) is not None
 
         with AzureIdentityTokenCredentialProvider(
-            KUSTO_URI,
-            credential_from_login_endpoint=lambda login_endpoint: ClientSecretCredential(
-                authority=login_endpoint, client_id=app_id, client_secret=app_key, tenant_id=auth_id
-            ),
+                KUSTO_URI,
+                credential_from_login_endpoint=lambda login_endpoint: ClientSecretCredential(
+                    authority=login_endpoint, client_id=app_id, client_secret=app_key, tenant_id=auth_id
+                ),
         ) as provider:
             token = provider.get_token()
             assert TokenProviderTests.get_token_value(token) is not None
