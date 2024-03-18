@@ -119,8 +119,8 @@ class TokenProviderTests(unittest.TestCase):
                 assert False, "Expected KustoAsyncUsageError to occur"
             except KustoAsyncUsageError as e:
                 assert (
-                    str(e) == "Method get_token_async can't be called from a synchronous client"
-                    or str(e) == "Method context_async can't be called from a synchronous client"
+                        str(e) == "Method get_token_async can't be called from a synchronous client"
+                        or str(e) == "Method context_async can't be called from a synchronous client"
                 )
                 # context_async is called for tracing purposes
 
@@ -352,19 +352,21 @@ class TokenProviderTests(unittest.TestCase):
 
     @staticmethod
     def test_azure_identity_default_token_provider():
-        app_id, app_key, auth_id = prepare_app_key_auth(optional=True)
-        if not app_id or not app_key or not auth_id:
+        auth = prepare_app_key_auth(optional=True)
+        if not auth:
             pytest.skip(" *** Skipped Azure Identity Provider Test ***")
+
+        app_id, app_key, auth_id = auth
 
         with AzureIdentityTokenCredentialProvider(KUSTO_URI, credential=DefaultAzureCredential()) as provider:
             token = provider.get_token()
             assert TokenProviderTests.get_token_value(token) is not None
 
         with AzureIdentityTokenCredentialProvider(
-            KUSTO_URI,
-            credential_from_login_endpoint=lambda login_endpoint: ClientSecretCredential(
-                authority=login_endpoint, client_id=app_id, client_secret=app_key, tenant_id=auth_id
-            ),
+                KUSTO_URI,
+                credential_from_login_endpoint=lambda login_endpoint: ClientSecretCredential(
+                    authority=login_endpoint, client_id=app_id, client_secret=app_key, tenant_id=auth_id
+                ),
         ) as provider:
             token = provider.get_token()
             assert TokenProviderTests.get_token_value(token) is not None

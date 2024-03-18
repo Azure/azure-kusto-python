@@ -154,17 +154,6 @@ class TestE2E:
     def teardown_class(cls):
         with cls.get_client() as client:
             client.execute_mgmt(cls.test_db, ".drop table {}".format(cls.streaming_test_table))
-
-    @staticmethod
-    @pytest.fixture(scope="session")
-    def event_loop():
-        if platform.system() == "Windows":
-            asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-        policy = asyncio.get_event_loop_policy()
-        loop = policy.new_event_loop()
-        yield loop
-        loop.close()
-
     @classmethod
     async def get_async_client(cls, app_insights=False) -> AsyncKustoClient:
         return AsyncKustoClient(cls.engine_kcsb_from_env(app_insights, is_async=True))
@@ -333,6 +322,8 @@ class TestE2E:
             assert result.get_exceptions() == []
 
     def test_cloud_info(self):
+        if ".dev." in self.engine_cs:
+            pytest.skip("This test is not relevant for dev clusters")
         cloud_info = CloudSettings.get_cloud_info_for_cluster(self.engine_cs)
         assert cloud_info is not CloudSettings.DEFAULT_CLOUD
         assert cloud_info == CloudSettings.DEFAULT_CLOUD

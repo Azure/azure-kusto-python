@@ -25,6 +25,7 @@ dev-dependencies = [
     "aioresponses>=0.7.6",
     "pytest-asyncio>=0.23.5",
     "asgiref>=3.7.2",
+    "setuptools>=69.2.0",
 ]
 
 [tool.ruff]
