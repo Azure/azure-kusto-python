@@ -31,6 +31,8 @@ dev-dependencies = [
 
 [tool.ruff]
 line-length = 160
+target-version = 'py38'
+
 
 [tool.ruff.lint.per-file-ignores]
 "**/sample.py" = ["E402"] # module level import not at top of file (for samples)
@@ -44,3 +46,9 @@ target-version = ['py38']
 testpaths = ["azure-kusto-data/tests", "azure-kusto-ingest/tests"]
 addopts = ["-s", "--import-mode=importlib"]
 pythonpath = ["."]
+
+
+[tool.pyright]
+pythonVersion = "3.8"
+venvPath = ".venv"
+reportMissingImports = false
