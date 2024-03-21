@@ -178,15 +178,16 @@ class KustoClient(_KustoClientBase):
         if self._aad_helper:
             request_headers["Authorization"] = await self._aad_helper.acquire_authorization_header_async()
 
-        invoker = lambda: self._session.post(
-            endpoint,
+        def invoker():
+            return self._session.post(
+                endpoint,
             headers=request_headers,
             json=request.json_payload,
             data=request.payload,
             timeout=timeout.seconds,
             proxy=self._proxy_url,
             allow_redirects=False,
-        )
+            )
 
         try:
             response = await MonitoredActivity.invoke_async(

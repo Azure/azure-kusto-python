@@ -4,7 +4,6 @@ import tempfile
 import time
 import uuid
 from abc import ABCMeta, abstractmethod
-from copy import copy
 from enum import Enum
 from io import TextIOWrapper
 from typing import TYPE_CHECKING, Union, IO, AnyStr, Optional, Tuple

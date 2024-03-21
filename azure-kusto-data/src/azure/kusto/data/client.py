@@ -322,15 +322,10 @@ class KustoClient(_KustoClientBase):
             request_headers["Authorization"] = self._aad_helper.acquire_authorization_header()
 
         # trace http post call for response
-        invoker = lambda: self._session.post(
-            endpoint,
-            headers=request_headers,
-            json=request.json_payload,
-            data=request.payload,
-            timeout=request.timeout.seconds,
-            stream=stream_response,
-            allow_redirects=False,
-        )
+        def invoker():
+            return self._session.post(
+                endpoint, headers=request_headers, json=request.json_payload, data=request.payload, timeout=request.timeout.seconds, stream=stream_response, allow_redirects=False
+            )
 
         try:
             response = MonitoredActivity.invoke(

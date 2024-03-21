@@ -28,7 +28,7 @@ def test_dataframe_from_result_table():
     assert type(df.iloc[0].RecordTime) is pandas._libs.tslibs.timestamps.Timestamp
     assert all(getattr(df.iloc[0].RecordTime, k) == v for k, v in {"year": 2021, "month": 12, "day": 22, "hour": 11, "minute": 43, "second": 00}.items())
     assert type(df.iloc[0].RecordBool) is numpy.bool_
-    assert df.iloc[0].RecordBool == True
+    assert df.iloc[0].RecordBool == numpy.bool_(True)
     assert type(df.iloc[0].RecordInt) is numpy.int32
     assert df.iloc[0].RecordInt == 5678
     assert type(df.iloc[0].RecordReal) is numpy.float64

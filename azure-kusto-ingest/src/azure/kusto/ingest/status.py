@@ -23,8 +23,7 @@ class StatusMessage:
             if hasattr(self, key):
                 try:
                     setattr(self, key, value)
-                except:
-                    # TODO: should we set up a logger?
+                except Exception:
                     pass
 
     def __str__(self):

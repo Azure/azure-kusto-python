@@ -1,6 +1,5 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
-import random
 from typing import Union, AnyStr, IO, List, Optional, Dict
 from urllib.parse import urlparse
 
@@ -147,7 +146,9 @@ class QueuedIngestClient(BaseIngestClient):
                 with QueueServiceClient(queue.account_uri, proxies=self._proxy_dict) as queue_service:
                     with queue_service.get_queue_client(queue=queue.object_name, message_encode_policy=TextBase64EncodePolicy()) as queue_client:
                         # trace enqueuing of blob for ingestion
-                        invoker = lambda: queue_client.send_message(content=ingestion_blob_info_json, timeout=self._SERVICE_CLIENT_TIMEOUT_SECONDS)
+                        def invoker():
+                            return queue_client.send_message(content=ingestion_blob_info_json, timeout=self._SERVICE_CLIENT_TIMEOUT_SECONDS)
+
                         enqueue_trace_attributes = IngestTracingAttributes.create_enqueue_request_attributes(queue_client.queue_name, blob_descriptor.source_id)
                         MonitoredActivity.invoke(invoker, name_of_span="QueuedIngestClient.enqueue_request", tracing_attributes=enqueue_trace_attributes)
 
