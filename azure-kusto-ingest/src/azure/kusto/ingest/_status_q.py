@@ -5,7 +5,7 @@ import random
 from typing import List, Callable
 
 from ._resource_manager import _ResourceUri
-from azure.storage.queue import QueueServiceClient, QueueClient, QueueMessage, TextBase64EncodePolicy, TextBase64DecodePolicy
+from azure.storage.queue import QueueServiceClient, QueueClient, QueueMessage, TextBase64DecodePolicy
 
 
 class QueueDetails:

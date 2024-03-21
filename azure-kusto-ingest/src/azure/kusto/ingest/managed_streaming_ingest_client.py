@@ -122,10 +122,11 @@ class ManagedStreamingIngestClient(BaseIngestClient):
                 with attempt:
                     stream.seek(0, SEEK_SET)
                     client_request_id = ManagedStreamingIngestClient._get_request_id(stream_descriptor.source_id, attempt.retry_state.attempt_number - 1)
+
                     # trace attempt to ingest from stream
-                    invoker = lambda: self.streaming_client._ingest_from_stream_with_client_request_id(
-                        stream_descriptor, ingestion_properties, client_request_id
-                    )
+                    def invoker():
+                        return self.streaming_client._ingest_from_stream_with_client_request_id(stream_descriptor, ingestion_properties, client_request_id)
+
                     return MonitoredActivity.invoke(invoker, name_of_span="ManagedStreamingIngestClient.ingest_from_stream_attempt")
 
         except KustoApiError as ex:

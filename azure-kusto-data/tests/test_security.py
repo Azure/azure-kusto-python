@@ -3,7 +3,8 @@
 import pytest
 
 from azure.kusto.data import KustoConnectionStringBuilder
-from azure.kusto.data._token_providers import *
+from azure.kusto.data._cloud_settings import CloudSettings
+from azure.kusto.data._token_providers import CallbackTokenProvider, MsiTokenProvider, UserPassTokenProvider
 from azure.kusto.data.exceptions import KustoAuthenticationError
 from azure.kusto.data.security import _AadHelper
 
@@ -52,8 +53,8 @@ def test_msi_auth():
     kcsb = [
         KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication(KUSTO_TEST_URI, timeout=1),
         KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication(KUSTO_TEST_URI, client_id=client_guid, timeout=1),
-        # KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication(KUSTO_TEST_URI, object_id=object_guid, timeout=1),
-        # KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication(KUSTO_TEST_URI, msi_res_id=res_guid, timeout=1),
+        KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication(KUSTO_TEST_URI, object_id=object_guid, timeout=1),
+        KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication(KUSTO_TEST_URI, msi_res_id=res_guid, timeout=1),
     ]
 
     helpers = [_AadHelper(i, False) for i in kcsb]
@@ -81,8 +82,11 @@ def test_msi_auth():
 
 
 def test_token_provider_auth():
-    valid_token_provider = lambda: "caller token"
-    invalid_token_provider = lambda: 12345678
+    def valid_token_provider():
+        return "caller token"
+
+    def invalid_token_provider():
+        return 12345678
 
     valid_kcsb = KustoConnectionStringBuilder.with_token_provider(KUSTO_TEST_URI, valid_token_provider)
     invalid_kcsb = KustoConnectionStringBuilder.with_token_provider(KUSTO_TEST_URI, invalid_token_provider)
