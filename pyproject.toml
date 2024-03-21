@@ -32,6 +32,9 @@ dev-dependencies = [
 [tool.ruff]
 line-length = 160
 
+[tool.ruff.lint.per-file-ignores]
+"**/sample.py" = ["E402"] # module level import not at top of file (for samples)
+
 [tool.black]
 line-length = 160
 target-version = ['py38']
