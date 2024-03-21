@@ -3,7 +3,7 @@
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
     <content url="file://$MODULE_DIR$">
-      <sourceFolder url="file://$MODULE_DIR$/src/azure/kusto/ingest" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/tests" isTestSource="true" />
     </content>
     <orderEntry type="inheritedJdk" />
@@ -13,9 +13,10 @@
   <component name="PyNamespacePackagesService">
     <option name="namespacePackageFolders">
       <list>
-        <option value="$MODULE_DIR$/src/azure" />
-        <option value="$MODULE_DIR$/src/azure/kusto" />
-        <option value="$MODULE_DIR$/src/azure/kusto/ingest" />
+        <option value="$MODULE_DIR$/../azure-kusto-data/src/azure" />
+        <option value="$MODULE_DIR$/../azure-kusto-data/src/azure/kusto" />
+        <option value="$MODULE_DIR$/../azure-kusto-data/src/azure/kusto/data/aio" />
+        <option value="$MODULE_DIR$/../azure-kusto-data/src/azure/kusto/data" />
       </list>
     </option>
   </component>
