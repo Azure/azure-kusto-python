@@ -26,6 +26,7 @@ dev-dependencies = [
     "pytest-asyncio>=0.23.5",
     "asgiref>=3.7.2",
     "setuptools>=69.2.0",
+    "pyright>=1.1.355",
 ]
 
 [tool.ruff]
