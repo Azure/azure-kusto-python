@@ -7,9 +7,19 @@ from azure.identity.aio import ClientSecretCredential as AsyncClientSecretCreden
 
 from azure.kusto.data._cloud_settings import CloudSettings, CloudInfo
 from azure.kusto.data._decorators import aio_documented_by
-from azure.kusto.data._token_providers import AzureIdentityTokenCredentialProvider, AsyncDefaultAzureCredential, CallbackTokenProvider, UserPassTokenProvider, \
-    ApplicationCertificateTokenProvider, ApplicationKeyTokenProvider, DeviceLoginTokenProvider, MsiTokenProvider, AzCliTokenProvider, BasicTokenProvider, \
-    TokenConstants
+from azure.kusto.data._token_providers import (
+    AzureIdentityTokenCredentialProvider,
+    AsyncDefaultAzureCredential,
+    CallbackTokenProvider,
+    UserPassTokenProvider,
+    ApplicationCertificateTokenProvider,
+    ApplicationKeyTokenProvider,
+    DeviceLoginTokenProvider,
+    MsiTokenProvider,
+    AzCliTokenProvider,
+    BasicTokenProvider,
+    TokenConstants,
+)
 from azure.kusto.data.env_utils import get_env, get_app_id, get_auth_id, prepare_app_key_auth
 from azure.kusto.data.exceptions import KustoClientError, KustoAsyncUsageError
 
