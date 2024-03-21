@@ -6,7 +6,7 @@ import inspect
 import time
 from datetime import datetime
 from threading import Lock
-from typing import Callable, Coroutine, List, Optional, Any
+from typing import Callable, Coroutine, List, Optional, Any, Tuple
 
 from azure.core.exceptions import ClientAuthenticationError
 from azure.core.tracing import SpanKind
