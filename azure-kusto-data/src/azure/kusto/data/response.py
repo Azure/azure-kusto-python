@@ -173,7 +173,7 @@ class KustoStreamingResponseDataSet(BaseKustoResponseDataSet):
         if self.finished:
             raise StopIteration
 
-        if type(self._current_table) is KustoStreamingResultTable and not self._current_table.finished and not self._skip_incomplete_tables:
+        if isinstance(self._current_table, KustoStreamingResultTable) and not self._current_table.finished and not self._skip_incomplete_tables:
             raise KustoStreamingQueryError(
                 "Tried retrieving a new primary_result table before the old one was finished. To override call `set_skip_incomplete_tables(True)`"
             )
@@ -232,5 +232,5 @@ class PrimaryResultsIterator:
     def __next__(self) -> KustoStreamingResultTable:
         while True:
             table = next(self.dataset)
-            if type(table) is KustoStreamingResultTable:
+            if isinstance(table, KustoStreamingResultTable):
                 return table

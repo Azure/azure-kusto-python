@@ -100,7 +100,7 @@ class TestKustoClient(KustoClientTestsMixin):
             properties.set_option(ClientRequestProperties.results_defer_partial_query_failures_option_name, False)
             with pytest.raises(KustoMultiApiError) as e:
                 response = method.__call__(client, "PythonTest", query, properties=properties)
-                if type(response) == KustoStreamingResponseDataSet:
+                if isinstance(response, KustoStreamingResponseDataSet):
                     list(get_response_first_primary_result(response))
             errors = e.value.get_api_errors()
             assert len(errors) == 1

@@ -380,7 +380,7 @@ class KustoClientTestsMixin:
         assert len(results) == 5
         assert results[0]["x"] == 1
 
-        if type(response) == KustoStreamingResponseDataSet:
+        if isinstance(response, KustoStreamingResponseDataSet):
             _ = [t for t in response]  # Read rest of tables
         assert response.errors_count == 1
         assert "E_QUERY_RESULT_SET_TOO_LARGE" in response.get_exceptions()[0]

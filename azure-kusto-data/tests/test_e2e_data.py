@@ -183,13 +183,13 @@ class TestE2E:
     def normalize_row(row):
         result = []
         for r in row:
-            if type(r) == bool:
+            if isinstance(r, bool):
                 result.append(str(r).lower())
-            elif type(r) == datetime:
+            elif isinstance(r, datetime):
                 result.append(r.strftime("%Y-%m-%dT%H:%M:%SZ"))
-            elif type(r) == float:
+            elif isinstance(r, float):
                 result.append(r)
-            elif type(r) == dict:
+            elif isinstance(r, dict):
                 result.append(json.dumps(r).replace(" ", ""))
             else:
                 result.append(str(r))
@@ -208,7 +208,7 @@ class TestE2E:
                 for expected_row in self.test_streaming_data:
                     actual_row = self.normalize_row(next(primary).to_list())
                     for i in range(len(expected_row)):
-                        if type(actual_row[i]) == float:
+                        if isinstance(actual_row[i], float):
                             assert pytest.approx(float(expected_row[i]), 0.1) == actual_row[i]
                         else:
                             assert expected_row[i] == actual_row[i]
@@ -236,7 +236,7 @@ class TestE2E:
 
                     actual_row = self.normalize_row(row.to_list())
                     for i in range(len(expected_row)):
-                        if type(actual_row[i]) == float:
+                        if isinstance(actual_row[i], float):
                             assert pytest.approx(float(expected_row[i]), 0.1) == actual_row[i]
                         else:
                             assert expected_row[i] == actual_row[i]
@@ -260,15 +260,15 @@ class TestE2E:
             query_props = next(frames)
             assert query_props["FrameType"] == FrameType.DataTable
             assert query_props["TableKind"] == WellKnownDataSet.QueryProperties.value
-            assert type(query_props["Columns"]) == list
-            assert type(query_props["Rows"]) == list
+            assert isinstance(query_props["Columns"], list)
+            assert isinstance(query_props["Rows"], list)
             assert len(query_props["Rows"][0]) == len(query_props["Columns"])
 
             primary_result = next(frames)
             assert primary_result["FrameType"] == FrameType.DataTable
             assert primary_result["TableKind"] == WellKnownDataSet.PrimaryResult.value
-            assert type(primary_result["Columns"]) == list
-            assert type(primary_result["Rows"]) != list
+            assert isinstance(primary_result["Columns"], list)
+            assert not isinstance(primary_result["Rows"], list)
 
             row = next(primary_result["Rows"])
             assert len(row) == len(primary_result["Columns"])
@@ -288,15 +288,15 @@ class TestE2E:
             query_props = await frames.__anext__()
             assert query_props["FrameType"] == FrameType.DataTable
             assert query_props["TableKind"] == WellKnownDataSet.QueryProperties.value
-            assert type(query_props["Columns"]) == list
-            assert type(query_props["Rows"]) == list
+            assert isinstance(query_props["Columns"], list)
+            assert isinstance(query_props["Rows"], list)
             assert len(query_props["Rows"][0]) == len(query_props["Columns"])
 
             primary_result = await frames.__anext__()
             assert primary_result["FrameType"] == FrameType.DataTable
             assert primary_result["TableKind"] == WellKnownDataSet.PrimaryResult.value
-            assert type(primary_result["Columns"]) == list
-            assert type(primary_result["Rows"]) != list
+            assert isinstance(primary_result["Columns"], list)
+            assert not isinstance(primary_result["Rows"], list)
 
             row = await primary_result["Rows"].__anext__()
             assert len(row) == len(primary_result["Columns"])

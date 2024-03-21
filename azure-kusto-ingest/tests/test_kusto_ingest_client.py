@@ -68,7 +68,7 @@ def request_callback_throw_transient(request):
 
 
 def request_callback(request):
-    body = json.loads(request.body.decode()) if type(request.body) == bytes else json.loads(request.body)
+    body = json.loads(request.body.decode()) if isinstance(request.body, bytes) else json.loads(request.body)
     response_status = 400
     response_headers = dict()
     response_body = {}
@@ -148,7 +148,7 @@ def request_callback(request):
 
 
 def request_callback_check_retries(request):
-    body = json.loads(request.body.decode()) if type(request.body) == bytes else json.loads(request.body)
+    body = json.loads(request.body.decode()) if isinstance(request.body, bytes) else json.loads(request.body)
     response_status = 400
     response_headers = dict()
     response_body = {}
@@ -232,7 +232,7 @@ def request_callback_check_retries(request):
 
 
 def request_callback_all_retries_failed(request):
-    body = json.loads(request.body.decode()) if type(request.body) == bytes else json.loads(request.body)
+    body = json.loads(request.body.decode()) if isinstance(request.body, bytes) else json.loads(request.body)
     response_status = 400
     response_headers = dict()
     response_body = {}
@@ -280,7 +280,7 @@ def request_callback_all_retries_failed(request):
 
 
 def request_callback_containers(request):
-    body = json.loads(request.body.decode()) if type(request.body) == bytes else json.loads(request.body)
+    body = json.loads(request.body.decode()) if isinstance(request.body, bytes) else json.loads(request.body)
     response_headers = dict()
 
     if ".get ingestion resources" in body["csl"]:
@@ -316,7 +316,7 @@ def request_callback_containers(request):
 
 
 def request_error_callback(request):
-    body = json.loads(request.body.decode()) if type(request.body) == bytes else json.loads(request.body)
+    body = json.loads(request.body.decode()) if isinstance(request.body, bytes) else json.loads(request.body)
     response_status = 400
     response_headers = dict()
     response_body = {}
