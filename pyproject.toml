@@ -1,9 +1,9 @@
 [project]
 name = "azure-kusto-python"
-version = "4.5.3"
-description = "Add your description here"
+version = "5.0.0"
+description = "Microsoft Azure Kusto Python SDK"
 authors = [
-    { name = "asafmahlev", email = "asafmahlev@microsoft.com" }
+    { name = "Microsoft Corporation", email = "kustalk@microsoft.com" },
 ]
 dependencies = []
 readme = "README.md"

@@ -1,15 +1,15 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
-import unittest
 from uuid import uuid4
 
 import pytest
+
 from azure.kusto.data import KustoConnectionStringBuilder, KustoClient
 
 local_emulator = False
 
 
-class KustoConnectionStringBuilderTests(unittest.TestCase):
+class KustoConnectionStringBuilderTests:
     """Tests class for KustoConnectionStringBuilder."""
 
     PASSWORDS_REPLACEMENT = "****"
@@ -89,17 +89,17 @@ class KustoConnectionStringBuilderTests(unittest.TestCase):
             assert kcsb.application_key == key
             assert kcsb.authority_id == "microsoft.com"
             assert (
-                repr(kcsb)
-                == "Data Source=localhost;Initial Catalog=NetDefaultDB;AAD Federated Security=True;Application Client Id={0};Application Key={1};Authority Id={2}".format(
-                    uuid, key, "microsoft.com"
-                )
+                    repr(kcsb)
+                    == "Data Source=localhost;Initial Catalog=NetDefaultDB;AAD Federated Security=True;Application Client Id={0};Application Key={1};Authority Id={2}".format(
+                uuid, key, "microsoft.com"
+            )
             )
 
             assert (
-                str(kcsb)
-                == "Data Source=localhost;Initial Catalog=NetDefaultDB;AAD Federated Security=True;Application Client Id={0};Application Key={1};Authority Id={2}".format(
-                    uuid, self.PASSWORDS_REPLACEMENT, "microsoft.com"
-                )
+                    str(kcsb)
+                    == "Data Source=localhost;Initial Catalog=NetDefaultDB;AAD Federated Security=True;Application Client Id={0};Application Key={1};Authority Id={2}".format(
+                uuid, self.PASSWORDS_REPLACEMENT, "microsoft.com"
+            )
             )
 
     def test_aad_user(self):
@@ -135,16 +135,16 @@ class KustoConnectionStringBuilderTests(unittest.TestCase):
             assert kcsb.application_key is None
             assert kcsb.authority_id == "organizations"
             assert (
-                repr(kcsb)
-                == "Data Source=localhost;Initial Catalog=NetDefaultDB;AAD Federated Security=True;AAD User ID={0};Password={1};Authority Id=organizations".format(
-                    user, password
-                )
+                    repr(kcsb)
+                    == "Data Source=localhost;Initial Catalog=NetDefaultDB;AAD Federated Security=True;AAD User ID={0};Password={1};Authority Id=organizations".format(
+                user, password
+            )
             )
             assert (
-                str(kcsb)
-                == "Data Source=localhost;Initial Catalog=NetDefaultDB;AAD Federated Security=True;AAD User ID={0};Password={1};Authority Id=organizations".format(
-                    user, self.PASSWORDS_REPLACEMENT
-                )
+                    str(kcsb)
+                    == "Data Source=localhost;Initial Catalog=NetDefaultDB;AAD Federated Security=True;AAD User ID={0};Password={1};Authority Id=organizations".format(
+                user, self.PASSWORDS_REPLACEMENT
+            )
             )
 
     def test_aad_user_with_authority(self):
@@ -200,13 +200,13 @@ class KustoConnectionStringBuilderTests(unittest.TestCase):
         assert kcsb.user_token is None
         assert kcsb.authority_id == "organizations"
         assert (
-            repr(kcsb)
-            == "Data Source=localhost;Initial Catalog=NetDefaultDB;AAD Federated Security=True;Authority Id=organizations;Application Token=%s" % token
+                repr(kcsb)
+                == "Data Source=localhost;Initial Catalog=NetDefaultDB;AAD Federated Security=True;Authority Id=organizations;Application Token=%s" % token
         )
         assert (
-            str(kcsb)
-            == "Data Source=localhost;Initial Catalog=NetDefaultDB;AAD Federated Security=True;Authority Id=organizations;Application Token=%s"
-            % self.PASSWORDS_REPLACEMENT
+                str(kcsb)
+                == "Data Source=localhost;Initial Catalog=NetDefaultDB;AAD Federated Security=True;Authority Id=organizations;Application Token=%s"
+                % self.PASSWORDS_REPLACEMENT
         )
 
     def test_aad_user_token(self):
@@ -224,9 +224,9 @@ class KustoConnectionStringBuilderTests(unittest.TestCase):
         assert kcsb.authority_id == "organizations"
         assert repr(kcsb) == "Data Source=localhost;Initial Catalog=NetDefaultDB;AAD Federated Security=True;Authority Id=organizations;User Token=%s" % token
         assert (
-            str(kcsb)
-            == "Data Source=localhost;Initial Catalog=NetDefaultDB;AAD Federated Security=True;Authority Id=organizations;User Token=%s"
-            % self.PASSWORDS_REPLACEMENT
+                str(kcsb)
+                == "Data Source=localhost;Initial Catalog=NetDefaultDB;AAD Federated Security=True;Authority Id=organizations;User Token=%s"
+                % self.PASSWORDS_REPLACEMENT
         )
 
     def test_add_msi(self):
@@ -315,7 +315,8 @@ class KustoConnectionStringBuilderTests(unittest.TestCase):
         finally:
             assert exception_occurred
 
-    def test_add_async_token_provider(self):
+    @pytest.mark.asyncio
+    async def test_add_async_token_provider(self):
         caller_token = "caller token"
 
         async def async_token_provider():
@@ -323,7 +324,7 @@ class KustoConnectionStringBuilderTests(unittest.TestCase):
 
         kscb = KustoConnectionStringBuilder.with_async_token_provider("localhost", async_token_provider)
 
-        assert kscb.async_token_provider() is not None
+        assert (await kscb.async_token_provider()) is not None
 
         exception_occurred = False
         try:

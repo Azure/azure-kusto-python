@@ -697,7 +697,7 @@ class AzureIdentityTokenCredentialProvider(CloudInfoTokenProvider):
             if inspect.iscoroutinefunction(self.credential.close):
                 await self.credential.close()
             else:
-                await (sync_to_async(self.credential.close)())
+                await sync_to_async(self.credential.close)()
             self.credential = None
             self.credential_from_login_endpoint = None
 
