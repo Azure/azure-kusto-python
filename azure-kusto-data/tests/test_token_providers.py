@@ -9,9 +9,20 @@ from asgiref.sync import async_to_sync
 from azure.identity import ClientSecretCredential, DefaultAzureCredential
 
 from azure.kusto.data._cloud_settings import CloudSettings, CloudInfo
-from azure.kusto.data._token_providers import AzureIdentityTokenCredentialProvider, UserPassTokenProvider, ApplicationCertificateTokenProvider, \
-    ApplicationKeyTokenProvider, InteractiveLoginTokenProvider, DeviceLoginTokenProvider, MsiTokenProvider, AzCliTokenProvider, CallbackTokenProvider, \
-    BasicTokenProvider, TokenConstants, TokenProviderBase
+from azure.kusto.data._token_providers import (
+    AzureIdentityTokenCredentialProvider,
+    UserPassTokenProvider,
+    ApplicationCertificateTokenProvider,
+    ApplicationKeyTokenProvider,
+    InteractiveLoginTokenProvider,
+    DeviceLoginTokenProvider,
+    MsiTokenProvider,
+    AzCliTokenProvider,
+    CallbackTokenProvider,
+    BasicTokenProvider,
+    TokenConstants,
+    TokenProviderBase,
+)
 
 from azure.kusto.data.exceptions import KustoNetworkError, KustoClientError, KustoAsyncUsageError
 from azure.kusto.data.env_utils import get_env, get_app_id, get_auth_id, prepare_app_key_auth
