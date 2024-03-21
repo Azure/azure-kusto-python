@@ -221,7 +221,7 @@ class KustoClient(_KustoClientBase):
         blob_url: Optional[str],
         stream_format: Union[DataFormat, str],
         properties: Optional[ClientRequestProperties] = None,
-        mapping_name: str = None,
+        mapping_name: Optional[str] = None,
     ):
         """
         Execute streaming ingest against this client

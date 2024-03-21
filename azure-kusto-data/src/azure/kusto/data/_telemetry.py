@@ -73,7 +73,7 @@ class Span:
         return ingest_attributes
 
     @classmethod
-    def create_http_attributes(cls, method: str, url: str, headers: dict = None) -> dict:
+    def create_http_attributes(cls, method: str, url: str, headers: Optional[dict] = None) -> dict:
         if headers is None:
             headers = {}
         http_tracing_attributes: dict = {
@@ -105,7 +105,7 @@ class MonitoredActivity:
     T = TypeVar("T")
 
     @staticmethod
-    def invoke(invoker: Callable[[], T], name_of_span: str = None, tracing_attributes=None, kind: str = SpanKind.INTERNAL) -> T:
+    def invoke(invoker: Callable[[], T], name_of_span: Optional[str] = None, tracing_attributes=None, kind: str = SpanKind.INTERNAL) -> T:
         """
         Runs the span on given function
         """
@@ -116,7 +116,7 @@ class MonitoredActivity:
         return span()
 
     @staticmethod
-    async def invoke_async(invoker: Callable[[], T], name_of_span: str = None, tracing_attributes=None, kind: str = SpanKind.INTERNAL) -> T:
+    async def invoke_async(invoker: Callable[[], T], name_of_span: Optional[str] = None, tracing_attributes=None, kind: str = SpanKind.INTERNAL) -> T:
         """
         Runs a span on given function
         """

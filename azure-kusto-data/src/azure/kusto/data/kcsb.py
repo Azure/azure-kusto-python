@@ -15,7 +15,7 @@ class KustoConnectionStringBuilder:
     """
 
     DEFAULT_DATABASE_NAME = "NetDefaultDB"
-    device_callback: DeviceCallbackType = None
+    device_callback: Optional[DeviceCallbackType] = None
     kcsb_invalid_item_error = "%s is not supported as an item in KustoConnectionStringBuilder"
 
     @unique
@@ -327,7 +327,7 @@ class KustoConnectionStringBuilder:
 
     @classmethod
     def with_aad_device_authentication(
-        cls, connection_string: str, authority_id: str = "organizations", callback: DeviceCallbackType = None
+        cls, connection_string: str, authority_id: str = "organizations", callback: Optional[DeviceCallbackType] = None
     ) -> "KustoConnectionStringBuilder":
         """
         Creates a KustoConnection string builder that will authenticate with AAD application and
@@ -362,7 +362,7 @@ class KustoConnectionStringBuilder:
 
     @classmethod
     def with_aad_managed_service_identity_authentication(
-        cls, connection_string: str, client_id: str = None, object_id: str = None, msi_res_id: str = None, timeout: int = None
+        cls, connection_string: str, client_id: Optional[str] = None, object_id: Optional[str] = None, msi_res_id: Optional[str] = None, timeout: Optional[int] = None
     ) -> "KustoConnectionStringBuilder":
         """
         Creates a KustoConnection string builder that will authenticate with AAD application, using
