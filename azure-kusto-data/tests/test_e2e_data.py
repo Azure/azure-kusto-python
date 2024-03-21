@@ -34,6 +34,7 @@ def event_loop_policy(request):
         return asyncio.WindowsSelectorEventLoopPolicy()
     return asyncio.DefaultEventLoopPolicy()
 
+
 class TestE2E:
     """A class to define mappings to deft table."""
 
