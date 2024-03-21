@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from typing import List, Tuple, Optional
 
 from .env_utils import get_env
-from azure.kusto.data._version import VERSION
+from importlib.metadata import version
 
 NONE = "[none]"
 
@@ -46,7 +46,7 @@ def default_user():
 def format_version():
     return format_header(
         [
-            ("Kusto.Python.Client", VERSION),
+            ("Kusto.Python.Client", version("azure-kusto-data")),
             (f"Runtime.{escape_field(sys.implementation.name)}", sys.version),
         ]
     )

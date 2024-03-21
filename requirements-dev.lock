@@ -71,6 +71,8 @@ msal-extensions==1.1.0
 multidict==6.0.5
     # via aiohttp
     # via yarl
+nodeenv==1.8.0
+    # via pyright
 numpy==1.24.4
     # via pandas
 packaging==23.2
@@ -87,6 +89,7 @@ pycparser==2.21
     # via cffi
 pyjwt==2.8.0
     # via msal
+pyright==1.1.355
 pytest==8.0.2
     # via pytest-asyncio
 pytest-asyncio==0.23.5
@@ -106,6 +109,7 @@ requests==2.31.0
     # via responses
 responses==0.25.0
 setuptools==69.2.0
+    # via nodeenv
 six==1.16.0
     # via azure-core
     # via isodate
