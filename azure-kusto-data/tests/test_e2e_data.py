@@ -22,11 +22,13 @@ from azure.kusto.data.exceptions import KustoServiceError
 from azure.kusto.data.kusto_trusted_endpoints import MatchRule, well_known_kusto_endpoints
 from azure.kusto.data.streaming_response import FrameType
 
+
 @pytest.fixture(scope="module")
 def event_loop_policy(request):
     if platform.system() == "Windows":
         return asyncio.WindowsSelectorEventLoopPolicy()
     return asyncio.DefaultEventLoopPolicy()
+
 
 @pytest.fixture(params=["ManagedStreaming", "NormalClient"])
 def is_managed_streaming(request):

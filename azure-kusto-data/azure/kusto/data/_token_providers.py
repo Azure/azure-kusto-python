@@ -406,7 +406,7 @@ class MsiTokenProvider(CloudInfoTokenProvider):
 
     async def close_async(self):
         if self._msi_auth_context is not None:
-            await (sync_to_async(self._msi_auth_context.close()))
+            await sync_to_async(self._msi_auth_context.close())
 
         if self._msi_auth_context_async is not None:
             await self._msi_auth_context_async.close()
