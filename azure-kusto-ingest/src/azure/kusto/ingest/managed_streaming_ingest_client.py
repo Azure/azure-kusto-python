@@ -47,7 +47,7 @@ class ManagedStreamingIngestClient(BaseIngestClient):
         :param engine_kcsb: KustoConnectionStringBuilder for the engine.
         :return: ManagedStreamingIngestClient
         """
-        kcsb = repr(engine_kcsb) if type(engine_kcsb) == KustoConnectionStringBuilder else engine_kcsb
+        kcsb = repr(engine_kcsb) if isinstance(engine_kcsb, KustoConnectionStringBuilder) else engine_kcsb
         dm_kcsb = KustoConnectionStringBuilder(kcsb.replace("https://", "https://ingest-"))
         return ManagedStreamingIngestClient(engine_kcsb, dm_kcsb)
 
@@ -61,7 +61,7 @@ class ManagedStreamingIngestClient(BaseIngestClient):
         :param dm_kcsb: KustoConnectionStringBuilder for the dm.
         :return: ManagedStreamingIngestClient
         """
-        kcsb = repr(dm_kcsb) if type(dm_kcsb) == KustoConnectionStringBuilder else dm_kcsb
+        kcsb = repr(dm_kcsb) if isinstance(dm_kcsb, KustoConnectionStringBuilder) else dm_kcsb
         engine_kcsb = KustoConnectionStringBuilder(kcsb.replace("https://ingest-", "https://"))
         return ManagedStreamingIngestClient(engine_kcsb, dm_kcsb)
 
