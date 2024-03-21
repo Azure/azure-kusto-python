@@ -35,6 +35,12 @@ def is_managed_streaming(request):
     return request.param == "ManagedStreaming"
 
 
+@pytest.fixture(scope="module")
+def event_loop_policy(request):
+    if platform.system() == "Windows":
+        return asyncio.WindowsSelectorEventLoopPolicy()
+    return asyncio.DefaultEventLoopPolicy()
+
 class TestE2E:
     """A class to define mappings to deft table."""
 
