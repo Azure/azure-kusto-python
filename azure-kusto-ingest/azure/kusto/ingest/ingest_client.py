@@ -49,7 +49,7 @@ class QueuedIngestClient(BaseIngestClient):
         self._endpoint_service_type = None
         self._suggested_endpoint_uri = None
         self.application_for_tracing = kcsb.application_for_tracing
-        self.user_for_tracing = kcsb.user_name_for_tracing
+        self.client_version_for_tracing = kcsb.client_details
 
     def close(self) -> None:
         self._resource_manager.close()
@@ -69,7 +69,7 @@ class QueuedIngestClient(BaseIngestClient):
         """
         file_descriptor = FileDescriptor.get_instance(file_descriptor)
         ingestion_properties.application_for_tracing = self.application_for_tracing
-        ingestion_properties.user_for_tracing = self.user_for_tracing
+        ingestion_properties.client_version_for_tracing = self.client_version_for_tracing
         IngestTracingAttributes.set_ingest_descriptor_attributes(file_descriptor, ingestion_properties)
 
         super().ingest_from_file(file_descriptor, ingestion_properties)
@@ -98,7 +98,7 @@ class QueuedIngestClient(BaseIngestClient):
         """
         stream_descriptor = StreamDescriptor.get_instance(stream_descriptor)
         ingestion_properties.application_for_tracing = self.application_for_tracing
-        ingestion_properties.user_for_tracing = self.user_for_tracing
+        ingestion_properties.client_version_for_tracing = self.client_version_for_tracing
         IngestTracingAttributes.set_ingest_descriptor_attributes(stream_descriptor, ingestion_properties)
 
         super().ingest_from_stream(stream_descriptor, ingestion_properties)

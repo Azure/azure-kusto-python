@@ -173,8 +173,6 @@ class IngestionProperties:
         report_method: ReportMethod = ReportMethod.Queue,
         validation_policy: Optional[ValidationPolicy] = None,
         additional_properties: Optional[dict] = None,
-        application_for_tracing: Optional[str] = None,
-        user_for_tracing: Optional[str] = None,
     ):
         if ingestion_mapping_reference is None and column_mappings is None:
             if ingestion_mapping_kind is not None:
@@ -220,8 +218,6 @@ class IngestionProperties:
         self.report_method = report_method
         self.validation_policy = validation_policy
         self.additional_properties = additional_properties
-        self.application_for_tracing = application_for_tracing
-        self.user_for_tracing = user_for_tracing
 
     def get_tracing_attributes(self) -> dict:
         """Gets dictionary of attributes to be documented during tracing"""
