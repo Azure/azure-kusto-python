@@ -24,6 +24,8 @@ class IngestionBlobInfo:
         self.properties["ReportMethod"] = ingestion_properties.report_method.value
         self.properties["SourceMessageCreationTime"] = datetime.utcnow().isoformat()
         self.properties["Id"] = str(blob_descriptor.source_id)
+        self.properties["ApplicationForTracing"] = ingestion_properties.application_for_tracing
+        self.properties["ClientVersionForTracing"] = ingestion_properties.client_version_for_tracing
 
         additional_properties = ingestion_properties.additional_properties or {}
         additional_properties["authorizationContext"] = auth_context

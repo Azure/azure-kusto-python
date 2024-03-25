@@ -218,6 +218,8 @@ class IngestionProperties:
         self.report_method = report_method
         self.validation_policy = validation_policy
         self.additional_properties = additional_properties
+        self.application_for_tracing = None
+        self.client_version_for_tracing = None
 
     def get_tracing_attributes(self) -> dict:
         """Gets dictionary of attributes to be documented during tracing"""
