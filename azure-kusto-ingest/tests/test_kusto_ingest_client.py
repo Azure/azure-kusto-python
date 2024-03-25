@@ -404,7 +404,7 @@ def assert_queued_upload(mock_put_message_in_queue, mock_upload_blob_from_stream
 @pytest.fixture(params=[QueuedIngestClient, ManagedStreamingIngestClient])
 def ingest_client_class(request):
     if request.param == ManagedStreamingIngestClient:
-        return ManagedStreamingIngestClient.from_dm_kcsb
+        return ManagedStreamingIngestClient
     return request.param
 
 
@@ -492,33 +492,6 @@ class TestQueuedIngestClient:
         )
 
         ingest_client.close()
-
-    @responses.activate
-    @patch("azure.kusto.ingest.managed_streaming_ingest_client.ManagedStreamingIngestClient.MAX_STREAMING_SIZE_IN_BYTES", new=0)
-    def test_ingest_from_file_wrong_endpoint(self, ingest_client_class):
-        responses.add_callback(
-            responses.POST, "https://somecluster.kusto.windows.net/v1/rest/mgmt", callback=request_error_callback, content_type="application/json"
-        )
-
-        ingest_client = ingest_client_class("https://somecluster.kusto.windows.net")
-        ingestion_properties = IngestionProperties(database="database", table="table", data_format=DataFormat.CSV)
-
-        current_dir = os.getcwd()
-        path_parts = ["azure-kusto-ingest", "tests", "input", "dataset.csv"]
-        missing_path_parts = []
-        for path_part in path_parts:
-            if path_part not in current_dir:
-                missing_path_parts.append(path_part)
-
-        file_path = os.path.join(current_dir, *missing_path_parts)
-
-        with pytest.raises(KustoInvalidEndpointError) as ex:
-            ingest_client.ingest_from_file(file_path, ingestion_properties=ingestion_properties)
-
-        assert (
-            ex.value.args[0] == "You are using 'DataManagement' client type, but the provided endpoint is of ServiceType 'Engine'. Initialize the "
-            "client with the appropriate endpoint URI: 'https://ingest-somecluster.kusto.windows.net'"
-        ), ("Expected exception was " "not raised")
 
     @responses.activate
     @pytest.mark.skipif(not pandas_installed, reason="requires pandas")
@@ -634,3 +607,31 @@ class TestQueuedIngestClient:
             ingest_client.ingest_from_file(file_path, ingestion_properties=ingestion_properties)
 
         ingest_client.close()
+
+    def test_client_uri_from_query_endpoint(self):
+        client = QueuedIngestClient("https://somecluster.kusto.windows.net")
+        assert client._connection_datasource == "https://ingest-somecluster.kusto.windows.net", "Client URI was not extracted correctly from query endpoint"
+
+        assert client._resource_manager._kusto_client._kusto_cluster == "https://ingest-somecluster.kusto.windows.net/"
+
+    def test_client_uri_from_ingestion_endpoint(self):
+        client = QueuedIngestClient("https://ingest-somecluster.kusto.windows.net")
+        assert client._connection_datasource == "https://ingest-somecluster.kusto.windows.net", "Client URI was not extracted correctly from query endpoint"
+
+        assert client._resource_manager._kusto_client._kusto_cluster == "https://ingest-somecluster.kusto.windows.net/"
+
+    def test_from_ingestion_endpoint_reserved_hostname(self):
+        client = QueuedIngestClient("https://localhost:8080")
+        assert client._connection_datasource == "https://localhost:8080", "Client URI was not extracted correctly from query endpoint"
+
+        assert client._resource_manager._kusto_client._kusto_cluster == "https://localhost:8080/"
+
+        client = QueuedIngestClient("https://192.168.14.4")
+        assert client._connection_datasource == "https://192.168.14.4", "Client URI was not extracted correctly from query endpoint"
+
+        assert client._resource_manager._kusto_client._kusto_cluster == "https://192.168.14.4/"
+
+        client = QueuedIngestClient("https://onebox.dev.kusto.windows.net")
+        assert client._connection_datasource == "https://onebox.dev.kusto.windows.net", "Client URI was not extracted correctly from query endpoint"
+
+        assert client._resource_manager._kusto_client._kusto_cluster == "https://onebox.dev.kusto.windows.net/"
