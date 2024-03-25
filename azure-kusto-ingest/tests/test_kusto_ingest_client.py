@@ -619,3 +619,19 @@ class TestQueuedIngestClient:
         assert client._connection_datasource == "https://ingest-somecluster.kusto.windows.net", "Client URI was not extracted correctly from query endpoint"
 
         assert client._resource_manager._kusto_client._kusto_cluster == "https://ingest-somecluster.kusto.windows.net/"
+
+    def test_from_ingestion_endpoint_reserved_hostname(self):
+        client = QueuedIngestClient("https://localhost:8080")
+        assert client._connection_datasource == "https://localhost:8080", "Client URI was not extracted correctly from query endpoint"
+
+        assert client._resource_manager._kusto_client._kusto_cluster == "https://localhost:8080/"
+
+        client = QueuedIngestClient("https://192.168.14.4")
+        assert client._connection_datasource == "https://192.168.14.4", "Client URI was not extracted correctly from query endpoint"
+
+        assert client._resource_manager._kusto_client._kusto_cluster == "https://192.168.14.4/"
+
+        client = QueuedIngestClient("https://onebox.dev.kusto.windows.net")
+        assert client._connection_datasource == "https://onebox.dev.kusto.windows.net", "Client URI was not extracted correctly from query endpoint"
+
+        assert client._resource_manager._kusto_client._kusto_cluster == "https://onebox.dev.kusto.windows.net/"

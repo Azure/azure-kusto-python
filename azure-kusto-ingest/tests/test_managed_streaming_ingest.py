@@ -375,3 +375,21 @@ class TestManagedStreamingIngestClient:
         assert (
             client.streaming_client._kusto_client._kusto_cluster == "https://somecluster.kusto.windows.net/"
         ), "Client URI was not extracted correctly from ingestion endpoint"
+
+    def test_from_ingestion_endpoint_reserved_hostname(self):
+        client = ManagedStreamingIngestClient("https://localhost:8080")
+        assert client.queued_client._connection_datasource == "https://localhost:8080", "Client URI was not extracted correctly from query endpoint"
+        assert client.queued_client._resource_manager._kusto_client._kusto_cluster == "https://localhost:8080/"
+        assert client.streaming_client._kusto_client._kusto_cluster == "https://localhost:8080/"
+
+        client = ManagedStreamingIngestClient("https://192.168.14.4")
+        assert client.queued_client._connection_datasource == "https://192.168.14.4", "Client URI was not extracted correctly from query endpoint"
+        assert client.queued_client._resource_manager._kusto_client._kusto_cluster == "https://192.168.14.4/"
+        assert client.streaming_client._kusto_client._kusto_cluster == "https://192.168.14.4/"
+
+        client = ManagedStreamingIngestClient("https://onebox.dev.kusto.windows.net")
+        assert (
+            client.queued_client._connection_datasource == "https://onebox.dev.kusto.windows.net"
+        ), "Client URI was not extracted correctly from query endpoint"
+        assert client.queued_client._resource_manager._kusto_client._kusto_cluster == "https://onebox.dev.kusto.windows.net/"
+        assert client.streaming_client._kusto_client._kusto_cluster == "https://onebox.dev.kusto.windows.net/"
