@@ -23,6 +23,13 @@ from azure.kusto.data.kusto_trusted_endpoints import MatchRule, well_known_kusto
 from azure.kusto.data.streaming_response import FrameType
 
 
+@pytest.fixture(scope="module")
+def event_loop_policy(request):
+    if platform.system() == "Windows":
+        return asyncio.WindowsSelectorEventLoopPolicy()
+    return asyncio.DefaultEventLoopPolicy()
+
+
 @pytest.fixture(params=["ManagedStreaming", "NormalClient"])
 def is_managed_streaming(request):
     return request.param == "ManagedStreaming"
@@ -154,16 +161,6 @@ class TestE2E:
     def teardown_class(cls):
         with cls.get_client() as client:
             client.execute_mgmt(cls.test_db, ".drop table {}".format(cls.streaming_test_table))
-
-    @staticmethod
-    @pytest.fixture(scope="session")
-    def event_loop():
-        if platform.system() == "Windows":
-            asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-        policy = asyncio.get_event_loop_policy()
-        loop = policy.new_event_loop()
-        yield loop
-        loop.close()
 
     @classmethod
     async def get_async_client(cls, app_insights=False) -> AsyncKustoClient:
@@ -333,6 +330,8 @@ class TestE2E:
             assert result.get_exceptions() == []
 
     def test_cloud_info(self):
+        if ".dev." in self.engine_cs:
+            pytest.skip("This test is not relevant for dev clusters")
         cloud_info = CloudSettings.get_cloud_info_for_cluster(self.engine_cs)
         assert cloud_info is not CloudSettings.DEFAULT_CLOUD
         assert cloud_info == CloudSettings.DEFAULT_CLOUD
