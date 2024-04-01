@@ -32,17 +32,20 @@ class QueuedIngestClient(BaseIngestClient):
     """
 
     _INGEST_PREFIX = "ingest-"
-    _EXPECTED_SERVICE_TYPE = "DataManagement"
     _SERVICE_CLIENT_TIMEOUT_SECONDS = 10 * 60
     _MAX_RETRIES = 3
 
-    def __init__(self, kcsb: Union[str, KustoConnectionStringBuilder]):
+    def __init__(self, kcsb: Union[str, KustoConnectionStringBuilder], auto_correct_endpoint: bool = True):
         """Kusto Ingest Client constructor.
         :param kcsb: The connection string to initialize KustoClient.
         """
         super().__init__()
         if not isinstance(kcsb, KustoConnectionStringBuilder):
             kcsb = KustoConnectionStringBuilder(kcsb)
+
+        if auto_correct_endpoint:
+            kcsb["Data Source"] = BaseIngestClient.get_ingestion_endpoint(kcsb.data_source)
+
         self._proxy_dict: Optional[Dict[str, str]] = None
         self._connection_datasource = kcsb.data_source
         self._resource_manager = _ResourceManager(KustoClient(kcsb))
@@ -129,11 +132,7 @@ class QueuedIngestClient(BaseIngestClient):
         if self._is_closed:
             raise KustoClosedError()
 
-        try:
-            queues = self._resource_manager.get_ingestion_queues()
-        except KustoServiceError as ex:
-            self._validate_endpoint_service_type()
-            raise ex
+        queues = self._resource_manager.get_ingestion_queues()
 
         authorization_context = self._resource_manager.get_authorization_context()
         ingestion_blob_info = IngestionBlobInfo(blob_descriptor, ingestion_properties=ingestion_properties, auth_context=authorization_context)
@@ -160,46 +159,7 @@ class QueuedIngestClient(BaseIngestClient):
                     raise KustoQueueError() from e
 
     def _get_containers(self) -> List[_ResourceUri]:
-        try:
-            containers = self._resource_manager.get_containers()
-        except KustoServiceError as ex:
-            self._validate_endpoint_service_type()
-            raise ex
-        return containers
-
-    def _validate_endpoint_service_type(self):
-        if not self._hostname_starts_with_ingest(self._connection_datasource):
-            if not self._endpoint_service_type:
-                self._endpoint_service_type = self._retrieve_service_type()
-
-            if self._EXPECTED_SERVICE_TYPE != self._endpoint_service_type:
-                if not self._suggested_endpoint_uri:
-                    self._suggested_endpoint_uri = self._generate_endpoint_suggestion(self._connection_datasource)
-                    if not self._suggested_endpoint_uri:
-                        raise KustoInvalidEndpointError(self._EXPECTED_SERVICE_TYPE, self._endpoint_service_type)
-                raise KustoInvalidEndpointError(self._EXPECTED_SERVICE_TYPE, self._endpoint_service_type, self._suggested_endpoint_uri)
-
-    def _retrieve_service_type(self) -> str:
-        return self._resource_manager.retrieve_service_type()
-
-    def _generate_endpoint_suggestion(self, datasource: str) -> Optional[str]:
-        """The default is not passing a suggestion to the exception String"""
-        endpoint_uri_to_suggest_str = None
-        if datasource.strip():
-            try:
-                endpoint_uri_to_suggest = urlparse(datasource)  # Standardize URL formatting
-                endpoint_uri_to_suggest = urlparse(endpoint_uri_to_suggest.scheme + "://" + self._INGEST_PREFIX + endpoint_uri_to_suggest.hostname)
-                endpoint_uri_to_suggest_str = endpoint_uri_to_suggest.geturl()
-            except Exception:
-                # TODO: Add logging infrastructure so we can tell the user as a warning:
-                #   "Couldn't generate suggested endpoint due to problem parsing datasource, with exception: {ex}. The correct endpoint is usually the Engine endpoint with '{self._INGEST_PREFIX}' prepended to the hostname."
-                pass
-        return endpoint_uri_to_suggest_str
-
-    def _hostname_starts_with_ingest(self, datasource: str) -> bool:
-        datasource_uri = urlparse(datasource)
-        hostname = datasource_uri.hostname
-        return hostname and hostname.startswith(self._INGEST_PREFIX)
+        return self._resource_manager.get_containers()
 
     def upload_blob(
         self,

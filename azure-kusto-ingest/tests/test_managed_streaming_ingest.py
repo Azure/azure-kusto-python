@@ -101,7 +101,7 @@ class TestManagedStreamingIngestClient:
         )
 
         data_format = DataFormat.ORC  # Using orc to avoid compression
-        ingest_client = ManagedStreamingIngestClient.from_dm_kcsb("https://ingest-somecluster.kusto.windows.net")
+        ingest_client = ManagedStreamingIngestClient("https://ingest-somecluster.kusto.windows.net")
         ingestion_properties = IngestionProperties(database="database", table="table", data_format=data_format)
 
         initial_bytes = bytearray(os.urandom(5 * 1024 * 1024))
@@ -159,7 +159,7 @@ class TestManagedStreamingIngestClient:
         )
 
         data_format = DataFormat.ORC  # Using orc to avoid compression
-        ingest_client = ManagedStreamingIngestClient.from_engine_kcsb("https://somecluster.kusto.windows.net")
+        ingest_client = ManagedStreamingIngestClient("https://somecluster.kusto.windows.net")
         ingestion_properties = IngestionProperties(database="database", table="table", data_format=data_format)
 
         initial_bytes = bytearray(os.urandom(5 * 1024 * 1024))
@@ -197,7 +197,7 @@ class TestManagedStreamingIngestClient:
             responses.POST, "https://ingest-somecluster.kusto.windows.net/v1/rest/mgmt", callback=queued_request_callback, content_type="application/json"
         )
 
-        ingest_client = ManagedStreamingIngestClient.from_engine_kcsb("https://somecluster.kusto.windows.net")
+        ingest_client = ManagedStreamingIngestClient("https://somecluster.kusto.windows.net")
         ingest_client._set_retry_settings(0)
         ingestion_properties = IngestionProperties(database="database", table="table")
 
@@ -250,7 +250,7 @@ class TestManagedStreamingIngestClient:
             content_type="application/json",
         )
 
-        ingest_client = ManagedStreamingIngestClient.from_engine_kcsb("https://somecluster.kusto.windows.net")
+        ingest_client = ManagedStreamingIngestClient("https://somecluster.kusto.windows.net")
         ingest_client._set_retry_settings(0)
         ingestion_properties = IngestionProperties(database="database", table="table")
 
@@ -304,7 +304,7 @@ class TestManagedStreamingIngestClient:
             content_type="application/json",
         )
 
-        ingest_client = ManagedStreamingIngestClient.from_dm_kcsb("https://ingest-somecluster.kusto.windows.net")
+        ingest_client = ManagedStreamingIngestClient("https://ingest-somecluster.kusto.windows.net")
         ingestion_properties = IngestionProperties(database="database", table="table", data_format=DataFormat.CSV)
 
         current_dir = os.getcwd()
@@ -335,7 +335,7 @@ class TestManagedStreamingIngestClient:
             content_type="application/json",
         )
 
-        ingest_client = ManagedStreamingIngestClient.from_dm_kcsb("https://ingest-somecluster.kusto.windows.net")
+        ingest_client = ManagedStreamingIngestClient("https://ingest-somecluster.kusto.windows.net")
         ingestion_properties = IngestionProperties(database="database", table="table")
 
         blob_path = (
@@ -351,3 +351,45 @@ class TestManagedStreamingIngestClient:
             mock_upload_blob_from_stream=None,
             expected_url="https://storageaccount.blob.core.windows.net/tempstorage/database__table__11111111-1111-1111-1111-111111111111__tmpbvk40leg?",
         )
+
+    def test_client_uri_from_query_endpoint(self):
+        client = ManagedStreamingIngestClient("https://somecluster.kusto.windows.net")
+        assert (
+            client.queued_client._connection_datasource == "https://ingest-somecluster.kusto.windows.net"
+        ), "Client URI was not extracted correctly from query endpoint"
+
+        assert client.queued_client._resource_manager._kusto_client._kusto_cluster == "https://ingest-somecluster.kusto.windows.net/"
+
+        assert (
+            client.streaming_client._kusto_client._kusto_cluster == "https://somecluster.kusto.windows.net/"
+        ), "Client URI was not extracted correctly from ingestion endpoint"
+
+    def test_client_uri_from_ingestion_endpoint(self):
+        client = ManagedStreamingIngestClient("https://ingest-somecluster.kusto.windows.net")
+        assert (
+            client.queued_client._connection_datasource == "https://ingest-somecluster.kusto.windows.net"
+        ), "Client URI was not extracted correctly from query endpoint"
+
+        assert client.queued_client._resource_manager._kusto_client._kusto_cluster == "https://ingest-somecluster.kusto.windows.net/"
+
+        assert (
+            client.streaming_client._kusto_client._kusto_cluster == "https://somecluster.kusto.windows.net/"
+        ), "Client URI was not extracted correctly from ingestion endpoint"
+
+    def test_from_ingestion_endpoint_reserved_hostname(self):
+        client = ManagedStreamingIngestClient("https://localhost:8080")
+        assert client.queued_client._connection_datasource == "https://localhost:8080", "Client URI was not extracted correctly from query endpoint"
+        assert client.queued_client._resource_manager._kusto_client._kusto_cluster == "https://localhost:8080/"
+        assert client.streaming_client._kusto_client._kusto_cluster == "https://localhost:8080/"
+
+        client = ManagedStreamingIngestClient("https://192.168.14.4")
+        assert client.queued_client._connection_datasource == "https://192.168.14.4", "Client URI was not extracted correctly from query endpoint"
+        assert client.queued_client._resource_manager._kusto_client._kusto_cluster == "https://192.168.14.4/"
+        assert client.streaming_client._kusto_client._kusto_cluster == "https://192.168.14.4/"
+
+        client = ManagedStreamingIngestClient("https://onebox.dev.kusto.windows.net")
+        assert (
+            client.queued_client._connection_datasource == "https://onebox.dev.kusto.windows.net"
+        ), "Client URI was not extracted correctly from query endpoint"
+        assert client.queued_client._resource_manager._kusto_client._kusto_cluster == "https://onebox.dev.kusto.windows.net/"
+        assert client.streaming_client._kusto_client._kusto_cluster == "https://onebox.dev.kusto.windows.net/"
