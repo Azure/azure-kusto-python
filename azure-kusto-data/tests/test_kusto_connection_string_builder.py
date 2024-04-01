@@ -9,7 +9,7 @@ from azure.kusto.data import KustoConnectionStringBuilder, KustoClient
 local_emulator = False
 
 
-class KustoConnectionStringBuilderTests(unittest.TestCase):
+class KustoConnectionStringBuilderTests:
     """Tests class for KustoConnectionStringBuilder."""
 
     PASSWORDS_REPLACEMENT = "****"
@@ -311,7 +311,8 @@ class KustoConnectionStringBuilderTests(unittest.TestCase):
         finally:
             assert exception_occurred
 
-    def test_add_async_token_provider(self):
+    @pytest.mark.asyncio
+    async def test_add_async_token_provider(self):
         caller_token = "caller token"
 
         async def async_token_provider():
@@ -319,7 +320,7 @@ class KustoConnectionStringBuilderTests(unittest.TestCase):
 
         kscb = KustoConnectionStringBuilder.with_async_token_provider("localhost", async_token_provider)
 
-        assert kscb.async_token_provider() is not None
+        assert (await kscb.async_token_provider()) is not None
 
         exception_occurred = False
         try:

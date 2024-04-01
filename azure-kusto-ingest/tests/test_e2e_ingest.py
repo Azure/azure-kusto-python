@@ -40,6 +40,13 @@ def is_managed_streaming(request):
     return request.param == "ManagedStreaming"
 
 
+@pytest.fixture(scope="module")
+def event_loop_policy(request):
+    if platform.system() == "Windows":
+        return asyncio.WindowsSelectorEventLoopPolicy()
+    return asyncio.DefaultEventLoopPolicy()
+
+
 class TestE2E:
     """A class to define mappings to deft table."""
 
@@ -213,16 +220,6 @@ class TestE2E:
         cls.ingest_client.close()
         cls.streaming_ingest_client.close()
         cls.managed_streaming_ingest_client.close()
-
-    @staticmethod
-    @pytest.fixture(scope="session")
-    def event_loop():
-        if platform.system() == "Windows":
-            asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-        policy = asyncio.get_event_loop_policy()
-        loop = policy.new_event_loop()
-        yield loop
-        loop.close()
 
     @classmethod
     async def get_async_client(cls) -> AsyncKustoClient:
