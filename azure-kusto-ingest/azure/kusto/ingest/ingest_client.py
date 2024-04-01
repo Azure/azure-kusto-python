@@ -49,6 +49,10 @@ class QueuedIngestClient(BaseIngestClient):
         self._proxy_dict: Optional[Dict[str, str]] = None
         self._connection_datasource = kcsb.data_source
         self._resource_manager = _ResourceManager(KustoClient(kcsb))
+        self._endpoint_service_type = None
+        self._suggested_endpoint_uri = None
+        self.application_for_tracing = kcsb.client_details.application_for_tracing
+        self.client_version_for_tracing = kcsb.client_details.version_for_tracing
 
     def close(self) -> None:
         self._resource_manager.close()
@@ -121,6 +125,8 @@ class QueuedIngestClient(BaseIngestClient):
         :param azure.kusto.ingest.BlobDescriptor blob_descriptor: An object that contains a description of the blob to be ingested.
         :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
         """
+        ingestion_properties.application_for_tracing = self.application_for_tracing
+        ingestion_properties.client_version_for_tracing = self.client_version_for_tracing
         IngestTracingAttributes.set_ingest_descriptor_attributes(blob_descriptor, ingestion_properties)
 
         if self._is_closed:
