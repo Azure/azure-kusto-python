@@ -1,6 +1,11 @@
 # This workflow will install the dependencies, run tests and lint every push
 
 name: Python package
+permissions:
+  checks: write
+  pull-requests: write
+  id-token: write
+  contents: read
 
 on:
   push:
@@ -9,9 +14,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    permissions:
-      checks: write
-      pull-requests: write
+
     strategy:
       fail-fast: false
       matrix:
@@ -20,6 +23,13 @@ jobs:
       PYTHON: ${{ matrix.python-version }}
 
     steps:
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          auth-type: IDENTITY
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
       - uses: actions/checkout@v4
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
@@ -38,9 +48,6 @@ jobs:
           version: "23.3.0"
       - name: EtoE Test with pytest
         env:
-          APP_ID: ${{ secrets.APP_ID }}
-          APP_KEY: ${{ secrets.APP_KEY }}
-          AUTH_ID: ${{ secrets.AUTH_ID }}
           TEST_DATABASE: ${{ secrets.TEST_DATABASE }}
           TEST_BLOB: ${{ secrets.TEST_BLOB }}
           ENGINE_CONNECTION_STRING: ${{ secrets.ENGINE_CONNECTION_STRING }}
