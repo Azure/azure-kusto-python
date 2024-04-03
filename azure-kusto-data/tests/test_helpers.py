@@ -20,7 +20,11 @@ def test_dataframe_from_result_table():
     response = KustoResponseDataSetV2(json.loads(data))
     df = dataframe_from_result_table(response.primary_results[0])
 
-    assert df.iloc[0].RecordName == "now"
+    if pandas.hasattr("StringDType"):
+        assert df["RecordName"].dtype == pandas.StringDtype()
+        assert str(df.iloc[0].RecordName) == "now"
+    else:
+        assert df.iloc[0].RecordName == "now"
     assert type(df.iloc[0].RecordTime) is pandas._libs.tslibs.timestamps.Timestamp
     assert all(getattr(df.iloc[0].RecordTime, k) == v for k, v in {"year": 2021, "month": 12, "day": 22, "hour": 11, "minute": 43, "second": 00}.items())
     assert type(df.iloc[0].RecordBool) is numpy.bool_
