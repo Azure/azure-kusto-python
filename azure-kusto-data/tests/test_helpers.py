@@ -20,7 +20,7 @@ def test_dataframe_from_result_table():
     response = KustoResponseDataSetV2(json.loads(data))
     df = dataframe_from_result_table(response.primary_results[0])
 
-    if pandas.hasattr("StringDType"):
+    if hasattr(pandas, "StringDType"):
         assert df["RecordName"].dtype == pandas.StringDtype()
         assert str(df.iloc[0].RecordName) == "now"
     else:
