@@ -48,8 +48,6 @@ def dataframe_from_result_table(table: "Union[KustoResultTable, KustoStreamingRe
 
     columns = [col.column_name for col in table.columns]
     frame = pd.DataFrame(table.raw_rows, columns=columns)
-    print(frame.dtypes)
-    print(frame.infer_objects().dtypes)
 
     # fix types
     for col in table.columns:
