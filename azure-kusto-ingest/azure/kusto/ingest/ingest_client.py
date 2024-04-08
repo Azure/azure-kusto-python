@@ -125,8 +125,6 @@ class QueuedIngestClient(BaseIngestClient):
         :param azure.kusto.ingest.BlobDescriptor blob_descriptor: An object that contains a description of the blob to be ingested.
         :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
         """
-        ingestion_properties.application_for_tracing = self.application_for_tracing
-        ingestion_properties.client_version_for_tracing = self.client_version_for_tracing
         IngestTracingAttributes.set_ingest_descriptor_attributes(blob_descriptor, ingestion_properties)
 
         if self._is_closed:
@@ -135,7 +133,13 @@ class QueuedIngestClient(BaseIngestClient):
         queues = self._resource_manager.get_ingestion_queues()
 
         authorization_context = self._resource_manager.get_authorization_context()
-        ingestion_blob_info = IngestionBlobInfo(blob_descriptor, ingestion_properties=ingestion_properties, auth_context=authorization_context)
+        ingestion_blob_info = IngestionBlobInfo(
+            blob_descriptor,
+            ingestion_properties=ingestion_properties,
+            auth_context=authorization_context,
+            application_for_tracing=self.application_for_tracing,
+            client_version_for_tracing=self.client_version_for_tracing,
+        )
         ingestion_blob_info_json = ingestion_blob_info.to_json()
         retries_left = min(self._MAX_RETRIES, len(queues))
         for queue in queues:
