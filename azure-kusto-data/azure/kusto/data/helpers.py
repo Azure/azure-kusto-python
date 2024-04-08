@@ -51,6 +51,8 @@ def dataframe_from_result_table(table: "Union[KustoResultTable, KustoStreamingRe
 
     # fix types
     for col in table.columns:
+        if col.column_type == "string" and hasattr(pd, "StringDType"):
+            frame[col.column_name] = frame[col.column_name].astype(pd.StringDType())
         if col.column_type == "bool":
             frame[col.column_name] = frame[col.column_name].astype(pd.BooleanDtype() if nullable_bools else bool)
         elif col.column_type == "int":

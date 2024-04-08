@@ -125,6 +125,8 @@ class QueuedIngestClient(BaseIngestClient):
         :param azure.kusto.ingest.BlobDescriptor blob_descriptor: An object that contains a description of the blob to be ingested.
         :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
         """
+        ingestion_properties.application_for_tracing = self.application_for_tracing
+        ingestion_properties.client_version_for_tracing = self.client_version_for_tracing
         IngestTracingAttributes.set_ingest_descriptor_attributes(blob_descriptor, ingestion_properties)
 
         if self._is_closed:
