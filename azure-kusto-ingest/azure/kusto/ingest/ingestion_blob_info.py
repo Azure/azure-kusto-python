@@ -10,7 +10,14 @@ if TYPE_CHECKING:
 
 
 class IngestionBlobInfo:
-    def __init__(self, blob_descriptor: "BlobDescriptor", ingestion_properties: "IngestionProperties", auth_context=None):
+    def __init__(
+        self,
+        blob_descriptor: "BlobDescriptor",
+        ingestion_properties: "IngestionProperties",
+        auth_context=None,
+        application_for_tracing=None,
+        client_version_for_tracing=None,
+    ):
         self.properties = dict()
         self.properties["BlobPath"] = blob_descriptor.path
         if blob_descriptor.size:
@@ -24,8 +31,8 @@ class IngestionBlobInfo:
         self.properties["ReportMethod"] = ingestion_properties.report_method.value
         self.properties["SourceMessageCreationTime"] = datetime.utcnow().isoformat()
         self.properties["Id"] = str(blob_descriptor.source_id)
-        self.properties["ApplicationForTracing"] = ingestion_properties.application_for_tracing
-        self.properties["ClientVersionForTracing"] = ingestion_properties.client_version_for_tracing
+        self.properties["ApplicationForTracing"] = application_for_tracing
+        self.properties["ClientVersionForTracing"] = client_version_for_tracing
 
         additional_properties = ingestion_properties.additional_properties or {}
         additional_properties["authorizationContext"] = auth_context
