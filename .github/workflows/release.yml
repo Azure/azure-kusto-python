@@ -2,6 +2,12 @@
 # For more information see: https://help.github.com/en/actions/language-and-framework-guides/using-python-with-github-actions#publishing-to-package-registries
 
 name: release
+permissions:
+  checks: write
+  pull-requests: write
+  packages: write
+  deployments: write
+  contents: write
 
 on:
   push:

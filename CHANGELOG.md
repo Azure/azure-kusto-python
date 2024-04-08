@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Managed streaming fallback to queued
 - Fixed token providers not being closed properly
 - Internal test fixes
+- Pandas support the new string type, if available
 
 ### Changed
 - Changed binary files data format compression to false
