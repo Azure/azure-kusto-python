@@ -17,8 +17,7 @@ on:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
-    environment: release
+    runs-on: ubuntu-latest environment: release
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python
@@ -37,8 +36,6 @@ jobs:
       working-directory: ./azure-kusto-ingest
       run: |
         python setup.py sdist bdist_wheel
-      with:
-        args: azure-kusto-data/dist/*.tar.gz azure-kusto-ingest/dist/*.tar.gz azure-kusto-data/dist/*.whl azure-kusto-ingest/dist/*.whl
     - name: Publish azure-kusto-data
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
@@ -51,3 +48,5 @@ jobs:
       uses: docker://antonyurchenko/git-release:latest
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        args: azure-kusto-data/dist/*.tar.gz azure-kusto-ingest/dist/*.tar.gz azure-kusto-data/dist/*.whl azure-kusto-ingest/dist/*.whl
