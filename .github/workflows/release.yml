@@ -17,7 +17,8 @@ on:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest environment: release
+    runs-on: ubuntu-latest
+    environment: release
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python
