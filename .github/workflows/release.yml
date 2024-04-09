@@ -8,6 +8,7 @@ permissions:
   packages: write
   deployments: write
   contents: write
+  id-token: write
 
 on:
   push:
@@ -16,9 +17,8 @@ on:
 
 jobs:
   deploy:
-
     runs-on: ubuntu-latest
-
+    environment: release
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python
@@ -37,23 +37,17 @@ jobs:
       working-directory: ./azure-kusto-ingest
       run: |
         python setup.py sdist bdist_wheel
+      with:
+        args: azure-kusto-data/dist/*.tar.gz azure-kusto-ingest/dist/*.tar.gz azure-kusto-data/dist/*.whl azure-kusto-ingest/dist/*.whl
+    - name: Publish azure-kusto-data
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        packages-dir: azure-kusto-data/dist
+    - name: Publish azure-kusto-ingest
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        packages-dir: azure-kusto-ingest/dist
     - name: Release
       uses: docker://antonyurchenko/git-release:latest
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        args: azure-kusto-data/dist/*.tar.gz azure-kusto-ingest/dist/*.tar.gz azure-kusto-data/dist/*.whl azure-kusto-ingest/dist/*.whl
-    - name: Publish azure-kusto-data
-      working-directory: ./azure-kusto-data
-      env:
-        TWINE_USERNAME: microsoftkusto
-        TWINE_PASSWORD: ${{ secrets.pypi_password }}
-      run: |
-        twine upload dist/*
-    - name: Publish azure-kusto-ingest
-      working-directory: ./azure-kusto-ingest
-      env:
-        TWINE_USERNAME: microsoftkusto
-        TWINE_PASSWORD: ${{ secrets.pypi_password }}
-      run: |
-        twine upload dist/*
