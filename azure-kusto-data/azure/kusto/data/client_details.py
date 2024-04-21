@@ -13,6 +13,7 @@ NONE = "NONE"
 REPLACE_REGEX = re.compile(r"[^a-zA-Z0-9_.\-()]")
 MAX_HEADER_LENGTH = 100
 
+
 @functools.lru_cache(maxsize=1)
 def default_script() -> str:
     """Returns the name of the script that is currently running"""

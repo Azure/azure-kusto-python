@@ -229,9 +229,10 @@ def test_set_connector_escaped():
     assert params.request_headers["x-ms-user"] == "myUser"
     assert params.request_headers["x-ms-client-version"].startswith("Kusto.Python.Client:")
 
-    assert (params.request_headers["x-ms-app"] ==
-            "Kusto.Caf_:1_._0"
-            "|App.my_test____app:ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss|myField:myValue")
+    assert (
+        params.request_headers["x-ms-app"] == "Kusto.Caf_:1_._0"
+        "|App.my_test____app:ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss|myField:myValue"
+    )
 
 
 def test_kcsb_direct_escaped():
