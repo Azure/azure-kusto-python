@@ -141,10 +141,10 @@ def test_set_connector_name_and_version():
     )
 
     assert params.request_headers["x-ms-client-request-id"] is not None
-    assert params.request_headers["x-ms-user"] == "[none]"
+    assert params.request_headers["x-ms-user"] == "NONE"
     assert params.request_headers["x-ms-client-version"].startswith("Kusto.Python.Client:")
 
-    assert params.request_headers["x-ms-app"].startswith("Kusto.myConnector:{myVersion}|App.")
+    assert params.request_headers["x-ms-app"].startswith("Kusto.myConnector:myVersion|App.")
 
 
 def test_set_connector_no_app_version():
@@ -167,7 +167,7 @@ def test_set_connector_no_app_version():
     assert len(params.request_headers["x-ms-user"]) > 0
     assert params.request_headers["x-ms-client-version"].startswith("Kusto.Python.Client:")
 
-    assert params.request_headers["x-ms-app"].startswith("Kusto.myConnector:{myVersion}|App.")
+    assert params.request_headers["x-ms-app"].startswith("Kusto.myConnector:myVersion|App.")
 
 
 def test_set_connector_full():
@@ -198,4 +198,61 @@ def test_set_connector_full():
     assert params.request_headers["x-ms-user"] == "myUser"
     assert params.request_headers["x-ms-client-version"].startswith("Kusto.Python.Client:")
 
-    assert params.request_headers["x-ms-app"] == "Kusto.myConnector:{myVersion}|App.{myApp}:{myAppVersion}|myField:{myValue}"
+    assert params.request_headers["x-ms-app"] == "Kusto.myConnector:myVersion|App.myApp:myAppVersion|myField:myValue"
+
+
+def test_set_connector_escaped():
+    kcsb = KustoConnectionStringBuilder("test")
+    kcsb._set_connector_details(
+        "Café",
+        "1 . 0",
+        app_name=r"my|test\{}\app",
+        app_version="s" * 1000,
+        send_user=True,
+        override_user="myUser",
+        additional_fields=[("myField", "myValue")],
+    )
+    crp = ClientRequestProperties()
+
+    params = ExecuteRequestParams._from_query(
+        "somequery",
+        "somedatabase",
+        crp,
+        {},
+        timedelta(seconds=10),
+        timedelta(seconds=10),
+        timedelta(seconds=10),
+        kcsb.client_details,
+    )
+
+    assert params.request_headers["x-ms-client-request-id"] is not None
+    assert params.request_headers["x-ms-user"] == "myUser"
+    assert params.request_headers["x-ms-client-version"].startswith("Kusto.Python.Client:")
+
+    assert (params.request_headers["x-ms-app"] ==
+            "Kusto.Caf_:1_._0"
+            "|App.my_test____app:ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss|myField:myValue")
+
+
+def test_kcsb_direct_escaped():
+    kcsb = KustoConnectionStringBuilder("test")
+    kcsb.application_for_tracing = "Café"
+    kcsb.user_name_for_tracing = "user with spaces"
+    crp = ClientRequestProperties()
+
+    params = ExecuteRequestParams._from_query(
+        "somequery",
+        "somedatabase",
+        crp,
+        {},
+        timedelta(seconds=10),
+        timedelta(seconds=10),
+        timedelta(seconds=10),
+        kcsb.client_details,
+    )
+
+    assert params.request_headers["x-ms-client-request-id"] is not None
+    assert params.request_headers["x-ms-user"] == "user_with_spaces"
+    assert params.request_headers["x-ms-client-version"].startswith("Kusto.Python.Client:")
+
+    assert params.request_headers["x-ms-app"] == "Caf_"

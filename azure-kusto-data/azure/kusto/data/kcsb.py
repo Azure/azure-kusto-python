@@ -128,6 +128,7 @@ class KustoConnectionStringBuilder:
         https://kusto.azurewebsites.net/docs/concepts/kusto_connection_strings.html
         """
         assert_string_is_not_empty(connection_string)
+        self._client_details: Optional[ClientDetails] = None
         self._internal_dict = {}
         self._token_provider = None
         self._async_token_provider = None
@@ -644,7 +645,7 @@ class KustoConnectionStringBuilder:
 
     @property
     def client_details(self) -> ClientDetails:
-        return ClientDetails(self.application_for_tracing, self.user_name_for_tracing)
+        return self._client_details or ClientDetails(self.application_for_tracing, self.user_name_for_tracing)
 
     def _set_connector_details(
         self,
@@ -666,10 +667,7 @@ class KustoConnectionStringBuilder:
         :param app_version: The version of the containing application
         :param additional_fields: Additional fields to add to the header
         """
-        client_details = ClientDetails.set_connector_details(name, version, app_name, app_version, send_user, override_user, additional_fields)
-
-        self.application_for_tracing = client_details.application_for_tracing
-        self.user_name_for_tracing = client_details.user_name_for_tracing
+        self._client_details = ClientDetails.set_connector_details(name, version, app_name, app_version, send_user, override_user, additional_fields)
 
     def __str__(self) -> str:
         dict_copy = self._internal_dict.copy()

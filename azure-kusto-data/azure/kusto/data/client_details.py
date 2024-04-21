@@ -8,10 +8,10 @@ from typing import List, Tuple, Optional
 from .env_utils import get_env
 from azure.kusto.data._version import VERSION
 
-NONE = "[none]"
+NONE = "NONE"
 
-REPLACE_REGEX = re.compile(r"[\r\n\s{}|]+")
-
+REPLACE_REGEX = re.compile(r"[^a-zA-Z0-9_.\-()]")
+MAX_HEADER_LENGTH = 100
 
 @functools.lru_cache(maxsize=1)
 def default_script() -> str:
@@ -57,7 +57,7 @@ def format_header(args: List[Tuple[str, str]]) -> str:
 
 
 def escape_field(field: str):
-    return f"{{{REPLACE_REGEX.sub('_', field)}}}"
+    return f"{REPLACE_REGEX.sub('_', field[0:MAX_HEADER_LENGTH])}"
 
 
 @dataclass
@@ -65,10 +65,14 @@ class ClientDetails:
     application_for_tracing: str
     user_name_for_tracing: str
     version_for_tracing: str = format_version()
+    should_escape: bool = True
 
     def __post_init__(self):
         self.application_for_tracing = self.application_for_tracing or default_script()
         self.user_name_for_tracing = self.user_name_for_tracing or default_user()
+        if self.should_escape:
+            self.application_for_tracing = escape_field(self.application_for_tracing)
+            self.user_name_for_tracing = escape_field(self.user_name_for_tracing)
 
     @staticmethod
     def set_connector_details(
@@ -80,12 +84,12 @@ class ClientDetails:
         override_user: Optional[str] = None,
         additional_fields: Optional[List[Tuple[str, str]]] = None,
     ) -> "ClientDetails":
-        params = [("Kusto." + name, version)]
+        params = [("Kusto." + escape_field(name), escape_field(version))]
 
-        app_name = app_name or default_script()
-        app_version = app_version or NONE
+        app_name = escape_field(app_name or default_script())
+        app_version = escape_field(app_version or NONE)
 
-        params.append(("App." + escape_field(app_name), app_version))
+        params.append(("App." + app_name, app_version))
         params.extend(additional_fields or [])
 
         user = NONE
@@ -93,4 +97,4 @@ class ClientDetails:
         if send_user:
             user = override_user or default_user()
 
-        return ClientDetails(application_for_tracing=format_header(params), user_name_for_tracing=user)
+        return ClientDetails(application_for_tracing=format_header(params), user_name_for_tracing=user, should_escape=False)
