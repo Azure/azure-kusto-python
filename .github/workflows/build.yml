@@ -42,7 +42,8 @@ jobs:
           pip install pytest-cov --user
           pip install ./azure-kusto-data[aio,pandas] ./azure-kusto-ingest[aio,pandas] --user
           pip freeze
-      - uses: psf/black@stable
+      # We have to use an old version of this plugin, as the new one assumes python 3.8
+      - uses: psf/black@c8f1a5542c257491e1e093b1404481ece7f7e02c
         with:
           options: "--check --diff --line-length 160"
           version: "23.3.0"
