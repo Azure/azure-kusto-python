@@ -9,10 +9,9 @@ from uuid import uuid4
 
 from azure.storage.queue import QueueMessage, QueueClient
 
-from azure.kusto.ingest import QueuedIngestClient
+from azure.kusto.ingest import QueuedIngestClient, IngestionResult, IngestionStatus
 from azure.kusto.ingest._resource_manager import _ResourceUri
 from azure.kusto.ingest.status import KustoIngestStatusQueues, SuccessMessage, FailureMessage
-from kusto.ingest import IngestionResult, IngestionStatus
 
 SAS = "sp=rl&st=2020-05-20T13:38:37Z&se=2020-05-21T13:38:37Z&sv=2019-10-10&sr=c&sig=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 ENDPOINT_SUFFIX = "core.windows.net"
