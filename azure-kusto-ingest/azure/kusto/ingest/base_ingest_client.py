@@ -65,9 +65,11 @@ class IngestionResult:
 
     def __repr__(self):
         # Remove query parameters from blob_uri, if exists
+        obfuscated_path = None
         if isinstance(self.blob_uri, str):
             obfuscated_path = self.blob_uri.split("?")[0].split(";")[0]
-        return f"IngestionResult(status={self.status}, database={self.database}, table={self.table}, source_id={self.source_id}, blob_uri={obfuscated_path})"
+        blob_uri = f", blob_uri={obfuscated_path}" if obfuscated_path else ""
+        return f"IngestionResult(status={self.status}, database={self.database}, table={self.table}, source_id={self.source_id}{blob_uri})"
 
 
 class BaseIngestClient(metaclass=ABCMeta):
