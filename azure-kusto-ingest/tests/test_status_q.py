@@ -256,7 +256,8 @@ class StatusQTests(unittest.TestCase):
     def test_status_sanity(self):
         i = IngestionResult(IngestionStatus.QUEUED, "db", "table", uuid.UUID("11111111-1111-1111-1111-111111111111"), "path")
         assert (
-            repr(i) == "IngestionResult(status=IngestionStatus.QUEUED, database=db, table=table, source_id=11111111-1111-1111-1111-111111111111, blob_uri=path)"
+            repr(i)
+            == "IngestionResult(status=IngestionStatus.QUEUED, database=db, table=table, source_id=11111111-1111-1111-1111-111111111111, obfuscated_blob_uri=path)"
         )
 
         no_path = IngestionResult(IngestionStatus.QUEUED, "db", "table", uuid.UUID("11111111-1111-1111-1111-111111111111"))
