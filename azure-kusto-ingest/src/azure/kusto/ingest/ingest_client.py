@@ -1,6 +1,6 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
-from typing import Union, AnyStr, IO, List, Optional, Dict
+from typing import Union, IO, List, Optional, Dict
 
 from azure.core.tracing import SpanKind
 from azure.core.tracing.decorator import distributed_trace

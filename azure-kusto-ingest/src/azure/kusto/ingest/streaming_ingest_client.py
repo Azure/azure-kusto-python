@@ -1,6 +1,6 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
-from typing import Union, AnyStr, Optional
+from typing import Union, Optional
 from typing import IO
 
 from azure.core.tracing.decorator import distributed_trace
@@ -59,7 +59,7 @@ class KustoStreamingIngestClient(BaseIngestClient):
             return self.ingest_from_stream(stream_descriptor, ingestion_properties)
 
     @distributed_trace(kind=SpanKind.CLIENT)
-    def ingest_from_stream(self, stream_descriptor: Union[StreamDescriptor, IO[AnyStr]], ingestion_properties: IngestionProperties) -> IngestionResult:
+    def ingest_from_stream(self, stream_descriptor: Union[StreamDescriptor, IO], ingestion_properties: IngestionProperties) -> IngestionResult:
         """Ingest from io streams.
         :param .StreamDescriptor stream_descriptor: An object that contains a description of the stream to
                be ingested.
@@ -73,7 +73,7 @@ class KustoStreamingIngestClient(BaseIngestClient):
         return self._ingest_from_stream_with_client_request_id(stream_descriptor, ingestion_properties, None)
 
     def _ingest_from_stream_with_client_request_id(
-        self, stream_descriptor: Union[StreamDescriptor, IO[AnyStr]], ingestion_properties: IngestionProperties, client_request_id: Optional[str]
+        self, stream_descriptor: Union[StreamDescriptor, IO], ingestion_properties: IngestionProperties, client_request_id: Optional[str]
     ) -> IngestionResult:
         stream_descriptor = BaseIngestClient._prepare_stream(stream_descriptor, ingestion_properties)
         additional_properties = None

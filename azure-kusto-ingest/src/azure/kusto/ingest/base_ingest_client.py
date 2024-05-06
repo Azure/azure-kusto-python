@@ -6,7 +6,7 @@ import uuid
 from abc import ABCMeta, abstractmethod
 from enum import Enum
 from io import TextIOWrapper
-from typing import TYPE_CHECKING, Union, IO, AnyStr, Optional, Tuple
+from typing import TYPE_CHECKING, Union, IO, Optional, Tuple
 from urllib.parse import urlparse
 
 from azure.kusto.data.data_format import DataFormat
@@ -82,7 +82,7 @@ class BaseIngestClient(metaclass=ABCMeta):
             raise KustoClosedError()
 
     @abstractmethod
-    def ingest_from_stream(self, stream_descriptor: Union[StreamDescriptor, IO[AnyStr]], ingestion_properties: IngestionProperties) -> IngestionResult:
+    def ingest_from_stream(self, stream_descriptor: Union[StreamDescriptor, IO], ingestion_properties: IngestionProperties) -> IngestionResult:
         """Ingest from io streams.
         :param stream_descriptor: An object that contains a description of the stream to be ingested.
         :param .IngestionProperties ingestion_properties: Ingestion properties.
@@ -127,7 +127,7 @@ class BaseIngestClient(metaclass=ABCMeta):
             os.unlink(temp_file_path)
 
     @staticmethod
-    def _prepare_stream(stream_descriptor: Union[StreamDescriptor, IO[AnyStr]], ingestion_properties: IngestionProperties) -> StreamDescriptor:
+    def _prepare_stream(stream_descriptor: Union[StreamDescriptor, IO], ingestion_properties: IngestionProperties) -> StreamDescriptor:
         """
         Prepares a StreamDescriptor instance for ingest operation based on ingestion properties
         :param StreamDescriptor stream_descriptor: Stream descriptor instance

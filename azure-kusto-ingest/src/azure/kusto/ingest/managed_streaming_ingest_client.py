@@ -1,6 +1,5 @@
-import uuid
 from io import SEEK_SET
-from typing import AnyStr, IO, TYPE_CHECKING, Union, Optional, cast
+from typing import IO, TYPE_CHECKING, Union, Optional, cast
 
 from azure.kusto.ingest.descriptors import DescriptorBase, OptionalUUID
 from tenacity import Retrying, _utils, stop_after_attempt, wait_random_exponential
@@ -38,10 +37,10 @@ class ManagedStreamingIngestClient(BaseIngestClient):
     MAX_STREAMING_SIZE_IN_BYTES = 4 * 1024 * 1024
 
     def __init__(
-            self,
-            engine_kcsb: Union[KustoConnectionStringBuilder, str],
-            dm_kcsb: Union[KustoConnectionStringBuilder, str, None] = None,
-            auto_correct_endpoint: bool = True,
+        self,
+        engine_kcsb: Union[KustoConnectionStringBuilder, str],
+        dm_kcsb: Union[KustoConnectionStringBuilder, str, None] = None,
+        auto_correct_endpoint: bool = True,
     ):
         super().__init__()
         self.queued_client = QueuedIngestClient(dm_kcsb if dm_kcsb is not None else engine_kcsb, auto_correct_endpoint)
@@ -131,10 +130,10 @@ class ManagedStreamingIngestClient(BaseIngestClient):
         return self.queued_client.ingest_from_blob(blob_descriptor, ingestion_properties)
 
     def _stream_with_retries(
-            self,
-            length: int,
-            descriptor: DescriptorBase,
-            props: IngestionProperties,
+        self,
+        length: int,
+        descriptor: DescriptorBase,
+        props: IngestionProperties,
     ) -> Optional[IngestionResult]:
         from_stream = isinstance(descriptor, StreamDescriptor)
         if length > self.MAX_STREAMING_SIZE_IN_BYTES:

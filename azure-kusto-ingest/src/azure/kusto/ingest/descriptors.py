@@ -8,7 +8,7 @@ import uuid
 from copy import copy
 from gzip import GzipFile
 from io import BytesIO, SEEK_END
-from typing import Union, Optional, AnyStr, IO
+from typing import Union, Optional, IO
 from zipfile import ZipFile
 
 from azure.storage.blob import BlobClient
@@ -29,6 +29,7 @@ def ensure_uuid(maybe_uuid: OptionalUUID) -> uuid.UUID:
 class DescriptorBase(abc.ABC):
     """This base class abstracts tracing attributes for all implementations."""
 
+    source_id: OptionalUUID
     _SOURCE_ID = "source_id"
 
     @abc.abstractmethod
@@ -162,9 +163,7 @@ class StreamDescriptor(DescriptorBase):
     _STREAM_NAME = "stream_name"
 
     # TODO: currently we always assume that streams are gz compressed (will get compressed before sending), should we expand that?
-    def __init__(
-        self, stream: IO[AnyStr], source_id: OptionalUUID = None, is_compressed: bool = False, stream_name: Optional[str] = None, size: Optional[int] = None
-    ):
+    def __init__(self, stream: IO, source_id: OptionalUUID = None, is_compressed: bool = False, stream_name: Optional[str] = None, size: Optional[int] = None):
         """
         :param stream: in-memory stream object.
         :type stream: io.BaseIO
@@ -173,14 +172,10 @@ class StreamDescriptor(DescriptorBase):
         :param is_compressed: specify if the provided stream is compressed
         :type is_compressed: boolean
         """
-        self.stream: IO[AnyStr] = stream
-        self.source_id: uuid.UUID = ensure_uuid(source_id)
+        self.stream: IO = stream
+        self.source_id = ensure_uuid(source_id)
         self.is_compressed: bool = is_compressed
-        self.stream_name: str = stream_name
-        if self.stream_name is None:
-            self.stream_name = "stream"
-            if is_compressed:
-                self.stream_name += ".gz"
+        self.stream_name: str = stream_name if stream_name else ("stream" + (".gz" if is_compressed else ""))
         self.size: Optional[int] = size
 
     def compress_stream(self) -> None:
@@ -212,7 +207,7 @@ class StreamDescriptor(DescriptorBase):
         return stream_descriptor
 
     @classmethod
-    def get_instance(cls, stream_descriptor: Union["StreamDescriptor", IO[AnyStr]]) -> "StreamDescriptor":
+    def get_instance(cls, stream_descriptor: Union["StreamDescriptor", IO]) -> "StreamDescriptor":
         if not isinstance(stream_descriptor, cls):
             descriptor = cls(stream_descriptor)
         else:

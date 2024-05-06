@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Optional, Any, Tuple, Dict, AnyStr, IO, List, Iterator
+from typing import Optional, Any, Tuple, Dict, IO, List, Iterator
 
 import ijson
 from ijson import IncompleteJSONError
@@ -46,7 +46,7 @@ class JsonToken:
 
 
 class JsonTokenReader:
-    def __init__(self, stream: IO[AnyStr]):
+    def __init__(self, stream: IO):
         self.json_iter = ijson.parse(stream, use_float=True)
 
     def __iter__(self) -> "JsonTokenReader":

@@ -3,7 +3,7 @@
 import socket
 import sys
 from datetime import timedelta
-from typing import AnyStr, IO, List, Optional, TYPE_CHECKING, Tuple, Union
+from typing import IO, List, Optional, TYPE_CHECKING, Tuple, Union
 
 import requests
 import requests.adapters
@@ -217,7 +217,7 @@ class KustoClient(_KustoClientBase):
         self,
         database: Optional[str],
         table: str,
-        stream: Optional[IO[AnyStr]],
+        stream: Optional[IO],
         blob_url: Optional[str],
         stream_format: Union[DataFormat, str],
         properties: Optional[ClientRequestProperties] = None,
@@ -230,7 +230,7 @@ class KustoClient(_KustoClientBase):
         https://docs.microsoft.com/en-us/azure/data-explorer/ingest-data-streaming
         :param Optional[str] database: Target database. If not provided, will default to the "Initial Catalog" value in the connection string
         :param str table: Target table.
-        :param Optional[IO[AnyStr]] stream: a stream object or which contains the data to ingest.
+        :param Optional[IO] stream: a stream object or which contains the data to ingest.
         :param Optional[str] blob_url: An url to a blob which contains the data to ingest. Provide either this or stream.
         :param DataFormat stream_format: Format of the data in the stream.
         :param ClientRequestProperties properties: additional request properties.
