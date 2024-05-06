@@ -181,12 +181,12 @@ class KustoClient(_KustoClientBase):
         def invoker():
             return self._session.post(
                 endpoint,
-            headers=request_headers,
-            json=request.json_payload,
-            data=request.payload,
-            timeout=timeout.seconds,
-            proxy=self._proxy_url,
-            allow_redirects=False,
+                headers=request_headers,
+                json=request.json_payload,
+                data=request.payload,
+                timeout=timeout.seconds,
+                proxy=self._proxy_url,
+                allow_redirects=False,
             )
 
         try:

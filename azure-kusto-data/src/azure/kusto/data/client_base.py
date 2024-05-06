@@ -2,7 +2,6 @@ import abc
 import io
 import json
 import uuid
-from copy import copy
 from datetime import timedelta
 from typing import Union, Optional, Any, NoReturn, ClassVar, TYPE_CHECKING
 from urllib.parse import urljoin

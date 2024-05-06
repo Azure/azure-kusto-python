@@ -63,6 +63,8 @@ msal-extensions==1.1.0
 multidict==6.0.5
     # via aiohttp
     # via yarl
+nodeenv==1.8.0
+    # via pyright
 numpy==1.24.4
     # via pandas
 packaging==23.2
@@ -76,6 +78,7 @@ pycparser==2.21
     # via cffi
 pyjwt==2.8.0
     # via msal
+pyright==1.1.361
 python-dateutil==2.8.2
     # via azure-kusto-data
     # via pandas
@@ -87,6 +90,8 @@ requests==2.31.0
     # via azure-core
     # via azure-kusto-data
     # via msal
+setuptools==69.5.1
+    # via nodeenv
 six==1.16.0
     # via azure-core
     # via isodate

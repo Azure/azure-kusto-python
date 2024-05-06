@@ -2,12 +2,15 @@
 name = "azure-kusto-python"
 version = "5.0.0"
 description = "Microsoft Azure Kusto Python SDK"
-authors = [
-    { name = "Microsoft Corporation", email = "kustalk@microsoft.com" },
+dependencies = [
+    "pyright>=1.1.361",
 ]
-dependencies = []
 readme = "README.md"
 requires-python = ">= 3.8"
+
+[[project.authors]]
+name = "Microsoft Corporation"
+email = "kustalk@microsoft.com"
 
 [tool.rye.workspace]
 members = ["azure-kusto-data", "azure-kusto-ingest"]
@@ -50,5 +53,5 @@ pythonpath = ["."]
 
 [tool.pyright]
 pythonVersion = "3.8"
-venvPath = ".venv"
-reportMissingImports = false
+venvPath = "."
+venv = ".venv"

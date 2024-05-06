@@ -362,7 +362,12 @@ class KustoConnectionStringBuilder:
 
     @classmethod
     def with_aad_managed_service_identity_authentication(
-        cls, connection_string: str, client_id: Optional[str] = None, object_id: Optional[str] = None, msi_res_id: Optional[str] = None, timeout: Optional[int] = None
+        cls,
+        connection_string: str,
+        client_id: Optional[str] = None,
+        object_id: Optional[str] = None,
+        msi_res_id: Optional[str] = None,
+        timeout: Optional[int] = None,
     ) -> "KustoConnectionStringBuilder":
         """
         Creates a KustoConnection string builder that will authenticate with AAD application, using

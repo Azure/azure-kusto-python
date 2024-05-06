@@ -324,7 +324,13 @@ class KustoClient(_KustoClientBase):
         # trace http post call for response
         def invoker():
             return self._session.post(
-                endpoint, headers=request_headers, json=request.json_payload, data=request.payload, timeout=request.timeout.seconds, stream=stream_response, allow_redirects=False
+                endpoint,
+                headers=request_headers,
+                json=request.json_payload,
+                data=request.payload,
+                timeout=request.timeout.seconds,
+                stream=stream_response,
+                allow_redirects=False,
             )
 
         try:

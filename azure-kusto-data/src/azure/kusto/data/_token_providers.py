@@ -35,6 +35,7 @@ except ImportError:
     def sync_to_async(f):
         raise KustoAioSyntaxError()
 
+
 try:
     from azure.identity.aio import (
         ManagedIdentityCredential as AsyncManagedIdentityCredential,
@@ -50,16 +51,13 @@ except ImportError:
         def __init__(self):
             raise KustoAioSyntaxError()
 
-
     class AsyncAzureCliCredential:
         def __init__(self):
             raise KustoAioSyntaxError()
 
-
     class AsyncDefaultAzureCredential:
         def __init__(self):
             raise KustoAioSyntaxError()
-
 
     class AsyncTokenCredential:
         def __init__(self):
@@ -312,7 +310,7 @@ class CallbackTokenProvider(TokenProviderBase):
     """Callback Token Provider generates a token based on a callback function provided by the caller"""
 
     def __init__(
-            self, token_callback: Optional[Callable[[], str]], async_token_callback: Optional[Callable[[], Coroutine[None, None, str]]], is_async: bool = False
+        self, token_callback: Optional[Callable[[], str]], async_token_callback: Optional[Callable[[], Coroutine[None, None, str]]], is_async: bool = False
     ):
         super().__init__(is_async)
         self._token_callback = token_callback
@@ -521,12 +519,12 @@ class InteractiveLoginTokenProvider(CloudInfoTokenProvider):
     """Acquire a token from MSAL with Device Login flow"""
 
     def __init__(
-            self,
-            kusto_uri: str,
-            authority_id: str,
-            login_hint: Optional[str] = None,
-            domain_hint: Optional[str] = None,
-            is_async: bool = False,
+        self,
+        kusto_uri: str,
+        authority_id: str,
+        login_hint: Optional[str] = None,
+        domain_hint: Optional[str] = None,
+        is_async: bool = False,
     ):
         super().__init__(kusto_uri, is_async)
         self._msal_client = None
@@ -600,14 +598,14 @@ class ApplicationCertificateTokenProvider(CloudInfoTokenProvider):
     """
 
     def __init__(
-            self,
-            kusto_uri: str,
-            client_id: str,
-            authority_id: str,
-            private_cert: str,
-            thumbprint: str,
-            public_cert: Optional[str] = None,
-            is_async: bool = False,
+        self,
+        kusto_uri: str,
+        client_id: str,
+        authority_id: str,
+        private_cert: str,
+        thumbprint: str,
+        public_cert: Optional[str] = None,
+        is_async: bool = False,
     ):
         super().__init__(kusto_uri, is_async)
         self._msal_client = None
@@ -645,11 +643,11 @@ class AzureIdentityTokenCredentialProvider(CloudInfoTokenProvider):
     """Acquire a token using an Azure Identity credential"""
 
     def __init__(
-            self,
-            kusto_uri: str,
-            is_async: bool = False,
-            credential: Optional[Any] = None,
-            credential_from_login_endpoint: Optional[Callable[[str], Any]] = None,
+        self,
+        kusto_uri: str,
+        is_async: bool = False,
+        credential: Optional[Any] = None,
+        credential_from_login_endpoint: Optional[Callable[[str], Any]] = None,
     ):
         super().__init__(kusto_uri, is_async)
 
