@@ -39,7 +39,7 @@ class QueuedIngestClient(BaseIngestClient):
         if not isinstance(kcsb, KustoConnectionStringBuilder):
             kcsb = KustoConnectionStringBuilder(kcsb)
 
-        if auto_correct_endpoint:
+        if auto_correct_endpoint and kcsb.data_source:
             kcsb["Data Source"] = BaseIngestClient.get_ingestion_endpoint(kcsb.data_source)
 
         self._proxy_dict: Optional[Dict[str, str]] = None
@@ -160,6 +160,8 @@ class QueuedIngestClient(BaseIngestClient):
                 if retries_left == 0:
                     raise KustoQueueError() from e
 
+        raise RuntimeError("Unreachable code")
+
     def _get_containers(self) -> List[_ResourceUri]:
         return self._resource_manager.get_containers()
 
@@ -201,3 +203,5 @@ class QueuedIngestClient(BaseIngestClient):
                 self._resource_manager.report_resource_usage_result(container.storage_account_name, False)
                 if retries_left == 0:
                     raise KustoBlobError(e)
+
+        raise RuntimeError("Unreachable code")

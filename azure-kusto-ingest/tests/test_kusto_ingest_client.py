@@ -310,6 +310,8 @@ def request_callback_containers(request):
                 }
             ]
         }
+    else:
+        raise ValueError("Unexpected request")
 
     return response_status, response_headers, json.dumps(response_body)
 
