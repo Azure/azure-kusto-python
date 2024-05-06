@@ -2,7 +2,7 @@
 # Licensed under the MIT License.
 
 import re
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 from dateutil import parser
 
@@ -13,7 +13,7 @@ _TIMESPAN_PATTERN = re.compile(r"(-?)((?P<d>[0-9]*).)?(?P<h>[0-9]{2}):(?P<m>[0-9
 def to_datetime(value):
     """Converts a string to a datetime."""
     if isinstance(value, int):
-        return parser.parse(value)
+        return datetime.fromtimestamp(value)
     return parser.isoparse(value)
 
 

@@ -1,24 +1,21 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
 from typing import Union, AnyStr, IO, List, Optional, Dict
-from urllib.parse import urlparse
 
-from azure.storage.blob import BlobServiceClient
-
-from azure.core.tracing.decorator import distributed_trace
 from azure.core.tracing import SpanKind
+from azure.core.tracing.decorator import distributed_trace
+from azure.storage.blob import BlobServiceClient
 from azure.storage.queue import QueueServiceClient, TextBase64EncodePolicy
 
 from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
 from azure.kusto.data._telemetry import MonitoredActivity
-from azure.kusto.data.exceptions import KustoClosedError, KustoServiceError
-
+from azure.kusto.data.exceptions import KustoBlobError
+from azure.kusto.data.exceptions import KustoClosedError
 from ._ingest_telemetry import IngestTracingAttributes
 from ._resource_manager import _ResourceManager, _ResourceUri
 from .base_ingest_client import BaseIngestClient, IngestionResult, IngestionStatus
 from .descriptors import BlobDescriptor, FileDescriptor, StreamDescriptor
-from .exceptions import KustoInvalidEndpointError, KustoQueueError
-from azure.kusto.data.exceptions import KustoBlobError
+from .exceptions import KustoQueueError
 from .ingestion_blob_info import IngestionBlobInfo
 from .ingestion_properties import IngestionProperties
 
@@ -91,7 +88,7 @@ class QueuedIngestClient(BaseIngestClient):
         return self.ingest_from_blob(blob_descriptor, ingestion_properties=ingestion_properties)
 
     @distributed_trace(name_of_span="QueuedIngestClient.ingest_from_stream", kind=SpanKind.CLIENT)
-    def ingest_from_stream(self, stream_descriptor: Union[StreamDescriptor, IO[AnyStr]], ingestion_properties: IngestionProperties) -> IngestionResult:
+    def ingest_from_stream(self, stream_descriptor: Union[StreamDescriptor, IO], ingestion_properties: IngestionProperties) -> IngestionResult:
         """Ingest from io streams.
         :param stream_descriptor: An object that contains a description of the stream to be ingested.
         :param .IngestionProperties ingestion_properties: Ingestion properties.
@@ -172,7 +169,7 @@ class QueuedIngestClient(BaseIngestClient):
         descriptor: Union[FileDescriptor, "StreamDescriptor"],
         database: str,
         table: str,
-        stream: IO[AnyStr],
+        stream: IO,
         proxy_dict: Optional[Dict[str, str]],
         timeout: int,
         max_retries: int,
@@ -183,7 +180,7 @@ class QueuedIngestClient(BaseIngestClient):
         :param Union[FileDescriptor, "StreamDescriptor"] descriptor:
         :param string database: database to be ingested to
         :param string table: table to be ingested to
-        :param IO[AnyStr] stream: stream to be ingested from
+        :param IO stream: stream to be ingested from
         :param Optional[Dict[str, str]] proxy_dict: proxy urls
         :param int timeout: Azure service call timeout in seconds
         :return new BlobDescriptor instance

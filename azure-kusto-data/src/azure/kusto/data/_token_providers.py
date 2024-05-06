@@ -2,11 +2,12 @@
 # Licensed under the MIT License
 import abc
 import asyncio
+import enum
 import inspect
 import time
 from datetime import datetime
 from threading import Lock
-from typing import Callable, Coroutine, List, Optional, Any, Tuple
+from typing import Callable, Coroutine, List, Optional, Any, TypeVar, Union, overload, TypedDict
 
 from azure.core.exceptions import ClientAuthenticationError
 from azure.core.tracing import SpanKind
@@ -31,8 +32,36 @@ DeviceCallbackType = Callable[[str, str, datetime], None]
 try:
     from asgiref.sync import sync_to_async
 except ImportError:
+    from typing_extensions import ParamSpec
+    from concurrent.futures import ThreadPoolExecutor
 
-    def sync_to_async(f):
+    _P = ParamSpec("_P")
+    _R = TypeVar("_R")
+
+    @overload
+    def sync_to_async(
+        *,
+        thread_sensitive: bool = True,
+        executor: Optional["ThreadPoolExecutor"] = None,
+    ) -> Callable[[Callable[_P, _R]], Callable[_P, Coroutine[Any, Any, _R]]]: ...
+
+    @overload
+    def sync_to_async(
+        func: Callable[_P, _R],
+        *,
+        thread_sensitive: bool = True,
+        executor: Optional["ThreadPoolExecutor"] = None,
+    ) -> Callable[_P, Coroutine[Any, Any, _R]]: ...
+
+    def sync_to_async(
+        func: Optional[Callable[_P, _R]] = None,
+        *,
+        thread_sensitive: bool = True,
+        executor: Optional["ThreadPoolExecutor"] = None,
+    ) -> Union[
+        Callable[[Callable[_P, _R]], Callable[_P, Coroutine[Any, Any, _R]]],
+        Callable[_P, Coroutine[Any, Any, _R]],
+    ]:
         raise KustoAioSyntaxError()
 
 
@@ -64,8 +93,13 @@ except ImportError:
             raise KustoAioSyntaxError()
 
 
+class ProxyDict(TypedDict, total=False):
+    http: str
+    https: str
+
+
 # constant key names and values used throughout the code
-class TokenConstants:
+class TokenConstants(enum.Enum):
     BEARER_TYPE = "Bearer"
     MSAL_TOKEN_TYPE = "token_type"
     MSAL_ACCESS_TOKEN = "access_token"
@@ -91,7 +125,7 @@ class TokenProviderBase(abc.ABC):
     _resources_initialized: bool = False
 
     def __init__(self, is_async: bool = False):
-        self._proxy_dict: Optional[Tuple[str, str]] = None
+        self._proxy_dict: Optional[ProxyDict] = None
         self.is_async = is_async
 
         if is_async:
@@ -264,7 +298,7 @@ class TokenProviderBase(abc.ABC):
 
 
 class CloudInfoTokenProvider(TokenProviderBase, abc.ABC):
-    _cloud_info: Optional[CloudInfo]
+    _cloud_info: CloudInfo
     _scopes = List[str]
     _kusto_uri: str
 
@@ -375,6 +409,7 @@ class MsiTokenProvider(CloudInfoTokenProvider):
         try:
             if self._msi_auth_context is None:
                 self._msi_auth_context = ManagedIdentityCredential(**self._msi_args)
+                assert self._msi_auth_context is not None
 
             msi_token = self._msi_auth_context.get_token(self._scopes[0])
             return {TokenConstants.MSAL_TOKEN_TYPE: TokenConstants.BEARER_TYPE, TokenConstants.MSAL_ACCESS_TOKEN: msi_token.token}
@@ -481,7 +516,7 @@ class AzCliTokenProvider(CloudInfoTokenProvider):
 class UserPassTokenProvider(CloudInfoTokenProvider):
     """Acquire a token from MSAL with username and password"""
 
-    def __init__(self, kusto_uri: str, authority_id: str, username: str, password: str, is_async: bool = False):
+    def __init__(self, kusto_uri: str, authority_id: Optional[str], username: str, password: str, is_async: bool = False):
         super().__init__(kusto_uri, is_async)
         self._msal_client = None
         self._auth = authority_id
@@ -521,7 +556,7 @@ class InteractiveLoginTokenProvider(CloudInfoTokenProvider):
     def __init__(
         self,
         kusto_uri: str,
-        authority_id: str,
+        authority_id: Optional[str],
         login_hint: Optional[str] = None,
         domain_hint: Optional[str] = None,
         is_async: bool = False,
@@ -564,7 +599,7 @@ class InteractiveLoginTokenProvider(CloudInfoTokenProvider):
 class ApplicationKeyTokenProvider(CloudInfoTokenProvider):
     """Acquire a token from MSAL with application Id and Key"""
 
-    def __init__(self, kusto_uri: str, authority_id: str, app_client_id: str, app_key: str, is_async: bool = False):
+    def __init__(self, kusto_uri: str, authority_id: Optional[str], app_client_id: str, app_key: str, is_async: bool = False):
         super().__init__(kusto_uri, is_async)
         self._msal_client = None
         self._app_client_id = app_client_id
@@ -601,7 +636,7 @@ class ApplicationCertificateTokenProvider(CloudInfoTokenProvider):
         self,
         kusto_uri: str,
         client_id: str,
-        authority_id: str,
+        authority_id: Optional[str],
         private_cert: str,
         thumbprint: str,
         public_cert: Optional[str] = None,
@@ -705,7 +740,7 @@ class AzureIdentityTokenCredentialProvider(CloudInfoTokenProvider):
 class DeviceLoginTokenProvider(AzureIdentityTokenCredentialProvider):
     """Acquire a token from MSAL with Device Login flow"""
 
-    def __init__(self, kusto_uri: str, authority_id: str, device_code_callback: Optional[DeviceCallbackType] = None, is_async: bool = False):
+    def __init__(self, kusto_uri: str, authority_id: Optional[str], device_code_callback: Optional[DeviceCallbackType] = None, is_async: bool = False):
         self._msal_client = None
         self._auth = authority_id
         self._account = None

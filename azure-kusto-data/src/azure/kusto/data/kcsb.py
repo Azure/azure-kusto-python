@@ -153,7 +153,8 @@ class KustoConnectionStringBuilder:
             if keyword.is_str_type():
                 self[keyword] = value_stripped.rstrip("/")
                 if keyword == self.ValidKeywords.data_source:
-                    self._parse_data_source(self.data_source)
+                    if self.data_source:
+                        self._parse_data_source(self.data_source)
             elif keyword.is_bool_type():
                 if value_stripped in ["True", "true"]:
                     self[keyword] = True
@@ -175,6 +176,7 @@ class KustoConnectionStringBuilder:
             raise TypeError("Value cannot be None.")
 
         if keyword.is_str_type():
+            assert isinstance(value, str)
             self._internal_dict[keyword] = value.strip()
         elif keyword.is_bool_type():
             if not isinstance(value, bool):
@@ -393,18 +395,10 @@ class KustoConnectionStringBuilder:
             exclusive_pcount += 1
 
         if object_id is not None:
-            # Until we upgrade azure-identity to version 1.4.1, only client_id is excepted as a hint for user managed service identity
-            raise ValueError("User Managed Service Identity with object_id is temporarily not supported by azure identity 1.3.1. Please use client_id instead.")
-            # noinspection PyUnreachableCode
             params["object_id"] = object_id
             exclusive_pcount += 1
 
         if msi_res_id is not None:
-            # Until we upgrade azure-identity to version 1.4.1, only client_id is excepted as a hint for user managed service identity
-            raise ValueError(
-                "User Managed Service Identity with msi_res_id is temporarily not supported by azure identity 1.3.1. Please use client_id instead."
-            )
-            # noinspection PyUnreachableCode
             params["msi_res_id"] = msi_res_id
             exclusive_pcount += 1
 
@@ -689,8 +683,8 @@ class KustoConnectionStringBuilder:
     def _build_connection_string(self, kcsb_as_dict: dict) -> str:
         return ";".join(["{0}={1}".format(word.value, kcsb_as_dict[word]) for word in self.ValidKeywords if word in kcsb_as_dict])
 
-    def _parse_data_source(self, url: str):
-        url = urlparse(url)
+    def _parse_data_source(self, raw: str):
+        url = urlparse(raw)
         if not url.netloc:
             return
         segments = url.path.lstrip("/").split("/")

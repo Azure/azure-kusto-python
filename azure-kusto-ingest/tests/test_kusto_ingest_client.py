@@ -9,13 +9,12 @@ from unittest.mock import patch
 
 import pytest
 import responses
+from pandas import DataFrame
 
 from azure.kusto.data.data_format import DataFormat
-
 from azure.kusto.ingest import QueuedIngestClient, IngestionProperties, IngestionStatus, _resource_manager
-from azure.kusto.ingest.exceptions import KustoInvalidEndpointError, KustoQueueError
+from azure.kusto.ingest.exceptions import KustoQueueError
 from azure.kusto.ingest.managed_streaming_ingest_client import ManagedStreamingIngestClient
-from pandas import DataFrame
 
 UUID_REGEX = "[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}"
 BLOB_NAME_REGEX = "database__table__" + UUID_REGEX + "__dataset.csv.gz"

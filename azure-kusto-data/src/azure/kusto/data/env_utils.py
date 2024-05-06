@@ -1,9 +1,22 @@
 import os
 from dataclasses import dataclass, astuple
-from typing import Optional
+from typing import Optional, overload
+from typing_extensions import Literal
 
 
-def get_env(*args, optional=False, default=None):
+@overload
+def get_env(*args: str, optional: Literal[False] = ..., default: str = ...) -> str: ...
+
+
+@overload
+def get_env(*args: str, optional: Literal[True] = ..., default: Optional[str] = ...) -> Optional[str]: ...
+
+
+@overload
+def get_env(*args: str, optional: bool = ..., default: Optional[str] = ...) -> Optional[str]: ...
+
+
+def get_env(*args: str, optional: bool = False, default: Optional[str] = None) -> Optional[str]:
     """Return the first environment variable that is defined."""
     for arg in args:
         if arg in os.environ:

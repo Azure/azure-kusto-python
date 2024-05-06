@@ -1,6 +1,6 @@
 import dataclasses
 from threading import Lock
-from typing import Optional, Dict
+from typing import Optional, Dict, cast
 from urllib.parse import urljoin
 
 import requests
@@ -8,6 +8,7 @@ import requests
 from azure.core.tracing.decorator import distributed_trace
 from azure.core.tracing import SpanKind
 
+from ._token_providers import ProxyDict
 from .env_utils import get_env
 from ._telemetry import Span, MonitoredActivity
 from .exceptions import KustoServiceError, KustoNetworkError
@@ -56,7 +57,7 @@ class CloudSettings:
 
     @classmethod
     @distributed_trace(name_of_span="CloudSettings.get_cloud_info", kind=SpanKind.CLIENT)
-    def get_cloud_info_for_cluster(cls, kusto_uri: str, proxies: Optional[Dict[str, str]] = None) -> CloudInfo:
+    def get_cloud_info_for_cluster(cls, kusto_uri: str, proxies: Optional[ProxyDict] = None) -> CloudInfo:
         kusto_uri = cls._normalize_uri(kusto_uri)
 
         # tracing attributes for cloud info
@@ -73,7 +74,7 @@ class CloudSettings:
             try:
                 # trace http get call for result
                 result = MonitoredActivity.invoke(
-                    lambda: requests.get(url, proxies=proxies, allow_redirects=False),
+                    lambda: requests.get(url, proxies=cast(Optional[Dict[str, str]], proxies), allow_redirects=False),
                     name_of_span="CloudSettings.http_get",
                     tracing_attributes=Span.create_http_attributes(url=url, method="GET"),
                 )

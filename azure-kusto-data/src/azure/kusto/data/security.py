@@ -15,6 +15,7 @@ from ._token_providers import (
     ApplicationCertificateTokenProvider,
     TokenConstants,
     AzureIdentityTokenCredentialProvider,
+    TokenProviderBase,
 )
 from .exceptions import KustoAuthenticationError, KustoClientError
 
@@ -23,9 +24,8 @@ if TYPE_CHECKING:
 
 
 class _AadHelper:
-    kusto_uri = None  # type: str
-    authority_uri = None  # type: str
-    token_provider = None  # type: TokenProviderBase
+    kusto_uri: str
+    token_provider: TokenProviderBase
 
     def __init__(self, kcsb: "KustoConnectionStringBuilder", is_async: bool):
         parsed_url = urlparse(kcsb.data_source)
@@ -37,13 +37,13 @@ class _AadHelper:
 
         if kcsb.interactive_login:
             self.token_provider = InteractiveLoginTokenProvider(self.kusto_uri, kcsb.authority_id, kcsb.login_hint, kcsb.domain_hint, is_async=is_async)
-        elif all([kcsb.aad_user_id, kcsb.password]):
+        elif kcsb.aad_user_id and kcsb.password:
             self.token_provider = UserPassTokenProvider(self.kusto_uri, kcsb.authority_id, kcsb.aad_user_id, kcsb.password, is_async=is_async)
-        elif all([kcsb.application_client_id, kcsb.application_key]):
+        elif kcsb.application_client_id and kcsb.application_key:
             self.token_provider = ApplicationKeyTokenProvider(
                 self.kusto_uri, kcsb.authority_id, kcsb.application_client_id, kcsb.application_key, is_async=is_async
             )
-        elif all([kcsb.application_client_id, kcsb.application_certificate, kcsb.application_certificate_thumbprint]):
+        elif kcsb.application_client_id and kcsb.application_certificate and kcsb.application_certificate_thumbprint:
             # kcsb.application_public_certificate can be None if SNI is not used
             self.token_provider = ApplicationCertificateTokenProvider(
                 self.kusto_uri,
