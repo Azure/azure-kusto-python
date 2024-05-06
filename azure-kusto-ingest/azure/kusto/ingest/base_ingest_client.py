@@ -68,7 +68,7 @@ class IngestionResult:
         obfuscated_path = None
         if isinstance(self.blob_uri, str):
             obfuscated_path = self.blob_uri.split("?")[0].split(";")[0]
-        blob_uri = f", blob_uri={obfuscated_path}" if obfuscated_path else ""
+        blob_uri = f", obfuscated_blob_uri={obfuscated_path}" if obfuscated_path else ""
         return f"IngestionResult(status={self.status}, database={self.database}, table={self.table}, source_id={self.source_id}{blob_uri})"
 
 
