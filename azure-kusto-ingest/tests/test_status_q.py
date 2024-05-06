@@ -3,12 +3,13 @@
 import json
 import time
 import unittest
+import uuid
 from unittest import mock
 from uuid import uuid4
 
 from azure.storage.queue import QueueMessage, QueueClient
 
-from azure.kusto.ingest import QueuedIngestClient
+from azure.kusto.ingest import QueuedIngestClient, IngestionResult, IngestionStatus
 from azure.kusto.ingest._resource_manager import _ResourceUri
 from azure.kusto.ingest.status import KustoIngestStatusQueues, SuccessMessage, FailureMessage
 
@@ -251,3 +252,13 @@ class StatusQTests(unittest.TestCase):
                 actual[call_args[0][0].queue_name] = actual.get(call_args[0][0].queue_name, 0) + call_args[1]["messages_per_page"]
 
             assert actual[fake_failed_queue2.object_name] + actual[fake_failed_queue1.object_name] == (4 + 4 + 6)
+
+    def test_status_sanity(self):
+        i = IngestionResult(IngestionStatus.QUEUED, "db", "table", uuid.UUID("11111111-1111-1111-1111-111111111111"), "path")
+        assert (
+            repr(i)
+            == "IngestionResult(status=IngestionStatus.QUEUED, database=db, table=table, source_id=11111111-1111-1111-1111-111111111111, obfuscated_blob_uri=path)"
+        )
+
+        no_path = IngestionResult(IngestionStatus.QUEUED, "db", "table", uuid.UUID("11111111-1111-1111-1111-111111111111"))
+        assert repr(no_path) == "IngestionResult(status=IngestionStatus.QUEUED, database=db, table=table, source_id=11111111-1111-1111-1111-111111111111)"

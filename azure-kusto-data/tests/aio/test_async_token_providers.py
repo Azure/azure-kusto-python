@@ -354,3 +354,22 @@ class TestTokenProvider:
         ) as provider:
             token = await provider.get_token_async()
             assert TokenProviderTests.get_token_value(token) is not None
+
+    @aio_documented_by(TokenProviderTests.test_sanity_close)
+    @pytest.mark.asyncio
+    async def test_sanity_close(self):
+        DUMMY_URI = "https://dummy_uri.kusto.windows.net"
+        providers = [
+            MsiTokenProvider(DUMMY_URI, is_async=True),
+            AzCliTokenProvider(DUMMY_URI, is_async=True),
+            UserPassTokenProvider(DUMMY_URI, "organizations", "a", "b", is_async=True),
+            ApplicationKeyTokenProvider(DUMMY_URI, "a", "b", "c", is_async=True),
+            ApplicationCertificateTokenProvider(DUMMY_URI, "a", "b", "c", "d", is_async=True),
+            CallbackTokenProvider(lambda: "a", None),
+            AzureIdentityTokenCredentialProvider(DUMMY_URI, credential=AsyncDefaultAzureCredential(), is_async=True),
+            DeviceLoginTokenProvider(DUMMY_URI, "organizations", lambda x, x2, x3: None, is_async=True),
+        ]
+
+        for provider in providers:
+            async with provider:
+                pass

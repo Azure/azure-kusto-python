@@ -370,3 +370,21 @@ class TokenProviderTests(unittest.TestCase):
         ) as provider:
             token = provider.get_token()
             assert TokenProviderTests.get_token_value(token) is not None
+
+    @staticmethod
+    def test_sanity_close():
+        DUMMY_URI = "https://dummy_uri.kusto.windows.net"
+        providers = [
+            MsiTokenProvider(DUMMY_URI),
+            AzCliTokenProvider(DUMMY_URI),
+            UserPassTokenProvider(DUMMY_URI, "organizations", "a", "b"),
+            ApplicationKeyTokenProvider(DUMMY_URI, "a", "b", "c"),
+            ApplicationCertificateTokenProvider(DUMMY_URI, "a", "b", "c", "d"),
+            CallbackTokenProvider(lambda: "a", None),
+            AzureIdentityTokenCredentialProvider(DUMMY_URI, credential=DefaultAzureCredential()),
+            DeviceLoginTokenProvider(DUMMY_URI, "organizations", lambda x, x2, x3: None),
+        ]
+
+        for provider in providers:
+            with provider:
+                pass

@@ -401,7 +401,7 @@ class MsiTokenProvider(CloudInfoTokenProvider):
     def close(self):
         if self._msi_auth_context is not None:
             self._msi_auth_context.close()
-        if self._msi_auth_context is not None:
+        if self._msi_auth_context_async is not None:
             raise KustoAsyncUsageError("Can't close async token provider with sync close", self.is_async)
 
     async def close_async(self):
