@@ -9,7 +9,9 @@
 
 -e file:azure-kusto-data
     # via azure-kusto-ingest
+    # via file:///azure-kusto-data
 -e file:azure-kusto-ingest
+    # via file:///azure-kusto-ingest
 aiohttp==3.9.3
     # via aioresponses
     # via azure-kusto-data
@@ -89,6 +91,7 @@ pycparser==2.21
     # via cffi
 pyjwt==2.8.0
     # via msal
+    # via pyjwt
 pyright==1.1.361
 pytest==8.0.2
     # via pytest-asyncio
@@ -108,8 +111,6 @@ requests==2.31.0
     # via msal
     # via responses
 responses==0.25.0
-setuptools==69.2.0
-    # via nodeenv
 six==1.16.0
     # via azure-core
     # via isodate
@@ -130,3 +131,5 @@ urllib3==2.2.1
     # via responses
 yarl==1.9.4
     # via aiohttp
+setuptools==69.2.0
+    # via nodeenv

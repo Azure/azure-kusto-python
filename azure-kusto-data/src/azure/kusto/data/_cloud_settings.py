@@ -8,10 +8,10 @@ import requests
 from azure.core.tracing.decorator import distributed_trace
 from azure.core.tracing import SpanKind
 
-from ._token_providers import ProxyDict
 from .env_utils import get_env
 from ._telemetry import Span, MonitoredActivity
 from .exceptions import KustoServiceError, KustoNetworkError
+from .type_utils import ProxyDict
 
 METADATA_ENDPOINT = "v1/rest/auth/metadata"
 

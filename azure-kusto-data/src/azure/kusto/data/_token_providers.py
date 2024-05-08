@@ -19,6 +19,7 @@ from msal import ConfidentialClientApplication, PublicClientApplication
 from ._cloud_settings import CloudInfo, CloudSettings
 from ._telemetry import MonitoredActivity
 from .exceptions import KustoAioSyntaxError, KustoAsyncUsageError, KustoClientError
+from .type_utils import ProxyDict
 
 DeviceCallbackType = Callable[[str, str, datetime], None]
 """A callback enabling control of how authentication
@@ -91,12 +92,6 @@ except ImportError:
     class AsyncTokenCredential:
         def __init__(self):
             raise KustoAioSyntaxError()
-
-
-class ProxyDict(TypedDict, total=False):
-    http: str
-    https: str
-
 
 # constant key names and values used throughout the code
 class TokenConstants(enum.Enum):
