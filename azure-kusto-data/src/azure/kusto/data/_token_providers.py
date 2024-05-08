@@ -7,7 +7,7 @@ import inspect
 import time
 from datetime import datetime
 from threading import Lock
-from typing import Callable, Coroutine, List, Optional, Any, TypeVar, Union, overload, TypedDict
+from typing import Callable, Coroutine, List, Optional, Any, TypeVar, Union, overload
 
 from azure.core.exceptions import ClientAuthenticationError
 from azure.core.tracing import SpanKind
@@ -436,7 +436,7 @@ class MsiTokenProvider(CloudInfoTokenProvider):
 
     async def close_async(self):
         if self._msi_auth_context is not None:
-            await sync_to_async(self._msi_auth_context.close())
+            await sync_to_async(self._msi_auth_context.close)()
 
         if self._msi_auth_context_async is not None:
             await self._msi_auth_context_async.close()
@@ -502,7 +502,7 @@ class AzCliTokenProvider(CloudInfoTokenProvider):
 
     async def close_async(self):
         if self._az_auth_context is not None:
-            await sync_to_async(self._az_auth_context.close())
+            await sync_to_async(self._az_auth_context.close)()
 
         if self._az_auth_context_async is not None:
             await self._az_auth_context_async.close()
