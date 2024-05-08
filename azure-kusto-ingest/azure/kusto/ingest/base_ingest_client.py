@@ -83,6 +83,9 @@ class BaseIngestClient(metaclass=ABCMeta):
         """
         if self._is_closed:
             raise KustoClosedError()
+        
+        if ingestion_properties.ignore_first_record:
+            raise NotImplementedError("ignore_first_record not implemented for ingest_from_file")        
 
     @abstractmethod
     def ingest_from_stream(self, stream_descriptor: Union[StreamDescriptor, IO[AnyStr]], ingestion_properties: IngestionProperties) -> IngestionResult:
