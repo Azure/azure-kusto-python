@@ -1,5 +1,7 @@
 import sys
 from typing import TYPE_CHECKING, Union
+import numpy as np
+import pandas as pd
 
 if TYPE_CHECKING:
     import pandas
@@ -29,13 +31,16 @@ def to_pandas_timedelta(raw_value: Union[int, float, str]) -> "pandas.Timedelta"
             return pd.to_timedelta(formatted_value)
 
 
-def dataframe_from_result_table(table: "Union[KustoResultTable, KustoStreamingResultTable]", nullable_bools: bool = False) -> "pandas.DataFrame":
+def dataframe_from_result_table(table: "Union[KustoResultTable, KustoStreamingResultTable]",
+                                nullable_bools: bool = False, column_name_totype_dict: dict = {},
+                                type_totype_dict: dict = {}) -> "pandas.DataFrame":
     """Converts Kusto tables into pandas DataFrame.
     :param azure.kusto.data._models.KustoResultTable table: Table received from the response.
     :param nullable_bools: When True, converts bools that are 'null' from kusto or 'None' from python to pandas.NA. This will be the default in the future.
+    :param column_name_totype_dict: When received converts specified columns to corresponding types, else uses type_totype_dict
+    :param type_totype_dict: When received converts specified types to corresponding types, else uses default_dict
     :return: pandas DataFrame.
     """
-    import numpy as np
     import pandas as pd
 
     if not table:
@@ -49,32 +54,29 @@ def dataframe_from_result_table(table: "Union[KustoResultTable, KustoStreamingRe
     columns = [col.column_name for col in table.columns]
     frame = pd.DataFrame(table.raw_rows, columns=columns)
 
-    # fix types
+    default_dict = {
+        "string": lambda col, df: df[col].astype(pd.StringDtype()) if hasattr(pd, "StringDType") else df[col],
+        "guid": lambda col, df: df[col],
+        "dynamic": lambda col, df: df[col],
+        "bool": lambda col, df: df[col].astype(pd.BooleanDtype() if nullable_bools else bool),
+        "int": lambda col, df: df[col].astype(pd.Int32Dtype()),
+        "long": lambda col, df: df[col].astype(pd.Int64Dtype()),
+        "real": lambda col, df: real_or_decimal(df, col),
+        "decimal": lambda col, df: real_or_decimal(df, col),
+        "datetime": lambda col, df: datetime_func(df, col),
+        "timespan": lambda col, df: df[col].apply(to_pandas_timedelta)
+    }
+
+    by_name_bool = True if column_name_totype_dict else False
+    by_type_bool = True if type_totype_dict else False
+
     for col in table.columns:
-        if col.column_type == "string" and hasattr(pd, "StringDType"):
-            frame[col.column_name] = frame[col.column_name].astype(pd.StringDType())
-        if col.column_type == "bool":
-            frame[col.column_name] = frame[col.column_name].astype(pd.BooleanDtype() if nullable_bools else bool)
-        elif col.column_type == "int":
-            frame[col.column_name] = frame[col.column_name].astype(pd.Int32Dtype())
-        elif col.column_type == "long":
-            frame[col.column_name] = frame[col.column_name].astype(pd.Int64Dtype())
-        elif col.column_type == "real" or col.column_type == "decimal":
-            frame[col.column_name] = frame[col.column_name].replace("NaN", np.NaN).replace("Infinity", np.PINF).replace("-Infinity", np.NINF)
-            frame[col.column_name] = pd.to_numeric(frame[col.column_name], errors="coerce").astype(pd.Float64Dtype())
-        elif col.column_type == "datetime":
-            # Pandas before version 2 doesn't support the "format" arg
-            args = {}
-            if pd.__version__.startswith("2."):
-                args = {"format": "ISO8601", "utc": True}
-            else:
-                # if frame contains ".", replace "Z" with ".000Z"
-                # == False is not a mistake - that's the pandas way to do it
-                contains_dot = frame[col.column_name].str.contains(".")
-                frame.loc[contains_dot == False, col.column_name] = frame.loc[contains_dot == False, col.column_name].str.replace("Z", ".000Z")
-            frame[col.column_name] = pd.to_datetime(frame[col.column_name], errors="coerce", **args)
-        elif col.column_type == "timespan":
-            frame[col.column_name] = frame[col.column_name].apply(to_pandas_timedelta)
+        if by_name_bool and col.column_name in column_name_totype_dict.keys():
+            frame[col.column_name] = column_name_totype_dict[col.column_name](col.column_name, frame)
+        elif by_type_bool and col.column_type in type_totype_dict.keys():
+            frame[col.column_name] = type_totype_dict[col.column_type](col.column_name, frame)
+        else:
+            frame[col.column_name] = default_dict[col.column_type](col.column_name, frame)
 
     return frame
 
@@ -86,4 +88,24 @@ def get_string_tail_lower_case(val, length):
     if length >= len(val):
         return val.lower()
 
-    return val[len(val) - length :].lower()
+    return val[len(val) - length:].lower()
+
+
+def real_or_decimal(frame, col):
+    frame[col] = frame[col].replace("NaN", np.NaN).replace("Infinity", np.PINF).replace("-Infinity", np.NINF)
+    frame[col] = pd.to_numeric(frame[col], errors="coerce").astype(pd.Float64Dtype())
+    return frame[col]
+
+
+def datetime_func(frame, col):
+    # Pandas before version 2 doesn't support the "format" arg
+    args = {}
+    if pd.__version__.startswith("2."):
+        args = {"format": "ISO8601", "utc": True}
+    else:
+        # if frame contains ".", replace "Z" with ".000Z"
+        # == False is not a mistake - that's the pandas way to do it
+        contains_dot = frame[col].str.contains(".")
+        frame.loc[contains_dot == False, col] = frame.loc[contains_dot == False, col].str.replace("Z", ".000Z")
+    frame[col] = pd.to_datetime(frame[col], errors="coerce", **args)
+    return frame[col]

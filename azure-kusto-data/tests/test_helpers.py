@@ -18,19 +18,32 @@ def test_dataframe_from_result_table():
         data = response_file.read()
 
     response = KustoResponseDataSetV2(json.loads(data))
-    df = dataframe_from_result_table(response.primary_results[0])
+    test_dict1 = {'RecordName': lambda col, frame: frame[col].astype('str'), 'RecordInt64': lambda col, frame: frame[col].astype('int64')}
+    test_dict2 = {'int': lambda col, frame: frame[col].astype('int32')}
+    df = dataframe_from_result_table(response.primary_results[0], column_name_totype_dict= test_dict1, type_totype_dict=test_dict2)
 
     if hasattr(pandas, "StringDType"):
         assert df["RecordName"].dtype == pandas.StringDtype()
         assert str(df.iloc[0].RecordName) == "now"
     else:
         assert df.iloc[0].RecordName == "now"
+
+    if hasattr(pandas, "StringDType"):
+        assert df["RecordGUID"].dtype == pandas.StringDtype()
+        assert str(df.iloc[0].RecordGUID) == "6f3c1072-2739-461c-8aa7-3cfc8ff528a8"
+    else:
+        assert df.iloc[0].RecordGUID == "6f3c1072-2739-461c-8aa7-3cfc8ff528a8"
+
     assert type(df.iloc[0].RecordTime) is pandas._libs.tslibs.timestamps.Timestamp
     assert all(getattr(df.iloc[0].RecordTime, k) == v for k, v in {"year": 2021, "month": 12, "day": 22, "hour": 11, "minute": 43, "second": 00}.items())
     assert type(df.iloc[0].RecordBool) is numpy.bool_
     assert df.iloc[0].RecordBool == True
     assert type(df.iloc[0].RecordInt) is numpy.int32
     assert df.iloc[0].RecordInt == 5678
+    assert type(df.iloc[0].RecordInt64) is numpy.int64
+    assert df.iloc[0].RecordInt64 == 222
+    assert type(df.iloc[0].RecordLong) is numpy.int64
+    assert df.iloc[0].RecordLong == 92233720368
     assert type(df.iloc[0].RecordReal) is numpy.float64
     assert df.iloc[0].RecordReal == 3.14159
 
