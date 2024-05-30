@@ -31,9 +31,9 @@ def to_pandas_timedelta(raw_value: Union[int, float, str]) -> "pandas.Timedelta"
             return pd.to_timedelta(formatted_value)
 
 
-def dataframe_from_result_table(table: "Union[KustoResultTable, KustoStreamingResultTable]",
-                                nullable_bools: bool = False, column_name_totype_dict: dict = {},
-                                type_totype_dict: dict = {}) -> "pandas.DataFrame":
+def dataframe_from_result_table(
+    table: "Union[KustoResultTable, KustoStreamingResultTable]", nullable_bools: bool = False, column_name_totype_dict: dict = {}, type_totype_dict: dict = {}
+) -> "pandas.DataFrame":
     """Converts Kusto tables into pandas DataFrame.
     :param azure.kusto.data._models.KustoResultTable table: Table received from the response.
     :param nullable_bools: When True, converts bools that are 'null' from kusto or 'None' from python to pandas.NA. This will be the default in the future.
@@ -64,7 +64,7 @@ def dataframe_from_result_table(table: "Union[KustoResultTable, KustoStreamingRe
         "real": lambda col, df: real_or_decimal(df, col),
         "decimal": lambda col, df: real_or_decimal(df, col),
         "datetime": lambda col, df: datetime_func(df, col),
-        "timespan": lambda col, df: df[col].apply(to_pandas_timedelta)
+        "timespan": lambda col, df: df[col].apply(to_pandas_timedelta),
     }
 
     by_name_bool = True if column_name_totype_dict else False
@@ -88,7 +88,7 @@ def get_string_tail_lower_case(val, length):
     if length >= len(val):
         return val.lower()
 
-    return val[len(val) - length:].lower()
+    return val[len(val) - length :].lower()
 
 
 def real_or_decimal(frame, col):
