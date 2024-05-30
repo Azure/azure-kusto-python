@@ -18,9 +18,9 @@ def test_dataframe_from_result_table():
         data = response_file.read()
 
     response = KustoResponseDataSetV2(json.loads(data))
-    test_dict1 = {'RecordName': lambda col, frame: frame[col].astype('str'), 'RecordInt64': lambda col, frame: frame[col].astype('int64')}
-    test_dict2 = {'int': lambda col, frame: frame[col].astype('int32')}
-    df = dataframe_from_result_table(response.primary_results[0], column_name_totype_dict= test_dict1, type_totype_dict=test_dict2)
+    test_dict1 = {"RecordName": lambda col, frame: frame[col].astype("str"), "RecordInt64": lambda col, frame: frame[col].astype("int64")}
+    test_dict2 = {"int": lambda col, frame: frame[col].astype("int32")}
+    df = dataframe_from_result_table(response.primary_results[0], column_name_totype_dict=test_dict1, type_totype_dict=test_dict2)
 
     if hasattr(pandas, "StringDType"):
         assert df["RecordName"].dtype == pandas.StringDtype()
