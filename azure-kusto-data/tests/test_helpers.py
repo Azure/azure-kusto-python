@@ -3,6 +3,7 @@
 import datetime
 import json
 import os
+import unittest
 
 from azure.kusto.data._models import KustoResultTable
 from azure.kusto.data.helpers import dataframe_from_result_table
@@ -11,30 +12,37 @@ import pandas
 import numpy
 
 
-def test_dataframe_from_result_table():
-    """Test conversion of KustoResultTable to pandas.DataFrame, including fixes for certain column types"""
+class PandasTests(unittest.TestCase):
+    def test_dataframe_from_result_table(self):
+        """Test conversion of KustoResultTable to pandas.DataFrame, including fixes for certain column types"""
 
     with open(os.path.join(os.path.dirname(__file__), "input", "dataframe.json"), "r") as response_file:
         data = response_file.read()
 
     response = KustoResponseDataSetV2(json.loads(data))
-    test_dict1 = {"RecordName": lambda col, frame: frame[col].astype("str"), "RecordInt64": lambda col, frame: frame[col].astype("int64")}
-    test_dict2 = {"int": lambda col, frame: frame[col].astype("int32")}
-    df = dataframe_from_result_table(response.primary_results[0], column_name_totype_dict=test_dict1, type_totype_dict=test_dict2)
+    # Test that receives both types of dictionary parameters. Test that type conversion doesn't override column name conversion
+    test_dict_by_name = {"RecordName": lambda col, frame: frame[col].astype("str"), "RecordInt64": lambda col, frame: frame[col].astype("int64")}
+    test_dict_by_type = {"int": lambda col, frame: frame[col].astype("int32")}
+    test_int_to_float = {"int": "float64"}
+    df = dataframe_from_result_table(response.primary_results[0], converters_by_type=test_dict_by_type, converters_by_column_name=test_dict_by_name)
+    df_int_to_float = dataframe_from_result_table(response.primary_results[0], converters_by_type=test_int_to_float)
 
     if hasattr(pandas, "StringDType"):
         assert df["RecordName"].dtype == pandas.StringDtype()
         assert str(df.iloc[0].RecordName) == "now"
-    else:
-        assert df.iloc[0].RecordName == "now"
-
-    if hasattr(pandas, "StringDType"):
         assert df["RecordGUID"].dtype == pandas.StringDtype()
         assert str(df.iloc[0].RecordGUID) == "6f3c1072-2739-461c-8aa7-3cfc8ff528a8"
+        assert df["RecordDynamic"].dtype == pandas.StringDtype()
+        assert (
+            str(df.iloc[0].RecordDynamic)
+            == '{"Visualization":null,"Title":null,"XColumn":null,"Series":null,"YColumns":null,"XTitle":null,"YTitle":null,"XAxis":null,"YAxis":null,"Legend":null,"YSplit":null,"Accumulate":false,"IsQuerySorted":false,"Kind":null}'
+        )
     else:
+        assert df.iloc[0].RecordName == "now"
         assert df.iloc[0].RecordGUID == "6f3c1072-2739-461c-8aa7-3cfc8ff528a8"
 
     assert type(df.iloc[0].RecordTime) is pandas._libs.tslibs.timestamps.Timestamp
+
     assert all(getattr(df.iloc[0].RecordTime, k) == v for k, v in {"year": 2021, "month": 12, "day": 22, "hour": 11, "minute": 43, "second": 00}.items())
     assert type(df.iloc[0].RecordBool) is numpy.bool_
     assert df.iloc[0].RecordBool == True
@@ -46,6 +54,8 @@ def test_dataframe_from_result_table():
     assert df.iloc[0].RecordLong == 92233720368
     assert type(df.iloc[0].RecordReal) is numpy.float64
     assert df.iloc[0].RecordReal == 3.14159
+    assert type(df.iloc[0].RecordDecimal) is numpy.float64
+    assert df.iloc[0].RecordDecimal == 1.2
 
     # Kusto datetime(0000-01-01T00:00:00Z), which Pandas can't represent.
     assert df.iloc[1].RecordName == "earliest datetime"
@@ -80,8 +90,12 @@ def test_dataframe_from_result_table():
     assert type(df.iloc[6].RecordOffset) is pandas._libs.tslibs.timestamps.Timedelta
     assert df.iloc[6].RecordOffset == pandas.to_timedelta("1 days 01:01:01")
 
+    # Testing int to float conversion
+    assert type(df_int_to_float.iloc[0].RecordInt) is numpy.float64
+    assert df.iloc[0].RecordInt == 5678
 
-def test_pandas_mixed_date():
+
+def test_pandas_mixed_date(self):
     df = dataframe_from_result_table(
         KustoResultTable(
             {

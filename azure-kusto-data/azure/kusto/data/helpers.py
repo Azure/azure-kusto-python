@@ -1,11 +1,30 @@
 import sys
-from typing import TYPE_CHECKING, Union
-import numpy as np
-import pandas as pd
+import types
+from typing import TYPE_CHECKING, Union, Callable
 
 if TYPE_CHECKING:
-    import pandas
+    import pandas as pd
     from azure.kusto.data._models import KustoResultTable, KustoStreamingResultTable
+
+try:
+    import pandas as pd
+except ImportError:
+    pd = None
+
+
+default_dict = {
+    "string": lambda col, df: df[col].astype(pd.StringDtype()) if hasattr(pd, "StringDType") else df[col],
+    "guid": lambda col, df: df[col],
+    "dynamic": lambda col, df: df[col],
+    "bool": lambda col, df: df[col].astype(bool),
+    "int": lambda col, df: df[col].astype(pd.Int32Dtype()),
+    "long": lambda col, df: df[col].astype(pd.Int64Dtype()),
+    "real": lambda col, df: parse_float(df, col),
+    "decimal": lambda col, df: parse_float(df, col),
+    "datetime": lambda col, df: parse_datetime(df, col),
+    "timespan": lambda col, df: df[col].apply(to_pandas_timedelta),
+}
+nullable_bools_converter = lambda col, df: df[col].astype(pd.BooleanDtype())
 
 
 # Copyright (c) Microsoft Corporation.
@@ -32,19 +51,28 @@ def to_pandas_timedelta(raw_value: Union[int, float, str]) -> "pandas.Timedelta"
 
 
 def dataframe_from_result_table(
-    table: "Union[KustoResultTable, KustoStreamingResultTable]", nullable_bools: bool = False, column_name_totype_dict: dict = {}, type_totype_dict: dict = {}
+    table: "Union[KustoResultTable, KustoStreamingResultTable]",
+    nullable_bools: bool = False,
+    converters_by_type: dict[str, Callable[[str, "pandas.DataFrame"], "pandas.Series"]] = None,
+    converters_by_column_name: dict[str, Callable[[str, "pandas.DataFrame"], "pandas.Series"]] = None,
 ) -> "pandas.DataFrame":
-    """Converts Kusto tables into pandas DataFrame.
+    f"""Converts Kusto tables into pandas DataFrame.
     :param azure.kusto.data._models.KustoResultTable table: Table received from the response.
     :param nullable_bools: When True, converts bools that are 'null' from kusto or 'None' from python to pandas.NA. This will be the default in the future.
-    :param column_name_totype_dict: When received converts specified columns to corresponding types, else uses type_totype_dict
-    :param type_totype_dict: When received converts specified types to corresponding types, else uses default_dict
+    :param converters_by_type: If given, converts specified types to corresponding types, else uses {default_dict}. The dictionary maps from kusto
+    datatype (https://learn.microsoft.com/azure/data-explorer/kusto/query/scalar-data-types/) to a lambda that receives a column name and a dataframe and
+    returns the converted column.
+    :param converters_by_column_name: If given, converts specified columns to corresponding types, else uses converters_by_type. The dictionary maps from column
+     name to a lambda that receives a column name and a dataframe and returns the converted column.
     :return: pandas DataFrame.
     """
     import pandas as pd
 
     if not table:
         raise ValueError()
+
+    if nullable_bools:
+        default_dict["bool"] = nullable_bools_converter
 
     from azure.kusto.data._models import KustoResultTable, KustoStreamingResultTable
 
@@ -54,29 +82,20 @@ def dataframe_from_result_table(
     columns = [col.column_name for col in table.columns]
     frame = pd.DataFrame(table.raw_rows, columns=columns)
 
-    default_dict = {
-        "string": lambda col, df: df[col].astype(pd.StringDtype()) if hasattr(pd, "StringDType") else df[col],
-        "guid": lambda col, df: df[col],
-        "dynamic": lambda col, df: df[col],
-        "bool": lambda col, df: df[col].astype(pd.BooleanDtype() if nullable_bools else bool),
-        "int": lambda col, df: df[col].astype(pd.Int32Dtype()),
-        "long": lambda col, df: df[col].astype(pd.Int64Dtype()),
-        "real": lambda col, df: real_or_decimal(df, col),
-        "decimal": lambda col, df: real_or_decimal(df, col),
-        "datetime": lambda col, df: datetime_func(df, col),
-        "timespan": lambda col, df: df[col].apply(to_pandas_timedelta),
-    }
-
-    by_name_bool = True if column_name_totype_dict else False
-    by_type_bool = True if type_totype_dict else False
+    # converters_by_type overrides the default
+    converters_by_type = {**default_dict, **converters_by_type}
 
     for col in table.columns:
-        if by_name_bool and col.column_name in column_name_totype_dict.keys():
-            frame[col.column_name] = column_name_totype_dict[col.column_name](col.column_name, frame)
-        elif by_type_bool and col.column_type in type_totype_dict.keys():
-            frame[col.column_name] = type_totype_dict[col.column_type](col.column_name, frame)
+        if converters_by_column_name and col.column_name in converters_by_column_name.keys():
+            if isinstance(converters_by_column_name[col.column_name], types.LambdaType):
+                frame[col.column_name] = converters_by_column_name[col.column_name](col.column_name, frame)
+            else:
+                frame[col.column_name] = frame[col.column_name].astype(converters_by_column_name[col.column_name])
         else:
-            frame[col.column_name] = default_dict[col.column_type](col.column_name, frame)
+            if isinstance(converters_by_type[col.column_type], types.LambdaType):
+                frame[col.column_name] = converters_by_type[col.column_type](col.column_name, frame)
+            else:
+                frame[col.column_name] = frame[col.column_name].astype(converters_by_type[col.column_type])
 
     return frame
 
@@ -91,14 +110,18 @@ def get_string_tail_lower_case(val, length):
     return val[len(val) - length :].lower()
 
 
-def real_or_decimal(frame, col):
+def parse_float(frame, col):
+    import numpy as np
+
     frame[col] = frame[col].replace("NaN", np.NaN).replace("Infinity", np.PINF).replace("-Infinity", np.NINF)
     frame[col] = pd.to_numeric(frame[col], errors="coerce").astype(pd.Float64Dtype())
     return frame[col]
 
 
-def datetime_func(frame, col):
+def parse_datetime(frame, col):
     # Pandas before version 2 doesn't support the "format" arg
+    import pandas as pd
+
     args = {}
     if pd.__version__.startswith("2."):
         args = {"format": "ISO8601", "utc": True}
