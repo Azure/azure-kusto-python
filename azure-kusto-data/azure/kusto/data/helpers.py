@@ -3,7 +3,6 @@ import sys
 import types
 from typing import TYPE_CHECKING, Union, Callable
 
-
 if TYPE_CHECKING:
     import pandas as pd
     from azure.kusto.data._models import KustoResultTable, KustoStreamingResultTable
@@ -12,7 +11,6 @@ try:
     import pandas as pd
 except ImportError:
     pd = None
-
 
 default_dict = {
     "string": lambda col, df: df[col].astype(pd.StringDtype()) if hasattr(pd, "StringDType") else df[col],
@@ -26,7 +24,6 @@ default_dict = {
     "datetime": lambda col, df: parse_datetime(df, col),
     "timespan": lambda col, df: df[col].apply(to_pandas_timedelta),
 }
-nullable_bools_converter = lambda col, df: df[col].astype(pd.BooleanDtype())
 
 
 # Copyright (c) Microsoft Corporation.
@@ -73,9 +70,6 @@ def dataframe_from_result_table(
     if not table:
         raise ValueError()
 
-    if nullable_bools:
-        default_dict["bool"] = nullable_bools_converter
-
     from azure.kusto.data._models import KustoResultTable, KustoStreamingResultTable
 
     if not isinstance(table, KustoResultTable) and not isinstance(table, KustoStreamingResultTable):
@@ -85,8 +79,10 @@ def dataframe_from_result_table(
     frame = pd.DataFrame(table.raw_rows, columns=columns)
 
     # converters_by_type overrides the default
-    if converters_by_type:
+    if converters_by_type and not nullable_bools:
         converters_by_type = {**default_dict, **converters_by_type}
+    elif converters_by_type:
+        converters_by_type = {**{"bool": lambda col, df: df[col].astype(pd.BooleanDtype())}, **default_dict, **converters_by_type}
     else:
         converters_by_type = default_dict
 
