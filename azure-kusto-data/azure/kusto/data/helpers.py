@@ -82,7 +82,7 @@ def dataframe_from_result_table(
     if converters_by_type and not nullable_bools:
         converters_by_type = {**default_dict, **converters_by_type}
     elif converters_by_type:
-        converters_by_type = {**{"bool": lambda col, df: df[col].astype(pd.BooleanDtype())}, **default_dict, **converters_by_type}
+        converters_by_type = {**default_dict, **{"bool": lambda col, df: df[col].astype(pd.BooleanDtype())}, **converters_by_type}
     else:
         converters_by_type = default_dict
 

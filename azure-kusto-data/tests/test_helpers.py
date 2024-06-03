@@ -24,76 +24,76 @@ class PandasTests(unittest.TestCase):
     test_dict_by_name = {"RecordName": lambda col, frame: frame[col].astype("str"), "RecordInt64": lambda col, frame: frame[col].astype("int64")}
     test_dict_by_type = {"int": lambda col, frame: frame[col].astype("int32")}
     test_int_to_float = {"int": "float64"}
-    df2 = dataframe_from_result_table(response.primary_results[0], converters_by_type=test_dict_by_type, converters_by_column_name=test_dict_by_name)
+    df = dataframe_from_result_table(response.primary_results[0], converters_by_type=test_dict_by_type, converters_by_column_name=test_dict_by_name)
     df_int_to_float = dataframe_from_result_table(response.primary_results[0], converters_by_type=test_int_to_float)
 
     if hasattr(pandas, "StringDType"):
-        assert df2["RecordName"].dtype == pandas.StringDtype()
-        assert str(df2.iloc[0].RecordName) == "now"
-        assert df2["RecordGUID"].dtype == pandas.StringDtype()
-        assert str(df2.iloc[0].RecordGUID) == "6f3c1072-2739-461c-8aa7-3cfc8ff528a8"
-        assert df2["RecordDynamic"].dtype == pandas.StringDtype()
+        assert df["RecordName"].dtype == pandas.StringDtype()
+        assert str(df.iloc[0].RecordName) == "now"
+        assert df["RecordGUID"].dtype == pandas.StringDtype()
+        assert str(df.iloc[0].RecordGUID) == "6f3c1072-2739-461c-8aa7-3cfc8ff528a8"
+        assert df["RecordDynamic"].dtype == pandas.StringDtype()
         assert (
-            str(df2.iloc[0].RecordDynamic)
+            str(df.iloc[0].RecordDynamic)
             == '{"Visualization":null,"Title":null,"XColumn":null,"Series":null,"YColumns":null,"XTitle":null,"YTitle":null,"XAxis":null,"YAxis":null,"Legend":null,"YSplit":null,"Accumulate":false,"IsQuerySorted":false,"Kind":null}'
         )
     else:
-        assert df2.iloc[0].RecordName == "now"
-        assert df2.iloc[0].RecordGUID == "6f3c1072-2739-461c-8aa7-3cfc8ff528a8"
+        assert df.iloc[0].RecordName == "now"
+        assert df.iloc[0].RecordGUID == "6f3c1072-2739-461c-8aa7-3cfc8ff528a8"
 
-    assert type(df2.iloc[0].RecordTime) is pandas._libs.tslibs.timestamps.Timestamp
+    assert type(df.iloc[0].RecordTime) is pandas._libs.tslibs.timestamps.Timestamp
 
     for k, v in {"year": 2021, "month": 12, "day": 22, "hour": 11, "minute": 43, "second": 00}.items():
-        assert getattr(df2.iloc[0].RecordTime, k) == v
-    assert type(df2.iloc[0].RecordBool) is numpy.bool_
-    assert df2.iloc[0].RecordBool == True
-    assert type(df2.iloc[0].RecordInt) is numpy.int32
-    assert df2.iloc[0].RecordInt == 5678
-    assert type(df2.iloc[0].RecordInt64) is numpy.int64
-    assert df2.iloc[0].RecordInt64 == 222
-    assert type(df2.iloc[0].RecordLong) is numpy.int64
-    assert df2.iloc[0].RecordLong == 92233720368
-    assert type(df2.iloc[0].RecordReal) is numpy.float64
-    assert df2.iloc[0].RecordReal == 3.14159
-    assert type(df2.iloc[0].RecordDecimal) is numpy.float64
-    assert df2.iloc[0].RecordDecimal == 1.2
+        assert getattr(df.iloc[0].RecordTime, k) == v
+    assert type(df.iloc[0].RecordBool) is numpy.bool_
+    assert df.iloc[0].RecordBool == True
+    assert type(df.iloc[0].RecordInt) is numpy.int32
+    assert df.iloc[0].RecordInt == 5678
+    assert type(df.iloc[0].RecordInt64) is numpy.int64
+    assert df.iloc[0].RecordInt64 == 222
+    assert type(df.iloc[0].RecordLong) is numpy.int64
+    assert df.iloc[0].RecordLong == 92233720368
+    assert type(df.iloc[0].RecordReal) is numpy.float64
+    assert df.iloc[0].RecordReal == 3.14159
+    assert type(df.iloc[0].RecordDecimal) is numpy.float64
+    assert df.iloc[0].RecordDecimal == 1.2
 
     # Kusto datetime(0000-01-01T00:00:00Z), which Pandas can't represent.
-    assert df2.iloc[1].RecordName == "earliest datetime"
-    assert type(df2.iloc[1].RecordTime) is pandas._libs.tslibs.nattype.NaTType
-    assert pandas.isnull(df2.iloc[1].RecordReal)
+    assert df.iloc[1].RecordName == "earliest datetime"
+    assert type(df.iloc[1].RecordTime) is pandas._libs.tslibs.nattype.NaTType
+    assert pandas.isnull(df.iloc[1].RecordReal)
 
     # Kusto datetime(9999-12-31T23:59:59Z), which Pandas can't represent.
-    assert df2.iloc[2].RecordName == "latest datetime"
-    assert type(df2.iloc[2].RecordTime) is pandas._libs.tslibs.nattype.NaTType
-    assert type(df2.iloc[2].RecordReal) is numpy.float64
-    assert df2.iloc[2].RecordReal == numpy.inf
+    assert df.iloc[2].RecordName == "latest datetime"
+    assert type(df.iloc[2].RecordTime) is pandas._libs.tslibs.nattype.NaTType
+    assert type(df.iloc[2].RecordReal) is numpy.float64
+    assert df.iloc[2].RecordReal == numpy.inf
 
     # Pandas earliest datetime
-    assert df2.iloc[3].RecordName == "earliest pandas datetime"
-    assert type(df2.iloc[3].RecordTime) is pandas._libs.tslibs.timestamps.Timestamp
-    assert type(df2.iloc[3].RecordReal) is numpy.float64
-    assert df2.iloc[3].RecordReal == -numpy.inf
+    assert df.iloc[3].RecordName == "earliest pandas datetime"
+    assert type(df.iloc[3].RecordTime) is pandas._libs.tslibs.timestamps.Timestamp
+    assert type(df.iloc[3].RecordReal) is numpy.float64
+    assert df.iloc[3].RecordReal == -numpy.inf
 
     # Pandas latest datetime
-    assert df2.iloc[4].RecordName == "latest pandas datetime"
-    assert type(df2.iloc[4].RecordTime) is pandas._libs.tslibs.timestamps.Timestamp
+    assert df.iloc[4].RecordName == "latest pandas datetime"
+    assert type(df.iloc[4].RecordTime) is pandas._libs.tslibs.timestamps.Timestamp
 
     # Kusto 600000000 ticks timedelta
-    assert df2.iloc[5].RecordName == "timedelta ticks"
-    assert type(df2.iloc[5].RecordTime) is pandas._libs.tslibs.timestamps.Timestamp
-    assert type(df2.iloc[5].RecordOffset) is pandas._libs.tslibs.timestamps.Timedelta
-    assert df2.iloc[5].RecordOffset == pandas.to_timedelta("00:01:00")
+    assert df.iloc[5].RecordName == "timedelta ticks"
+    assert type(df.iloc[5].RecordTime) is pandas._libs.tslibs.timestamps.Timestamp
+    assert type(df.iloc[5].RecordOffset) is pandas._libs.tslibs.timestamps.Timedelta
+    assert df.iloc[5].RecordOffset == pandas.to_timedelta("00:01:00")
 
     # Kusto timedelta(1.01:01:01.0) ==
-    assert df2.iloc[6].RecordName == "timedelta string"
-    assert type(df2.iloc[6].RecordTime) is pandas._libs.tslibs.timestamps.Timestamp
-    assert type(df2.iloc[6].RecordOffset) is pandas._libs.tslibs.timestamps.Timedelta
-    assert df2.iloc[6].RecordOffset == pandas.to_timedelta("1 days 01:01:01")
+    assert df.iloc[6].RecordName == "timedelta string"
+    assert type(df.iloc[6].RecordTime) is pandas._libs.tslibs.timestamps.Timestamp
+    assert type(df.iloc[6].RecordOffset) is pandas._libs.tslibs.timestamps.Timedelta
+    assert df.iloc[6].RecordOffset == pandas.to_timedelta("1 days 01:01:01")
 
     # Testing int to float conversion
     assert type(df_int_to_float.iloc[0].RecordInt) is numpy.float64
-    assert df2.iloc[0].RecordInt == 5678
+    assert df.iloc[0].RecordInt == 5678
 
     def test_pandas_mixed_date(self):
         df = dataframe_from_result_table(
