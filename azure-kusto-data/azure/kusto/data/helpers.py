@@ -83,7 +83,10 @@ def dataframe_from_result_table(
     frame = pd.DataFrame(table.raw_rows, columns=columns)
 
     # converters_by_type overrides the default
-    converters_by_type = {**default_dict, **converters_by_type}
+    if converters_by_type:
+        converters_by_type = {**default_dict, **converters_by_type}
+    else:
+        converters_by_type = default_dict
 
     for col in table.columns:
         if converters_by_column_name and col.column_name in converters_by_column_name.keys():
