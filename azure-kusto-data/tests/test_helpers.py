@@ -95,7 +95,6 @@ class PandasTests(unittest.TestCase):
     assert type(df_int_to_float.iloc[0].RecordInt) is numpy.float64
     assert df2.iloc[0].RecordInt == 5678
 
-
     def test_pandas_mixed_date(self):
         df = dataframe_from_result_table(
             KustoResultTable(
