@@ -96,21 +96,21 @@ class PandasTests(unittest.TestCase):
     assert df2.iloc[0].RecordInt == 5678
 
 
-def test_pandas_mixed_date(self):
-    df = dataframe_from_result_table(
-        KustoResultTable(
-            {
-                "TableName": "Table_0",
-                "Columns": [
-                    {"ColumnName": "Date", "ColumnType": "datetime"},
-                ],
-                "Rows": [
-                    ["2023-12-12T01:59:59.352Z"],
-                    ["2023-12-12T01:54:44Z"],
-                ],
-            }
+    def test_pandas_mixed_date(self):
+        df = dataframe_from_result_table(
+            KustoResultTable(
+                {
+                    "TableName": "Table_0",
+                    "Columns": [
+                        {"ColumnName": "Date", "ColumnType": "datetime"},
+                    ],
+                    "Rows": [
+                        ["2023-12-12T01:59:59.352Z"],
+                        ["2023-12-12T01:54:44Z"],
+                    ],
+                }
+            )
         )
-    )
 
-    assert df["Date"][0] == pandas.Timestamp(year=2023, month=12, day=12, hour=1, minute=59, second=59, microsecond=352000, tzinfo=datetime.timezone.utc)
-    assert df["Date"][1] == pandas.Timestamp(year=2023, month=12, day=12, hour=1, minute=54, second=44, tzinfo=datetime.timezone.utc)
+        assert df["Date"][0] == pandas.Timestamp(year=2023, month=12, day=12, hour=1, minute=59, second=59, microsecond=352000, tzinfo=datetime.timezone.utc)
+        assert df["Date"][1] == pandas.Timestamp(year=2023, month=12, day=12, hour=1, minute=54, second=44, tzinfo=datetime.timezone.utc)
