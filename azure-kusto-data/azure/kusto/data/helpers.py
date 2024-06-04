@@ -1,34 +1,37 @@
-from __future__ import annotations
 import sys
-import types
-from typing import TYPE_CHECKING, Union, Callable
+from typing import TYPE_CHECKING, Union, Callable, Dict, Optional
+from functools import lru_cache
+import copy
 
 if TYPE_CHECKING:
     import pandas as pd
     from azure.kusto.data._models import KustoResultTable, KustoStreamingResultTable
 
-try:
-    import pandas as pd
-except ImportError:
-    pd = None
+# Alias for dataframe_from_result_table converter type
+Converter = Optional[Dict[str, Union[str, Callable[[str, "pd.DataFrame"], "pd.Series"]]]]
 
-default_dict = {
-    "string": lambda col, df: df[col].astype(pd.StringDtype()) if hasattr(pd, "StringDType") else df[col],
-    "guid": lambda col, df: df[col],
-    "dynamic": lambda col, df: df[col],
-    "bool": lambda col, df: df[col].astype(bool),
-    "int": lambda col, df: df[col].astype(pd.Int32Dtype()),
-    "long": lambda col, df: df[col].astype(pd.Int64Dtype()),
-    "real": lambda col, df: parse_float(df, col),
-    "decimal": lambda col, df: parse_float(df, col),
-    "datetime": lambda col, df: parse_datetime(df, col),
-    "timespan": lambda col, df: df[col].apply(to_pandas_timedelta),
-}
+
+@lru_cache
+def default_dict() -> Dict[str, Callable[[str, "pd.DataFrame"], "pd.Series"]]:
+    import pandas as pd
+
+    return {
+        "string": lambda col, df: df[col].astype(pd.StringDtype()) if hasattr(pd, "StringDType") else df[col],
+        "guid": lambda col, df: df[col],
+        "dynamic": lambda col, df: df[col],
+        "bool": lambda col, df: df[col].astype(bool),
+        "int": lambda col, df: df[col].astype(pd.Int32Dtype()),
+        "long": lambda col, df: df[col].astype(pd.Int64Dtype()),
+        "real": lambda col, df: parse_float(df, col),
+        "decimal": lambda col, df: parse_float(df, col),
+        "datetime": lambda col, df: parse_datetime(df, col),
+        "timespan": lambda col, df: df[col].apply(to_pd_timedelta),
+    }
 
 
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
-def to_pandas_timedelta(raw_value: Union[int, float, str]) -> "pandas.Timedelta":
+def to_pd_timedelta(raw_value: Union[int, float, str]) -> "pd.Timedelta":
     """
     Transform a raw python value to a pandas timedelta.
     """
@@ -52,13 +55,13 @@ def to_pandas_timedelta(raw_value: Union[int, float, str]) -> "pandas.Timedelta"
 def dataframe_from_result_table(
     table: "Union[KustoResultTable, KustoStreamingResultTable]",
     nullable_bools: bool = False,
-    converters_by_type: dict[str, Callable[[str, "pandas.DataFrame"], "pandas.Series"]] = None,
-    converters_by_column_name: dict[str, Callable[[str, "pandas.DataFrame"], "pandas.Series"]] = None,
-) -> "pandas.DataFrame":
+    converters_by_type: Converter = None,
+    converters_by_column_name: Converter = None,
+) -> "pd.DataFrame":
     f"""Converts Kusto tables into pandas DataFrame.
     :param azure.kusto.data._models.KustoResultTable table: Table received from the response.
     :param nullable_bools: When True, converts bools that are 'null' from kusto or 'None' from python to pandas.NA. This will be the default in the future.
-    :param converters_by_type: If given, converts specified types to corresponding types, else uses {default_dict}. The dictionary maps from kusto
+    :param converters_by_type: If given, converts specified types to corresponding types, else uses {default_dict()}. The dictionary maps from kusto
     datatype (https://learn.microsoft.com/azure/data-explorer/kusto/query/scalar-data-types/) to a lambda that receives a column name and a dataframe and
     returns the converted column.
     :param converters_by_column_name: If given, converts specified columns to corresponding types, else uses converters_by_type. The dictionary maps from column
@@ -77,28 +80,25 @@ def dataframe_from_result_table(
 
     columns = [col.column_name for col in table.columns]
     frame = pd.DataFrame(table.raw_rows, columns=columns)
+    default = default_dict()
 
-    # converters_by_type overrides the default
-    if converters_by_type and not nullable_bools:
-        converters_by_type = {**default_dict, **converters_by_type}
-    elif converters_by_type:
-        converters_by_type = {**default_dict, **{"bool": lambda col, df: df[col].astype(pd.BooleanDtype())}, **converters_by_type}
-    elif nullable_bools:
-        converters_by_type = {**default_dict, **{"bool": lambda col, df: df[col].astype(pd.BooleanDtype())}}
-    else:
-        converters_by_type = default_dict
+    if nullable_bools:
+        default = copy.deepcopy(default)
+        default["bool"] = lambda col, df: df[col].astype(pd.BooleanDtype())
 
     for col in table.columns:
         if converters_by_column_name and col.column_name in converters_by_column_name.keys():
-            if isinstance(converters_by_column_name[col.column_name], types.LambdaType):
-                frame[col.column_name] = converters_by_column_name[col.column_name](col.column_name, frame)
-            else:
+            if isinstance(converters_by_column_name[col.column_name], str):
                 frame[col.column_name] = frame[col.column_name].astype(converters_by_column_name[col.column_name])
-        else:
-            if isinstance(converters_by_type[col.column_type], types.LambdaType):
-                frame[col.column_name] = converters_by_type[col.column_type](col.column_name, frame)
             else:
+                frame[col.column_name] = converters_by_column_name[col.column_name](col.column_name, frame)
+        elif converters_by_type and col.column_type in converters_by_type.keys():
+            if isinstance(converters_by_type[col.column_type], str):
                 frame[col.column_name] = frame[col.column_name].astype(converters_by_type[col.column_type])
+            else:
+                frame[col.column_name] = converters_by_type[col.column_type](col.column_name, frame)
+        else:
+            frame[col.column_name] = default[col.column_type](col.column_name, frame)
 
     return frame
 
@@ -113,8 +113,10 @@ def get_string_tail_lower_case(val, length):
     return val[len(val) - length :].lower()
 
 
+# TODO When moving to pandas 2 only - change to the appropriate type
 def parse_float(frame, col):
     import numpy as np
+    import pandas as pd
 
     frame[col] = frame[col].replace("NaN", np.NaN).replace("Infinity", np.PINF).replace("-Infinity", np.NINF)
     frame[col] = pd.to_numeric(frame[col], errors="coerce").astype(pd.Float64Dtype())
