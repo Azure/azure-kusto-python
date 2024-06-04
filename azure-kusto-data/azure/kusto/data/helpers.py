@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 Converter = Optional[Dict[str, Union[str, Callable[[str, "pd.DataFrame"], "pd.Series"]]]]
 
 
-@lru_cache
+@lru_cache(maxsize=128, typed=False)
 def default_dict() -> Dict[str, Callable[[str, "pd.DataFrame"], "pd.Series"]]:
     import pandas as pd
 
