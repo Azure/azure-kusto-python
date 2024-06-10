@@ -265,7 +265,7 @@ paket-files/
 .fake/
 
 # JetBrains Rider
-.idea/
+.idea/**/*
 !.idea/modules.xml
 .run/
 *.sln.iml

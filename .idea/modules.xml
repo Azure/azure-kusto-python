@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/azure-kusto-data/azure-kusto-data.iml" filepath="$PROJECT_DIR$/azure-kusto-data/azure-kusto-data.iml" />
+      <module fileurl="file://$PROJECT_DIR$/azure-kusto-ingest/azure-kusto-ingest.iml" filepath="$PROJECT_DIR$/azure-kusto-ingest/azure-kusto-ingest.iml" />
+      <module fileurl="file://$PROJECT_DIR$/quick_start/quick_start.iml" filepath="$PROJECT_DIR$/quick_start/quick_start.iml" />
+    </modules>
+  </component>
+</project>
