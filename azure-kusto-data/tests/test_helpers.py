@@ -31,8 +31,8 @@ if hasattr(pandas, "StringDType"):
     assert str(df.iloc[0].RecordGUID) == "6f3c1072-2739-461c-8aa7-3cfc8ff528a8"
     assert df["RecordDynamic"].dtype == pandas.StringDtype()
     assert (
-            str(df.iloc[0].RecordDynamic)
-            == '{"Visualization":null,"Title":null,"XColumn":null,"Series":null,"YColumns":null,"XTitle":null,"YTitle":null,"XAxis":null,"YAxis":null,"Legend":null,"YSplit":null,"Accumulate":false,"IsQuerySorted":false,"Kind":null}'
+        str(df.iloc[0].RecordDynamic)
+        == '{"Visualization":null,"Title":null,"XColumn":null,"Series":null,"YColumns":null,"XTitle":null,"YTitle":null,"XAxis":null,"YAxis":null,"Legend":null,"YSplit":null,"Accumulate":false,"IsQuerySorted":false,"Kind":null}'
     )
 else:
     assert df.iloc[0].RecordName == "now"
