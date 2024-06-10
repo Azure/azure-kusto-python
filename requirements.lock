@@ -6,12 +6,11 @@
 #   features: []
 #   all-features: true
 #   with-sources: false
+#   generate-hashes: false
 
 -e file:azure-kusto-data
     # via azure-kusto-ingest
-    # via file:///azure-kusto-data
 -e file:azure-kusto-ingest
-    # via file:///azure-kusto-ingest
 aiohttp==3.9.3
     # via azure-kusto-data
 aiosignal==1.3.1
@@ -81,7 +80,6 @@ pycparser==2.21
     # via cffi
 pyjwt==2.8.0
     # via msal
-    # via pyjwt
 pyright==1.1.361
 python-dateutil==2.8.2
     # via azure-kusto-data
@@ -94,6 +92,8 @@ requests==2.31.0
     # via azure-core
     # via azure-kusto-data
     # via msal
+setuptools==69.5.1
+    # via nodeenv
 six==1.16.0
     # via azure-core
     # via isodate
@@ -111,5 +111,3 @@ urllib3==2.2.1
     # via requests
 yarl==1.9.4
     # via aiohttp
-setuptools==69.5.1
-    # via nodeenv
