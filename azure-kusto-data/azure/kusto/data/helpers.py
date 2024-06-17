@@ -97,7 +97,7 @@ def parse_float(frame, col):
     import numpy as np
     import pandas as pd
 
-    frame[col] = frame[col].replace("NaN", np.nan).replace("Infinity", np.inf).replace("-Infinity", np.NINF)
+    frame[col] = frame[col].replace("NaN", np.nan).replace("Infinity", np.inf).replace("-Infinity", -np.inf)
     frame[col] = pd.to_numeric(frame[col], errors="coerce").astype(pd.Float64Dtype())
     return frame[col]
 
