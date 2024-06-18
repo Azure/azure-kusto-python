@@ -13,6 +13,7 @@ from azure.storage.queue import QueueServiceClient, TextBase64EncodePolicy
 from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
 from azure.kusto.data._telemetry import MonitoredActivity
 from azure.kusto.data.exceptions import KustoClosedError, KustoServiceError
+from .V2.local_source import LocalSource
 
 from ._ingest_telemetry import IngestTracingAttributes
 from ._resource_manager import _ResourceManager, _ResourceUri
@@ -203,3 +204,5 @@ class QueuedIngestClient(BaseIngestClient):
                 self._resource_manager.report_resource_usage_result(container.storage_account_name, False)
                 if retries_left == 0:
                     raise KustoBlobError(e)
+
+
