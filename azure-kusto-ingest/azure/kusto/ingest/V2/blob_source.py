@@ -1,8 +1,8 @@
 from typing import Union
 
-from kusto.data.data_format import DataFormat
-from kusto.ingest.V2.ingestion_source import IngestionSource
-from kusto.ingest.V2.local_source import LocalSource
+from azure.kusto.data.data_format import DataFormat
+from azure.kusto.ingest.V2.ingestion_source import IngestionSource
+from azure.kusto.ingest.V2.local_source import LocalSource
 
 
 class BlobSource(IngestionSource):

@@ -1,6 +1,6 @@
 import uuid
 
-from kusto.data import DataFormat
+from azure.kusto.data import DataFormat
 
 
 class IngestionSource:

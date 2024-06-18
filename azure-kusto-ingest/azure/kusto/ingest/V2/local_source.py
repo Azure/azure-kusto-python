@@ -1,7 +1,7 @@
-from kusto.ingest import StreamDescriptor
-from kusto.ingest.V2.compression_type import CompressionType
-from kusto.ingest.V2.ingestion_source import IngestionSource
-from kusto.data.data_format import DataFormat
+from azure.kusto.ingest import StreamDescriptor
+from azure.kusto.ingest.V2.compression_type import CompressionType
+from azure.kusto.ingest.V2.ingestion_source import IngestionSource
+from azure.kusto.data.data_format import DataFormat
 
 
 class LocalSource(IngestionSource):

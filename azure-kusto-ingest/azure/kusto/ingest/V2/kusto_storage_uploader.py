@@ -6,8 +6,8 @@ from azure.kusto.ingest._resource_manager import _ResourceManager, _ResourceUri
 from azure.kusto.ingest.base_ingest_client import BaseIngestClient
 from azure.kusto.ingest.descriptors import BlobDescriptor, FileDescriptor, StreamDescriptor
 from azure.kusto.data.exceptions import KustoBlobError, KustoClientError
-from kusto.ingest.V2.blob_source import BlobSource
-from kusto.ingest.V2.local_source import LocalSource
+from azure.kusto.ingest.V2.blob_source import BlobSource
+from azure.kusto.ingest.V2.local_source import LocalSource
 
 
 class KustoStorageUploader:
@@ -84,11 +84,10 @@ class KustoStorageUploader:
                 if local_stream is None or local_stream.length == 0:
                   ??  tracer
                     raise KustoClientError(local.source_id, f"KustoStorageUploader.upload_async: No data in file. Skipping uploading of file: '{local.name}'." )
-
-                  ??  blob_name = create_uniqe_blob_name
-                  ??  blob_uri = upload_blob(local_stream, blob_name, local.compression_type, local.should_compress(), )
-                    return BlobSource(blob_uri, local)
-
+            ??  blob_name =
+            blob_name = "{db}__{table}__{guid}__{file}".format(db=database, table=table, guid=descriptor.source_id, file=descriptor.stream_name)
+            blob_uri = upload_blob(?? )
+            return BlobSource(blob_uri, local)
         except Exception as ex:
             if isinstance(ex, KustoClientError):
                 ex.ingestion_source = local.name
