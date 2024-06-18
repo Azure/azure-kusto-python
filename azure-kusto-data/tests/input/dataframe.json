@@ -74,12 +74,20 @@
         "ColumnType": "real"
       },
       {
+        "ColumnName": "RecordDouble",
+        "ColumnType": "double"
+      },
+      {
         "ColumnName": "RecordDecimal",
         "ColumnType": "decimal"
       },
       {
         "ColumnName": "RecordDynamic",
         "ColumnType": "dynamic"
+      },
+      {
+        "ColumnName": "MissingType",
+        "ColumnType": "missing"
       }
     ],
     "Rows": [
@@ -92,8 +100,8 @@
         222,
         92233720368,
         "6f3c1072-2739-461c-8aa7-3cfc8ff528a8",
-        3.14159, 1.2,
-        "{\"Visualization\":null,\"Title\":null,\"XColumn\":null,\"Series\":null,\"YColumns\":null,\"XTitle\":null,\"YTitle\":null,\"XAxis\":null,\"YAxis\":null,\"Legend\":null,\"YSplit\":null,\"Accumulate\":false,\"IsQuerySorted\":false,\"Kind\":null}"
+        3.14159, 7.89, 1.2,
+        "{\"Visualization\":null,\"Title\":null,\"XColumn\":null,\"Series\":null,\"YColumns\":null,\"XTitle\":null,\"YTitle\":null,\"XAxis\":null,\"YAxis\":null,\"Legend\":null,\"YSplit\":null,\"Accumulate\":false,\"IsQuerySorted\":false,\"Kind\":null}", "miss"
 
       ],
       [
@@ -105,8 +113,8 @@
         222,
         92233720368,
         "6f3c1072-2739-461c-8aa7-3cfc8ff528a8",
-        "NaN", "NaN",
-        "{\"Visualization\":null,\"Title\":null,\"XColumn\":null,\"Series\":null,\"YColumns\":null,\"XTitle\":null,\"YTitle\":null,\"XAxis\":null,\"YAxis\":null,\"Legend\":null,\"YSplit\":null,\"Accumulate\":false,\"IsQuerySorted\":false,\"Kind\":null}"
+        "NaN", "NaN", "NaN",
+        "{\"Visualization\":null,\"Title\":null,\"XColumn\":null,\"Series\":null,\"YColumns\":null,\"XTitle\":null,\"YTitle\":null,\"XAxis\":null,\"YAxis\":null,\"Legend\":null,\"YSplit\":null,\"Accumulate\":false,\"IsQuerySorted\":false,\"Kind\":null}", "miss"
 
       ],
       [
@@ -118,8 +126,8 @@
         222,
         92233720368,
         "6f3c1072-2739-461c-8aa7-3cfc8ff528a8",
-        "Infinity", "Infinity",
-        "{\"Visualization\":null,\"Title\":null,\"XColumn\":null,\"Series\":null,\"YColumns\":null,\"XTitle\":null,\"YTitle\":null,\"XAxis\":null,\"YAxis\":null,\"Legend\":null,\"YSplit\":null,\"Accumulate\":false,\"IsQuerySorted\":false,\"Kind\":null}"
+        "Infinity", "Infinity", "Infinity",
+        "{\"Visualization\":null,\"Title\":null,\"XColumn\":null,\"Series\":null,\"YColumns\":null,\"XTitle\":null,\"YTitle\":null,\"XAxis\":null,\"YAxis\":null,\"Legend\":null,\"YSplit\":null,\"Accumulate\":false,\"IsQuerySorted\":false,\"Kind\":null}", "miss"
 
       ],
       [
@@ -131,8 +139,8 @@
         222,
         92233720368,
         "6f3c1072-2739-461c-8aa7-3cfc8ff528a8",
-        "-Infinity", "-Infinity",
-        "{\"Visualization\":null,\"Title\":null,\"XColumn\":null,\"Series\":null,\"YColumns\":null,\"XTitle\":null,\"YTitle\":null,\"XAxis\":null,\"YAxis\":null,\"Legend\":null,\"YSplit\":null,\"Accumulate\":false,\"IsQuerySorted\":false,\"Kind\":null}"
+        "-Infinity", "-Infinity", "-Infinity",
+        "{\"Visualization\":null,\"Title\":null,\"XColumn\":null,\"Series\":null,\"YColumns\":null,\"XTitle\":null,\"YTitle\":null,\"XAxis\":null,\"YAxis\":null,\"Legend\":null,\"YSplit\":null,\"Accumulate\":false,\"IsQuerySorted\":false,\"Kind\":null}", "miss"
 
       ],
       [
@@ -144,8 +152,8 @@
         222,
         92233720368,
         "6f3c1072-2739-461c-8aa7-3cfc8ff528a8",
-        3.14159, 1.2,
-        "{\"Visualization\":null,\"Title\":null,\"XColumn\":null,\"Series\":null,\"YColumns\":null,\"XTitle\":null,\"YTitle\":null,\"XAxis\":null,\"YAxis\":null,\"Legend\":null,\"YSplit\":null,\"Accumulate\":false,\"IsQuerySorted\":false,\"Kind\":null}"
+        3.14159, 7.89, 1.2,
+        "{\"Visualization\":null,\"Title\":null,\"XColumn\":null,\"Series\":null,\"YColumns\":null,\"XTitle\":null,\"YTitle\":null,\"XAxis\":null,\"YAxis\":null,\"Legend\":null,\"YSplit\":null,\"Accumulate\":false,\"IsQuerySorted\":false,\"Kind\":null}", "miss"
 
       ],
       [
@@ -157,8 +165,8 @@
         222,
         92233720368,
         "6f3c1072-2739-461c-8aa7-3cfc8ff528a8",
-        3.14159, 1.2,
-        "{\"Visualization\":null,\"Title\":null,\"XColumn\":null,\"Series\":null,\"YColumns\":null,\"XTitle\":null,\"YTitle\":null,\"XAxis\":null,\"YAxis\":null,\"Legend\":null,\"YSplit\":null,\"Accumulate\":false,\"IsQuerySorted\":false,\"Kind\":null}"
+        3.14159, 7.89, 1.2,
+        "{\"Visualization\":null,\"Title\":null,\"XColumn\":null,\"Series\":null,\"YColumns\":null,\"XTitle\":null,\"YTitle\":null,\"XAxis\":null,\"YAxis\":null,\"Legend\":null,\"YSplit\":null,\"Accumulate\":false,\"IsQuerySorted\":false,\"Kind\":null}", "miss"
 
       ],
       [
@@ -170,8 +178,8 @@
         222,
         92233720368,
         "6f3c1072-2739-461c-8aa7-3cfc8ff528a8",
-        3.14159, 1.2,
-        "{\"Visualization\":null,\"Title\":null,\"XColumn\":null,\"Series\":null,\"YColumns\":null,\"XTitle\":null,\"YTitle\":null,\"XAxis\":null,\"YAxis\":null,\"Legend\":null,\"YSplit\":null,\"Accumulate\":false,\"IsQuerySorted\":false,\"Kind\":null}"
+        3.14159, 7.89, 1.2,
+        "{\"Visualization\":null,\"Title\":null,\"XColumn\":null,\"Series\":null,\"YColumns\":null,\"XTitle\":null,\"YTitle\":null,\"XAxis\":null,\"YAxis\":null,\"Legend\":null,\"YSplit\":null,\"Accumulate\":false,\"IsQuerySorted\":false,\"Kind\":null}", "miss"
 
       ],
       [
