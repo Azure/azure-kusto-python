@@ -4,6 +4,8 @@ import datetime
 import json
 import os
 
+import pytest
+
 from azure.kusto.data._models import KustoResultTable
 from azure.kusto.data.helpers import dataframe_from_result_table
 from azure.kusto.data.response import KustoResponseDataSetV2
@@ -104,12 +106,8 @@ assert type(df_int_to_float.iloc[0].RecordInt) is numpy.float64
 assert df.iloc[0].RecordInt == 5678
 
 # Testing missing type conversion
-raised = False
-try:
+with pytest.raises(Exception):
     df_missing_type = dataframe_from_result_table(response.primary_results[0])
-except Exception:
-    raised = True
-assert raised
 
 
 def test_pandas_mixed_date():
