@@ -18,14 +18,22 @@ def default_dict() -> Converter:
     return {
         "string": lambda col, df: df[col].astype(pd.StringDtype()) if hasattr(pd, "StringDType") else df[col],
         "guid": lambda col, df: df[col],
+        "uuid": lambda col, df: df[col],
+        "uniqueid": lambda col, df: df[col],
         "dynamic": lambda col, df: df[col],
         "bool": lambda col, df: df[col].astype(bool),
+        "boolean": lambda col, df: df[col].astype(bool),
         "int": lambda col, df: df[col].astype(pd.Int32Dtype()),
+        "int32": lambda col, df: df[col].astype(pd.Int32Dtype()),
+        "int64": lambda col, df: df[col].astype(pd.Int64Dtype()),
         "long": lambda col, df: df[col].astype(pd.Int64Dtype()),
         "real": lambda col, df: parse_float(df, col),
+        "double": lambda col, df: parse_float(df, col),
         "decimal": lambda col, df: parse_float(df, col),
         "datetime": lambda col, df: parse_datetime(df, col),
+        "date": lambda col, df: parse_datetime(df, col),
         "timespan": lambda col, df: df[col].apply(parse_timedelta),
+        "time": lambda col, df: df[col].apply(parse_timedelta),
     }
 
 
@@ -67,13 +75,15 @@ def dataframe_from_result_table(
         column_name = col.column_name
         column_type = col.column_type
         if converters_by_column_name and column_name in converters_by_column_name:
-            converter = converters_by_column_name[column_name]
+            converter = converters_by_column_name.get(column_name)
         elif converters_by_type and column_type in converters_by_type:
-            converter = converters_by_type[column_type]
+            converter = converters_by_type.get(column_type)
         elif nullable_bools and column_type == "bool":
             converter = lambda col, df: df[col].astype(pd.BooleanDtype())
         else:
-            converter = default[column_type]
+            converter = default.get(column_type)
+        if converter is None:
+            raise Exception("Unexpected type " + column_type)
         if isinstance(converter, str):
             frame[column_name] = frame[column_name].astype(converter)
         else:

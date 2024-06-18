@@ -4,6 +4,8 @@ import datetime
 import json
 import os
 
+import pytest
+
 from azure.kusto.data._models import KustoResultTable
 from azure.kusto.data.helpers import dataframe_from_result_table
 from azure.kusto.data.response import KustoResponseDataSetV2
@@ -20,7 +22,11 @@ with open(os.path.join(os.path.dirname(__file__), "input", "dataframe.json"), "r
 
 response = KustoResponseDataSetV2(json.loads(data))
 # Test when given both types of dictionary parameters that type conversion doesn't override column name conversion
-test_dict_by_name = {"RecordName": lambda col, frame: frame[col].astype("str"), "RecordInt64": lambda col, frame: frame[col].astype("int64")}
+test_dict_by_name = {
+    "RecordName": lambda col, frame: frame[col].astype("str"),
+    "RecordInt64": lambda col, frame: frame[col].astype("int64"),
+    "MissingType": lambda col, frame: frame[col].astype("str"),
+}
 test_dict_by_type = {"int": lambda col, frame: frame[col].astype("int32")}
 df = dataframe_from_result_table(response.primary_results[0], converters_by_type=test_dict_by_type, converters_by_column_name=test_dict_by_name)
 
@@ -52,6 +58,8 @@ assert type(df.iloc[0].RecordLong) is numpy.int64
 assert df.iloc[0].RecordLong == 92233720368
 assert type(df.iloc[0].RecordReal) is numpy.float64
 assert df.iloc[0].RecordReal == 3.14159
+assert type(df.iloc[0].RecordDouble) is numpy.float64
+assert df.iloc[0].RecordDouble == 7.89
 assert type(df.iloc[0].RecordDecimal) is numpy.float64
 assert df.iloc[0].RecordDecimal == 1.2
 
@@ -90,9 +98,16 @@ assert df.iloc[6].RecordOffset == pandas.to_timedelta("1 days 01:01:01")
 
 # Testing int to float conversion
 test_int_to_float = {"int": "float64"}
-df_int_to_float = dataframe_from_result_table(response.primary_results[0], converters_by_type=test_int_to_float)
+ignore_missing_type = {
+    "MissingType": lambda col, frame: frame[col].astype("str"),
+}
+df_int_to_float = dataframe_from_result_table(response.primary_results[0], converters_by_type=test_int_to_float, converters_by_column_name=ignore_missing_type)
 assert type(df_int_to_float.iloc[0].RecordInt) is numpy.float64
 assert df.iloc[0].RecordInt == 5678
+
+# Testing missing type conversion
+with pytest.raises(Exception):
+    df_missing_type = dataframe_from_result_table(response.primary_results[0])
 
 
 def test_pandas_mixed_date():
