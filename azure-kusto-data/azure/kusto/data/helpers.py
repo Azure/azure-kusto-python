@@ -82,11 +82,11 @@ def dataframe_from_result_table(
             converter = lambda col, df: df[col].astype(pd.BooleanDtype())
         else:
             converter = default.get(column_type)
+        if converter is None:
+            raise Exception("Unexpected type " + column_type)
         if isinstance(converter, str):
             frame[column_name] = frame[column_name].astype(converter)
         else:
-            if converter is None:
-                raise Exception("Unexpected type " + column_type)
             frame[column_name] = converter(column_name, frame)
 
     return frame
