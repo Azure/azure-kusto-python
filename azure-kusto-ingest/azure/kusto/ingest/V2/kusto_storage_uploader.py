@@ -76,7 +76,7 @@ class KustoStorageUploader:
                     raise KustoUploadError(local.name)
 
             blob_uri = self.upload_blob(local, local_stream)
-            return BlobSource(blob_uri, local)
+            return BlobSource(blob_uri.__str__(), local)
         except Exception as ex:
             if isinstance(ex, KustoUploadError):
                 raise KustoUploadError(local.name)

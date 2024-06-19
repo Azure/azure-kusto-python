@@ -31,10 +31,10 @@ class KustoServiceError(KustoError):
     """Raised when the Kusto service was unable to process a request."""
 
     def __init__(
-        self,
-        messages: Union[str, List[dict]],
-        http_response: "Union[requests.Response, ClientResponse, None]" = None,
-        kusto_response: Optional[Dict[str, Any]] = None,
+            self,
+            messages: Union[str, List[dict]],
+            http_response: "Union[requests.Response, ClientResponse, None]" = None,
+            kusto_response: Optional[Dict[str, Any]] = None,
     ):
         super().__init__(messages)
         self.http_response = http_response
@@ -148,6 +148,15 @@ class KustoBlobError(KustoClientError):
 
     def message(self) -> str:
         return f"Failed to upload blob: {self.inner}"
+
+
+class KustoUploadError(KustoClientError):
+    def __init__(self, file_name: str):
+        super().__init__(f"KustoStorageUploader.upload_async: No data in file. Skipping uploading of file: '{file_name}'.")
+        self.file_name = file_name
+
+    def message(self) -> str:
+        return f"Failed to upload blob. File name: {self.file_name}"
 
 
 class KustoUnsupportedApiError(KustoError):

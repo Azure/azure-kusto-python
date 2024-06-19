@@ -9,6 +9,7 @@ class LocalSource(ABC, IngestionSource):
     def __init__(self, compression_type: CompressionType, format: DataFormat):
         super().__init__(format)
         self.compression_type = compression_type
+        self.name = None
 
     def should_compress(self):
         return (self.compression_type == CompressionType.Uncompressed) and self.format.compressible

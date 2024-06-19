@@ -2,7 +2,7 @@ from azure.kusto.data import KustoConnectionStringBuilder
 from azure.kusto.data import DataFormat
 from azure.kusto.ingest.V2.kusto_storage_uploader import KustoStorageUploader
 from azure.kusto.ingest.V2.local_source import FileSource
-from azure.kusto.tests.test_e2e_ingest import TestE2E
+from tests.test_e2e_data import TestE2E
 
 
 class TestIngestionV2:
