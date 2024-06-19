@@ -204,5 +204,3 @@ class QueuedIngestClient(BaseIngestClient):
                 self._resource_manager.report_resource_usage_result(container.storage_account_name, False)
                 if retries_left == 0:
                     raise KustoBlobError(e)
-
-

@@ -1,17 +1,18 @@
-from typing import Optional, Dict, Union, List, IO, AnyStr
+from typing import Optional, Dict, Union, IO, AnyStr
 
 from azure.storage.blob import BlobServiceClient
 from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
-from azure.kusto.ingest._resource_manager import _ResourceManager, _ResourceUri
+from azure.kusto.ingest._resource_manager import _ResourceManager
 from azure.kusto.ingest.base_ingest_client import BaseIngestClient
-from azure.kusto.ingest.descriptors import BlobDescriptor, FileDescriptor, StreamDescriptor
-from azure.kusto.data.exceptions import KustoBlobError, KustoClientError
+from azure.kusto.ingest.descriptors import BlobDescriptor
+from azure.kusto.data.exceptions import KustoBlobError, KustoUploadError
 from azure.kusto.ingest.V2.blob_source import BlobSource
 from azure.kusto.ingest.V2.local_source import LocalSource
 
 
 class KustoStorageUploader:
     _MAX_RETRIES = 3
+    _SERVICE_CLIENT_TIMEOUT_SECONDS = 10 * 60
 
     def __init__(self, kcsb: Union[str, KustoConnectionStringBuilder], auto_correct_endpoint: bool = True):
 
@@ -32,36 +33,26 @@ class KustoStorageUploader:
 
     def upload_blob(
             self,
-            containers: List[_ResourceUri],
-            descriptor: Union[FileDescriptor, "StreamDescriptor"],
-            database: str,
-            table: str,
+            local_source: LocalSource,
             stream: IO[AnyStr],
-            proxy_dict: Optional[Dict[str, str]],
-            timeout: int,
-            max_retries: int,
     ) -> "BlobDescriptor":
         """
         Uploads and transforms FileDescriptor or StreamDescriptor into a BlobDescriptor instance
-        :param List[_ResourceUri] containers: blob containers
-        :param Union[FileDescriptor, "StreamDescriptor"] descriptor:
-        :param string database: database to be ingested to
-        :param string table: table to be ingested to
+        :param LocalSource local_source:
         :param IO[AnyStr] stream: stream to be ingested from
-        :param Optional[Dict[str, str]] proxy_dict: proxy urls
-        :param int timeout: Azure service call timeout in seconds
         :return new BlobDescriptor instance
         """
-        blob_name = "{db}__{table}__{guid}__{file}".format(db=database, table=table, guid=descriptor.source_id, file=descriptor.stream_name)
 
-        retries_left = min(max_retries, len(containers))
+        blob_name = local_source.name + local_source.compression_type
+        containers = self._resource_manager.get_containers()
+        retries_left = min(self._MAX_RETRIES, len(containers))
         for container in containers:
             succeeded = True
             try:
-                blob_service = BlobServiceClient(container.account_uri, proxies=proxy_dict)
+                blob_service = BlobServiceClient(container.account_uri, proxies=self._proxy_dict)
                 blob_client = blob_service.get_blob_client(container=container.object_name, blob=blob_name)
-                blob_client.upload_blob(data=stream, timeout=timeout)
-                return BlobDescriptor(blob_client.url, descriptor.size, descriptor.source_id)
+                blob_client.upload_blob(data=stream, timeout=self._SERVICE_CLIENT_TIMEOUT_SECONDS)
+                return BlobDescriptor(blob_client.url, local_source.size, local_source.source_id)
             except Exception as e:
                 succeeded = False
                 retries_left = retries_left - 1
@@ -78,22 +69,19 @@ class KustoStorageUploader:
         self._resource_manager.set_proxy(proxy_url)
         self._proxy_dict = {"http": proxy_url, "https": proxy_url}
 
-    def upload_local_source(self, local: LocalSource):
+    def upload_local_source(self, local: LocalSource, blob_name):
         try:
-            with local.Data() as local_stream:
+            with local.data() as local_stream:
                 if local_stream is None or local_stream.length == 0:
-                  ??  tracer
-                    raise KustoClientError(local.source_id, f"KustoStorageUploader.upload_async: No data in file. Skipping uploading of file: '{local.name}'." )
-            ??  blob_name =
-            blob_name = "{db}__{table}__{guid}__{file}".format(db=database, table=table, guid=descriptor.source_id, file=descriptor.stream_name)
-            blob_uri = upload_blob(?? )
+                    raise KustoUploadError(local.name)
+
+            blob_uri = self.upload_blob(local, local_stream)
             return BlobSource(blob_uri, local)
         except Exception as ex:
-            if isinstance(ex, KustoClientError):
-                ex.ingestion_source = local.name
-                raise KustoClientError(local.source_id, f"KustoStorageUploader.upload_async: No data in file. Skipping uploading of file: '{local.name}'." )
+            if isinstance(ex, KustoUploadError):
+                raise KustoUploadError(local.name)
             else:
-                raise KustoClientError(local.source_id, local.name, f"Failed to upload file '{local.name}'.", ex)
+                raise KustoUploadError(local.name)
 
 
 
