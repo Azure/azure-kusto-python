@@ -1,70 +1,109 @@
 # Changelog
+
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.5.1] - 2024-06-19
+
+### Fixed
+
+- Fixed bug in `dataframe_from_result_table` with some command results.
+
+## [4.5.0] - 2024-06-18
+
+### Added
+
+- `dataframe_from_result_table` now accepts optional converters for specific columns or types.
+
+### Fixed
+
+- Compatibility with numpy 2.0
+
 ## [4.4.1] - 2024-05-06
 
 ### Fixed
+
 - Fixed bug in ManagedIdentity close method
 - Fixed bug in IngestionResult repr
 
 ## [4.4.0] - 2024-04-08
 
 ### Added
+
 - Streaming ingestion from blob
 
 ### Fixed
+
 - Managed streaming fallback to queued
 - Fixed token providers not being closed properly
 - Internal test fixes
 - Pandas support the new string type, if available
-
-### Changed
-- Changed binary files data format compression to false
-
-### Fixed
 - Removed test folders from wheel
 
+### Changed
+
+- Changed binary files data format compression to false
+
 ## [4.3.1] - 2023-12-18
+
 ### Fixed
+
 - Pandas now correctly parses all dates
 
 ## [4.3.0] - 2023-12-12
+
 ### Added
+
 - Added smart retry ability for queued ingestion.
 - Support new playfab domain
 - Added no-authenticaion option
+
 ### Fixed
+
 - Santaize secrets from blob urls
-- Correctly handle closing of token providers in async (NOTE: now using async providers in sync clients will correctly raise an exception)
+- Correctly handle closing of token providers in async (NOTE: now using async providers in sync clients will correctly
+  raise an exception)
 - Fixed proxy not passing correctly in some cases
 - Fixed exception handling in web requests
 - Internal fixes for environment variables
 - Fixed documentation on E2E tests, and made it possible to test on a clean cluster
 
 ## [4.2.0] - 2023-05-18
+
 ### Added
+
 - Added Initial Catalog (Default Database) parameter to ConnectionStringBuilder
 - Added callback parameter to device code
 - Added method to manually set the cache for CloudSettings
+
 ### Changed
-- Urls with one item after the path (i.e https://test.com/abc) will now be treated as cluster and initial catalog (ie. the cluster is "https://test.com" and the initial catalog is "abc").
+
+- Urls with one item after the path (i.e https://test.com/abc) will now be treated as cluster and initial catalog (ie.
+  the cluster is "https://test.com" and the initial catalog is "abc").
     - This is to align our behaviour with the .NET SDK
+
 ### Fixed
+
 - Some edge cases in url parsing
 - IgnoreFirstRecord now works properly
 - Internal code improvement for telemetry
 
 ## [4.1.4] - 2023-04-16
+
 ### Fixed
+
 - Unicode headers are now espaced using '?', to align with the service
 
 ## [4.1.3] - 2023-03-26
+
 ### Added
+
 - Add new trident endpoint support
+
 ### Security
+
 - Redirects are no longer allowed
 
 ## [4.1.2] - 2023-02-22
