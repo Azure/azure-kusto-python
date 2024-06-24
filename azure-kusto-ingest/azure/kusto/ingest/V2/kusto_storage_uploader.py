@@ -15,7 +15,6 @@ class KustoStorageUploader:
     _SERVICE_CLIENT_TIMEOUT_SECONDS = 10 * 60
 
     def __init__(self, kcsb: Union[str, KustoConnectionStringBuilder], auto_correct_endpoint: bool = True):
-
         super().__init__()
         if not isinstance(kcsb, KustoConnectionStringBuilder):
             kcsb = KustoConnectionStringBuilder(kcsb)
@@ -52,7 +51,8 @@ class KustoStorageUploader:
                 blob_service = BlobServiceClient(container.account_uri, proxies=self._proxy_dict)
                 blob_client = blob_service.get_blob_client(container=container.object_name, blob=blob_name)
                 blob_client.upload_blob(data=stream, timeout=self._SERVICE_CLIENT_TIMEOUT_SECONDS)
-                return BlobDescriptor(blob_client.url, local_source.size, local_source.source_id)
+                return BlobDescriptor(blob_client.url, getattr(local_source, "size", None), local_source.source_id)
+
             except Exception as e:
                 succeeded = False
                 retries_left = retries_left - 1
