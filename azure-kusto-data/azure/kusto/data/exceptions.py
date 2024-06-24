@@ -19,22 +19,20 @@ class KustoError(Exception):
     """Base class for all exceptions raised by the Kusto Python Client Libraries."""
 
 
-class KustoStreamingQueryError(KustoError):
-    ...
+class KustoStreamingQueryError(KustoError): ...
 
 
-class KustoTokenParsingError(KustoStreamingQueryError):
-    ...
+class KustoTokenParsingError(KustoStreamingQueryError): ...
 
 
 class KustoServiceError(KustoError):
     """Raised when the Kusto service was unable to process a request."""
 
     def __init__(
-            self,
-            messages: Union[str, List[dict]],
-            http_response: "Union[requests.Response, ClientResponse, None]" = None,
-            kusto_response: Optional[Dict[str, Any]] = None,
+        self,
+        messages: Union[str, List[dict]],
+        http_response: "Union[requests.Response, ClientResponse, None]" = None,
+        kusto_response: Optional[Dict[str, Any]] = None,
     ):
         super().__init__(messages)
         self.http_response = http_response

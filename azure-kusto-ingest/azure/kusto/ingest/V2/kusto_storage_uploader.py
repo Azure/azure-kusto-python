@@ -32,9 +32,9 @@ class KustoStorageUploader:
         self.client_version_for_tracing = kcsb.client_details.version_for_tracing
 
     def upload_blob(
-            self,
-            local_source: LocalSource,
-            stream: IO[AnyStr],
+        self,
+        local_source: LocalSource,
+        stream: IO[AnyStr],
     ) -> "BlobDescriptor":
         """
         Uploads and transforms FileDescriptor or StreamDescriptor into a BlobDescriptor instance
@@ -82,6 +82,3 @@ class KustoStorageUploader:
                 raise KustoUploadError(local.name)
             else:
                 raise KustoUploadError(local.name)
-
-
-
