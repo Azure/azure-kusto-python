@@ -69,7 +69,7 @@ class KustoStorageUploader:
         self._resource_manager.set_proxy(proxy_url)
         self._proxy_dict = {"http": proxy_url, "https": proxy_url}
 
-    def upload_local_source(self, local: LocalSource, blob_name):
+    def upload_local_source(self, local: LocalSource):
         try:
             with local.data() as local_stream:
                 if local_stream is None or local_stream.length == 0:

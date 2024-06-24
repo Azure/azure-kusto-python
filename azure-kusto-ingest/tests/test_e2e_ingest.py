@@ -33,6 +33,8 @@ from azure.kusto.ingest import (
     StreamDescriptor,
     ManagedStreamingIngestClient,
 )
+# from kusto.ingest.V2.kusto_storage_uploader import KustoStorageUploader
+# from kusto.ingest.V2.local_source import FileSource
 
 
 @pytest.fixture(params=["ManagedStreaming", "NormalClient"])
@@ -564,3 +566,22 @@ class TestE2E:
                 self.streaming_ingest_client.ingest_from_blob(blob_descriptor, ingestion_properties)
 
         await self.assert_rows_added(2, timeout=120)
+
+    # # Tests for ingestion V2
+    # dm_kcsb = KustoConnectionStringBuilder(engine_cs)
+    # uploader = KustoStorageUploader(dm_kcsb)
+    #
+    # def test_upload_source_is_regular_file(self):
+    #     file_source = FileSource("azure-kusto-ingest/tests/input/dataset.csv", DataFormat.CSV)
+    #     blob_source = self.uploader.upload_local_source(file_source)
+    #     assert "dataset.csv" == blob_source.url
+    #
+    # def test_upload_source_is_zip_file(self):
+    #     file_source = FileSource("azure-kusto-ingest/tests/input/dataset.csv.zip", DataFormat.CSV)
+    #     blob_source = self.uploader.upload_local_source(file_source)
+    #     assert "dataset.csv" == blob_source.url
+    #
+    # def test_upload_source_is_gzip_file(self):
+    #     file_source = FileSource("azure-kusto-ingest/tests/input/dataset.csv.gz", DataFormat.CSV)
+    #     blob_source = self.uploader.upload_local_source(file_source)
+    #     assert "dataset.csv" == blob_source.url
