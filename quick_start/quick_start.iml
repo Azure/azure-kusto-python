@@ -8,8 +8,8 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="azure-kusto-ingest" />
-    <orderEntry type="module" module-name="azure-kusto-data" />
+    <orderEntry type="module" module-name="azure-kusto-ingest" exported="" />
+    <orderEntry type="module" module-name="azure-kusto-data" exported="" />
   </component>
   <component name="TestRunnerService">
     <option name="PROJECT_TEST_RUNNER" value="py.test" />

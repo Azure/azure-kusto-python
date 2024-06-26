@@ -42,7 +42,7 @@ class KustoStorageUploader:
         :return new BlobDescriptor instance
         """
 
-        blob_name = local_source.name + local_source.compression_type
+        blob_name = local_source.name + "_" + str(local_source.source_id) + "_" + str(local_source.compression_type.name)
         containers = self._resource_manager.get_containers()
         retries_left = min(self._MAX_RETRIES, len(containers))
         for container in containers:
@@ -65,20 +65,16 @@ class KustoStorageUploader:
         self._resource_manager.close()
         BaseIngestClient().close()
 
-    def set_proxy(self, proxy_url: str):
-        self._resource_manager.set_proxy(proxy_url)
-        self._proxy_dict = {"http": proxy_url, "https": proxy_url}
-
     def upload_local_source(self, local: LocalSource):
         try:
-            with local.data() as local_stream:
-                if local_stream is None or local_stream.length == 0:
-                    raise KustoUploadError(local.name)
+            local_stream = local.data()
+            if local_stream is None or len(local_stream) == 0:
+                raise KustoUploadError(local.name)
 
-            blob_uri = self.upload_blob(local, local_stream)
-            return BlobSource(blob_uri.__str__(), local)
+            blob_uri = self.upload_blob(local, local_stream).path
+            return BlobSource(blob_uri, local)
         except Exception as ex:
             if isinstance(ex, KustoUploadError):
                 raise KustoUploadError(local.name)
             else:
-                raise KustoUploadError(local.name)
+                raise ex

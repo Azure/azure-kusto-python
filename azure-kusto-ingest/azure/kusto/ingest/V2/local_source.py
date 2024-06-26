@@ -1,8 +1,14 @@
+import gzip
+import os
+import zipfile
+
 from azure.kusto.ingest import StreamDescriptor
 from azure.kusto.ingest.V2.compression_type import CompressionType
 from azure.kusto.ingest.V2.ingestion_source import IngestionSource
 from azure.kusto.data.data_format import DataFormat
 from abc import ABC, abstractmethod
+
+from kusto.ingest import FileDescriptor
 
 
 class LocalSource(ABC, IngestionSource):
@@ -33,10 +39,35 @@ class FileSource(LocalSource):
             self.compression_type = CompressionType.GZip
 
     def data(self):
-        if self.cache_file_stream is None:
-            with open(self.name, "r") as file:
-                self.cache_file_stream = file.read()
-        return self.cache_file_stream
+        try:
+            if self.cache_file_stream is None:
+                if self.name.endswith("zip"):
+                    self.open_file_zip()
+                elif self.name.endswith("gz"):
+                    self.open_file_gz()
+                else:
+                    self.open_file()
+            return self.cache_file_stream
+        except FileNotFoundError:
+            print(f"File '{self.name}' not found.")
+        except PermissionError:
+            print(f"Permission denied for file '{self.name}'.")
+        except Exception as e:
+            print(f"An error occurred: {e}")
+
+    def open_file(self):
+        with open(self.name, "r") as file:
+            self.cache_file_stream = file.read()
+
+    def open_file_zip(self):
+        descriptor = FileDescriptor(self.name, 0)
+        with descriptor.open(False) as file:
+            self.cache_file_stream = file.read()
+
+    def open_file_gz(self):
+        descriptor = FileDescriptor(self.name, 0)
+        with descriptor.open(False) as file:
+            self.cache_file_stream = file.read()
 
 
 class StreamSource(LocalSource):

@@ -34,8 +34,8 @@ from azure.kusto.ingest import (
     ManagedStreamingIngestClient,
 )
 
-# from kusto.ingest.V2.kusto_storage_uploader import KustoStorageUploader
-# from kusto.ingest.V2.local_source import FileSource
+from kusto.ingest.V2.kusto_storage_uploader import KustoStorageUploader
+from kusto.ingest.V2.local_source import FileSource
 
 
 @pytest.fixture(params=["ManagedStreaming", "NormalClient"])
@@ -70,6 +70,9 @@ class TestE2E:
     zipped_json_file_path: ClassVar[str]
     cred: ClassVar[Callable[[], DefaultAzureCredential]]
     async_cred: ClassVar[Callable[[], DefaultAzureCredential]]
+# For V2
+    dm_kcsb: KustoConnectionStringBuilder
+    uploader: KustoStorageUploader
 
     CHUNK_SIZE = 1024
 
@@ -215,6 +218,9 @@ class TestE2E:
         # Clear the cache to guarantee that subsequent streaming ingestion requests incorporate database and table schema changes
         # See https://docs.microsoft.com/azure/data-explorer/kusto/management/data-ingestion/clear-schema-cache-command
         cls.client.execute(cls.test_db, ".clear database cache streamingingestion schema")
+
+        cls.dm_kcsb =KustoConnectionStringBuilder.with_az_cli_authentication(cls.dm_cs)
+        cls.uploader = KustoStorageUploader(cls.dm_kcsb)
 
     @classmethod
     def teardown_class(cls):
@@ -568,21 +574,18 @@ class TestE2E:
 
         await self.assert_rows_added(2, timeout=120)
 
-    # # Tests for ingestion V2
-    # dm_kcsb = KustoConnectionStringBuilder(engine_cs)
-    # uploader = KustoStorageUploader(dm_kcsb)
-    #
-    # def test_upload_source_is_regular_file(self):
-    #     file_source = FileSource("azure-kusto-ingest/tests/input/dataset.csv", DataFormat.CSV)
-    #     blob_source = self.uploader.upload_local_source(file_source)
-    #     assert "dataset.csv" == blob_source.url
-    #
-    # def test_upload_source_is_zip_file(self):
-    #     file_source = FileSource("azure-kusto-ingest/tests/input/dataset.csv.zip", DataFormat.CSV)
-    #     blob_source = self.uploader.upload_local_source(file_source)
-    #     assert "dataset.csv" == blob_source.url
-    #
-    # def test_upload_source_is_gzip_file(self):
-    #     file_source = FileSource("azure-kusto-ingest/tests/input/dataset.csv.gz", DataFormat.CSV)
-    #     blob_source = self.uploader.upload_local_source(file_source)
-    #     assert "dataset.csv" == blob_source.url
+    # Tests for ingestion V2
+    def test_upload_source_is_regular_file(self):
+        file_source = FileSource("input/dataset.csv", DataFormat.CSV)
+        blob_source = self.uploader.upload_local_source(file_source)
+        assert blob_source.url.__contains__("dataset.csv")
+
+    def test_upload_source_is_zip_file(self):
+        file_source = FileSource("input/dataset.csv.zip", DataFormat.CSV)
+        blob_source = self.uploader.upload_local_source(file_source)
+        assert blob_source.url.__contains__("dataset.csv")
+
+    def test_upload_source_is_gzip_file(self):
+        file_source = FileSource("input/dataset.csv.gz", DataFormat.CSV)
+        blob_source = self.uploader.upload_local_source(file_source)
+        assert blob_source.url.__contains__("dataset.csv")
