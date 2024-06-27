@@ -150,7 +150,7 @@ class KustoBlobError(KustoClientError):
 
 class KustoUploadError(KustoClientError):
     def __init__(self, file_name: str):
-        super().__init__(f"KustoStorageUploader.upload_async: No data in file. Skipping uploading of file: '{file_name}'.")
+        super().__init__(f"KustoStorageUploader.upload_blob: No data in file. Skipping uploading of file: '{file_name}'.")
         self.file_name = file_name
 
     def message(self) -> str:
