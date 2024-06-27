@@ -576,16 +576,16 @@ class TestE2E:
 
     # Tests for ingestion V2
     def test_upload_source_is_regular_file(self):
-        file_source = FileSource("input/dataset.csv", DataFormat.CSV)
+        file_source = FileSource("azure-kusto-ingest/tests/input/dataset.csv", DataFormat.CSV)
         blob_source = self.uploader.upload_local_source(file_source)
         assert blob_source.url.__contains__("dataset.csv")
 
     def test_upload_source_is_zip_file(self):
-        file_source = FileSource("input/dataset.csv.zip", DataFormat.CSV)
+        file_source = FileSource("azure-kusto-ingest/tests/input/dataset.csv.zip", DataFormat.CSV)
         blob_source = self.uploader.upload_local_source(file_source)
         assert blob_source.url.__contains__("dataset.csv")
 
     def test_upload_source_is_gzip_file(self):
-        file_source = FileSource("input/dataset.csv.gz", DataFormat.CSV)
+        file_source = FileSource("azure-kusto-ingest/tests/input/dataset.csv.gz", DataFormat.CSV)
         blob_source = self.uploader.upload_local_source(file_source)
         assert blob_source.url.__contains__("dataset.csv")
