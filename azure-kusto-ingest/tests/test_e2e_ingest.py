@@ -70,7 +70,7 @@ class TestE2E:
     zipped_json_file_path: ClassVar[str]
     cred: ClassVar[Callable[[], DefaultAzureCredential]]
     async_cred: ClassVar[Callable[[], DefaultAzureCredential]]
-# For V2
+    # For V2
     dm_kcsb: KustoConnectionStringBuilder
     uploader: KustoStorageUploader
 
@@ -219,7 +219,7 @@ class TestE2E:
         # See https://docs.microsoft.com/azure/data-explorer/kusto/management/data-ingestion/clear-schema-cache-command
         cls.client.execute(cls.test_db, ".clear database cache streamingingestion schema")
 
-        cls.dm_kcsb =KustoConnectionStringBuilder.with_az_cli_authentication(cls.dm_cs)
+        cls.dm_kcsb = KustoConnectionStringBuilder.with_az_cli_authentication(cls.dm_cs)
         cls.uploader = KustoStorageUploader(cls.dm_kcsb)
 
     @classmethod
