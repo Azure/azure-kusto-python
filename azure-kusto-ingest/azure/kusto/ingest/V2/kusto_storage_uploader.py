@@ -1,9 +1,9 @@
+import uuid
 from typing import Optional, Dict, Union, IO, AnyStr
 
 from azure.storage.blob import BlobServiceClient
 from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
 from azure.kusto.ingest._resource_manager import _ResourceManager
-from azure.kusto.ingest.base_ingest_client import BaseIngestClient
 from azure.kusto.ingest.descriptors import BlobDescriptor
 from azure.kusto.data.exceptions import KustoBlobError, KustoUploadError
 from azure.kusto.ingest.V2.blob_source import BlobSource
@@ -14,13 +14,10 @@ class KustoStorageUploader:
     _MAX_RETRIES = 3
     _SERVICE_CLIENT_TIMEOUT_SECONDS = 10 * 60
 
-    def __init__(self, kcsb: Union[str, KustoConnectionStringBuilder], auto_correct_endpoint: bool = True):
+    def __init__(self, kcsb: Union[str, KustoConnectionStringBuilder]):
         super().__init__()
         if not isinstance(kcsb, KustoConnectionStringBuilder):
             kcsb = KustoConnectionStringBuilder(kcsb)
-
-        if auto_correct_endpoint:
-            kcsb["Data Source"] = BaseIngestClient.get_ingestion_endpoint(kcsb.data_source)
 
         self._connection_datasource = kcsb.data_source
         self._resource_manager = _ResourceManager(KustoClient(kcsb))
@@ -32,17 +29,20 @@ class KustoStorageUploader:
 
     def upload_blob(
         self,
-        local_source: LocalSource,
+        blob_name: str,
         stream: IO[AnyStr],
+        size: Optional[int] = None,
+        source_id: Union[str, uuid] = None,
     ) -> "BlobDescriptor":
         """
         Uploads and transforms FileDescriptor or StreamDescriptor into a BlobDescriptor instance
-        :param LocalSource local_source:
+        :param str blob_name:
         :param IO[AnyStr] stream: stream to be ingested from
+        :param Optional[int] size:  estimated size of file if known
+        :param Union[str, uuid] source_id: source id
         :return new BlobDescriptor instance
         """
 
-        blob_name = local_source.name + "_" + str(local_source.source_id) + "_" + str(local_source.compression_type.name)
         containers = self._resource_manager.get_containers()
         retries_left = min(self._MAX_RETRIES, len(containers))
         for container in containers:
@@ -51,7 +51,7 @@ class KustoStorageUploader:
                 blob_service = BlobServiceClient(container.account_uri, proxies=self._proxy_dict)
                 blob_client = blob_service.get_blob_client(container=container.object_name, blob=blob_name)
                 blob_client.upload_blob(data=stream, timeout=self._SERVICE_CLIENT_TIMEOUT_SECONDS)
-                return BlobDescriptor(blob_client.url, getattr(local_source, "size", None), local_source.source_id)
+                return BlobDescriptor(blob_client.url, size, source_id)
 
             except Exception as e:
                 succeeded = False
@@ -63,18 +63,17 @@ class KustoStorageUploader:
 
     def close(self) -> None:
         self._resource_manager.close()
-        BaseIngestClient().close()
 
-    def upload_local_source(self, local: LocalSource):
+    def upload_local_source(self, local_source: LocalSource):
         try:
-            local_stream = local.data()
+            local_stream = local_source.data()
             if local_stream is None or len(local_stream) == 0:
-                raise KustoUploadError(local.name)
-
-            blob_uri = self.upload_blob(local, local_stream).path
-            return BlobSource(blob_uri, local)
+                raise KustoUploadError(local_source.name)
+            blob_name = local_source.name + "_" + str(local_source.source_id) + "_" + str(local_source.compression_type.name)
+            blob_uri = self.upload_blob(blob_name, local_stream, getattr(local_source, "size", None), local_source.source_id).path
+            return BlobSource(blob_uri, local_source.format)
         except Exception as ex:
-            if isinstance(ex, KustoUploadError):
-                raise KustoUploadError(local.name)
+            if isinstance(ex, KustoBlobError):
+                raise KustoUploadError(local_source.name)
             else:
                 raise ex
