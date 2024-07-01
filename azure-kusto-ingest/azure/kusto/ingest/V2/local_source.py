@@ -5,6 +5,7 @@ from azure.kusto.data.data_format import DataFormat
 from abc import ABC, abstractmethod
 
 from azure.kusto.ingest import FileDescriptor
+
 # from .. import FileDescriptor
 
 
