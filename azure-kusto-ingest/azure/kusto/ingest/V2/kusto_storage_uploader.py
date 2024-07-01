@@ -1,4 +1,4 @@
-import uuid
+from uuid import UUID
 from typing import Optional, Dict, Union, IO, AnyStr
 
 from azure.storage.blob import BlobServiceClient
@@ -32,7 +32,7 @@ class KustoStorageUploader:
         blob_name: str,
         stream: IO[AnyStr],
         size: Optional[int] = None,
-        source_id: Union[str, uuid] = None,
+        source_id: Union[str, UUID] = None,
     ) -> "BlobDescriptor":
         """
         Uploads and transforms FileDescriptor or StreamDescriptor into a BlobDescriptor instance

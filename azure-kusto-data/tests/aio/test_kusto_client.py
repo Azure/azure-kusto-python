@@ -1,5 +1,4 @@
 """Tests for KustoClient."""
-
 import json
 import sys
 from unittest.mock import patch
