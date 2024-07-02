@@ -173,9 +173,6 @@ class TestE2E:
         cls.engine_cs = get_env("ENGINE_CONNECTION_STRING")
         cls.dm_cs = get_env("DM_CONNECTION_STRING", default=cls.engine_cs.replace("//", "//ingest-"))
 
-        # for JSON 401 test
-        cls.dm_kcsb = KustoConnectionStringBuilder(cls.engine_cs)
-
         # Called to set the env variables for the default azure credentials
         prepare_app_key_auth(optional=True)
 
