@@ -173,7 +173,7 @@ class TestE2E:
         cls.engine_cs = get_env("ENGINE_CONNECTION_STRING")
         cls.dm_cs = get_env("DM_CONNECTION_STRING", default=cls.engine_cs.replace("//", "//ingest-"))
 
-        #for JSON 401 test
+        # for JSON 401 test
         cls.dm_kcsb = KustoConnectionStringBuilder(cls.engine_cs)
 
         # Called to set the env variables for the default azure credentials
@@ -216,7 +216,6 @@ class TestE2E:
         # Clear the cache to guarantee that subsequent streaming ingestion requests incorporate database and table schema changes
         # See https://docs.microsoft.com/azure/data-explorer/kusto/management/data-ingestion/clear-schema-cache-command
         cls.client.execute(cls.test_db, ".clear database cache streamingingestion schema")
-
 
     @classmethod
     def teardown_class(cls):
