@@ -353,7 +353,7 @@ class KustoClient(_KustoClientBase):
         try:
             if 300 <= response.status_code < 400:
                 raise Exception("Unexpected redirection, got status code: " + str(response.status))
-            if response.content:
+            if response.text:
                 response_json = response.json()
             else:
                 raise KustoServiceError("The content of the response contains no data.", response)
