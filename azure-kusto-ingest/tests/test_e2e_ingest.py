@@ -67,6 +67,7 @@ class TestE2E:
     zipped_json_file_path: ClassVar[str]
     cred: ClassVar[Callable[[], DefaultAzureCredential]]
     async_cred: ClassVar[Callable[[], DefaultAzureCredential]]
+    dm_kcsb: KustoConnectionStringBuilder
 
     CHUNK_SIZE = 1024
 
@@ -172,6 +173,9 @@ class TestE2E:
         cls.engine_cs = get_env("ENGINE_CONNECTION_STRING")
         cls.dm_cs = get_env("DM_CONNECTION_STRING", default=cls.engine_cs.replace("//", "//ingest-"))
 
+        #for JSON 401 test
+        cls.dm_kcsb = KustoConnectionStringBuilder(cls.engine_cs)
+
         # Called to set the env variables for the default azure credentials
         prepare_app_key_auth(optional=True)
 
@@ -212,6 +216,7 @@ class TestE2E:
         # Clear the cache to guarantee that subsequent streaming ingestion requests incorporate database and table schema changes
         # See https://docs.microsoft.com/azure/data-explorer/kusto/management/data-ingestion/clear-schema-cache-command
         cls.client.execute(cls.test_db, ".clear database cache streamingingestion schema")
+
 
     @classmethod
     def teardown_class(cls):
@@ -564,3 +569,11 @@ class TestE2E:
                 self.streaming_ingest_client.ingest_from_blob(blob_descriptor, ingestion_properties)
 
         await self.assert_rows_added(2, timeout=120)
+
+    def test_json_401(self):
+        try:
+            self.dm_kcsb = KustoConnectionStringBuilder(self.engine_cs)
+            KustoClient(self.dm_kcsb).execute_mgmt(self.test_db, ".show version")
+            raise Exception("Should have failed")
+        except PermissionError:
+            pass
