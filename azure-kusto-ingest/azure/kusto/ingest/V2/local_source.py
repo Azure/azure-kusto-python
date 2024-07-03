@@ -13,7 +13,7 @@ class LocalSource(ABC, IngestionSource):
         self.compression_type = compression_type
         self.name = None
 
-    def should_compress(self):
+    def should_compress(self) -> bool:
         return (self.compression_type == CompressionType.Uncompressed) and self.format.compressible
 
     @abstractmethod
@@ -31,7 +31,7 @@ class FileSource(LocalSource):
         elif path.lower().endswith(".gz"):
             self.compression_type = CompressionType.GZip
 
-    def data(self):
+    def data(self) -> bytes:
         if self.cache_file_stream is None:
             descriptor = FileDescriptor(self.name, 0)
             with descriptor.open(False) as file:
@@ -46,5 +46,5 @@ class StreamSource(LocalSource):
         if name is None:
             self.name = "Stream_" + self.source_id
 
-    def data(self):
+    def data(self) -> StreamDescriptor:
         return self.stream_descriptor

@@ -10,5 +10,5 @@ class BlobSource(IngestionSource):
         self.size = size
 
     @staticmethod
-    def with_local_source(local: LocalSource):
+    def from_local_source(local: LocalSource) -> None:
         IngestionSource(local.format)

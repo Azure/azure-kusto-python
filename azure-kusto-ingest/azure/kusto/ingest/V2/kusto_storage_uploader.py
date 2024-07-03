@@ -10,34 +10,29 @@ from azure.kusto.ingest.V2.blob_source import BlobSource
 from azure.kusto.ingest.V2.local_source import LocalSource
 
 
-class KustoStorageUploader:
+class _KustoStorageUploader:
     _MAX_RETRIES = 3
     _SERVICE_CLIENT_TIMEOUT_SECONDS = 10 * 60
 
     def __init__(self, kcsb: Union[str, KustoConnectionStringBuilder]):
-        super().__init__()
         if not isinstance(kcsb, KustoConnectionStringBuilder):
             kcsb = KustoConnectionStringBuilder(kcsb)
 
         self._connection_datasource = kcsb.data_source
         self._resource_manager = _ResourceManager(KustoClient(kcsb))
-        self._endpoint_service_type = None
-        self._suggested_endpoint_uri = None
         self._proxy_dict: Optional[Dict[str, str]] = None
-        self.application_for_tracing = kcsb.client_details.application_for_tracing
-        self.client_version_for_tracing = kcsb.client_details.version_for_tracing
 
     def upload_blob(
-        self,
-        blob_name: str,
-        stream: IO[AnyStr],
-        size: Optional[int] = None,
-        source_id: Union[str, UUID] = None,
+            self,
+            blob_name: str,
+            stream: IO[AnyStr],
+            size: Optional[int] = None,
+            source_id: Union[str, UUID] = None,
     ) -> "BlobDescriptor":
         """
-        Uploads and transforms FileDescriptor or StreamDescriptor into a BlobDescriptor instance
+        Uploads and transforms stream into a BlobDescriptor instance
         :param str blob_name:
-        :param IO[AnyStr] stream: stream to be ingested from
+        :param IO[AnyStr] stream: stream to be uploaded from
         :param Optional[int] size:  estimated size of file if known
         :param Union[str, uuid] source_id: source id
         :return new BlobDescriptor instance
@@ -64,16 +59,14 @@ class KustoStorageUploader:
     def close(self) -> None:
         self._resource_manager.close()
 
-    def upload_local_source(self, local_source: LocalSource):
+    def upload_local_source(self, local_source: LocalSource) -> BlobSource:
         try:
             local_stream = local_source.data()
             if local_stream is None or len(local_stream) == 0:
+                # The stream is empty and cannot be uploaded
                 raise KustoUploadError(local_source.name)
             blob_name = local_source.name + "_" + str(local_source.source_id) + "_" + str(local_source.compression_type.name)
             blob_uri = self.upload_blob(blob_name, local_stream, getattr(local_source, "size", None), local_source.source_id).path
             return BlobSource(blob_uri, local_source.format)
-        except Exception as ex:
-            if isinstance(ex, KustoBlobError):
-                raise KustoUploadError(local_source.name)
-            else:
-                raise ex
+        except KustoBlobError:
+            raise KustoUploadError(local_source.name)
