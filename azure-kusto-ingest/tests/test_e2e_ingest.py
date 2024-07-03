@@ -576,7 +576,7 @@ class TestE2E:
 
     # Tests for ingestion V2
     def test_upload_source_is_regular_file(self):
-        file_source = FileSource("input/dataset.csv", DataFormat.CSV)
+        file_source = FileSource("azure-kusto-ingest/tests/input/dataset.csv", DataFormat.CSV)
         blob_source = self.uploader.upload_local_source(file_source)
         assert blob_source.url.__contains__("dataset.csv")
 
