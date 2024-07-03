@@ -23,11 +23,11 @@ class _KustoStorageUploader:
         self._proxy_dict: Optional[Dict[str, str]] = None
 
     def upload_blob(
-            self,
-            blob_name: str,
-            stream: IO[AnyStr],
-            size: Optional[int] = None,
-            source_id: Union[str, UUID] = None,
+        self,
+        blob_name: str,
+        stream: IO[AnyStr],
+        size: Optional[int] = None,
+        source_id: Union[str, UUID] = None,
     ) -> "BlobDescriptor":
         """
         Uploads and transforms stream into a BlobDescriptor instance
