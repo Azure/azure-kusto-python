@@ -11,4 +11,4 @@ class BlobSource(IngestionSource):
 
     @staticmethod
     def from_local_source(local: LocalSource) -> None:
-        IngestionSource(local.format)
+        BlobSource(local.format)

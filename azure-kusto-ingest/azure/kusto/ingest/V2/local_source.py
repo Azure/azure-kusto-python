@@ -1,3 +1,5 @@
+from typing import IO, AnyStr
+
 from azure.kusto.ingest import StreamDescriptor
 from azure.kusto.ingest.V2.compression_type import CompressionType
 from azure.kusto.ingest.V2.ingestion_source import IngestionSource
@@ -17,7 +19,7 @@ class LocalSource(ABC, IngestionSource):
         return (self.compression_type == CompressionType.Uncompressed) and self.format.compressible
 
     @abstractmethod
-    def data(self):
+    def data(self) -> IO[AnyStr]:
         pass
 
 
@@ -31,7 +33,7 @@ class FileSource(LocalSource):
         elif path.lower().endswith(".gz"):
             self.compression_type = CompressionType.GZip
 
-    def data(self) -> bytes:
+    def data(self) -> IO[AnyStr]:
         if self.cache_file_stream is None:
             descriptor = FileDescriptor(self.name, 0)
             with descriptor.open(False) as file:
@@ -46,5 +48,5 @@ class StreamSource(LocalSource):
         if name is None:
             self.name = "Stream_" + self.source_id
 
-    def data(self) -> StreamDescriptor:
-        return self.stream_descriptor
+    def data(self) -> IO[AnyStr]:
+        return self.stream_descriptor.stream

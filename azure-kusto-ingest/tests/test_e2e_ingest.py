@@ -17,7 +17,7 @@ from azure.kusto.data.env_utils import get_env, prepare_app_key_auth
 from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
 from azure.kusto.data.aio import KustoClient as AsyncKustoClient
 from azure.kusto.data.data_format import DataFormat, IngestionMappingKind
-from azure.kusto.data.exceptions import KustoServiceError
+from azure.kusto.data.exceptions import KustoServiceError, KustoUploadError
 from azure.kusto.ingest import (
     QueuedIngestClient,
     KustoStreamingIngestClient,
@@ -579,6 +579,10 @@ class TestE2E:
         file_source = FileSource("azure-kusto-ingest/tests/input/dataset.csv", DataFormat.CSV)
         blob_source = self.uploader.upload_local_source(file_source)
         assert blob_source.url.__contains__("dataset.csv")
+        # Testing what happens when called twice
+        blob_source2 = self.uploader.upload_local_source(file_source)
+        assert blob_source2.url.__contains__("dataset.csv")
+
 
     def test_upload_source_is_zip_file(self):
         file_source = FileSource("azure-kusto-ingest/tests/input/dataset.csv.zip", DataFormat.CSV)

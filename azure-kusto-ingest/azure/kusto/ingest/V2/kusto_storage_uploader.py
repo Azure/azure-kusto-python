@@ -28,14 +28,14 @@ class _KustoStorageUploader:
         stream: IO[AnyStr],
         size: Optional[int] = None,
         source_id: Union[str, UUID] = None,
-    ) -> "BlobDescriptor":
+    ) -> BlobDescriptor:
         """
         Uploads and transforms stream into a BlobDescriptor instance
         :param str blob_name:
         :param IO[AnyStr] stream: stream to be uploaded from
-        :param Optional[int] size:  estimated size of file if known
+        :param Optional[int] size: estimated size of data if known
         :param Union[str, uuid] source_id: source id
-        :return new BlobDescriptor instance
+        :return A BlobDescriptor
         """
 
         containers = self._resource_manager.get_containers()
