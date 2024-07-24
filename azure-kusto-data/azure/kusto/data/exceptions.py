@@ -150,6 +150,12 @@ class KustoBlobError(KustoClientError):
         return f"Failed to upload blob: {self.inner}"
 
 
+class KustoUploadError(KustoClientError):
+    def __init__(self, file_name: str):
+        super().__init__(f"No data in file. Skipping uploading of file: '{file_name}'.")
+        self.file_name = file_name
+
+
 class KustoUnsupportedApiError(KustoError):
     """Raised when a Kusto client is unable to send or complete a request."""
 
