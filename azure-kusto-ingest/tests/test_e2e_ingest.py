@@ -583,7 +583,6 @@ class TestE2E:
         blob_source2 = self.uploader.upload_local_source(file_source)
         assert blob_source2.url.__contains__("dataset.csv")
 
-
     def test_upload_source_is_zip_file(self):
         file_source = FileSource("azure-kusto-ingest/tests/input/dataset.csv.zip", DataFormat.CSV)
         blob_source = self.uploader.upload_local_source(file_source)
