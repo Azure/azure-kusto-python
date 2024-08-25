@@ -85,6 +85,8 @@ def mocked_requests_post(*args, **kwargs):
             file_name = "pandas_bool.json"
         elif "print dynamic" in kwargs["json"]["csl"]:
             file_name = "dynamic.json"
+        elif "execute_401" in kwargs["json"]["csl"]:
+            return MockResponse(None, 401, url)
         elif "take 0" in kwargs["json"]["csl"]:
             file_name = "zero_results.json"
         elif "PrimaryResultName" in kwargs["json"]["csl"]:

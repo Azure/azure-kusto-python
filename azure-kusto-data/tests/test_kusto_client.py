@@ -127,6 +127,15 @@ class TestKustoClient(KustoClientTestsMixin):
             self._assert_dynamic_response(row)
 
     @patch("requests.Session.post", side_effect=mocked_requests_post)
+    def test_json_401(self, mock_post, method):
+        """Tests 401 permission errors."""
+        with KustoClient(self.HOST) as client:
+            with pytest.raises(PermissionError):
+                query = "execute_401"
+                response = method.__call__(client, "PythonTest", query)
+                get_response_first_primary_result(response)
+
+    @patch("requests.Session.post", side_effect=mocked_requests_post)
     def test_empty_result(self, mock_post, method):
         """Tests dynamic responses."""
         with KustoClient(self.HOST) as client:
