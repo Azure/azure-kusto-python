@@ -130,7 +130,7 @@ class TestKustoClient(KustoClientTestsMixin):
     def test_json_401(self, mock_post, method):
         """Tests 401 permission errors."""
         with KustoClient(self.HOST) as client:
-            with pytest.raises(KustoServiceError):
+            with pytest.raises(KustoServiceError, match=f"401. Missing adequate access rights."):
                 query = "execute_401"
                 response = method.__call__(client, "PythonTest", query)
                 get_response_first_primary_result(response)

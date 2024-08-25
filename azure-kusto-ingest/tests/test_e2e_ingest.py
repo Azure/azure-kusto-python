@@ -567,6 +567,6 @@ class TestE2E:
         await self.assert_rows_added(2, timeout=120)
 
     def test_json_401(self):
-        with pytest.raises(KustoServiceError):
+        with pytest.raises(KustoServiceError, match=f"401. Missing adequate access rights."):
             self.dm_kcsb = KustoConnectionStringBuilder(self.engine_cs)
             KustoClient(self.dm_kcsb).execute_mgmt(self.test_db, ".show version")
