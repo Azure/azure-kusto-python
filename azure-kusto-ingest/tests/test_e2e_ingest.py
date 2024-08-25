@@ -567,9 +567,6 @@ class TestE2E:
         await self.assert_rows_added(2, timeout=120)
 
     def test_json_401(self):
-        try:
+        with pytest.raises(KustoServiceError):
             self.dm_kcsb = KustoConnectionStringBuilder(self.engine_cs)
             KustoClient(self.dm_kcsb).execute_mgmt(self.test_db, ".show version")
-            raise Exception("Should have failed")
-        except PermissionError:
-            pass

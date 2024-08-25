@@ -109,7 +109,7 @@ class _KustoClientBase(abc.ABC):
             raise KustoThrottlingError("The request was throttled by the server.", response) from exception
 
         if status == 401:
-            raise PermissionError() from exception
+            raise KustoServiceError(f"401. Missing adequate access rights.", response) from exception
 
         if payload:
             message = f"An error occurred while trying to ingest: Status: {status}, Reason: {response.reason}, Text: {response_text}."
