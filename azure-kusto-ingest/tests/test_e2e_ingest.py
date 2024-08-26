@@ -67,6 +67,7 @@ class TestE2E:
     zipped_json_file_path: ClassVar[str]
     cred: ClassVar[Callable[[], DefaultAzureCredential]]
     async_cred: ClassVar[Callable[[], DefaultAzureCredential]]
+    dm_kcsb: KustoConnectionStringBuilder
 
     CHUNK_SIZE = 1024
 

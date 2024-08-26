@@ -8,7 +8,7 @@ import pytest
 
 from azure.kusto.data import ClientRequestProperties, KustoClient, KustoConnectionStringBuilder
 from azure.kusto.data._cloud_settings import CloudSettings
-from azure.kusto.data.exceptions import KustoClosedError, KustoMultiApiError, KustoNetworkError
+from azure.kusto.data.exceptions import KustoClosedError, KustoMultiApiError, KustoNetworkError, KustoServiceError
 from azure.kusto.data.helpers import dataframe_from_result_table
 from azure.kusto.data.response import KustoStreamingResponseDataSet
 from tests.kusto_client_common import KustoClientTestsMixin, mocked_requests_post, get_response_first_primary_result, get_table_first_row, proxy_kcsb
@@ -125,6 +125,15 @@ class TestKustoClient(KustoClientTestsMixin):
             """ dynamic(null), dynamic('{"rowId":2,"arr":[0,2]}'), dynamic({"rowId":2,"arr":[0,2]})"""
             row = get_table_first_row(get_response_first_primary_result(method.__call__(client, "PythonTest", query)))
             self._assert_dynamic_response(row)
+
+    @patch("requests.Session.post", side_effect=mocked_requests_post)
+    def test_json_401(self, mock_post, method):
+        """Tests 401 permission errors."""
+        with KustoClient(self.HOST) as client:
+            with pytest.raises(KustoServiceError, match=f"401. Missing adequate access rights."):
+                query = "execute_401"
+                response = method.__call__(client, "PythonTest", query)
+                get_response_first_primary_result(response)
 
     @patch("requests.Session.post", side_effect=mocked_requests_post)
     def test_empty_result(self, mock_post, method):

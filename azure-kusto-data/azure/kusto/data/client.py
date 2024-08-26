@@ -14,6 +14,7 @@ from azure.core.tracing.decorator import distributed_trace
 from azure.core.tracing import SpanKind
 
 from azure.kusto.data._telemetry import Span, MonitoredActivity
+from build.lib.azure.kusto.data.exceptions import KustoServiceError
 
 from .client_base import ExecuteRequestParams, _KustoClientBase
 from .client_request_properties import ClientRequestProperties
@@ -352,7 +353,10 @@ class KustoClient(_KustoClientBase):
         try:
             if 300 <= response.status_code < 400:
                 raise Exception("Unexpected redirection, got status code: " + str(response.status))
-            response_json = response.json()
+            if response.text:
+                response_json = response.json()
+            else:
+                raise KustoServiceError("The content of the response contains no data.", response)
             response.raise_for_status()
         except Exception as e:
             raise self._handle_http_error(e, endpoint, request.payload, response, response.status_code, response_json, response.text)
