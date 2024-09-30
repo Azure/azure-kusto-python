@@ -14,7 +14,7 @@ from azure.core.tracing.decorator import distributed_trace
 from azure.core.tracing import SpanKind
 
 from azure.kusto.data._telemetry import Span, MonitoredActivity
-from build.lib.azure.kusto.data.exceptions import KustoServiceError
+from azure.kusto.data.exceptions import KustoServiceError
 
 from .client_base import ExecuteRequestParams, _KustoClientBase
 from .client_request_properties import ClientRequestProperties
