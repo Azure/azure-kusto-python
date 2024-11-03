@@ -43,6 +43,7 @@ setup(
         "License :: OSI Approved :: MIT License",
     ],
     packages=find_packages(exclude=["azure", "*tests*", "*tests.*"]),
+    package_data={"": ["py.typed"]},
     install_requires=["azure-kusto-data=={}".format(VERSION), "azure-storage-blob>=12,<13", "azure-storage-queue>=12,<13", "tenacity>=8.0.0"],
     extras_require={"pandas": ["pandas"], "aio": []},
 )
