@@ -1,7 +1,7 @@
 import dataclasses
 from threading import Lock
 from typing import Optional, Dict
-from urllib.parse import urljoin
+from urllib.parse import urlparse
 
 import requests
 
@@ -68,7 +68,8 @@ class CloudSettings:
         with cls._cloud_cache_lock:
             if kusto_uri in cls._cloud_cache:
                 return cls._cloud_cache[kusto_uri]
-            url = urljoin(kusto_uri, METADATA_ENDPOINT)
+            url_parts = urlparse(kusto_uri)
+            url = f"{url_parts.scheme}://{url_parts.netloc}/{METADATA_ENDPOINT}"
 
             try:
                 # trace http get call for result
