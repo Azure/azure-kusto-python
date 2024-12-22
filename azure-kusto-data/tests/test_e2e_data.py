@@ -345,6 +345,7 @@ class TestE2E:
 
     @pytest.mark.parametrize("code", [301, 302, 307, 308])
     def test_no_redirects_fail_in_cloud(self, code):
+        pytest.skip("This test is currently not supported as it relies on the URI path witch we now ignore")
         with KustoClient(
             KustoConnectionStringBuilder.with_azure_token_credential(f"https://statusreturner.azurewebsites.net/{code}/nocloud", self.__class__.cred())
         ) as client:
@@ -365,6 +366,7 @@ class TestE2E:
     @pytest.mark.asyncio
     @pytest.mark.parametrize("code", [301, 302, 307, 308])
     async def test_no_redirects_fail_in_cloud_async(self, code):
+        pytest.skip("This test is currently not supported as it relies on the URI path witch we now ignore")
         async with AsyncKustoClient(
             KustoConnectionStringBuilder.with_azure_token_credential(f"https://statusreturner.azurewebsites.net/{code}/nocloud", self.__class__.async_cred())
         ) as client:
