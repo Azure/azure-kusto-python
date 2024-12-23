@@ -10,6 +10,7 @@ import platform
 import random
 from datetime import datetime
 from typing import Optional, ClassVar, Callable
+from urllib.parse import urljoin
 
 import pytest
 from azure.identity import DefaultAzureCredential
@@ -336,7 +337,8 @@ class TestE2E:
         assert cloud_info is not CloudSettings.DEFAULT_CLOUD
         assert cloud_info == CloudSettings.DEFAULT_CLOUD
         assert cloud_info is CloudSettings.get_cloud_info_for_cluster(self.engine_cs)
-
+        assert cloud_info is CloudSettings.get_cloud_info_for_cluster(urljoin(self.engine_cs, "/test1/test2/test3"))
+        
     def test_cloud_info_404(self):
         pytest.skip("This test is currently wrong - until all cluster are updated to the redirect uri, this test will fail")
         cloud_info = CloudSettings.get_cloud_info_for_cluster("https://statusreturner.azurewebsites.net/404/test")
