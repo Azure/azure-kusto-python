@@ -68,12 +68,24 @@ class KustoConnectionStringBuilder:
 
     DEFAULT_DATABASE_NAME = "NetDefaultDB"
 
+    interactive_login: bool = False
+    az_cli_login: bool = False
+    device_login: bool = False
+    token_credential_login: bool = False
+
     device_callback: DeviceCallbackType = None
     password: Optional[str] = None
     msi_authentication: bool = False
     msi_parameters: Optional[dict] = None
-    interactive_login: bool = False
-    az_cli_login: bool = False
+
+    token_provider: Optional[Callable[[], str]]
+    async_token_provider: Optional[Callable[[], Coroutine[None, None, str]]]
+
+    application_for_tracing: Optional[str]
+    user_name_for_tracing: Optional[str]
+
+    credential: Optional[Any] = None
+    credential_from_login_endpoint: Optional[Any] = None
 
     def __init__(self, connection_string: str):
         """
@@ -86,17 +98,8 @@ class KustoConnectionStringBuilder:
         assert_string_is_not_empty(connection_string)
         self._internal_dict = {}
 
-        self._token_provider = None
-        self._async_token_provider = None
-        self._is_token_credential_auth = False
-        self.is_device_login_auth = False
-        self._credential: Optional[Any] = None
-        self._credential_from_login_endpoint: Optional[Any] = None
         if connection_string is not None and "=" not in connection_string.partition(";")[0]:
             connection_string = "Data Source=" + connection_string
-
-        self._application_for_tracing: Optional[str] = None
-        self._user_for_tracing: Optional[str] = None
 
         self[ValidKeywords.TENANT_ID] = "organizations"
 
@@ -110,9 +113,9 @@ class KustoConnectionStringBuilder:
                 if keyword == ValidKeywords.DATA_SOURCE:
                     self._parse_data_source(self.data_source)
                 if keyword == ValidKeywords.TRACE_USER_NAME:
-                    self._user_for_tracing = value_stripped
+                    self.user_for_tracing = value_stripped
                 if keyword == ValidKeywords.TRACE_APP_NAME:
-                    self._application_for_tracing = value_stripped
+                    self.application_for_tracing = value_stripped
             elif keyword.is_bool_type():
                 if value_stripped in ["True", "true"]:
                     self[keyword.name] = True
@@ -293,7 +296,7 @@ class KustoConnectionStringBuilder:
                 - ``expires_on`` (datetime.datetime) the UTC time at which the code will expire
         """
         kcsb = cls(connection_string)
-        kcsb.is_device_login_auth = True
+        kcsb.device_login = True
         kcsb[ValidKeywords.FEDERATED_SECURITY] = True
         kcsb[ValidKeywords.TENANT_ID] = authority_id
         kcsb.device_callback = callback
@@ -361,7 +364,7 @@ class KustoConnectionStringBuilder:
 
         kcsb[ValidKeywords.FEDERATED_SECURITY] = True
         kcsb.msi_authentication = True
-        kcsb._msi_params = params
+        kcsb.msi_params = params
 
         return kcsb
 
@@ -377,7 +380,7 @@ class KustoConnectionStringBuilder:
 
         kcsb = cls(connection_string)
         kcsb[ValidKeywords.FEDERATED_SECURITY] = True
-        kcsb._token_provider = token_provider
+        kcsb.token_provider = token_provider
 
         return kcsb
 
@@ -397,7 +400,7 @@ class KustoConnectionStringBuilder:
 
         kcsb = cls(connection_string)
         kcsb[ValidKeywords.FEDERATED_SECURITY] = True
-        kcsb._async_token_provider = async_token_provider
+        kcsb.async_token_provider = async_token_provider
 
         return kcsb
 
@@ -431,9 +434,9 @@ class KustoConnectionStringBuilder:
         """
         kcsb = cls(connection_string)
         kcsb[ValidKeywords.FEDERATED_SECURITY] = True
-        kcsb._is_token_credential_auth = True
-        kcsb._credential = credential
-        kcsb._credential_from_login_endpoint = credential_from_login_endpoint
+        kcsb.token_credential_login = True
+        kcsb.credential = credential
+        kcsb.credential_from_login_endpoint = credential_from_login_endpoint
 
         return kcsb
 
@@ -538,31 +541,17 @@ class KustoConnectionStringBuilder:
         return self._internal_dict.get(ValidKeywords.APPLICATION_TOKEN)
 
     @property
-    def token_provider(self) -> Optional[Callable[[], str]]:
-        return self._token_provider
-
-    @property
-    def async_token_provider(self) -> Optional[Callable[[], Coroutine[None, None, str]]]:
-        return self._async_token_provider
-    @property
-    def application_for_tracing(self) -> Optional[str]:
-        return self._application_for_tracing
-
-    @application_for_tracing.setter
-    def application_for_tracing(self, value: str):
-        self._application_for_tracing = value
-
-    @property
-    def user_name_for_tracing(self) -> Optional[str]:
-        return self._user_for_tracing
-
-    @user_name_for_tracing.setter
-    def user_name_for_tracing(self, value: str):
-        self._user_for_tracing = value
-
-    @property
     def client_details(self) -> ClientDetails:
         return ClientDetails(self.application_for_tracing, self.user_name_for_tracing)
+
+    @property
+    def login_hint(self) -> Optional[str]:
+        return self._internal_dict.get(ValidKeywords.USER_ID)
+
+    @property
+    def domain_hint(self) -> Optional[str]:
+        return self._internal_dict.get(ValidKeywords.TENANT_ID)
+
 
     def _set_connector_details(
             self,
