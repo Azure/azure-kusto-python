@@ -7,6 +7,7 @@ from urllib.parse import urlparse
 from azure.kusto.data.helpers import get_string_tail_lower_case
 from azure.kusto.data.security import _is_local_address
 from .exceptions import KustoClientInvalidConnectionStringException
+from .helpers import load_bundled_json
 
 
 class MatchRule:
@@ -101,7 +102,5 @@ class KustoTrustedEndpoints:
         self._override_matcher = matcher
 
 
-_filename = Path(__file__).absolute().parent.joinpath("wellKnownKustoEndpoints.json")
-with _filename.open("r", encoding="utf-8") as data:
-    _well_known_kusto_endpoints_data = json.load(data)
+_well_known_kusto_endpoints_data = load_bundled_json("wellKnownKustoEndpoints.json")
 well_known_kusto_endpoints = KustoTrustedEndpoints()

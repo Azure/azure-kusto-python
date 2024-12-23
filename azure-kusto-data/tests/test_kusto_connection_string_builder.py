@@ -67,10 +67,10 @@ class KustoConnectionStringBuilderTests:
             assert isinstance(e, ValueError)
 
         kcsb1 = KustoConnectionStringBuilder("server=localhost")
-        kcsb1[KustoConnectionStringBuilder.ValidKeywords.application_client_id] = uuid
-        kcsb1[KustoConnectionStringBuilder.ValidKeywords.application_key] = key
+        kcsb1[KustoConnectionStringBuilder.ValidKeywords.APPLICATION_CLIENT_ID] = uuid
+        kcsb1[KustoConnectionStringBuilder.ValidKeywords.APPLICATION_KEY] = key
         kcsb1[KustoConnectionStringBuilder.ValidKeywords.authority_id] = "microsoft.com"
-        kcsb1[KustoConnectionStringBuilder.ValidKeywords.aad_federated_security] = True
+        kcsb1[KustoConnectionStringBuilder.ValidKeywords.FEDERATED_SECURITY] = True
         kcsbs.append(kcsb1)
 
         kcsb2 = KustoConnectionStringBuilder("Server=localhost")
@@ -115,7 +115,7 @@ class KustoConnectionStringBuilderTests:
         kcsb1 = KustoConnectionStringBuilder("Server=localhost")
         kcsb1[KustoConnectionStringBuilder.ValidKeywords.aad_user_id] = user
         kcsb1[KustoConnectionStringBuilder.ValidKeywords.password] = password
-        kcsb1[KustoConnectionStringBuilder.ValidKeywords.aad_federated_security] = True
+        kcsb1[KustoConnectionStringBuilder.ValidKeywords.FEDERATED_SECURITY] = True
         kcsbs.append(kcsb1)
 
         kcsb2 = KustoConnectionStringBuilder("server=localhost")

@@ -65,12 +65,12 @@ class _AadHelper:
             self.token_provider = AzCliTokenProvider(self.kusto_uri, is_async=is_async)
         elif kcsb.token_provider or kcsb.async_token_provider:
             self.token_provider = CallbackTokenProvider(token_callback=kcsb.token_provider, async_token_callback=kcsb.async_token_provider, is_async=is_async)
-        elif kcsb.is_token_credential_auth:
+        elif kcsb._is_token_credential_auth:
             self.token_provider = AzureIdentityTokenCredentialProvider(
                 self.kusto_uri,
                 is_async=is_async,
-                credential=kcsb.credential,
-                credential_from_login_endpoint=kcsb.credential_from_login_endpoint,
+                credential=kcsb._credential,
+                credential_from_login_endpoint=kcsb._credential_from_login_endpoint,
             )
         elif kcsb.is_device_login_auth:
             self.token_provider = DeviceLoginTokenProvider(self.kusto_uri, kcsb.authority_id, kcsb.device_callback, is_async=is_async)

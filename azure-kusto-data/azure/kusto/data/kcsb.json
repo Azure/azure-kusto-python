@@ -1,0 +1,221 @@
+{
+  "dstsfed": {
+    "aliases": [
+      "dstsfed",
+      "dstsfederatedsecurity",
+      "dststokentype"
+    ],
+    "type": "bool",
+    "secret": false
+  },
+  "streaming": {
+    "aliases": [
+      "streaming"
+    ],
+    "type": "bool",
+    "secret": false
+  },
+  "uncompressed": {
+    "aliases": [
+      "uncompressed"
+    ],
+    "type": "bool",
+    "secret": false
+  },
+  "enforcemfa": {
+    "aliases": [
+      "enforcemfa"
+    ],
+    "type": "bool",
+    "secret": false
+  },
+  "accept": {
+    "aliases": [
+      "accept"
+    ],
+    "type": "bool",
+    "secret": false
+  },
+  "queryconsistency": {
+    "aliases": [
+      "queryconsistency"
+    ],
+    "type": "bool",
+    "secret": false
+  },
+  "password": {
+    "aliases": [
+      "password",
+      "pwd"
+    ],
+    "type": "string",
+    "secret": true
+  },
+  "datasourceuri": {
+    "aliases": [
+      "datasourceuri",
+      "serveruri",
+      "clusteruri"
+    ],
+    "type": "string",
+    "secret": false
+  },
+  "azureregion": {
+    "aliases": [
+      "azureregion",
+      "region"
+    ],
+    "type": "string",
+    "secret": false
+  },
+  "namespace": {
+    "aliases": [
+      "namespace",
+      "ns"
+    ],
+    "type": "string",
+    "secret": false
+  },
+  "applicationcertificatethumbprint": {
+    "aliases": [
+      "applicationcertificatethumbprint",
+      "appcert"
+    ],
+    "type": "string",
+    "secret": true
+  },
+  "applicationcertificateissuerdistinguishedname": {
+    "aliases": [
+      "applicationcertificateissuerdistinguishedname",
+      "applicationcertificateissuer"
+    ],
+    "type": "string",
+    "secret": true
+  },
+  "applicationcertificatesubject": {
+    "aliases": [
+      "applicationcertificatesubject",
+      "applicationcertificatesubjectdistinguishedname"
+    ],
+    "type": "string",
+    "secret": true
+  },
+  "applicationtoken": {
+    "aliases": [
+      "applicationtoken",
+      "apptoken"
+    ],
+    "type": "string",
+    "secret": true
+  },
+  "usertoken": {
+    "aliases": [
+      "usertoken",
+      "usrtoken"
+    ],
+    "type": "string",
+    "secret": true
+  },
+  "applicationkey": {
+    "aliases": [
+      "applicationkey",
+      "appkey"
+    ],
+    "type": "string",
+    "secret": true
+  },
+  "applicationcertificateblob": {
+    "aliases": [
+      "applicationcertificateblob"
+    ],
+    "type": "string",
+    "secret": true
+  },
+  "applicationcertificatex5c": {
+    "aliases": [
+      "applicationcertificatex5c",
+      "applicationcertificatesendx5c",
+      "sendx5c",
+      "applicationcertificatesendpubliccertificate",
+      "sendcertificatechain"
+    ],
+    "type": "bool",
+    "secret": false
+  },
+  "userid": {
+    "aliases": [
+      "userid",
+      "user",
+      "uid",
+      "loginhint",
+      "aaduserid"
+    ],
+    "type": "string",
+    "secret": false
+  },
+  "database": {
+    "aliases": [
+      "database",
+      "initialcatalog"
+    ],
+    "type": "string",
+    "secret": false
+  },
+  "federatedsecurity": {
+    "aliases": [
+      "federatedsecurity",
+      "aadfederatedsecurity",
+      "aadfed",
+      "fed",
+      "federated"
+    ],
+    "type": "bool",
+    "secret": false
+  },
+  "tenantid": {
+    "aliases": [
+      "tenantid",
+      "tid",
+      "tenant",
+      "authority",
+      "domainhint"
+    ],
+    "type": "string",
+    "secret": false
+  },
+  "datasource": {
+    "aliases": [
+      "datasource",
+      "server",
+      "addr",
+      "address",
+      "networkaddress"
+    ],
+    "type": "string",
+    "secret": false
+  },
+  "traceappname": {
+    "aliases": [
+      "traceappname",
+      "applicationnamefortracing"
+    ],
+    "type": "string",
+    "secret": false
+  },
+  "traceusername": {
+    "aliases": [
+      "traceusername",
+      "usernamesfortracing"
+    ],
+    "type": "string",
+    "secret": false
+  },
+  "applicationclientid": {
+    "aliases": [
+      "applicationclientid",
+      "appclientid"
+    ],
+    "type": "string",
+    "secret": false
+  }
+}
