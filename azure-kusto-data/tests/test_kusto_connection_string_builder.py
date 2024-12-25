@@ -197,13 +197,13 @@ class KustoConnectionStringBuilderTests:
         assert kcsb.user_token is None
         assert kcsb.authority_id == "organizations"
         assert (
-                repr(kcsb)
-                == "Data Source=localhost;Initial Catalog=NetDefaultDB;AAD Federated Security=True;Authority Id=organizations;Application Token=%s" % token
+            repr(kcsb)
+            == "Data Source=localhost;Initial Catalog=NetDefaultDB;AAD Federated Security=True;Authority Id=organizations;Application Token=%s" % token
         )
         assert (
-                str(kcsb)
-                == "Data Source=localhost;Initial Catalog=NetDefaultDB;AAD Federated Security=True;Authority Id=organizations;Application Token=%s"
-                % self.PASSWORDS_REPLACEMENT
+            str(kcsb)
+            == "Data Source=localhost;Initial Catalog=NetDefaultDB;AAD Federated Security=True;Authority Id=organizations;Application Token=%s"
+            % self.PASSWORDS_REPLACEMENT
         )
 
     def test_aad_user_token(self):
@@ -221,9 +221,9 @@ class KustoConnectionStringBuilderTests:
         assert kcsb.authority_id == "organizations"
         assert repr(kcsb) == "Data Source=localhost;Initial Catalog=NetDefaultDB;AAD Federated Security=True;Authority Id=organizations;User Token=%s" % token
         assert (
-                str(kcsb)
-                == "Data Source=localhost;Initial Catalog=NetDefaultDB;AAD Federated Security=True;Authority Id=organizations;User Token=%s"
-                % self.PASSWORDS_REPLACEMENT
+            str(kcsb)
+            == "Data Source=localhost;Initial Catalog=NetDefaultDB;AAD Federated Security=True;Authority Id=organizations;User Token=%s"
+            % self.PASSWORDS_REPLACEMENT
         )
 
     def test_add_msi(self):
