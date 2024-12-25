@@ -1,5 +1,5 @@
 import dataclasses
-from enum import unique, StrEnum
+from enum import unique, Enum
 from typing import Union, Callable, Coroutine, Optional, Tuple, List, Any
 from urllib.parse import urlparse
 
@@ -33,7 +33,7 @@ class Keyword:
 
 
 @unique
-class ValidKeywords(StrEnum):
+class ValidKeywords(Enum):
     APPLICATION_TOKEN = "applicationtoken"
     USER_TOKEN = "usertoken"
     APPLICATION_KEY = "applicationkey"
