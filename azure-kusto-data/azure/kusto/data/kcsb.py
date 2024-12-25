@@ -31,6 +31,7 @@ class Keyword:
     def is_bool_type(self) -> bool:
         return self.type == "bool"
 
+
 @unique
 class ValidKeywords(StrEnum):
     APPLICATION_TOKEN = "applicationtoken"
@@ -545,7 +546,6 @@ class KustoConnectionStringBuilder:
     @property
     def domain_hint(self) -> Optional[str]:
         return self._internal_dict.get(ValidKeywords.TENANT_ID)
-
 
     def _set_connector_details(
             self,

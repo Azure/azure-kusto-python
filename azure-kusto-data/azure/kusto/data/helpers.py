@@ -1,9 +1,7 @@
-import sys
+import json
+from functools import lru_cache
 from pathlib import Path
 from typing import TYPE_CHECKING, Union, Callable, Dict, Optional
-from functools import lru_cache
-import copy
-import json
 
 if TYPE_CHECKING:
     import pandas as pd
@@ -17,6 +15,7 @@ def load_bundled_json(file_name: str) -> Dict:
     filename = Path(__file__).absolute().parent.joinpath(file_name)
     with filename.open("r", encoding="utf-8") as data:
         return json.load(data)
+
 
 @lru_cache(maxsize=1, typed=False)
 def default_dict() -> Converter:
@@ -49,10 +48,10 @@ def default_dict() -> Converter:
 
 
 def dataframe_from_result_table(
-    table: "Union[KustoResultTable, KustoStreamingResultTable]",
-    nullable_bools: bool = False,
-    converters_by_type: Optional[Converter] = None,
-    converters_by_column_name: Optional[Converter] = None,
+        table: "Union[KustoResultTable, KustoStreamingResultTable]",
+        nullable_bools: bool = False,
+        converters_by_type: Optional[Converter] = None,
+        converters_by_column_name: Optional[Converter] = None,
 ) -> "pd.DataFrame":
     f"""Converts Kusto tables into pandas DataFrame.
     :param azure.kusto.data._models.KustoResultTable table: Table received from the response.
@@ -106,7 +105,7 @@ def get_string_tail_lower_case(val, length):
     if length >= len(val):
         return val.lower()
 
-    return val[len(val) - length :].lower()
+    return val[len(val) - length:].lower()
 
 
 # TODO When moving to pandas 2 only - change to the appropriate type
