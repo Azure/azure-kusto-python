@@ -1,7 +1,9 @@
 import sys
+from pathlib import Path
 from typing import TYPE_CHECKING, Union, Callable, Dict, Optional
 from functools import lru_cache
 import copy
+import json
 
 if TYPE_CHECKING:
     import pandas as pd
@@ -10,6 +12,11 @@ if TYPE_CHECKING:
 # Alias for dataframe_from_result_table converter type
 Converter = Dict[str, Union[str, Callable[[str, "pd.DataFrame"], "pd.Series"]]]
 
+
+def load_bundled_json(file_name: str) -> Dict:
+    filename = Path(__file__).absolute().parent.joinpath(file_name)
+    with filename.open("r", encoding="utf-8") as data:
+        return json.load(data)
 
 @lru_cache(maxsize=1, typed=False)
 def default_dict() -> Converter:
