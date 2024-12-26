@@ -8,16 +8,6 @@ from ._token_providers import DeviceCallbackType
 from .client_details import ClientDetails
 from .helpers import load_bundled_json
 
-
-def init_keywords():
-    kcsb_json: dict = load_bundled_json("kcsb.json")
-    return [Keyword(k, v["aliases"], v["type"], v["secret"]) for k, v in kcsb_json.items()]
-
-
-keywords = init_keywords()
-lookup = {a: v for v in keywords for a in v.aliases}
-
-
 @dataclasses.dataclass
 class Keyword:
     name: str
@@ -26,10 +16,19 @@ class Keyword:
     secret: bool
 
     def is_str_type(self) -> bool:
-        return self.type == "str"
+        return self.type == "string"
 
     def is_bool_type(self) -> bool:
         return self.type == "bool"
+
+
+def init_keywords():
+    kcsb_json: dict = load_bundled_json("kcsb.json")
+    return [Keyword(k, v["aliases"], v["type"], v["secret"]) for k, v in kcsb_json.items()]
+
+
+keywords = init_keywords()
+lookup = {a: v for v in keywords for a in v.aliases}
 
 
 @unique
