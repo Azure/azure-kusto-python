@@ -5,7 +5,7 @@ from uuid import uuid4
 import pytest
 
 from azure.kusto.data import KustoConnectionStringBuilder, KustoClient
-from kusto.data.kcsb import ValidKeywords
+from azure.kusto.data.kcsb import ValidKeywords
 
 local_emulator = False
 
