@@ -8,6 +8,7 @@ from ._token_providers import DeviceCallbackType
 from .client_details import ClientDetails
 from .helpers import load_bundled_json
 
+
 @dataclasses.dataclass
 class Keyword:
     name: str
