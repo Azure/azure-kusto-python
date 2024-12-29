@@ -1,189 +1,5 @@
 {
-  "dstsfed": {
-    "aliases": [
-      "dstsfed",
-      "dstsfederatedsecurity",
-      "dststokentype"
-    ],
-    "type": "bool",
-    "secret": false
-  },
-  "streaming": {
-    "aliases": [
-      "streaming"
-    ],
-    "type": "bool",
-    "secret": false
-  },
-  "uncompressed": {
-    "aliases": [
-      "uncompressed"
-    ],
-    "type": "bool",
-    "secret": false
-  },
-  "enforcemfa": {
-    "aliases": [
-      "enforcemfa"
-    ],
-    "type": "bool",
-    "secret": false
-  },
-  "accept": {
-    "aliases": [
-      "accept"
-    ],
-    "type": "bool",
-    "secret": false
-  },
-  "queryconsistency": {
-    "aliases": [
-      "queryconsistency"
-    ],
-    "type": "bool",
-    "secret": false
-  },
-  "password": {
-    "aliases": [
-      "password",
-      "pwd"
-    ],
-    "type": "string",
-    "secret": true
-  },
-  "datasourceuri": {
-    "aliases": [
-      "datasourceuri",
-      "serveruri",
-      "clusteruri"
-    ],
-    "type": "string",
-    "secret": false
-  },
-  "azureregion": {
-    "aliases": [
-      "azureregion",
-      "region"
-    ],
-    "type": "string",
-    "secret": false
-  },
-  "namespace": {
-    "aliases": [
-      "namespace",
-      "ns"
-    ],
-    "type": "string",
-    "secret": false
-  },
-  "applicationcertificatethumbprint": {
-    "aliases": [
-      "applicationcertificatethumbprint",
-      "appcert"
-    ],
-    "type": "string",
-    "secret": true
-  },
-  "applicationcertificateissuerdistinguishedname": {
-    "aliases": [
-      "applicationcertificateissuerdistinguishedname",
-      "applicationcertificateissuer"
-    ],
-    "type": "string",
-    "secret": true
-  },
-  "applicationcertificatesubject": {
-    "aliases": [
-      "applicationcertificatesubject",
-      "applicationcertificatesubjectdistinguishedname"
-    ],
-    "type": "string",
-    "secret": true
-  },
-  "applicationtoken": {
-    "aliases": [
-      "applicationtoken",
-      "apptoken"
-    ],
-    "type": "string",
-    "secret": true
-  },
-  "usertoken": {
-    "aliases": [
-      "usertoken",
-      "usrtoken"
-    ],
-    "type": "string",
-    "secret": true
-  },
-  "applicationkey": {
-    "aliases": [
-      "applicationkey",
-      "appkey"
-    ],
-    "type": "string",
-    "secret": true
-  },
-  "applicationcertificateblob": {
-    "aliases": [
-      "applicationcertificateblob"
-    ],
-    "type": "string",
-    "secret": true
-  },
-  "applicationcertificatex5c": {
-    "aliases": [
-      "applicationcertificatex5c",
-      "applicationcertificatesendx5c",
-      "sendx5c",
-      "applicationcertificatesendpubliccertificate",
-      "sendcertificatechain"
-    ],
-    "type": "bool",
-    "secret": false
-  },
-  "userid": {
-    "aliases": [
-      "userid",
-      "user",
-      "uid",
-      "loginhint",
-      "aaduserid"
-    ],
-    "type": "string",
-    "secret": false
-  },
-  "database": {
-    "aliases": [
-      "database",
-      "initialcatalog"
-    ],
-    "type": "string",
-    "secret": false
-  },
-  "federatedsecurity": {
-    "aliases": [
-      "federatedsecurity",
-      "aadfederatedsecurity",
-      "aadfed",
-      "fed",
-      "federated"
-    ],
-    "type": "bool",
-    "secret": false
-  },
-  "tenantid": {
-    "aliases": [
-      "tenantid",
-      "tid",
-      "tenant",
-      "authority",
-      "domainhint"
-    ],
-    "type": "string",
-    "secret": false
-  },
-  "datasource": {
+  "Data Source": {
     "aliases": [
       "datasource",
       "server",
@@ -194,7 +10,192 @@
     "type": "string",
     "secret": false
   },
-  "traceappname": {
+  "dSTS Federated Security": {
+    "aliases": [
+      "dstsfed",
+      "dstsfederatedsecurity",
+      "dststokentype"
+    ],
+    "type": "bool",
+    "secret": false
+  },
+  "Streaming": {
+    "aliases": [
+      "streaming"
+    ],
+    "type": "bool",
+    "secret": false
+  },
+  "Uncompressed": {
+    "aliases": [
+      "uncompressed"
+    ],
+    "type": "bool",
+    "secret": false
+  },
+  "EnforceMfa": {
+    "aliases": [
+      "enforcemfa"
+    ],
+    "type": "bool",
+    "secret": false
+  },
+  "Accept": {
+    "aliases": [
+      "accept"
+    ],
+    "type": "bool",
+    "secret": false
+  },
+  "Query Consistency": {
+    "aliases": [
+      "queryconsistency"
+    ],
+    "type": "bool",
+    "secret": false
+  },
+  "Password": {
+    "aliases": [
+      "password",
+      "pwd"
+    ],
+    "type": "string",
+    "secret": true
+  },
+  "Data Source Uri": {
+    "aliases": [
+      "datasourceuri",
+      "serveruri",
+      "clusteruri"
+    ],
+    "type": "string",
+    "secret": false
+  },
+  "Azure Region": {
+    "aliases": [
+      "azureregion",
+      "region"
+    ],
+    "type": "string",
+    "secret": false
+  },
+  "Namespace": {
+    "aliases": [
+      "namespace",
+      "ns"
+    ],
+    "type": "string",
+    "secret": false
+  },
+  "Application Certificate Thumbprint": {
+    "aliases": [
+      "applicationcertificatethumbprint",
+      "appcert"
+    ],
+    "type": "string",
+    "secret": true
+  },
+  "Application Certificate Issuer Distinguished Name": {
+    "aliases": [
+      "applicationcertificateissuerdistinguishedname",
+      "applicationcertificateissuer"
+    ],
+    "type": "string",
+    "secret": true
+  },
+  "Application Certificate Subject Distinguished Name": {
+    "aliases": [
+      "applicationcertificatesubject",
+      "applicationcertificatesubjectdistinguishedname"
+    ],
+    "type": "string",
+    "secret": true
+  },
+  "Application Token": {
+    "aliases": [
+      "applicationtoken",
+      "apptoken"
+    ],
+    "type": "string",
+    "secret": true
+  },
+  "User Token": {
+    "aliases": [
+      "usertoken",
+      "usrtoken"
+    ],
+    "type": "string",
+    "secret": true
+  },
+  "Application Key": {
+    "aliases": [
+      "applicationkey",
+      "appkey"
+    ],
+    "type": "string",
+    "secret": true
+  },
+  "Application Certificate Blob": {
+    "aliases": [
+      "applicationcertificateblob"
+    ],
+    "type": "string",
+    "secret": true
+  },
+  "Application Certificate SendX5c": {
+    "aliases": [
+      "applicationcertificatex5c",
+      "applicationcertificatesendx5c",
+      "sendx5c",
+      "applicationcertificatesendpubliccertificate",
+      "sendcertificatechain"
+    ],
+    "type": "bool",
+    "secret": false
+  },
+  "User ID": {
+    "aliases": [
+      "userid",
+      "user",
+      "uid",
+      "loginhint",
+      "aaduserid"
+    ],
+    "type": "string",
+    "secret": false
+  },
+  "Initial Catalog": {
+    "aliases": [
+      "database",
+      "initialcatalog"
+    ],
+    "type": "string",
+    "secret": false
+  },
+  "AAD Federated Security": {
+    "aliases": [
+      "federatedsecurity",
+      "aadfederatedsecurity",
+      "aadfed",
+      "fed",
+      "federated"
+    ],
+    "type": "bool",
+    "secret": false
+  },
+  "Authority Id": {
+    "aliases": [
+      "tenantid",
+      "tid",
+      "tenant",
+      "authority",
+      "authorityid",
+      "domainhint"
+    ],
+    "type": "string",
+    "secret": false
+  },
+  "Application Name for Tracing": {
     "aliases": [
       "traceappname",
       "applicationnamefortracing"
@@ -202,7 +203,7 @@
     "type": "string",
     "secret": false
   },
-  "traceusername": {
+  "User Name for Tracing": {
     "aliases": [
       "traceusername",
       "usernamesfortracing"
@@ -210,7 +211,7 @@
     "type": "string",
     "secret": false
   },
-  "applicationclientid": {
+  "Application Client Id": {
     "aliases": [
       "applicationclientid",
       "appclientid"
