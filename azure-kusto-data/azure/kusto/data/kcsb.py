@@ -94,8 +94,8 @@ class KustoConnectionStringBuilder:
     msi_authentication: bool = False
     msi_parameters: Optional[dict] = None
 
-    token_provider: Optional[Callable[[], str]]
-    async_token_provider: Optional[Callable[[], Coroutine[None, None, str]]]
+    token_provider: Optional[Callable[[], str]] = None
+    async_token_provider: Optional[Callable[[], Coroutine[None, None, str]]] = None
 
     application_for_tracing: Optional[str] = None
     user_name_for_tracing: Optional[str] = None
