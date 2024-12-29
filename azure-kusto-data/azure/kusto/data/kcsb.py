@@ -8,6 +8,7 @@ from ._token_providers import DeviceCallbackType
 from .client_details import ClientDetails
 from .helpers import load_bundled_json
 
+
 @unique
 class ValidKeywords(Enum):
     DATA_SOURCE = "Data Source"
@@ -25,7 +26,9 @@ class ValidKeywords(Enum):
     TRACE_APP_NAME = "Trace App Name"
     TRACE_USER_NAME = "Trace User Name"
 
+
 valid_keywords = [k.value for k in ValidKeywords]
+
 
 @dataclasses.dataclass(frozen=True)
 class Keyword:
@@ -39,6 +42,7 @@ class Keyword:
 
     def is_bool_type(self) -> bool:
         return self.type == "bool"
+
 
 kcsb_json: dict = load_bundled_json("kcsb.json")
 keywords = []
@@ -54,6 +58,7 @@ for k, v in kcsb_json.items():
     else:
         unsupported_keywords.append(k)
         unsupported_keywords.extend(v["aliases"])
+
 
 def parse_keyword(key: Union[str, ValidKeywords]) -> "Keyword":
     if isinstance(key, ValidKeywords):
