@@ -386,3 +386,17 @@ class TestE2E:
             with pytest.raises(KustoServiceError) as ex:
                 await client.execute("db", "table")
             assert ex.value.http_response.status == code
+
+
+    def test_semantic_error(self):
+        with self.get_client() as client:
+            with pytest.raises(KustoServiceError) as ex:
+                client.execute(self.test_db, "Nonexistent")
+            assert ex.value.is_semantic_error()
+
+    @pytest.mark.asyncio
+    async def test_semantic_error_async(self):
+        async with await self.get_async_client() as client:
+            with pytest.raises(KustoServiceError) as ex:
+                await client.execute(self.test_db, "Nonexistent")
+            assert ex.value.is_semantic_error()
