@@ -387,7 +387,6 @@ class TestE2E:
                 await client.execute("db", "table")
             assert ex.value.http_response.status == code
 
-
     def test_semantic_error(self):
         with self.get_client() as client:
             with pytest.raises(KustoServiceError) as ex:

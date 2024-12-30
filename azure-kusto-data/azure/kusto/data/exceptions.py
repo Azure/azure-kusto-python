@@ -29,6 +29,7 @@ class KustoTokenParsingError(KustoStreamingQueryError):
 
 SEMANTIC_ERROR_STRING = "Semantic error:"
 
+
 class KustoServiceError(KustoError):
     """Raised when the Kusto service was unable to process a request."""
 
