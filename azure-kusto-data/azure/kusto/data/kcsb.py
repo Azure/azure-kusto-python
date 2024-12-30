@@ -16,18 +16,38 @@ class ValidKeywords(Enum):
     FEDERATED_SECURITY = "AAD Federated Security"
     APPLICATION_CLIENT_ID = "Application Client Id"
     APPLICATION_KEY = "Application Key"
+    USER_ID = "User ID"
+    PASSWORD = "Password"
     AUTHORITY_ID = "Authority Id"
     APPLICATION_TOKEN = "Application Token"
     USER_TOKEN = "User Token"
-    APPLICATION_CERTIFICATE = "Application Certificate"
-    APPLICATION_CERTIFICATE_X5C = "Application Certificate X5C"
+    APPLICATION_CERTIFICATE_BLOB = "Application Certificate Blob"
+    APPLICATION_CERTIFICATE_X5C = "Application Certificate SendX5c"
     APPLICATION_CERTIFICATE_THUMBPRINT = "Application Certificate Thumbprint"
-    USER_ID = "User ID"
-    TRACE_APP_NAME = "Trace App Name"
-    TRACE_USER_NAME = "Trace User Name"
+    TRACE_APP_NAME = "Application Name for Tracing"
+    TRACE_USER_NAME = "User Name for Tracing"
 
 
 valid_keywords = [k.value for k in ValidKeywords]
+
+
+@unique
+class InvalidKeywords(Enum):
+    DSTS_FEDERATED_SECURITY = "dSTS Federated Security"
+    STREAMING = "Streaming"
+    UNCOMPRESSED = "Uncompressed"
+    ENFORCE_MFA = "EnforceMfa"
+    ACCEPT = "Accept"
+    QUERY_CONSISTENCY = "Query Consistency"
+    PASSWORD = "Password"
+    DATA_SOURCE_URI = "Data Source Uri"
+    AZURE_REGION = "Azure Region"
+    NAMESPACE = "Namespace"
+    APPLICATION_CERTIFICATE_ISSUER_DISTINGUISHED_NAME = "Application Certificate Issuer Distinguished Name"
+    APPLICATION_CERTIFICATE_SUBJECT_DISTINGUISHED_NAME = "Application Certificate Subject Distinguished Name"
+
+
+invalid_keywords = [k.value for k in InvalidKeywords]
 
 
 @dataclasses.dataclass(frozen=True)
@@ -47,6 +67,7 @@ class Keyword:
 kcsb_json: dict = load_bundled_json("kcsb.json")
 keywords = []
 unsupported_keywords = []
+u = []
 lookup = {}
 for k, v in kcsb_json.items():
     if k in valid_keywords:
@@ -55,9 +76,12 @@ for k, v in kcsb_json.items():
         lookup[k] = keyword
         for alias in v["aliases"]:
             lookup[alias] = keyword
-    else:
+    elif k in invalid_keywords:
+        u.append(k)
         unsupported_keywords.append(k)
         unsupported_keywords.extend(v["aliases"])
+    else:
+        raise KeyError(f"Unknown keyword: `{k}`")
 
 
 def parse_keyword(key: Union[str, ValidKeywords]) -> "Keyword":
@@ -90,7 +114,6 @@ class KustoConnectionStringBuilder:
     token_credential_login: bool = False
 
     device_callback: DeviceCallbackType = None
-    password: Optional[str] = None
     msi_authentication: bool = False
     msi_parameters: Optional[dict] = None
 
@@ -181,8 +204,7 @@ class KustoConnectionStringBuilder:
         kcsb[ValidKeywords.FEDERATED_SECURITY] = True
         kcsb[ValidKeywords.USER_ID] = user_id
         kcsb[ValidKeywords.AUTHORITY_ID] = authority_id
-
-        kcsb.password = password
+        kcsb[ValidKeywords.PASSWORD] = password
 
         return kcsb
 
@@ -248,7 +270,7 @@ class KustoConnectionStringBuilder:
         kcsb = cls(connection_string)
         kcsb[ValidKeywords.FEDERATED_SECURITY] = True
         kcsb[ValidKeywords.APPLICATION_CLIENT_ID] = aad_app_id
-        kcsb[ValidKeywords.APPLICATION_CERTIFICATE] = certificate
+        kcsb[ValidKeywords.APPLICATION_CERTIFICATE_BLOB] = certificate
         kcsb[ValidKeywords.APPLICATION_CERTIFICATE_THUMBPRINT] = thumbprint
         kcsb[ValidKeywords.AUTHORITY_ID] = authority_id
 
@@ -278,7 +300,7 @@ class KustoConnectionStringBuilder:
         kcsb = cls(connection_string)
         kcsb[ValidKeywords.FEDERATED_SECURITY] = True
         kcsb[ValidKeywords.APPLICATION_CLIENT_ID] = aad_app_id
-        kcsb[ValidKeywords.APPLICATION_CERTIFICATE] = private_certificate
+        kcsb[ValidKeywords.APPLICATION_CERTIFICATE_BLOB] = private_certificate
         kcsb.application_public_certificate = public_certificate
         kcsb[ValidKeywords.APPLICATION_CERTIFICATE_THUMBPRINT] = thumbprint
         kcsb[ValidKeywords.AUTHORITY_ID] = authority_id
@@ -511,11 +533,11 @@ class KustoConnectionStringBuilder:
     @property
     def application_certificate(self) -> Optional[str]:
         """A PEM encoded certificate private key."""
-        return self._internal_dict.get(ValidKeywords.APPLICATION_CERTIFICATE)
+        return self._internal_dict.get(ValidKeywords.APPLICATION_CERTIFICATE_BLOB)
 
     @application_certificate.setter
     def application_certificate(self, value: str):
-        self[ValidKeywords.APPLICATION_CERTIFICATE] = value
+        self[ValidKeywords.APPLICATION_CERTIFICATE_BLOB] = value
 
     @property
     def application_certificate_thumbprint(self) -> Optional[str]:
@@ -562,6 +584,10 @@ class KustoConnectionStringBuilder:
     @property
     def domain_hint(self) -> Optional[str]:
         return self._internal_dict.get(ValidKeywords.AUTHORITY_ID)
+
+    @property
+    def password(self) -> Optional[str]:
+        return self._internal_dict.get(ValidKeywords.PASSWORD)
 
     def _set_connector_details(
         self,

@@ -93,69 +93,64 @@ class TestKustoConnectionStringBuilder:
                 uuid, self.PASSWORDS_REPLACEMENT, "microsoft.com"
             )
 
-    # TODO - decide what to do with these, depends on if we want to keep the password keyword
-    # def test_aad_user(self):
-    #     """Checks kcsb that is created with AAD user credentials."""
-    #     user = "test"
-    #     password = "Pa$$w0rd"
-    #     kcsbs = [
-    #         KustoConnectionStringBuilder("localhost;AAD User ID={0};password={1} ;AAD Federated Security=True ".format(user, password)),
-    #         KustoConnectionStringBuilder("Data Source=localhost ; AaD User ID={0}; Password ={1} ;AAD Federated Security=True".format(user, password)),
-    #         KustoConnectionStringBuilder(" Addr = localhost ; AAD User ID = {0} ; Pwd ={1} ;AAD Federated Security=True".format(user, password)),
-    #         KustoConnectionStringBuilder("Network Address = localhost; AAD User iD = {0} ; Pwd = {1} ;AAD Federated Security= True  ".format(user, password)),
-    #         KustoConnectionStringBuilder.with_aad_user_password_authentication("localhost", user, password),
-    #     ]
-    #
-    #     kcsb2 = KustoConnectionStringBuilder("server=localhost")
-    #     kcsb2["AAD User ID"] = user
-    #     kcsb2["Password"] = password
-    #     kcsb2["aad federated security"] = True
-    #     kcsbs.append(kcsb2)
-    #
-    #     for kcsb in kcsbs:
-    #         assert kcsb.data_source == "localhost"
-    #         assert kcsb.aad_federated_security
-    #         assert kcsb.aad_user_id == user
-    #         assert kcsb.password == password
-    #         assert kcsb.application_client_id is None
-    #         assert kcsb.application_key is None
-    #         assert kcsb.authority_id == "organizations"
-    #         assert repr(
-    #             kcsb
-    #         ) == "Data Source=localhost;Initial Catalog=NetDefaultDB;AAD Federated Security=True;AAD User ID={0};Password={1};Authority Id=organizations".format(
-    #             user, password
-    #         )
-    #         assert str(
-    #             kcsb
-    #         ) == "Data Source=localhost;Initial Catalog=NetDefaultDB;AAD Federated Security=True;AAD User ID={0};Password={1};Authority Id=organizations".format(
-    #             user, self.PASSWORDS_REPLACEMENT
-    #         )
-    #
-    # def test_aad_user_with_authority(self):
-    #     """Checks kcsb that is created with AAD user credentials."""
-    #     user = "test2"
-    #     password = "Pa$$w0rd2"
-    #     authority_id = "13456"
-    #
-    #     kcsb = KustoConnectionStringBuilder.with_aad_user_password_authentication("localhost", user, password, authority_id)
-    #
-    #     assert kcsb.data_source == "localhost"
-    #     assert kcsb.aad_federated_security
-    #     assert kcsb.aad_user_id == user
-    #     assert kcsb.password == password
-    #     assert kcsb.application_client_id is None
-    #     assert kcsb.application_key is None
-    #     assert kcsb.authority_id == authority_id
-    #     assert repr(
-    #         kcsb
-    #     ) == "Data Source=localhost;Initial Catalog=NetDefaultDB;AAD Federated Security=True;AAD User ID={0};Password={1};Authority Id=13456".format(
-    #         user, password
-    #     )
-    #     assert str(
-    #         kcsb
-    #     ) == "Data Source=localhost;Initial Catalog=NetDefaultDB;AAD Federated Security=True;AAD User ID={0};Password={1};Authority Id=13456".format(
-    #         user, self.PASSWORDS_REPLACEMENT
-    #     )
+    def test_aad_user(self):
+        """Checks kcsb that is created with AAD user credentials."""
+        user = "test"
+        password = "Pa$$w0rd"
+        kcsbs = [
+            KustoConnectionStringBuilder("localhost;User ID={0};password={1} ;AAD Federated Security=True ".format(user, password)),
+            KustoConnectionStringBuilder("Data Source=localhost ; AaD User ID={0}; Password ={1} ;AAD Federated Security=True".format(user, password)),
+            KustoConnectionStringBuilder(" Addr = localhost ; User ID = {0} ; Pwd ={1} ;AAD Federated Security=True".format(user, password)),
+            KustoConnectionStringBuilder("Network Address = localhost; AAD User iD = {0} ; Pwd = {1} ;AAD Federated Security= True  ".format(user, password)),
+            KustoConnectionStringBuilder.with_aad_user_password_authentication("localhost", user, password),
+        ]
+
+        kcsb2 = KustoConnectionStringBuilder("server=localhost")
+        kcsb2["User ID"] = user
+        kcsb2["Password"] = password
+        kcsb2["aad federated security"] = True
+        kcsbs.append(kcsb2)
+
+        for kcsb in kcsbs:
+            assert kcsb.data_source == "localhost"
+            assert kcsb.aad_federated_security
+            assert kcsb.aad_user_id == user
+            assert kcsb.password == password
+            assert kcsb.application_client_id is None
+            assert kcsb.application_key is None
+            assert kcsb.authority_id == "organizations"
+            assert repr(
+                kcsb
+            ) == "Data Source=localhost;Initial Catalog=NetDefaultDB;AAD Federated Security=True;User ID={0};Password={1};Authority Id=organizations".format(
+                user, password
+            )
+            assert str(
+                kcsb
+            ) == "Data Source=localhost;Initial Catalog=NetDefaultDB;AAD Federated Security=True;User ID={0};Password={1};Authority Id=organizations".format(
+                user, self.PASSWORDS_REPLACEMENT
+            )
+
+    def test_aad_user_with_authority(self):
+        """Checks kcsb that is created with AAD user credentials."""
+        user = "test2"
+        password = "Pa$$w0rd2"
+        authority_id = "13456"
+
+        kcsb = KustoConnectionStringBuilder.with_aad_user_password_authentication("localhost", user, password, authority_id)
+
+        assert kcsb.data_source == "localhost"
+        assert kcsb.aad_federated_security
+        assert kcsb.aad_user_id == user
+        assert kcsb.password == password
+        assert kcsb.application_client_id is None
+        assert kcsb.application_key is None
+        assert kcsb.authority_id == authority_id
+        assert repr(
+            kcsb
+        ) == "Data Source=localhost;Initial Catalog=NetDefaultDB;AAD Federated Security=True;User ID={0};Password={1};Authority Id=13456".format(user, password)
+        assert str(kcsb) == "Data Source=localhost;Initial Catalog=NetDefaultDB;AAD Federated Security=True;User ID={0};Password={1};Authority Id=13456".format(
+            user, self.PASSWORDS_REPLACEMENT
+        )
 
     def test_aad_device_login(self):
         """Checks kcsb that is created with AAD device login."""
@@ -363,3 +358,13 @@ class TestKustoConnectionStringBuilder:
         client = KustoClient(kcsb)
         assert client._kusto_cluster == "https://help.kusto.windows.net/Test/Test2/"
         assert client.default_database == "NetDefaultDB"
+
+    def test_unsupported_keyword(self):
+        with pytest.raises(KeyError) as e:
+            KustoConnectionStringBuilder("Data Source=localhost;Initial Catalog=NetDefaultDB;Namespace=Test")
+        assert "Keyword `Namespace` is not supported in this SDK" in str(e.value)
+
+    def test_unknown_keyword(self):
+        with pytest.raises(KeyError) as e:
+            KustoConnectionStringBuilder("Data Source=localhost;Initial Catalog=NetDefaultDB;Bla=Test")
+        assert "Unknown keyword: `Bla`" in str(e.value)
