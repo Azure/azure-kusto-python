@@ -99,7 +99,7 @@ class Keyword:
             raise KeyError(f"Unknown keyword: `{key}`")
 
         if lookup[normalized] == UNSUPPORTED_KEYWORD:
-            raise KeyError(f"Unsupported keyword: `{key}`")
+            raise KeyError(f"Keyword `{key}` is not supported by this SDK")
 
         return lookup[normalized]
 
