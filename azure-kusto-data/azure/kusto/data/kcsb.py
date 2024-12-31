@@ -1,5 +1,6 @@
 import dataclasses
 from enum import unique, Enum
+from functools import lru_cache
 from typing import Union, Callable, Coroutine, Optional, Tuple, List, Any
 from urllib.parse import urlparse
 
@@ -7,6 +8,9 @@ from ._string_utils import assert_string_is_not_empty
 from ._token_providers import DeviceCallbackType
 from .client_details import ClientDetails
 from .helpers import load_bundled_json
+
+
+UNSUPPORTED_KEYWORD = "UNSUPPORTED"
 
 
 @unique
@@ -63,38 +67,43 @@ class Keyword:
     def is_bool_type(self) -> bool:
         return self.type == "bool"
 
+    @staticmethod
+    def init_lookup() -> dict:
+        kcsb_json: dict = load_bundled_json("kcsb.json")
+        lookup = {}
+        for k, v in kcsb_json.items():
+            if k in valid_keywords:
+                keyword = Keyword(ValidKeywords(k), v["aliases"], v["type"], v["secret"])
+            else:
+                keyword = UNSUPPORTED_KEYWORD
 
-kcsb_json: dict = load_bundled_json("kcsb.json")
-keywords = []
-unsupported_keywords = []
-u = []
-lookup = {}
-for k, v in kcsb_json.items():
-    if k in valid_keywords:
-        keyword = Keyword(ValidKeywords(k), v["aliases"], v["type"], v["secret"])
-        keywords.append(keyword)
-        lookup[k] = keyword
-        for alias in v["aliases"]:
-            lookup[alias] = keyword
-    elif k in invalid_keywords:
-        u.append(k)
-        unsupported_keywords.append(k)
-        unsupported_keywords.extend(v["aliases"])
-    else:
-        raise KeyError(f"Unknown keyword: `{k}`")
+            lookup[Keyword.normalize_string(k)] = keyword
+
+            for alias in v["aliases"]:
+                lookup[Keyword.normalize_string(alias)] = keyword
+            else:
+                raise KeyError(f"Unknown keyword: `{k}`")
+        return lookup
+
+    @staticmethod
+    def normalize_string(key: str) -> str:
+        return key.lower().replace(" ", "").replace("_", "")
+
+
+lookup = Keyword.init_lookup()
 
 
 def parse_keyword(key: Union[str, ValidKeywords]) -> "Keyword":
     if isinstance(key, ValidKeywords):
         key = key.value
 
-    normalized = key.lower().replace(" ", "").replace("_", "")
-
-    if normalized in unsupported_keywords:
-        raise KeyError(f"Keyword `{key}` is not supported in this SDK")
+    normalized = normalize_keyword(key)
 
     if normalized not in lookup:
         raise KeyError(f"Unknown keyword: `{key}`")
+
+    if lookup[normalized] == UNSUPPORTED_KEYWORD:
+        raise KeyError(f"Unsupported keyword: `{key}`")
 
     return lookup[normalized]
 
