@@ -69,8 +69,8 @@ class _AadHelper:
             self.token_provider = AzureIdentityTokenCredentialProvider(
                 self.kusto_uri,
                 is_async=is_async,
-                credential=kcsb.credential,
-                credential_from_login_endpoint=kcsb.credential_from_login_endpoint,
+                credential=kcsb.azure_credential,
+                credential_from_login_endpoint=kcsb.azure_credential_from_login_endpoint,
             )
         elif kcsb.device_login:
             self.token_provider = DeviceLoginTokenProvider(self.kusto_uri, kcsb.authority_id, kcsb.device_callback, is_async=is_async)

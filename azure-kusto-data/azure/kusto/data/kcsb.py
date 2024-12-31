@@ -56,7 +56,6 @@ invalid_keywords = [k.value for k in InvalidKeywords]
 @dataclasses.dataclass(frozen=True)
 class Keyword:
     name: ValidKeywords
-    aliases: List[str]
     type: str
     secret: bool
 
@@ -72,7 +71,7 @@ class Keyword:
         lookup = {}
         for k, v in kcsb_json.items():
             if k in valid_keywords:
-                keyword = Keyword(ValidKeywords(k), v["aliases"], v["type"], v["secret"])
+                keyword = Keyword(ValidKeywords(k), v["type"], v["secret"])
             else:
                 keyword = UNSUPPORTED_KEYWORD
 
@@ -130,8 +129,8 @@ class KustoConnectionStringBuilder:
     application_for_tracing: Optional[str] = None
     user_name_for_tracing: Optional[str] = None
 
-    credential: Optional[Any] = None
-    credential_from_login_endpoint: Optional[Any] = None
+    azure_credential: Optional[Any] = None
+    azure_credential_from_login_endpoint: Optional[Any] = None
 
     application_public_certificate: Optional[str] = None
 
@@ -484,8 +483,8 @@ class KustoConnectionStringBuilder:
         kcsb = cls(connection_string)
         kcsb[ValidKeywords.FEDERATED_SECURITY] = True
         kcsb.token_credential_login = True
-        kcsb.credential = credential
-        kcsb.credential_from_login_endpoint = credential_from_login_endpoint
+        kcsb.azure_credential = credential
+        kcsb.azure_credential_from_login_endpoint = credential_from_login_endpoint
 
         return kcsb
 
