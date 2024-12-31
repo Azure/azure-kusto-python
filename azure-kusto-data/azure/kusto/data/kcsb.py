@@ -72,15 +72,16 @@ class Keyword:
         for k, v in kcsb_json.items():
             if k in valid_keywords:
                 keyword = Keyword(ValidKeywords(k), v["type"], v["secret"])
-            else:
+            elif k in invalid_keywords:
                 keyword = UNSUPPORTED_KEYWORD
+            else:
+                raise KeyError(f"Unknown keyword: `{k}`")
 
             lookup[Keyword.normalize_string(k)] = keyword
 
             for alias in v["aliases"]:
                 lookup[Keyword.normalize_string(alias)] = keyword
-            else:
-                raise KeyError(f"Unknown keyword: `{k}`")
+
         return lookup
 
     @staticmethod
