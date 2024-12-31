@@ -1,6 +1,5 @@
 import dataclasses
 from enum import unique, Enum
-from functools import lru_cache
 from typing import Union, Callable, Coroutine, Optional, Tuple, List, Any
 from urllib.parse import urlparse
 
@@ -89,23 +88,22 @@ class Keyword:
     def normalize_string(key: str) -> str:
         return key.lower().replace(" ", "").replace("_", "")
 
+    @staticmethod
+    def parse(key: Union[str, ValidKeywords]) -> "Keyword":
+        if isinstance(key, ValidKeywords):
+            key = key.value
+
+        normalized = Keyword.normalize_string(key)
+
+        if normalized not in lookup:
+            raise KeyError(f"Unknown keyword: `{key}`")
+
+        if lookup[normalized] == UNSUPPORTED_KEYWORD:
+            raise KeyError(f"Unsupported keyword: `{key}`")
+
+        return lookup[normalized]
 
 lookup = Keyword.init_lookup()
-
-
-def parse_keyword(key: Union[str, ValidKeywords]) -> "Keyword":
-    if isinstance(key, ValidKeywords):
-        key = key.value
-
-    normalized = normalize_keyword(key)
-
-    if normalized not in lookup:
-        raise KeyError(f"Unknown keyword: `{key}`")
-
-    if lookup[normalized] == UNSUPPORTED_KEYWORD:
-        raise KeyError(f"Unsupported keyword: `{key}`")
-
-    return lookup[normalized]
 
 
 class KustoConnectionStringBuilder:
@@ -155,7 +153,7 @@ class KustoConnectionStringBuilder:
 
         for kvp_string in connection_string.split(";"):
             key, _, value = kvp_string.partition("=")
-            keyword = parse_keyword(key)
+            keyword = Keyword.parse(key)
 
             value_stripped = value.strip()
             if keyword.is_str_type():
@@ -180,7 +178,7 @@ class KustoConnectionStringBuilder:
             self.initial_catalog = self.DEFAULT_DATABASE_NAME
 
     def __setitem__(self, key: "Union[ValidKeywords, str]", value: Union[str, bool, dict]):
-        keyword = parse_keyword(key)
+        keyword = Keyword.parse(key)
 
         if value is None:
             raise TypeError("Value cannot be None.")
