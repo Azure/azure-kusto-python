@@ -102,6 +102,7 @@ class Keyword:
 
         return lookup[normalized]
 
+
 lookup = Keyword.init_lookup()
 
 
