@@ -626,7 +626,7 @@ class KustoConnectionStringBuilder:
         dict_copy = self._internal_dict.copy()
         for key in dict_copy:
             if lookup[Keyword.normalize_string(key.value)].secret:
-                dict_copy[key.value] = "****"
+                dict_copy[key] = "****"
         return self._build_connection_string(dict_copy)
 
     def __repr__(self) -> str:
