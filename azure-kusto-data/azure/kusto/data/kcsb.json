@@ -93,7 +93,7 @@
       "appcert"
     ],
     "type": "string",
-    "secret": true
+    "secret": false
   },
   "Application Certificate Issuer Distinguished Name": {
     "aliases": [
@@ -101,7 +101,7 @@
       "applicationcertificateissuer"
     ],
     "type": "string",
-    "secret": true
+    "secret": false
   },
   "Application Certificate Subject Distinguished Name": {
     "aliases": [
@@ -109,7 +109,7 @@
       "applicationcertificatesubjectdistinguishedname"
     ],
     "type": "string",
-    "secret": true
+    "secret": false
   },
   "Application Token": {
     "aliases": [
