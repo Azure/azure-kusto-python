@@ -364,7 +364,6 @@ class TestKustoConnectionStringBuilder:
             KustoConnectionStringBuilder("Data Source=localhost;Initial Catalog=NetDefaultDB;Namespace=Test")
         assert "Keyword `Namespace` is not supported by this SDK" in str(e.value)
 
-
     def test_unknown_keyword(self):
         with pytest.raises(KeyError) as e:
             KustoConnectionStringBuilder("Data Source=localhost;Initial Catalog=NetDefaultDB;Bla=Test")
