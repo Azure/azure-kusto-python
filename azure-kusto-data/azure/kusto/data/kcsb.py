@@ -1,6 +1,6 @@
 import dataclasses
 from enum import unique, Enum
-from typing import Union, Callable, Coroutine, Optional, Tuple, List, Any
+from typing import Union, Callable, Coroutine, Optional, Tuple, List, Any, ClassVar
 from urllib.parse import urlparse
 
 from ._string_utils import assert_string_is_not_empty
@@ -31,9 +31,6 @@ class ValidKeywords(Enum):
     TRACE_USER_NAME = "User Name for Tracing"
 
 
-valid_keywords = [k.value for k in ValidKeywords]
-
-
 @unique
 class InvalidKeywords(Enum):
     DSTS_FEDERATED_SECURITY = "dSTS Federated Security"
@@ -50,11 +47,12 @@ class InvalidKeywords(Enum):
     APPLICATION_CERTIFICATE_SUBJECT_DISTINGUISHED_NAME = "Application Certificate Subject Distinguished Name"
 
 
-invalid_keywords = [k.value for k in InvalidKeywords]
-
-
 @dataclasses.dataclass(frozen=True)
 class Keyword:
+    _valid_keywords : ClassVar[List[str]] = [k.value for k in ValidKeywords]
+    _invalid_keywords : ClassVar[List[str]] = [k.value for k in InvalidKeywords]
+    _lookup : ClassVar[dict]
+
     name: ValidKeywords
     type: str
     secret: bool
@@ -66,13 +64,17 @@ class Keyword:
         return self.type == "bool"
 
     @staticmethod
-    def init_lookup() -> dict:
+    def normalize_string(key: str) -> str:
+        return key.lower().replace(" ", "").replace("_", "")
+
+    @classmethod
+    def init_lookup(cls) -> dict:
         kcsb_json: dict = load_bundled_json("kcsb.json")
         lookup = {}
         for k, v in kcsb_json.items():
-            if k in valid_keywords:
+            if k in cls._valid_keywords:
                 keyword = Keyword(ValidKeywords(k), v["type"], v["secret"])
-            elif k in invalid_keywords:
+            elif k in cls._invalid_keywords:
                 keyword = UNSUPPORTED_KEYWORD
             else:
                 raise KeyError(f"Unknown keyword: `{k}`")
@@ -84,27 +86,27 @@ class Keyword:
 
         return lookup
 
-    @staticmethod
-    def normalize_string(key: str) -> str:
-        return key.lower().replace(" ", "").replace("_", "")
-
-    @staticmethod
-    def parse(key: Union[str, ValidKeywords]) -> "Keyword":
+    @classmethod
+    def parse(cls, key: Union[str, ValidKeywords]) -> "Keyword":
         if isinstance(key, ValidKeywords):
             key = key.value
 
         normalized = Keyword.normalize_string(key)
 
-        if normalized not in lookup:
+        if normalized not in cls._lookup:
             raise KeyError(f"Unknown keyword: `{key}`")
 
-        if lookup[normalized] == UNSUPPORTED_KEYWORD:
+        if cls._lookup[normalized] == UNSUPPORTED_KEYWORD:
             raise KeyError(f"Keyword `{key}` is not supported by this SDK")
 
-        return lookup[normalized]
+        return cls._lookup[normalized]
 
+    @classmethod
+    def lookup(cls, key: Union[str, ValidKeywords]) -> "Keyword":
+        if isinstance(key, ValidKeywords):
+            key = key.value
 
-lookup = Keyword.init_lookup()
+        return cls._lookup[Keyword.normalize_string(key)]
 
 
 class KustoConnectionStringBuilder:
@@ -625,7 +627,7 @@ class KustoConnectionStringBuilder:
     def __str__(self) -> str:
         dict_copy = self._internal_dict.copy()
         for key in dict_copy:
-            if lookup[Keyword.normalize_string(key.value)].secret:
+            if Keyword.lookup(key).secret:
                 dict_copy[key] = "****"
         return self._build_connection_string(dict_copy)
 
