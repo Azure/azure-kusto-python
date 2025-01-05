@@ -51,7 +51,7 @@ class InvalidKeywords(Enum):
 class Keyword:
     _valid_keywords: ClassVar[List[str]] = [k.value for k in ValidKeywords]
     _invalid_keywords: ClassVar[List[str]] = [k.value for k in InvalidKeywords]
-    _lookup: ClassVar[dict] = {}
+    _lookup: ClassVar[dict]
 
     name: ValidKeywords
     type: str
@@ -68,7 +68,7 @@ class Keyword:
         return key.lower().replace(" ", "").replace("_", "")
 
     @classmethod
-    def init_lookup(cls) -> dict:
+    def init_lookup(cls):
         kcsb_json: dict = load_bundled_json("kcsb.json")
         lookup = {}
         for k, v in kcsb_json.items():
@@ -84,7 +84,7 @@ class Keyword:
             for alias in v["aliases"]:
                 lookup[Keyword.normalize_string(alias)] = keyword
 
-        return lookup
+        cls._lookup = lookup
 
     @classmethod
     def parse(cls, key: Union[str, ValidKeywords]) -> "Keyword":
@@ -107,6 +107,8 @@ class Keyword:
             key = key.value
 
         return cls._lookup[Keyword.normalize_string(key)]
+
+Keyword.init_lookup()
 
 
 class KustoConnectionStringBuilder:
