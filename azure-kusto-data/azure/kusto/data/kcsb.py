@@ -49,9 +49,9 @@ class InvalidKeywords(Enum):
 
 @dataclasses.dataclass(frozen=True)
 class Keyword:
-    _valid_keywords : ClassVar[List[str]] = [k.value for k in ValidKeywords]
-    _invalid_keywords : ClassVar[List[str]] = [k.value for k in InvalidKeywords]
-    _lookup : ClassVar[dict]
+    _valid_keywords: ClassVar[List[str]] = [k.value for k in ValidKeywords]
+    _invalid_keywords: ClassVar[List[str]] = [k.value for k in InvalidKeywords]
+    _lookup: ClassVar[dict]
 
     name: ValidKeywords
     type: str
