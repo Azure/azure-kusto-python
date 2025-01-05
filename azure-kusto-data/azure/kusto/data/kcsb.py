@@ -108,6 +108,7 @@ class Keyword:
 
         return cls._lookup[Keyword.normalize_string(key)]
 
+
 Keyword.init_lookup()
 
 
