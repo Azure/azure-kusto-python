@@ -33,6 +33,7 @@ from azure.kusto.ingest import (
     StreamDescriptor,
     ManagedStreamingIngestClient,
 )
+from azure.kusto.ingest._resource_manager import _ResourceUri
 
 
 @pytest.fixture(params=["ManagedStreaming", "NormalClient"])
@@ -539,8 +540,6 @@ class TestE2E:
 
     @pytest.mark.asyncio
     async def test_streaming_ingest_from_blob(self, is_managed_streaming):
-        from kusto.ingest._resource_manager import _ResourceUri
-
         ingestion_properties = IngestionProperties(
             database=self.test_db,
             table=self.test_table,
