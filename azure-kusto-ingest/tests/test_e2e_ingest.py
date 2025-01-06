@@ -537,32 +537,32 @@ class TestE2E:
 
         await self.assert_rows_added(1, timeout=120)
 
-    # TODO - this is disabled due to the permissions changing on kusto's storage, to enable it we need to upload to a separate account.
-    # @pytest.mark.asyncio
-    # async def test_streaming_ingest_from_blob(self, is_managed_streaming):
-    #     ingestion_properties = IngestionProperties(
-    #         database=self.test_db,
-    #         table=self.test_table,
-    #         data_format=DataFormat.JSON,
-    #         ingestion_mapping_reference="JsonMapping",
-    #         ingestion_mapping_kind=IngestionMappingKind.JSON,
-    #     )
-    #     containers = self.ingest_client._resource_manager.get_containers()
-    #
-    #     with FileDescriptor(self.json_file_path).open(False) as stream:
-    #         blob_descriptor = self.ingest_client.upload_blob(
-    #             containers,
-    #             FileDescriptor(self.json_file_path),
-    #             ingestion_properties.database,
-    #             ingestion_properties.table,
-    #             stream,
-    #             None,
-    #             10 * 60,
-    #             3,
-    #         )
-    #         if is_managed_streaming:
-    #             self.managed_streaming_ingest_client.ingest_from_blob(blob_descriptor, ingestion_properties)
-    #         else:
-    #             self.streaming_ingest_client.ingest_from_blob(blob_descriptor, ingestion_properties)
-    #
-    #     await self.assert_rows_added(2, timeout=120)
+    @pytest.mark.asyncio
+    async def test_streaming_ingest_from_blob(self, is_managed_streaming):
+        ingestion_properties = IngestionProperties(
+            database=self.test_db,
+            table=self.test_table,
+            data_format=DataFormat.JSON,
+            ingestion_mapping_reference="JsonMapping",
+            ingestion_mapping_kind=IngestionMappingKind.JSON,
+        )
+        export_containers_list = self.ingest_client._resource_manager._kusto_client.execute("NetDefaultDB", ".show export containers")
+        containers = [s["StorageRoot"] for s in export_containers_list.primary_results[0]]
+
+        with FileDescriptor(self.json_file_path).open(False) as stream:
+            blob_descriptor = self.ingest_client.upload_blob(
+                containers,
+                FileDescriptor(self.json_file_path),
+                ingestion_properties.database,
+                ingestion_properties.table,
+                stream,
+                None,
+                10 * 60,
+                3,
+            )
+            if is_managed_streaming:
+                self.managed_streaming_ingest_client.ingest_from_blob(blob_descriptor, ingestion_properties)
+            else:
+                self.streaming_ingest_client.ingest_from_blob(blob_descriptor, ingestion_properties)
+
+        await self.assert_rows_added(2, timeout=120)
