@@ -539,6 +539,8 @@ class TestE2E:
 
     @pytest.mark.asyncio
     async def test_streaming_ingest_from_blob(self, is_managed_streaming):
+        from kusto.ingest._resource_manager import _ResourceUri
+
         ingestion_properties = IngestionProperties(
             database=self.test_db,
             table=self.test_table,
@@ -547,7 +549,10 @@ class TestE2E:
             ingestion_mapping_kind=IngestionMappingKind.JSON,
         )
         export_containers_list = self.ingest_client._resource_manager._kusto_client.execute("NetDefaultDB", ".show export containers")
-        containers = [s["StorageRoot"] for s in export_containers_list.primary_results[0]]
+        containers = [_ResourceUri(s["StorageRoot"]) for s in export_containers_list.primary_results[0]]
+
+        for c in containers:
+            self.ingest_client._resource_manager._ranked_storage_account_set.add_storage_account(c.storage_account_name)
 
         with FileDescriptor(self.json_file_path).open(False) as stream:
             blob_descriptor = self.ingest_client.upload_blob(
