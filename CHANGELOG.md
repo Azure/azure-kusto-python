@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Changed
+
+- [BREAKING] Dropped support for python version 3.7, as it is on EOL for over year.
+
 ### Fixed
 - Added `py.typed` markers
 
