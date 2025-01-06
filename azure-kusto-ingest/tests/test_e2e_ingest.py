@@ -33,6 +33,7 @@ from azure.kusto.ingest import (
     StreamDescriptor,
     ManagedStreamingIngestClient,
 )
+from azure.kusto.ingest._resource_manager import _ResourceUri
 
 
 @pytest.fixture(params=["ManagedStreaming", "NormalClient"])
@@ -546,7 +547,11 @@ class TestE2E:
             ingestion_mapping_reference="JsonMapping",
             ingestion_mapping_kind=IngestionMappingKind.JSON,
         )
-        containers = self.ingest_client._resource_manager.get_containers()
+        export_containers_list = self.ingest_client._resource_manager._kusto_client.execute("NetDefaultDB", ".show export containers")
+        containers = [_ResourceUri(s["StorageRoot"]) for s in export_containers_list.primary_results[0]]
+
+        for c in containers:
+            self.ingest_client._resource_manager._ranked_storage_account_set.add_storage_account(c.storage_account_name)
 
         with FileDescriptor(self.json_file_path).open(False) as stream:
             blob_descriptor = self.ingest_client.upload_blob(
