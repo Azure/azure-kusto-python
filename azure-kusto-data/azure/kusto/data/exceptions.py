@@ -27,6 +27,9 @@ class KustoTokenParsingError(KustoStreamingQueryError):
     ...
 
 
+SEMANTIC_ERROR_STRING = "Semantic error:"
+
+
 class KustoServiceError(KustoError):
     """Raised when the Kusto service was unable to process a request."""
 
@@ -40,6 +43,8 @@ class KustoServiceError(KustoError):
         self.http_response = http_response
         self.kusto_response = kusto_response
 
+        self.message_text = messages if isinstance(messages, str) else "\n\n".join(repr(m) for m in messages)
+
     def get_raw_http_response(self) -> "Union[requests.Response, ClientResponse, None]":
         """Gets the http response."""
         return self.http_response
@@ -47,7 +52,7 @@ class KustoServiceError(KustoError):
     def is_semantic_error(self) -> bool:
         """Checks if a response is a semantic error."""
         try:
-            return "Semantic error:" in self.http_response.text
+            return SEMANTIC_ERROR_STRING in self.message_text
         except AttributeError:
             return False
 
