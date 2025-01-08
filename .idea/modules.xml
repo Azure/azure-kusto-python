@@ -4,7 +4,7 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/azure-kusto-data/azure-kusto-data.iml" filepath="$PROJECT_DIR$/azure-kusto-data/azure-kusto-data.iml" />
       <module fileurl="file://$PROJECT_DIR$/azure-kusto-ingest/azure-kusto-ingest.iml" filepath="$PROJECT_DIR$/azure-kusto-ingest/azure-kusto-ingest.iml" />
-      <module fileurl="file://$PROJECT_DIR$/quick_start/quick_start.iml" filepath="$PROJECT_DIR$/quick_start/quick_start.iml" />
+      <module fileurl="file://$PROJECT_DIR$/quick-start/quick_start.iml" filepath="$PROJECT_DIR$/quick-start/quick_start.iml" />
     </modules>
   </component>
 </project>

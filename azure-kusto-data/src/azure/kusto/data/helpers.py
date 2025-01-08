@@ -86,4 +86,3 @@ def get_string_tail_lower_case(val, length):
         return val.lower()
 
     return val[len(val) - length :].lower()
-

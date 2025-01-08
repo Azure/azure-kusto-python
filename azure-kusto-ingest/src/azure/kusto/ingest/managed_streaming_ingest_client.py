@@ -148,6 +148,7 @@ class ManagedStreamingIngestClient(BaseIngestClient):
 
                     def invoker():
                         return self.streaming_client._ingest_from_stream_with_client_request_id(stream_descriptor, props, client_request_id)
+
                 else:
                     blob_descriptor = cast(BlobDescriptor, descriptor)
 

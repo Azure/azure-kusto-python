@@ -93,6 +93,7 @@ except ImportError:
         def __init__(self):
             raise KustoAioSyntaxError()
 
+
 # constant key names and values used throughout the code
 class TokenConstants(enum.Enum):
     BEARER_TYPE = "Bearer"

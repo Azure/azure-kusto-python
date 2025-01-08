@@ -174,7 +174,9 @@ class StatusQTests(unittest.TestCase):
             "receive_messages",
             autospec=True,
             side_effect=fake_receive,
-        ) as q_receive_mock, mock.patch.object(QueueClient, "delete_message", return_value=None) as q_del_mock:
+        ) as q_receive_mock, mock.patch.object(
+            QueueClient, "delete_message", return_value=None
+        ) as q_del_mock:
             fake_failed_queue1 = get_resource_uri("mocked_storage_account_f1", "mocked_qf_name")
             fake_failed_queue2 = get_resource_uri("mocked_storage_account_f2", "mocked_qf_2_name")
             fake_success_queue = get_resource_uri("mocked_storage_account2", "mocked_qs_name")
@@ -224,7 +226,9 @@ class StatusQTests(unittest.TestCase):
             "receive_messages",
             autospec=True,
             side_effect=fake_receive,
-        ) as q_receive_mock, mock.patch.object(QueueClient, "delete_message", return_value=None):
+        ) as q_receive_mock, mock.patch.object(
+            QueueClient, "delete_message", return_value=None
+        ):
             fake_failed_queue1 = get_resource_uri("mocked_storage_account_f1", "mocked_qf_1_name")
             fake_failed_queue2 = get_resource_uri("mocked_storage_account_f2", "mocked_qf_2_name")
 

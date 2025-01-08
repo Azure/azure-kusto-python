@@ -15,7 +15,7 @@ from msgspec.structs import force_setattr
 # Regex for TimeSpan
 _TIMESPAN_PATTERN = re.compile(r"(-?)((?P<d>[0-9]*).)?(?P<h>[0-9]{2}):(?P<m>[0-9]{2}):(?P<s>[0-9]{2}(\.[0-9]+)?$)")
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 class KustoJsonReader:
@@ -31,7 +31,7 @@ class KustoJsonReader:
             res = self.data.readline()
             if res == b"]\n":
                 break
-            yield memoryview(res)[1:-1] # strip the comma and newline
+            yield memoryview(res)[1:-1]  # strip the comma and newline
 
     def handle_start(self):
         if not self.after_start:
@@ -52,16 +52,10 @@ def kusto_raw(name: str, items: Dict[str, Type], **kwargs):
         else:
             tuples.append((f, t))
 
-    new = msgspec.defstruct(
-        name,
-        tuples,
-        frozen=True,
-        array_like=True,
-        dict=True,
-        **kwargs
-    )
+    new = msgspec.defstruct(name, tuples, frozen=True, array_like=True, dict=True, **kwargs)
 
     if timedeltas:
+
         class Final(new, frozen=True, array_like=True, dict=True):
             def __post_init__(self):
                 for f, name in timedeltas:
@@ -181,7 +175,7 @@ kusto_to_python = {
     "real": Union[float, None],
     "string": str,
     "long": Union[int, None],
-    "guid": Union[UUID, None]
+    "guid": Union[UUID, None],
 }
 
 
@@ -234,8 +228,6 @@ def to_timedelta(value):
         return factor * timedelta(days=int(match.group("d") or 0), hours=int(match.group("h")), minutes=int(match.group("m")), seconds=float(match.group("s")))
     else:
         raise ValueError("Timespan value '{}' cannot be decoded".format(value))
-
-
 
 
 strip = open(r"D:\azure-kusto-go\azkustodata\query\v2\testData\validFrames.json", "rb")

@@ -28,16 +28,15 @@ async = [
     "asgiref>=3.7.2",
 ]
 
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-
-[tool.rye]
-managed = true
-dev-dependencies = []
+[tool.uv]
+package = true
 
 [tool.hatch.metadata]
 allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/azure"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
