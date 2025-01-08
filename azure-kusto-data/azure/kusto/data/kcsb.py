@@ -39,7 +39,6 @@ class InvalidKeywords(Enum):
     ENFORCE_MFA = "EnforceMfa"
     ACCEPT = "Accept"
     QUERY_CONSISTENCY = "Query Consistency"
-    PASSWORD = "Password"
     DATA_SOURCE_URI = "Data Source Uri"
     AZURE_REGION = "Azure Region"
     NAMESPACE = "Namespace"
