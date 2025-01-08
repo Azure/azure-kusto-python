@@ -3,7 +3,7 @@ from typing import Tuple
 import pytest
 
 from azure.kusto.data import KustoConnectionStringBuilder
-from kusto_client_common import KustoClientTestsMixin
+from .kusto_client_common import KustoClientTestsMixin
 
 
 @pytest.fixture(

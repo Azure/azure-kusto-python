@@ -25,6 +25,7 @@ dev = [
     "pyright>=1.1.355",
     "ipython>=8.12.3",
     "pyarrow>=16.1.0",
+    "pandas>=2.0.3",
 ]
 
 [tool.uv.workspace]
