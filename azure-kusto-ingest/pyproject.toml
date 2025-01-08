@@ -1,0 +1,47 @@
+[project]
+name = "azure-kusto-ingest"
+version = "5.0.0"
+description = "Kusto Ingest Client"
+authors = [
+    { name = "Microsoft Corporation", email = "kustalk@microsoft.com" },
+]
+dependencies = [
+    "azure-kusto-data",
+    "azure-storage-blob>=12.19.0",
+    "azure-storage-queue>=12.9.0",
+    "tenacity>=8.2.3",
+]
+readme = "README.rst"
+requires-python = ">= 3.8"
+license = "MIT"
+keywords = ["azure", "kusto", "ingest", "data", "analytics"]
+classifiers = [
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "License :: OSI Approved :: MIT License",
+]
+urls = { "Repository" = "https://github.com/Azure/azure-kusto-python" }
+
+[project.optional-dependencies]
+pandas = [
+    "pandas>=2.0.3",
+]
+aio = []
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.uv]
+package = true
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/azure"]
+

@@ -15,7 +15,7 @@ Microsoft Azure Kusto Ingest Library for Python
 
     blob_descriptor = BlobDescriptor("https://{path_to_blob}.csv.gz?sas", 51200)  # in this example, the raw (uncompressed) size of the data is 50KB (52100 bytes)
     client.ingest_from_blob(blob_descriptor, ingestion_properties=ingestion_props)
-    
+
 
 Overview
 --------

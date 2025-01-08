@@ -1,4 +1,0 @@
-include *.rst
-include azure/__init__.py
-include azure/kusto/data/wellKnownKustoEndpoints.json
-recursive-exclude tests *

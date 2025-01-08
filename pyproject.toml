@@ -1,2 +1,59 @@
+[project]
+name = "azure-kusto-python"
+version = "5.0.0"
+description = "Microsoft Azure Kusto Python SDK"
+dependencies = [
+    "azure-kusto-data",
+    "azure-kusto-ingest",
+    "quick-start",
+]
+readme = "README.md"
+requires-python = ">= 3.8"
+
+[[project.authors]]
+name = "Microsoft Corporation"
+email = "kustalk@microsoft.com"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0.2",
+    "responses>=0.25.0",
+    "aioresponses>=0.7.6",
+    "pytest-asyncio>=0.23.5",
+    "asgiref>=3.7.2",
+    "setuptools>=69.2.0",
+    "pyright>=1.1.355",
+    "ipython>=8.12.3",
+    "pyarrow>=16.1.0",
+    "pandas>=2.0.3",
+]
+
+[tool.uv.workspace]
+members = ["azure-kusto-data", "azure-kusto-ingest", "quick-start"]
+
+[tool.uv.sources]
+azure-kusto-data = { workspace = true }
+azure-kusto-ingest = { workspace = true }
+quick-start = { workspace = true }
+
+[tool.ruff]
+line-length = 160
+target-version = 'py38'
+
+[tool.ruff.lint.per-file-ignores]
+"**/sample.py" = ["E402"] # module level import not at top of file (for samples)
+"**/test_streaming_query.py" = ["F841"] # unused variable - for pytest raises
+
 [tool.black]
 line-length = 160
+target-version = ['py38']
+
+[tool.pytest.ini_options]
+testpaths = ["azure-kusto-data/tests", "azure-kusto-ingest/tests"]
+addopts = ["-s", "--import-mode=importlib"]
+pythonpath = ["."]
+
+[tool.pyright]
+pythonVersion = "3.8"
+venvPath = "."
+venv = ".venv"
