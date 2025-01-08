@@ -71,15 +71,16 @@ class Keyword:
     def init_lookup(cls):
         kcsb_json: dict = load_bundled_json("kcsb.json")
         lookup = {}
-        for k, v in kcsb_json.items():
-            if k in cls._valid_keywords:
-                keyword = Keyword(ValidKeywords(k), v["type"], v["secret"])
-            elif k in cls._invalid_keywords:
+        for v in kcsb_json["keywords"]:
+            name = v["name"]
+            if name in cls._valid_keywords:
+                keyword = Keyword(ValidKeywords(name), v["type"], v["secret"])
+            elif name in cls._invalid_keywords:
                 keyword = UNSUPPORTED_KEYWORD
             else:
-                raise KeyError(f"Unknown keyword: `{k}`")
+                raise KeyError(f"Unknown keyword: `{name}`")
 
-            lookup[Keyword.normalize_string(k)] = keyword
+            lookup[Keyword.normalize_string(name)] = keyword
 
             for alias in v["aliases"]:
                 lookup[Keyword.normalize_string(alias)] = keyword
