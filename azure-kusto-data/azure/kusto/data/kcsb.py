@@ -13,7 +13,7 @@ UNSUPPORTED_KEYWORD = "UNSUPPORTED"
 
 
 @unique
-class ValidKeywords(Enum):
+class SupportedKeywords(Enum):
     DATA_SOURCE = "Data Source"
     INITIAL_CATALOG = "Initial Catalog"
     FEDERATED_SECURITY = "AAD Federated Security"
@@ -32,7 +32,7 @@ class ValidKeywords(Enum):
 
 
 @unique
-class InvalidKeywords(Enum):
+class UnsupportedKeywords(Enum):
     DSTS_FEDERATED_SECURITY = "dSTS Federated Security"
     STREAMING = "Streaming"
     UNCOMPRESSED = "Uncompressed"
@@ -48,11 +48,11 @@ class InvalidKeywords(Enum):
 
 @dataclasses.dataclass(frozen=True)
 class Keyword:
-    _valid_keywords: ClassVar[List[str]] = [k.value for k in ValidKeywords]
-    _invalid_keywords: ClassVar[List[str]] = [k.value for k in InvalidKeywords]
+    _supported_keywords: ClassVar[List[str]] = [k.value for k in SupportedKeywords]
+    _unsupported_keywords: ClassVar[List[str]] = [k.value for k in UnsupportedKeywords]
     _lookup: ClassVar[dict]
 
-    name: ValidKeywords
+    name: SupportedKeywords
     type: str
     secret: bool
 
@@ -64,7 +64,7 @@ class Keyword:
 
     @staticmethod
     def normalize_string(key: str) -> str:
-        return key.lower().replace(" ", "").replace("_", "")
+        return key.lower().replace(" ", "")
 
     @classmethod
     def init_lookup(cls):
@@ -72,9 +72,9 @@ class Keyword:
         lookup = {}
         for v in kcsb_json["keywords"]:
             name = v["name"]
-            if name in cls._valid_keywords:
-                keyword = Keyword(ValidKeywords(name), v["type"], v["secret"])
-            elif name in cls._invalid_keywords:
+            if name in cls._supported_keywords:
+                keyword = Keyword(SupportedKeywords(name), v["type"], v["secret"])
+            elif name in cls._unsupported_keywords:
                 keyword = UNSUPPORTED_KEYWORD
             else:
                 raise KeyError(f"Unknown keyword: `{name}`")
@@ -87,8 +87,8 @@ class Keyword:
         cls._lookup = lookup
 
     @classmethod
-    def parse(cls, key: Union[str, ValidKeywords]) -> "Keyword":
-        if isinstance(key, ValidKeywords):
+    def parse(cls, key: Union[str, SupportedKeywords]) -> "Keyword":
+        if isinstance(key, SupportedKeywords):
             key = key.value
 
         normalized = Keyword.normalize_string(key)
@@ -102,8 +102,8 @@ class Keyword:
         return cls._lookup[normalized]
 
     @classmethod
-    def lookup(cls, key: Union[str, ValidKeywords]) -> "Keyword":
-        if isinstance(key, ValidKeywords):
+    def lookup(cls, key: Union[str, SupportedKeywords]) -> "Keyword":
+        if isinstance(key, SupportedKeywords):
             key = key.value
 
         return cls._lookup[Keyword.normalize_string(key)]
@@ -155,7 +155,7 @@ class KustoConnectionStringBuilder:
         if connection_string is not None and "=" not in connection_string.partition(";")[0]:
             connection_string = "Data Source=" + connection_string
 
-        self[ValidKeywords.AUTHORITY_ID] = "organizations"
+        self[SupportedKeywords.AUTHORITY_ID] = "organizations"
 
         for kvp_string in connection_string.split(";"):
             key, _, value = kvp_string.partition("=")
@@ -163,12 +163,12 @@ class KustoConnectionStringBuilder:
 
             value_stripped = value.strip()
             if keyword.is_str_type():
-                if keyword.name == ValidKeywords.DATA_SOURCE:
+                if keyword.name == SupportedKeywords.DATA_SOURCE:
                     self[keyword.name] = value_stripped.rstrip("/")
                     self._parse_data_source(self.data_source)
-                elif keyword.name == ValidKeywords.TRACE_USER_NAME:
+                elif keyword.name == SupportedKeywords.TRACE_USER_NAME:
                     self.user_name_for_tracing = value_stripped
-                elif keyword.name == ValidKeywords.TRACE_APP_NAME:
+                elif keyword.name == SupportedKeywords.TRACE_APP_NAME:
                     self.application_for_tracing = value_stripped
                 else:
                     self[keyword.name] = value_stripped
@@ -183,7 +183,7 @@ class KustoConnectionStringBuilder:
         if self.initial_catalog is None:
             self.initial_catalog = self.DEFAULT_DATABASE_NAME
 
-    def __setitem__(self, key: "Union[ValidKeywords, str]", value: Union[str, bool, dict]):
+    def __setitem__(self, key: "Union[SupportedKeywords, str]", value: Union[str, bool, dict]):
         keyword = Keyword.parse(key)
 
         if value is None:
@@ -214,10 +214,10 @@ class KustoConnectionStringBuilder:
         assert_string_is_not_empty(password)
 
         kcsb = cls(connection_string)
-        kcsb[ValidKeywords.FEDERATED_SECURITY] = True
-        kcsb[ValidKeywords.USER_ID] = user_id
-        kcsb[ValidKeywords.AUTHORITY_ID] = authority_id
-        kcsb[ValidKeywords.PASSWORD] = password
+        kcsb[SupportedKeywords.FEDERATED_SECURITY] = True
+        kcsb[SupportedKeywords.USER_ID] = user_id
+        kcsb[SupportedKeywords.AUTHORITY_ID] = authority_id
+        kcsb[SupportedKeywords.PASSWORD] = password
 
         return kcsb
 
@@ -233,8 +233,8 @@ class KustoConnectionStringBuilder:
         assert_string_is_not_empty(user_token)
 
         kcsb = cls(connection_string)
-        kcsb[ValidKeywords.FEDERATED_SECURITY] = True
-        kcsb[ValidKeywords.USER_TOKEN] = user_token
+        kcsb[SupportedKeywords.FEDERATED_SECURITY] = True
+        kcsb[SupportedKeywords.USER_TOKEN] = user_token
 
         return kcsb
 
@@ -254,10 +254,10 @@ class KustoConnectionStringBuilder:
         assert_string_is_not_empty(authority_id)
 
         kcsb = cls(connection_string)
-        kcsb[ValidKeywords.FEDERATED_SECURITY] = True
-        kcsb[ValidKeywords.APPLICATION_CLIENT_ID] = aad_app_id
-        kcsb[ValidKeywords.APPLICATION_KEY] = app_key
-        kcsb[ValidKeywords.AUTHORITY_ID] = authority_id
+        kcsb[SupportedKeywords.FEDERATED_SECURITY] = True
+        kcsb[SupportedKeywords.APPLICATION_CLIENT_ID] = aad_app_id
+        kcsb[SupportedKeywords.APPLICATION_KEY] = app_key
+        kcsb[SupportedKeywords.AUTHORITY_ID] = authority_id
 
         return kcsb
 
@@ -281,11 +281,11 @@ class KustoConnectionStringBuilder:
         assert_string_is_not_empty(authority_id)
 
         kcsb = cls(connection_string)
-        kcsb[ValidKeywords.FEDERATED_SECURITY] = True
-        kcsb[ValidKeywords.APPLICATION_CLIENT_ID] = aad_app_id
-        kcsb[ValidKeywords.APPLICATION_CERTIFICATE_BLOB] = certificate
-        kcsb[ValidKeywords.APPLICATION_CERTIFICATE_THUMBPRINT] = thumbprint
-        kcsb[ValidKeywords.AUTHORITY_ID] = authority_id
+        kcsb[SupportedKeywords.FEDERATED_SECURITY] = True
+        kcsb[SupportedKeywords.APPLICATION_CLIENT_ID] = aad_app_id
+        kcsb[SupportedKeywords.APPLICATION_CERTIFICATE_BLOB] = certificate
+        kcsb[SupportedKeywords.APPLICATION_CERTIFICATE_THUMBPRINT] = thumbprint
+        kcsb[SupportedKeywords.AUTHORITY_ID] = authority_id
 
         return kcsb
 
@@ -311,12 +311,12 @@ class KustoConnectionStringBuilder:
         assert_string_is_not_empty(authority_id)
 
         kcsb = cls(connection_string)
-        kcsb[ValidKeywords.FEDERATED_SECURITY] = True
-        kcsb[ValidKeywords.APPLICATION_CLIENT_ID] = aad_app_id
-        kcsb[ValidKeywords.APPLICATION_CERTIFICATE_BLOB] = private_certificate
+        kcsb[SupportedKeywords.FEDERATED_SECURITY] = True
+        kcsb[SupportedKeywords.APPLICATION_CLIENT_ID] = aad_app_id
+        kcsb[SupportedKeywords.APPLICATION_CERTIFICATE_BLOB] = private_certificate
         kcsb.application_public_certificate = public_certificate
-        kcsb[ValidKeywords.APPLICATION_CERTIFICATE_THUMBPRINT] = thumbprint
-        kcsb[ValidKeywords.AUTHORITY_ID] = authority_id
+        kcsb[SupportedKeywords.APPLICATION_CERTIFICATE_THUMBPRINT] = thumbprint
+        kcsb[SupportedKeywords.AUTHORITY_ID] = authority_id
 
         return kcsb
 
@@ -331,8 +331,8 @@ class KustoConnectionStringBuilder:
         """
         assert_string_is_not_empty(application_token)
         kcsb = cls(connection_string)
-        kcsb[ValidKeywords.FEDERATED_SECURITY] = True
-        kcsb[ValidKeywords.APPLICATION_TOKEN] = application_token
+        kcsb[SupportedKeywords.FEDERATED_SECURITY] = True
+        kcsb[SupportedKeywords.APPLICATION_TOKEN] = application_token
 
         return kcsb
 
@@ -352,8 +352,8 @@ class KustoConnectionStringBuilder:
         """
         kcsb = cls(connection_string)
         kcsb.device_login = True
-        kcsb[ValidKeywords.FEDERATED_SECURITY] = True
-        kcsb[ValidKeywords.AUTHORITY_ID] = authority_id
+        kcsb[SupportedKeywords.FEDERATED_SECURITY] = True
+        kcsb[SupportedKeywords.AUTHORITY_ID] = authority_id
         kcsb.device_callback = callback
 
         return kcsb
@@ -367,7 +367,7 @@ class KustoConnectionStringBuilder:
         """
         kcsb = cls(connection_string)
         kcsb.az_cli_login = True
-        kcsb[ValidKeywords.FEDERATED_SECURITY] = True
+        kcsb[SupportedKeywords.FEDERATED_SECURITY] = True
 
         return kcsb
 
@@ -417,7 +417,7 @@ class KustoConnectionStringBuilder:
         if exclusive_pcount > 1:
             raise ValueError("the following parameters are mutually exclusive and can not be provided at the same time: client_uid, object_id, msi_res_id")
 
-        kcsb[ValidKeywords.FEDERATED_SECURITY] = True
+        kcsb[SupportedKeywords.FEDERATED_SECURITY] = True
         kcsb.msi_authentication = True
         kcsb.msi_parameters = params
 
@@ -434,7 +434,7 @@ class KustoConnectionStringBuilder:
         assert callable(token_provider)
 
         kcsb = cls(connection_string)
-        kcsb[ValidKeywords.FEDERATED_SECURITY] = True
+        kcsb[SupportedKeywords.FEDERATED_SECURITY] = True
         kcsb.token_provider = token_provider
 
         return kcsb
@@ -454,7 +454,7 @@ class KustoConnectionStringBuilder:
         assert callable(async_token_provider)
 
         kcsb = cls(connection_string)
-        kcsb[ValidKeywords.FEDERATED_SECURITY] = True
+        kcsb[SupportedKeywords.FEDERATED_SECURITY] = True
         kcsb.async_token_provider = async_token_provider
 
         return kcsb
@@ -465,12 +465,12 @@ class KustoConnectionStringBuilder:
     ) -> "KustoConnectionStringBuilder":
         kcsb = cls(connection_string)
         kcsb.interactive_login = True
-        kcsb[ValidKeywords.FEDERATED_SECURITY] = True
+        kcsb[SupportedKeywords.FEDERATED_SECURITY] = True
         if user_id_hint is not None:
-            kcsb[ValidKeywords.USER_ID] = user_id_hint
+            kcsb[SupportedKeywords.USER_ID] = user_id_hint
 
         if tenant_hint is not None:
-            kcsb[ValidKeywords.AUTHORITY_ID] = tenant_hint
+            kcsb[SupportedKeywords.AUTHORITY_ID] = tenant_hint
 
         return kcsb
 
@@ -488,7 +488,7 @@ class KustoConnectionStringBuilder:
         :param credential_from_login_endpoint: an optional function that returns a token credential for the relevant kusto resource
         """
         kcsb = cls(connection_string)
-        kcsb[ValidKeywords.FEDERATED_SECURITY] = True
+        kcsb[SupportedKeywords.FEDERATED_SECURITY] = True
         kcsb.token_credential_login = True
         kcsb.azure_credential = credential
         kcsb.azure_credential_from_login_endpoint = credential_from_login_endpoint
@@ -504,7 +504,7 @@ class KustoConnectionStringBuilder:
         if not connection_string.startswith("http://"):
             raise ValueError("Connection string must start with http://")
         kcsb = cls(connection_string)
-        kcsb[ValidKeywords.FEDERATED_SECURITY] = False
+        kcsb[SupportedKeywords.FEDERATED_SECURITY] = False
 
         return kcsb
 
@@ -513,78 +513,78 @@ class KustoConnectionStringBuilder:
         """The URI specifying the Kusto service endpoint.
         For example, https://kuskus.kusto.windows.net or net.tcp://localhost
         """
-        return self._internal_dict.get(ValidKeywords.DATA_SOURCE)
+        return self._internal_dict.get(SupportedKeywords.DATA_SOURCE)
 
     @property
     def initial_catalog(self) -> Optional[str]:
         """The default database to be used for requests.
         By default, it is set to 'NetDefaultDB'.
         """
-        return self._internal_dict.get(ValidKeywords.INITIAL_CATALOG)
+        return self._internal_dict.get(SupportedKeywords.INITIAL_CATALOG)
 
     @initial_catalog.setter
     def initial_catalog(self, value: str) -> None:
-        self._internal_dict[ValidKeywords.INITIAL_CATALOG] = value
+        self._internal_dict[SupportedKeywords.INITIAL_CATALOG] = value
 
     @property
     def aad_user_id(self) -> Optional[str]:
         """The username to use for AAD Federated AuthN."""
-        return self._internal_dict.get(ValidKeywords.USER_ID)
+        return self._internal_dict.get(SupportedKeywords.USER_ID)
 
     @property
     def application_client_id(self) -> Optional[str]:
         """The application client id to use for authentication when federated
         authentication is used.
         """
-        return self._internal_dict.get(ValidKeywords.APPLICATION_CLIENT_ID)
+        return self._internal_dict.get(SupportedKeywords.APPLICATION_CLIENT_ID)
 
     @property
     def application_key(self) -> Optional[str]:
         """The application key to use for authentication when federated authentication is used"""
-        return self._internal_dict.get(ValidKeywords.APPLICATION_KEY)
+        return self._internal_dict.get(SupportedKeywords.APPLICATION_KEY)
 
     @property
     def application_certificate(self) -> Optional[str]:
         """A PEM encoded certificate private key."""
-        return self._internal_dict.get(ValidKeywords.APPLICATION_CERTIFICATE_BLOB)
+        return self._internal_dict.get(SupportedKeywords.APPLICATION_CERTIFICATE_BLOB)
 
     @application_certificate.setter
     def application_certificate(self, value: str):
-        self[ValidKeywords.APPLICATION_CERTIFICATE_BLOB] = value
+        self[SupportedKeywords.APPLICATION_CERTIFICATE_BLOB] = value
 
     @property
     def application_certificate_thumbprint(self) -> Optional[str]:
         """hex encoded thumbprint of the certificate."""
-        return self._internal_dict.get(ValidKeywords.APPLICATION_CERTIFICATE_THUMBPRINT)
+        return self._internal_dict.get(SupportedKeywords.APPLICATION_CERTIFICATE_THUMBPRINT)
 
     @application_certificate_thumbprint.setter
     def application_certificate_thumbprint(self, value: str):
-        self[ValidKeywords.APPLICATION_CERTIFICATE_THUMBPRINT] = value
+        self[SupportedKeywords.APPLICATION_CERTIFICATE_THUMBPRINT] = value
 
     @property
     def authority_id(self) -> Optional[str]:
         """The ID of the AAD tenant where the application is configured.
         (should be supplied only for non-Microsoft tenant)"""
-        return self._internal_dict.get(ValidKeywords.AUTHORITY_ID)
+        return self._internal_dict.get(SupportedKeywords.AUTHORITY_ID)
 
     @authority_id.setter
     def authority_id(self, value: str):
-        self[ValidKeywords.AUTHORITY_ID] = value
+        self[SupportedKeywords.AUTHORITY_ID] = value
 
     @property
     def aad_federated_security(self) -> Optional[bool]:
         """A Boolean value that instructs the client to perform AAD federated authentication."""
-        return self._internal_dict.get(ValidKeywords.FEDERATED_SECURITY)
+        return self._internal_dict.get(SupportedKeywords.FEDERATED_SECURITY)
 
     @property
     def user_token(self) -> Optional[str]:
         """User token."""
-        return self._internal_dict.get(ValidKeywords.USER_TOKEN)
+        return self._internal_dict.get(SupportedKeywords.USER_TOKEN)
 
     @property
     def application_token(self) -> Optional[str]:
         """Application token."""
-        return self._internal_dict.get(ValidKeywords.APPLICATION_TOKEN)
+        return self._internal_dict.get(SupportedKeywords.APPLICATION_TOKEN)
 
     @property
     def client_details(self) -> ClientDetails:
@@ -592,15 +592,15 @@ class KustoConnectionStringBuilder:
 
     @property
     def login_hint(self) -> Optional[str]:
-        return self._internal_dict.get(ValidKeywords.USER_ID)
+        return self._internal_dict.get(SupportedKeywords.USER_ID)
 
     @property
     def domain_hint(self) -> Optional[str]:
-        return self._internal_dict.get(ValidKeywords.AUTHORITY_ID)
+        return self._internal_dict.get(SupportedKeywords.AUTHORITY_ID)
 
     @property
     def password(self) -> Optional[str]:
-        return self._internal_dict.get(ValidKeywords.PASSWORD)
+        return self._internal_dict.get(SupportedKeywords.PASSWORD)
 
     def _set_connector_details(
         self,
@@ -638,7 +638,7 @@ class KustoConnectionStringBuilder:
         return self._build_connection_string(self._internal_dict)
 
     def _build_connection_string(self, kcsb_as_dict: dict) -> str:
-        return ";".join(["{0}={1}".format(word.value, kcsb_as_dict[word]) for word in ValidKeywords if word in kcsb_as_dict])
+        return ";".join(["{0}={1}".format(word.value, kcsb_as_dict[word]) for word in SupportedKeywords if word in kcsb_as_dict])
 
     def _parse_data_source(self, url: str):
         url = urlparse(url)
@@ -647,4 +647,4 @@ class KustoConnectionStringBuilder:
         segments = url.path.lstrip("/").split("/")
         if len(segments) == 1 and segments[0] and not self.initial_catalog:
             self.initial_catalog = segments[0]
-            self._internal_dict[ValidKeywords.DATA_SOURCE] = url._replace(path="").geturl()
+            self._internal_dict[SupportedKeywords.DATA_SOURCE] = url._replace(path="").geturl()
