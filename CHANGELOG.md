@@ -10,6 +10,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [4.6.2] - 2025-01-07
 
+### Changed
+- [BREAKING] Aligned the Connection String Builder keywords with the rest of the SDKs.
+This means that some keywords were removed, and they will no longer be parsed as part of the Connection String.  
+Building the Connection String using the builder method will still work as expected.  
+The following keywords have been removed:
+    - `msi_auth` / `msi_authentication`
+    - `msi_params` / `msi_type`
+    - `interactive_login`
+    - `az_cli`
+
 ### Fixed
 - Added `py.typed` markers
 - Fixed semantic error handling
