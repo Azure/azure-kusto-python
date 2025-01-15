@@ -1,15 +1,15 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
-import unittest
 from uuid import uuid4
 
 import pytest
+
 from azure.kusto.data import KustoConnectionStringBuilder, KustoClient
 
 local_emulator = False
 
 
-class KustoConnectionStringBuilderTests:
+class TestKustoConnectionStringBuilder:
     """Tests class for KustoConnectionStringBuilder."""
 
     PASSWORDS_REPLACEMENT = "****"
@@ -66,19 +66,12 @@ class KustoConnectionStringBuilderTests:
             # make sure error is raised when authority_id i none
             assert isinstance(e, ValueError)
 
-        kcsb1 = KustoConnectionStringBuilder("server=localhost")
-        kcsb1[KustoConnectionStringBuilder.ValidKeywords.application_client_id] = uuid
-        kcsb1[KustoConnectionStringBuilder.ValidKeywords.application_key] = key
-        kcsb1[KustoConnectionStringBuilder.ValidKeywords.authority_id] = "microsoft.com"
-        kcsb1[KustoConnectionStringBuilder.ValidKeywords.aad_federated_security] = True
-        kcsbs.append(kcsb1)
-
-        kcsb2 = KustoConnectionStringBuilder("Server=localhost")
-        kcsb2["AppclientId"] = uuid
-        kcsb2["Application key"] = key
-        kcsb2["Authority Id"] = "microsoft.com"
-        kcsb2["aad federated security"] = True
-        kcsbs.append(kcsb2)
+        kcsb = KustoConnectionStringBuilder("Server=localhost")
+        kcsb["AppclientId"] = uuid
+        kcsb["Application key"] = key
+        kcsb["Authority Id"] = "microsoft.com"
+        kcsb["aad federated security"] = True
+        kcsbs.append(kcsb)
 
         for kcsb in kcsbs:
             assert kcsb.data_source == "localhost"
@@ -105,21 +98,15 @@ class KustoConnectionStringBuilderTests:
         user = "test"
         password = "Pa$$w0rd"
         kcsbs = [
-            KustoConnectionStringBuilder("localhost;AAD User ID={0};password={1} ;AAD Federated Security=True ".format(user, password)),
+            KustoConnectionStringBuilder("localhost;User ID={0};password={1} ;AAD Federated Security=True ".format(user, password)),
             KustoConnectionStringBuilder("Data Source=localhost ; AaD User ID={0}; Password ={1} ;AAD Federated Security=True".format(user, password)),
-            KustoConnectionStringBuilder(" Addr = localhost ; AAD User ID = {0} ; Pwd ={1} ;AAD Federated Security=True".format(user, password)),
+            KustoConnectionStringBuilder(" Addr = localhost ; User ID = {0} ; Pwd ={1} ;AAD Federated Security=True".format(user, password)),
             KustoConnectionStringBuilder("Network Address = localhost; AAD User iD = {0} ; Pwd = {1} ;AAD Federated Security= True  ".format(user, password)),
             KustoConnectionStringBuilder.with_aad_user_password_authentication("localhost", user, password),
         ]
 
-        kcsb1 = KustoConnectionStringBuilder("Server=localhost")
-        kcsb1[KustoConnectionStringBuilder.ValidKeywords.aad_user_id] = user
-        kcsb1[KustoConnectionStringBuilder.ValidKeywords.password] = password
-        kcsb1[KustoConnectionStringBuilder.ValidKeywords.aad_federated_security] = True
-        kcsbs.append(kcsb1)
-
         kcsb2 = KustoConnectionStringBuilder("server=localhost")
-        kcsb2["AAD User ID"] = user
+        kcsb2["User ID"] = user
         kcsb2["Password"] = password
         kcsb2["aad federated security"] = True
         kcsbs.append(kcsb2)
@@ -134,12 +121,12 @@ class KustoConnectionStringBuilderTests:
             assert kcsb.authority_id == "organizations"
             assert repr(
                 kcsb
-            ) == "Data Source=localhost;Initial Catalog=NetDefaultDB;AAD Federated Security=True;AAD User ID={0};Password={1};Authority Id=organizations".format(
+            ) == "Data Source=localhost;Initial Catalog=NetDefaultDB;AAD Federated Security=True;User ID={0};Password={1};Authority Id=organizations".format(
                 user, password
             )
             assert str(
                 kcsb
-            ) == "Data Source=localhost;Initial Catalog=NetDefaultDB;AAD Federated Security=True;AAD User ID={0};Password={1};Authority Id=organizations".format(
+            ) == "Data Source=localhost;Initial Catalog=NetDefaultDB;AAD Federated Security=True;User ID={0};Password={1};Authority Id=organizations".format(
                 user, self.PASSWORDS_REPLACEMENT
             )
 
@@ -160,12 +147,8 @@ class KustoConnectionStringBuilderTests:
         assert kcsb.authority_id == authority_id
         assert repr(
             kcsb
-        ) == "Data Source=localhost;Initial Catalog=NetDefaultDB;AAD Federated Security=True;AAD User ID={0};Password={1};Authority Id=13456".format(
-            user, password
-        )
-        assert str(
-            kcsb
-        ) == "Data Source=localhost;Initial Catalog=NetDefaultDB;AAD Federated Security=True;AAD User ID={0};Password={1};Authority Id=13456".format(
+        ) == "Data Source=localhost;Initial Catalog=NetDefaultDB;AAD Federated Security=True;User ID={0};Password={1};Authority Id=13456".format(user, password)
+        assert str(kcsb) == "Data Source=localhost;Initial Catalog=NetDefaultDB;AAD Federated Security=True;User ID={0};Password={1};Authority Id=13456".format(
             user, self.PASSWORDS_REPLACEMENT
         )
 
@@ -375,3 +358,13 @@ class KustoConnectionStringBuilderTests:
         client = KustoClient(kcsb)
         assert client._kusto_cluster == "https://help.kusto.windows.net/Test/Test2/"
         assert client.default_database == "NetDefaultDB"
+
+    def test_unsupported_keyword(self):
+        with pytest.raises(KeyError) as e:
+            KustoConnectionStringBuilder("Data Source=localhost;Initial Catalog=NetDefaultDB;Namespace=Test")
+        assert "Keyword `Namespace` is not supported by this SDK" in str(e.value)
+
+    def test_unknown_keyword(self):
+        with pytest.raises(KeyError) as e:
+            KustoConnectionStringBuilder("Data Source=localhost;Initial Catalog=NetDefaultDB;Bla=Test")
+        assert "Unknown keyword: `Bla`" in str(e.value)

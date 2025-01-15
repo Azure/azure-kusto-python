@@ -61,18 +61,18 @@ class _AadHelper:
             self.token_provider = BasicTokenProvider(kcsb.user_token, is_async=is_async)
         elif kcsb.application_token:
             self.token_provider = BasicTokenProvider(kcsb.application_token, is_async=is_async)
-        elif kcsb.az_cli:
+        elif kcsb.az_cli_login:
             self.token_provider = AzCliTokenProvider(self.kusto_uri, is_async=is_async)
         elif kcsb.token_provider or kcsb.async_token_provider:
             self.token_provider = CallbackTokenProvider(token_callback=kcsb.token_provider, async_token_callback=kcsb.async_token_provider, is_async=is_async)
-        elif kcsb.is_token_credential_auth:
+        elif kcsb.token_credential_login:
             self.token_provider = AzureIdentityTokenCredentialProvider(
                 self.kusto_uri,
                 is_async=is_async,
-                credential=kcsb.credential,
-                credential_from_login_endpoint=kcsb.credential_from_login_endpoint,
+                credential=kcsb.azure_credential,
+                credential_from_login_endpoint=kcsb.azure_credential_from_login_endpoint,
             )
-        elif kcsb.is_device_login_auth:
+        elif kcsb.device_login:
             self.token_provider = DeviceLoginTokenProvider(self.kusto_uri, kcsb.authority_id, kcsb.device_callback, is_async=is_async)
         else:
             self.token_provider = InteractiveLoginTokenProvider(self.kusto_uri, kcsb.authority_id, kcsb.login_hint, kcsb.domain_hint, is_async=is_async)
