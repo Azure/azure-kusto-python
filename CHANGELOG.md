@@ -5,12 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [4.6.3] - 2025-01-08
-- Explicitly export members in `__init__.py` via `__all__`
+## Unreleased
 
-## [4.6.2] - 2025-01-07
-
-### Changed
+- [BREAKING] Dropped support for python version 3.7, as it is on EOL for over year.
 - [BREAKING] Aligned the Connection String Builder keywords with the rest of the SDKs.
 This means that some keywords were removed, and they will no longer be parsed as part of the Connection String.  
 Building the Connection String using the builder method will still work as expected.  
@@ -19,6 +16,11 @@ The following keywords have been removed:
     - `msi_params` / `msi_type`
     - `interactive_login`
     - `az_cli`
+
+## [4.6.3] - 2025-01-08
+- Explicitly export members in `__init__.py` via `__all__`
+
+## [4.6.2] - 2025-01-07
 
 ### Fixed
 - Added `py.typed` markers
