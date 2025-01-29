@@ -24,7 +24,7 @@ if TYPE_CHECKING:
 
 
 class _KustoClientBase(abc.ABC):
-    API_VERSION = "2019-02-13"
+    API_VERSION = "2024-12-12"
 
     _mgmt_default_timeout: ClassVar[timedelta] = timedelta(hours=1, seconds=30)
     _query_default_timeout: ClassVar[timedelta] = timedelta(minutes=4, seconds=30)
