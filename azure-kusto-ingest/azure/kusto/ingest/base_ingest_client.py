@@ -1,10 +1,10 @@
+import gzip
 import ipaddress
 import os
 import tempfile
 import time
 import uuid
 from abc import ABCMeta, abstractmethod
-from copy import copy
 from enum import Enum
 from io import TextIOWrapper
 from typing import TYPE_CHECKING, Union, IO, AnyStr, Optional, Tuple
@@ -12,10 +12,8 @@ from urllib.parse import urlparse
 
 from azure.kusto.data.data_format import DataFormat
 from azure.kusto.data.exceptions import KustoClosedError
-
 from .descriptors import FileDescriptor, StreamDescriptor
 from .ingestion_properties import IngestionProperties
-
 
 if TYPE_CHECKING:
     import pandas
@@ -117,12 +115,11 @@ class BaseIngestClient(metaclass=ABCMeta):
         if not isinstance(df, DataFrame):
             raise ValueError("Expected DataFrame instance, found {}".format(type(df)))
 
-        file_name = "df_{id}_{timestamp}_{uid}.csv.gz".format(id=id(df), timestamp=int(time.time()), uid=uuid.uuid4())
+        file_name = "df_{id}_{timestamp}_{uid}.json.gz".format(id=id(df), timestamp=int(time.time()), uid=uuid.uuid4())
         temp_file_path = os.path.join(tempfile.gettempdir(), file_name)
-
-        df.to_csv(temp_file_path, index=False, encoding="utf-8", header=False, compression="gzip")
-
-        ingestion_properties.format = DataFormat.CSV
+        with gzip.open(temp_file_path, "wb") as temp_file:
+            df.to_json(temp_file, orient="records", date_format="iso", lines=True)
+        ingestion_properties.format = DataFormat.JSON
 
         try:
             return self.ingest_from_file(temp_file_path, ingestion_properties)
