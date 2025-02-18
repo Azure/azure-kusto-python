@@ -522,7 +522,7 @@ class TestQueuedIngestClient:
             id(df)
         )
 
-        assert_queued_upload(mock_put_message_in_queue, mock_upload_blob_from_stream, expected_url)
+        assert_queued_upload(mock_put_message_in_queue, mock_upload_blob_from_stream, expected_url, format="json")
 
     @responses.activate
     @patch("azure.kusto.ingest.managed_streaming_ingest_client.ManagedStreamingIngestClient.MAX_STREAMING_SIZE_IN_BYTES", new=0)
