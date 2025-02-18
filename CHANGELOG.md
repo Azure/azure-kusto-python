@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Changed
 - [BREAKING] Dropped support for python version 3.7, as it is on EOL for over year.
 - [BREAKING] Aligned the Connection String Builder keywords with the rest of the SDKs.
 This means that some keywords were removed, and they will no longer be parsed as part of the Connection String.  
@@ -17,7 +18,12 @@ The following keywords have been removed:
     - `interactive_login`
     - `az_cli`
 
+### Fixed
+- Fixed issues with nested pandas dataframes ingestion.
+
 ## [4.6.3] - 2025-01-08
+
+### Fixed
 - Explicitly export members in `__init__.py` via `__all__`
 
 ## [4.6.2] - 2025-01-07
