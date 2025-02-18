@@ -518,7 +518,7 @@ class TestQueuedIngestClient:
         result = ingest_client.ingest_from_dataframe(df, ingestion_properties=ingestion_properties)
         assert result.status == IngestionStatus.QUEUED
 
-        expected_url = "https://storageaccount.blob.core.windows.net/tempstorage/database__table__11111111-1111-1111-1111-111111111111__df_{0}_100_11111111-1111-1111-1111-111111111111.csv.gz?".format(
+        expected_url = "https://storageaccount.blob.core.windows.net/tempstorage/database__table__11111111-1111-1111-1111-111111111111__df_{0}_100_11111111-1111-1111-1111-111111111111.json.gz?".format(
             id(df)
         )
 
