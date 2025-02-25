@@ -120,11 +120,11 @@ class BaseIngestClient(metaclass=ABCMeta):
 
         is_json = True
 
-        # If we are given CSV mapping, or the format is explicitly set to CSV, we should use CSV
+        # If we are given CSV mapping, or the mapping format is explicitly set to CSV, we should use CSV
         if (
             not data_format
             and ingestion_properties is not None
-            and (ingestion_properties.ingestion_mapping_type == DataFormat.CSV or ingestion_properties.format == DataFormat.CSV)
+            and (ingestion_properties.ingestion_mapping_type == DataFormat.CSV)
         ):
             is_json = False
         elif data_format == DataFormat.CSV:
