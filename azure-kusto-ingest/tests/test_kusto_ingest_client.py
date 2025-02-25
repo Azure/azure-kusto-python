@@ -507,7 +507,7 @@ class TestQueuedIngestClient:
         )
 
         ingest_client = ingest_client_class("https://ingest-somecluster.kusto.windows.net")
-        ingestion_properties = IngestionProperties(database="database", table="table", data_format=DataFormat.CSV)
+        ingestion_properties = IngestionProperties(database="database", table="table")
 
         from pandas import DataFrame
 

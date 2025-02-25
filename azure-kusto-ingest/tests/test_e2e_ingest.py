@@ -535,7 +535,7 @@ class TestE2E:
         dynamic_value = ["me@dummy.com", "you@dummy.com", "them@dummy.com"]
         rows = [[0, str(guid), 0.0, 0.0, 0, 0, 0, 0, 0, 0, 0, 0, "2014-01-01T01:01:01Z", "Zero", "Zero", "0", "00:00:00", None, dynamic_value]]
         df = DataFrame(data=rows, columns=fields)
-        ingestion_properties = IngestionProperties(database=self.test_db, table=self.test_table, flush_immediately=True, data_format=DataFormat.CSV)
+        ingestion_properties = IngestionProperties(database=self.test_db, table=self.test_table, flush_immediately=True)
         self.ingest_client.ingest_from_dataframe(df, ingestion_properties)
 
         await self.assert_rows_added(1, timeout=120)
