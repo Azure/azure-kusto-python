@@ -507,7 +507,7 @@ class TestQueuedIngestClient:
         )
 
         ingest_client = ingest_client_class("https://ingest-somecluster.kusto.windows.net")
-        ingestion_properties = IngestionProperties(database="database", table="table", data_format=DataFormat.CSV)
+        ingestion_properties = IngestionProperties(database="database", table="table")
 
         from pandas import DataFrame
 
@@ -518,11 +518,11 @@ class TestQueuedIngestClient:
         result = ingest_client.ingest_from_dataframe(df, ingestion_properties=ingestion_properties)
         assert result.status == IngestionStatus.QUEUED
 
-        expected_url = "https://storageaccount.blob.core.windows.net/tempstorage/database__table__11111111-1111-1111-1111-111111111111__df_{0}_100_11111111-1111-1111-1111-111111111111.csv.gz?".format(
+        expected_url = "https://storageaccount.blob.core.windows.net/tempstorage/database__table__11111111-1111-1111-1111-111111111111__df_{0}_100_11111111-1111-1111-1111-111111111111.json.gz?".format(
             id(df)
         )
 
-        assert_queued_upload(mock_put_message_in_queue, mock_upload_blob_from_stream, expected_url)
+        assert_queued_upload(mock_put_message_in_queue, mock_upload_blob_from_stream, expected_url, format="json")
 
     @responses.activate
     @patch("azure.kusto.ingest.managed_streaming_ingest_client.ManagedStreamingIngestClient.MAX_STREAMING_SIZE_IN_BYTES", new=0)
