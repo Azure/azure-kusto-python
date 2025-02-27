@@ -107,7 +107,7 @@ class BaseIngestClient(metaclass=ABCMeta):
         https://docs.microsoft.com/en-us/azure/data-explorer/ingest-data-overview#ingestion-methods
         :param pandas.DataFrame df: input dataframe to ingest.
         :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
-        :param DataFormat data_format: Format to convert the dataframe to. If not specified, it will try to infer it from the mapping, if not found, it will default to JSON.
+        :param DataFormat data_format: Format to convert the dataframe to - Can be DataFormat.CSV, DataFormat.JSOn or None. If not specified, it will try to infer it from the mapping, if not found, it will default to JSON.
         """
 
         if self._is_closed:
@@ -126,8 +126,10 @@ class BaseIngestClient(metaclass=ABCMeta):
                 is_json = False
         elif data_format == DataFormat.CSV:
             is_json = False
-        elif data_format != DataFormat.JSON:
-            raise ValueError("Unsupported format: {}".format(data_format))
+        elif data_format == DataFormat.JSON:
+            is_json = True
+        else:
+            raise ValueError("Unsupported format: {}. Supported formats are: CSV, JSON, None".format(data_format))
 
         file_name = "df_{id}_{timestamp}_{uid}.{ext}.gz".format(id=id(df), timestamp=int(time.time()), uid=uuid.uuid4(), ext="json" if is_json else "csv")
         temp_file_path = os.path.join(tempfile.gettempdir(), file_name)
