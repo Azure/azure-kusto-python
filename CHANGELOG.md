@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## [5.0.0] - 2025-03-10
 
 ### Changed
 - [BREAKING] Dropped support for python version 3.7, as it is on EOL for over year.
@@ -17,9 +17,12 @@ The following keywords have been removed:
     - `msi_params` / `msi_type`
     - `interactive_login`
     - `az_cli`
-
-### Fixed
-- Fixed issues with nested pandas dataframes ingestion.
+- [BREAKING] `ingest_from_dataframe` - Added `data_format` parameter. It can be None (default), 'json' or 'csv'.
+  Based on how panda's csv serialization works, dynamic data will not be serialized correctly.
+  By default, the data will be serialized as json to avoid this issue.
+  However, that may break if a CSV mapping is used.
+  Therefore, when passing the None value, the data will be json by default, or csv if a csv mapping is used.
+  Also, it is possible to pass 'csv' or 'json' to force the serialization type.
 
 ## [4.6.3] - 2025-01-08
 
