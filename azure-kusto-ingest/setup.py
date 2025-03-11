@@ -24,6 +24,7 @@ setup(
     name=PACKAGE_NAME,
     version=VERSION,
     description="Kusto Ingest Client",
+    long_description_content_type="text/markdown",
     long_description=open("README.rst", "r").read(),
     license="MIT",
     author="Microsoft Corporation",
