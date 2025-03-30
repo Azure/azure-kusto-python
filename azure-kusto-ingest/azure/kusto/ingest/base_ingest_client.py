@@ -142,7 +142,6 @@ class BaseIngestClient(metaclass=ABCMeta):
                 ingestion_properties.ignore_first_record = False
                 ingestion_properties.format = DataFormat.CSV
 
-
         try:
             return self.ingest_from_file(temp_file_path, ingestion_properties)
         finally:
