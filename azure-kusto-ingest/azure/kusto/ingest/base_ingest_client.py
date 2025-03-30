@@ -139,7 +139,9 @@ class BaseIngestClient(metaclass=ABCMeta):
                 ingestion_properties.format = DataFormat.JSON
             else:
                 df.to_csv(temp_file_path, index=False, encoding="utf-8", header=False)
+                ingestion_properties.ignore_first_record = False
                 ingestion_properties.format = DataFormat.CSV
+
 
         try:
             return self.ingest_from_file(temp_file_path, ingestion_properties)
