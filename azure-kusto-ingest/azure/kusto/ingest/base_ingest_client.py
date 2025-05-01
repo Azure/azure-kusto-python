@@ -10,7 +10,7 @@ from io import TextIOWrapper
 from typing import TYPE_CHECKING, Union, IO, AnyStr, Optional, Tuple
 from urllib.parse import urlparse
 
-from azure.kusto.data.data_format import DataFormat
+from azure.kusto.data.data_format import DataFormat, IngestionMappingKind
 from azure.kusto.data.exceptions import KustoClosedError
 from .descriptors import FileDescriptor, StreamDescriptor
 from .ingestion_properties import IngestionProperties
@@ -122,7 +122,7 @@ class BaseIngestClient(metaclass=ABCMeta):
 
         # If we are given CSV mapping, or the mapping format is explicitly set to CSV, we should use CSV
         if not data_format:
-            if ingestion_properties is not None and (ingestion_properties.ingestion_mapping_type == DataFormat.CSV):
+            if ingestion_properties is not None and (ingestion_properties.ingestion_mapping_type == IngestionMappingKind.CSV):
                 is_json = False
         elif data_format == DataFormat.CSV:
             is_json = False
@@ -138,7 +138,7 @@ class BaseIngestClient(metaclass=ABCMeta):
                 df.to_json(temp_file, orient="records", date_format="iso", lines=True)
                 ingestion_properties.format = DataFormat.JSON
             else:
-                df.to_csv(temp_file_path, index=False, encoding="utf-8", header=False)
+                df.to_csv(temp_file, index=False, encoding="utf-8", header=False)
                 ingestion_properties.ignore_first_record = False
                 ingestion_properties.format = DataFormat.CSV
 
