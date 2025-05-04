@@ -49,6 +49,6 @@ setup(
     packages=find_packages(exclude=["azure", "*tests*", "*tests.*"]),
     package_data={"": ["wellKnownKustoEndpoints.json", "py.typed", "kcsb.json"]},
     include_package_data=True,
-    install_requires=["python-dateutil>=2.8.0", "requests>=2.32.3", "azure-identity>=1.21.0,<2", "msal>=1.9.0,<2", "ijson~=3.1", "azure-core>=1.11.0,<2"],
+    install_requires=["python-dateutil>=2.8.0", "requests>=2.32.3", "azure-identity>=1.21.0,<2", "msal>=1.9.0,<2", "ijson~=3.1", "azure-core>=1.33.0,<2"],
     extras_require={"pandas": ["pandas"], "aio": ["aiohttp>=3.8.0,<4", "asgiref>=3.2.3,<4"]},
 )

@@ -19,7 +19,6 @@ with open(path.join(PACKAGE_FOLDER_PATH, "_version.py"), "r") as fd:
 if not VERSION:
     raise RuntimeError("Cannot find version information")
 
-
 setup(
     name=PACKAGE_NAME,
     version=VERSION,
@@ -45,6 +44,12 @@ setup(
     ],
     packages=find_packages(exclude=["azure", "*tests*", "*tests.*"]),
     package_data={"": ["py.typed"]},
-    install_requires=["azure-kusto-data=={}".format(VERSION), "azure-storage-blob>=12,<13", "azure-storage-queue>=12,<13", "tenacity>=8.0.0"],
+    install_requires=[
+        "azure-kusto-data=={}".format(VERSION),
+        # TODO - this has to be locked to this version due to https://github.com/Azure/azure-sdk-for-python/issues/40041
+        "azure-storage-blob==12.23.0",
+        "azure-storage-queue==12.12.0",
+        "tenacity>=8.0.0",
+    ],
     extras_require={"pandas": ["pandas"], "aio": []},
 )
