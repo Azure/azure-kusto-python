@@ -46,11 +46,9 @@ setup(
     package_data={"": ["py.typed"]},
     install_requires=[
         "azure-kusto-data=={}".format(VERSION),
-
         # TODO - this has to be locked to this version due to https://github.com/Azure/azure-sdk-for-python/issues/40041
-        "azure-storage-blob==12.24.0",  
+        "azure-storage-blob==12.24.0",
         "azure-storage-queue==12.12.0",
-        
         "tenacity>=8.0.0",
     ],
     extras_require={"pandas": ["pandas"], "aio": []},
