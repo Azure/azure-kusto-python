@@ -2,11 +2,13 @@
 # Licensed under the MIT License
 import random
 
-from typing import List, Callable
+from typing import List, Callable, TYPE_CHECKING
 
 from azure.kusto.ingest._resource_manager import _ResourceUri
-from azure.kusto.ingest.status import StatusMessage
 from azure.storage.queue import QueueServiceClient, QueueClient, QueueMessage, TextBase64EncodePolicy, TextBase64DecodePolicy
+
+if TYPE_CHECKING:
+    from azure.kusto.ingest.status import StatusMessage
 
 
 class QueueDetails:
