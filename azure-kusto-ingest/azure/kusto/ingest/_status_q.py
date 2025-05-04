@@ -5,6 +5,7 @@ import random
 from typing import List, Callable
 
 from azure.kusto.ingest._resource_manager import _ResourceUri
+from azure.kusto.ingest.status import StatusMessage
 from azure.storage.queue import QueueServiceClient, QueueClient, QueueMessage, TextBase64EncodePolicy, TextBase64DecodePolicy
 
 
@@ -34,7 +35,7 @@ class StatusQueue:
         """Checks if Status queue has any messages"""
         return len(self.peek(1, raw=True)) == 0
 
-    def _deserialize_message(self, m: QueueMessage):
+    def _deserialize_message(self, m: QueueMessage) -> StatusMessage:
         """Deserialize a message and return at as `message_cls`
         :param m: original message m.
         """
@@ -42,7 +43,7 @@ class StatusQueue:
 
     # TODO: current implementation takes a union top n /  len(queues), which is not ideal,
     #  because the user is not supposed to know that there can be multiple underlying queues
-    def peek(self, n=1, raw=False) -> List[QueueMessage]:
+    def peek(self, n=1, raw=False) -> List[StatusMessage]:
         """Peek status queue
         :param int n: number of messages to return as part of peek.
         :param bool raw: should message content be returned as is (no parsing).
@@ -87,7 +88,7 @@ class StatusQueue:
 
     # TODO: current implementation takes a union top n /  len(queues), which is not ideal,
     #  because the user is not supposed to know that there can be multiple underlying queues
-    def pop(self, n: int = 1, raw: bool = False, delete: bool = True) -> List[QueueMessage]:
+    def pop(self, n: int = 1, raw: bool = False, delete: bool = True) -> List[StatusMessage]:
         """Pop status queue
         :param int n: number of messages to return as part of peek.
         :param bool raw: should message content be returned as is (no parsing).
