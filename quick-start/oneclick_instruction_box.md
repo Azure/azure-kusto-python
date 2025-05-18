@@ -1,6 +1,6 @@
 ### Prerequisites
 
-1. Set up Python version 3.7 or higher on your machine. For instructions, consult a Python environment setup tutorial, like [this](https://www.tutorialspoint.com/python/python_environment.htm).
+1. Set up Python version 3.8 or higher on your machine. For instructions, consult a Python environment setup tutorial, like [this](https://www.tutorialspoint.com/python/python_environment.htm).
 
 ### Instructions
 

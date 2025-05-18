@@ -1,21 +1,19 @@
+import gzip
 import ipaddress
 import os
 import tempfile
 import time
 import uuid
 from abc import ABCMeta, abstractmethod
-from copy import copy
 from enum import Enum
 from io import TextIOWrapper
 from typing import TYPE_CHECKING, Union, IO, AnyStr, Optional, Tuple
 from urllib.parse import urlparse
 
-from azure.kusto.data.data_format import DataFormat
+from azure.kusto.data.data_format import DataFormat, IngestionMappingKind
 from azure.kusto.data.exceptions import KustoClosedError
-
 from .descriptors import FileDescriptor, StreamDescriptor
 from .ingestion_properties import IngestionProperties
-
 
 if TYPE_CHECKING:
     import pandas
@@ -101,12 +99,15 @@ class BaseIngestClient(metaclass=ABCMeta):
         if self._is_closed:
             raise KustoClosedError()
 
-    def ingest_from_dataframe(self, df: "pandas.DataFrame", ingestion_properties: IngestionProperties) -> IngestionResult:
+    def ingest_from_dataframe(
+        self, df: "pandas.DataFrame", ingestion_properties: IngestionProperties, data_format: Optional[DataFormat] = None
+    ) -> IngestionResult:
         """Enqueue an ingest command from local files.
         To learn more about ingestion methods go to:
         https://docs.microsoft.com/en-us/azure/data-explorer/ingest-data-overview#ingestion-methods
         :param pandas.DataFrame df: input dataframe to ingest.
         :param azure.kusto.ingest.IngestionProperties ingestion_properties: Ingestion properties.
+        :param DataFormat data_format: Format to convert the dataframe to - Can be DataFormat.CSV, DataFormat.JSOn or None. If not specified, it will try to infer it from the mapping, if not found, it will default to JSON.
         """
 
         if self._is_closed:
@@ -117,12 +118,29 @@ class BaseIngestClient(metaclass=ABCMeta):
         if not isinstance(df, DataFrame):
             raise ValueError("Expected DataFrame instance, found {}".format(type(df)))
 
-        file_name = "df_{id}_{timestamp}_{uid}.csv.gz".format(id=id(df), timestamp=int(time.time()), uid=uuid.uuid4())
+        is_json = True
+
+        # If we are given CSV mapping, or the mapping format is explicitly set to CSV, we should use CSV
+        if not data_format:
+            if ingestion_properties is not None and (ingestion_properties.ingestion_mapping_type == IngestionMappingKind.CSV):
+                is_json = False
+        elif data_format == DataFormat.CSV:
+            is_json = False
+        elif data_format == DataFormat.JSON:
+            is_json = True
+        else:
+            raise ValueError("Unsupported format: {}. Supported formats are: CSV, JSON, None".format(data_format))
+
+        file_name = "df_{id}_{timestamp}_{uid}.{ext}.gz".format(id=id(df), timestamp=int(time.time()), uid=uuid.uuid4(), ext="json" if is_json else "csv")
         temp_file_path = os.path.join(tempfile.gettempdir(), file_name)
-
-        df.to_csv(temp_file_path, index=False, encoding="utf-8", header=False, compression="gzip")
-
-        ingestion_properties.format = DataFormat.CSV
+        with gzip.open(temp_file_path, "wb") as temp_file:
+            if is_json:
+                df.to_json(temp_file, orient="records", date_format="iso", lines=True)
+                ingestion_properties.format = DataFormat.JSON
+            else:
+                df.to_csv(temp_file, index=False, encoding="utf-8", header=False)
+                ingestion_properties.ignore_first_record = False
+                ingestion_properties.format = DataFormat.CSV
 
         try:
             return self.ingest_from_file(temp_file_path, ingestion_properties)
