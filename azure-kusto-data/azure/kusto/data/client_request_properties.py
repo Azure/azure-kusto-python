@@ -11,7 +11,6 @@ class ClientRequestProperties:
     client_request_id: str
     application: str
     user: str
-    
     _CLIENT_REQUEST_ID = "client_request_id"
 
     results_defer_partial_query_failures_option_name = "deferpartialqueryfailures"
