@@ -1,18 +1,19 @@
 [project]
 name = "azure-kusto-ingest"
-version = "5.0.0"
+version = "5.0.3"
 description = "Kusto Ingest Client"
 authors = [
     { name = "Microsoft Corporation", email = "kustalk@microsoft.com" },
 ]
 dependencies = [
     "azure-kusto-data",
-    "azure-storage-blob>=12.19.0",
-    "azure-storage-queue>=12.9.0",
+    # TODO - this has to be locked to this version due to https://github.com/Azure/azure-sdk-for-python/issues/40041
+    "azure-storage-blob==12.23.0",
+    "azure-storage-queue==12.12.0",
     "tenacity>=8.2.3",
 ]
 readme = "README.rst"
-requires-python = ">= 3.8"
+requires-python = ">= 3.9"
 license = "MIT"
 keywords = ["azure", "kusto", "ingest", "data", "analytics"]
 classifiers = [
