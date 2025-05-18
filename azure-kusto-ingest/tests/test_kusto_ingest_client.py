@@ -13,12 +13,11 @@ import responses
 from azure.kusto.data.data_format import DataFormat
 
 from azure.kusto.ingest import QueuedIngestClient, IngestionProperties, IngestionStatus, _resource_manager
-from azure.kusto.ingest.exceptions import KustoInvalidEndpointError, KustoQueueError
+from azure.kusto.ingest.exceptions import KustoQueueError
 from azure.kusto.ingest.managed_streaming_ingest_client import ManagedStreamingIngestClient
 
 pandas_installed = False
 try:
-    import pandas
 
     pandas_installed = True
 except:

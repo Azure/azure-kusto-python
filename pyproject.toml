@@ -41,6 +41,9 @@ quick-start = { workspace = true }
 line-length = 160
 target-version = 'py39'
 
+[tool.ruff.lint]
+ignore = ["E731"] # E731 - don't assign lambdas. 
+
 [tool.ruff.lint.per-file-ignores]
 "**/sample.py" = ["E402"] # module level import not at top of file (for samples)
 "**/test_streaming_query.py" = ["F841"] # unused variable - for pytest raises

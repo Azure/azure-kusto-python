@@ -2,7 +2,6 @@ import dataclasses
 import enum
 import json
 import uuid
-import os
 from dataclasses import dataclass
 from typing import List
 
@@ -27,7 +26,6 @@ from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 from opentelemetry.sdk.trace.export import ConsoleSpanExporter
 
 # alternative azure monitor exporter for distributed tracing
-from azure.monitor.opentelemetry.exporter import AzureMonitorTraceExporter
 
 
 def enable_distributed_tracing() -> "Tracer":

@@ -2,7 +2,6 @@ import abc
 import io
 import json
 import uuid
-from copy import copy
 from datetime import timedelta
 from typing import Union, Optional, Any, NoReturn, ClassVar, TYPE_CHECKING
 from urllib.parse import urljoin
@@ -109,7 +108,7 @@ class _KustoClientBase(abc.ABC):
             raise KustoThrottlingError("The request was throttled by the server.", response) from exception
 
         if status == 401:
-            raise KustoServiceError(f"401. Missing adequate access rights.", response) from exception
+            raise KustoServiceError("401. Missing adequate access rights.", response) from exception
 
         if payload:
             message = f"An error occurred while trying to ingest: Status: {status}, Reason: {response.reason}, Text: {response_text}."

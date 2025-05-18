@@ -13,7 +13,6 @@ from azure.kusto.ingest import KustoStreamingIngestClient, IngestionProperties, 
 
 pandas_installed = False
 try:
-    import pandas
 
     pandas_installed = True
 except:
