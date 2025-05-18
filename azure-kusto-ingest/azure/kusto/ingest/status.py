@@ -23,7 +23,7 @@ class StatusMessage:
             if hasattr(self, key):
                 try:
                     setattr(self, key, value)
-                except:
+                except:  # noqa: E722
                     # TODO: should we set up a logger?
                     pass
 
