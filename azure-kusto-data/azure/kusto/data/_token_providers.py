@@ -353,9 +353,9 @@ class MsiTokenProvider(CloudInfoTokenProvider):
     The args parameter is a dictionary conforming with the ManagedIdentityCredential initializer API arguments
     """
 
-    def __init__(self, kusto_uri: str, msi_args: dict = None, is_async: bool = False):
+    def __init__(self, kusto_uri: str, msi_args: Optional[dict] = None, is_async: bool = False):
         super().__init__(kusto_uri, is_async)
-        self._msi_args: dict = msi_args
+        self._msi_args: dict = msi_args or {}
         self._msi_auth_context: Optional[ManagedIdentityCredential] = None
         self._msi_auth_context_async: Optional[AsyncManagedIdentityCredential] = None
 
@@ -604,7 +604,7 @@ class ApplicationCertificateTokenProvider(CloudInfoTokenProvider):
         authority_id: str,
         private_cert: str,
         thumbprint: str,
-        public_cert: str = None,
+        public_cert: Optional[str] = None,
         is_async: bool = False,
     ):
         super().__init__(kusto_uri, is_async)
@@ -705,7 +705,7 @@ class AzureIdentityTokenCredentialProvider(CloudInfoTokenProvider):
 class DeviceLoginTokenProvider(AzureIdentityTokenCredentialProvider):
     """Acquire a token from MSAL with Device Login flow"""
 
-    def __init__(self, kusto_uri: str, authority_id: str, device_code_callback: DeviceCallbackType = None, is_async: bool = False):
+    def __init__(self, kusto_uri: str, authority_id: str, device_code_callback: Optional[DeviceCallbackType] = None, is_async: bool = False):
         self._msal_client = None
         self._auth = authority_id
         self._account = None

@@ -45,7 +45,7 @@ class KustoClient(_KustoClientBase):
         await self.close()
 
     @aio_documented_by(KustoClientSync.execute)
-    async def execute(self, database: Optional[str], query: str, properties: ClientRequestProperties = None) -> KustoResponseDataSet:
+    async def execute(self, database: Optional[str], query: str, properties: Optional[ClientRequestProperties] = None) -> KustoResponseDataSet:
         query = query.strip()
         if query.startswith("."):
             return await self.execute_mgmt(database, query, properties)
@@ -53,7 +53,7 @@ class KustoClient(_KustoClientBase):
 
     @distributed_trace_async(name_of_span="AioKustoClient.query_cmd", kind=SpanKind.CLIENT)
     @aio_documented_by(KustoClientSync.execute_query)
-    async def execute_query(self, database: str, query: str, properties: ClientRequestProperties = None) -> KustoResponseDataSet:
+    async def execute_query(self, database: str, query: str, properties: Optional[ClientRequestProperties] = None) -> KustoResponseDataSet:
         database = self._get_database_or_default(database)
         Span.set_query_attributes(self._kusto_cluster, database, properties)
         request = ExecuteRequestParams._from_query(
@@ -70,7 +70,7 @@ class KustoClient(_KustoClientBase):
 
     @distributed_trace_async(name_of_span="AioKustoClient.control_cmd", kind=SpanKind.CLIENT)
     @aio_documented_by(KustoClientSync.execute_mgmt)
-    async def execute_mgmt(self, database: str, query: str, properties: ClientRequestProperties = None) -> KustoResponseDataSet:
+    async def execute_mgmt(self, database: str, query: str, properties: Optional[ClientRequestProperties] = None) -> KustoResponseDataSet:
         database = self._get_database_or_default(database)
         Span.set_query_attributes(self._kusto_cluster, database, properties)
         request = ExecuteRequestParams._from_query(
@@ -94,8 +94,8 @@ class KustoClient(_KustoClientBase):
         stream: Optional[io.IOBase],
         blob_url: Optional[str],
         stream_format: Union[DataFormat, str],
-        properties: ClientRequestProperties = None,
-        mapping_name: str = None,
+        properties: Optional[ClientRequestProperties] = None,
+        mapping_name: Optional[str] = None,
     ):
         database = self._get_database_or_default(database)
 

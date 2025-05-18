@@ -28,7 +28,10 @@ class _AadHelper:
     token_provider = None  # type: TokenProviderBase
 
     def __init__(self, kcsb: "KustoConnectionStringBuilder", is_async: bool):
-        parsed_url = urlparse(kcsb.data_source)
+        if kcsb.data_source is None or kcsb.data_source == "":
+            raise KustoClientError("KustoConnectionStringBuilder must have a data_source set")
+
+        parsed_url = urlparse(kcsb.data_source) # type: ignore - we checked it's not None
         self.kusto_uri = f"{parsed_url.scheme}://{parsed_url.hostname}"
         if parsed_url.port is not None:
             self.kusto_uri += f":{parsed_url.port}"

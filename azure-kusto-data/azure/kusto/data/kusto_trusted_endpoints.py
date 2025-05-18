@@ -1,5 +1,5 @@
 import copy
-from typing import List, Dict
+from typing import List, Dict, Optional
 from urllib.parse import urlparse
 
 from azure.kusto.data.helpers import get_string_tail_lower_case
@@ -40,7 +40,7 @@ class FastSuffixMatcher:
         return False
 
 
-def create_fast_suffix_matcher_from_existing(rules: List[MatchRule], existing: FastSuffixMatcher) -> FastSuffixMatcher:
+def create_fast_suffix_matcher_from_existing(rules: List[MatchRule], existing: Optional[FastSuffixMatcher]) -> FastSuffixMatcher:
     if existing is None or len(existing.rules) == 0:
         return FastSuffixMatcher(rules)
 
@@ -59,7 +59,7 @@ class KustoTrustedEndpoints:
             for (k, v) in _well_known_kusto_endpoints_data["AllowedEndpointsByLogin"].items()
         }
 
-        self._additional_matcher = None
+        self._additional_matcher: Optional[FastSuffixMatcher] = None
         self._override_matcher = None
 
     def set_override_matcher(self, matcher):

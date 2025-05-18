@@ -3,6 +3,7 @@ import os
 import uuid
 from time import sleep
 from tqdm import tqdm
+from typing import Optional
 from azure.kusto.data import KustoConnectionStringBuilder, ClientRequestProperties, KustoClient, DataFormat
 from azure.kusto.data.exceptions import KustoClientError, KustoServiceError
 from azure.kusto.ingest import IngestionProperties, BaseIngestClient, QueuedIngestClient, FileDescriptor, BlobDescriptor
@@ -121,7 +122,7 @@ class Utils:
         MGMT_PREFIX = "."
 
         @classmethod
-        def create_client_request_properties(cls, scope: str, timeout: str = None) -> ClientRequestProperties:
+        def create_client_request_properties(cls, scope: str, timeout: Optional[str] = None) -> ClientRequestProperties:
             """
             Creates a fitting ClientRequestProperties object, to be used when executing control commands or queries.
             :param scope: Working scope
@@ -211,7 +212,7 @@ class Utils:
             file_path: str,
             data_format: DataFormat,
             ignore_first_record,
-            mapping_name: str = None,
+            mapping_name: Optional[str] = None,
         ) -> None:
             """
             Ingest Data from a given file path.
@@ -242,7 +243,7 @@ class Utils:
             blob_url: str,
             data_format: DataFormat,
             ignore_first_record: bool,
-            mapping_name: str = None,
+            mapping_name: Optional[str] = None,
         ) -> None:
             """
             Ingest Data from a Blob.
@@ -279,7 +280,7 @@ class Utils:
                 sleep(1)
 
     @staticmethod
-    def error_handler(error: str, e: Exception = None) -> None:
+    def error_handler(error: str, e: Optional[Exception] = None) -> None:
         """
         Error handling function. Will mention the appropriate error message (and the exception itself if exists), and will quit the program.
         :param error: Appropriate error message received from calling function

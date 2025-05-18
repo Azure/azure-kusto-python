@@ -153,3 +153,4 @@ def parse_timedelta(raw_value: Union[int, float, str]) -> "pd.Timedelta":
         else:
             formatted_value = raw_value.replace(".", " days ", 1)
             return pd.to_timedelta(formatted_value)
+    raise ValueError(f"Invalid timespan value: {raw_value}")

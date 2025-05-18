@@ -11,7 +11,7 @@ if TYPE_CHECKING:
         from aiohttp import ClientResponse
     except ImportError:
         # No aio installed, ignore
-        ClientResponse = None
+        ClientResponse = None #type: ignore
         pass
 
 
@@ -120,7 +120,9 @@ class KustoApiError(KustoServiceError):
     Represents a standard API error from kusto. Use `get_api_error()` to retrieve more details.
     """
 
-    def __init__(self, error_dict: dict, message: str = None, http_response: "Union[requests.Response, ClientResponse, None]" = None, kusto_response=None):
+    def __init__(
+        self, error_dict: dict, message: Optional[str] = None, http_response: "Union[requests.Response, ClientResponse, None]" = None, kusto_response=None
+    ):
         self.error = OneApiError.from_dict(error_dict["error"])
         super().__init__(message or self.error.description, http_response, kusto_response)
 

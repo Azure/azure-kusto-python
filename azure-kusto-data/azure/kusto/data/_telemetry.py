@@ -42,12 +42,12 @@ class Span:
             span.add_attribute(key, val)
 
     @classmethod
-    def set_query_attributes(cls, cluster: str, database: str, properties: Optional[ClientRequestProperties] = None) -> None:
+    def set_query_attributes(cls, cluster: str, database: Optional[str], properties: Optional[ClientRequestProperties] = None) -> None:
         query_attributes: dict = cls.create_query_attributes(cluster, database, properties)
         cls.add_attributes(tracing_attributes=query_attributes)
 
     @classmethod
-    def set_streaming_ingest_attributes(cls, cluster: str, database: str, table: str, properties: Optional[ClientRequestProperties] = None) -> None:
+    def set_streaming_ingest_attributes(cls, cluster: str, database: Optional[str], table: str, properties: Optional[ClientRequestProperties] = None) -> None:
         ingest_attributes: dict = cls.create_streaming_ingest_attributes(cluster, database, table, properties)
         cls.add_attributes(tracing_attributes=ingest_attributes)
 
@@ -57,7 +57,7 @@ class Span:
         cls.add_attributes(tracing_attributes=cloud_info_attributes)
 
     @classmethod
-    def create_query_attributes(cls, cluster: str, database: str, properties: Optional[ClientRequestProperties] = None) -> dict:
+    def create_query_attributes(cls, cluster: str, database: Optional[str], properties: Optional[ClientRequestProperties] = None) -> dict:
         query_attributes: dict = {cls._KUSTO_CLUSTER: cluster, cls._DATABASE: database}
         if properties:
             query_attributes.update(properties.get_tracing_attributes())
@@ -65,15 +65,17 @@ class Span:
         return query_attributes
 
     @classmethod
-    def create_streaming_ingest_attributes(cls, cluster: str, database: str, table: str, properties: Optional[ClientRequestProperties] = None) -> dict:
-        ingest_attributes: dict = {cls._KUSTO_CLUSTER: cluster, cls._DATABASE: database, cls._TABLE: table}
+    def create_streaming_ingest_attributes(cls, cluster: str, database: Optional[str], table: str, properties: Optional[ClientRequestProperties] = None) -> dict:
+        ingest_attributes: dict = {cls._KUSTO_CLUSTER: cluster, cls._TABLE: table}
+        if database:
+            ingest_attributes[cls._DATABASE] = database
         if properties:
             ingest_attributes.update(properties.get_tracing_attributes())
 
         return ingest_attributes
 
     @classmethod
-    def create_http_attributes(cls, method: str, url: str, headers: dict = None) -> dict:
+    def create_http_attributes(cls, method: str, url: str, headers: Optional[dict] = None) -> dict:
         if headers is None:
             headers = {}
         http_tracing_attributes: dict = {
@@ -105,7 +107,7 @@ class MonitoredActivity:
     T = TypeVar("T")
 
     @staticmethod
-    def invoke(invoker: Callable[[], T], name_of_span: str = None, tracing_attributes=None, kind: str = SpanKind.INTERNAL) -> T:
+    def invoke(invoker: Callable[[], T], name_of_span: Optional[str] = None, tracing_attributes=None, kind: Optional[SpanKind] = SpanKind.INTERNAL) -> T:
         """
         Runs the span on given function
         """
@@ -116,7 +118,7 @@ class MonitoredActivity:
         return span()
 
     @staticmethod
-    async def invoke_async(invoker: Callable[[], T], name_of_span: str = None, tracing_attributes=None, kind: str = SpanKind.INTERNAL) -> T:
+    async def invoke_async(invoker: Callable[[], T], name_of_span: Optional[str] = None, tracing_attributes=None, kind: Optional[SpanKind] = SpanKind.INTERNAL) -> T:
         """
         Runs a span on given function
         """

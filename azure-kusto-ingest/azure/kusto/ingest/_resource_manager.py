@@ -34,11 +34,11 @@ class _ResourceUri:
 class _IngestClientResources:
     def __init__(
         self,
-        secured_ready_for_aggregation_queues: List[_ResourceUri] = None,
-        failed_ingestions_queues: List[_ResourceUri] = None,
-        successful_ingestions_queues: List[_ResourceUri] = None,
-        containers: List[_ResourceUri] = None,
-        status_tables: List[_ResourceUri] = None,
+        secured_ready_for_aggregation_queues: Optional[List[_ResourceUri]] = None,
+        failed_ingestions_queues: Optional[List[_ResourceUri]] = None,
+        successful_ingestions_queues: Optional[List[_ResourceUri]] = None,
+        containers: Optional[List[_ResourceUri]] = None,
+        status_tables: Optional[List[_ResourceUri]] = None,
     ):
         self.secured_ready_for_aggregation_queues = secured_ready_for_aggregation_queues
         self.failed_ingestions_queues = failed_ingestions_queues

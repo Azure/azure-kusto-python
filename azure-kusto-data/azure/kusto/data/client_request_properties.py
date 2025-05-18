@@ -44,7 +44,7 @@ class ClientRequestProperties:
         """Checks if an option is specified."""
         return name in self._options
 
-    def get_option(self, name: str, default_value: Any) -> str:
+    def get_option(self, name: str, default_value: Any) -> Any:
         """Gets an option's value."""
         return self._options.get(name, default_value)
 
