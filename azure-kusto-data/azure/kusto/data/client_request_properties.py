@@ -8,7 +8,7 @@ class ClientRequestProperties:
     """This class is a POD used by client making requests to describe specific needs from the service executing the requests.
     For more information please look at: https://docs.microsoft.com/en-us/azure/kusto/api/netfx/request-properties
     """
-    
+
     client_request_id: str
     application: str
     user: str
