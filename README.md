@@ -35,7 +35,7 @@ Download a zip of the code via GitHub or PyPi. Then follow the same instructions
     * `pip install azure-kusto-ingest[pandas]`
 
 ## Minimum Requirements
-* Python 3.5 and above
+* Python 3.9 and above
 * See setup.py for dependencies
 
 ## Authentication methods:
