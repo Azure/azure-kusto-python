@@ -1,11 +1,13 @@
 import sys
 from urllib.parse import urlparse
 
+
 def normalize_uri(kusto_uri):
     """Extracts and returns the authority part of the URI (schema, host, port)"""
     url_parts = urlparse(kusto_uri)
     # Return only the scheme and netloc (which contains host and port if present)
     return f"{url_parts.scheme}://{url_parts.netloc}"
+
 
 test_cases = [
     ("https://cluster.kusto.windows.net", "https://cluster.kusto.windows.net"),

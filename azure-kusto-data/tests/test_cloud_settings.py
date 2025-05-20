@@ -55,7 +55,7 @@ class CloudSettingsTests(unittest.TestCase):
             normalized_url = CloudSettings._normalize_uri(url)
             self.assertEqual(normalized_url, "https://cluster.kusto.windows.net")
             self.assertIn(normalized_url, CloudSettings._cloud_cache)
-            
+
             # Verify the retrieved CloudInfo is the same instance
             retrieved_info = CloudSettings._cloud_cache[normalized_url]
             self.assertIs(retrieved_info, test_cloud_info)
@@ -88,26 +88,14 @@ class CloudSettingsTests(unittest.TestCase):
         # Verify they are cached separately
         self.assertIn("https://cluster.kusto.windows.net", CloudSettings._cloud_cache)
         self.assertIn("https://cluster.kusto.windows.net:443", CloudSettings._cloud_cache)
-        
+
         # Verify each URI gets the correct CloudInfo
-        self.assertIs(
-            CloudSettings._cloud_cache["https://cluster.kusto.windows.net"], 
-            cloud_info_default
-        )
-        self.assertIs(
-            CloudSettings._cloud_cache["https://cluster.kusto.windows.net:443"], 
-            cloud_info_with_port
-        )
-        
+        self.assertIs(CloudSettings._cloud_cache["https://cluster.kusto.windows.net"], cloud_info_default)
+        self.assertIs(CloudSettings._cloud_cache["https://cluster.kusto.windows.net:443"], cloud_info_with_port)
+
         # Additional verification with variations
-        self.assertIs(
-            CloudSettings._cloud_cache[CloudSettings._normalize_uri("https://cluster.kusto.windows.net/database")], 
-            cloud_info_default
-        )
-        self.assertIs(
-            CloudSettings._cloud_cache[CloudSettings._normalize_uri("https://cluster.kusto.windows.net:443/database")], 
-            cloud_info_with_port
-        )
+        self.assertIs(CloudSettings._cloud_cache[CloudSettings._normalize_uri("https://cluster.kusto.windows.net/database")], cloud_info_default)
+        self.assertIs(CloudSettings._cloud_cache[CloudSettings._normalize_uri("https://cluster.kusto.windows.net:443/database")], cloud_info_with_port)
 
 
 if __name__ == "__main__":
