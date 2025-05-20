@@ -51,6 +51,13 @@ In order to work on this project, we recommend using the dev requirements:
 pip install -r dev_requirements.txt
 ```
 
+Alternatively, you can use uv (a faster Python package installer and resolver):
+
+```bash
+pip install uv
+uv pip install -r dev_requirements.txt
+```
+
 These including testing related packages as well as styling ([black](https://black.readthedocs.io/en/stable/))
 
 ## Building and Testing
@@ -62,6 +69,12 @@ Since the tests use the package as a third-party, the easiest way to set it up i
 
 ```bash
 pip install -e ./azure-kusto-data ./azure-kusto-ingest
+```
+
+Or with uv:
+
+```bash
+uv pip install -e ./azure-kusto-data ./azure-kusto-ingest
 ```
 
 After which, running tests is simple.

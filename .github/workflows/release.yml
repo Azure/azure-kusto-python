@@ -33,11 +33,11 @@ jobs:
     - name: Build azure-kusto-data
       working-directory: ./azure-kusto-data
       run: |
-        uv build -s -w
+        uv build --sdist --wheel
     - name: Build azure-kusto-ingest
       working-directory: ./azure-kusto-ingest
       run: |
-        uv build -s -w
+        uv build --sdist --wheel
     - name: Publish azure-kusto-data
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
