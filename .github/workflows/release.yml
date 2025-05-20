@@ -27,16 +27,17 @@ jobs:
         python-version: '3.8'
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
-        pip install setuptools wheel twine
+        python -m pip install --upgrade uv
+        uv venv
+        uv pip install twine
     - name: Build azure-kusto-data
       working-directory: ./azure-kusto-data
       run: |
-        python setup.py sdist bdist_wheel
+        uv build -s -w
     - name: Build azure-kusto-ingest
       working-directory: ./azure-kusto-ingest
       run: |
-        python setup.py sdist bdist_wheel
+        uv build -s -w
     - name: Publish azure-kusto-data
       uses: pypa/gh-action-pypi-publish@release/v1
       with:

@@ -37,11 +37,12 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip --user
-          pip install -r dev_requirements.txt --user
-          pip install pytest-cov --user
-          pip install ./azure-kusto-data[aio,pandas] ./azure-kusto-ingest[aio,pandas] --user
-          pip freeze
+          python -m pip install --upgrade uv
+          uv venv
+          uv pip install -r dev_requirements.txt
+          uv pip install pytest-cov
+          uv pip install ./azure-kusto-data[aio,pandas] ./azure-kusto-ingest[aio,pandas]
+          uv pip freeze
       # We have to use an old version of this plugin, as the new one assumes python 3.8
       - uses: psf/black@c8f1a5542c257491e1e093b1404481ece7f7e02c
         with:

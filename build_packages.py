@@ -15,8 +15,8 @@ package_list = ["azure-kusto-data", "azure-kusto-ingest"]
 
 def create_package(name, dest_folder=DEFAULT_DESTINATION_FOLDER):
     absdirpath = os.path.abspath(name)
-    check_call(["python", "setup.py", "bdist_wheel", "-d", dest_folder], cwd=absdirpath)
-    check_call(["python", "setup.py", "sdist", "-d", dest_folder], cwd=absdirpath)
+    check_call(["uv", "build", "-w", "-o", dest_folder], cwd=absdirpath)
+    check_call(["uv", "build", "-s", "-o", dest_folder], cwd=absdirpath)
 
 
 def travis_build_package():
