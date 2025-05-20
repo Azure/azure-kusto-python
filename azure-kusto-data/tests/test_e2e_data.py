@@ -333,37 +333,38 @@ class TestE2E:
     def test_cloud_info(self):
         if ".dev." in self.engine_cs:
             pytest.skip("This test is not relevant for dev clusters")
-        
+
         # Clear the cache before testing
         with CloudSettings._cloud_cache_lock:
             CloudSettings._cloud_cache.clear()
-            
+
         # Get cloud info for the original URI
         cloud_info = CloudSettings.get_cloud_info_for_cluster(self.engine_cs)
         assert cloud_info is not CloudSettings.DEFAULT_CLOUD
         assert cloud_info == CloudSettings.DEFAULT_CLOUD
-        
+
         # Test same instance is returned for same authority
         assert cloud_info is CloudSettings.get_cloud_info_for_cluster(self.engine_cs)
-        
+
         # Test different paths with same authority use the same cache entry
         with_path = urljoin(self.engine_cs, "/test1/test2/test3")
         assert cloud_info is CloudSettings.get_cloud_info_for_cluster(with_path)
-        
+
         # Test another path variation
         with_db_path = urljoin(self.engine_cs, "/database")
         assert cloud_info is CloudSettings.get_cloud_info_for_cluster(with_db_path)
-        
+
         # Test that URLs with different ports are cached separately
         from urllib.parse import urlparse
+
         url_parts = urlparse(self.engine_cs)
-        
+
         # Only run this test if the original URL doesn't already specify a port
         if not url_parts.port:
             # Create a URL with a different port
             with_port = f"{url_parts.scheme}://{url_parts.netloc}:8080"
             port_cloud_info = CloudSettings.get_cloud_info_for_cluster(with_port)
-            
+
             # Should be a different instance from the original
             assert port_cloud_info is not cloud_info
 
