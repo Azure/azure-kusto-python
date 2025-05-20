@@ -103,7 +103,7 @@ class FileDescriptor(DescriptorBase):
     def is_compressed(self) -> bool:
         return self.path.endswith(".gz") or self.path.endswith(".zip")
 
-    def open(self, should_compress: bool) -> BytesIO:
+    def open(self, should_compress: bool) -> Union[BytesIO, IO[bytes]]:
         if should_compress:
             file_stream = self.compress_stream()
         else:

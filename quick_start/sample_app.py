@@ -4,7 +4,7 @@ import json
 import uuid
 import os
 from dataclasses import dataclass
-from typing import List
+from typing import List, Any
 
 import inflection as inflection
 
@@ -123,7 +123,7 @@ def keys_to_snake_case(json_dict: dict) -> dict:
     return {inflection.underscore(key): val for (key, val) in json_dict.items()}
 
 
-def data_class_from_json(json_dict: dict, data_type: type) -> dataclasses.dataclass:
+def data_class_from_json(json_dict: dict, data_type: type) -> Any:
     assert dataclasses.is_dataclass(data_type)
     all_keys = keys_to_snake_case(json_dict)
     config_json_keys = remove_extra_keys(all_keys, data_type)
