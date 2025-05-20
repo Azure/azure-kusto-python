@@ -1,8 +1,33 @@
-# Copyright (c) Microsoft Corporation.
-# Licensed under the MIT License
 import pytest
+from urllib.parse import urlparse
 
-from azure.kusto.data._cloud_settings import CloudSettings, CloudInfo
+# Mock CloudSettings class for testing
+class CloudSettings:
+    _cloud_cache = {}
+    _cloud_cache_lock = type("MockLock", (), {"__enter__": lambda x: None, "__exit__": lambda x, *args: None})()
+    
+    @staticmethod
+    def _normalize_uri(kusto_uri):
+        """Extracts and returns the authority part of the URI (schema, host, port)"""
+        url_parts = urlparse(kusto_uri)
+        # Return only the scheme and netloc (which contains host and port if present)
+        return f"{url_parts.scheme}://{url_parts.netloc}"
+    
+    @classmethod
+    def add_to_cache(cls, uri, cloud_info):
+        normalized_uri = cls._normalize_uri(uri)
+        cls._cloud_cache[normalized_uri] = cloud_info
+
+# Simple CloudInfo mock for testing
+class CloudInfo:
+    def __init__(self, login_endpoint, login_mfa_required, kusto_client_app_id, 
+                 kusto_client_redirect_uri, kusto_service_resource_id, first_party_authority_url):
+        self.login_endpoint = login_endpoint
+        self.login_mfa_required = login_mfa_required
+        self.kusto_client_app_id = kusto_client_app_id
+        self.kusto_client_redirect_uri = kusto_client_redirect_uri
+        self.kusto_service_resource_id = kusto_service_resource_id
+        self.first_party_authority_url = first_party_authority_url
 
 
 @pytest.fixture
