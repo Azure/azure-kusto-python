@@ -9,6 +9,9 @@ class ClientRequestProperties:
     For more information please look at: https://docs.microsoft.com/en-us/azure/kusto/api/netfx/request-properties
     """
 
+    client_request_id: str
+    application: str
+    user: str
     _CLIENT_REQUEST_ID = "client_request_id"
 
     results_defer_partial_query_failures_option_name = "deferpartialqueryfailures"
