@@ -33,16 +33,14 @@ pandas = [
 ]
 aio = []
 
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-
 [tool.uv]
 package = true
 
-[tool.hatch.metadata]
-allow-direct-references = true
+[build-system]
+requires = ["uv_build>=0.7.12,<0.8.0"]
+build-backend = "uv_build"
 
-[tool.hatch.build.targets.wheel]
-packages = ["src/azure"]
+[tool.uv.build-backend]
+module-name = "ingest"
+module-root = "azure/kusto"
 

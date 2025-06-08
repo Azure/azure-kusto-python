@@ -1,7 +1,7 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
 from datetime import datetime, timedelta
-from typing import List, Dict
+from typing import List, Dict, Optional
 from urllib.parse import urlparse
 
 from tenacity import retry_if_exception_type, stop_after_attempt, Retrying, wait_random_exponential

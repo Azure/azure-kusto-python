@@ -26,6 +26,8 @@ dev = [
     "pyarrow>=16.1.0",
     "pandas>=2.0.3",
     "ruff>=0.11.10",
+    "ty>=0.0.1a8",
+    "pyrefly>=0.18.1",
 ]
 
 [tool.uv.workspace]
@@ -41,7 +43,7 @@ line-length = 160
 target-version = 'py39'
 
 [tool.ruff.lint]
-ignore = ["E731"] # E731 - don't assign lambdas. 
+ignore = ["E731"] # E731 - dont assign lambdas. 
 
 [tool.ruff.lint.per-file-ignores]
 "**/sample.py" = ["E402"] # module level import not at top of file (for samples)
