@@ -7,9 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Changed
+- CloudSettings will now reuse the HTTP session from the query client for sync clients.
+
 ### Fixed
 
-- CloudInfo / CloudSettings now cached by authority (schema, host and port) instead of full URL
+- CloudSettings now cached by authority (schema, host and port) instead of full URL
 
 ## [5.0.3] - 2025-05-04
 
