@@ -267,6 +267,7 @@ class TokenProviderBase(abc.ABC):
     def set_session(self, session: requests.Session):
         self._session = session
 
+
 class CloudInfoTokenProvider(TokenProviderBase, abc.ABC):
     _cloud_info: Optional[CloudInfo]
     _scopes = List[str]
