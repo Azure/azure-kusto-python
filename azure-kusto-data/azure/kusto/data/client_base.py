@@ -2,12 +2,11 @@ import abc
 import io
 import json
 import uuid
-from copy import copy
 from datetime import timedelta
 from typing import Union, Optional, Any, NoReturn, ClassVar, TYPE_CHECKING
 from urllib.parse import urljoin
 
-from requests import Response
+from requests import Response, Session
 
 from azure.kusto.data._cloud_settings import CloudSettings
 from azure.kusto.data._token_providers import CloudInfoTokenProvider
@@ -34,6 +33,7 @@ class _KustoClientBase(abc.ABC):
     _aad_helper: _AadHelper
     client_details: ClientDetails
     _endpoint_validated = False
+    _session: Union["aiohttp.ClientSession", "Session"]
 
     def __init__(self, kcsb: Union[KustoConnectionStringBuilder, str], is_async):
         self._kcsb = kcsb
@@ -73,13 +73,20 @@ class _KustoClientBase(abc.ABC):
         self._proxy_url = proxy_url
         if self._aad_helper:
             self._aad_helper.token_provider.set_proxy(proxy_url)
+            if isinstance(self._session, Session):
+                self._aad_helper.token_provider.set_session(self._session)
 
     def validate_endpoint(self):
         if not self._endpoint_validated and self._aad_helper is not None:
             if isinstance(self._aad_helper.token_provider, CloudInfoTokenProvider):
+                endpoint = CloudSettings.get_cloud_info_for_cluster(
+                    self._kusto_cluster,
+                    self._aad_helper.token_provider._proxy_dict,
+                    self._session if isinstance(self._session, Session) else None,
+                ).login_endpoint
                 well_known_kusto_endpoints.validate_trusted_endpoint(
                     self._kusto_cluster,
-                    CloudSettings.get_cloud_info_for_cluster(self._kusto_cluster, self._aad_helper.token_provider._proxy_dict).login_endpoint,
+                    endpoint,
                 )
             self._endpoint_validated = True
 

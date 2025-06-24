@@ -56,7 +56,7 @@ class CloudSettings:
 
     @classmethod
     @distributed_trace(name_of_span="CloudSettings.get_cloud_info", kind=SpanKind.CLIENT)
-    def get_cloud_info_for_cluster(cls, kusto_uri: str, proxies: Optional[Dict[str, str]] = None) -> CloudInfo:
+    def get_cloud_info_for_cluster(cls, kusto_uri: str, proxies: Optional[Dict[str, str]] = None, session: requests.Session = None) -> CloudInfo:
         normalized_authority = cls._normalize_uri(kusto_uri)
 
         # tracing attributes for cloud info
@@ -75,7 +75,7 @@ class CloudSettings:
             try:
                 # trace http get call for result
                 result = MonitoredActivity.invoke(
-                    lambda: requests.get(url, proxies=proxies, allow_redirects=False),
+                    lambda: (session or requests).get(url, proxies=proxies, allow_redirects=False),
                     name_of_span="CloudSettings.http_get",
                     tracing_attributes=Span.create_http_attributes(url=url, method="GET"),
                 )
