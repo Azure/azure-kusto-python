@@ -56,7 +56,7 @@ class _AadHelper:
                 kcsb.application_certificate_thumbprint,
                 kcsb.application_public_certificate,
                 is_async=is_async,
-                session=session
+                session=session,
             )
         elif kcsb.msi_authentication:
             self.token_provider = MsiTokenProvider(self.kusto_uri, kcsb.msi_parameters, is_async=is_async)
