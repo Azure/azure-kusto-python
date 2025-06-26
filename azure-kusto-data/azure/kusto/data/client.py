@@ -64,16 +64,15 @@ class KustoClient(_KustoClientBase):
     # The maximum amount of connections to be able to operate in parallel
     _max_pool_size = 100
 
-    def __init__(self, kcsb: Union[KustoConnectionStringBuilder, str]):
+    def __init__(self, kcsb: Union[KustoConnectionStringBuilder, str], session: Optional[requests.Session] = None):
         """
         Kusto Client constructor.
         :param kcsb: The connection string to initialize KustoClient.
         :type kcsb: azure.kusto.data.KustoConnectionStringBuilder or str
         """
-        super().__init__(kcsb, False)
-
         # Create a session object for connection pooling
-        self._session = requests.Session()
+        self._session = session or requests.Session()
+        super().__init__(kcsb, False, self._session)
 
         adapter = HTTPAdapterWithSocketOptions(
             socket_options=(HTTPConnection.default_socket_options or []) + self.compose_socket_options(), pool_maxsize=self._max_pool_size

@@ -1,7 +1,9 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 from urllib.parse import urlparse
+
+from requests import Session
 
 from ._token_providers import (
     TokenProviderBase,
@@ -28,7 +30,7 @@ class _AadHelper:
     authority_uri = None  # type: str
     token_provider = None  # type: TokenProviderBase
 
-    def __init__(self, kcsb: "KustoConnectionStringBuilder", is_async: bool):
+    def __init__(self, kcsb: "KustoConnectionStringBuilder", is_async: bool, session: Optional[Session] = None):
         parsed_url = urlparse(kcsb.data_source)
         self.kusto_uri = f"{parsed_url.scheme}://{parsed_url.hostname}"
         if parsed_url.port is not None:
@@ -54,6 +56,7 @@ class _AadHelper:
                 kcsb.application_certificate_thumbprint,
                 kcsb.application_public_certificate,
                 is_async=is_async,
+                session=session
             )
         elif kcsb.msi_authentication:
             self.token_provider = MsiTokenProvider(self.kusto_uri, kcsb.msi_parameters, is_async=is_async)

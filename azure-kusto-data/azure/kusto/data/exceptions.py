@@ -19,12 +19,10 @@ class KustoError(Exception):
     """Base class for all exceptions raised by the Kusto Python Client Libraries."""
 
 
-class KustoStreamingQueryError(KustoError):
-    ...
+class KustoStreamingQueryError(KustoError): ...
 
 
-class KustoTokenParsingError(KustoStreamingQueryError):
-    ...
+class KustoTokenParsingError(KustoStreamingQueryError): ...
 
 
 SEMANTIC_ERROR_STRING = "Semantic error:"
