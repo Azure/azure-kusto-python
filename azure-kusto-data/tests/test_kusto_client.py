@@ -5,6 +5,7 @@ from unittest.mock import patch
 
 import pandas
 import pytest
+import requests
 
 from azure.kusto.data import ClientRequestProperties, KustoClient, KustoConnectionStringBuilder
 from azure.kusto.data._cloud_settings import CloudSettings
@@ -197,6 +198,38 @@ class TestKustoClient(KustoClientTestsMixin):
 
             assert client._aad_helper.token_provider._proxy_dict == expected_dict
             assert client._session.proxies == expected_dict
+
+            CloudSettings._cloud_cache.clear()
+
+            client._aad_helper.token_provider._init_resources()
+
+            mock_get.assert_called_with("https://somecluster.kusto.windows.net/v1/rest/auth/metadata", proxies=expected_dict, allow_redirects=False)
+
+    @patch("requests.Session.get", side_effect=mocked_requests_post)
+    def test_kusto_client_with_custom_session(self, mock_get, proxy_kcsb):
+        """Test query V2."""
+        proxy = "https://my_proxy.sample"
+        kcsb, auth_supports_proxy = proxy_kcsb
+        original_session = requests.Session()
+        original_session.cert = ("foo", "bar")
+        original_session.verify = "/foo/bar/baz"
+        original_session.proxies = {"http": proxy, "https": proxy}
+        with KustoClient(kcsb, original_session) as client:
+            client.set_proxy(proxy)
+
+            assert client._proxy_url == proxy
+
+            expected_dict = original_session.proxies
+            if not auth_supports_proxy:
+                return
+
+            assert client._aad_helper.token_provider._proxy_dict == expected_dict
+
+            # assert that the same instance of requests.Session is used with the token provider
+            assert client._aad_helper.token_provider._session == original_session
+            assert client._session.proxies == expected_dict
+            assert client._session.cert == original_session.cert
+            assert client._session.verify == original_session.verify
 
             CloudSettings._cloud_cache.clear()
 

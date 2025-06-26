@@ -91,9 +91,10 @@ class TokenProviderBase(abc.ABC):
     _initialized: bool = False
     _resources_initialized: bool = False
 
-    def __init__(self, is_async: bool = False):
+    # The "session" parameter allows us to provide a custom session if desired
+    def __init__(self, is_async: bool = False, session: Optional[requests.Session] = None, **kwargs):
         self._proxy_dict: Optional[str, str] = None
-        self._session: Optional[requests.Session] = None
+        self._session = session
         self.is_async = is_async
 
         if is_async:
@@ -273,8 +274,9 @@ class CloudInfoTokenProvider(TokenProviderBase, abc.ABC):
     _scopes = List[str]
     _kusto_uri: str
 
-    def __init__(self, kusto_uri: str, is_async: bool = False):
-        super().__init__(is_async)
+    def __init__(self, kusto_uri: str, is_async: bool = False, **kwargs):
+        # Addition of "kwargs" allows us to provide a requests.Session instance to the base class via super()
+        super().__init__(is_async, **kwargs)
         self._kusto_uri = kusto_uri
 
     def _init_resources(self):
@@ -611,8 +613,12 @@ class ApplicationCertificateTokenProvider(CloudInfoTokenProvider):
         thumbprint: str,
         public_cert: str = None,
         is_async: bool = False,
+        session: Optional[requests.Session] = None,
     ):
-        super().__init__(kusto_uri, is_async)
+        # Passing in the session here will allow us to set the session as an instance attr on the base class
+        # TokenProviderBase. In case it can be used in other classes in the future. If session is None, the behavior is the same as before.
+        # See: https://github.com/AzureAD/microsoft-authentication-library-for-python/blob/b1d8cd71145a8b1889b490f9b0dfbe4b1ac3a7f1/msal/application.py#L607
+        super().__init__(kusto_uri, is_async, session=session)
         self._msal_client = None
         self._auth = authority_id
         self._client_id = client_id
@@ -631,9 +637,15 @@ class ApplicationCertificateTokenProvider(CloudInfoTokenProvider):
             "thumbprint": self._cert_credentials[TokenConstants.MSAL_THUMBPRINT],
         }
 
+    # msal client already takes an http_client parameter, which we can provide here.
+    # If it is None, the behavior is the same as not passing it at all.
     def _init_impl(self):
         self._msal_client = ConfidentialClientApplication(
-            client_id=self._client_id, client_credential=self._cert_credentials, authority=self._cloud_info.authority_uri(self._auth), proxies=self._proxy_dict
+            client_id=self._client_id,
+            client_credential=self._cert_credentials,
+            authority=self._cloud_info.authority_uri(self._auth),
+            proxies=self._proxy_dict,
+            http_client=self._session,
         )
 
     def _get_token_impl(self) -> Optional[dict]:

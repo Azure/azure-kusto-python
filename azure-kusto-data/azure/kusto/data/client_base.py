@@ -35,7 +35,7 @@ class _KustoClientBase(abc.ABC):
     _endpoint_validated = False
     _session: Union["aiohttp.ClientSession", "Session"]
 
-    def __init__(self, kcsb: Union[KustoConnectionStringBuilder, str], is_async):
+    def __init__(self, kcsb: Union[KustoConnectionStringBuilder, str], is_async, session: Session = None):
         self._kcsb = kcsb
         self._proxy_url: Optional[str] = None
         if not isinstance(kcsb, KustoConnectionStringBuilder):
@@ -43,7 +43,7 @@ class _KustoClientBase(abc.ABC):
         self._kusto_cluster = self._kcsb.data_source
 
         # notice that in this context, federated actually just stands for aad auth, not aad federated auth (legacy code)
-        self._aad_helper = _AadHelper(self._kcsb, is_async) if self._kcsb.aad_federated_security else None
+        self._aad_helper = _AadHelper(self._kcsb, is_async, session=session) if self._kcsb.aad_federated_security else None
 
         if not self._kusto_cluster.endswith("/"):
             self._kusto_cluster += "/"
