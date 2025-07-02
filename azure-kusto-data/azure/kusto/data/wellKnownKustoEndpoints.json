@@ -21,7 +21,7 @@
         ".azureplayfab.com",
         ".kusto.data.microsoft.com",
         ".kusto.fabric.microsoft.com",
-	".api.securityplatform.microsoft.com",
+        ".api.securityplatform.microsoft.com",
         ".securitycenter.windows.com"
       ],
       "AllowedKustoHostnames": [
@@ -35,7 +35,8 @@
         "adx.loganalytics.azure.com",
         "adx.monitor.azure.com",
         "kusto.aria.microsoft.com",
-        "eu.kusto.aria.microsoft.com"
+        "eu.kusto.aria.microsoft.com",
+        "api.securityplatform.microsoft.com"
       ]
     },
     "https://login.microsoftonline.us": {
