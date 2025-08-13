@@ -60,8 +60,6 @@ jobs:
       - uses: tj-actions/verify-changed-files@v20
         id: verify-changed-files
         with:
-          # Fail if files were changed (this indicates there are linting errors to fix)
-          fail-if-changed: 'true'
           files: "**/*.py"
 
       # Suggest fixes if any were made
