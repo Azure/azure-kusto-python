@@ -46,9 +46,30 @@ jobs:
           APPLICATION_INSIGHTS_ENGINE_CONNECTION_STRING: https://ade.applicationinsights.io/subscriptions/12534eb3-8109-4d84-83ad-576c0d5e1d06/resourcegroups/clients_e2e_test/providers/microsoft.insights/components/kusto-e2e-app-insights
           APPLICATION_INSIGHTS_TEST_DATABASE: kusto-e2e-app-insights
         run: uv run pytest --junit-xml pytest.xml
-      - uses: astral-sh/ruff-action@v3
+        
+      - name: "Run Ruff Formatter"
+        uses: astral-sh/ruff-action@v3
         with:
-          args: "format --check --diff"
+          args: "format"
+        continue-on-error: true # TODO - different PR to format & lint
+      - name: "Run Ruff Linter"
+        run: ruff check --fix
+        
+      - uses: tj-actions/verify-changed-files@v20
+        id: verify-changed-files
+        if: always()
+        with:
+          # Fail if files were changed (this indicates there are linting errors to fix)
+          fail-if-changed: 'true'
+          files: "*.py"
+
+      # Suggest fixes if any were made
+      - uses: parkerbxyz/suggest-changes@v2
+        if: failure() && steps.verify-changed-files.outcome == 'failure'
+        with:
+          comment: 'Please commit the suggested changes from ruff.'
+          event: 'REQUEST_CHANGES'
+          
       - name: Upload Unit Test Results
         if: always()
         uses: actions/upload-artifact@v4
