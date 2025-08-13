@@ -48,6 +48,7 @@ jobs:
 #        run: uv run pytest --junit-xml pytest.xml
         
       - name: "Run Ruff Formatter"
+        id: ruff-formatter
         uses: astral-sh/ruff-action@v3
         with:
           args: "format"
@@ -58,7 +59,6 @@ jobs:
       
       - uses: tj-actions/verify-changed-files@v20
         id: verify-changed-files
-        if: always()
         with:
           # Fail if files were changed (this indicates there are linting errors to fix)
           fail-if-changed: 'true'
@@ -66,7 +66,6 @@ jobs:
 
       # Suggest fixes if any were made
       - uses: parkerbxyz/suggest-changes@v2
-        if: failure() && steps.verify-changed-files.outcome == 'failure'
         with:
           comment: 'Please commit the suggested changes from ruff.'
           event: 'REQUEST_CHANGES'
