@@ -2,8 +2,10 @@
 # Licensed under the MIT License
 import unittest
 from threading import Thread
+from typing import Optional
 
 import pytest
+from _cloud_settings import CloudInfo
 from asgiref.sync import async_to_sync
 from azure.identity import ClientSecretCredential, DefaultAzureCredential
 
@@ -17,8 +19,13 @@ from azure.kusto.data._token_providers import (
     AzCliTokenProvider,
     ApplicationCertificateTokenProvider,
     AzureIdentityTokenCredentialProvider,
+    TokenConstants,
+    KustoClientError,
+    CloudSettings,
+    DeviceLoginTokenProvider,
+    TokenProviderBase,
 )
-from azure.kusto.data.exceptions import KustoNetworkError
+from azure.kusto.data.exceptions import KustoNetworkError, KustoAsyncUsageError
 from azure.kusto.data.env_utils import get_env, get_app_id, get_auth_id, prepare_app_key_auth
 
 TOKEN_VALUE = "little miss sunshine"

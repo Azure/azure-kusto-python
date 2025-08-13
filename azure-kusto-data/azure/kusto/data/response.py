@@ -232,5 +232,5 @@ class PrimaryResultsIterator:
     def __next__(self) -> KustoStreamingResultTable:
         while True:
             table = next(self.dataset)
-            if type(table) is KustoStreamingResultTable:
+            if isinstance(table, KustoStreamingResultTable):
                 return table
