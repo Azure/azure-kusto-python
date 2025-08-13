@@ -13,13 +13,8 @@ from requests import HTTPError
 from azure.kusto.data._models import KustoResultRow, KustoResultTable, KustoStreamingResultTable
 from azure.kusto.data.response import WellKnownDataSet, KustoStreamingResponseDataSet, KustoResponseDataSet
 
-PANDAS = False
-try:
-    import pandas
-
-    PANDAS = True
-except:
-    pass
+from pandas import DataFrame, Series, to_datetime
+from pandas.testing import assert_frame_equal
 
 
 def mocked_requests_post(*args, **kwargs):
@@ -275,10 +270,7 @@ class KustoClientTestsMixin:
         assert result["ServiceType"] == "Engine"
         assert result["ProductVersion"] == "KustoMain_2018.04.29.5"
 
-    def _assert_sanity_data_frame_response(self, data_frame: "pandas.DataFrame"):
-        from pandas import DataFrame, Series
-        from pandas.testing import assert_frame_equal
-
+    def _assert_sanity_data_frame_response(self, data_frame: "DataFrame"):
         assert len(data_frame.columns) == 19
         expected_dict = {
             "rownumber": Series([None, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9], dtype="Int32"),
@@ -310,17 +302,17 @@ class KustoClientTestsMixin:
             "xuint64": Series([None, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9], dtype="Int64"),
             "xdate": Series(
                 [
-                    pandas.to_datetime(None),
-                    pandas.to_datetime("2014-01-01T01:01:01.0000000Z"),
-                    pandas.to_datetime("2015-01-01T01:01:01.0000001Z"),
-                    pandas.to_datetime("2016-01-01T01:01:01.0000002Z"),
-                    pandas.to_datetime("2017-01-01T01:01:01.0000003Z"),
-                    pandas.to_datetime("2018-01-01T01:01:01.0000004Z"),
-                    pandas.to_datetime("2019-01-01T01:01:01.0000005Z"),
-                    pandas.to_datetime("2020-01-01T01:01:01.0000006Z"),
-                    pandas.to_datetime("2021-01-01T01:01:01.0000007Z"),
-                    pandas.to_datetime("2022-01-01T01:01:01.0000008Z"),
-                    pandas.to_datetime("2023-01-01T01:01:01.0000009Z"),
+                    to_datetime(None),
+                    to_datetime("2014-01-01T01:01:01.0000000Z"),
+                    to_datetime("2015-01-01T01:01:01.0000001Z"),
+                    to_datetime("2016-01-01T01:01:01.0000002Z"),
+                    to_datetime("2017-01-01T01:01:01.0000003Z"),
+                    to_datetime("2018-01-01T01:01:01.0000004Z"),
+                    to_datetime("2019-01-01T01:01:01.0000005Z"),
+                    to_datetime("2020-01-01T01:01:01.0000006Z"),
+                    to_datetime("2021-01-01T01:01:01.0000007Z"),
+                    to_datetime("2022-01-01T01:01:01.0000008Z"),
+                    to_datetime("2023-01-01T01:01:01.0000009Z"),
                 ]
             ),
             "xsmalltext": Series(["", "Zero", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine"], dtype=object),
@@ -390,7 +382,7 @@ class KustoClientTestsMixin:
         assert len(results) == 5
         assert results[0]["x"] == 1
 
-        if type(response) == KustoStreamingResponseDataSet:
+        if isinstance(response, KustoStreamingResponseDataSet):
             _ = [t for t in response]  # Read rest of tables
         assert response.errors_count == 1
         assert "E_QUERY_RESULT_SET_TOO_LARGE" in response.get_exceptions()[0]

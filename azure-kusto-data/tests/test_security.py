@@ -1,9 +1,10 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
 import pytest
+from _cloud_settings import CloudSettings
+from _token_providers import CallbackTokenProvider, MsiTokenProvider, UserPassTokenProvider
 
 from azure.kusto.data import KustoConnectionStringBuilder
-from azure.kusto.data._token_providers import *
 from azure.kusto.data.exceptions import KustoAuthenticationError
 from azure.kusto.data.security import _AadHelper
 

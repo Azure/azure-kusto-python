@@ -20,7 +20,7 @@ def ensure_uuid(maybe_uuid: OptionalUUID) -> uuid.UUID:
     if not maybe_uuid:
         return uuid.uuid4()
 
-    if type(maybe_uuid) == uuid.UUID:
+    if isinstance(maybe_uuid, uuid.UUID):
         return maybe_uuid
 
     return uuid.UUID(f"{maybe_uuid}", version=4)
