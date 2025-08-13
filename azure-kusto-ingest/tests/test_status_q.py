@@ -82,10 +82,6 @@ def get_resource_uri(account: str, container: str) -> _ResourceUri:
     return _ResourceUri("https://{0}.{1}.{2}/{3}?{4}".format(account, "queue", ENDPOINT_SUFFIX, container, SAS))
 
 
-def test_fail():
-    raise Exception("This test should not be called.")
-
-
 class StatusQTests(unittest.TestCase):
     def test_init(self):
         client = QueuedIngestClient("some-cluster")
