@@ -4,6 +4,8 @@ If you would like to become an active contributor to this project please
 follow the instructions provided in [Microsoft Azure Projects Contribution Guidelines](https://azure.github.io/azure-sdk/python_documentation.html).
 
 ## Prerequisites
+
+### Cluster
 In order to run E2E tests, you need a Kusto database you have admin rights on.
 A Kusto free cluster is the easiest way to acquire one.
 You can cerate a free Kusto cluster here: https://dataexplorer.azure.com/home
@@ -11,18 +13,51 @@ You can cerate a free Kusto cluster here: https://dataexplorer.azure.com/home
 Make sure you set streaming ingestion to enabled in the cluster's configuration:  
 https://learn.microsoft.com/en-us/azure/data-explorer/ingest-data-streaming?tabs=azure-portal%2Ccsharp
 
-You should set then following environment vars where you run E2Es (in IDE run config, shell window, computer, etc).
+
+### Tools
+
+The project uses [uv](https://docs.astral.sh/uv/) as the project manager.
+You will need to install it in order to develop on this project.  
+
+See [Installing uv](https://docs.astral.sh/uv/getting-started/installation/).
+
+Additionally, the project uses [poethepoet](https://poethepoet.natn.io/index.html) as the task runner.
+
+You can install it with uv:
+
+```bash
+uv tool install poethepoet
+
+poe <command>
+```
+
+Or you can use `uvx` to use it directly without installing:
+
+```bash
+uvx poe <command>
+```
+
+
+### Environment Variables
+
+Some tests require you to set environment variables to run.
+
+The project supports a .env file, which you can create in the root of the project.  
+See [.env.example](./.env.example) for an example of a .env file.
+
+#### E2E Tests Environment Variables
+
 ```shell
-ENGINE_CONNECTION_STRING=<Your cluster URI>
-DM_CONNECTION_STRING=<Your ingest cluster URI> # Optional - if not set, will infer from ENGINE_CONNECTION_STRING
+ENGINE_CONNECTION_STRING=<Your cluster URI> # Format: https://<cluster_name>.<region>.kusto.windows.net
+DM_CONNECTION_STRING=<Your ingest cluster URI> # Optional - if not set, will infer from ENGINE_CONNECTION_STRING. Format: https://ingest-<cluster_name>.<region>.kusto.windows.net
 TEST_DATABASE=<The name of the database>
 ```
 
-The E2E tests authenticate with DefaultAzureCredential, and will fall back to interactive login if needed.
+The E2E tests authenticate with [DefaultAzureCredential](https://learn.microsoft.com/en-us/python/api/azure-identity/azure.identity.defaultazurecredential?view=azure-python).
 
+It is recommended to use the [azure cli](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest) command `az login` to authenticate with your Azure account to run the tests.
 
-For more information on DefaultAzureCredential, see:  
-https://learn.microsoft.com/en-us/python/api/azure-identity/azure.identity.defaultazurecredential?view=azure-python
+#### Token Provider Tests
 
 To run the optional `token_provider` tests, you will need to set the booleans at the top of the file `test_token_providers.py` and the following environment variables in addition to the previous ones:
 ```shell
@@ -43,41 +78,61 @@ USER_PASS=<Your user password>
 USER_AUTH_ID=<Your user auth ID> # optional
 ```
 
-## Requirements
 
-In order to work on this project, we recommend using the dev requirements:
+## Development
+
+As mentioned before, this project uses `uv` and `poe` to manage the development environment and tasks.
+
+To see the tasks available, you can run:
 
 ```bash
-pip install -r dev_requirements.txt
+poe
 ```
 
-These including testing related packages as well as styling ([black](https://black.readthedocs.io/en/stable/))
+### Setup
 
-## Building and Testing
+Setup the project by syncing `uv`:
+
+```bash
+poe sync
+```
+
+This will install the dependencies, set up the virtual environment, and install the tools needed for development.
+
+### Testing
 
 This project uses [pytest](https://docs.pytest.org/en/latest/).
 
-
-Since the tests use the package as a third-party, the easiest way to set it up is installing it in edit mode:
+To test the project, simply run:
 
 ```bash
-pip install -e ./azure-kusto-data ./azure-kusto-ingest
+poe test
 ```
 
-After which, running tests is simple.
-
-Just run:
+To test without E2E tests, you can run:
 
 ```bash
-pytest ./azure-kusto-data ./azure-kusto-ingest 
+poe test --no-e2e
 ```
 
-## Style
+### Style
 
-We use black, and allow for line-length of 160, so please run:
+This project uses [ruff](https://docs.astral.sh/ruff/) for linting and formatting.
+
+Before commiting your changes, make sure the code is properly formatted, or the commit will be rejected.
 
 ```bash
-black --line-length=160 ./azure-kusto-data ./azure-kusto-ingest
+    poe format # formats the code directly
+    poe check-format # returns a diff of what needs to be formatted    
+```
+
+Also make sure to lint the code:
+
+```bash
+    poe lint
+    
+    # You can auto-fix some issues with:
+    poe lint --fix
 ```
 
 ## PRs
@@ -90,7 +145,7 @@ We welcome contributions. In order to make the PR process efficient, please foll
 * **Please provide any related information needed to understand the change** - docs, guidelines, use-case, best practices and so on. Opinions are accepted, but have to be backed up.
 * **Checks should pass** - these including linting with black and running tests.
 
-## Code of Conduct
+# Code of Conduct
 This project's code of conduct can be found in the
 [CODE_OF_CONDUCT.md file](https://github.com/Azure/azure-sdk-for-python/blob/master/CODE_OF_CONDUCT.md)
 (v1.4.0 of the http://contributor-covenant.org/ CoC).
