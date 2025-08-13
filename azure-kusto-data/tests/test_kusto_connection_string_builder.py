@@ -271,7 +271,7 @@ class TestKustoConnectionStringBuilder:
         exception_occurred = False
         try:
             fault = KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication("localhost", client_id=client_guid, object_id=object_guid)
-        except ValueError as e:
+        except ValueError:
             exception_occurred = True
         finally:
             assert exception_occurred
@@ -291,7 +291,7 @@ class TestKustoConnectionStringBuilder:
         exception_occurred = False
         try:
             kscb = KustoConnectionStringBuilder.with_token_provider("localhost", caller_token)
-        except AssertionError as ex:
+        except AssertionError:
             exception_occurred = True
         finally:
             assert exception_occurred
@@ -310,7 +310,7 @@ class TestKustoConnectionStringBuilder:
         exception_occurred = False
         try:
             kscb = KustoConnectionStringBuilder.with_async_token_provider("localhost", caller_token)
-        except AssertionError as ex:
+        except AssertionError:
             exception_occurred = True
         finally:
             assert exception_occurred
