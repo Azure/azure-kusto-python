@@ -56,18 +56,18 @@ class CloudSettings:
 
     @classmethod
     @distributed_trace(name_of_span="CloudSettings.get_cloud_info", kind=SpanKind.CLIENT)
-    def get_cloud_info_for_cluster(cls, kusto_uri: str, proxies: Optional[Dict[str, str]] = None) -> CloudInfo:
-        kusto_uri = cls._normalize_uri(kusto_uri)
+    def get_cloud_info_for_cluster(cls, kusto_uri: str, proxies: Optional[Dict[str, str]] = None, session: requests.Session = None) -> CloudInfo:
+        normalized_authority = cls._normalize_uri(kusto_uri)
 
         # tracing attributes for cloud info
         Span.set_cloud_info_attributes(kusto_uri)
 
-        if kusto_uri in cls._cloud_cache:  # Double-checked locking to avoid unnecessary lock access
-            return cls._cloud_cache[kusto_uri]
+        if normalized_authority in cls._cloud_cache:  # Double-checked locking to avoid unnecessary lock access
+            return cls._cloud_cache[normalized_authority]
 
         with cls._cloud_cache_lock:
-            if kusto_uri in cls._cloud_cache:
-                return cls._cloud_cache[kusto_uri]
+            if normalized_authority in cls._cloud_cache:
+                return cls._cloud_cache[normalized_authority]
 
             url_parts = urlparse(kusto_uri)
             url = f"{url_parts.scheme}://{url_parts.netloc}/{METADATA_ENDPOINT}"
@@ -75,7 +75,7 @@ class CloudSettings:
             try:
                 # trace http get call for result
                 result = MonitoredActivity.invoke(
-                    lambda: requests.get(url, proxies=proxies, allow_redirects=False),
+                    lambda: (session or requests).get(url, proxies=proxies, allow_redirects=False),
                     name_of_span="CloudSettings.http_get",
                     tracing_attributes=Span.create_http_attributes(url=url, method="GET"),
                 )
@@ -88,7 +88,7 @@ class CloudSettings:
                     raise KustoServiceError("Kusto returned an invalid cloud metadata response", result)
                 root = content["AzureAD"]
                 if root is not None:
-                    cls._cloud_cache[kusto_uri] = CloudInfo(
+                    cls._cloud_cache[normalized_authority] = CloudInfo(
                         login_endpoint=root["LoginEndpoint"],
                         login_mfa_required=root["LoginMfaRequired"],
                         kusto_client_app_id=root["KustoClientAppId"],
@@ -97,13 +97,13 @@ class CloudSettings:
                         first_party_authority_url=root["FirstPartyAuthorityUrl"],
                     )
                 else:
-                    cls._cloud_cache[kusto_uri] = cls.DEFAULT_CLOUD
+                    cls._cloud_cache[normalized_authority] = cls.DEFAULT_CLOUD
             elif result.status_code == 404:
                 # For now as long not all proxies implement the metadata endpoint, if no endpoint exists return public cloud data
-                cls._cloud_cache[kusto_uri] = cls.DEFAULT_CLOUD
+                cls._cloud_cache[normalized_authority] = cls.DEFAULT_CLOUD
             else:
                 raise KustoServiceError("Kusto returned an invalid cloud metadata response", result)
-            return cls._cloud_cache[kusto_uri]
+            return cls._cloud_cache[normalized_authority]
 
     @classmethod
     def add_to_cache(cls, url: str, cloud_info: CloudInfo):
@@ -112,6 +112,7 @@ class CloudSettings:
 
     @classmethod
     def _normalize_uri(cls, kusto_uri):
-        if not kusto_uri.endswith("/"):
-            kusto_uri += "/"
-        return kusto_uri
+        """Extracts and returns the authority part of the URI (schema, host, port)"""
+        url_parts = urlparse(kusto_uri)
+        # Return only the scheme and netloc (which contains host and port if present)
+        return f"{url_parts.scheme}://{url_parts.netloc}"

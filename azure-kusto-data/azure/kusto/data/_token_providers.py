@@ -8,6 +8,7 @@ from datetime import datetime
 from threading import Lock
 from typing import Callable, Coroutine, List, Optional, Any
 
+import requests
 from azure.core.exceptions import ClientAuthenticationError
 from azure.core.tracing import SpanKind
 from azure.core.tracing.decorator import distributed_trace
@@ -92,6 +93,7 @@ class TokenProviderBase(abc.ABC):
 
     def __init__(self, is_async: bool = False):
         self._proxy_dict: Optional[str, str] = None
+        self._session: Optional[requests.Session] = None
         self.is_async = is_async
 
         if is_async:
@@ -262,6 +264,9 @@ class TokenProviderBase(abc.ABC):
     def set_proxy(self, proxy_url: str):
         self._proxy_dict = {"http": proxy_url, "https": proxy_url}
 
+    def set_session(self, session: requests.Session):
+        self._session = session
+
 
 class CloudInfoTokenProvider(TokenProviderBase, abc.ABC):
     _cloud_info: Optional[CloudInfo]
@@ -274,7 +279,7 @@ class CloudInfoTokenProvider(TokenProviderBase, abc.ABC):
 
     def _init_resources(self):
         if self._kusto_uri is not None:
-            self._cloud_info = CloudSettings.get_cloud_info_for_cluster(self._kusto_uri, self._proxy_dict)
+            self._cloud_info = CloudSettings.get_cloud_info_for_cluster(self._kusto_uri, self._proxy_dict, self._session)
             resource_uri = self._cloud_info.kusto_service_resource_id
             if self._cloud_info.login_mfa_required:
                 resource_uri = resource_uri.replace(".kusto.", ".kustomfa.")
