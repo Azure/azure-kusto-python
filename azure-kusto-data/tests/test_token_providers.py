@@ -7,7 +7,17 @@ import pytest
 from asgiref.sync import async_to_sync
 from azure.identity import ClientSecretCredential, DefaultAzureCredential
 
-from azure.kusto.data._token_providers import *
+from azure.kusto.data._token_providers import (
+    UserPassTokenProvider,
+    BasicTokenProvider,
+    MsiTokenProvider,
+    CallbackTokenProvider,
+    InteractiveLoginTokenProvider,
+    ApplicationKeyTokenProvider,
+    AzCliTokenProvider,
+    ApplicationCertificateTokenProvider,
+    AzureIdentityTokenCredentialProvider,
+)
 from azure.kusto.data.exceptions import KustoNetworkError
 from azure.kusto.data.env_utils import get_env, get_app_id, get_auth_id, prepare_app_key_auth
 
