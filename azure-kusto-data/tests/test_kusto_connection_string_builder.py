@@ -270,7 +270,7 @@ class TestKustoConnectionStringBuilder:
 
         exception_occurred = False
         try:
-            fault = KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication("localhost", client_id=client_guid, object_id=object_guid)
+            KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication("localhost", client_id=client_guid, object_id=object_guid)
         except ValueError:
             exception_occurred = True
         finally:

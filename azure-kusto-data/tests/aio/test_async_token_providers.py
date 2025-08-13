@@ -67,7 +67,6 @@ class TestTokenProvider:
         assert token is not None
         assert TokenConstants.MSAL_ERROR not in token
 
-        value = None
         if TokenConstants.MSAL_ACCESS_TOKEN in token:
             return token[TokenConstants.MSAL_ACCESS_TOKEN]
         elif TokenConstants.AZ_ACCESS_TOKEN in token:

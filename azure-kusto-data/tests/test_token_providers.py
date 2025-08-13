@@ -113,7 +113,6 @@ class TokenProviderTests(unittest.TestCase):
         assert token is not None
         assert TokenConstants.MSAL_ERROR not in token
 
-        value = None
         if TokenConstants.MSAL_ACCESS_TOKEN in token:
             return token[TokenConstants.MSAL_ACCESS_TOKEN]
         elif TokenConstants.AZ_ACCESS_TOKEN in token:
@@ -287,7 +286,7 @@ class TokenProviderTests(unittest.TestCase):
         if app_auth:
             with pytest.raises(KustoNetworkError):
                 with ApplicationKeyTokenProvider("NoURI", app_auth.auth_id, app_auth.app_id, app_auth.app_key) as provider:
-                    token = provider.get_token()
+                    provider.get_token()
 
     @staticmethod
     def test_app_cert_provider():

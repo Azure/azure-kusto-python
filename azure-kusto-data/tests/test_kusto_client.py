@@ -42,7 +42,7 @@ class TestKustoClient(KustoClientTestsMixin):
         """Test query V2."""
         with KustoClient(self.HOST) as client:
             with pytest.raises(KustoNetworkError):
-                response = method.__call__(client, "PythonTest", "raiseNetwork")
+                method.__call__(client, "PythonTest", "raiseNetwork")
 
     @patch("requests.Session.post", side_effect=mocked_requests_post)
     def test_sanity_control_command(self, mock_post):
@@ -100,7 +100,7 @@ class TestKustoClient(KustoClientTestsMixin):
             with pytest.raises(KustoMultiApiError) as e:
                 response = method.__call__(client, "PythonTest", query, properties=properties)
                 if type(response) == KustoStreamingResponseDataSet:
-                    results = list(get_response_first_primary_result(response))
+                    list(get_response_first_primary_result(response))
             errors = e.value.get_api_errors()
             assert len(errors) == 1
             assert errors[0].code == "LimitsExceeded"
