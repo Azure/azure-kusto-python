@@ -51,5 +51,5 @@ ignore = ["E731"] # E731 - dont assign lambdas.
 
 [tool.pytest.ini_options]
 testpaths = ["azure-kusto-data/tests", "azure-kusto-ingest/tests"]
-addopts = ["-s", "--import-mode=importlib", "-n", "auto"]
+addopts = ["-s", "--import-mode=importlib", "-n", "8"]
 pythonpath = ["."]
