@@ -13,16 +13,10 @@ import responses
 from azure.kusto.data.data_format import DataFormat
 
 from azure.kusto.ingest import QueuedIngestClient, IngestionProperties, IngestionStatus, _resource_manager
-from azure.kusto.ingest.exceptions import KustoInvalidEndpointError, KustoQueueError
+from azure.kusto.ingest.exceptions import KustoQueueError
 from azure.kusto.ingest.managed_streaming_ingest_client import ManagedStreamingIngestClient
 
-pandas_installed = False
-try:
-    import pandas
-
-    pandas_installed = True
-except:
-    pass
+from pandas import DataFrame
 
 UUID_REGEX = "[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}"
 BLOB_NAME_REGEX = "database__table__" + UUID_REGEX + "__dataset.csv.gz"
@@ -494,7 +488,6 @@ class TestQueuedIngestClient:
         ingest_client.close()
 
     @responses.activate
-    @pytest.mark.skipif(not pandas_installed, reason="requires pandas")
     @patch("azure.kusto.ingest.managed_streaming_ingest_client.ManagedStreamingIngestClient.MAX_STREAMING_SIZE_IN_BYTES", new=0)
     @patch("azure.storage.blob.BlobClient.upload_blob")
     @patch("azure.storage.queue.QueueClient.send_message")
@@ -508,8 +501,6 @@ class TestQueuedIngestClient:
 
         ingest_client = ingest_client_class("https://ingest-somecluster.kusto.windows.net")
         ingestion_properties = IngestionProperties(database="database", table="table")
-
-        from pandas import DataFrame
 
         fields = ["id", "name", "value"]
         rows = [[1, "abc", 15.3], [2, "cde", 99.9]]

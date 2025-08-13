@@ -7,17 +7,10 @@ import uuid
 
 import pytest
 import responses
+from pandas import DataFrame
 
 from azure.kusto.data.data_format import DataFormat
 from azure.kusto.ingest import KustoStreamingIngestClient, IngestionProperties, IngestionStatus, ManagedStreamingIngestClient
-
-pandas_installed = False
-try:
-    import pandas
-
-    pandas_installed = True
-except:
-    pass
 
 UUID_REGEX = "[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}"
 BLOB_NAME_REGEX = "database__table__" + UUID_REGEX + "__dataset.csv.gz"
@@ -140,7 +133,6 @@ class TestKustoStreamingIngestClient:
         result = ingest_client.ingest_from_file(file_path, ingestion_properties=ingestion_properties)
         assert result.status == IngestionStatus.SUCCESS
 
-    @pytest.mark.skipif(not pandas_installed, reason="requires pandas")
     @responses.activate
     def test_streaming_ingest_from_dataframe(self, ingest_client_class):
         responses.add_callback(
@@ -149,8 +141,6 @@ class TestKustoStreamingIngestClient:
 
         ingest_client = ingest_client_class("https://somecluster.kusto.windows.net")
         ingestion_properties = IngestionProperties(database="database", table="table", data_format=DataFormat.CSV)
-
-        from pandas import DataFrame
 
         fields = ["id", "name", "value"]
         rows = [[1, "abc", 15.3], [2, "cde", 99.9]]

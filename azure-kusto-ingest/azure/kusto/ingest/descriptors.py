@@ -2,14 +2,13 @@
 # Licensed under the MIT License
 import abc
 import os
-import random
 import shutil
 import struct
 import uuid
 from copy import copy
 from gzip import GzipFile
 from io import BytesIO, SEEK_END
-from typing import Union, Optional, AnyStr, IO, List, Dict
+from typing import Union, Optional, AnyStr, IO
 from zipfile import ZipFile
 
 from azure.storage.blob import BlobClient
