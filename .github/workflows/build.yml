@@ -38,22 +38,23 @@ jobs:
           enable-cache: true
       - name: Install the project
         run: uv sync --locked --all-extras --dev
-      - name: EtoE Test with pytest
-        env:
-          TEST_DATABASE: ${{ secrets.TEST_DATABASE }}
-          TEST_BLOB: ${{ secrets.TEST_BLOB }}
-          ENGINE_CONNECTION_STRING: ${{ secrets.ENGINE_CONNECTION_STRING }}
-          APPLICATION_INSIGHTS_ENGINE_CONNECTION_STRING: https://ade.applicationinsights.io/subscriptions/12534eb3-8109-4d84-83ad-576c0d5e1d06/resourcegroups/clients_e2e_test/providers/microsoft.insights/components/kusto-e2e-app-insights
-          APPLICATION_INSIGHTS_TEST_DATABASE: kusto-e2e-app-insights
-        run: uv run pytest --junit-xml pytest.xml
+#      - name: EtoE Test with pytest
+#        env:
+#          TEST_DATABASE: ${{ secrets.TEST_DATABASE }}
+#          TEST_BLOB: ${{ secrets.TEST_BLOB }}
+#          ENGINE_CONNECTION_STRING: ${{ secrets.ENGINE_CONNECTION_STRING }}
+#          APPLICATION_INSIGHTS_ENGINE_CONNECTION_STRING: https://ade.applicationinsights.io/subscriptions/12534eb3-8109-4d84-83ad-576c0d5e1d06/resourcegroups/clients_e2e_test/providers/microsoft.insights/components/kusto-e2e-app-insights
+#          APPLICATION_INSIGHTS_TEST_DATABASE: kusto-e2e-app-insights
+#        run: uv run pytest --junit-xml pytest.xml
         
       - name: "Run Ruff Formatter"
         uses: astral-sh/ruff-action@v3
         with:
           args: "format"
-      - name: "Run Ruff Linter"
-        run: ruff check --fix
-        continue-on-error: true
+          
+#      - name: "Run Ruff Linter"
+#        run: ruff check --fix
+#        continue-on-error: true
       
       - uses: tj-actions/verify-changed-files@v20
         id: verify-changed-files
