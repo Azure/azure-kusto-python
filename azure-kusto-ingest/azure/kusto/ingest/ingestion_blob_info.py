@@ -1,6 +1,7 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
 import json
+import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING
 

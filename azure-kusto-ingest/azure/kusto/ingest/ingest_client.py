@@ -1,6 +1,8 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
+import random
 from typing import Union, AnyStr, IO, List, Optional, Dict
+from urllib.parse import urlparse
 
 from azure.storage.blob import BlobServiceClient
 
@@ -10,13 +12,13 @@ from azure.storage.queue import QueueServiceClient, TextBase64EncodePolicy
 
 from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
 from azure.kusto.data._telemetry import MonitoredActivity
-from azure.kusto.data.exceptions import KustoClosedError
+from azure.kusto.data.exceptions import KustoClosedError, KustoServiceError
 
 from ._ingest_telemetry import IngestTracingAttributes
 from ._resource_manager import _ResourceManager, _ResourceUri
 from .base_ingest_client import BaseIngestClient, IngestionResult, IngestionStatus
 from .descriptors import BlobDescriptor, FileDescriptor, StreamDescriptor
-from .exceptions import KustoQueueError
+from .exceptions import KustoInvalidEndpointError, KustoQueueError
 from azure.kusto.data.exceptions import KustoBlobError
 from .ingestion_blob_info import IngestionBlobInfo
 from .ingestion_properties import IngestionProperties
@@ -159,7 +161,6 @@ class QueuedIngestClient(BaseIngestClient):
                 self._resource_manager.report_resource_usage_result(queue.storage_account_name, False)
                 if retries_left == 0:
                     raise KustoQueueError() from e
-        raise KustoQueueError()
 
     def _get_containers(self) -> List[_ResourceUri]:
         return self._resource_manager.get_containers()

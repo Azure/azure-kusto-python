@@ -13,6 +13,7 @@ from azure.kusto.ingest import KustoStreamingIngestClient, IngestionProperties, 
 
 pandas_installed = False
 try:
+    import pandas
 
     pandas_installed = True
 except:
@@ -193,9 +194,9 @@ class TestKustoStreamingIngestClient:
         assert result.status == IngestionStatus.SUCCESS
 
     def test_client_uri_from_query_endpoint(self):
-        assert KustoStreamingIngestClient("https://somecluster.kusto.windows.net")._kusto_client._kusto_cluster == "https://somecluster.kusto.windows.net/", (
-            "Client URI was not extracted correctly from query endpoint"
-        )
+        assert (
+            KustoStreamingIngestClient("https://somecluster.kusto.windows.net")._kusto_client._kusto_cluster == "https://somecluster.kusto.windows.net/"
+        ), "Client URI was not extracted correctly from query endpoint"
 
     def test_client_uri_from_ingestion_endpoint(self):
         assert (

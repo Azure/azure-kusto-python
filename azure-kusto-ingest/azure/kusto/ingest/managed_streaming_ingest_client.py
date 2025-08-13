@@ -154,8 +154,6 @@ class ManagedStreamingIngestClient(BaseIngestClient):
                     tracing_attributes={"attemptNumber": attempt, "sourceIsStream": from_stream},
                 )
 
-        return None
-
     @staticmethod
     def _get_request_id(source_id: uuid.UUID, attempt: int):
         return f"KPC.executeManagedStreamingIngest;{source_id};{attempt}"

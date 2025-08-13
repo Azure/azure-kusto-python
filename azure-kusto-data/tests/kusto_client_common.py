@@ -20,7 +20,7 @@ try:
     import pandas
 
     PANDAS = True
-except ImportError:
+except:
     pass
 
 
@@ -429,7 +429,7 @@ class KustoClientTestsMixin:
         assert len(results) == 5
         assert results[0]["x"] == 1
 
-        if response is KustoStreamingResponseDataSet:
+        if type(response) == KustoStreamingResponseDataSet:
             _ = [t for t in response]  # Read rest of tables
         assert response.errors_count == 1
         assert "E_QUERY_RESULT_SET_TOO_LARGE" in response.get_exceptions()[0]

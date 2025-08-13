@@ -5,7 +5,7 @@ import ijson
 from ijson import IncompleteJSONError
 
 from azure.kusto.data._models import WellKnownDataSet
-from azure.kusto.data.exceptions import KustoTokenParsingError, KustoUnsupportedApiError, KustoMultiApiError
+from azure.kusto.data.exceptions import KustoServiceError, KustoTokenParsingError, KustoUnsupportedApiError, KustoApiError, KustoMultiApiError
 
 
 class JsonTokenType(Enum):
@@ -125,18 +125,12 @@ class JsonTokenReader:
                 continue
 
             raise Exception(f"Unexpected token {token}")
-        
-        # If we reach here, the iterator was exhausted without finding a matching token
-        raise KustoTokenParsingError("Unexpected end of stream while looking for property name or end object")
 
     def skip_until_token_with_paths(self, *tokens: (JsonTokenType, str)) -> JsonToken:
         for token in self:
             if any((token.token_type == t_type and token.token_path == t_path) for (t_type, t_path) in tokens):
                 return token
             self.skip_children(token)
-        
-        # If we reach here, the iterator was exhausted without finding a matching token
-        raise KustoTokenParsingError("Unexpected end of stream while looking for token with specified paths")
 
 
 class StreamingDataSetEnumerator:
@@ -179,9 +173,9 @@ class StreamingDataSetEnumerator:
             if frame["IsProgressive"]:
                 raise KustoUnsupportedApiError.progressive_api_unsupported()
             return frame
-        elif frame_type in [FrameType.TableHeader, FrameType.TableFragment, FrameType.TableCompletion, FrameType.TableProgress]:
+        if frame_type in [FrameType.TableHeader, FrameType.TableFragment, FrameType.TableCompletion, FrameType.TableProgress]:
             raise KustoUnsupportedApiError.progressive_api_unsupported()
-        elif frame_type == FrameType.DataTable:
+        if frame_type == FrameType.DataTable:
             props = self.extract_props(
                 frame_type,
                 ("TableId", JsonTokenType.NUMBER),
@@ -194,15 +188,12 @@ class StreamingDataSetEnumerator:
             if props["TableKind"] != WellKnownDataSet.PrimaryResult.value:
                 props["Rows"] = list(props["Rows"])
             return props
-        elif frame_type == FrameType.DataSetCompletion:
+        if frame_type == FrameType.DataSetCompletion:
             res = self.extract_props(frame_type, ("HasErrors", JsonTokenType.BOOLEAN), ("Cancelled", JsonTokenType.BOOLEAN))
             token = self.reader.skip_until_property_name_or_end_object("OneApiErrors")
             if token.token_type != JsonTokenType.END_MAP:
                 res["OneApiErrors"] = self.parse_array(skip_start=False)
             return res
-        else:
-            # Handle unexpected frame types
-            raise KustoTokenParsingError(f"Unexpected frame type: {frame_type}")
 
     def row_iterator(self) -> Iterator[list]:
         self.reader.read_token_of_type(JsonTokenType.START_ARRAY)

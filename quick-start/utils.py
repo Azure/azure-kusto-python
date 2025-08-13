@@ -3,7 +3,6 @@ import os
 import uuid
 from time import sleep
 from tqdm import tqdm
-from typing import Optional
 from azure.kusto.data import KustoConnectionStringBuilder, ClientRequestProperties, KustoClient, DataFormat
 from azure.kusto.data.exceptions import KustoClientError, KustoServiceError
 from azure.kusto.ingest import IngestionProperties, BaseIngestClient, QueuedIngestClient, FileDescriptor, BlobDescriptor

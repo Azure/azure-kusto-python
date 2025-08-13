@@ -96,11 +96,9 @@ class StatusQTests(unittest.TestCase):
         fake_peek = fake_peek_factory(
             lambda queue_name, num_messages=1: [mock_message(success=True) for _ in range(0, num_messages)] if "qs" in queue_name else []
         )
-        with (
-            mock.patch.object(client._resource_manager, "get_successful_ingestions_queues") as mocked_get_success_qs,
-            mock.patch.object(client._resource_manager, "get_failed_ingestions_queues") as mocked_get_failed_qs,
-            mock.patch.object(QueueClient, "peek_messages", autospec=True, side_effect=fake_peek) as q_mock,
-        ):
+        with mock.patch.object(client._resource_manager, "get_successful_ingestions_queues") as mocked_get_success_qs, mock.patch.object(
+            client._resource_manager, "get_failed_ingestions_queues"
+        ) as mocked_get_failed_qs, mock.patch.object(QueueClient, "peek_messages", autospec=True, side_effect=fake_peek) as q_mock:
             fake_failed_queue = get_resource_uri("mocked_storage_account_f1", "mocked_qf_name")
             fake_success_queue = get_resource_uri("mocked_storage_account2", "mocked_qs_name")
 
@@ -125,11 +123,9 @@ class StatusQTests(unittest.TestCase):
             ]
         )
 
-        with (
-            mock.patch.object(client._resource_manager, "get_successful_ingestions_queues") as mocked_get_success_qs,
-            mock.patch.object(client._resource_manager, "get_failed_ingestions_queues") as mocked_get_failed_qs,
-            mock.patch.object(QueueClient, "peek_messages", autospec=True, side_effect=fake_peek) as q_mock,
-        ):
+        with mock.patch.object(client._resource_manager, "get_successful_ingestions_queues") as mocked_get_success_qs, mock.patch.object(
+            client._resource_manager, "get_failed_ingestions_queues"
+        ) as mocked_get_failed_qs, mock.patch.object(QueueClient, "peek_messages", autospec=True, side_effect=fake_peek) as q_mock:
             fake_failed_queue1 = get_resource_uri("mocked_storage_account_f1", "mocked_qf_name")
             fake_failed_queue2 = get_resource_uri("mocked_storage_account_f2", "mocked_qf_2_name")
             fake_success_queue = get_resource_uri("mocked_storage_account2", "mocked_qs_name")
@@ -172,17 +168,16 @@ class StatusQTests(unittest.TestCase):
             ]
         )
 
-        with (
-            mock.patch.object(client._resource_manager, "get_successful_ingestions_queues") as mocked_get_success_qs,
-            mock.patch.object(client._resource_manager, "get_failed_ingestions_queues") as mocked_get_failed_qs,
-            mock.patch.object(
-                QueueClient,
-                "receive_messages",
-                autospec=True,
-                side_effect=fake_receive,
-            ) as q_receive_mock,
-            mock.patch.object(QueueClient, "delete_message", return_value=None) as q_del_mock,
-        ):
+        with mock.patch.object(client._resource_manager, "get_successful_ingestions_queues") as mocked_get_success_qs, mock.patch.object(
+            client._resource_manager, "get_failed_ingestions_queues"
+        ) as mocked_get_failed_qs, mock.patch.object(
+            QueueClient,
+            "receive_messages",
+            autospec=True,
+            side_effect=fake_receive,
+        ) as q_receive_mock, mock.patch.object(
+            QueueClient, "delete_message", return_value=None
+        ) as q_del_mock:
             fake_failed_queue1 = get_resource_uri("mocked_storage_account_f1", "mocked_qf_name")
             fake_failed_queue2 = get_resource_uri("mocked_storage_account_f2", "mocked_qf_2_name")
             fake_success_queue = get_resource_uri("mocked_storage_account2", "mocked_qs_name")
@@ -225,16 +220,15 @@ class StatusQTests(unittest.TestCase):
         fake_receive = fake_receive_factory(
             lambda queue_name, messages_per_page=1: [mock_message(success=False) for _ in range(0, messages_per_page)] if "1" in queue_name else []
         )
-        with (
-            mock.patch.object(client._resource_manager, "get_successful_ingestions_queues"),
-            mock.patch.object(client._resource_manager, "get_failed_ingestions_queues") as mocked_get_failed_qs,
-            mock.patch.object(
-                QueueClient,
-                "receive_messages",
-                autospec=True,
-                side_effect=fake_receive,
-            ) as q_receive_mock,
-            mock.patch.object(QueueClient, "delete_message", return_value=None),
+        with mock.patch.object(client._resource_manager, "get_successful_ingestions_queues"), mock.patch.object(
+            client._resource_manager, "get_failed_ingestions_queues"
+        ) as mocked_get_failed_qs, mock.patch.object(
+            QueueClient,
+            "receive_messages",
+            autospec=True,
+            side_effect=fake_receive,
+        ) as q_receive_mock, mock.patch.object(
+            QueueClient, "delete_message", return_value=None
         ):
             fake_failed_queue1 = get_resource_uri("mocked_storage_account_f1", "mocked_qf_1_name")
             fake_failed_queue2 = get_resource_uri("mocked_storage_account_f2", "mocked_qf_2_name")

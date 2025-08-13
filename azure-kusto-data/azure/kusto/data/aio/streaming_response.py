@@ -1,11 +1,11 @@
-from typing import Any, Tuple, Dict, Iterator, AsyncIterator
+from typing import Any, Tuple, Dict, Iterator
 
 import aiohttp
 import ijson
 from ijson import IncompleteJSONError
 
 from azure.kusto.data._models import WellKnownDataSet
-from azure.kusto.data.exceptions import KustoTokenParsingError, KustoUnsupportedApiError, KustoMultiApiError
+from azure.kusto.data.exceptions import KustoTokenParsingError, KustoUnsupportedApiError, KustoApiError, KustoMultiApiError
 from azure.kusto.data.streaming_response import JsonTokenType, FrameType, JsonToken
 
 
@@ -88,14 +88,12 @@ class JsonTokenReader:
                 continue
 
             raise Exception(f"Unexpected token {token}")
-        raise KustoTokenParsingError("Unexpected end of stream")
 
     async def skip_until_token_with_paths(self, *tokens: (JsonTokenType, str)) -> JsonToken:
         async for token in self:
             if any((token.token_type == t_type and token.token_path == t_path) for (t_type, t_path) in tokens):
                 return token
             await self.skip_children(token)
-        raise KustoTokenParsingError("Unexpected end of stream")
 
 
 class StreamingDataSetEnumerator:
@@ -159,9 +157,8 @@ class StreamingDataSetEnumerator:
             if token.token_type != JsonTokenType.END_MAP:
                 res["OneApiErrors"] = self.parse_array(skip_start=False)
             return res
-        raise KustoTokenParsingError("Unexpected end of stream")
 
-    async def row_iterator(self) -> AsyncIterator[list]:
+    async def row_iterator(self) -> Iterator[list]:
         await self.reader.read_token_of_type(JsonTokenType.START_ARRAY)
         while True:
             token = await self.reader.read_token_of_type(JsonTokenType.START_ARRAY, JsonTokenType.END_ARRAY, JsonTokenType.START_MAP)

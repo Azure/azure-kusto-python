@@ -37,6 +37,7 @@ class KustoInvalidEndpointError(KustoClientError):
 
 
 class KustoQueueError(KustoClientError):
+
     """Raised when not succeeding to upload message to queue in all retries"""
 
     def __init__(self):

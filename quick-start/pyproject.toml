@@ -2,15 +2,15 @@
 name = "quick-start"
 version = "5.0.0"
 description = "Microsoft Azure Kusto Python SDK"
- dependencies = [
-   "azure-kusto-data",
-   "azure-kusto-ingest",
-   "azure-core-tracing-opentelemetry ~= 1.0.0b9",
-   "azure-monitor-opentelemetry-exporter ~= 1.0.0b7",
-   "inflection ~= 0.5.1",
-   "opentelemetry-sdk ~= 1.12.0",
-   "tqdm ~= 4.64.0",
- ]
+dependencies = [
+    "azure-kusto-data",
+    "azure-kusto-ingest",
+    "azure-core-tracing-opentelemetry ~= 1.0.0b12",
+    "azure-monitor-opentelemetry-exporter ~= 1.0.0b41",
+    "inflection ~= 0.5.1",
+    "opentelemetry-sdk ~= 1.36.0",
+    "tqdm ~= 4.64.1",
+]
 readme = "README.md"
 requires-python = ">= 3.8"
 
@@ -21,16 +21,6 @@ email = "kustalk@microsoft.com"
 [project.scripts]
 sample_app = "sample_app:main"
 
-[dependency-groups]
-dev = [
-    "pytest>=8.0.2",
-    "responses>=0.25.0",
-    "aioresponses>=0.7.6",
-    "pytest-asyncio>=0.23.5",
-    "asgiref>=3.7.2",
-    "setuptools>=69.2.0",
-    "pyright>=1.1.355",
-    "ipython>=8.12.3",
-    "pyarrow>=16.1.0",
-]
+[tool.uv]
+package = false
 

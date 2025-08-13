@@ -29,15 +29,13 @@ dev = [
     "basedpyright>=1.31.1",
 ]
 
-[tool.uv]
-
-
 [tool.uv.workspace]
-members = ["azure-kusto-data", "azure-kusto-ingest"]
+members = ["azure-kusto-data", "azure-kusto-ingest", "quick-start"]
 
 [tool.uv.sources]
 azure-kusto-data = { workspace = true }
 azure-kusto-ingest = { workspace = true }
+quick-start = { workspace = true }
 
 [tool.ruff]
 line-length = 160

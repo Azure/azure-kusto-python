@@ -126,7 +126,7 @@ class KustoConnectionStringBuilder:
     device_login: bool = False
     token_credential_login: bool = False
 
-    device_callback: Optional[DeviceCallbackType] = None
+    device_callback: DeviceCallbackType = None
     msi_authentication: bool = False
     msi_parameters: Optional[dict] = None
 
@@ -190,7 +190,7 @@ class KustoConnectionStringBuilder:
             raise TypeError("Value cannot be None.")
 
         if keyword.is_str_type():
-            self._internal_dict[keyword.name] = value.strip() #type: ignore - we know that value is str
+            self._internal_dict[keyword.name] = value.strip()
         elif keyword.is_bool_type():
             if not isinstance(value, bool):
                 raise TypeError("Expected %s to be bool" % key)
@@ -338,7 +338,7 @@ class KustoConnectionStringBuilder:
 
     @classmethod
     def with_aad_device_authentication(
-        cls, connection_string: str, authority_id: str = "organizations", callback: Optional[DeviceCallbackType] = None
+        cls, connection_string: str, authority_id: str = "organizations", callback: DeviceCallbackType = None
     ) -> "KustoConnectionStringBuilder":
         """
         Creates a KustoConnection string builder that will authenticate with AAD application and
@@ -373,12 +373,7 @@ class KustoConnectionStringBuilder:
 
     @classmethod
     def with_aad_managed_service_identity_authentication(
-        cls,
-        connection_string: str,
-        client_id: Optional[str] = None,
-        object_id: Optional[str] = None,
-        msi_res_id: Optional[str] = None,
-        timeout: Optional[int] = None,
+        cls, connection_string: str, client_id: str = None, object_id: str = None, msi_res_id: str = None, timeout: int = None
     ) -> "KustoConnectionStringBuilder":
         """
         Creates a KustoConnection string builder that will authenticate with AAD application, using
@@ -646,10 +641,10 @@ class KustoConnectionStringBuilder:
         return ";".join(["{0}={1}".format(word.value, kcsb_as_dict[word]) for word in SupportedKeywords if word in kcsb_as_dict])
 
     def _parse_data_source(self, url: str):
-        url_res = urlparse(url)
-        if not url_res.netloc:
+        url = urlparse(url)
+        if not url.netloc:
             return
-        segments = url_res.path.lstrip("/").split("/")
+        segments = url.path.lstrip("/").split("/")
         if len(segments) == 1 and segments[0] and not self.initial_catalog:
             self.initial_catalog = segments[0]
-            self._internal_dict[SupportedKeywords.DATA_SOURCE] = url_res._replace(path="").geturl()
+            self._internal_dict[SupportedKeywords.DATA_SOURCE] = url._replace(path="").geturl()

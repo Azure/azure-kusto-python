@@ -9,7 +9,7 @@ from azure.identity import ClientSecretCredential, DefaultAzureCredential
 
 from azure.kusto.data._token_providers import *
 from azure.kusto.data.exceptions import KustoNetworkError
-from azure.kusto.data.env_utils import get_env, get_app_id, get_auth_id, prepare_app_key_auth
+from azure.kusto.data.env_utils import get_env, get_app_id, get_auth_id, get_app_key, prepare_app_key_auth
 
 TOKEN_VALUE = "little miss sunshine"
 
