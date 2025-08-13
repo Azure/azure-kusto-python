@@ -42,8 +42,6 @@ def test_msi_auth():
     Please be prudent in adding any future tests!
     """
     client_guid = "kjhjk"
-    object_guid = "87687687"
-    res_guid = "kajsdghdijewhag"
 
     """
     Use of object_id and msi_res_id is disabled pending support of azure-identity

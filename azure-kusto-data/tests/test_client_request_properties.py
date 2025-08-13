@@ -127,7 +127,6 @@ def test_custom_crp_tracing_properties_override_kcsb():
 def test_set_connector_name_and_version():
     kcsb = KustoConnectionStringBuilder("test")
     kcsb._set_connector_details("myConnector", "myVersion", send_user=False)
-    crp = ClientRequestProperties()
 
     params = ExecuteRequestParams._from_query(
         "somequery",
@@ -150,7 +149,6 @@ def test_set_connector_name_and_version():
 def test_set_connector_no_app_version():
     kcsb = KustoConnectionStringBuilder("test")
     kcsb._set_connector_details("myConnector", "myVersion", app_name="myApp", send_user=True)
-    crp = ClientRequestProperties()
 
     params = ExecuteRequestParams._from_query(
         "somequery",

@@ -49,7 +49,7 @@ assert type(df.iloc[0].RecordTime) is pandas._libs.tslibs.timestamps.Timestamp
 for k, v in {"year": 2021, "month": 12, "day": 22, "hour": 11, "minute": 43, "second": 00}.items():
     assert getattr(df.iloc[0].RecordTime, k) == v
 assert type(df.iloc[0].RecordBool) is numpy.bool_
-assert df.iloc[0].RecordBool == True
+assert df.iloc[0].RecordBool
 assert type(df.iloc[0].RecordInt) is numpy.int32
 assert df.iloc[0].RecordInt == 5678
 assert type(df.iloc[0].RecordInt64) is numpy.int64
