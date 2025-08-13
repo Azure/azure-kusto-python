@@ -27,7 +27,7 @@ jobs:
         python-version: '3.9'
         enable-cache: true
     - name: Build
-      run: uv build --all
+      run: uv build --all-packages
     - name: Publish
       uses: pypa/gh-action-pypi-publish@release/v1.12
       with:

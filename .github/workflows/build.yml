@@ -35,6 +35,8 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           enable-cache: true
+      - name: Install Poe
+        run: uv tool install poethepoet
       - name: EtoE Test with pytest
         env:
           TEST_DATABASE: ${{ secrets.TEST_DATABASE }}
@@ -42,7 +44,7 @@ jobs:
           ENGINE_CONNECTION_STRING: ${{ secrets.ENGINE_CONNECTION_STRING }}
           APPLICATION_INSIGHTS_ENGINE_CONNECTION_STRING: https://ade.applicationinsights.io/subscriptions/12534eb3-8109-4d84-83ad-576c0d5e1d06/resourcegroups/clients_e2e_test/providers/microsoft.insights/components/kusto-e2e-app-insights
           APPLICATION_INSIGHTS_TEST_DATABASE: kusto-e2e-app-insights
-        run: uvx poe test --ci
+        run: poe test --ci
       
       #      todo: re-enable on a different PR
       #      - name: "Run Ruff Formatter"
