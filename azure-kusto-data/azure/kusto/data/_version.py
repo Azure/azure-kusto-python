@@ -1,3 +1,5 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
-VERSION = "5.0.5"
+import importlib.metadata
+
+VERSION = importlib.metadata.version("azure-kusto-data")

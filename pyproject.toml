@@ -1,6 +1,6 @@
 [project]
 name = "azure-kusto-python"
-version = "5.0.3"
+version = "5.0.5"
 description = "Microsoft Azure Kusto Python SDK"
 dependencies = [
     "azure-kusto-data",
@@ -16,27 +16,28 @@ email = "kustalk@microsoft.com"
 
 [dependency-groups]
 dev = [
-    "pytest>=8.0.2",
-    "responses>=0.25.0",
-    "aioresponses>=0.7.6",
-    "pytest-asyncio>=0.23.5",
-    "asgiref>=3.7.2",
-    "setuptools>=69.2.0",
+    "pytest>=8.4.1",
+    "responses>=0.25.8",
+    "aioresponses>=0.7.8",
+    "pytest-asyncio>=1.1.0",
+    "asgiref>=3.9.1",
+    "setuptools>=80.9.0",
     "ipython>=8.12.3",
-    "pyarrow>=16.1.0",
-    "pandas>=2.0.3",
-    "ruff>=0.11.10",
-    "ty>=0.0.1a8",
-    "pyrefly>=0.18.1",
+    "pyarrow>=21.0.0",
+    "pandas>=2.3.1",
+    "ruff>=0.12.8",
+    "basedpyright>=1.31.1",
 ]
 
+[tool.uv]
+
+
 [tool.uv.workspace]
-members = ["azure-kusto-data", "azure-kusto-ingest", "quick-start"]
+members = ["azure-kusto-data", "azure-kusto-ingest"]
 
 [tool.uv.sources]
 azure-kusto-data = { workspace = true }
 azure-kusto-ingest = { workspace = true }
-quick-start = { workspace = true }
 
 [tool.ruff]
 line-length = 160
@@ -53,8 +54,3 @@ ignore = ["E731"] # E731 - dont assign lambdas.
 testpaths = ["azure-kusto-data/tests"]
 addopts = ["-s", "--import-mode=importlib"]
 pythonpath = ["."]
-
-
-[tool.poe.tasks]
-test  = "uv run --all-packages pytest"
-build = "uv build --all-packages"

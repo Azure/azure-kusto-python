@@ -1,6 +1,6 @@
 [project]
 name = "azure-kusto-data"
-version = "5.0.3"
+version = "5.0.5"
 description = "Kusto Data Client"
 authors = [
     { name = "Microsoft Corporation", email = "kustalk@microsoft.com" },
@@ -10,31 +10,31 @@ readme = "README.rst"
 urls = { "Repository" = "https://github.com/Azure/azure-kusto-python" }
 
 dependencies = [
-    "python-dateutil>=2.8.0",
-    "requests>=2.13.0",
-    "azure-identity>=1.5.0,<2",
-    "msal>=1.9.0,<2",
-    "ijson~=3.1",
-    "azure-core>=1.11.0,<2"
+    "python-dateutil>=2.9.0",
+    "requests>=2.32.4",
+    "azure-identity>=1.24.0,<2",
+    "msal>=1.34.0b1,<2",
+    "ijson~=3.4.0",
+    "azure-core>=1.35.0,<2"
 ]
 requires-python = ">= 3.9"
 
 [project.optional-dependencies]
 pandas = [
-    "pandas>=2.0.3",
+    "pandas>=2.3.1",
 ]
 async = [
-    "aiohttp>=3.9.3",
-    "asgiref>=3.7.2",
+    "aiohttp>=3.12.15",
+    "asgiref>=3.9.1",
 ]
 
 [tool.uv]
 package = true
 
 [build-system]
-requires = ["uv_build>=0.7.12,<0.8.0"]
+requires = ["uv_build>=0.8.9,<0.9.0"]
 build-backend = "uv_build"
 
 [tool.uv.build-backend]
-module-name = "data"
-module-root = "azure/kusto"
+module-name = "azure.kusto.data"
+module-root = ""

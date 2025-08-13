@@ -18,7 +18,7 @@ To install via the Python Package Index (PyPI), type:
 ### Option 2: Source Via Git
 To get the source code of the SDK via git just type:
 
-```python
+```bash
 git clone https://github.com/Azure/azure-kusto-python
 cd ./azure-kusto-python/azure-kusto-data
 python3 setup.py install
