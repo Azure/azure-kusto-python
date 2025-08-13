@@ -49,6 +49,6 @@ ignore = ["E731"] # E731 - dont assign lambdas.
 "**/test_streaming_query.py" = ["F841"] # unused variable - for pytest raises
 
 [tool.pytest.ini_options]
-testpaths = ["azure-kusto-data/tests"]
+testpaths = ["azure-kusto-data/tests", "azure-kusto-ingest/tests"]
 addopts = ["-s", "--import-mode=importlib"]
 pythonpath = ["."]
