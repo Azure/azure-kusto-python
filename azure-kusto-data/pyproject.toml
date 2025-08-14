@@ -18,6 +18,16 @@ dependencies = [
     "azure-core>=1.35.0,<2"
 ]
 requires-python = ">= 3.9"
+keywords = ["azure", "kusto", "data", "analytics"]
+classifiers = [
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "License :: OSI Approved :: MIT License",
+]
 
 [project.optional-dependencies]
 pandas = [
