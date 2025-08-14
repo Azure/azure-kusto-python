@@ -10,9 +10,8 @@ if TYPE_CHECKING:
 # Alias for dataframe_from_result_table converter type
 Converter = Dict[str, Union[str, Callable[[str, "pd.DataFrame"], "pd.Series"]]]
 
-a = ("sdd"
-     ""
-     "dsds")
+a = "sdddsds"
+
 
 def load_bundled_json(file_name: str) -> Dict:
     filename = Path(__file__).absolute().parent.joinpath(file_name)
