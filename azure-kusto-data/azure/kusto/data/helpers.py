@@ -1,7 +1,7 @@
 import json
 from functools import lru_cache
 from pathlib import Path
-from typing import TYPE_CHECKING, Union, Callable, Dict, Optional, List
+from typing import TYPE_CHECKING, Union, Callable, Dict, Optional
 
 if TYPE_CHECKING:
     import pandas as pd
