@@ -30,15 +30,17 @@ def proxy_kcsb(request) -> Tuple[KustoConnectionStringBuilder, bool]:
     key = "key of application"
     token = "The app hardest token ever"
 
-    return {
+    kcsb_dict = {
         "user_password": (KustoConnectionStringBuilder.with_aad_user_password_authentication(cluster, user, password, authority_id), True),
         "application_key": (KustoConnectionStringBuilder.with_aad_application_key_authentication(cluster, uuid, key, "microsoft.com"), True),
-        "application_token": (KustoConnectionStringBuilder.with_aad_application_token_authentication(cluster, application_token=token), False),
+        "application_token": (KustoConnectionStringBuilder.with_aad_application_token_authentication(cluster, token), False),
         "device": (KustoConnectionStringBuilder.with_aad_device_authentication(cluster), True),
-        "user_token": (KustoConnectionStringBuilder.with_aad_user_token_authentication(cluster, user_token=token), False),
+        "user_token": (KustoConnectionStringBuilder.with_aad_user_token_authentication(cluster, token), False),
         "managed_identity": (KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication(cluster), False),
         "token_provider": (KustoConnectionStringBuilder.with_token_provider(cluster, lambda: ""), False),
         "async_token_provider": (KustoConnectionStringBuilder.with_async_token_provider(cluster, lambda: asyncio.sleep(0, result="")), False),
         "az_cli": (KustoConnectionStringBuilder.with_az_cli_authentication(cluster), True),
         "interactive_login": (KustoConnectionStringBuilder.with_interactive_login(cluster), True),
-    }[request.param]
+    }
+
+    return kcsb_dict[request.param]
