@@ -135,6 +135,18 @@ Also make sure to lint the code:
     poe lint --fix
 ```
 
+### Types
+
+This project uses [basedpyright](https://docs.basedpyright.com/) for type checking.
+
+To check the types, run:
+
+```bash
+poe types
+```
+
+Note that we have a `baseline.json` file that is used to ignore old type errors, as we gradually add types to the codebase.
+
 ## PRs
 We welcome contributions. In order to make the PR process efficient, please follow the below checklist:
 
