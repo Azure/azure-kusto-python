@@ -78,3 +78,4 @@ args = { bump = { help = "Bump version [possible values: major, minor, patch, st
 
 [tool.basedpyright]
 pythonVersion = "3.9"
+reportUnnecessaryTypeIgnoreComment = false
