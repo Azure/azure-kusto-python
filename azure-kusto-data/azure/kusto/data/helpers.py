@@ -10,8 +10,6 @@ if TYPE_CHECKING:
 # Alias for dataframe_from_result_table converter type
 Converter = Dict[str, Union[str, Callable[[str, "pd.DataFrame"], "pd.Series"]]]
 
-a = "sdddsds"
-
 
 def load_bundled_json(file_name: str) -> Dict:
     filename = Path(__file__).absolute().parent.joinpath(file_name)
@@ -116,7 +114,7 @@ def parse_float(frame, col):
     import pandas as pd
 
     frame[col] = frame[col].replace("NaN", np.nan).replace("Infinity", np.inf).replace("-Infinity", -np.inf)
-    frame[col] = pd.to_numeric(frame[col], errors="coerce").astype(pd.Float64Dtype())  # type: ignore
+    frame[col] = pd.to_numeric(frame[col], errors="coerce").astype(pd.Float64Dtype())  # pyright: ignore[reportCallIssue,reportArgumentType]
     return frame[col]
 
 
