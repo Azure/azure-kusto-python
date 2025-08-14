@@ -20,10 +20,6 @@ To get the source code of the SDK via git just type:
 
 ```bash
 git clone https://github.com/Azure/azure-kusto-python
-cd ./azure-kusto-python/azure-kusto-data
-python3 setup.py install
-cd ../azure-kusto-ingest
-python3 setup.py install
 ```
 
 ### Option 3: Source Zip
@@ -33,10 +29,13 @@ Download a zip of the code via GitHub or PyPi. Then follow the same instructions
 * [_Pandas_](http://pandas.pydata.org/) - Package provides extra functionality for use with pandas. Since these are optional dependencies, install with pandas:
     * `pip install azure-kusto-data[pandas]`
     * `pip install azure-kusto-ingest[pandas]`
+* [_aio_](http://pandas.pydata.org/) - Package provides async interfaces.
+    * `pip install azure-kusto-data[aio]`
+    * `pip install azure-kusto-ingest[aio]`
 
 ## Minimum Requirements
 * Python 3.9 and above
-* See setup.py for dependencies
+* See `pyproject.toml` files for dependencies
 
 ## Authentication methods:
 

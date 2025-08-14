@@ -11,6 +11,7 @@ on:
   push:
     branches: [ master ]
   pull_request:
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -51,6 +52,9 @@ jobs:
 
       - name: "Run Ruff Linter"
         run: poe lint
+        
+      - name: "Run Type Checking"
+        run: poe types
 
       - name: Upload Unit Test Results
         if: always()

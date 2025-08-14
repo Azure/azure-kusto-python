@@ -24,6 +24,7 @@ dev = [
     "asgiref>=3.9.1",
     "pandas>=2.3.1",
     "ruff>=0.12.8",
+    "basedpyright>=1.31.2",
 ]
 
 [tool.uv.workspace]
@@ -54,6 +55,7 @@ pythonpath = ["."]
 envfile = ".env"
 
 [tool.poe.tasks]
+types = "uv run basedpyright"
 sync = "uv sync --all-packages --all-extras --dev --locked"
 build = "uv build --all-packages"
 format = "ruff format"
@@ -72,3 +74,6 @@ CI = { help = "Run tests in CI mode", type = "boolean", options = ["--ci"] }
 [tool.poe.tasks.bump-version]
 sequence = [{ cmd = "uv version --bump $bump" }, { cmd = "uv version --bump $bump --package azure-kusto-data" }, { cmd = "uv version --bump $bump --package azure-kusto-ingest" }, { cmd = "uv version --bump $bump --package quick-start" }]
 args = { bump = { help = "Bump version [possible values: major, minor, patch, stable, alpha, beta, rc, post, dev]", positional = true, default = "patch" } }
+
+[tool.basedpyright]
+pythonVersion = "3.9"
