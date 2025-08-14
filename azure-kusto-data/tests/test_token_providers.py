@@ -5,10 +5,10 @@ from threading import Thread
 from typing import Optional
 
 import pytest
-from _cloud_settings import CloudInfo
 from asgiref.sync import async_to_sync
 from azure.identity import ClientSecretCredential, DefaultAzureCredential
 
+from azure.kusto.data._cloud_settings import CloudInfo
 from azure.kusto.data._token_providers import (
     UserPassTokenProvider,
     BasicTokenProvider,
