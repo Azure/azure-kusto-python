@@ -1,0 +1,1182 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="pdoc 15.0.4"/>
+    <title>azure.core API documentation</title>
+
+    <style>/*! * Bootstrap Reboot v5.0.0 (https://getbootstrap.com/) * Copyright 2011-2021 The Bootstrap Authors * Copyright 2011-2021 Twitter, Inc. * Licensed under MIT (https://github.com/twbs/bootstrap/blob/main/LICENSE) * Forked from Normalize.css, licensed MIT (https://github.com/necolas/normalize.css/blob/master/LICENSE.md) */*,::after,::before{box-sizing:border-box}@media (prefers-reduced-motion:no-preference){:root{scroll-behavior:smooth}}body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans","Liberation Sans",sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji";font-size:1rem;font-weight:400;line-height:1.5;color:#212529;background-color:#fff;-webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent}hr{margin:1rem 0;color:inherit;background-color:currentColor;border:0;opacity:.25}hr:not([size]){height:1px}h1,h2,h3,h4,h5,h6{margin-top:0;margin-bottom:.5rem;font-weight:500;line-height:1.2}h1{font-size:calc(1.375rem + 1.5vw)}@media (min-width:1200px){h1{font-size:2.5rem}}h2{font-size:calc(1.325rem + .9vw)}@media (min-width:1200px){h2{font-size:2rem}}h3{font-size:calc(1.3rem + .6vw)}@media (min-width:1200px){h3{font-size:1.75rem}}h4{font-size:calc(1.275rem + .3vw)}@media (min-width:1200px){h4{font-size:1.5rem}}h5{font-size:1.25rem}h6{font-size:1rem}p{margin-top:0;margin-bottom:1rem}abbr[data-bs-original-title],abbr[title]{-webkit-text-decoration:underline dotted;text-decoration:underline dotted;cursor:help;-webkit-text-decoration-skip-ink:none;text-decoration-skip-ink:none}address{margin-bottom:1rem;font-style:normal;line-height:inherit}ol,ul{padding-left:2rem}dl,ol,ul{margin-top:0;margin-bottom:1rem}ol ol,ol ul,ul ol,ul ul{margin-bottom:0}dt{font-weight:700}dd{margin-bottom:.5rem;margin-left:0}blockquote{margin:0 0 1rem}b,strong{font-weight:bolder}small{font-size:.875em}mark{padding:.2em;background-color:#fcf8e3}sub,sup{position:relative;font-size:.75em;line-height:0;vertical-align:baseline}sub{bottom:-.25em}sup{top:-.5em}a{color:#0d6efd;text-decoration:underline}a:hover{color:#0a58ca}a:not([href]):not([class]),a:not([href]):not([class]):hover{color:inherit;text-decoration:none}code,kbd,pre,samp{font-family:SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;font-size:1em;direction:ltr;unicode-bidi:bidi-override}pre{display:block;margin-top:0;margin-bottom:1rem;overflow:auto;font-size:.875em}pre code{font-size:inherit;color:inherit;word-break:normal}code{font-size:.875em;color:#d63384;word-wrap:break-word}a>code{color:inherit}kbd{padding:.2rem .4rem;font-size:.875em;color:#fff;background-color:#212529;border-radius:.2rem}kbd kbd{padding:0;font-size:1em;font-weight:700}figure{margin:0 0 1rem}img,svg{vertical-align:middle}table{caption-side:bottom;border-collapse:collapse}caption{padding-top:.5rem;padding-bottom:.5rem;color:#6c757d;text-align:left}th{text-align:inherit;text-align:-webkit-match-parent}tbody,td,tfoot,th,thead,tr{border-color:inherit;border-style:solid;border-width:0}label{display:inline-block}button{border-radius:0}button:focus:not(:focus-visible){outline:0}button,input,optgroup,select,textarea{margin:0;font-family:inherit;font-size:inherit;line-height:inherit}button,select{text-transform:none}[role=button]{cursor:pointer}select{word-wrap:normal}select:disabled{opacity:1}[list]::-webkit-calendar-picker-indicator{display:none}[type=button],[type=reset],[type=submit],button{-webkit-appearance:button}[type=button]:not(:disabled),[type=reset]:not(:disabled),[type=submit]:not(:disabled),button:not(:disabled){cursor:pointer}::-moz-focus-inner{padding:0;border-style:none}textarea{resize:vertical}fieldset{min-width:0;padding:0;margin:0;border:0}legend{float:left;width:100%;padding:0;margin-bottom:.5rem;font-size:calc(1.275rem + .3vw);line-height:inherit}@media (min-width:1200px){legend{font-size:1.5rem}}legend+*{clear:left}::-webkit-datetime-edit-day-field,::-webkit-datetime-edit-fields-wrapper,::-webkit-datetime-edit-hour-field,::-webkit-datetime-edit-minute,::-webkit-datetime-edit-month-field,::-webkit-datetime-edit-text,::-webkit-datetime-edit-year-field{padding:0}::-webkit-inner-spin-button{height:auto}[type=search]{outline-offset:-2px;-webkit-appearance:textfield}::-webkit-search-decoration{-webkit-appearance:none}::-webkit-color-swatch-wrapper{padding:0}::file-selector-button{font:inherit}::-webkit-file-upload-button{font:inherit;-webkit-appearance:button}output{display:inline-block}iframe{border:0}summary{display:list-item;cursor:pointer}progress{vertical-align:baseline}[hidden]{display:none!important}</style>
+    <style>/*! syntax-highlighting.css */pre{line-height:125%;}span.linenos{color:inherit; background-color:transparent; padding-left:5px; padding-right:20px;}.pdoc-code .hll{background-color:#ffffcc}.pdoc-code{background:#f8f8f8;}.pdoc-code .c{color:#3D7B7B; font-style:italic}.pdoc-code .err{border:1px solid #FF0000}.pdoc-code .k{color:#008000; font-weight:bold}.pdoc-code .o{color:#666666}.pdoc-code .ch{color:#3D7B7B; font-style:italic}.pdoc-code .cm{color:#3D7B7B; font-style:italic}.pdoc-code .cp{color:#9C6500}.pdoc-code .cpf{color:#3D7B7B; font-style:italic}.pdoc-code .c1{color:#3D7B7B; font-style:italic}.pdoc-code .cs{color:#3D7B7B; font-style:italic}.pdoc-code .gd{color:#A00000}.pdoc-code .ge{font-style:italic}.pdoc-code .gr{color:#E40000}.pdoc-code .gh{color:#000080; font-weight:bold}.pdoc-code .gi{color:#008400}.pdoc-code .go{color:#717171}.pdoc-code .gp{color:#000080; font-weight:bold}.pdoc-code .gs{font-weight:bold}.pdoc-code .gu{color:#800080; font-weight:bold}.pdoc-code .gt{color:#0044DD}.pdoc-code .kc{color:#008000; font-weight:bold}.pdoc-code .kd{color:#008000; font-weight:bold}.pdoc-code .kn{color:#008000; font-weight:bold}.pdoc-code .kp{color:#008000}.pdoc-code .kr{color:#008000; font-weight:bold}.pdoc-code .kt{color:#B00040}.pdoc-code .m{color:#666666}.pdoc-code .s{color:#BA2121}.pdoc-code .na{color:#687822}.pdoc-code .nb{color:#008000}.pdoc-code .nc{color:#0000FF; font-weight:bold}.pdoc-code .no{color:#880000}.pdoc-code .nd{color:#AA22FF}.pdoc-code .ni{color:#717171; font-weight:bold}.pdoc-code .ne{color:#CB3F38; font-weight:bold}.pdoc-code .nf{color:#0000FF}.pdoc-code .nl{color:#767600}.pdoc-code .nn{color:#0000FF; font-weight:bold}.pdoc-code .nt{color:#008000; font-weight:bold}.pdoc-code .nv{color:#19177C}.pdoc-code .ow{color:#AA22FF; font-weight:bold}.pdoc-code .w{color:#bbbbbb}.pdoc-code .mb{color:#666666}.pdoc-code .mf{color:#666666}.pdoc-code .mh{color:#666666}.pdoc-code .mi{color:#666666}.pdoc-code .mo{color:#666666}.pdoc-code .sa{color:#BA2121}.pdoc-code .sb{color:#BA2121}.pdoc-code .sc{color:#BA2121}.pdoc-code .dl{color:#BA2121}.pdoc-code .sd{color:#BA2121; font-style:italic}.pdoc-code .s2{color:#BA2121}.pdoc-code .se{color:#AA5D1F; font-weight:bold}.pdoc-code .sh{color:#BA2121}.pdoc-code .si{color:#A45A77; font-weight:bold}.pdoc-code .sx{color:#008000}.pdoc-code .sr{color:#A45A77}.pdoc-code .s1{color:#BA2121}.pdoc-code .ss{color:#19177C}.pdoc-code .bp{color:#008000}.pdoc-code .fm{color:#0000FF}.pdoc-code .vc{color:#19177C}.pdoc-code .vg{color:#19177C}.pdoc-code .vi{color:#19177C}.pdoc-code .vm{color:#19177C}.pdoc-code .il{color:#666666}</style>
+    <style>/*! theme.css */:root{--pdoc-background:#fff;}.pdoc{--text:#212529;--muted:#6c757d;--link:#3660a5;--link-hover:#1659c5;--code:#f8f8f8;--active:#fff598;--accent:#eee;--accent2:#c1c1c1;--nav-hover:rgba(255, 255, 255, 0.5);--name:#0066BB;--def:#008800;--annotation:#007020;}</style>
+    <style>/*! layout.css */html, body{width:100%;height:100%;}html, main{scroll-behavior:smooth;}body{background-color:var(--pdoc-background);}@media (max-width:769px){#navtoggle{cursor:pointer;position:absolute;width:50px;height:40px;top:1rem;right:1rem;border-color:var(--text);color:var(--text);display:flex;opacity:0.8;z-index:999;}#navtoggle:hover{opacity:1;}#togglestate + div{display:none;}#togglestate:checked + div{display:inherit;}main, header{padding:2rem 3vw;}header + main{margin-top:-3rem;}.git-button{display:none !important;}nav input[type="search"]{max-width:77%;}nav input[type="search"]:first-child{margin-top:-6px;}nav input[type="search"]:valid ~ *{display:none !important;}}@media (min-width:770px){:root{--sidebar-width:clamp(12.5rem, 28vw, 22rem);}nav{position:fixed;overflow:auto;height:100vh;width:var(--sidebar-width);}main, header{padding:3rem 2rem 3rem calc(var(--sidebar-width) + 3rem);width:calc(54rem + var(--sidebar-width));max-width:100%;}header + main{margin-top:-4rem;}#navtoggle{display:none;}}#togglestate{position:absolute;height:0;opacity:0;}nav.pdoc{--pad:clamp(0.5rem, 2vw, 1.75rem);--indent:1.5rem;background-color:var(--accent);border-right:1px solid var(--accent2);box-shadow:0 0 20px rgba(50, 50, 50, .2) inset;padding:0 0 0 var(--pad);overflow-wrap:anywhere;scrollbar-width:thin; scrollbar-color:var(--accent2) transparent; z-index:1}nav.pdoc::-webkit-scrollbar{width:.4rem; }nav.pdoc::-webkit-scrollbar-thumb{background-color:var(--accent2); }nav.pdoc > div{padding:var(--pad) 0;}nav.pdoc .module-list-button{display:inline-flex;align-items:center;color:var(--text);border-color:var(--muted);margin-bottom:1rem;}nav.pdoc .module-list-button:hover{border-color:var(--text);}nav.pdoc input[type=search]{display:block;outline-offset:0;width:calc(100% - var(--pad));}nav.pdoc .logo{max-width:calc(100% - var(--pad));max-height:35vh;display:block;margin:0 auto 1rem;transform:translate(calc(-.5 * var(--pad)), 0);}nav.pdoc ul{list-style:none;padding-left:0;}nav.pdoc > div > ul{margin-left:calc(0px - var(--pad));}nav.pdoc li a{padding:.2rem 0 .2rem calc(var(--pad) + var(--indent));}nav.pdoc > div > ul > li > a{padding-left:var(--pad);}nav.pdoc li{transition:all 100ms;}nav.pdoc li:hover{background-color:var(--nav-hover);}nav.pdoc a, nav.pdoc a:hover{color:var(--text);}nav.pdoc a{display:block;}nav.pdoc > h2:first-of-type{margin-top:1.5rem;}nav.pdoc .class:before{content:"class ";color:var(--muted);}nav.pdoc .function:after{content:"()";color:var(--muted);}nav.pdoc footer:before{content:"";display:block;width:calc(100% - var(--pad));border-top:solid var(--accent2) 1px;margin-top:1.5rem;padding-top:.5rem;}nav.pdoc footer{font-size:small;}</style>
+    <style>/*! content.css */.pdoc{color:var(--text);box-sizing:border-box;line-height:1.5;background:none;}.pdoc .pdoc-button{cursor:pointer;display:inline-block;border:solid black 1px;border-radius:2px;font-size:.75rem;padding:calc(0.5em - 1px) 1em;transition:100ms all;}.pdoc .alert{padding:1rem 1rem 1rem calc(1.5rem + 24px);border:1px solid transparent;border-radius:.25rem;background-repeat:no-repeat;background-position:.75rem center;margin-bottom:1rem;}.pdoc .alert > em{display:none;}.pdoc .alert > *:last-child{margin-bottom:0;}.pdoc .alert.note{color:#084298;background-color:#cfe2ff;border-color:#b6d4fe;background-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2224%22%20height%3D%2224%22%20fill%3D%22%23084298%22%20viewBox%3D%220%200%2016%2016%22%3E%3Cpath%20d%3D%22M8%2016A8%208%200%201%200%208%200a8%208%200%200%200%200%2016zm.93-9.412-1%204.705c-.07.34.029.533.304.533.194%200%20.487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703%200-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381%202.29-.287zM8%205.5a1%201%200%201%201%200-2%201%201%200%200%201%200%202z%22/%3E%3C/svg%3E");}.pdoc .alert.tip{color:#0a3622;background-color:#d1e7dd;border-color:#a3cfbb;background-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2224%22%20height%3D%2224%22%20fill%3D%22%230a3622%22%20viewBox%3D%220%200%2016%2016%22%3E%3Cpath%20d%3D%22M2%206a6%206%200%201%201%2010.174%204.31c-.203.196-.359.4-.453.619l-.762%201.769A.5.5%200%200%201%2010.5%2013a.5.5%200%200%201%200%201%20.5.5%200%200%201%200%201l-.224.447a1%201%200%200%201-.894.553H6.618a1%201%200%200%201-.894-.553L5.5%2015a.5.5%200%200%201%200-1%20.5.5%200%200%201%200-1%20.5.5%200%200%201-.46-.302l-.761-1.77a2%202%200%200%200-.453-.618A5.98%205.98%200%200%201%202%206m6-5a5%205%200%200%200-3.479%208.592c.263.254.514.564.676.941L5.83%2012h4.342l.632-1.467c.162-.377.413-.687.676-.941A5%205%200%200%200%208%201%22/%3E%3C/svg%3E");}.pdoc .alert.important{color:#055160;background-color:#cff4fc;border-color:#9eeaf9;background-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2224%22%20height%3D%2224%22%20fill%3D%22%23055160%22%20viewBox%3D%220%200%2016%2016%22%3E%3Cpath%20d%3D%22M2%200a2%202%200%200%200-2%202v12a2%202%200%200%200%202%202h12a2%202%200%200%200%202-2V2a2%202%200%200%200-2-2zm6%204c.535%200%20.954.462.9.995l-.35%203.507a.552.552%200%200%201-1.1%200L7.1%204.995A.905.905%200%200%201%208%204m.002%206a1%201%200%201%201%200%202%201%201%200%200%201%200-2%22/%3E%3C/svg%3E");}.pdoc .alert.warning{color:#664d03;background-color:#fff3cd;border-color:#ffecb5;background-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2224%22%20height%3D%2224%22%20fill%3D%22%23664d03%22%20viewBox%3D%220%200%2016%2016%22%3E%3Cpath%20d%3D%22M8.982%201.566a1.13%201.13%200%200%200-1.96%200L.165%2013.233c-.457.778.091%201.767.98%201.767h13.713c.889%200%201.438-.99.98-1.767L8.982%201.566zM8%205c.535%200%20.954.462.9.995l-.35%203.507a.552.552%200%200%201-1.1%200L7.1%205.995A.905.905%200%200%201%208%205zm.002%206a1%201%200%201%201%200%202%201%201%200%200%201%200-2z%22/%3E%3C/svg%3E");}.pdoc .alert.caution{color:#842029;background-color:#f8d7da;border-color:#f5c2c7;background-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2224%22%20height%3D%2224%22%20fill%3D%22%23842029%22%20viewBox%3D%220%200%2016%2016%22%3E%3Cpath%20d%3D%22M11.46.146A.5.5%200%200%200%2011.107%200H4.893a.5.5%200%200%200-.353.146L.146%204.54A.5.5%200%200%200%200%204.893v6.214a.5.5%200%200%200%20.146.353l4.394%204.394a.5.5%200%200%200%20.353.146h6.214a.5.5%200%200%200%20.353-.146l4.394-4.394a.5.5%200%200%200%20.146-.353V4.893a.5.5%200%200%200-.146-.353zM8%204c.535%200%20.954.462.9.995l-.35%203.507a.552.552%200%200%201-1.1%200L7.1%204.995A.905.905%200%200%201%208%204m.002%206a1%201%200%201%201%200%202%201%201%200%200%201%200-2%22/%3E%3C/svg%3E");}.pdoc .alert.danger{color:#842029;background-color:#f8d7da;border-color:#f5c2c7;background-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2224%22%20height%3D%2224%22%20fill%3D%22%23842029%22%20viewBox%3D%220%200%2016%2016%22%3E%3Cpath%20d%3D%22M5.52.359A.5.5%200%200%201%206%200h4a.5.5%200%200%201%20.474.658L8.694%206H12.5a.5.5%200%200%201%20.395.807l-7%209a.5.5%200%200%201-.873-.454L6.823%209.5H3.5a.5.5%200%200%201-.48-.641l2.5-8.5z%22/%3E%3C/svg%3E");}.pdoc .visually-hidden{position:absolute !important;width:1px !important;height:1px !important;padding:0 !important;margin:-1px !important;overflow:hidden !important;clip:rect(0, 0, 0, 0) !important;white-space:nowrap !important;border:0 !important;}.pdoc h1, .pdoc h2, .pdoc h3{font-weight:300;margin:.3em 0;padding:.2em 0;}.pdoc > section:not(.module-info) h1{font-size:1.5rem;font-weight:500;}.pdoc > section:not(.module-info) h2{font-size:1.4rem;font-weight:500;}.pdoc > section:not(.module-info) h3{font-size:1.3rem;font-weight:500;}.pdoc > section:not(.module-info) h4{font-size:1.2rem;}.pdoc > section:not(.module-info) h5{font-size:1.1rem;}.pdoc a{text-decoration:none;color:var(--link);}.pdoc a:hover{color:var(--link-hover);}.pdoc blockquote{margin-left:2rem;}.pdoc pre{border-top:1px solid var(--accent2);border-bottom:1px solid var(--accent2);margin-top:0;margin-bottom:1em;padding:.5rem 0 .5rem .5rem;overflow-x:auto;background-color:var(--code);}.pdoc code{color:var(--text);padding:.2em .4em;margin:0;font-size:85%;background-color:var(--accent);border-radius:6px;}.pdoc a > code{color:inherit;}.pdoc pre > code{display:inline-block;font-size:inherit;background:none;border:none;padding:0;}.pdoc > section:not(.module-info){margin-bottom:1.5rem;}.pdoc .modulename{margin-top:0;font-weight:bold;}.pdoc .modulename a{color:var(--link);transition:100ms all;}.pdoc .git-button{float:right;border:solid var(--link) 1px;}.pdoc .git-button:hover{background-color:var(--link);color:var(--pdoc-background);}.view-source-toggle-state,.view-source-toggle-state ~ .pdoc-code{display:none;}.view-source-toggle-state:checked ~ .pdoc-code{display:block;}.view-source-button{display:inline-block;float:right;font-size:.75rem;line-height:1.5rem;color:var(--muted);padding:0 .4rem 0 1.3rem;cursor:pointer;text-indent:-2px;}.view-source-button > span{visibility:hidden;}.module-info .view-source-button{float:none;display:flex;justify-content:flex-end;margin:-1.2rem .4rem -.2rem 0;}.view-source-button::before{position:absolute;content:"View Source";display:list-item;list-style-type:disclosure-closed;}.view-source-toggle-state:checked ~ .attr .view-source-button::before,.view-source-toggle-state:checked ~ .view-source-button::before{list-style-type:disclosure-open;}.pdoc .docstring{margin-bottom:1.5rem;}.pdoc section:not(.module-info) .docstring{margin-left:clamp(0rem, 5vw - 2rem, 1rem);}.pdoc .docstring .pdoc-code{margin-left:1em;margin-right:1em;}.pdoc h1:target,.pdoc h2:target,.pdoc h3:target,.pdoc h4:target,.pdoc h5:target,.pdoc h6:target,.pdoc .pdoc-code > pre > span:target{background-color:var(--active);box-shadow:-1rem 0 0 0 var(--active);}.pdoc .pdoc-code > pre > span:target{display:block;}.pdoc div:target > .attr,.pdoc section:target > .attr,.pdoc dd:target > a{background-color:var(--active);}.pdoc *{scroll-margin:2rem;}.pdoc .pdoc-code .linenos{user-select:none;}.pdoc .attr:hover{filter:contrast(0.95);}.pdoc section, .pdoc .classattr{position:relative;}.pdoc .headerlink{--width:clamp(1rem, 3vw, 2rem);position:absolute;top:0;left:calc(0rem - var(--width));transition:all 100ms ease-in-out;opacity:0;}.pdoc .headerlink::before{content:"#";display:block;text-align:center;width:var(--width);height:2.3rem;line-height:2.3rem;font-size:1.5rem;}.pdoc .attr:hover ~ .headerlink,.pdoc *:target > .headerlink,.pdoc .headerlink:hover{opacity:1;}.pdoc .attr{display:block;margin:.5rem 0 .5rem;padding:.4rem .4rem .4rem 1rem;background-color:var(--accent);overflow-x:auto;}.pdoc .classattr{margin-left:2rem;}.pdoc .decorator-deprecated{color:#842029;}.pdoc .decorator-deprecated ~ span{filter:grayscale(1) opacity(0.8);}.pdoc .name{color:var(--name);font-weight:bold;}.pdoc .def{color:var(--def);font-weight:bold;}.pdoc .signature{background-color:transparent;}.pdoc .param, .pdoc .return-annotation{white-space:pre;}.pdoc .signature.multiline .param{display:block;}.pdoc .signature.condensed .param{display:inline-block;}.pdoc .annotation{color:var(--annotation);}.pdoc .view-value-toggle-state,.pdoc .view-value-toggle-state ~ .default_value{display:none;}.pdoc .view-value-toggle-state:checked ~ .default_value{display:inherit;}.pdoc .view-value-button{font-size:.5rem;vertical-align:middle;border-style:dashed;margin-top:-0.1rem;}.pdoc .view-value-button:hover{background:white;}.pdoc .view-value-button::before{content:"show";text-align:center;width:2.2em;display:inline-block;}.pdoc .view-value-toggle-state:checked ~ .view-value-button::before{content:"hide";}.pdoc .inherited{margin-left:2rem;}.pdoc .inherited dt{font-weight:700;}.pdoc .inherited dt, .pdoc .inherited dd{display:inline;margin-left:0;margin-bottom:.5rem;}.pdoc .inherited dd:not(:last-child):after{content:", ";}.pdoc .inherited .class:before{content:"class ";}.pdoc .inherited .function a:after{content:"()";}.pdoc .search-result .docstring{overflow:auto;max-height:25vh;}.pdoc .search-result.focused > .attr{background-color:var(--active);}.pdoc .attribution{margin-top:2rem;display:block;opacity:0.5;transition:all 200ms;filter:grayscale(100%);}.pdoc .attribution:hover{opacity:1;filter:grayscale(0%);}.pdoc .attribution img{margin-left:5px;height:35px;vertical-align:middle;width:70px;transition:all 200ms;}.pdoc table{display:block;width:max-content;max-width:100%;overflow:auto;margin-bottom:1rem;}.pdoc table th{font-weight:600;}.pdoc table th, .pdoc table td{padding:6px 13px;border:1px solid var(--accent2);}</style>
+    <style>/*! custom.css */</style></head>
+<body>
+    <nav class="pdoc">
+        <label id="navtoggle" for="togglestate" class="pdoc-button"><svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'><path stroke-linecap='round' stroke="currentColor" stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/></svg></label>
+        <input id="togglestate" type="checkbox" aria-hidden="true" tabindex="-1">
+        <div>            <a class="pdoc-button module-list-button" href="../azure.html">
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-box-arrow-in-left" viewBox="0 0 16 16">
+  <path fill-rule="evenodd" d="M10 3.5a.5.5 0 0 0-.5-.5h-8a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h8a.5.5 0 0 0 .5-.5v-2a.5.5 0 0 1 1 0v2A1.5 1.5 0 0 1 9.5 14h-8A1.5 1.5 0 0 1 0 12.5v-9A1.5 1.5 0 0 1 1.5 2h8A1.5 1.5 0 0 1 11 3.5v2a.5.5 0 0 1-1 0v-2z"/>
+  <path fill-rule="evenodd" d="M4.146 8.354a.5.5 0 0 1 0-.708l3-3a.5.5 0 1 1 .708.708L5.707 7.5H14.5a.5.5 0 0 1 0 1H5.707l2.147 2.146a.5.5 0 0 1-.708.708l-3-3z"/>
+</svg>                &nbsp;azure</a>
+
+
+            <input type="search" placeholder="Search..." role="searchbox" aria-label="search"
+                   pattern=".+" required>
+
+
+
+            <h2>API Documentation</h2>
+                <ul class="memberlist">
+            <li>
+                    <a class="class" href="#PipelineClient">PipelineClient</a>
+                            <ul class="memberlist">
+                        <li>
+                                <a class="function" href="#PipelineClient.close">close</a>
+                        </li>
+                        <li>
+                                <a class="function" href="#PipelineClient.send_request">send_request</a>
+                        </li>
+                </ul>
+
+            </li>
+            <li>
+                    <a class="class" href="#MatchConditions">MatchConditions</a>
+                            <ul class="memberlist">
+                        <li>
+                                <a class="variable" href="#MatchConditions.Unconditionally">Unconditionally</a>
+                        </li>
+                        <li>
+                                <a class="variable" href="#MatchConditions.IfNotModified">IfNotModified</a>
+                        </li>
+                        <li>
+                                <a class="variable" href="#MatchConditions.IfModified">IfModified</a>
+                        </li>
+                        <li>
+                                <a class="variable" href="#MatchConditions.IfPresent">IfPresent</a>
+                        </li>
+                        <li>
+                                <a class="variable" href="#MatchConditions.IfMissing">IfMissing</a>
+                        </li>
+                </ul>
+
+            </li>
+            <li>
+                    <a class="class" href="#CaseInsensitiveEnumMeta">CaseInsensitiveEnumMeta</a>
+                            <ul class="memberlist">
+                </ul>
+
+            </li>
+            <li>
+                    <a class="class" href="#AsyncPipelineClient">AsyncPipelineClient</a>
+                            <ul class="memberlist">
+                        <li>
+                                <a class="function" href="#AsyncPipelineClient.close">close</a>
+                        </li>
+                        <li>
+                                <a class="function" href="#AsyncPipelineClient.send_request">send_request</a>
+                        </li>
+                </ul>
+
+            </li>
+            <li>
+                    <a class="class" href="#AzureClouds">AzureClouds</a>
+                            <ul class="memberlist">
+                        <li>
+                                <a class="variable" href="#AzureClouds.AZURE_PUBLIC_CLOUD">AZURE_PUBLIC_CLOUD</a>
+                        </li>
+                        <li>
+                                <a class="variable" href="#AzureClouds.AZURE_CHINA_CLOUD">AZURE_CHINA_CLOUD</a>
+                        </li>
+                        <li>
+                                <a class="variable" href="#AzureClouds.AZURE_US_GOVERNMENT">AZURE_US_GOVERNMENT</a>
+                        </li>
+                </ul>
+
+            </li>
+    </ul>
+
+
+
+        <a class="attribution" title="pdoc: Python API documentation generator" href="https://pdoc.dev" target="_blank">
+            built with <span class="visually-hidden">pdoc</span><img
+                alt="pdoc logo"
+                src="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20role%3D%22img%22%20aria-label%3D%22pdoc%20logo%22%20width%3D%22300%22%20height%3D%22150%22%20viewBox%3D%22-1%200%2060%2030%22%3E%3Ctitle%3Epdoc%3C/title%3E%3Cpath%20d%3D%22M29.621%2021.293c-.011-.273-.214-.475-.511-.481a.5.5%200%200%200-.489.503l-.044%201.393c-.097.551-.695%201.215-1.566%201.704-.577.428-1.306.486-2.193.182-1.426-.617-2.467-1.654-3.304-2.487l-.173-.172a3.43%203.43%200%200%200-.365-.306.49.49%200%200%200-.286-.196c-1.718-1.06-4.931-1.47-7.353.191l-.219.15c-1.707%201.187-3.413%202.131-4.328%201.03-.02-.027-.49-.685-.141-1.763.233-.721.546-2.408.772-4.076.042-.09.067-.187.046-.288.166-1.347.277-2.625.241-3.351%201.378-1.008%202.271-2.586%202.271-4.362%200-.976-.272-1.935-.788-2.774-.057-.094-.122-.18-.184-.268.033-.167.052-.339.052-.516%200-1.477-1.202-2.679-2.679-2.679-.791%200-1.496.352-1.987.9a6.3%206.3%200%200%200-1.001.029c-.492-.564-1.207-.929-2.012-.929-1.477%200-2.679%201.202-2.679%202.679A2.65%202.65%200%200%200%20.97%206.554c-.383.747-.595%201.572-.595%202.41%200%202.311%201.507%204.29%203.635%205.107-.037.699-.147%202.27-.423%203.294l-.137.461c-.622%202.042-2.515%208.257%201.727%2010.643%201.614.908%203.06%201.248%204.317%201.248%202.665%200%204.492-1.524%205.322-2.401%201.476-1.559%202.886-1.854%206.491.82%201.877%201.393%203.514%201.753%204.861%201.068%202.223-1.713%202.811-3.867%203.399-6.374.077-.846.056-1.469.054-1.537zm-4.835%204.313c-.054.305-.156.586-.242.629-.034-.007-.131-.022-.307-.157-.145-.111-.314-.478-.456-.908.221.121.432.25.675.355.115.039.219.051.33.081zm-2.251-1.238c-.05.33-.158.648-.252.694-.022.001-.125-.018-.307-.157-.217-.166-.488-.906-.639-1.573.358.344.754.693%201.198%201.036zm-3.887-2.337c-.006-.116-.018-.231-.041-.342.635.145%201.189.368%201.599.625.097.231.166.481.174.642-.03.049-.055.101-.067.158-.046.013-.128.026-.298.004-.278-.037-.901-.57-1.367-1.087zm-1.127-.497c.116.306.176.625.12.71-.019.014-.117.045-.345.016-.206-.027-.604-.332-.986-.695.41-.051.816-.056%201.211-.031zm-4.535%201.535c.209.22.379.47.358.598-.006.041-.088.138-.351.234-.144.055-.539-.063-.979-.259a11.66%2011.66%200%200%200%20.972-.573zm.983-.664c.359-.237.738-.418%201.126-.554.25.237.479.548.457.694-.006.042-.087.138-.351.235-.174.064-.694-.105-1.232-.375zm-3.381%201.794c-.022.145-.061.29-.149.401-.133.166-.358.248-.69.251h-.002c-.133%200-.306-.26-.45-.621.417.091.854.07%201.291-.031zm-2.066-8.077a4.78%204.78%200%200%201-.775-.584c.172-.115.505-.254.88-.378l-.105.962zm-.331%202.302a10.32%2010.32%200%200%201-.828-.502c.202-.143.576-.328.984-.49l-.156.992zm-.45%202.157l-.701-.403c.214-.115.536-.249.891-.376a11.57%2011.57%200%200%201-.19.779zm-.181%201.716c.064.398.194.702.298.893-.194-.051-.435-.162-.736-.398.061-.119.224-.3.438-.495zM8.87%204.141c0%20.152-.123.276-.276.276s-.275-.124-.275-.276.123-.276.276-.276.275.124.275.276zm-.735-.389a1.15%201.15%200%200%200-.314.783%201.16%201.16%200%200%200%201.162%201.162c.457%200%20.842-.27%201.032-.653.026.117.042.238.042.362a1.68%201.68%200%200%201-1.679%201.679%201.68%201.68%200%200%201-1.679-1.679c0-.843.626-1.535%201.436-1.654zM5.059%205.406A1.68%201.68%200%200%201%203.38%207.085a1.68%201.68%200%200%201-1.679-1.679c0-.037.009-.072.011-.109.21.3.541.508.935.508a1.16%201.16%200%200%200%201.162-1.162%201.14%201.14%200%200%200-.474-.912c.015%200%20.03-.005.045-.005.926.001%201.679.754%201.679%201.68zM3.198%204.141c0%20.152-.123.276-.276.276s-.275-.124-.275-.276.123-.276.276-.276.275.124.275.276zM1.375%208.964c0-.52.103-1.035.288-1.52.466.394%201.06.64%201.717.64%201.144%200%202.116-.725%202.499-1.738.383%201.012%201.355%201.738%202.499%201.738.867%200%201.631-.421%202.121-1.062.307.605.478%201.267.478%201.942%200%202.486-2.153%204.51-4.801%204.51s-4.801-2.023-4.801-4.51zm24.342%2019.349c-.985.498-2.267.168-3.813-.979-3.073-2.281-5.453-3.199-7.813-.705-1.315%201.391-4.163%203.365-8.423.97-3.174-1.786-2.239-6.266-1.261-9.479l.146-.492c.276-1.02.395-2.457.444-3.268a6.11%206.11%200%200%200%201.18.115%206.01%206.01%200%200%200%202.536-.562l-.006.175c-.802.215-1.848.612-2.021%201.25-.079.295.021.601.274.837.219.203.415.364.598.501-.667.304-1.243.698-1.311%201.179-.02.144-.022.507.393.787.213.144.395.26.564.365-1.285.521-1.361.96-1.381%201.126-.018.142-.011.496.427.746l.854.489c-.473.389-.971.914-.999%201.429-.018.278.095.532.316.713.675.556%201.231.721%201.653.721.059%200%20.104-.014.158-.02.207.707.641%201.64%201.513%201.64h.013c.8-.008%201.236-.345%201.462-.626.173-.216.268-.457.325-.692.424.195.93.374%201.372.374.151%200%20.294-.021.423-.068.732-.27.944-.704.993-1.021.009-.061.003-.119.002-.179.266.086.538.147.789.147.15%200%20.294-.021.423-.069.542-.2.797-.489.914-.754.237.147.478.258.704.288.106.014.205.021.296.021.356%200%20.595-.101.767-.229.438.435%201.094.992%201.656%201.067.106.014.205.021.296.021a1.56%201.56%200%200%200%20.323-.035c.17.575.453%201.289.866%201.605.358.273.665.362.914.362a.99.99%200%200%200%20.421-.093%201.03%201.03%200%200%200%20.245-.164c.168.428.39.846.68%201.068.358.273.665.362.913.362a.99.99%200%200%200%20.421-.093c.317-.148.512-.448.639-.762.251.157.495.257.726.257.127%200%20.25-.024.37-.071.427-.17.706-.617.841-1.314.022-.015.047-.022.068-.038.067-.051.133-.104.196-.159-.443%201.486-1.107%202.761-2.086%203.257zM8.66%209.925a.5.5%200%201%200-1%200c0%20.653-.818%201.205-1.787%201.205s-1.787-.552-1.787-1.205a.5.5%200%201%200-1%200c0%201.216%201.25%202.205%202.787%202.205s2.787-.989%202.787-2.205zm4.4%2015.965l-.208.097c-2.661%201.258-4.708%201.436-6.086.527-1.542-1.017-1.88-3.19-1.844-4.198a.4.4%200%200%200-.385-.414c-.242-.029-.406.164-.414.385-.046%201.249.367%203.686%202.202%204.896.708.467%201.547.7%202.51.7%201.248%200%202.706-.392%204.362-1.174l.185-.086a.4.4%200%200%200%20.205-.527c-.089-.204-.326-.291-.527-.206zM9.547%202.292c.093.077.205.114.317.114a.5.5%200%200%200%20.318-.886L8.817.397a.5.5%200%200%200-.703.068.5.5%200%200%200%20.069.703l1.364%201.124zm-7.661-.065c.086%200%20.173-.022.253-.068l1.523-.893a.5.5%200%200%200-.506-.863l-1.523.892a.5.5%200%200%200-.179.685c.094.158.261.247.432.247z%22%20transform%3D%22matrix%28-1%200%200%201%2058%200%29%22%20fill%3D%22%233bb300%22/%3E%3Cpath%20d%3D%22M.3%2021.86V10.18q0-.46.02-.68.04-.22.18-.5.28-.54%201.34-.54%201.06%200%201.42.28.38.26.44.78.76-1.04%202.38-1.04%201.64%200%203.1%201.54%201.46%201.54%201.46%203.58%200%202.04-1.46%203.58-1.44%201.54-3.08%201.54-1.64%200-2.38-.92v4.04q0%20.46-.04.68-.02.22-.18.5-.14.3-.5.42-.36.12-.98.12-.62%200-1-.12-.36-.12-.52-.4-.14-.28-.18-.5-.02-.22-.02-.68zm3.96-9.42q-.46.54-.46%201.18%200%20.64.46%201.18.48.52%201.2.52.74%200%201.24-.52.52-.52.52-1.18%200-.66-.48-1.18-.48-.54-1.26-.54-.76%200-1.22.54zm14.741-8.36q.16-.3.54-.42.38-.12%201-.12.64%200%201.02.12.38.12.52.42.16.3.18.54.04.22.04.68v11.94q0%20.46-.04.7-.02.22-.18.5-.3.54-1.7.54-1.38%200-1.54-.98-.84.96-2.34.96-1.8%200-3.28-1.56-1.48-1.58-1.48-3.66%200-2.1%201.48-3.68%201.5-1.58%203.28-1.58%201.48%200%202.3%201v-4.2q0-.46.02-.68.04-.24.18-.52zm-3.24%2010.86q.52.54%201.26.54.74%200%201.22-.54.5-.54.5-1.18%200-.66-.48-1.22-.46-.56-1.26-.56-.8%200-1.28.56-.48.54-.48%201.2%200%20.66.52%201.2zm7.833-1.2q0-2.4%201.68-3.96%201.68-1.56%203.84-1.56%202.16%200%203.82%201.56%201.66%201.54%201.66%203.94%200%201.66-.86%202.96-.86%201.28-2.1%201.9-1.22.6-2.54.6-1.32%200-2.56-.64-1.24-.66-2.1-1.92-.84-1.28-.84-2.88zm4.18%201.44q.64.48%201.3.48.66%200%201.32-.5.66-.5.66-1.48%200-.98-.62-1.46-.62-.48-1.34-.48-.72%200-1.34.5-.62.5-.62%201.48%200%20.96.64%201.46zm11.412-1.44q0%20.84.56%201.32.56.46%201.18.46.64%200%201.18-.36.56-.38.9-.38.6%200%201.46%201.06.46.58.46%201.04%200%20.76-1.1%201.42-1.14.8-2.8.8-1.86%200-3.58-1.34-.82-.64-1.34-1.7-.52-1.08-.52-2.36%200-1.3.52-2.34.52-1.06%201.34-1.7%201.66-1.32%203.54-1.32.76%200%201.48.22.72.2%201.06.4l.32.2q.36.24.56.38.52.4.52.92%200%20.5-.42%201.14-.72%201.1-1.38%201.1-.38%200-1.08-.44-.36-.34-1.04-.34-.66%200-1.24.48-.58.48-.58%201.34z%22%20fill%3D%22green%22/%3E%3C/svg%3E"/>
+        </a>
+</div>
+    </nav>
+    <main class="pdoc">
+            <section class="module-info">
+                    <h1 class="modulename">
+<a href="./../azure.html">azure</a><wbr>.core    </h1>
+
+                
+                        <input id="mod-core-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+
+                        <label class="view-source-button" for="mod-core-view-source"><span>View Source</span></label>
+
+                        <div class="pdoc-code codehilite"><pre><span></span><span id="L-1"><a href="#L-1"><span class="linenos"> 1</span></a><span class="c1"># --------------------------------------------------------------------------</span>
+</span><span id="L-2"><a href="#L-2"><span class="linenos"> 2</span></a><span class="c1">#</span>
+</span><span id="L-3"><a href="#L-3"><span class="linenos"> 3</span></a><span class="c1"># Copyright (c) Microsoft Corporation. All rights reserved.</span>
+</span><span id="L-4"><a href="#L-4"><span class="linenos"> 4</span></a><span class="c1">#</span>
+</span><span id="L-5"><a href="#L-5"><span class="linenos"> 5</span></a><span class="c1"># The MIT License (MIT)</span>
+</span><span id="L-6"><a href="#L-6"><span class="linenos"> 6</span></a><span class="c1">#</span>
+</span><span id="L-7"><a href="#L-7"><span class="linenos"> 7</span></a><span class="c1"># Permission is hereby granted, free of charge, to any person obtaining a copy</span>
+</span><span id="L-8"><a href="#L-8"><span class="linenos"> 8</span></a><span class="c1"># of this software and associated documentation files (the &quot;&quot;Software&quot;&quot;), to</span>
+</span><span id="L-9"><a href="#L-9"><span class="linenos"> 9</span></a><span class="c1"># deal in the Software without restriction, including without limitation the</span>
+</span><span id="L-10"><a href="#L-10"><span class="linenos">10</span></a><span class="c1"># rights to use, copy, modify, merge, publish, distribute, sublicense, and/or</span>
+</span><span id="L-11"><a href="#L-11"><span class="linenos">11</span></a><span class="c1"># sell copies of the Software, and to permit persons to whom the Software is</span>
+</span><span id="L-12"><a href="#L-12"><span class="linenos">12</span></a><span class="c1"># furnished to do so, subject to the following conditions:</span>
+</span><span id="L-13"><a href="#L-13"><span class="linenos">13</span></a><span class="c1">#</span>
+</span><span id="L-14"><a href="#L-14"><span class="linenos">14</span></a><span class="c1"># The above copyright notice and this permission notice shall be included in</span>
+</span><span id="L-15"><a href="#L-15"><span class="linenos">15</span></a><span class="c1"># all copies or substantial portions of the Software.</span>
+</span><span id="L-16"><a href="#L-16"><span class="linenos">16</span></a><span class="c1">#</span>
+</span><span id="L-17"><a href="#L-17"><span class="linenos">17</span></a><span class="c1"># THE SOFTWARE IS PROVIDED *AS IS*, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR</span>
+</span><span id="L-18"><a href="#L-18"><span class="linenos">18</span></a><span class="c1"># IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,</span>
+</span><span id="L-19"><a href="#L-19"><span class="linenos">19</span></a><span class="c1"># FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE</span>
+</span><span id="L-20"><a href="#L-20"><span class="linenos">20</span></a><span class="c1"># AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER</span>
+</span><span id="L-21"><a href="#L-21"><span class="linenos">21</span></a><span class="c1"># LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING</span>
+</span><span id="L-22"><a href="#L-22"><span class="linenos">22</span></a><span class="c1"># FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS</span>
+</span><span id="L-23"><a href="#L-23"><span class="linenos">23</span></a><span class="c1"># IN THE SOFTWARE.</span>
+</span><span id="L-24"><a href="#L-24"><span class="linenos">24</span></a><span class="c1">#</span>
+</span><span id="L-25"><a href="#L-25"><span class="linenos">25</span></a><span class="c1"># --------------------------------------------------------------------------</span>
+</span><span id="L-26"><a href="#L-26"><span class="linenos">26</span></a>
+</span><span id="L-27"><a href="#L-27"><span class="linenos">27</span></a><span class="kn">from</span><span class="w"> </span><span class="nn">._version</span><span class="w"> </span><span class="kn">import</span> <span class="n">VERSION</span>
+</span><span id="L-28"><a href="#L-28"><span class="linenos">28</span></a>
+</span><span id="L-29"><a href="#L-29"><span class="linenos">29</span></a><span class="n">__version__</span> <span class="o">=</span> <span class="n">VERSION</span>
+</span><span id="L-30"><a href="#L-30"><span class="linenos">30</span></a>
+</span><span id="L-31"><a href="#L-31"><span class="linenos">31</span></a><span class="kn">from</span><span class="w"> </span><span class="nn">._pipeline_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">PipelineClient</span>
+</span><span id="L-32"><a href="#L-32"><span class="linenos">32</span></a><span class="kn">from</span><span class="w"> </span><span class="nn">._match_conditions</span><span class="w"> </span><span class="kn">import</span> <span class="n">MatchConditions</span>
+</span><span id="L-33"><a href="#L-33"><span class="linenos">33</span></a><span class="kn">from</span><span class="w"> </span><span class="nn">._azure_clouds</span><span class="w"> </span><span class="kn">import</span> <span class="n">AzureClouds</span>
+</span><span id="L-34"><a href="#L-34"><span class="linenos">34</span></a><span class="kn">from</span><span class="w"> </span><span class="nn">._enum_meta</span><span class="w"> </span><span class="kn">import</span> <span class="n">CaseInsensitiveEnumMeta</span>
+</span><span id="L-35"><a href="#L-35"><span class="linenos">35</span></a><span class="kn">from</span><span class="w"> </span><span class="nn">._pipeline_client_async</span><span class="w"> </span><span class="kn">import</span> <span class="n">AsyncPipelineClient</span>
+</span><span id="L-36"><a href="#L-36"><span class="linenos">36</span></a>
+</span><span id="L-37"><a href="#L-37"><span class="linenos">37</span></a><span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+</span><span id="L-38"><a href="#L-38"><span class="linenos">38</span></a>    <span class="s2">&quot;PipelineClient&quot;</span><span class="p">,</span>
+</span><span id="L-39"><a href="#L-39"><span class="linenos">39</span></a>    <span class="s2">&quot;MatchConditions&quot;</span><span class="p">,</span>
+</span><span id="L-40"><a href="#L-40"><span class="linenos">40</span></a>    <span class="s2">&quot;CaseInsensitiveEnumMeta&quot;</span><span class="p">,</span>
+</span><span id="L-41"><a href="#L-41"><span class="linenos">41</span></a>    <span class="s2">&quot;AsyncPipelineClient&quot;</span><span class="p">,</span>
+</span><span id="L-42"><a href="#L-42"><span class="linenos">42</span></a>    <span class="s2">&quot;AzureClouds&quot;</span><span class="p">,</span>
+</span><span id="L-43"><a href="#L-43"><span class="linenos">43</span></a><span class="p">]</span>
+</span></pre></div>
+
+
+            </section>
+                <section id="PipelineClient">
+                            <input id="PipelineClient-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+<div class="attr class">
+            
+    <span class="def">class</span>
+    <span class="name">PipelineClient</span><wbr>(<span class="base">azure.core.pipeline.transport._base.PipelineClientBase</span>, <span class="base">typing.Generic[~HTTPRequestType, ~HTTPResponseType]</span>):
+
+                <label class="view-source-button" for="PipelineClient-view-source"><span>View Source</span></label>
+
+    </div>
+    <a class="headerlink" href="#PipelineClient"></a>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="PipelineClient-50"><a href="#PipelineClient-50"><span class="linenos"> 50</span></a><span class="k">class</span><span class="w"> </span><span class="nc">PipelineClient</span><span class="p">(</span><span class="n">PipelineClientBase</span><span class="p">,</span> <span class="n">Generic</span><span class="p">[</span><span class="n">HTTPRequestType</span><span class="p">,</span> <span class="n">HTTPResponseType</span><span class="p">]):</span>
+</span><span id="PipelineClient-51"><a href="#PipelineClient-51"><span class="linenos"> 51</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Service client core methods.</span>
+</span><span id="PipelineClient-52"><a href="#PipelineClient-52"><span class="linenos"> 52</span></a>
+</span><span id="PipelineClient-53"><a href="#PipelineClient-53"><span class="linenos"> 53</span></a><span class="sd">    Builds a Pipeline client.</span>
+</span><span id="PipelineClient-54"><a href="#PipelineClient-54"><span class="linenos"> 54</span></a>
+</span><span id="PipelineClient-55"><a href="#PipelineClient-55"><span class="linenos"> 55</span></a><span class="sd">    :param str base_url: URL for the request.</span>
+</span><span id="PipelineClient-56"><a href="#PipelineClient-56"><span class="linenos"> 56</span></a><span class="sd">    :keyword ~azure.core.configuration.Configuration config: If omitted, the standard configuration is used.</span>
+</span><span id="PipelineClient-57"><a href="#PipelineClient-57"><span class="linenos"> 57</span></a><span class="sd">    :keyword Pipeline pipeline: If omitted, a Pipeline object is created and returned.</span>
+</span><span id="PipelineClient-58"><a href="#PipelineClient-58"><span class="linenos"> 58</span></a><span class="sd">    :keyword list[HTTPPolicy] policies: If omitted, the standard policies of the configuration object is used.</span>
+</span><span id="PipelineClient-59"><a href="#PipelineClient-59"><span class="linenos"> 59</span></a><span class="sd">    :keyword per_call_policies: If specified, the policies will be added into the policy list before RetryPolicy</span>
+</span><span id="PipelineClient-60"><a href="#PipelineClient-60"><span class="linenos"> 60</span></a><span class="sd">    :paramtype per_call_policies: Union[HTTPPolicy, SansIOHTTPPolicy, list[HTTPPolicy], list[SansIOHTTPPolicy]]</span>
+</span><span id="PipelineClient-61"><a href="#PipelineClient-61"><span class="linenos"> 61</span></a><span class="sd">    :keyword per_retry_policies: If specified, the policies will be added into the policy list after RetryPolicy</span>
+</span><span id="PipelineClient-62"><a href="#PipelineClient-62"><span class="linenos"> 62</span></a><span class="sd">    :paramtype per_retry_policies: Union[HTTPPolicy, SansIOHTTPPolicy, list[HTTPPolicy], list[SansIOHTTPPolicy]]</span>
+</span><span id="PipelineClient-63"><a href="#PipelineClient-63"><span class="linenos"> 63</span></a><span class="sd">    :keyword HttpTransport transport: If omitted, RequestsTransport is used for synchronous transport.</span>
+</span><span id="PipelineClient-64"><a href="#PipelineClient-64"><span class="linenos"> 64</span></a><span class="sd">    :return: A pipeline object.</span>
+</span><span id="PipelineClient-65"><a href="#PipelineClient-65"><span class="linenos"> 65</span></a><span class="sd">    :rtype: ~azure.core.pipeline.Pipeline</span>
+</span><span id="PipelineClient-66"><a href="#PipelineClient-66"><span class="linenos"> 66</span></a>
+</span><span id="PipelineClient-67"><a href="#PipelineClient-67"><span class="linenos"> 67</span></a><span class="sd">    .. admonition:: Example:</span>
+</span><span id="PipelineClient-68"><a href="#PipelineClient-68"><span class="linenos"> 68</span></a>
+</span><span id="PipelineClient-69"><a href="#PipelineClient-69"><span class="linenos"> 69</span></a><span class="sd">        .. literalinclude:: ../samples/test_example_sync.py</span>
+</span><span id="PipelineClient-70"><a href="#PipelineClient-70"><span class="linenos"> 70</span></a><span class="sd">            :start-after: [START build_pipeline_client]</span>
+</span><span id="PipelineClient-71"><a href="#PipelineClient-71"><span class="linenos"> 71</span></a><span class="sd">            :end-before: [END build_pipeline_client]</span>
+</span><span id="PipelineClient-72"><a href="#PipelineClient-72"><span class="linenos"> 72</span></a><span class="sd">            :language: python</span>
+</span><span id="PipelineClient-73"><a href="#PipelineClient-73"><span class="linenos"> 73</span></a><span class="sd">            :dedent: 4</span>
+</span><span id="PipelineClient-74"><a href="#PipelineClient-74"><span class="linenos"> 74</span></a><span class="sd">            :caption: Builds the pipeline client.</span>
+</span><span id="PipelineClient-75"><a href="#PipelineClient-75"><span class="linenos"> 75</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="PipelineClient-76"><a href="#PipelineClient-76"><span class="linenos"> 76</span></a>
+</span><span id="PipelineClient-77"><a href="#PipelineClient-77"><span class="linenos"> 77</span></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+</span><span id="PipelineClient-78"><a href="#PipelineClient-78"><span class="linenos"> 78</span></a>        <span class="bp">self</span><span class="p">,</span>
+</span><span id="PipelineClient-79"><a href="#PipelineClient-79"><span class="linenos"> 79</span></a>        <span class="n">base_url</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+</span><span id="PipelineClient-80"><a href="#PipelineClient-80"><span class="linenos"> 80</span></a>        <span class="o">*</span><span class="p">,</span>
+</span><span id="PipelineClient-81"><a href="#PipelineClient-81"><span class="linenos"> 81</span></a>        <span class="n">pipeline</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Pipeline</span><span class="p">[</span><span class="n">HTTPRequestType</span><span class="p">,</span> <span class="n">HTTPResponseType</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="PipelineClient-82"><a href="#PipelineClient-82"><span class="linenos"> 82</span></a>        <span class="n">config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Configuration</span><span class="p">[</span><span class="n">HTTPRequestType</span><span class="p">,</span> <span class="n">HTTPResponseType</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="PipelineClient-83"><a href="#PipelineClient-83"><span class="linenos"> 83</span></a>        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+</span><span id="PipelineClient-84"><a href="#PipelineClient-84"><span class="linenos"> 84</span></a>    <span class="p">):</span>
+</span><span id="PipelineClient-85"><a href="#PipelineClient-85"><span class="linenos"> 85</span></a>        <span class="nb">super</span><span class="p">(</span><span class="n">PipelineClient</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">base_url</span><span class="p">)</span>
+</span><span id="PipelineClient-86"><a href="#PipelineClient-86"><span class="linenos"> 86</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_config</span><span class="p">:</span> <span class="n">Configuration</span><span class="p">[</span><span class="n">HTTPRequestType</span><span class="p">,</span> <span class="n">HTTPResponseType</span><span class="p">]</span> <span class="o">=</span> <span class="n">config</span> <span class="ow">or</span> <span class="n">Configuration</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+</span><span id="PipelineClient-87"><a href="#PipelineClient-87"><span class="linenos"> 87</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_base_url</span> <span class="o">=</span> <span class="n">base_url</span>
+</span><span id="PipelineClient-88"><a href="#PipelineClient-88"><span class="linenos"> 88</span></a>
+</span><span id="PipelineClient-89"><a href="#PipelineClient-89"><span class="linenos"> 89</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_pipeline</span> <span class="o">=</span> <span class="n">pipeline</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_pipeline</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_config</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+</span><span id="PipelineClient-90"><a href="#PipelineClient-90"><span class="linenos"> 90</span></a>
+</span><span id="PipelineClient-91"><a href="#PipelineClient-91"><span class="linenos"> 91</span></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__enter__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PipelineClient</span><span class="p">[</span><span class="n">HTTPRequestType</span><span class="p">,</span> <span class="n">HTTPResponseType</span><span class="p">]:</span>
+</span><span id="PipelineClient-92"><a href="#PipelineClient-92"><span class="linenos"> 92</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_pipeline</span><span class="o">.</span><span class="fm">__enter__</span><span class="p">()</span>
+</span><span id="PipelineClient-93"><a href="#PipelineClient-93"><span class="linenos"> 93</span></a>        <span class="k">return</span> <span class="bp">self</span>
+</span><span id="PipelineClient-94"><a href="#PipelineClient-94"><span class="linenos"> 94</span></a>
+</span><span id="PipelineClient-95"><a href="#PipelineClient-95"><span class="linenos"> 95</span></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__exit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">exc_details</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="PipelineClient-96"><a href="#PipelineClient-96"><span class="linenos"> 96</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_pipeline</span><span class="o">.</span><span class="fm">__exit__</span><span class="p">(</span><span class="o">*</span><span class="n">exc_details</span><span class="p">)</span>
+</span><span id="PipelineClient-97"><a href="#PipelineClient-97"><span class="linenos"> 97</span></a>
+</span><span id="PipelineClient-98"><a href="#PipelineClient-98"><span class="linenos"> 98</span></a>    <span class="k">def</span><span class="w"> </span><span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="PipelineClient-99"><a href="#PipelineClient-99"><span class="linenos"> 99</span></a>        <span class="bp">self</span><span class="o">.</span><span class="fm">__exit__</span><span class="p">()</span>
+</span><span id="PipelineClient-100"><a href="#PipelineClient-100"><span class="linenos">100</span></a>
+</span><span id="PipelineClient-101"><a href="#PipelineClient-101"><span class="linenos">101</span></a>    <span class="k">def</span><span class="w"> </span><span class="nf">_build_pipeline</span><span class="p">(</span>
+</span><span id="PipelineClient-102"><a href="#PipelineClient-102"><span class="linenos">102</span></a>        <span class="bp">self</span><span class="p">,</span>
+</span><span id="PipelineClient-103"><a href="#PipelineClient-103"><span class="linenos">103</span></a>        <span class="n">config</span><span class="p">:</span> <span class="n">Configuration</span><span class="p">[</span><span class="n">HTTPRequestType</span><span class="p">,</span> <span class="n">HTTPResponseType</span><span class="p">],</span>
+</span><span id="PipelineClient-104"><a href="#PipelineClient-104"><span class="linenos">104</span></a>        <span class="o">*</span><span class="p">,</span>
+</span><span id="PipelineClient-105"><a href="#PipelineClient-105"><span class="linenos">105</span></a>        <span class="n">transport</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">HttpTransport</span><span class="p">[</span><span class="n">HTTPRequestType</span><span class="p">,</span> <span class="n">HTTPResponseType</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="PipelineClient-106"><a href="#PipelineClient-106"><span class="linenos">106</span></a>        <span class="n">policies</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+</span><span id="PipelineClient-107"><a href="#PipelineClient-107"><span class="linenos">107</span></a>        <span class="n">per_call_policies</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+</span><span id="PipelineClient-108"><a href="#PipelineClient-108"><span class="linenos">108</span></a>        <span class="n">per_retry_policies</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+</span><span id="PipelineClient-109"><a href="#PipelineClient-109"><span class="linenos">109</span></a>        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+</span><span id="PipelineClient-110"><a href="#PipelineClient-110"><span class="linenos">110</span></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Pipeline</span><span class="p">[</span><span class="n">HTTPRequestType</span><span class="p">,</span> <span class="n">HTTPResponseType</span><span class="p">]:</span>
+</span><span id="PipelineClient-111"><a href="#PipelineClient-111"><span class="linenos">111</span></a>        <span class="n">per_call_policies</span> <span class="o">=</span> <span class="n">per_call_policies</span> <span class="ow">or</span> <span class="p">[]</span>
+</span><span id="PipelineClient-112"><a href="#PipelineClient-112"><span class="linenos">112</span></a>        <span class="n">per_retry_policies</span> <span class="o">=</span> <span class="n">per_retry_policies</span> <span class="ow">or</span> <span class="p">[]</span>
+</span><span id="PipelineClient-113"><a href="#PipelineClient-113"><span class="linenos">113</span></a>
+</span><span id="PipelineClient-114"><a href="#PipelineClient-114"><span class="linenos">114</span></a>        <span class="k">if</span> <span class="n">policies</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># [] is a valid policy list</span>
+</span><span id="PipelineClient-115"><a href="#PipelineClient-115"><span class="linenos">115</span></a>            <span class="n">policies</span> <span class="o">=</span> <span class="p">[</span>
+</span><span id="PipelineClient-116"><a href="#PipelineClient-116"><span class="linenos">116</span></a>                <span class="n">config</span><span class="o">.</span><span class="n">request_id_policy</span> <span class="ow">or</span> <span class="n">RequestIdPolicy</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">),</span>
+</span><span id="PipelineClient-117"><a href="#PipelineClient-117"><span class="linenos">117</span></a>                <span class="n">config</span><span class="o">.</span><span class="n">headers_policy</span><span class="p">,</span>
+</span><span id="PipelineClient-118"><a href="#PipelineClient-118"><span class="linenos">118</span></a>                <span class="n">config</span><span class="o">.</span><span class="n">user_agent_policy</span><span class="p">,</span>
+</span><span id="PipelineClient-119"><a href="#PipelineClient-119"><span class="linenos">119</span></a>                <span class="n">config</span><span class="o">.</span><span class="n">proxy_policy</span><span class="p">,</span>
+</span><span id="PipelineClient-120"><a href="#PipelineClient-120"><span class="linenos">120</span></a>                <span class="n">ContentDecodePolicy</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">),</span>
+</span><span id="PipelineClient-121"><a href="#PipelineClient-121"><span class="linenos">121</span></a>            <span class="p">]</span>
+</span><span id="PipelineClient-122"><a href="#PipelineClient-122"><span class="linenos">122</span></a>            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">per_call_policies</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">):</span>
+</span><span id="PipelineClient-123"><a href="#PipelineClient-123"><span class="linenos">123</span></a>                <span class="n">policies</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">per_call_policies</span><span class="p">)</span>
+</span><span id="PipelineClient-124"><a href="#PipelineClient-124"><span class="linenos">124</span></a>            <span class="k">else</span><span class="p">:</span>
+</span><span id="PipelineClient-125"><a href="#PipelineClient-125"><span class="linenos">125</span></a>                <span class="n">policies</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">per_call_policies</span><span class="p">)</span>
+</span><span id="PipelineClient-126"><a href="#PipelineClient-126"><span class="linenos">126</span></a>
+</span><span id="PipelineClient-127"><a href="#PipelineClient-127"><span class="linenos">127</span></a>            <span class="n">policies</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+</span><span id="PipelineClient-128"><a href="#PipelineClient-128"><span class="linenos">128</span></a>                <span class="p">[</span>
+</span><span id="PipelineClient-129"><a href="#PipelineClient-129"><span class="linenos">129</span></a>                    <span class="n">config</span><span class="o">.</span><span class="n">redirect_policy</span><span class="p">,</span>
+</span><span id="PipelineClient-130"><a href="#PipelineClient-130"><span class="linenos">130</span></a>                    <span class="n">config</span><span class="o">.</span><span class="n">retry_policy</span><span class="p">,</span>
+</span><span id="PipelineClient-131"><a href="#PipelineClient-131"><span class="linenos">131</span></a>                    <span class="n">config</span><span class="o">.</span><span class="n">authentication_policy</span><span class="p">,</span>
+</span><span id="PipelineClient-132"><a href="#PipelineClient-132"><span class="linenos">132</span></a>                    <span class="n">config</span><span class="o">.</span><span class="n">custom_hook_policy</span><span class="p">,</span>
+</span><span id="PipelineClient-133"><a href="#PipelineClient-133"><span class="linenos">133</span></a>                <span class="p">]</span>
+</span><span id="PipelineClient-134"><a href="#PipelineClient-134"><span class="linenos">134</span></a>            <span class="p">)</span>
+</span><span id="PipelineClient-135"><a href="#PipelineClient-135"><span class="linenos">135</span></a>            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">per_retry_policies</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">):</span>
+</span><span id="PipelineClient-136"><a href="#PipelineClient-136"><span class="linenos">136</span></a>                <span class="n">policies</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">per_retry_policies</span><span class="p">)</span>
+</span><span id="PipelineClient-137"><a href="#PipelineClient-137"><span class="linenos">137</span></a>            <span class="k">else</span><span class="p">:</span>
+</span><span id="PipelineClient-138"><a href="#PipelineClient-138"><span class="linenos">138</span></a>                <span class="n">policies</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">per_retry_policies</span><span class="p">)</span>
+</span><span id="PipelineClient-139"><a href="#PipelineClient-139"><span class="linenos">139</span></a>
+</span><span id="PipelineClient-140"><a href="#PipelineClient-140"><span class="linenos">140</span></a>            <span class="n">policies</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+</span><span id="PipelineClient-141"><a href="#PipelineClient-141"><span class="linenos">141</span></a>                <span class="p">[</span>
+</span><span id="PipelineClient-142"><a href="#PipelineClient-142"><span class="linenos">142</span></a>                    <span class="n">config</span><span class="o">.</span><span class="n">logging_policy</span><span class="p">,</span>
+</span><span id="PipelineClient-143"><a href="#PipelineClient-143"><span class="linenos">143</span></a>                    <span class="n">DistributedTracingPolicy</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">),</span>
+</span><span id="PipelineClient-144"><a href="#PipelineClient-144"><span class="linenos">144</span></a>                    <span class="p">(</span><span class="n">SensitiveHeaderCleanupPolicy</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">redirect_policy</span> <span class="k">else</span> <span class="kc">None</span><span class="p">),</span>
+</span><span id="PipelineClient-145"><a href="#PipelineClient-145"><span class="linenos">145</span></a>                    <span class="n">config</span><span class="o">.</span><span class="n">http_logging_policy</span> <span class="ow">or</span> <span class="n">HttpLoggingPolicy</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">),</span>
+</span><span id="PipelineClient-146"><a href="#PipelineClient-146"><span class="linenos">146</span></a>                <span class="p">]</span>
+</span><span id="PipelineClient-147"><a href="#PipelineClient-147"><span class="linenos">147</span></a>            <span class="p">)</span>
+</span><span id="PipelineClient-148"><a href="#PipelineClient-148"><span class="linenos">148</span></a>        <span class="k">else</span><span class="p">:</span>
+</span><span id="PipelineClient-149"><a href="#PipelineClient-149"><span class="linenos">149</span></a>            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">per_call_policies</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">):</span>
+</span><span id="PipelineClient-150"><a href="#PipelineClient-150"><span class="linenos">150</span></a>                <span class="n">per_call_policies_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">per_call_policies</span><span class="p">)</span>
+</span><span id="PipelineClient-151"><a href="#PipelineClient-151"><span class="linenos">151</span></a>            <span class="k">else</span><span class="p">:</span>
+</span><span id="PipelineClient-152"><a href="#PipelineClient-152"><span class="linenos">152</span></a>                <span class="n">per_call_policies_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">per_call_policies</span><span class="p">]</span>
+</span><span id="PipelineClient-153"><a href="#PipelineClient-153"><span class="linenos">153</span></a>            <span class="n">per_call_policies_list</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">policies</span><span class="p">)</span>
+</span><span id="PipelineClient-154"><a href="#PipelineClient-154"><span class="linenos">154</span></a>            <span class="n">policies</span> <span class="o">=</span> <span class="n">per_call_policies_list</span>
+</span><span id="PipelineClient-155"><a href="#PipelineClient-155"><span class="linenos">155</span></a>
+</span><span id="PipelineClient-156"><a href="#PipelineClient-156"><span class="linenos">156</span></a>            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">per_retry_policies</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">):</span>
+</span><span id="PipelineClient-157"><a href="#PipelineClient-157"><span class="linenos">157</span></a>                <span class="n">per_retry_policies_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">per_retry_policies</span><span class="p">)</span>
+</span><span id="PipelineClient-158"><a href="#PipelineClient-158"><span class="linenos">158</span></a>            <span class="k">else</span><span class="p">:</span>
+</span><span id="PipelineClient-159"><a href="#PipelineClient-159"><span class="linenos">159</span></a>                <span class="n">per_retry_policies_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">per_retry_policies</span><span class="p">]</span>
+</span><span id="PipelineClient-160"><a href="#PipelineClient-160"><span class="linenos">160</span></a>            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">per_retry_policies_list</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+</span><span id="PipelineClient-161"><a href="#PipelineClient-161"><span class="linenos">161</span></a>                <span class="n">index_of_retry</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+</span><span id="PipelineClient-162"><a href="#PipelineClient-162"><span class="linenos">162</span></a>                <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">policy</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">policies</span><span class="p">):</span>
+</span><span id="PipelineClient-163"><a href="#PipelineClient-163"><span class="linenos">163</span></a>                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">policy</span><span class="p">,</span> <span class="n">RetryPolicy</span><span class="p">):</span>
+</span><span id="PipelineClient-164"><a href="#PipelineClient-164"><span class="linenos">164</span></a>                        <span class="n">index_of_retry</span> <span class="o">=</span> <span class="n">index</span>
+</span><span id="PipelineClient-165"><a href="#PipelineClient-165"><span class="linenos">165</span></a>                <span class="k">if</span> <span class="n">index_of_retry</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+</span><span id="PipelineClient-166"><a href="#PipelineClient-166"><span class="linenos">166</span></a>                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+</span><span id="PipelineClient-167"><a href="#PipelineClient-167"><span class="linenos">167</span></a>                        <span class="s2">&quot;Failed to add per_retry_policies; no RetryPolicy found in the supplied list of policies. &quot;</span>
+</span><span id="PipelineClient-168"><a href="#PipelineClient-168"><span class="linenos">168</span></a>                    <span class="p">)</span>
+</span><span id="PipelineClient-169"><a href="#PipelineClient-169"><span class="linenos">169</span></a>                <span class="n">policies_1</span> <span class="o">=</span> <span class="n">policies</span><span class="p">[:</span> <span class="n">index_of_retry</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+</span><span id="PipelineClient-170"><a href="#PipelineClient-170"><span class="linenos">170</span></a>                <span class="n">policies_2</span> <span class="o">=</span> <span class="n">policies</span><span class="p">[</span><span class="n">index_of_retry</span> <span class="o">+</span> <span class="mi">1</span> <span class="p">:]</span>
+</span><span id="PipelineClient-171"><a href="#PipelineClient-171"><span class="linenos">171</span></a>                <span class="n">policies_1</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">per_retry_policies_list</span><span class="p">)</span>
+</span><span id="PipelineClient-172"><a href="#PipelineClient-172"><span class="linenos">172</span></a>                <span class="n">policies_1</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">policies_2</span><span class="p">)</span>
+</span><span id="PipelineClient-173"><a href="#PipelineClient-173"><span class="linenos">173</span></a>                <span class="n">policies</span> <span class="o">=</span> <span class="n">policies_1</span>
+</span><span id="PipelineClient-174"><a href="#PipelineClient-174"><span class="linenos">174</span></a>
+</span><span id="PipelineClient-175"><a href="#PipelineClient-175"><span class="linenos">175</span></a>        <span class="k">if</span> <span class="n">transport</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="PipelineClient-176"><a href="#PipelineClient-176"><span class="linenos">176</span></a>            <span class="c1"># Use private import for better typing, mypy and pyright don&#39;t like PEP562</span>
+</span><span id="PipelineClient-177"><a href="#PipelineClient-177"><span class="linenos">177</span></a>            <span class="kn">from</span><span class="w"> </span><span class="nn">.pipeline.transport._requests_basic</span><span class="w"> </span><span class="kn">import</span> <span class="n">RequestsTransport</span>
+</span><span id="PipelineClient-178"><a href="#PipelineClient-178"><span class="linenos">178</span></a>
+</span><span id="PipelineClient-179"><a href="#PipelineClient-179"><span class="linenos">179</span></a>            <span class="n">transport</span> <span class="o">=</span> <span class="n">RequestsTransport</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+</span><span id="PipelineClient-180"><a href="#PipelineClient-180"><span class="linenos">180</span></a>
+</span><span id="PipelineClient-181"><a href="#PipelineClient-181"><span class="linenos">181</span></a>        <span class="k">return</span> <span class="n">Pipeline</span><span class="p">(</span><span class="n">transport</span><span class="p">,</span> <span class="n">policies</span><span class="p">)</span>
+</span><span id="PipelineClient-182"><a href="#PipelineClient-182"><span class="linenos">182</span></a>
+</span><span id="PipelineClient-183"><a href="#PipelineClient-183"><span class="linenos">183</span></a>    <span class="k">def</span><span class="w"> </span><span class="nf">send_request</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">:</span> <span class="n">HTTPRequestType</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">stream</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">HTTPResponseType</span><span class="p">:</span>
+</span><span id="PipelineClient-184"><a href="#PipelineClient-184"><span class="linenos">184</span></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Method that runs the network request through the client&#39;s chained policies.</span>
+</span><span id="PipelineClient-185"><a href="#PipelineClient-185"><span class="linenos">185</span></a>
+</span><span id="PipelineClient-186"><a href="#PipelineClient-186"><span class="linenos">186</span></a><span class="sd">        &gt;&gt;&gt; from azure.core.rest import HttpRequest</span>
+</span><span id="PipelineClient-187"><a href="#PipelineClient-187"><span class="linenos">187</span></a><span class="sd">        &gt;&gt;&gt; request = HttpRequest(&#39;GET&#39;, &#39;http://www.example.com&#39;)</span>
+</span><span id="PipelineClient-188"><a href="#PipelineClient-188"><span class="linenos">188</span></a><span class="sd">        &lt;HttpRequest [GET], url: &#39;http://www.example.com&#39;&gt;</span>
+</span><span id="PipelineClient-189"><a href="#PipelineClient-189"><span class="linenos">189</span></a><span class="sd">        &gt;&gt;&gt; response = client.send_request(request)</span>
+</span><span id="PipelineClient-190"><a href="#PipelineClient-190"><span class="linenos">190</span></a><span class="sd">        &lt;HttpResponse: 200 OK&gt;</span>
+</span><span id="PipelineClient-191"><a href="#PipelineClient-191"><span class="linenos">191</span></a>
+</span><span id="PipelineClient-192"><a href="#PipelineClient-192"><span class="linenos">192</span></a><span class="sd">        :param request: The network request you want to make. Required.</span>
+</span><span id="PipelineClient-193"><a href="#PipelineClient-193"><span class="linenos">193</span></a><span class="sd">        :type request: ~azure.core.rest.HttpRequest</span>
+</span><span id="PipelineClient-194"><a href="#PipelineClient-194"><span class="linenos">194</span></a><span class="sd">        :keyword bool stream: Whether the response payload will be streamed. Defaults to False.</span>
+</span><span id="PipelineClient-195"><a href="#PipelineClient-195"><span class="linenos">195</span></a><span class="sd">        :return: The response of your network call. Does not do error handling on your response.</span>
+</span><span id="PipelineClient-196"><a href="#PipelineClient-196"><span class="linenos">196</span></a><span class="sd">        :rtype: ~azure.core.rest.HttpResponse</span>
+</span><span id="PipelineClient-197"><a href="#PipelineClient-197"><span class="linenos">197</span></a><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="PipelineClient-198"><a href="#PipelineClient-198"><span class="linenos">198</span></a>        <span class="n">return_pipeline_response</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;_return_pipeline_response&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+</span><span id="PipelineClient-199"><a href="#PipelineClient-199"><span class="linenos">199</span></a>        <span class="n">pipeline_response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pipeline</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">stream</span><span class="o">=</span><span class="n">stream</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+</span><span id="PipelineClient-200"><a href="#PipelineClient-200"><span class="linenos">200</span></a>        <span class="k">if</span> <span class="n">return_pipeline_response</span><span class="p">:</span>
+</span><span id="PipelineClient-201"><a href="#PipelineClient-201"><span class="linenos">201</span></a>            <span class="k">return</span> <span class="n">pipeline_response</span>  <span class="c1"># type: ignore  # This is a private API we don&#39;t want to type in signature</span>
+</span><span id="PipelineClient-202"><a href="#PipelineClient-202"><span class="linenos">202</span></a>        <span class="k">return</span> <span class="n">pipeline_response</span><span class="o">.</span><span class="n">http_response</span>
+</span></pre></div>
+
+
+            <div class="docstring"><p>Service client core methods.</p>
+
+<p>Builds a Pipeline client.</p>
+
+<h6 id="parameters">Parameters</h6>
+
+<ul>
+<li><strong>str base_url</strong>:  URL for the request.
+:keyword ~azure.core.configuration.Configuration config: If omitted, the standard configuration is used.
+:keyword Pipeline pipeline: If omitted, a Pipeline object is created and returned.
+:keyword list[HTTPPolicy] policies: If omitted, the standard policies of the configuration object is used.
+:keyword per_call_policies: If specified, the policies will be added into the policy list before RetryPolicy
+:paramtype per_call_policies: Union[HTTPPolicy, SansIOHTTPPolicy, list[HTTPPolicy], list[SansIOHTTPPolicy]]
+:keyword per_retry_policies: If specified, the policies will be added into the policy list after RetryPolicy
+:paramtype per_retry_policies: Union[HTTPPolicy, SansIOHTTPPolicy, list[HTTPPolicy], list[SansIOHTTPPolicy]]
+:keyword HttpTransport transport: If omitted, RequestsTransport is used for synchronous transport.</li>
+</ul>
+
+<h6 id="returns">Returns</h6>
+
+<blockquote>
+  <p>A pipeline object.</p>
+</blockquote>
+
+<p>.. admonition:: Example:</p>
+
+<pre><code>.. literalinclude:: ../samples/test_example_sync.py
+    :start-after: [START build_pipeline_client]
+    :end-before: [END build_pipeline_client]
+    :language: python
+    :dedent: 4
+    :caption: Builds the pipeline client.
+</code></pre>
+</div>
+
+
+                            <div id="PipelineClient.close" class="classattr">
+                                        <input id="PipelineClient.close-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+<div class="attr function">
+            
+        <span class="def">def</span>
+        <span class="name">close</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span></span><span class="return-annotation">) -> <span class="kc">None</span>:</span></span>
+
+                <label class="view-source-button" for="PipelineClient.close-view-source"><span>View Source</span></label>
+
+    </div>
+    <a class="headerlink" href="#PipelineClient.close"></a>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="PipelineClient.close-98"><a href="#PipelineClient.close-98"><span class="linenos">98</span></a>    <span class="k">def</span><span class="w"> </span><span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="PipelineClient.close-99"><a href="#PipelineClient.close-99"><span class="linenos">99</span></a>        <span class="bp">self</span><span class="o">.</span><span class="fm">__exit__</span><span class="p">()</span>
+</span></pre></div>
+
+
+    
+
+                            </div>
+                            <div id="PipelineClient.send_request" class="classattr">
+                                        <input id="PipelineClient.send_request-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+<div class="attr function">
+            
+        <span class="def">def</span>
+        <span class="name">send_request</span><span class="signature pdoc-code multiline">(<span class="param">	<span class="bp">self</span>,</span><span class="param">	<span class="n">request</span><span class="p">:</span> <span class="o">~</span><span class="n">HTTPRequestType</span>,</span><span class="param">	<span class="o">*</span>,</span><span class="param">	<span class="n">stream</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>,</span><span class="param">	<span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span></span><span class="return-annotation">) -> <span class="o">~</span><span class="n">HTTPResponseType</span>:</span></span>
+
+                <label class="view-source-button" for="PipelineClient.send_request-view-source"><span>View Source</span></label>
+
+    </div>
+    <a class="headerlink" href="#PipelineClient.send_request"></a>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="PipelineClient.send_request-183"><a href="#PipelineClient.send_request-183"><span class="linenos">183</span></a>    <span class="k">def</span><span class="w"> </span><span class="nf">send_request</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">:</span> <span class="n">HTTPRequestType</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">stream</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">HTTPResponseType</span><span class="p">:</span>
+</span><span id="PipelineClient.send_request-184"><a href="#PipelineClient.send_request-184"><span class="linenos">184</span></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Method that runs the network request through the client&#39;s chained policies.</span>
+</span><span id="PipelineClient.send_request-185"><a href="#PipelineClient.send_request-185"><span class="linenos">185</span></a>
+</span><span id="PipelineClient.send_request-186"><a href="#PipelineClient.send_request-186"><span class="linenos">186</span></a><span class="sd">        &gt;&gt;&gt; from azure.core.rest import HttpRequest</span>
+</span><span id="PipelineClient.send_request-187"><a href="#PipelineClient.send_request-187"><span class="linenos">187</span></a><span class="sd">        &gt;&gt;&gt; request = HttpRequest(&#39;GET&#39;, &#39;http://www.example.com&#39;)</span>
+</span><span id="PipelineClient.send_request-188"><a href="#PipelineClient.send_request-188"><span class="linenos">188</span></a><span class="sd">        &lt;HttpRequest [GET], url: &#39;http://www.example.com&#39;&gt;</span>
+</span><span id="PipelineClient.send_request-189"><a href="#PipelineClient.send_request-189"><span class="linenos">189</span></a><span class="sd">        &gt;&gt;&gt; response = client.send_request(request)</span>
+</span><span id="PipelineClient.send_request-190"><a href="#PipelineClient.send_request-190"><span class="linenos">190</span></a><span class="sd">        &lt;HttpResponse: 200 OK&gt;</span>
+</span><span id="PipelineClient.send_request-191"><a href="#PipelineClient.send_request-191"><span class="linenos">191</span></a>
+</span><span id="PipelineClient.send_request-192"><a href="#PipelineClient.send_request-192"><span class="linenos">192</span></a><span class="sd">        :param request: The network request you want to make. Required.</span>
+</span><span id="PipelineClient.send_request-193"><a href="#PipelineClient.send_request-193"><span class="linenos">193</span></a><span class="sd">        :type request: ~azure.core.rest.HttpRequest</span>
+</span><span id="PipelineClient.send_request-194"><a href="#PipelineClient.send_request-194"><span class="linenos">194</span></a><span class="sd">        :keyword bool stream: Whether the response payload will be streamed. Defaults to False.</span>
+</span><span id="PipelineClient.send_request-195"><a href="#PipelineClient.send_request-195"><span class="linenos">195</span></a><span class="sd">        :return: The response of your network call. Does not do error handling on your response.</span>
+</span><span id="PipelineClient.send_request-196"><a href="#PipelineClient.send_request-196"><span class="linenos">196</span></a><span class="sd">        :rtype: ~azure.core.rest.HttpResponse</span>
+</span><span id="PipelineClient.send_request-197"><a href="#PipelineClient.send_request-197"><span class="linenos">197</span></a><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="PipelineClient.send_request-198"><a href="#PipelineClient.send_request-198"><span class="linenos">198</span></a>        <span class="n">return_pipeline_response</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;_return_pipeline_response&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+</span><span id="PipelineClient.send_request-199"><a href="#PipelineClient.send_request-199"><span class="linenos">199</span></a>        <span class="n">pipeline_response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pipeline</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">stream</span><span class="o">=</span><span class="n">stream</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+</span><span id="PipelineClient.send_request-200"><a href="#PipelineClient.send_request-200"><span class="linenos">200</span></a>        <span class="k">if</span> <span class="n">return_pipeline_response</span><span class="p">:</span>
+</span><span id="PipelineClient.send_request-201"><a href="#PipelineClient.send_request-201"><span class="linenos">201</span></a>            <span class="k">return</span> <span class="n">pipeline_response</span>  <span class="c1"># type: ignore  # This is a private API we don&#39;t want to type in signature</span>
+</span><span id="PipelineClient.send_request-202"><a href="#PipelineClient.send_request-202"><span class="linenos">202</span></a>        <span class="k">return</span> <span class="n">pipeline_response</span><span class="o">.</span><span class="n">http_response</span>
+</span></pre></div>
+
+
+            <div class="docstring"><p>Method that runs the network request through the client's chained policies.</p>
+
+<div class="pdoc-code codehilite">
+<pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">azure.core.rest</span><span class="w"> </span><span class="kn">import</span> <span class="n">HttpRequest</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">request</span> <span class="o">=</span> <span class="n">HttpRequest</span><span class="p">(</span><span class="s1">&#39;GET&#39;</span><span class="p">,</span> <span class="s1">&#39;http://www.example.com&#39;</span><span class="p">)</span>
+<span class="go">&lt;HttpRequest [GET], url: &#39;http://www.example.com&#39;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">send_request</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+<span class="go">&lt;HttpResponse: 200 OK&gt;</span>
+</code></pre>
+</div>
+
+<h6 id="parameters">Parameters</h6>
+
+<ul>
+<li><strong>request</strong>:  The network request you want to make. Required.
+:keyword bool stream: Whether the response payload will be streamed. Defaults to False.</li>
+</ul>
+
+<h6 id="returns">Returns</h6>
+
+<blockquote>
+  <p>The response of your network call. Does not do error handling on your response.</p>
+</blockquote>
+</div>
+
+
+                            </div>
+                </section>
+                <section id="MatchConditions">
+                            <input id="MatchConditions-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+<div class="attr class">
+            
+    <span class="def">class</span>
+    <span class="name">MatchConditions</span><wbr>(<span class="base">enum.Enum</span>):
+
+                <label class="view-source-button" for="MatchConditions-view-source"><span>View Source</span></label>
+
+    </div>
+    <a class="headerlink" href="#MatchConditions"></a>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="MatchConditions-31"><a href="#MatchConditions-31"><span class="linenos">31</span></a><span class="k">class</span><span class="w"> </span><span class="nc">MatchConditions</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+</span><span id="MatchConditions-32"><a href="#MatchConditions-32"><span class="linenos">32</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;An enum to describe match conditions.&quot;&quot;&quot;</span>
+</span><span id="MatchConditions-33"><a href="#MatchConditions-33"><span class="linenos">33</span></a>
+</span><span id="MatchConditions-34"><a href="#MatchConditions-34"><span class="linenos">34</span></a>    <span class="n">Unconditionally</span> <span class="o">=</span> <span class="mi">1</span>
+</span><span id="MatchConditions-35"><a href="#MatchConditions-35"><span class="linenos">35</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Matches any condition&quot;&quot;&quot;</span>
+</span><span id="MatchConditions-36"><a href="#MatchConditions-36"><span class="linenos">36</span></a>
+</span><span id="MatchConditions-37"><a href="#MatchConditions-37"><span class="linenos">37</span></a>    <span class="n">IfNotModified</span> <span class="o">=</span> <span class="mi">2</span>
+</span><span id="MatchConditions-38"><a href="#MatchConditions-38"><span class="linenos">38</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;If the target object is not modified. Usually it maps to etag=&lt;specific etag&gt;&quot;&quot;&quot;</span>
+</span><span id="MatchConditions-39"><a href="#MatchConditions-39"><span class="linenos">39</span></a>
+</span><span id="MatchConditions-40"><a href="#MatchConditions-40"><span class="linenos">40</span></a>    <span class="n">IfModified</span> <span class="o">=</span> <span class="mi">3</span>
+</span><span id="MatchConditions-41"><a href="#MatchConditions-41"><span class="linenos">41</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Only if the target object is modified. Usually it maps to etag!=&lt;specific etag&gt;&quot;&quot;&quot;</span>
+</span><span id="MatchConditions-42"><a href="#MatchConditions-42"><span class="linenos">42</span></a>
+</span><span id="MatchConditions-43"><a href="#MatchConditions-43"><span class="linenos">43</span></a>    <span class="n">IfPresent</span> <span class="o">=</span> <span class="mi">4</span>
+</span><span id="MatchConditions-44"><a href="#MatchConditions-44"><span class="linenos">44</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;If the target object exists. Usually it maps to etag=&#39;*&#39;&quot;&quot;&quot;</span>
+</span><span id="MatchConditions-45"><a href="#MatchConditions-45"><span class="linenos">45</span></a>
+</span><span id="MatchConditions-46"><a href="#MatchConditions-46"><span class="linenos">46</span></a>    <span class="n">IfMissing</span> <span class="o">=</span> <span class="mi">5</span>
+</span><span id="MatchConditions-47"><a href="#MatchConditions-47"><span class="linenos">47</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;If the target object does not exist. Usually it maps to etag!=&#39;*&#39;&quot;&quot;&quot;</span>
+</span></pre></div>
+
+
+            <div class="docstring"><p>An enum to describe match conditions.</p>
+</div>
+
+
+                            <div id="MatchConditions.Unconditionally" class="classattr">
+                                <div class="attr variable">
+            <span class="name">Unconditionally</span>        =
+<span class="default_value">&lt;<a href="#MatchConditions.Unconditionally">MatchConditions.Unconditionally</a>: 1&gt;</span>
+
+        
+    </div>
+    <a class="headerlink" href="#MatchConditions.Unconditionally"></a>
+    
+            <div class="docstring"><p>Matches any condition</p>
+</div>
+
+
+                            </div>
+                            <div id="MatchConditions.IfNotModified" class="classattr">
+                                <div class="attr variable">
+            <span class="name">IfNotModified</span>        =
+<span class="default_value">&lt;<a href="#MatchConditions.IfNotModified">MatchConditions.IfNotModified</a>: 2&gt;</span>
+
+        
+    </div>
+    <a class="headerlink" href="#MatchConditions.IfNotModified"></a>
+    
+            <div class="docstring"><p>If the target object is not modified. Usually it maps to etag=<specific etag></p>
+</div>
+
+
+                            </div>
+                            <div id="MatchConditions.IfModified" class="classattr">
+                                <div class="attr variable">
+            <span class="name">IfModified</span>        =
+<span class="default_value">&lt;<a href="#MatchConditions.IfModified">MatchConditions.IfModified</a>: 3&gt;</span>
+
+        
+    </div>
+    <a class="headerlink" href="#MatchConditions.IfModified"></a>
+    
+            <div class="docstring"><p>Only if the target object is modified. Usually it maps to etag!=<specific etag></p>
+</div>
+
+
+                            </div>
+                            <div id="MatchConditions.IfPresent" class="classattr">
+                                <div class="attr variable">
+            <span class="name">IfPresent</span>        =
+<span class="default_value">&lt;<a href="#MatchConditions.IfPresent">MatchConditions.IfPresent</a>: 4&gt;</span>
+
+        
+    </div>
+    <a class="headerlink" href="#MatchConditions.IfPresent"></a>
+    
+            <div class="docstring"><p>If the target object exists. Usually it maps to etag='*'</p>
+</div>
+
+
+                            </div>
+                            <div id="MatchConditions.IfMissing" class="classattr">
+                                <div class="attr variable">
+            <span class="name">IfMissing</span>        =
+<span class="default_value">&lt;<a href="#MatchConditions.IfMissing">MatchConditions.IfMissing</a>: 5&gt;</span>
+
+        
+    </div>
+    <a class="headerlink" href="#MatchConditions.IfMissing"></a>
+    
+            <div class="docstring"><p>If the target object does not exist. Usually it maps to etag!='*'</p>
+</div>
+
+
+                            </div>
+                </section>
+                <section id="CaseInsensitiveEnumMeta">
+                            <input id="CaseInsensitiveEnumMeta-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+<div class="attr class">
+            
+    <span class="def">class</span>
+    <span class="name">CaseInsensitiveEnumMeta</span><wbr>(<span class="base">enum.EnumType</span>):
+
+                <label class="view-source-button" for="CaseInsensitiveEnumMeta-view-source"><span>View Source</span></label>
+
+    </div>
+    <a class="headerlink" href="#CaseInsensitiveEnumMeta"></a>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="CaseInsensitiveEnumMeta-31"><a href="#CaseInsensitiveEnumMeta-31"><span class="linenos">31</span></a><span class="k">class</span><span class="w"> </span><span class="nc">CaseInsensitiveEnumMeta</span><span class="p">(</span><span class="n">EnumMeta</span><span class="p">):</span>
+</span><span id="CaseInsensitiveEnumMeta-32"><a href="#CaseInsensitiveEnumMeta-32"><span class="linenos">32</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Enum metaclass to allow for interoperability with case-insensitive strings.</span>
+</span><span id="CaseInsensitiveEnumMeta-33"><a href="#CaseInsensitiveEnumMeta-33"><span class="linenos">33</span></a>
+</span><span id="CaseInsensitiveEnumMeta-34"><a href="#CaseInsensitiveEnumMeta-34"><span class="linenos">34</span></a><span class="sd">    Consuming this metaclass in an SDK should be done in the following manner:</span>
+</span><span id="CaseInsensitiveEnumMeta-35"><a href="#CaseInsensitiveEnumMeta-35"><span class="linenos">35</span></a>
+</span><span id="CaseInsensitiveEnumMeta-36"><a href="#CaseInsensitiveEnumMeta-36"><span class="linenos">36</span></a><span class="sd">    .. code-block:: python</span>
+</span><span id="CaseInsensitiveEnumMeta-37"><a href="#CaseInsensitiveEnumMeta-37"><span class="linenos">37</span></a>
+</span><span id="CaseInsensitiveEnumMeta-38"><a href="#CaseInsensitiveEnumMeta-38"><span class="linenos">38</span></a><span class="sd">        from enum import Enum</span>
+</span><span id="CaseInsensitiveEnumMeta-39"><a href="#CaseInsensitiveEnumMeta-39"><span class="linenos">39</span></a><span class="sd">        from azure.core import CaseInsensitiveEnumMeta</span>
+</span><span id="CaseInsensitiveEnumMeta-40"><a href="#CaseInsensitiveEnumMeta-40"><span class="linenos">40</span></a>
+</span><span id="CaseInsensitiveEnumMeta-41"><a href="#CaseInsensitiveEnumMeta-41"><span class="linenos">41</span></a><span class="sd">        class MyCustomEnum(str, Enum, metaclass=CaseInsensitiveEnumMeta):</span>
+</span><span id="CaseInsensitiveEnumMeta-42"><a href="#CaseInsensitiveEnumMeta-42"><span class="linenos">42</span></a><span class="sd">            FOO = &#39;foo&#39;</span>
+</span><span id="CaseInsensitiveEnumMeta-43"><a href="#CaseInsensitiveEnumMeta-43"><span class="linenos">43</span></a><span class="sd">            BAR = &#39;bar&#39;</span>
+</span><span id="CaseInsensitiveEnumMeta-44"><a href="#CaseInsensitiveEnumMeta-44"><span class="linenos">44</span></a>
+</span><span id="CaseInsensitiveEnumMeta-45"><a href="#CaseInsensitiveEnumMeta-45"><span class="linenos">45</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="CaseInsensitiveEnumMeta-46"><a href="#CaseInsensitiveEnumMeta-46"><span class="linenos">46</span></a>
+</span><span id="CaseInsensitiveEnumMeta-47"><a href="#CaseInsensitiveEnumMeta-47"><span class="linenos">47</span></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+</span><span id="CaseInsensitiveEnumMeta-48"><a href="#CaseInsensitiveEnumMeta-48"><span class="linenos">48</span></a>        <span class="c1"># disabling pylint bc of pylint bug https://github.com/PyCQA/astroid/issues/713</span>
+</span><span id="CaseInsensitiveEnumMeta-49"><a href="#CaseInsensitiveEnumMeta-49"><span class="linenos">49</span></a>        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">CaseInsensitiveEnumMeta</span><span class="p">,</span> <span class="bp">cls</span><span class="p">)</span><span class="o">.</span><span class="fm">__getitem__</span><span class="p">(</span><span class="n">name</span><span class="o">.</span><span class="n">upper</span><span class="p">())</span>
+</span><span id="CaseInsensitiveEnumMeta-50"><a href="#CaseInsensitiveEnumMeta-50"><span class="linenos">50</span></a>
+</span><span id="CaseInsensitiveEnumMeta-51"><a href="#CaseInsensitiveEnumMeta-51"><span class="linenos">51</span></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__getattr__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Enum</span><span class="p">:</span>
+</span><span id="CaseInsensitiveEnumMeta-52"><a href="#CaseInsensitiveEnumMeta-52"><span class="linenos">52</span></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the enum member matching `name`.</span>
+</span><span id="CaseInsensitiveEnumMeta-53"><a href="#CaseInsensitiveEnumMeta-53"><span class="linenos">53</span></a>
+</span><span id="CaseInsensitiveEnumMeta-54"><a href="#CaseInsensitiveEnumMeta-54"><span class="linenos">54</span></a><span class="sd">        We use __getattr__ instead of descriptors or inserting into the enum</span>
+</span><span id="CaseInsensitiveEnumMeta-55"><a href="#CaseInsensitiveEnumMeta-55"><span class="linenos">55</span></a><span class="sd">        class&#39; __dict__ in order to support `name` and `value` being both</span>
+</span><span id="CaseInsensitiveEnumMeta-56"><a href="#CaseInsensitiveEnumMeta-56"><span class="linenos">56</span></a><span class="sd">        properties for enum members (which live in the class&#39; __dict__) and</span>
+</span><span id="CaseInsensitiveEnumMeta-57"><a href="#CaseInsensitiveEnumMeta-57"><span class="linenos">57</span></a><span class="sd">        enum members themselves.</span>
+</span><span id="CaseInsensitiveEnumMeta-58"><a href="#CaseInsensitiveEnumMeta-58"><span class="linenos">58</span></a>
+</span><span id="CaseInsensitiveEnumMeta-59"><a href="#CaseInsensitiveEnumMeta-59"><span class="linenos">59</span></a><span class="sd">        :param str name: The name of the enum member to retrieve.</span>
+</span><span id="CaseInsensitiveEnumMeta-60"><a href="#CaseInsensitiveEnumMeta-60"><span class="linenos">60</span></a><span class="sd">        :rtype: ~azure.core.CaseInsensitiveEnumMeta</span>
+</span><span id="CaseInsensitiveEnumMeta-61"><a href="#CaseInsensitiveEnumMeta-61"><span class="linenos">61</span></a><span class="sd">        :return: The enum member matching `name`.</span>
+</span><span id="CaseInsensitiveEnumMeta-62"><a href="#CaseInsensitiveEnumMeta-62"><span class="linenos">62</span></a><span class="sd">        :raises AttributeError: If `name` is not a valid enum member.</span>
+</span><span id="CaseInsensitiveEnumMeta-63"><a href="#CaseInsensitiveEnumMeta-63"><span class="linenos">63</span></a><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="CaseInsensitiveEnumMeta-64"><a href="#CaseInsensitiveEnumMeta-64"><span class="linenos">64</span></a>        <span class="k">try</span><span class="p">:</span>
+</span><span id="CaseInsensitiveEnumMeta-65"><a href="#CaseInsensitiveEnumMeta-65"><span class="linenos">65</span></a>            <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_member_map_</span><span class="p">[</span><span class="n">name</span><span class="o">.</span><span class="n">upper</span><span class="p">()]</span>
+</span><span id="CaseInsensitiveEnumMeta-66"><a href="#CaseInsensitiveEnumMeta-66"><span class="linenos">66</span></a>        <span class="k">except</span> <span class="ne">KeyError</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+</span><span id="CaseInsensitiveEnumMeta-67"><a href="#CaseInsensitiveEnumMeta-67"><span class="linenos">67</span></a>            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">err</span>
+</span></pre></div>
+
+
+            <div class="docstring"><p>Enum metaclass to allow for interoperability with case-insensitive strings.</p>
+
+<p>Consuming this metaclass in an SDK should be done in the following manner:</p>
+
+<div class="pdoc-code codehilite">
+<pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn"><a href="">azure.core</a></span><span class="w"> </span><span class="kn">import</span> <span class="n">CaseInsensitiveEnumMeta</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">MyCustomEnum</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Enum</span><span class="p">,</span> <span class="n">metaclass</span><span class="o">=</span><span class="n">CaseInsensitiveEnumMeta</span><span class="p">):</span>
+    <span class="n">FOO</span> <span class="o">=</span> <span class="s1">&#39;foo&#39;</span>
+    <span class="n">BAR</span> <span class="o">=</span> <span class="s1">&#39;bar&#39;</span>
+</code></pre>
+</div>
+</div>
+
+
+                </section>
+                <section id="AsyncPipelineClient">
+                            <input id="AsyncPipelineClient-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+<div class="attr class">
+            
+    <span class="def">class</span>
+    <span class="name">AsyncPipelineClient</span><wbr>(<span class="base">azure.core.pipeline.transport._base.PipelineClientBase</span>, <span class="base">typing.AsyncContextManager[ForwardRef(&#39;AsyncPipelineClient&#39;)]</span>, <span class="base">typing.Generic[~HTTPRequestType, ~AsyncHTTPResponseType]</span>):
+
+                <label class="view-source-button" for="AsyncPipelineClient-view-source"><span>View Source</span></label>
+
+    </div>
+    <a class="headerlink" href="#AsyncPipelineClient"></a>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="AsyncPipelineClient-123"><a href="#AsyncPipelineClient-123"><span class="linenos">123</span></a><span class="k">class</span><span class="w"> </span><span class="nc">AsyncPipelineClient</span><span class="p">(</span>
+</span><span id="AsyncPipelineClient-124"><a href="#AsyncPipelineClient-124"><span class="linenos">124</span></a>    <span class="n">PipelineClientBase</span><span class="p">,</span>
+</span><span id="AsyncPipelineClient-125"><a href="#AsyncPipelineClient-125"><span class="linenos">125</span></a>    <span class="n">AsyncContextManager</span><span class="p">[</span><span class="s2">&quot;AsyncPipelineClient&quot;</span><span class="p">],</span>
+</span><span id="AsyncPipelineClient-126"><a href="#AsyncPipelineClient-126"><span class="linenos">126</span></a>    <span class="n">Generic</span><span class="p">[</span><span class="n">HTTPRequestType</span><span class="p">,</span> <span class="n">AsyncHTTPResponseType</span><span class="p">],</span>
+</span><span id="AsyncPipelineClient-127"><a href="#AsyncPipelineClient-127"><span class="linenos">127</span></a><span class="p">):</span>
+</span><span id="AsyncPipelineClient-128"><a href="#AsyncPipelineClient-128"><span class="linenos">128</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Service client core methods.</span>
+</span><span id="AsyncPipelineClient-129"><a href="#AsyncPipelineClient-129"><span class="linenos">129</span></a>
+</span><span id="AsyncPipelineClient-130"><a href="#AsyncPipelineClient-130"><span class="linenos">130</span></a><span class="sd">    Builds an AsyncPipeline client.</span>
+</span><span id="AsyncPipelineClient-131"><a href="#AsyncPipelineClient-131"><span class="linenos">131</span></a>
+</span><span id="AsyncPipelineClient-132"><a href="#AsyncPipelineClient-132"><span class="linenos">132</span></a><span class="sd">    :param str base_url: URL for the request.</span>
+</span><span id="AsyncPipelineClient-133"><a href="#AsyncPipelineClient-133"><span class="linenos">133</span></a><span class="sd">    :keyword ~azure.core.configuration.Configuration config: If omitted, the standard configuration is used.</span>
+</span><span id="AsyncPipelineClient-134"><a href="#AsyncPipelineClient-134"><span class="linenos">134</span></a><span class="sd">    :keyword Pipeline pipeline: If omitted, a Pipeline object is created and returned.</span>
+</span><span id="AsyncPipelineClient-135"><a href="#AsyncPipelineClient-135"><span class="linenos">135</span></a><span class="sd">    :keyword list[AsyncHTTPPolicy] policies: If omitted, the standard policies of the configuration object is used.</span>
+</span><span id="AsyncPipelineClient-136"><a href="#AsyncPipelineClient-136"><span class="linenos">136</span></a><span class="sd">    :keyword per_call_policies: If specified, the policies will be added into the policy list before RetryPolicy</span>
+</span><span id="AsyncPipelineClient-137"><a href="#AsyncPipelineClient-137"><span class="linenos">137</span></a><span class="sd">    :paramtype per_call_policies: Union[AsyncHTTPPolicy, SansIOHTTPPolicy,</span>
+</span><span id="AsyncPipelineClient-138"><a href="#AsyncPipelineClient-138"><span class="linenos">138</span></a><span class="sd">        list[AsyncHTTPPolicy], list[SansIOHTTPPolicy]]</span>
+</span><span id="AsyncPipelineClient-139"><a href="#AsyncPipelineClient-139"><span class="linenos">139</span></a><span class="sd">    :keyword per_retry_policies: If specified, the policies will be added into the policy list after RetryPolicy</span>
+</span><span id="AsyncPipelineClient-140"><a href="#AsyncPipelineClient-140"><span class="linenos">140</span></a><span class="sd">    :paramtype per_retry_policies: Union[AsyncHTTPPolicy, SansIOHTTPPolicy,</span>
+</span><span id="AsyncPipelineClient-141"><a href="#AsyncPipelineClient-141"><span class="linenos">141</span></a><span class="sd">        list[AsyncHTTPPolicy], list[SansIOHTTPPolicy]]</span>
+</span><span id="AsyncPipelineClient-142"><a href="#AsyncPipelineClient-142"><span class="linenos">142</span></a><span class="sd">    :keyword AsyncHttpTransport transport: If omitted, AioHttpTransport is used for asynchronous transport.</span>
+</span><span id="AsyncPipelineClient-143"><a href="#AsyncPipelineClient-143"><span class="linenos">143</span></a><span class="sd">    :return: An async pipeline object.</span>
+</span><span id="AsyncPipelineClient-144"><a href="#AsyncPipelineClient-144"><span class="linenos">144</span></a><span class="sd">    :rtype: ~azure.core.pipeline.AsyncPipeline</span>
+</span><span id="AsyncPipelineClient-145"><a href="#AsyncPipelineClient-145"><span class="linenos">145</span></a>
+</span><span id="AsyncPipelineClient-146"><a href="#AsyncPipelineClient-146"><span class="linenos">146</span></a><span class="sd">    .. admonition:: Example:</span>
+</span><span id="AsyncPipelineClient-147"><a href="#AsyncPipelineClient-147"><span class="linenos">147</span></a>
+</span><span id="AsyncPipelineClient-148"><a href="#AsyncPipelineClient-148"><span class="linenos">148</span></a><span class="sd">        .. literalinclude:: ../samples/test_example_async.py</span>
+</span><span id="AsyncPipelineClient-149"><a href="#AsyncPipelineClient-149"><span class="linenos">149</span></a><span class="sd">            :start-after: [START build_async_pipeline_client]</span>
+</span><span id="AsyncPipelineClient-150"><a href="#AsyncPipelineClient-150"><span class="linenos">150</span></a><span class="sd">            :end-before: [END build_async_pipeline_client]</span>
+</span><span id="AsyncPipelineClient-151"><a href="#AsyncPipelineClient-151"><span class="linenos">151</span></a><span class="sd">            :language: python</span>
+</span><span id="AsyncPipelineClient-152"><a href="#AsyncPipelineClient-152"><span class="linenos">152</span></a><span class="sd">            :dedent: 4</span>
+</span><span id="AsyncPipelineClient-153"><a href="#AsyncPipelineClient-153"><span class="linenos">153</span></a><span class="sd">            :caption: Builds the async pipeline client.</span>
+</span><span id="AsyncPipelineClient-154"><a href="#AsyncPipelineClient-154"><span class="linenos">154</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="AsyncPipelineClient-155"><a href="#AsyncPipelineClient-155"><span class="linenos">155</span></a>
+</span><span id="AsyncPipelineClient-156"><a href="#AsyncPipelineClient-156"><span class="linenos">156</span></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+</span><span id="AsyncPipelineClient-157"><a href="#AsyncPipelineClient-157"><span class="linenos">157</span></a>        <span class="bp">self</span><span class="p">,</span>
+</span><span id="AsyncPipelineClient-158"><a href="#AsyncPipelineClient-158"><span class="linenos">158</span></a>        <span class="n">base_url</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+</span><span id="AsyncPipelineClient-159"><a href="#AsyncPipelineClient-159"><span class="linenos">159</span></a>        <span class="o">*</span><span class="p">,</span>
+</span><span id="AsyncPipelineClient-160"><a href="#AsyncPipelineClient-160"><span class="linenos">160</span></a>        <span class="n">pipeline</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">AsyncPipeline</span><span class="p">[</span><span class="n">HTTPRequestType</span><span class="p">,</span> <span class="n">AsyncHTTPResponseType</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="AsyncPipelineClient-161"><a href="#AsyncPipelineClient-161"><span class="linenos">161</span></a>        <span class="n">config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Configuration</span><span class="p">[</span><span class="n">HTTPRequestType</span><span class="p">,</span> <span class="n">AsyncHTTPResponseType</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="AsyncPipelineClient-162"><a href="#AsyncPipelineClient-162"><span class="linenos">162</span></a>        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+</span><span id="AsyncPipelineClient-163"><a href="#AsyncPipelineClient-163"><span class="linenos">163</span></a>    <span class="p">):</span>
+</span><span id="AsyncPipelineClient-164"><a href="#AsyncPipelineClient-164"><span class="linenos">164</span></a>        <span class="nb">super</span><span class="p">(</span><span class="n">AsyncPipelineClient</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">base_url</span><span class="p">)</span>
+</span><span id="AsyncPipelineClient-165"><a href="#AsyncPipelineClient-165"><span class="linenos">165</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_config</span><span class="p">:</span> <span class="n">Configuration</span><span class="p">[</span><span class="n">HTTPRequestType</span><span class="p">,</span> <span class="n">AsyncHTTPResponseType</span><span class="p">]</span> <span class="o">=</span> <span class="n">config</span> <span class="ow">or</span> <span class="n">Configuration</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+</span><span id="AsyncPipelineClient-166"><a href="#AsyncPipelineClient-166"><span class="linenos">166</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_base_url</span> <span class="o">=</span> <span class="n">base_url</span>
+</span><span id="AsyncPipelineClient-167"><a href="#AsyncPipelineClient-167"><span class="linenos">167</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_pipeline</span> <span class="o">=</span> <span class="n">pipeline</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_pipeline</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_config</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+</span><span id="AsyncPipelineClient-168"><a href="#AsyncPipelineClient-168"><span class="linenos">168</span></a>
+</span><span id="AsyncPipelineClient-169"><a href="#AsyncPipelineClient-169"><span class="linenos">169</span></a>    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="fm">__aenter__</span><span class="p">(</span>
+</span><span id="AsyncPipelineClient-170"><a href="#AsyncPipelineClient-170"><span class="linenos">170</span></a>        <span class="bp">self</span><span class="p">,</span>
+</span><span id="AsyncPipelineClient-171"><a href="#AsyncPipelineClient-171"><span class="linenos">171</span></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AsyncPipelineClient</span><span class="p">[</span><span class="n">HTTPRequestType</span><span class="p">,</span> <span class="n">AsyncHTTPResponseType</span><span class="p">]:</span>
+</span><span id="AsyncPipelineClient-172"><a href="#AsyncPipelineClient-172"><span class="linenos">172</span></a>        <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pipeline</span><span class="o">.</span><span class="fm">__aenter__</span><span class="p">()</span>
+</span><span id="AsyncPipelineClient-173"><a href="#AsyncPipelineClient-173"><span class="linenos">173</span></a>        <span class="k">return</span> <span class="bp">self</span>
+</span><span id="AsyncPipelineClient-174"><a href="#AsyncPipelineClient-174"><span class="linenos">174</span></a>
+</span><span id="AsyncPipelineClient-175"><a href="#AsyncPipelineClient-175"><span class="linenos">175</span></a>    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="fm">__aexit__</span><span class="p">(</span>
+</span><span id="AsyncPipelineClient-176"><a href="#AsyncPipelineClient-176"><span class="linenos">176</span></a>        <span class="bp">self</span><span class="p">,</span>
+</span><span id="AsyncPipelineClient-177"><a href="#AsyncPipelineClient-177"><span class="linenos">177</span></a>        <span class="n">exc_type</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Type</span><span class="p">[</span><span class="ne">BaseException</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="AsyncPipelineClient-178"><a href="#AsyncPipelineClient-178"><span class="linenos">178</span></a>        <span class="n">exc_value</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="ne">BaseException</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="AsyncPipelineClient-179"><a href="#AsyncPipelineClient-179"><span class="linenos">179</span></a>        <span class="n">traceback</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">TracebackType</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="AsyncPipelineClient-180"><a href="#AsyncPipelineClient-180"><span class="linenos">180</span></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="AsyncPipelineClient-181"><a href="#AsyncPipelineClient-181"><span class="linenos">181</span></a>        <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pipeline</span><span class="o">.</span><span class="fm">__aexit__</span><span class="p">(</span><span class="n">exc_type</span><span class="p">,</span> <span class="n">exc_value</span><span class="p">,</span> <span class="n">traceback</span><span class="p">)</span>
+</span><span id="AsyncPipelineClient-182"><a href="#AsyncPipelineClient-182"><span class="linenos">182</span></a>
+</span><span id="AsyncPipelineClient-183"><a href="#AsyncPipelineClient-183"><span class="linenos">183</span></a>    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="AsyncPipelineClient-184"><a href="#AsyncPipelineClient-184"><span class="linenos">184</span></a>        <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="fm">__aexit__</span><span class="p">()</span>
+</span><span id="AsyncPipelineClient-185"><a href="#AsyncPipelineClient-185"><span class="linenos">185</span></a>
+</span><span id="AsyncPipelineClient-186"><a href="#AsyncPipelineClient-186"><span class="linenos">186</span></a>    <span class="k">def</span><span class="w"> </span><span class="nf">_build_pipeline</span><span class="p">(</span>
+</span><span id="AsyncPipelineClient-187"><a href="#AsyncPipelineClient-187"><span class="linenos">187</span></a>        <span class="bp">self</span><span class="p">,</span>
+</span><span id="AsyncPipelineClient-188"><a href="#AsyncPipelineClient-188"><span class="linenos">188</span></a>        <span class="n">config</span><span class="p">:</span> <span class="n">Configuration</span><span class="p">[</span><span class="n">HTTPRequestType</span><span class="p">,</span> <span class="n">AsyncHTTPResponseType</span><span class="p">],</span>
+</span><span id="AsyncPipelineClient-189"><a href="#AsyncPipelineClient-189"><span class="linenos">189</span></a>        <span class="o">*</span><span class="p">,</span>
+</span><span id="AsyncPipelineClient-190"><a href="#AsyncPipelineClient-190"><span class="linenos">190</span></a>        <span class="n">policies</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+</span><span id="AsyncPipelineClient-191"><a href="#AsyncPipelineClient-191"><span class="linenos">191</span></a>        <span class="n">per_call_policies</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+</span><span id="AsyncPipelineClient-192"><a href="#AsyncPipelineClient-192"><span class="linenos">192</span></a>        <span class="n">per_retry_policies</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+</span><span id="AsyncPipelineClient-193"><a href="#AsyncPipelineClient-193"><span class="linenos">193</span></a>        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+</span><span id="AsyncPipelineClient-194"><a href="#AsyncPipelineClient-194"><span class="linenos">194</span></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AsyncPipeline</span><span class="p">[</span><span class="n">HTTPRequestType</span><span class="p">,</span> <span class="n">AsyncHTTPResponseType</span><span class="p">]:</span>
+</span><span id="AsyncPipelineClient-195"><a href="#AsyncPipelineClient-195"><span class="linenos">195</span></a>        <span class="n">transport</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;transport&quot;</span><span class="p">)</span>
+</span><span id="AsyncPipelineClient-196"><a href="#AsyncPipelineClient-196"><span class="linenos">196</span></a>        <span class="n">per_call_policies</span> <span class="o">=</span> <span class="n">per_call_policies</span> <span class="ow">or</span> <span class="p">[]</span>
+</span><span id="AsyncPipelineClient-197"><a href="#AsyncPipelineClient-197"><span class="linenos">197</span></a>        <span class="n">per_retry_policies</span> <span class="o">=</span> <span class="n">per_retry_policies</span> <span class="ow">or</span> <span class="p">[]</span>
+</span><span id="AsyncPipelineClient-198"><a href="#AsyncPipelineClient-198"><span class="linenos">198</span></a>
+</span><span id="AsyncPipelineClient-199"><a href="#AsyncPipelineClient-199"><span class="linenos">199</span></a>        <span class="k">if</span> <span class="n">policies</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># [] is a valid policy list</span>
+</span><span id="AsyncPipelineClient-200"><a href="#AsyncPipelineClient-200"><span class="linenos">200</span></a>            <span class="n">policies</span> <span class="o">=</span> <span class="p">[</span>
+</span><span id="AsyncPipelineClient-201"><a href="#AsyncPipelineClient-201"><span class="linenos">201</span></a>                <span class="n">config</span><span class="o">.</span><span class="n">request_id_policy</span> <span class="ow">or</span> <span class="n">RequestIdPolicy</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">),</span>
+</span><span id="AsyncPipelineClient-202"><a href="#AsyncPipelineClient-202"><span class="linenos">202</span></a>                <span class="n">config</span><span class="o">.</span><span class="n">headers_policy</span><span class="p">,</span>
+</span><span id="AsyncPipelineClient-203"><a href="#AsyncPipelineClient-203"><span class="linenos">203</span></a>                <span class="n">config</span><span class="o">.</span><span class="n">user_agent_policy</span><span class="p">,</span>
+</span><span id="AsyncPipelineClient-204"><a href="#AsyncPipelineClient-204"><span class="linenos">204</span></a>                <span class="n">config</span><span class="o">.</span><span class="n">proxy_policy</span><span class="p">,</span>
+</span><span id="AsyncPipelineClient-205"><a href="#AsyncPipelineClient-205"><span class="linenos">205</span></a>                <span class="n">ContentDecodePolicy</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">),</span>
+</span><span id="AsyncPipelineClient-206"><a href="#AsyncPipelineClient-206"><span class="linenos">206</span></a>            <span class="p">]</span>
+</span><span id="AsyncPipelineClient-207"><a href="#AsyncPipelineClient-207"><span class="linenos">207</span></a>            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">per_call_policies</span><span class="p">,</span> <span class="n">collections</span><span class="o">.</span><span class="n">abc</span><span class="o">.</span><span class="n">Iterable</span><span class="p">):</span>
+</span><span id="AsyncPipelineClient-208"><a href="#AsyncPipelineClient-208"><span class="linenos">208</span></a>                <span class="n">policies</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">per_call_policies</span><span class="p">)</span>
+</span><span id="AsyncPipelineClient-209"><a href="#AsyncPipelineClient-209"><span class="linenos">209</span></a>            <span class="k">else</span><span class="p">:</span>
+</span><span id="AsyncPipelineClient-210"><a href="#AsyncPipelineClient-210"><span class="linenos">210</span></a>                <span class="n">policies</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">per_call_policies</span><span class="p">)</span>
+</span><span id="AsyncPipelineClient-211"><a href="#AsyncPipelineClient-211"><span class="linenos">211</span></a>
+</span><span id="AsyncPipelineClient-212"><a href="#AsyncPipelineClient-212"><span class="linenos">212</span></a>            <span class="n">policies</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+</span><span id="AsyncPipelineClient-213"><a href="#AsyncPipelineClient-213"><span class="linenos">213</span></a>                <span class="p">[</span>
+</span><span id="AsyncPipelineClient-214"><a href="#AsyncPipelineClient-214"><span class="linenos">214</span></a>                    <span class="n">config</span><span class="o">.</span><span class="n">redirect_policy</span><span class="p">,</span>
+</span><span id="AsyncPipelineClient-215"><a href="#AsyncPipelineClient-215"><span class="linenos">215</span></a>                    <span class="n">config</span><span class="o">.</span><span class="n">retry_policy</span><span class="p">,</span>
+</span><span id="AsyncPipelineClient-216"><a href="#AsyncPipelineClient-216"><span class="linenos">216</span></a>                    <span class="n">config</span><span class="o">.</span><span class="n">authentication_policy</span><span class="p">,</span>
+</span><span id="AsyncPipelineClient-217"><a href="#AsyncPipelineClient-217"><span class="linenos">217</span></a>                    <span class="n">config</span><span class="o">.</span><span class="n">custom_hook_policy</span><span class="p">,</span>
+</span><span id="AsyncPipelineClient-218"><a href="#AsyncPipelineClient-218"><span class="linenos">218</span></a>                <span class="p">]</span>
+</span><span id="AsyncPipelineClient-219"><a href="#AsyncPipelineClient-219"><span class="linenos">219</span></a>            <span class="p">)</span>
+</span><span id="AsyncPipelineClient-220"><a href="#AsyncPipelineClient-220"><span class="linenos">220</span></a>            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">per_retry_policies</span><span class="p">,</span> <span class="n">collections</span><span class="o">.</span><span class="n">abc</span><span class="o">.</span><span class="n">Iterable</span><span class="p">):</span>
+</span><span id="AsyncPipelineClient-221"><a href="#AsyncPipelineClient-221"><span class="linenos">221</span></a>                <span class="n">policies</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">per_retry_policies</span><span class="p">)</span>
+</span><span id="AsyncPipelineClient-222"><a href="#AsyncPipelineClient-222"><span class="linenos">222</span></a>            <span class="k">else</span><span class="p">:</span>
+</span><span id="AsyncPipelineClient-223"><a href="#AsyncPipelineClient-223"><span class="linenos">223</span></a>                <span class="n">policies</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">per_retry_policies</span><span class="p">)</span>
+</span><span id="AsyncPipelineClient-224"><a href="#AsyncPipelineClient-224"><span class="linenos">224</span></a>
+</span><span id="AsyncPipelineClient-225"><a href="#AsyncPipelineClient-225"><span class="linenos">225</span></a>            <span class="n">policies</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+</span><span id="AsyncPipelineClient-226"><a href="#AsyncPipelineClient-226"><span class="linenos">226</span></a>                <span class="p">[</span>
+</span><span id="AsyncPipelineClient-227"><a href="#AsyncPipelineClient-227"><span class="linenos">227</span></a>                    <span class="n">config</span><span class="o">.</span><span class="n">logging_policy</span><span class="p">,</span>
+</span><span id="AsyncPipelineClient-228"><a href="#AsyncPipelineClient-228"><span class="linenos">228</span></a>                    <span class="n">DistributedTracingPolicy</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">),</span>
+</span><span id="AsyncPipelineClient-229"><a href="#AsyncPipelineClient-229"><span class="linenos">229</span></a>                    <span class="p">(</span><span class="n">SensitiveHeaderCleanupPolicy</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">redirect_policy</span> <span class="k">else</span> <span class="kc">None</span><span class="p">),</span>
+</span><span id="AsyncPipelineClient-230"><a href="#AsyncPipelineClient-230"><span class="linenos">230</span></a>                    <span class="n">config</span><span class="o">.</span><span class="n">http_logging_policy</span> <span class="ow">or</span> <span class="n">HttpLoggingPolicy</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">),</span>
+</span><span id="AsyncPipelineClient-231"><a href="#AsyncPipelineClient-231"><span class="linenos">231</span></a>                <span class="p">]</span>
+</span><span id="AsyncPipelineClient-232"><a href="#AsyncPipelineClient-232"><span class="linenos">232</span></a>            <span class="p">)</span>
+</span><span id="AsyncPipelineClient-233"><a href="#AsyncPipelineClient-233"><span class="linenos">233</span></a>        <span class="k">else</span><span class="p">:</span>
+</span><span id="AsyncPipelineClient-234"><a href="#AsyncPipelineClient-234"><span class="linenos">234</span></a>            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">per_call_policies</span><span class="p">,</span> <span class="n">collections</span><span class="o">.</span><span class="n">abc</span><span class="o">.</span><span class="n">Iterable</span><span class="p">):</span>
+</span><span id="AsyncPipelineClient-235"><a href="#AsyncPipelineClient-235"><span class="linenos">235</span></a>                <span class="n">per_call_policies_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">per_call_policies</span><span class="p">)</span>
+</span><span id="AsyncPipelineClient-236"><a href="#AsyncPipelineClient-236"><span class="linenos">236</span></a>            <span class="k">else</span><span class="p">:</span>
+</span><span id="AsyncPipelineClient-237"><a href="#AsyncPipelineClient-237"><span class="linenos">237</span></a>                <span class="n">per_call_policies_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">per_call_policies</span><span class="p">]</span>
+</span><span id="AsyncPipelineClient-238"><a href="#AsyncPipelineClient-238"><span class="linenos">238</span></a>            <span class="n">per_call_policies_list</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">policies</span><span class="p">)</span>
+</span><span id="AsyncPipelineClient-239"><a href="#AsyncPipelineClient-239"><span class="linenos">239</span></a>            <span class="n">policies</span> <span class="o">=</span> <span class="n">per_call_policies_list</span>
+</span><span id="AsyncPipelineClient-240"><a href="#AsyncPipelineClient-240"><span class="linenos">240</span></a>            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">per_retry_policies</span><span class="p">,</span> <span class="n">collections</span><span class="o">.</span><span class="n">abc</span><span class="o">.</span><span class="n">Iterable</span><span class="p">):</span>
+</span><span id="AsyncPipelineClient-241"><a href="#AsyncPipelineClient-241"><span class="linenos">241</span></a>                <span class="n">per_retry_policies_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">per_retry_policies</span><span class="p">)</span>
+</span><span id="AsyncPipelineClient-242"><a href="#AsyncPipelineClient-242"><span class="linenos">242</span></a>            <span class="k">else</span><span class="p">:</span>
+</span><span id="AsyncPipelineClient-243"><a href="#AsyncPipelineClient-243"><span class="linenos">243</span></a>                <span class="n">per_retry_policies_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">per_retry_policies</span><span class="p">]</span>
+</span><span id="AsyncPipelineClient-244"><a href="#AsyncPipelineClient-244"><span class="linenos">244</span></a>            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">per_retry_policies_list</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+</span><span id="AsyncPipelineClient-245"><a href="#AsyncPipelineClient-245"><span class="linenos">245</span></a>                <span class="n">index_of_retry</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+</span><span id="AsyncPipelineClient-246"><a href="#AsyncPipelineClient-246"><span class="linenos">246</span></a>                <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">policy</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">policies</span><span class="p">):</span>
+</span><span id="AsyncPipelineClient-247"><a href="#AsyncPipelineClient-247"><span class="linenos">247</span></a>                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">policy</span><span class="p">,</span> <span class="n">AsyncRetryPolicy</span><span class="p">):</span>
+</span><span id="AsyncPipelineClient-248"><a href="#AsyncPipelineClient-248"><span class="linenos">248</span></a>                        <span class="n">index_of_retry</span> <span class="o">=</span> <span class="n">index</span>
+</span><span id="AsyncPipelineClient-249"><a href="#AsyncPipelineClient-249"><span class="linenos">249</span></a>                <span class="k">if</span> <span class="n">index_of_retry</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+</span><span id="AsyncPipelineClient-250"><a href="#AsyncPipelineClient-250"><span class="linenos">250</span></a>                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+</span><span id="AsyncPipelineClient-251"><a href="#AsyncPipelineClient-251"><span class="linenos">251</span></a>                        <span class="s2">&quot;Failed to add per_retry_policies; no RetryPolicy found in the supplied list of policies. &quot;</span>
+</span><span id="AsyncPipelineClient-252"><a href="#AsyncPipelineClient-252"><span class="linenos">252</span></a>                    <span class="p">)</span>
+</span><span id="AsyncPipelineClient-253"><a href="#AsyncPipelineClient-253"><span class="linenos">253</span></a>                <span class="n">policies_1</span> <span class="o">=</span> <span class="n">policies</span><span class="p">[:</span> <span class="n">index_of_retry</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+</span><span id="AsyncPipelineClient-254"><a href="#AsyncPipelineClient-254"><span class="linenos">254</span></a>                <span class="n">policies_2</span> <span class="o">=</span> <span class="n">policies</span><span class="p">[</span><span class="n">index_of_retry</span> <span class="o">+</span> <span class="mi">1</span> <span class="p">:]</span>
+</span><span id="AsyncPipelineClient-255"><a href="#AsyncPipelineClient-255"><span class="linenos">255</span></a>                <span class="n">policies_1</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">per_retry_policies_list</span><span class="p">)</span>
+</span><span id="AsyncPipelineClient-256"><a href="#AsyncPipelineClient-256"><span class="linenos">256</span></a>                <span class="n">policies_1</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">policies_2</span><span class="p">)</span>
+</span><span id="AsyncPipelineClient-257"><a href="#AsyncPipelineClient-257"><span class="linenos">257</span></a>                <span class="n">policies</span> <span class="o">=</span> <span class="n">policies_1</span>
+</span><span id="AsyncPipelineClient-258"><a href="#AsyncPipelineClient-258"><span class="linenos">258</span></a>
+</span><span id="AsyncPipelineClient-259"><a href="#AsyncPipelineClient-259"><span class="linenos">259</span></a>        <span class="k">if</span> <span class="ow">not</span> <span class="n">transport</span><span class="p">:</span>
+</span><span id="AsyncPipelineClient-260"><a href="#AsyncPipelineClient-260"><span class="linenos">260</span></a>            <span class="c1"># Use private import for better typing, mypy and pyright don&#39;t like PEP562</span>
+</span><span id="AsyncPipelineClient-261"><a href="#AsyncPipelineClient-261"><span class="linenos">261</span></a>            <span class="kn">from</span><span class="w"> </span><span class="nn">.pipeline.transport._aiohttp</span><span class="w"> </span><span class="kn">import</span> <span class="n">AioHttpTransport</span>
+</span><span id="AsyncPipelineClient-262"><a href="#AsyncPipelineClient-262"><span class="linenos">262</span></a>
+</span><span id="AsyncPipelineClient-263"><a href="#AsyncPipelineClient-263"><span class="linenos">263</span></a>            <span class="n">transport</span> <span class="o">=</span> <span class="n">AioHttpTransport</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+</span><span id="AsyncPipelineClient-264"><a href="#AsyncPipelineClient-264"><span class="linenos">264</span></a>
+</span><span id="AsyncPipelineClient-265"><a href="#AsyncPipelineClient-265"><span class="linenos">265</span></a>        <span class="k">return</span> <span class="n">AsyncPipeline</span><span class="p">[</span><span class="n">HTTPRequestType</span><span class="p">,</span> <span class="n">AsyncHTTPResponseType</span><span class="p">](</span><span class="n">transport</span><span class="p">,</span> <span class="n">policies</span><span class="p">)</span>
+</span><span id="AsyncPipelineClient-266"><a href="#AsyncPipelineClient-266"><span class="linenos">266</span></a>
+</span><span id="AsyncPipelineClient-267"><a href="#AsyncPipelineClient-267"><span class="linenos">267</span></a>    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_make_pipeline_call</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">:</span> <span class="n">HTTPRequestType</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AsyncHTTPResponseType</span><span class="p">:</span>
+</span><span id="AsyncPipelineClient-268"><a href="#AsyncPipelineClient-268"><span class="linenos">268</span></a>        <span class="n">return_pipeline_response</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;_return_pipeline_response&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+</span><span id="AsyncPipelineClient-269"><a href="#AsyncPipelineClient-269"><span class="linenos">269</span></a>        <span class="n">pipeline_response</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pipeline</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+</span><span id="AsyncPipelineClient-270"><a href="#AsyncPipelineClient-270"><span class="linenos">270</span></a>        <span class="k">if</span> <span class="n">return_pipeline_response</span><span class="p">:</span>
+</span><span id="AsyncPipelineClient-271"><a href="#AsyncPipelineClient-271"><span class="linenos">271</span></a>            <span class="k">return</span> <span class="n">pipeline_response</span>  <span class="c1"># type: ignore  # This is a private API we don&#39;t want to type in signature</span>
+</span><span id="AsyncPipelineClient-272"><a href="#AsyncPipelineClient-272"><span class="linenos">272</span></a>        <span class="k">return</span> <span class="n">pipeline_response</span><span class="o">.</span><span class="n">http_response</span>
+</span><span id="AsyncPipelineClient-273"><a href="#AsyncPipelineClient-273"><span class="linenos">273</span></a>
+</span><span id="AsyncPipelineClient-274"><a href="#AsyncPipelineClient-274"><span class="linenos">274</span></a>    <span class="k">def</span><span class="w"> </span><span class="nf">send_request</span><span class="p">(</span>
+</span><span id="AsyncPipelineClient-275"><a href="#AsyncPipelineClient-275"><span class="linenos">275</span></a>        <span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">:</span> <span class="n">HTTPRequestType</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">stream</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
+</span><span id="AsyncPipelineClient-276"><a href="#AsyncPipelineClient-276"><span class="linenos">276</span></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Awaitable</span><span class="p">[</span><span class="n">AsyncHTTPResponseType</span><span class="p">]:</span>
+</span><span id="AsyncPipelineClient-277"><a href="#AsyncPipelineClient-277"><span class="linenos">277</span></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Method that runs the network request through the client&#39;s chained policies.</span>
+</span><span id="AsyncPipelineClient-278"><a href="#AsyncPipelineClient-278"><span class="linenos">278</span></a>
+</span><span id="AsyncPipelineClient-279"><a href="#AsyncPipelineClient-279"><span class="linenos">279</span></a><span class="sd">        &gt;&gt;&gt; from azure.core.rest import HttpRequest</span>
+</span><span id="AsyncPipelineClient-280"><a href="#AsyncPipelineClient-280"><span class="linenos">280</span></a><span class="sd">        &gt;&gt;&gt; request = HttpRequest(&#39;GET&#39;, &#39;http://www.example.com&#39;)</span>
+</span><span id="AsyncPipelineClient-281"><a href="#AsyncPipelineClient-281"><span class="linenos">281</span></a><span class="sd">        &lt;HttpRequest [GET], url: &#39;http://www.example.com&#39;&gt;</span>
+</span><span id="AsyncPipelineClient-282"><a href="#AsyncPipelineClient-282"><span class="linenos">282</span></a><span class="sd">        &gt;&gt;&gt; response = await client.send_request(request)</span>
+</span><span id="AsyncPipelineClient-283"><a href="#AsyncPipelineClient-283"><span class="linenos">283</span></a><span class="sd">        &lt;AsyncHttpResponse: 200 OK&gt;</span>
+</span><span id="AsyncPipelineClient-284"><a href="#AsyncPipelineClient-284"><span class="linenos">284</span></a>
+</span><span id="AsyncPipelineClient-285"><a href="#AsyncPipelineClient-285"><span class="linenos">285</span></a><span class="sd">        :param request: The network request you want to make. Required.</span>
+</span><span id="AsyncPipelineClient-286"><a href="#AsyncPipelineClient-286"><span class="linenos">286</span></a><span class="sd">        :type request: ~azure.core.rest.HttpRequest</span>
+</span><span id="AsyncPipelineClient-287"><a href="#AsyncPipelineClient-287"><span class="linenos">287</span></a><span class="sd">        :keyword bool stream: Whether the response payload will be streamed. Defaults to False.</span>
+</span><span id="AsyncPipelineClient-288"><a href="#AsyncPipelineClient-288"><span class="linenos">288</span></a><span class="sd">        :return: The response of your network call. Does not do error handling on your response.</span>
+</span><span id="AsyncPipelineClient-289"><a href="#AsyncPipelineClient-289"><span class="linenos">289</span></a><span class="sd">        :rtype: ~azure.core.rest.AsyncHttpResponse</span>
+</span><span id="AsyncPipelineClient-290"><a href="#AsyncPipelineClient-290"><span class="linenos">290</span></a><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="AsyncPipelineClient-291"><a href="#AsyncPipelineClient-291"><span class="linenos">291</span></a>        <span class="n">wrapped</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_make_pipeline_call</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">stream</span><span class="o">=</span><span class="n">stream</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+</span><span id="AsyncPipelineClient-292"><a href="#AsyncPipelineClient-292"><span class="linenos">292</span></a>        <span class="k">return</span> <span class="n">_Coroutine</span><span class="p">(</span><span class="n">wrapped</span><span class="o">=</span><span class="n">wrapped</span><span class="p">)</span>
+</span></pre></div>
+
+
+            <div class="docstring"><p>Service client core methods.</p>
+
+<p>Builds an AsyncPipeline client.</p>
+
+<h6 id="parameters">Parameters</h6>
+
+<ul>
+<li><strong>str base_url</strong>:  URL for the request.
+:keyword ~azure.core.configuration.Configuration config: If omitted, the standard configuration is used.
+:keyword Pipeline pipeline: If omitted, a Pipeline object is created and returned.
+:keyword list[AsyncHTTPPolicy] policies: If omitted, the standard policies of the configuration object is used.
+:keyword per_call_policies: If specified, the policies will be added into the policy list before RetryPolicy
+:paramtype per_call_policies: Union[AsyncHTTPPolicy, SansIOHTTPPolicy,
+list[AsyncHTTPPolicy], list[SansIOHTTPPolicy]]
+:keyword per_retry_policies: If specified, the policies will be added into the policy list after RetryPolicy
+:paramtype per_retry_policies: Union[AsyncHTTPPolicy, SansIOHTTPPolicy,
+list[AsyncHTTPPolicy], list[SansIOHTTPPolicy]]
+:keyword AsyncHttpTransport transport: If omitted, AioHttpTransport is used for asynchronous transport.</li>
+</ul>
+
+<h6 id="returns">Returns</h6>
+
+<blockquote>
+  <p>An async pipeline object.</p>
+</blockquote>
+
+<p>.. admonition:: Example:</p>
+
+<pre><code>.. literalinclude:: ../samples/test_example_async.py
+    :start-after: [START build_async_pipeline_client]
+    :end-before: [END build_async_pipeline_client]
+    :language: python
+    :dedent: 4
+    :caption: Builds the async pipeline client.
+</code></pre>
+</div>
+
+
+                            <div id="AsyncPipelineClient.close" class="classattr">
+                                        <input id="AsyncPipelineClient.close-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+<div class="attr function">
+            
+        <span class="def">async def</span>
+        <span class="name">close</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span></span><span class="return-annotation">) -> <span class="kc">None</span>:</span></span>
+
+                <label class="view-source-button" for="AsyncPipelineClient.close-view-source"><span>View Source</span></label>
+
+    </div>
+    <a class="headerlink" href="#AsyncPipelineClient.close"></a>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="AsyncPipelineClient.close-183"><a href="#AsyncPipelineClient.close-183"><span class="linenos">183</span></a>    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="AsyncPipelineClient.close-184"><a href="#AsyncPipelineClient.close-184"><span class="linenos">184</span></a>        <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="fm">__aexit__</span><span class="p">()</span>
+</span></pre></div>
+
+
+    
+
+                            </div>
+                            <div id="AsyncPipelineClient.send_request" class="classattr">
+                                        <input id="AsyncPipelineClient.send_request-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+<div class="attr function">
+            
+        <span class="def">def</span>
+        <span class="name">send_request</span><span class="signature pdoc-code multiline">(<span class="param">	<span class="bp">self</span>,</span><span class="param">	<span class="n">request</span><span class="p">:</span> <span class="o">~</span><span class="n">HTTPRequestType</span>,</span><span class="param">	<span class="o">*</span>,</span><span class="param">	<span class="n">stream</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>,</span><span class="param">	<span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span></span><span class="return-annotation">) -> <span class="n">Awaitable</span><span class="p">[</span><span class="o">~</span><span class="n">AsyncHTTPResponseType</span><span class="p">]</span>:</span></span>
+
+                <label class="view-source-button" for="AsyncPipelineClient.send_request-view-source"><span>View Source</span></label>
+
+    </div>
+    <a class="headerlink" href="#AsyncPipelineClient.send_request"></a>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="AsyncPipelineClient.send_request-274"><a href="#AsyncPipelineClient.send_request-274"><span class="linenos">274</span></a>    <span class="k">def</span><span class="w"> </span><span class="nf">send_request</span><span class="p">(</span>
+</span><span id="AsyncPipelineClient.send_request-275"><a href="#AsyncPipelineClient.send_request-275"><span class="linenos">275</span></a>        <span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">:</span> <span class="n">HTTPRequestType</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">stream</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
+</span><span id="AsyncPipelineClient.send_request-276"><a href="#AsyncPipelineClient.send_request-276"><span class="linenos">276</span></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Awaitable</span><span class="p">[</span><span class="n">AsyncHTTPResponseType</span><span class="p">]:</span>
+</span><span id="AsyncPipelineClient.send_request-277"><a href="#AsyncPipelineClient.send_request-277"><span class="linenos">277</span></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Method that runs the network request through the client&#39;s chained policies.</span>
+</span><span id="AsyncPipelineClient.send_request-278"><a href="#AsyncPipelineClient.send_request-278"><span class="linenos">278</span></a>
+</span><span id="AsyncPipelineClient.send_request-279"><a href="#AsyncPipelineClient.send_request-279"><span class="linenos">279</span></a><span class="sd">        &gt;&gt;&gt; from azure.core.rest import HttpRequest</span>
+</span><span id="AsyncPipelineClient.send_request-280"><a href="#AsyncPipelineClient.send_request-280"><span class="linenos">280</span></a><span class="sd">        &gt;&gt;&gt; request = HttpRequest(&#39;GET&#39;, &#39;http://www.example.com&#39;)</span>
+</span><span id="AsyncPipelineClient.send_request-281"><a href="#AsyncPipelineClient.send_request-281"><span class="linenos">281</span></a><span class="sd">        &lt;HttpRequest [GET], url: &#39;http://www.example.com&#39;&gt;</span>
+</span><span id="AsyncPipelineClient.send_request-282"><a href="#AsyncPipelineClient.send_request-282"><span class="linenos">282</span></a><span class="sd">        &gt;&gt;&gt; response = await client.send_request(request)</span>
+</span><span id="AsyncPipelineClient.send_request-283"><a href="#AsyncPipelineClient.send_request-283"><span class="linenos">283</span></a><span class="sd">        &lt;AsyncHttpResponse: 200 OK&gt;</span>
+</span><span id="AsyncPipelineClient.send_request-284"><a href="#AsyncPipelineClient.send_request-284"><span class="linenos">284</span></a>
+</span><span id="AsyncPipelineClient.send_request-285"><a href="#AsyncPipelineClient.send_request-285"><span class="linenos">285</span></a><span class="sd">        :param request: The network request you want to make. Required.</span>
+</span><span id="AsyncPipelineClient.send_request-286"><a href="#AsyncPipelineClient.send_request-286"><span class="linenos">286</span></a><span class="sd">        :type request: ~azure.core.rest.HttpRequest</span>
+</span><span id="AsyncPipelineClient.send_request-287"><a href="#AsyncPipelineClient.send_request-287"><span class="linenos">287</span></a><span class="sd">        :keyword bool stream: Whether the response payload will be streamed. Defaults to False.</span>
+</span><span id="AsyncPipelineClient.send_request-288"><a href="#AsyncPipelineClient.send_request-288"><span class="linenos">288</span></a><span class="sd">        :return: The response of your network call. Does not do error handling on your response.</span>
+</span><span id="AsyncPipelineClient.send_request-289"><a href="#AsyncPipelineClient.send_request-289"><span class="linenos">289</span></a><span class="sd">        :rtype: ~azure.core.rest.AsyncHttpResponse</span>
+</span><span id="AsyncPipelineClient.send_request-290"><a href="#AsyncPipelineClient.send_request-290"><span class="linenos">290</span></a><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="AsyncPipelineClient.send_request-291"><a href="#AsyncPipelineClient.send_request-291"><span class="linenos">291</span></a>        <span class="n">wrapped</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_make_pipeline_call</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">stream</span><span class="o">=</span><span class="n">stream</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+</span><span id="AsyncPipelineClient.send_request-292"><a href="#AsyncPipelineClient.send_request-292"><span class="linenos">292</span></a>        <span class="k">return</span> <span class="n">_Coroutine</span><span class="p">(</span><span class="n">wrapped</span><span class="o">=</span><span class="n">wrapped</span><span class="p">)</span>
+</span></pre></div>
+
+
+            <div class="docstring"><p>Method that runs the network request through the client's chained policies.</p>
+
+<div class="pdoc-code codehilite">
+<pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">azure.core.rest</span><span class="w"> </span><span class="kn">import</span> <span class="n">HttpRequest</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">request</span> <span class="o">=</span> <span class="n">HttpRequest</span><span class="p">(</span><span class="s1">&#39;GET&#39;</span><span class="p">,</span> <span class="s1">&#39;http://www.example.com&#39;</span><span class="p">)</span>
+<span class="go">&lt;HttpRequest [GET], url: &#39;http://www.example.com&#39;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">response</span> <span class="o">=</span> <span class="k">await</span> <span class="n">client</span><span class="o">.</span><span class="n">send_request</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+<span class="go">&lt;AsyncHttpResponse: 200 OK&gt;</span>
+</code></pre>
+</div>
+
+<h6 id="parameters">Parameters</h6>
+
+<ul>
+<li><strong>request</strong>:  The network request you want to make. Required.
+:keyword bool stream: Whether the response payload will be streamed. Defaults to False.</li>
+</ul>
+
+<h6 id="returns">Returns</h6>
+
+<blockquote>
+  <p>The response of your network call. Does not do error handling on your response.</p>
+</blockquote>
+</div>
+
+
+                            </div>
+                </section>
+                <section id="AzureClouds">
+                            <input id="AzureClouds-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+<div class="attr class">
+            
+    <span class="def">class</span>
+    <span class="name">AzureClouds</span><wbr>(<span class="base">builtins.str</span>, <span class="base">enum.Enum</span>):
+
+                <label class="view-source-button" for="AzureClouds-view-source"><span>View Source</span></label>
+
+    </div>
+    <a class="headerlink" href="#AzureClouds"></a>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="AzureClouds-32"><a href="#AzureClouds-32"><span class="linenos">32</span></a><span class="k">class</span><span class="w"> </span><span class="nc">AzureClouds</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Enum</span><span class="p">):</span>
+</span><span id="AzureClouds-33"><a href="#AzureClouds-33"><span class="linenos">33</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;An enum to describe Azure Cloud.&quot;&quot;&quot;</span>
+</span><span id="AzureClouds-34"><a href="#AzureClouds-34"><span class="linenos">34</span></a>
+</span><span id="AzureClouds-35"><a href="#AzureClouds-35"><span class="linenos">35</span></a>    <span class="n">AZURE_PUBLIC_CLOUD</span> <span class="o">=</span> <span class="s2">&quot;AZURE_PUBLIC_CLOUD&quot;</span>
+</span><span id="AzureClouds-36"><a href="#AzureClouds-36"><span class="linenos">36</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Azure public cloud&quot;&quot;&quot;</span>
+</span><span id="AzureClouds-37"><a href="#AzureClouds-37"><span class="linenos">37</span></a>
+</span><span id="AzureClouds-38"><a href="#AzureClouds-38"><span class="linenos">38</span></a>    <span class="n">AZURE_CHINA_CLOUD</span> <span class="o">=</span> <span class="s2">&quot;AZURE_CHINA_CLOUD&quot;</span>
+</span><span id="AzureClouds-39"><a href="#AzureClouds-39"><span class="linenos">39</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Azure China cloud&quot;&quot;&quot;</span>
+</span><span id="AzureClouds-40"><a href="#AzureClouds-40"><span class="linenos">40</span></a>
+</span><span id="AzureClouds-41"><a href="#AzureClouds-41"><span class="linenos">41</span></a>    <span class="n">AZURE_US_GOVERNMENT</span> <span class="o">=</span> <span class="s2">&quot;AZURE_US_GOVERNMENT&quot;</span>
+</span><span id="AzureClouds-42"><a href="#AzureClouds-42"><span class="linenos">42</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Azure US government cloud&quot;&quot;&quot;</span>
+</span></pre></div>
+
+
+            <div class="docstring"><p>An enum to describe Azure Cloud.</p>
+</div>
+
+
+                            <div id="AzureClouds.AZURE_PUBLIC_CLOUD" class="classattr">
+                                <div class="attr variable">
+            <span class="name">AZURE_PUBLIC_CLOUD</span>        =
+<span class="default_value">&lt;<a href="#AzureClouds.AZURE_PUBLIC_CLOUD">AzureClouds.AZURE_PUBLIC_CLOUD</a>: &#39;AZURE_PUBLIC_CLOUD&#39;&gt;</span>
+
+        
+    </div>
+    <a class="headerlink" href="#AzureClouds.AZURE_PUBLIC_CLOUD"></a>
+    
+            <div class="docstring"><p>Azure public cloud</p>
+</div>
+
+
+                            </div>
+                            <div id="AzureClouds.AZURE_CHINA_CLOUD" class="classattr">
+                                <div class="attr variable">
+            <span class="name">AZURE_CHINA_CLOUD</span>        =
+<span class="default_value">&lt;<a href="#AzureClouds.AZURE_CHINA_CLOUD">AzureClouds.AZURE_CHINA_CLOUD</a>: &#39;AZURE_CHINA_CLOUD&#39;&gt;</span>
+
+        
+    </div>
+    <a class="headerlink" href="#AzureClouds.AZURE_CHINA_CLOUD"></a>
+    
+            <div class="docstring"><p>Azure China cloud</p>
+</div>
+
+
+                            </div>
+                            <div id="AzureClouds.AZURE_US_GOVERNMENT" class="classattr">
+                                <div class="attr variable">
+            <span class="name">AZURE_US_GOVERNMENT</span>        =
+<span class="default_value">&lt;<a href="#AzureClouds.AZURE_US_GOVERNMENT">AzureClouds.AZURE_US_GOVERNMENT</a>: &#39;AZURE_US_GOVERNMENT&#39;&gt;</span>
+
+        
+    </div>
+    <a class="headerlink" href="#AzureClouds.AZURE_US_GOVERNMENT"></a>
+    
+            <div class="docstring"><p>Azure US government cloud</p>
+</div>
+
+
+                            </div>
+                </section>
+    </main>
+<script>
+    function escapeHTML(html) {
+        return document.createElement('div').appendChild(document.createTextNode(html)).parentNode.innerHTML;
+    }
+
+    const originalContent = document.querySelector("main.pdoc");
+    let currentContent = originalContent;
+
+    function setContent(innerHTML) {
+        let elem;
+        if (innerHTML) {
+            elem = document.createElement("main");
+            elem.classList.add("pdoc");
+            elem.innerHTML = innerHTML;
+        } else {
+            elem = originalContent;
+        }
+        if (currentContent !== elem) {
+            currentContent.replaceWith(elem);
+            currentContent = elem;
+        }
+    }
+
+    function getSearchTerm() {
+        return (new URL(window.location)).searchParams.get("search");
+    }
+
+    const searchBox = document.querySelector(".pdoc input[type=search]");
+    searchBox.addEventListener("input", function () {
+        let url = new URL(window.location);
+        if (searchBox.value.trim()) {
+            url.hash = "";
+            url.searchParams.set("search", searchBox.value);
+        } else {
+            url.searchParams.delete("search");
+        }
+        history.replaceState("", "", url.toString());
+        onInput();
+    });
+    window.addEventListener("popstate", onInput);
+
+
+    let search, searchErr;
+
+    async function initialize() {
+        try {
+            search = await new Promise((resolve, reject) => {
+                const script = document.createElement("script");
+                script.type = "text/javascript";
+                script.async = true;
+                script.onload = () => resolve(window.pdocSearch);
+                script.onerror = (e) => reject(e);
+                script.src = "../search.js";
+                document.getElementsByTagName("head")[0].appendChild(script);
+            });
+        } catch (e) {
+            console.error("Cannot fetch pdoc search index");
+            searchErr = "Cannot fetch search index.";
+        }
+        onInput();
+
+        document.querySelector("nav.pdoc").addEventListener("click", e => {
+            if (e.target.hash) {
+                searchBox.value = "";
+                searchBox.dispatchEvent(new Event("input"));
+            }
+        });
+    }
+
+    function onInput() {
+        setContent((() => {
+            const term = getSearchTerm();
+            if (!term) {
+                return null
+            }
+            if (searchErr) {
+                return `<h3>Error: ${searchErr}</h3>`
+            }
+            if (!search) {
+                return "<h3>Searching...</h3>"
+            }
+
+            window.scrollTo({top: 0, left: 0, behavior: 'auto'});
+
+            const results = search(term);
+
+            let html;
+            if (results.length === 0) {
+                html = `No search results for '${escapeHTML(term)}'.`
+            } else {
+                html = `<h4>${results.length} search result${results.length > 1 ? "s" : ""} for '${escapeHTML(term)}'.</h4>`;
+            }
+            for (let result of results.slice(0, 10)) {
+                let doc = result.doc;
+                let url = `../${doc.modulename.replaceAll(".", "/")}.html`;
+                if (doc.qualname) {
+                    url += `#${doc.qualname}`;
+                }
+
+                let heading;
+                switch (result.doc.kind) {
+                    case "function":
+                        if (doc.fullname.endsWith(".__init__")) {
+                            heading = `<span class="name">${doc.fullname.replace(/\.__init__$/, "")}</span>${doc.signature}`;
+                        } else {
+                            heading = `<span class="def">${doc.funcdef}</span> <span class="name">${doc.fullname}</span>${doc.signature}`;
+                        }
+                        break;
+                    case "class":
+                        heading = `<span class="def">class</span> <span class="name">${doc.fullname}</span>`;
+                        if (doc.bases)
+                            heading += `<wbr>(<span class="base">${doc.bases}</span>)`;
+                        heading += `:`;
+                        break;
+                    case "variable":
+                        heading = `<span class="name">${doc.fullname}</span>`;
+                        if (doc.annotation)
+                            heading += `<span class="annotation">${doc.annotation}</span>`;
+                        if (doc.default_value)
+                            heading += `<span class="default_value"> = ${doc.default_value}</span>`;
+                        break;
+                    default:
+                        heading = `<span class="name">${doc.fullname}</span>`;
+                        break;
+                }
+                html += `
+                        <section class="search-result">
+                        <a href="${url}" class="attr ${doc.kind}">${heading}</a>
+                        <div class="docstring">${doc.doc}</div>
+                        </section>
+                    `;
+
+            }
+            return html;
+        })());
+    }
+
+    if (getSearchTerm()) {
+        initialize();
+        searchBox.value = getSearchTerm();
+        onInput();
+    } else {
+        searchBox.addEventListener("focus", initialize, {once: true});
+    }
+
+    searchBox.addEventListener("keydown", e => {
+        if (["ArrowDown", "ArrowUp", "Enter"].includes(e.key)) {
+            let focused = currentContent.querySelector(".search-result.focused");
+            if (!focused) {
+                currentContent.querySelector(".search-result").classList.add("focused");
+            } else if (
+                e.key === "ArrowDown"
+                && focused.nextElementSibling
+                && focused.nextElementSibling.classList.contains("search-result")
+            ) {
+                focused.classList.remove("focused");
+                focused.nextElementSibling.classList.add("focused");
+                focused.nextElementSibling.scrollIntoView({
+                    behavior: "smooth",
+                    block: "nearest",
+                    inline: "nearest"
+                });
+            } else if (
+                e.key === "ArrowUp"
+                && focused.previousElementSibling
+                && focused.previousElementSibling.classList.contains("search-result")
+            ) {
+                focused.classList.remove("focused");
+                focused.previousElementSibling.classList.add("focused");
+                focused.previousElementSibling.scrollIntoView({
+                    behavior: "smooth",
+                    block: "nearest",
+                    inline: "nearest"
+                });
+            } else if (
+                e.key === "Enter"
+            ) {
+                focused.querySelector("a").click();
+            }
+        }
+    });
+</script></body>
+</html>
