@@ -23,7 +23,8 @@ dev = [
     "aioresponses>=0.7.8",
     "asgiref>=3.9.1",
     "pandas>=2.3.1",
-    "ruff>=0.12.8",
+    "ruff>=0.12.9",
+    "pdoc>=15.0.4",
 ]
 
 [tool.uv.workspace]
@@ -54,6 +55,7 @@ pythonpath = ["."]
 envfile = ".env"
 
 [tool.poe.tasks]
+doc = {cmd = "uv run pdoc ./azure-kusto-data/azure ./azure-kusto-ingest/azure ${CI:+ -o ./docs}", args = { CI = { help = "Run in CI mode", type = "boolean", options = ["--ci"] } } }
 sync = "uv sync --all-packages --all-extras --dev --locked"
 build = "uv build --all-packages"
 format = "ruff format"
