@@ -50,25 +50,24 @@ jobs:
       - name: "Run Ruff Formatter"
         run: poe check-format
         id: ruff-formatter
-        continue-on-error: true
 
       - name: "Run Ruff Linter"
         run: poe lint
         id: ruff-linter
-        continue-on-error: true
         
       - name: "Run Ruff Fixes"
         id: fix-ruff
-        if: steps.ruff-formatter.outcome != 'success' || steps.ruff-linter.outcome != 'success'
+        if: matrix.python-version == '3.9' && failure() && (steps.ruff-formatter.outcome != 'success' || steps.ruff-linter.outcome != 'success')
         run: poe fix
         
       - uses: parkerbxyz/suggest-changes@v2
-        if: steps.fix-ruff.outcome == 'success' && matrix.python-version == '3.9'
+        if: matrix.python-version == '3.9' && steps.fix-ruff.outcome == 'success'
         with:
           comment: 'Please commit the suggested changes from markdownlint.'
           event: 'REQUEST_CHANGES'
         
       - name: "Run Type Checking"
+        if: always()
         run: poe types
 
       - name: Upload Unit Test Results
