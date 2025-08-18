@@ -1,6 +1,4 @@
 import copy
-import json
-from pathlib import Path
 from typing import List, Dict
 from urllib.parse import urlparse
 
@@ -95,7 +93,7 @@ class KustoTrustedEndpoints:
             return
 
         raise KustoClientInvalidConnectionStringException(
-            f"Can't communicate with '{hostname}' as this hostname is currently not trusted; please see " f"https://aka.ms/kustotrustedendpoints"
+            f"Can't communicate with '{hostname}' as this hostname is currently not trusted; please see https://aka.ms/kustotrustedendpoints"
         )
 
     def set_override_policy(self, matcher):

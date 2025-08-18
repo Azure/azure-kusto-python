@@ -8,6 +8,7 @@ from .kcsb import KustoConnectionStringBuilder
 from .data_format import DataFormat
 
 __all__ = [
+    "__version__",
     "KustoClient",
     "ClientRequestProperties",
     "KustoConnectionStringBuilder",

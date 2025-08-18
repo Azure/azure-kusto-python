@@ -11,7 +11,7 @@ from azure.kusto.data._cloud_settings import CloudSettings
 from azure.kusto.data.exceptions import KustoClosedError, KustoMultiApiError, KustoNetworkError, KustoServiceError
 from azure.kusto.data.helpers import dataframe_from_result_table
 from azure.kusto.data.response import KustoStreamingResponseDataSet
-from tests.kusto_client_common import KustoClientTestsMixin, mocked_requests_post, get_response_first_primary_result, get_table_first_row, proxy_kcsb
+from tests.kusto_client_common import KustoClientTestsMixin, mocked_requests_post, get_response_first_primary_result, get_table_first_row
 
 
 @pytest.fixture(params=[KustoClient.execute_query, KustoClient.execute_streaming_query])
@@ -42,7 +42,7 @@ class TestKustoClient(KustoClientTestsMixin):
         """Test query V2."""
         with KustoClient(self.HOST) as client:
             with pytest.raises(KustoNetworkError):
-                response = method.__call__(client, "PythonTest", "raiseNetwork")
+                method.__call__(client, "PythonTest", "raiseNetwork")
 
     @patch("requests.Session.post", side_effect=mocked_requests_post)
     def test_sanity_control_command(self, mock_post):
@@ -99,8 +99,8 @@ class TestKustoClient(KustoClientTestsMixin):
             properties.set_option(ClientRequestProperties.results_defer_partial_query_failures_option_name, False)
             with pytest.raises(KustoMultiApiError) as e:
                 response = method.__call__(client, "PythonTest", query, properties=properties)
-                if type(response) == KustoStreamingResponseDataSet:
-                    results = list(get_response_first_primary_result(response))
+                if isinstance(response, KustoStreamingResponseDataSet):
+                    list(get_response_first_primary_result(response))
             errors = e.value.get_api_errors()
             assert len(errors) == 1
             assert errors[0].code == "LimitsExceeded"
@@ -130,7 +130,7 @@ class TestKustoClient(KustoClientTestsMixin):
     def test_json_401(self, mock_post, method):
         """Tests 401 permission errors."""
         with KustoClient(self.HOST) as client:
-            with pytest.raises(KustoServiceError, match=f"401. Missing adequate access rights."):
+            with pytest.raises(KustoServiceError, match="401. Missing adequate access rights."):
                 query = "execute_401"
                 response = method.__call__(client, "PythonTest", query)
                 get_response_first_primary_result(response)

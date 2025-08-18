@@ -1,6 +1,6 @@
 """Tests for KustoClient."""
+
 import json
-import sys
 from unittest.mock import patch
 
 import pytest
@@ -10,31 +10,12 @@ from azure.kusto.data._decorators import aio_documented_by
 from azure.kusto.data.client_request_properties import ClientRequestProperties
 from azure.kusto.data.exceptions import KustoClosedError, KustoMultiApiError, KustoNetworkError
 from azure.kusto.data.helpers import dataframe_from_result_table
-from ..kusto_client_common import KustoClientTestsMixin, mocked_requests_post, proxy_kcsb
+from ..kusto_client_common import KustoClientTestsMixin, mocked_requests_post
 from ..test_kusto_client import TestKustoClient as KustoClientTestsSync
-
-PANDAS = False
-try:
-    import pandas
-
-    PANDAS = True
-except:
-    pass
-
-run_aio_tests = False
-try:
-    from azure.kusto.data.aio.client import KustoClient
-    from aioresponses import aioresponses, CallbackResult
-
-    run_aio_tests = True
-except:
-    pass
-
-if sys.version_info < (3, 6):
-    run_aio_tests = False
+from azure.kusto.data.aio.client import KustoClient
+from aioresponses import aioresponses, CallbackResult
 
 
-@pytest.mark.skipif(not run_aio_tests, reason="requires aio")
 @aio_documented_by(KustoClientTestsSync)
 class TestKustoClient(KustoClientTestsMixin):
     @staticmethod
@@ -80,7 +61,7 @@ class TestKustoClient(KustoClientTestsMixin):
             self._mock_query(aioresponses_mock)
             async with KustoClient(self.HOST) as client:
                 with pytest.raises(KustoNetworkError):
-                    response = await client.execute_query("PythonTest", "raiseNetwork")
+                    await client.execute_query("PythonTest", "raiseNetwork")
 
     @aio_documented_by(KustoClientTestsSync.test_sanity_control_command)
     @pytest.mark.asyncio
@@ -91,7 +72,6 @@ class TestKustoClient(KustoClientTestsMixin):
                 response = await client.execute_mgmt("NetDefaultDB", ".show version")
         self._assert_sanity_control_command_response(response)
 
-    @pytest.mark.skipif(not PANDAS, reason="requires pandas")
     @aio_documented_by(KustoClientTestsSync.test_sanity_data_frame)
     @pytest.mark.asyncio
     async def test_sanity_data_frame(self):

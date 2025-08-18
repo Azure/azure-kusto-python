@@ -11,6 +11,7 @@ on:
   push:
     branches: [ master ]
   pull_request:
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -45,17 +46,42 @@ jobs:
           APPLICATION_INSIGHTS_ENGINE_CONNECTION_STRING: https://ade.applicationinsights.io/subscriptions/12534eb3-8109-4d84-83ad-576c0d5e1d06/resourcegroups/clients_e2e_test/providers/microsoft.insights/components/kusto-e2e-app-insights
           APPLICATION_INSIGHTS_TEST_DATABASE: kusto-e2e-app-insights
         run: poe test --ci
-      
-      #      todo: re-enable on a different PR
-      #      - name: "Run Ruff Formatter"
-      #        id: ruff-formatter
-      #        uses: astral-sh/ruff-action@v3
-      #        with:
-      #          args: "format --diff"
-      #          
-      #      - name: "Run Ruff Linter"
-      #        run: ruff check --diff        
 
+      - name: "Run Ruff Formatter"
+        run: poe check-format
+        id: ruff-formatter
+        if: always()
+
+      - name: "Run Ruff Linter"
+        run: poe lint
+        id: ruff-linter
+        if: always()
+
+      - name: "Run Ruff Fixes"
+        id: fix-ruff
+        if: matrix.python-version == '3.9' && failure() && (steps.ruff-formatter.outcome != 'success' || steps.ruff-linter.outcome != 'success')
+        run: poe fix
+
+      - uses: parkerbxyz/suggest-changes@v2
+        if: matrix.python-version == '3.9' && failure() && steps.fix-ruff.outcome == 'success'
+        with:
+          comment: 'Please commit the suggested changes from markdownlint.'
+          event: 'REQUEST_CHANGES'
+
+      - name: "Run Type Checking"
+        if: always()
+        run: poe types
+        
+      - name: "Generate Docs"
+        if: matrix.python-version == '3.9' && github.ref == 'refs/heads/master'
+        run: poe docs --ci
+        
+      - name: "Upload Docs"
+        uses: actions/upload-pages-artifact@v3
+        if: matrix.python-version == '3.9' && github.ref == 'refs/heads/master'
+        with:
+          path: docs/
+          
       - name: Upload Unit Test Results
         if: always()
         uses: actions/upload-artifact@v4
@@ -82,3 +108,19 @@ jobs:
         uses: EnricoMi/publish-unit-test-result-action@v2
         with:
           files: artifacts/**/*.xml
+  
+  publish-docs:
+    name: "Publish Docs"
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master'
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+      
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

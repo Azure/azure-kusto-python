@@ -318,7 +318,7 @@ class TestManagedStreamingIngestClient:
 
         with pytest.raises(KustoApiError) as ex:
             ingest_client.ingest_from_file(file_path, ingestion_properties=ingestion_properties)
-            assert ex.value.get_api_error().permanent == True
+            assert ex.value.get_api_error().permanent
 
     @responses.activate
     @patch("azure.kusto.data.security._AadHelper.acquire_authorization_header", return_value=None)

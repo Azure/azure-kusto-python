@@ -2,8 +2,9 @@
 # Licensed under the MIT License
 import pytest
 
+from azure.kusto.data._cloud_settings import CloudSettings
+from azure.kusto.data._token_providers import CallbackTokenProvider, MsiTokenProvider, UserPassTokenProvider
 from azure.kusto.data import KustoConnectionStringBuilder
-from azure.kusto.data._token_providers import *
 from azure.kusto.data.exceptions import KustoAuthenticationError
 from azure.kusto.data.security import _AadHelper
 
@@ -42,8 +43,6 @@ def test_msi_auth():
     Please be prudent in adding any future tests!
     """
     client_guid = "kjhjk"
-    object_guid = "87687687"
-    res_guid = "kajsdghdijewhag"
 
     """
     Use of object_id and msi_res_id is disabled pending support of azure-identity

@@ -2,14 +2,31 @@
 # Licensed under the MIT License
 import unittest
 from threading import Thread
+from typing import Optional
 
 import pytest
 from asgiref.sync import async_to_sync
 from azure.identity import ClientSecretCredential, DefaultAzureCredential
 
-from azure.kusto.data._token_providers import *
-from azure.kusto.data.exceptions import KustoNetworkError
-from azure.kusto.data.env_utils import get_env, get_app_id, get_auth_id, get_app_key, prepare_app_key_auth
+from azure.kusto.data._cloud_settings import CloudInfo
+from azure.kusto.data._token_providers import (
+    UserPassTokenProvider,
+    BasicTokenProvider,
+    MsiTokenProvider,
+    CallbackTokenProvider,
+    InteractiveLoginTokenProvider,
+    ApplicationKeyTokenProvider,
+    AzCliTokenProvider,
+    ApplicationCertificateTokenProvider,
+    AzureIdentityTokenCredentialProvider,
+    TokenConstants,
+    KustoClientError,
+    CloudSettings,
+    DeviceLoginTokenProvider,
+    TokenProviderBase,
+)
+from azure.kusto.data.exceptions import KustoNetworkError, KustoAsyncUsageError
+from azure.kusto.data.env_utils import get_env, get_app_id, get_auth_id, prepare_app_key_auth
 
 TOKEN_VALUE = "little miss sunshine"
 
@@ -103,7 +120,6 @@ class TokenProviderTests(unittest.TestCase):
         assert token is not None
         assert TokenConstants.MSAL_ERROR not in token
 
-        value = None
         if TokenConstants.MSAL_ACCESS_TOKEN in token:
             return token[TokenConstants.MSAL_ACCESS_TOKEN]
         elif TokenConstants.AZ_ACCESS_TOKEN in token:
@@ -277,7 +293,7 @@ class TokenProviderTests(unittest.TestCase):
         if app_auth:
             with pytest.raises(KustoNetworkError):
                 with ApplicationKeyTokenProvider("NoURI", app_auth.auth_id, app_auth.app_id, app_auth.app_key) as provider:
-                    token = provider.get_token()
+                    provider.get_token()
 
     @staticmethod
     def test_app_cert_provider():

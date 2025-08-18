@@ -25,6 +25,7 @@ dev = [
     "pandas>=2.3.1",
     "ruff>=0.12.9",
     "pdoc>=15.0.4",
+    "basedpyright>=1.31.2",
 ]
 
 [tool.uv.workspace]
@@ -55,14 +56,16 @@ pythonpath = ["."]
 envfile = ".env"
 
 [tool.poe.tasks]
-doc = {cmd = "uv run pdoc ./azure-kusto-data/azure/kusto/data ./azure-kusto-data/azure/kusto/data/aio ./azure-kusto-ingest/azure/kusto/ingest ${CI:+ -o ./docs}", args = { CI = { help = "Run in CI mode", type = "boolean", options = ["--ci"] } } }
+types = "uv run basedpyright"
+docs = {cmd = "uv run pdoc ./azure-kusto-data/azure/kusto/data ./azure-kusto-data/azure/kusto/data/aio ./azure-kusto-ingest/azure/kusto/ingest ${CI:+ -o ./docs}", args = { CI = { help = "Run in CI mode", type = "boolean", options = ["--ci"] } } }
 sync = "uv sync --all-packages --all-extras --dev --locked"
 build = "uv build --all-packages"
 format = "ruff format"
 check-format = "ruff format --diff"
-lint = "ruff check"
+lint = "ruff check --diff"
 lint-fix = "ruff check --fix"
 lint-fix-unsafe = "ruff check --fix --unsafe-fixes"
+fix = ["format", "lint-fix"]
 show-version = "uv version"
 [tool.poe.tasks.test]
 sequence = ["sync", { cmd = 'pytest ${NO_E2E:+ --ignore=azure-kusto-ingest/tests/test_e2e_ingest.py --ignore=azure-kusto-data/tests/test_e2e_data.py } ${CI:+ -n8 --junit-xml pytest.xml}'}]
@@ -74,3 +77,7 @@ CI = { help = "Run tests in CI mode", type = "boolean", options = ["--ci"] }
 [tool.poe.tasks.bump-version]
 sequence = [{ cmd = "uv version --bump $bump" }, { cmd = "uv version --bump $bump --package azure-kusto-data" }, { cmd = "uv version --bump $bump --package azure-kusto-ingest" }, { cmd = "uv version --bump $bump --package quick-start" }]
 args = { bump = { help = "Bump version [possible values: major, minor, patch, stable, alpha, beta, rc, post, dev]", positional = true, default = "patch" } }
+
+[tool.basedpyright]
+pythonVersion = "3.9"
+reportUnnecessaryTypeIgnoreComment = false

@@ -1,8 +1,6 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
-import random
 from typing import Union, AnyStr, IO, List, Optional, Dict
-from urllib.parse import urlparse
 
 from azure.storage.blob import BlobServiceClient
 
@@ -12,13 +10,13 @@ from azure.storage.queue import QueueServiceClient, TextBase64EncodePolicy
 
 from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
 from azure.kusto.data._telemetry import MonitoredActivity
-from azure.kusto.data.exceptions import KustoClosedError, KustoServiceError
+from azure.kusto.data.exceptions import KustoClosedError
 
 from ._ingest_telemetry import IngestTracingAttributes
 from ._resource_manager import _ResourceManager, _ResourceUri
 from .base_ingest_client import BaseIngestClient, IngestionResult, IngestionStatus
 from .descriptors import BlobDescriptor, FileDescriptor, StreamDescriptor
-from .exceptions import KustoInvalidEndpointError, KustoQueueError
+from .exceptions import KustoQueueError
 from azure.kusto.data.exceptions import KustoBlobError
 from .ingestion_blob_info import IngestionBlobInfo
 from .ingestion_properties import IngestionProperties

@@ -1,16 +1,31 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
+import asyncio
+
 import pytest
+from azure.kusto.data._cloud_settings import CloudSettings, CloudInfo
+from azure.kusto.data._token_providers import (
+    DeviceLoginTokenProvider,
+    AsyncDefaultAzureCredential,
+    AzureIdentityTokenCredentialProvider,
+    CallbackTokenProvider,
+    ApplicationCertificateTokenProvider,
+    ApplicationKeyTokenProvider,
+    UserPassTokenProvider,
+    AzCliTokenProvider,
+    MsiTokenProvider,
+    BasicTokenProvider,
+    TokenConstants,
+)
 from azure.identity.aio import ClientSecretCredential as AsyncClientSecretCredential
 
 from azure.kusto.data._decorators import aio_documented_by
-from azure.kusto.data._token_providers import *
 from azure.kusto.data.env_utils import get_env, get_app_id, get_auth_id, prepare_app_key_auth
-from .test_kusto_client import run_aio_tests
+from azure.kusto.data.exceptions import KustoClientError, KustoAsyncUsageError
+
 from ..test_token_providers import KUSTO_URI, TOKEN_VALUE, TEST_AZ_AUTH, TEST_MSI_AUTH, TEST_DEVICE_AUTH, TokenProviderTests, MockProvider
 
 
-@pytest.mark.skipif(not run_aio_tests, reason="requires aio")
 @aio_documented_by(TokenProviderTests)
 class TestTokenProvider:
     @aio_documented_by(TokenProviderTests.test_base_provider)
@@ -67,7 +82,6 @@ class TestTokenProvider:
         assert token is not None
         assert TokenConstants.MSAL_ERROR not in token
 
-        value = None
         if TokenConstants.MSAL_ACCESS_TOKEN in token:
             return token[TokenConstants.MSAL_ACCESS_TOKEN]
         elif TokenConstants.AZ_ACCESS_TOKEN in token:

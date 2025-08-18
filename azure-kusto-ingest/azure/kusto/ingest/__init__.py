@@ -21,6 +21,7 @@ from .streaming_ingest_client import KustoStreamingIngestClient
 from .base_ingest_client import BaseIngestClient
 
 __all__ = [
+    "__version__",
     "IngestionResult",
     "IngestionStatus",
     "BlobDescriptor",

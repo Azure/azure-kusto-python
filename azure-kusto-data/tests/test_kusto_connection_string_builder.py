@@ -81,16 +81,18 @@ class TestKustoConnectionStringBuilder:
             assert kcsb.application_client_id == uuid
             assert kcsb.application_key == key
             assert kcsb.authority_id == "microsoft.com"
-            assert repr(
-                kcsb
-            ) == "Data Source=localhost;Initial Catalog=NetDefaultDB;AAD Federated Security=True;Application Client Id={0};Application Key={1};Authority Id={2}".format(
-                uuid, key, "microsoft.com"
+            assert (
+                repr(kcsb)
+                == "Data Source=localhost;Initial Catalog=NetDefaultDB;AAD Federated Security=True;Application Client Id={0};Application Key={1};Authority Id={2}".format(
+                    uuid, key, "microsoft.com"
+                )
             )
 
-            assert str(
-                kcsb
-            ) == "Data Source=localhost;Initial Catalog=NetDefaultDB;AAD Federated Security=True;Application Client Id={0};Application Key={1};Authority Id={2}".format(
-                uuid, self.PASSWORDS_REPLACEMENT, "microsoft.com"
+            assert (
+                str(kcsb)
+                == "Data Source=localhost;Initial Catalog=NetDefaultDB;AAD Federated Security=True;Application Client Id={0};Application Key={1};Authority Id={2}".format(
+                    uuid, self.PASSWORDS_REPLACEMENT, "microsoft.com"
+                )
             )
 
     def test_aad_user(self):
@@ -268,8 +270,8 @@ class TestKustoConnectionStringBuilder:
 
         exception_occurred = False
         try:
-            fault = KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication("localhost", client_id=client_guid, object_id=object_guid)
-        except ValueError as e:
+            KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication("localhost", client_id=client_guid, object_id=object_guid)
+        except ValueError:
             exception_occurred = True
         finally:
             assert exception_occurred
@@ -289,7 +291,7 @@ class TestKustoConnectionStringBuilder:
         exception_occurred = False
         try:
             kscb = KustoConnectionStringBuilder.with_token_provider("localhost", caller_token)
-        except AssertionError as ex:
+        except AssertionError:
             exception_occurred = True
         finally:
             assert exception_occurred
@@ -308,7 +310,7 @@ class TestKustoConnectionStringBuilder:
         exception_occurred = False
         try:
             kscb = KustoConnectionStringBuilder.with_async_token_provider("localhost", caller_token)
-        except AssertionError as ex:
+        except AssertionError:
             exception_occurred = True
         finally:
             assert exception_occurred

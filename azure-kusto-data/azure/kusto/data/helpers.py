@@ -114,7 +114,7 @@ def parse_float(frame, col):
     import pandas as pd
 
     frame[col] = frame[col].replace("NaN", np.nan).replace("Infinity", np.inf).replace("-Infinity", -np.inf)
-    frame[col] = pd.to_numeric(frame[col], errors="coerce").astype(pd.Float64Dtype())
+    frame[col] = pd.to_numeric(frame[col], errors="coerce").astype(pd.Float64Dtype())  # pyright: ignore[reportCallIssue,reportArgumentType]
     return frame[col]
 
 
@@ -129,7 +129,7 @@ def parse_datetime(frame, col):
         # if frame contains ".", replace "Z" with ".000Z"
         # == False is not a mistake - that's the pandas way to do it
         contains_dot = frame[col].str.contains(".")
-        frame.loc[contains_dot == False, col] = frame.loc[contains_dot == False, col].str.replace("Z", ".000Z")
+        frame.loc[not contains_dot, col] = frame.loc[not contains_dot, col].str.replace("Z", ".000Z")
     frame[col] = pd.to_datetime(frame[col], errors="coerce", **args)
     return frame[col]
 
