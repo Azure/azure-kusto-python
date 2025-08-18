@@ -50,10 +50,12 @@ jobs:
       - name: "Run Ruff Formatter"
         run: poe check-format
         id: ruff-formatter
+        if: always()
 
       - name: "Run Ruff Linter"
         run: poe lint
         id: ruff-linter
+        if: always()
         
       - name: "Run Ruff Fixes"
         id: fix-ruff
