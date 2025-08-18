@@ -18,7 +18,7 @@ To install via the Python Package Index (PyPI), type:
 ### Option 2: Source Via Git
 To get the source code of the SDK via git just type:
 
-```python
+```bash
 git clone https://github.com/Azure/azure-kusto-python
 cd ./azure-kusto-python/azure-kusto-data
 python3 setup.py install
@@ -35,7 +35,7 @@ Download a zip of the code via GitHub or PyPi. Then follow the same instructions
     * `pip install azure-kusto-ingest[pandas]`
 
 ## Minimum Requirements
-* Python 3.5 and above
+* Python 3.9 and above
 * See setup.py for dependencies
 
 ## Authentication methods:

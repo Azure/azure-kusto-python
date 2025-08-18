@@ -1,0 +1,45 @@
+[project]
+name = "azure-kusto-ingest"
+version = "5.0.5"
+description = "Kusto Ingest Client"
+authors = [
+    { name = "Microsoft Corporation", email = "kustalk@microsoft.com" },
+]
+dependencies = [
+    "azure-kusto-data",
+    # TODO - this has to be locked to this version due to https://github.com/Azure/azure-sdk-for-python/issues/40041
+    "azure-storage-blob==12.26.0",
+    "azure-storage-queue==12.13.0",
+    "tenacity>=9.1.2",
+]
+readme = "README.rst"
+requires-python = ">= 3.9"
+license = "MIT"
+keywords = ["azure", "kusto", "ingest", "data", "analytics"]
+classifiers = [
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "License :: OSI Approved :: MIT License",
+]
+urls = { "Repository" = "https://github.com/Azure/azure-kusto-python" }
+
+[project.optional-dependencies]
+pandas = [
+    "pandas>=2.3.1",
+]
+aio = []
+
+[tool.uv]
+package = true
+
+[build-system]
+requires = ["uv_build>=0.8.9,<0.9.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "azure.kusto.ingest"
+module-root = ""

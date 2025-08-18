@@ -1,2 +1,76 @@
-[tool.black]
+[project]
+name = "azure-kusto-python"
+version = "5.0.5"
+description = "Microsoft Azure Kusto Python SDK"
+dependencies = [
+    "azure-kusto-data",
+    "azure-kusto-ingest",
+    "quick-start",
+]
+readme = "README.md"
+requires-python = ">= 3.9"
+
+[[project.authors]]
+name = "Microsoft Corporation"
+email = "kustalk@microsoft.com"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.1",
+    "pytest-xdist[psutil]>=3.8.0",
+    "pytest-asyncio>=1.1.0",
+    "responses>=0.25.8",
+    "aioresponses>=0.7.8",
+    "asgiref>=3.9.1",
+    "pandas>=2.3.1",
+    "ruff>=0.12.9",
+    "pdoc>=15.0.4",
+]
+
+[tool.uv.workspace]
+members = ["azure-kusto-data", "azure-kusto-ingest", "quick-start"]
+
+[tool.uv.sources]
+azure-kusto-data = { workspace = true }
+azure-kusto-ingest = { workspace = true }
+quick-start = { workspace = true }
+
+[tool.ruff]
 line-length = 160
+target-version = 'py39'
+
+[tool.ruff.lint]
+ignore = ["E731"] # E731 - dont assign lambdas. 
+
+[tool.ruff.lint.per-file-ignores]
+"**/sample.py" = ["E402"] # module level import not at top of file (for samples)
+"**/test_streaming_query.py" = ["F841"] # unused variable - for pytest raises
+
+[tool.pytest.ini_options]
+testpaths = ["azure-kusto-data/tests", "azure-kusto-ingest/tests"]
+addopts = ["-s", "--import-mode=importlib", '-n', 'auto']
+pythonpath = ["."]
+
+[tool.poe]
+envfile = ".env"
+
+[tool.poe.tasks]
+doc = {cmd = "uv run pdoc ./azure-kusto-data/azure/kusto/data ./azure-kusto-data/azure/kusto/data/aio ./azure-kusto-ingest/azure/kusto/ingest ${CI:+ -o ./docs}", args = { CI = { help = "Run in CI mode", type = "boolean", options = ["--ci"] } } }
+sync = "uv sync --all-packages --all-extras --dev --locked"
+build = "uv build --all-packages"
+format = "ruff format"
+check-format = "ruff format --diff"
+lint = "ruff check"
+lint-fix = "ruff check --fix"
+lint-fix-unsafe = "ruff check --fix --unsafe-fixes"
+show-version = "uv version"
+[tool.poe.tasks.test]
+sequence = ["sync", { cmd = 'pytest ${NO_E2E:+ --ignore=azure-kusto-ingest/tests/test_e2e_ingest.py --ignore=azure-kusto-data/tests/test_e2e_data.py } ${CI:+ -n8 --junit-xml pytest.xml}'}]
+
+[tool.poe.tasks.test.args]
+NO_E2E = { help = "Skip E2E tests", type = "boolean", options = ["--no-e2e"] }
+CI = { help = "Run tests in CI mode", type = "boolean", options = ["--ci"] }
+
+[tool.poe.tasks.bump-version]
+sequence = [{ cmd = "uv version --bump $bump" }, { cmd = "uv version --bump $bump --package azure-kusto-data" }, { cmd = "uv version --bump $bump --package azure-kusto-ingest" }, { cmd = "uv version --bump $bump --package quick-start" }]
+args = { bump = { help = "Bump version [possible values: major, minor, patch, stable, alpha, beta, rc, post, dev]", positional = true, default = "patch" } }

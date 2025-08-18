@@ -14,12 +14,11 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    environment: build
 
     strategy:
       fail-fast: false
       matrix:
-        python-version: [ '3.8', '3.9', '3.10', '3.11', '3.12', '3.13' ]
+        python-version: [ '3.9', '3.10', '3.11', '3.12', '3.13' ]
     env:
       PYTHON: ${{ matrix.python-version }}
 
@@ -31,22 +30,13 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
       - uses: actions/checkout@v4
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
+      - name: Install uv and set the python version
+        uses: astral-sh/setup-uv@v6
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip --user
-          pip install -r dev_requirements.txt --user
-          pip install pytest-cov --user
-          pip install ./azure-kusto-data[aio,pandas] ./azure-kusto-ingest[aio,pandas] --user
-          pip freeze
-      # We have to use an old version of this plugin, as the new one assumes python 3.8
-      - uses: psf/black@c8f1a5542c257491e1e093b1404481ece7f7e02c
-        with:
-          options: "--check --diff --line-length 160"
-          version: "23.3.0"
+          enable-cache: true
+      - name: Install Poe
+        run: uv tool install poethepoet
       - name: EtoE Test with pytest
         env:
           TEST_DATABASE: ${{ secrets.TEST_DATABASE }}
@@ -54,20 +44,24 @@ jobs:
           ENGINE_CONNECTION_STRING: ${{ secrets.ENGINE_CONNECTION_STRING }}
           APPLICATION_INSIGHTS_ENGINE_CONNECTION_STRING: https://ade.applicationinsights.io/subscriptions/12534eb3-8109-4d84-83ad-576c0d5e1d06/resourcegroups/clients_e2e_test/providers/microsoft.insights/components/kusto-e2e-app-insights
           APPLICATION_INSIGHTS_TEST_DATABASE: kusto-e2e-app-insights
-        run: |
-          pytest -v . --junit-xml pytest.xml --cov=/home/runner/.local/lib/python${{ matrix.python-version }}/site-packages/azure/kusto --cov-report=xml:coverage2.xml
+        run: poe test --ci
+      
+      #      todo: re-enable on a different PR
+      #      - name: "Run Ruff Formatter"
+      #        id: ruff-formatter
+      #        uses: astral-sh/ruff-action@v3
+      #        with:
+      #          args: "format --diff"
+      #          
+      #      - name: "Run Ruff Linter"
+      #        run: ruff check --diff        
+
       - name: Upload Unit Test Results
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: Unit Test Results (Python ${{ matrix.python-version }})
           path: pytest*.xml
-
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v2
-        with:
-          env_vars: PYTHON
-
 
   publish-test-results:
     name: "Publish Unit Tests Results"
