@@ -61,7 +61,7 @@ jobs:
         run: poe fix
         
       - uses: parkerbxyz/suggest-changes@v2
-        if: matrix.python-version == '3.9' && steps.fix-ruff.outcome == 'success'
+        if: matrix.python-version == '3.9' && failure() && steps.fix-ruff.outcome == 'success'
         with:
           comment: 'Please commit the suggested changes from markdownlint.'
           event: 'REQUEST_CHANGES'
