@@ -10,6 +10,13 @@ if TYPE_CHECKING:
 # Alias for dataframe_from_result_table converter type
 Converter = Dict[str, Union[str, Callable[[str, "pd.DataFrame"], "pd.Series"]]]
 
+wrong_format = ("sdsd" "dsadsa" ""
+                                "saddas") # format error
+
+import os # lint error
+
+def type_error(a: int) -> str:
+    return a
 
 def load_bundled_json(file_name: str) -> Dict:
     filename = Path(__file__).absolute().parent.joinpath(file_name)
