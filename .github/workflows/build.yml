@@ -71,7 +71,17 @@ jobs:
       - name: "Run Type Checking"
         if: always()
         run: poe types
-
+        
+      - name: "Generate Docs"
+        if: matrix.python-version == '3.9' && github.ref == 'refs/heads/master'
+        run: poe docs --ci
+        
+      - name: "Upload Docs"
+        uses: actions/upload-pages-artifact@v3
+        if: matrix.python-version == '3.9' && github.ref == 'refs/heads/master'
+        with:
+          path: docs/
+          
       - name: Upload Unit Test Results
         if: always()
         uses: actions/upload-artifact@v4
@@ -98,3 +108,19 @@ jobs:
         uses: EnricoMi/publish-unit-test-result-action@v2
         with:
           files: artifacts/**/*.xml
+  
+  publish-docs:
+    name: "Publish Docs"
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master'
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+      
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

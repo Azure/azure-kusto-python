@@ -57,7 +57,7 @@ envfile = ".env"
 
 [tool.poe.tasks]
 types = "uv run basedpyright"
-doc = {cmd = "uv run pdoc ./azure-kusto-data/azure/kusto/data ./azure-kusto-data/azure/kusto/data/aio ./azure-kusto-ingest/azure/kusto/ingest ${CI:+ -o ./docs}", args = { CI = { help = "Run in CI mode", type = "boolean", options = ["--ci"] } } }
+docs = {cmd = "uv run pdoc ./azure-kusto-data/azure/kusto/data ./azure-kusto-data/azure/kusto/data/aio ./azure-kusto-ingest/azure/kusto/ingest ${CI:+ -o ./docs}", args = { CI = { help = "Run in CI mode", type = "boolean", options = ["--ci"] } } }
 sync = "uv sync --all-packages --all-extras --dev --locked"
 build = "uv build --all-packages"
 format = "ruff format"
