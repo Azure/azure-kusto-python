@@ -128,7 +128,7 @@ def test_well_known_kusto_endpoints_national_clouds():
         "https://rpe2e0422132101fct2.kusto.core.microsoft.scloud,https://login.microsoftonline.microsoft.scloud",
         "https://abc.kusto.sovcloud-api.fr,https://login.sovcloud-identity.fr",
         "https://efg.kusto.sovcloud-api.de,https://login.sovcloud-identity.de",
-        "https://hij.kusto.sovcloud-api.sg,https://login.sovcloud-identity.sg"
+        "https://hij.kusto.sovcloud-api.sg,https://login.sovcloud-identity.sg",
     ]:
         cluster_and_login_endpoint = c.split(",")
         _validate_endpoint(cluster_and_login_endpoint[0], cluster_and_login_endpoint[1])
