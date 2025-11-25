@@ -126,10 +126,9 @@ def test_well_known_kusto_endpoints_national_clouds():
         "https://kustofrbwrznltavls.kusto.usgovcloudapi.net,https://login.microsoftonline.us",
         "https://kusto7j53clqswr4he.kusto.core.eaglex.ic.gov,https://login.microsoftonline.eaglex.ic.gov",
         "https://rpe2e0422132101fct2.kusto.core.microsoft.scloud,https://login.microsoftonline.microsoft.scloud",
-        "https://kustozszokb5yrauyq.kusto.chinacloudapi.cn,{0}".format(CHINA_CLOUD_LOGIN),
-        "https://kustofrbwrznltavls.kusto.usgovcloudapi.net,https://login.microsoftonline.us",
-        "https://kusto7j53clqswr4he.kusto.core.eaglex.ic.gov,https://login.microsoftonline.eaglex.ic.gov",
-        "https://rpe2e0422132101fct2.kusto.core.microsoft.scloud,https://login.microsoftonline.microsoft.scloud",
+        "https://abc.kusto.sovcloud-api.fr,https://login.sovcloud-identity.fr",
+        "https://efg.kusto.sovcloud-api.de,https://login.sovcloud-identity.de",
+        "https://hij.kusto.sovcloud-api.sg,https://login.sovcloud-identity.sg"
     ]:
         cluster_and_login_endpoint = c.split(",")
         _validate_endpoint(cluster_and_login_endpoint[0], cluster_and_login_endpoint[1])
