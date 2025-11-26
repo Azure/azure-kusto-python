@@ -2,4 +2,4 @@
 # Licensed under the MIT License
 import importlib.metadata
 
-VERSION = importlib.metadata.version("azure-kusto-ingest")
+VERSION = "6.0.0"
