@@ -1,6 +1,6 @@
 azure-core-tracing-opentelemetry~=1.0.0b9
-azure-kusto-data>=4.0.0,<5.0.0
-azure-kusto-ingest>=4.0.0,<5.0.0
+azure-kusto-data>=4.0.0,<7.0.0
+azure-kusto-ingest>=4.0.0,<7.0.0
 azure-monitor-opentelemetry-exporter~=1.0.0b7
 
 inflection~=0.5.1
