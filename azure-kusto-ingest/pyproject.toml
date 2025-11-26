@@ -1,6 +1,6 @@
 [project]
 name = "azure-kusto-ingest"
-version = "5.0.5"
+version = "6.0.0"
 description = "Kusto Ingest Client"
 authors = [
     { name = "Microsoft Corporation", email = "kustalk@microsoft.com" },
