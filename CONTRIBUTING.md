@@ -49,7 +49,7 @@ See [.env.example](./.env.example) for an example of a .env file.
 
 ```shell
 ENGINE_CONNECTION_STRING=<Your cluster URI> # Format: https://<cluster_name>.<region>.kusto.windows.net
-DM_CONNECTION_STRING=<Your ingest cluster URI> # Optional - if not set, will infer from ENGINE_CONNECTION_STRING. Format: https://ingest-<cluster_name>.<region>.kusto.windows.net
+DM_CONNECTION_STRING=<Your ingest cluster URI> # Format: https://ingest-<cluster_name>.<region>.kusto.windows.net
 TEST_DATABASE=<The name of the database>
 ```
 

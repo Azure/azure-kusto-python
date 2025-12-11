@@ -133,7 +133,7 @@ class BaseIngestClient(metaclass=ABCMeta):
 
         file_name = "df_{id}_{timestamp}_{uid}.{ext}.gz".format(id=id(df), timestamp=int(time.time()), uid=uuid.uuid4(), ext="json" if is_json else "csv")
         temp_file_path = os.path.join(tempfile.gettempdir(), file_name)
-        with gzip.open(temp_file_path, "wb") as temp_file:
+        with gzip.open(temp_file_path, "wt", encoding="utf-8") as temp_file:
             if is_json:
                 df.to_json(temp_file, orient="records", date_format="iso", lines=True)
                 ingestion_properties.format = DataFormat.JSON
