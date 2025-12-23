@@ -118,18 +118,18 @@ def parse_float(frame, col):
     return frame[col]
 
 
-def parse_datetime(frame, col):
+def parse_datetime(frame, col, force_version=None):
     # Pandas before version 2 doesn't support the "format" arg
     import pandas as pd
 
     args = {}
-    if pd.__version__.startswith("2."):
+    if (force_version or pd.__version__).startswith("2."):
         args = {"format": "ISO8601", "utc": True}
     else:
         # if frame contains ".", replace "Z" with ".000Z"
         # == False is not a mistake - that's the pandas way to do it
-        contains_dot = frame[col].str.contains(".")
-        frame.loc[not contains_dot, col] = frame.loc[not contains_dot, col].str.replace("Z", ".000Z")
+        contains_dot = frame[col].str.contains("\\.")
+        frame.loc[~contains_dot, col] = frame.loc[~contains_dot, col].str.replace("Z", ".000Z")
     frame[col] = pd.to_datetime(frame[col], errors="coerce", **args)
     return frame[col]
 

@@ -128,3 +128,41 @@ def test_pandas_mixed_date():
 
     assert df["Date"][0] == pandas.Timestamp(year=2023, month=12, day=12, hour=1, minute=59, second=59, microsecond=352000, tzinfo=datetime.timezone.utc)
     assert df["Date"][1] == pandas.Timestamp(year=2023, month=12, day=12, hour=1, minute=54, second=44, tzinfo=datetime.timezone.utc)
+
+
+def test_parse_datetime():
+    """Test parse_datetime function with different pandas versions and datetime formats"""
+    from azure.kusto.data.helpers import parse_datetime
+    
+    # Test with pandas v2 behavior (force version 2)
+    df_v2 = pandas.DataFrame({
+        "date_with_ms": ["2023-12-12T01:59:59.352Z", "2023-12-12T01:54:44.123Z"],
+        "date_without_ms": ["2023-12-12T01:59:59Z", "2023-12-12T01:54:44Z"],
+        "mixed": ["2023-12-12T01:59:59.352Z", "2023-12-12T01:54:44Z"],
+    })
+    
+    # Force pandas v2 behavior
+    result_v2 = parse_datetime(df_v2, "mixed", force_version="2.0.0")
+    assert result_v2[0] == pandas.Timestamp(year=2023, month=12, day=12, hour=1, minute=59, second=59, microsecond=352000, tz="UTC")
+    assert result_v2[1] == pandas.Timestamp(year=2023, month=12, day=12, hour=1, minute=54, second=44, tz="UTC")
+    
+    # Test with pandas v1 behavior (force version 1)
+    df_v1 = pandas.DataFrame({
+        "date_with_ms": ["2023-12-12T01:59:59.352Z", "2023-12-12T01:54:44.123Z"],
+        "date_without_ms": ["2023-12-12T01:59:59Z", "2023-12-12T01:54:44Z"],
+        "mixed": ["2023-12-12T01:59:59.352Z", "2023-12-12T01:54:44Z"],
+    })
+    
+    # Force pandas v1 behavior - it should add .000 to dates without milliseconds
+    result_v1 = parse_datetime(df_v1, "mixed", force_version="1.5.3")
+    assert result_v1[0] == pandas.Timestamp(year=2023, month=12, day=12, hour=1, minute=59, second=59, microsecond=352000, tz="UTC")
+    assert result_v1[1] == pandas.Timestamp(year=2023, month=12, day=12, hour=1, minute=54, second=44, tz="UTC")
+    
+    # Test with actual pandas version (no force)
+    df_actual = pandas.DataFrame({
+        "mixed": ["2023-12-12T01:59:59.352Z", "2023-12-12T01:54:44Z"],
+    })
+    result_actual = parse_datetime(df_actual, "mixed")
+    assert result_actual[0] == pandas.Timestamp(year=2023, month=12, day=12, hour=1, minute=59, second=59, microsecond=352000, tz="UTC")
+    assert result_actual[1] == pandas.Timestamp(year=2023, month=12, day=12, hour=1, minute=54, second=44, tz="UTC")
+

@@ -26,6 +26,7 @@ dev = [
     "ruff>=0.12.9",
     "pdoc>=15.0.4",
     "basedpyright>=1.31.2",
+    "pandas-stubs>=2.2.2.240807",
 ]
 
 [tool.uv.workspace]
