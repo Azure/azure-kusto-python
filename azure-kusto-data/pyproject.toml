@@ -33,7 +33,7 @@ classifiers = [
 pandas = [
     "pandas>=2.3.1",
 ]
-aio = [
+async = [
     "aiohttp>=3.12.15",
     "asgiref>=3.9.1",
 ]
