@@ -241,7 +241,7 @@ dependencies = [
 ]
 
 [package.optional-dependencies]
-async = [
+aio = [
     { name = "aiohttp" },
     { name = "asgiref" },
 ]
@@ -251,8 +251,8 @@ pandas = [
 
 [package.metadata]
 requires-dist = [
-    { name = "aiohttp", marker = "extra == 'async'", specifier = ">=3.12.15" },
-    { name = "asgiref", marker = "extra == 'async'", specifier = ">=3.9.1" },
+    { name = "aiohttp", marker = "extra == 'aio'", specifier = ">=3.12.15" },
+    { name = "asgiref", marker = "extra == 'aio'", specifier = ">=3.9.1" },
     { name = "azure-core", specifier = ">=1.35.0,<2" },
     { name = "azure-identity", specifier = ">=1.24.0,<2" },
     { name = "ijson", specifier = "~=3.4.0" },
@@ -261,7 +261,7 @@ requires-dist = [
     { name = "python-dateutil", specifier = ">=2.9.0" },
     { name = "requests", specifier = ">=2.32.4" },
 ]
-provides-extras = ["pandas", "async"]
+provides-extras = ["pandas", "aio"]
 
 [[package]]
 name = "azure-kusto-ingest"

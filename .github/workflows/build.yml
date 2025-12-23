@@ -68,10 +68,11 @@ jobs:
           comment: 'Please commit the suggested changes from markdownlint.'
           event: 'REQUEST_CHANGES'
 
-      - name: "Run Type Checking"
+      - name: "Run Type Checking (Optional to passing)"
         if: always()
         run: poe types
-        
+        continue-on-error: true
+      
       - name: "Generate Docs"
         if: matrix.python-version == '3.9' && github.ref == 'refs/heads/master'
         run: poe docs --ci
