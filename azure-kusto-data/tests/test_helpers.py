@@ -133,6 +133,7 @@ def test_pandas_mixed_date():
 def test_parse_datetime():
     """Test parse_datetime function with different pandas versions and datetime formats"""
     from azure.kusto.data.helpers import parse_datetime
+
     # Test with pandas v2 behavior (force version 2)
     df_v2 = pandas.DataFrame(
         {
@@ -161,11 +162,11 @@ def test_parse_datetime():
     assert result_v1[0] == pandas.Timestamp(year=2023, month=12, day=12, hour=1, minute=59, second=59, microsecond=352000, tz="UTC")
     assert result_v1[1] == pandas.Timestamp(year=2023, month=12, day=12, hour=1, minute=54, second=44, tz="UTC")
     # Test with actual pandas version (no force)
-    result_actual = parse_datetime(df_actual, "mixed")
     df_actual = pandas.DataFrame(
         {
             "mixed": ["2023-12-12T01:59:59.352Z", "2023-12-12T01:54:44Z"],
         }
     )
+    result_actual = parse_datetime(df_actual, "mixed")
     assert result_actual[0] == pandas.Timestamp(year=2023, month=12, day=12, hour=1, minute=59, second=59, microsecond=352000, tz="UTC")
     assert result_actual[1] == pandas.Timestamp(year=2023, month=12, day=12, hour=1, minute=54, second=44, tz="UTC")
