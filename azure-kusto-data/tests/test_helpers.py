@@ -133,7 +133,6 @@ def test_pandas_mixed_date():
 def test_parse_datetime():
     """Test parse_datetime function with different pandas versions and datetime formats"""
     from azure.kusto.data.helpers import parse_datetime
-    
     # Test with pandas v2 behavior (force version 2)
     df_v2 = pandas.DataFrame({
         "date_with_ms": ["2023-12-12T01:59:59.352Z", "2023-12-12T01:54:44.123Z"],
