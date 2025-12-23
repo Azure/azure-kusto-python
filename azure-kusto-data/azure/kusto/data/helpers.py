@@ -1,17 +1,17 @@
 import json
 from functools import lru_cache
 from pathlib import Path
-from typing import TYPE_CHECKING, Union, Callable, Dict, Optional
+from typing import TYPE_CHECKING, Any, Union, Callable, Optional
 
 if TYPE_CHECKING:
     import pandas as pd
     from azure.kusto.data._models import KustoResultTable, KustoStreamingResultTable
 
 # Alias for dataframe_from_result_table converter type
-Converter = Dict[str, Union[str, Callable[[str, "pd.DataFrame"], "pd.Series"]]]
+Converter = dict[str, Union[str, Callable[[str, "pd.DataFrame"], "pd.Series['Any']"]]]
 
 
-def load_bundled_json(file_name: str) -> Dict:
+def load_bundled_json(file_name: str) -> dict[Any, Any]:
     filename = Path(__file__).absolute().parent.joinpath(file_name)
     with filename.open("r", encoding="utf-8") as data:
         return json.load(data)
@@ -118,7 +118,7 @@ def parse_float(frame, col):
     return frame[col]
 
 
-def parse_datetime(frame, col, force_version=None):
+def parse_datetime(frame, col, force_version: Optional[str] = None):
     # Pandas before version 2 doesn't support the "format" arg
     import pandas as pd
 
