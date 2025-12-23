@@ -91,6 +91,7 @@ class TestE2E:
             "pageViews",
             "performanceCounters",
             "requests",
+            "resources",
             "traces",
         ]
 
