@@ -160,7 +160,6 @@ def test_parse_datetime():
     result_v1 = parse_datetime(df_v1, "mixed", force_version="1.5.3")
     assert result_v1[0] == pandas.Timestamp(year=2023, month=12, day=12, hour=1, minute=59, second=59, microsecond=352000, tz="UTC")
     assert result_v1[1] == pandas.Timestamp(year=2023, month=12, day=12, hour=1, minute=54, second=44, tz="UTC")
-    
     # Test with actual pandas version (no force)
     df_actual = pandas.DataFrame({
         "mixed": ["2023-12-12T01:59:59.352Z", "2023-12-12T01:54:44Z"],
