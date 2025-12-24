@@ -130,7 +130,7 @@ def test_pandas_mixed_date():
     assert df["Date"][1] == pandas.Timestamp(year=2023, month=12, day=12, hour=1, minute=54, second=44, tzinfo=datetime.timezone.utc)
 
 
-def test_datetime_parsing()
+def test_datetime_parsing():
     """Test parse_datetime function with different pandas versions and datetime formats"""
 
     # Test with pandas v2 behavior (force version 2)
