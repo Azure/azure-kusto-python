@@ -203,14 +203,6 @@ class TestE2E:
 
         cls.current_count = 0
 
-        cls.client.execute(
-            cls.test_db,
-            f".create table {cls.test_table} (rownumber: int, rowguid: string, xdouble: real, xfloat: real, xbool: bool, xint16: int, xint32: int, xint64: long, xuint8: long, xuint16: long, xuint32: long, xuint64: long, xdate: datetime, xsmalltext: string, xtext: string, xnumberAsText: string, xtime: timespan, xtextWithNulls: string, xdynamicWithNulls: dynamic)",
-        )
-        cls.client.execute(cls.test_db, f".create table {cls.test_table} ingestion json mapping 'JsonMapping' {cls.table_json_mapping_reference()}")
-
-        cls.client.execute(cls.test_db, f".alter table {cls.test_table} policy streamingingestion enable ")
-
         # Clear the cache to guarantee that subsequent streaming ingestion requests incorporate database and table schema changes
         # See https://docs.microsoft.com/azure/data-explorer/kusto/management/data-ingestion/clear-schema-cache-command
         cls.client.execute(cls.test_db, ".clear database cache streamingingestion schema")
@@ -224,19 +216,40 @@ class TestE2E:
         cls.managed_streaming_ingest_client.close()
 
     @classmethod
+    async def init_table(cls, test_name: str) -> str:
+        async_client = await cls.get_async_client()
+
+        table_name = f"{cls.test_table}_{test_name}_{str(int(time.time()))}_{random.randint(1, 100000)}"
+
+        await async_client.execute(
+            cls.test_db,
+            f".create table {table_name} (rownumber: int, rowguid: string, xdouble: real, xfloat: real, xbool: bool, xint16: int, xint32: int, xint64: long, xuint8: long, xuint16: long, xuint32: long, xuint64: long, xdate: datetime, xsmalltext: string, xtext: string, xnumberAsText: string, xtime: timespan, xtextWithNulls: string, xdynamicWithNulls: dynamic)",
+        )
+        await async_client.execute(cls.test_db, f".create table {table_name} ingestion json mapping 'JsonMapping' {cls.table_json_mapping_reference()}")
+
+        await async_client.execute(cls.test_db, f".alter table {table_name} policy streamingingestion enable ")
+
+        return table_name
+
+    @classmethod
+    async def drop_table(cls, table_name: str):
+        async_client = await cls.get_async_client()
+        await async_client.execute(cls.test_db, f".drop table {table_name} ifexists")
+
+    @classmethod
     async def get_async_client(cls) -> AsyncKustoClient:
         return AsyncKustoClient(cls.engine_kcsb_from_env(is_async=True))
 
     # assertions
     @classmethod
-    async def assert_rows_added(cls, expected: int, timeout=120):
+    async def assert_rows_added(cls, table_name: str, expected: int, timeout=120):
         actual = 0
         while timeout > 0:
             time.sleep(1)
             timeout -= 1
 
             try:
-                command = "{} | count".format(cls.test_table)
+                command = "{} | count".format(table_name)
                 response = cls.client.execute(cls.test_db, command)
                 async_client = await cls.get_async_client()
                 response_from_async = await async_client.execute(cls.test_db, command)
@@ -255,339 +268,391 @@ class TestE2E:
         cls.current_count += actual
         assert actual == expected, "Row count expected = {0}, while actual row count = {1}".format(expected, actual)
 
-    @pytest.mark.xdist_group("group1")
     @pytest.mark.asyncio
     async def test_csv_ingest_existing_table(self, is_managed_streaming):
-        csv_ingest_props = IngestionProperties(
-            self.test_db,
-            self.test_table,
-            data_format=DataFormat.CSV,
-            column_mappings=self.get_test_table_csv_mappings(),
-            report_level=ReportLevel.FailuresAndSuccesses,
-            flush_immediately=True,
-        )
+        table = await self.init_table("csv_ingest_existing_table")
+        try:
+            csv_ingest_props = IngestionProperties(
+                self.test_db,
+                table,
+                data_format=DataFormat.CSV,
+                column_mappings=self.get_test_table_csv_mappings(),
+                report_level=ReportLevel.FailuresAndSuccesses,
+                flush_immediately=True,
+            )
 
-        client = self.streaming_ingest_client if is_managed_streaming else self.ingest_client
+            client = self.streaming_ingest_client if is_managed_streaming else self.ingest_client
 
-        for f in [self.csv_file_path, self.zipped_csv_file_path]:
-            client.ingest_from_file(f, csv_ingest_props)
+            for f in [self.csv_file_path, self.zipped_csv_file_path]:
+                client.ingest_from_file(f, csv_ingest_props)
 
-        await self.assert_rows_added(20)
+            await self.assert_rows_added(table, 20)
+        finally:
+            await self.drop_table(table)
 
-    @pytest.mark.xdist_group("group1")
     @pytest.mark.asyncio
     async def test_csv_ingest_ignore_first_record(self, is_managed_streaming):
-        csv_ingest_props = IngestionProperties(
-            self.test_db,
-            self.test_table,
-            data_format=DataFormat.CSV,
-            column_mappings=self.get_test_table_csv_mappings(),
-            report_level=ReportLevel.FailuresAndSuccesses,
-            flush_immediately=True,
-            ignore_first_record=True,
-        )
+        table = await self.init_table("csv_ingest_ignore_first_record")
+        try:
+            csv_ingest_props = IngestionProperties(
+                self.test_db,
+                table,
+                data_format=DataFormat.CSV,
+                column_mappings=self.get_test_table_csv_mappings(),
+                report_level=ReportLevel.FailuresAndSuccesses,
+                flush_immediately=True,
+                ignore_first_record=True,
+            )
 
-        for f in [self.csv_file_path, self.zipped_csv_file_path]:
-            self.ingest_client.ingest_from_file(f, csv_ingest_props)
+            client = self.streaming_ingest_client if is_managed_streaming else self.ingest_client
 
-        await self.assert_rows_added(18)
+            for f in [self.csv_file_path, self.zipped_csv_file_path]:
+                client.ingest_from_file(f, csv_ingest_props)
 
-    @pytest.mark.xdist_group("group1")
+            await self.assert_rows_added(table, 18)
+        finally:
+            await self.drop_table(table)
+
     @pytest.mark.asyncio
     async def test_json_ingest_existing_table(self):
-        json_ingestion_props = IngestionProperties(
-            self.test_db,
-            self.test_table,
-            flush_immediately=True,
-            data_format=DataFormat.JSON,
-            column_mappings=self.table_json_mappings(),
-            report_level=ReportLevel.FailuresAndSuccesses,
-        )
+        table = await self.init_table("json_ingest_existing_table")
+        try:
+            json_ingestion_props = IngestionProperties(
+                self.test_db,
+                table,
+                flush_immediately=True,
+                data_format=DataFormat.JSON,
+                column_mappings=self.table_json_mappings(),
+                report_level=ReportLevel.FailuresAndSuccesses,
+            )
 
-        for f in [self.json_file_path, self.zipped_json_file_path]:
-            self.ingest_client.ingest_from_file(f, json_ingestion_props)
+            for f in [self.json_file_path, self.zipped_json_file_path]:
+                self.ingest_client.ingest_from_file(f, json_ingestion_props)
 
-        await self.assert_rows_added(4)
+            await self.assert_rows_added(table, 4)
+        finally:
+            await self.drop_table(table)
 
-    @pytest.mark.xdist_group("group1")
     @pytest.mark.asyncio
     async def test_json_ingest_existing_table_no_mapping(self):
-        json_ingestion_props = IngestionProperties(
-            self.test_db,
-            self.test_table,
-            flush_immediately=True,
-            data_format=DataFormat.JSON,
-            report_level=ReportLevel.FailuresAndSuccesses,
-        )
+        table = await self.init_table("json_ingest_existing_table_no_mapping")
+        try:
+            json_ingestion_props = IngestionProperties(
+                self.test_db,
+                table,
+                flush_immediately=True,
+                data_format=DataFormat.JSON,
+                report_level=ReportLevel.FailuresAndSuccesses,
+            )
 
-        for f in [self.json_file_path, self.zipped_json_file_path]:
-            self.ingest_client.ingest_from_file(f, json_ingestion_props)
+            for f in [self.json_file_path, self.zipped_json_file_path]:
+                self.ingest_client.ingest_from_file(f, json_ingestion_props)
 
-        await self.assert_rows_added(4)
+            await self.assert_rows_added(table, 4)
+        finally:
+            await self.drop_table(table)
 
-    @pytest.mark.xdist_group("group1")
     @pytest.mark.asyncio
     async def test_ingest_complicated_props(self):
-        validation_policy = ValidationPolicy(
-            validation_options=ValidationOptions.ValidateCsvInputConstantColumns, validation_implications=ValidationImplications.Fail
-        )
-        json_ingestion_props = IngestionProperties(
-            self.test_db,
-            self.test_table,
-            data_format=DataFormat.JSON,
-            column_mappings=self.table_json_mappings(),
-            additional_tags=["a", "b"],
-            ingest_if_not_exists=["aaaa", "bbbb"],
-            ingest_by_tags=["ingestByTag"],
-            drop_by_tags=["drop", "drop-by"],
-            flush_immediately=False,
-            report_level=ReportLevel.FailuresAndSuccesses,
-            report_method=ReportMethod.Queue,
-            validation_policy=validation_policy,
-        )
+        table = await self.init_table("ingest_complicated_props")
+        try:
+            validation_policy = ValidationPolicy(
+                validation_options=ValidationOptions.ValidateCsvInputConstantColumns,
+                validation_implications=ValidationImplications.Fail,
+            )
+            json_ingestion_props = IngestionProperties(
+                self.test_db,
+                table,
+                data_format=DataFormat.JSON,
+                column_mappings=self.table_json_mappings(),
+                additional_tags=["a", "b"],
+                ingest_if_not_exists=["aaaa", "bbbb"],
+                ingest_by_tags=["ingestByTag"],
+                drop_by_tags=["drop", "drop-by"],
+                flush_immediately=False,
+                report_level=ReportLevel.FailuresAndSuccesses,
+                report_method=ReportMethod.Queue,
+                validation_policy=validation_policy,
+            )
 
-        file_paths = [self.json_file_path, self.zipped_json_file_path]
-        fds = [FileDescriptor(fp, 0, uuid.uuid4()) for fp in file_paths]
+            file_paths = [self.json_file_path, self.zipped_json_file_path]
+            fds = [FileDescriptor(fp, 0, uuid.uuid4()) for fp in file_paths]
 
-        for fd in fds:
-            self.ingest_client.ingest_from_file(fd, json_ingestion_props)
+            for fd in fds:
+                self.ingest_client.ingest_from_file(fd, json_ingestion_props)
 
-        await self.assert_rows_added(4)
+            await self.assert_rows_added(table, 4)
+        finally:
+            await self.drop_table(table)
 
-    @pytest.mark.xdist_group("group1")
     @pytest.mark.asyncio
     async def test_ingest_from_stream(self, is_managed_streaming):
-        validation_policy = ValidationPolicy(
-            validation_options=ValidationOptions.ValidateCsvInputConstantColumns, validation_implications=ValidationImplications.Fail
-        )
-        json_ingestion_props = IngestionProperties(
-            self.test_db,
-            self.test_table,
-            data_format=DataFormat.JSON,
-            column_mappings=self.table_json_mappings(),
-            additional_tags=["a", "b"],
-            ingest_if_not_exists=["aaaa", "bbbb"],
-            ingest_by_tags=["ingestByTag"],
-            drop_by_tags=["drop", "drop-by"],
-            flush_immediately=False,
-            report_level=ReportLevel.FailuresAndSuccesses,
-            report_method=ReportMethod.Queue,
-            validation_policy=validation_policy,
-        )
-        text = io.StringIO(pathlib.Path(self.json_file_path).read_text())
-        zipped = io.BytesIO(pathlib.Path(self.zipped_json_file_path).read_bytes())
+        table = await self.init_table("ingest_from_stream")
+        try:
+            validation_policy = ValidationPolicy(
+                validation_options=ValidationOptions.ValidateCsvInputConstantColumns,
+                validation_implications=ValidationImplications.Fail,
+            )
+            json_ingestion_props = IngestionProperties(
+                self.test_db,
+                table,
+                data_format=DataFormat.JSON,
+                column_mappings=self.table_json_mappings(),
+                additional_tags=["a", "b"],
+                ingest_if_not_exists=["aaaa", "bbbb"],
+                ingest_by_tags=["ingestByTag"],
+                drop_by_tags=["drop", "drop-by"],
+                flush_immediately=False,
+                report_level=ReportLevel.FailuresAndSuccesses,
+                report_method=ReportMethod.Queue,
+                validation_policy=validation_policy,
+            )
+            text = io.StringIO(pathlib.Path(self.json_file_path).read_text())
+            zipped = io.BytesIO(pathlib.Path(self.zipped_json_file_path).read_bytes())
 
-        client = self.managed_streaming_ingest_client if is_managed_streaming else self.ingest_client
+            client = self.managed_streaming_ingest_client if is_managed_streaming else self.ingest_client
 
-        client.ingest_from_stream(text, json_ingestion_props)
-        client.ingest_from_stream(StreamDescriptor(zipped, is_compressed=True), json_ingestion_props)
+            client.ingest_from_stream(text, json_ingestion_props)
+            client.ingest_from_stream(StreamDescriptor(zipped, is_compressed=True), json_ingestion_props)
 
-        await self.assert_rows_added(4)
+            await self.assert_rows_added(table, 4)
+        finally:
+            await self.drop_table(table)
 
-    @pytest.mark.xdist_group("group1")
     @pytest.mark.asyncio
     async def test_json_ingestion_ingest_by_tag(self):
-        json_ingestion_props = IngestionProperties(
-            self.test_db,
-            self.test_table,
-            data_format=DataFormat.JSON,
-            column_mappings=self.table_json_mappings(),
-            ingest_if_not_exists=["ingestByTag"],
-            report_level=ReportLevel.FailuresAndSuccesses,
-            drop_by_tags=["drop", "drop-by"],
-            flush_immediately=True,
-        )
+        table = await self.init_table("json_ingestion_ingest_by_tag")
+        try:
+            json_ingestion_props = IngestionProperties(
+                self.test_db,
+                table,
+                data_format=DataFormat.JSON,
+                column_mappings=self.table_json_mappings(),
+                ingest_if_not_exists=["ingestByTag"],
+                report_level=ReportLevel.FailuresAndSuccesses,
+                drop_by_tags=["drop", "drop-by"],
+                flush_immediately=True,
+            )
 
-        for f in [self.json_file_path, self.zipped_json_file_path]:
-            self.ingest_client.ingest_from_file(f, json_ingestion_props)
+            for f in [self.json_file_path, self.zipped_json_file_path]:
+                self.ingest_client.ingest_from_file(f, json_ingestion_props)
 
-        await self.assert_rows_added(0)
+            await self.assert_rows_added(table, 0)
+        finally:
+            await self.drop_table(table)
 
-    @pytest.mark.xdist_group("group1")
     @pytest.mark.asyncio
     async def test_tsv_ingestion_csv_mapping(self):
-        tsv_ingestion_props = IngestionProperties(
-            self.test_db,
-            self.test_table,
-            flush_immediately=True,
-            data_format=DataFormat.TSV,
-            column_mappings=self.get_test_table_csv_mappings(),
-            report_level=ReportLevel.FailuresAndSuccesses,
-        )
+        table = await self.init_table("tsv_ingestion_csv_mapping")
+        try:
+            tsv_ingestion_props = IngestionProperties(
+                self.test_db,
+                table,
+                flush_immediately=True,
+                data_format=DataFormat.TSV,
+                column_mappings=self.get_test_table_csv_mappings(),
+                report_level=ReportLevel.FailuresAndSuccesses,
+            )
 
-        self.ingest_client.ingest_from_file(self.tsv_file_path, tsv_ingestion_props)
+            self.ingest_client.ingest_from_file(self.tsv_file_path, tsv_ingestion_props)
 
-        await self.assert_rows_added(10)
+            await self.assert_rows_added(table, 10)
+        finally:
+            await self.drop_table(table)
 
-    @pytest.mark.xdist_group("group1")
     @pytest.mark.asyncio
     async def test_ingest_blob(self):
         if not self.test_blob:
             pytest.skip("Provide blob SAS uri with 'dataset.csv'")
 
-        csv_ingest_props = IngestionProperties(
-            self.test_db,
-            self.test_table,
-            data_format=DataFormat.CSV,
-            column_mappings=self.get_test_table_csv_mappings(),
-            report_level=ReportLevel.FailuresAndSuccesses,
-            flush_immediately=True,
-        )
+        table = await self.init_table("ingest_blob")
+        try:
+            csv_ingest_props = IngestionProperties(
+                self.test_db,
+                table,
+                data_format=DataFormat.CSV,
+                column_mappings=self.get_test_table_csv_mappings(),
+                report_level=ReportLevel.FailuresAndSuccesses,
+                flush_immediately=True,
+            )
 
-        blob_len = 1578
-        self.ingest_client.ingest_from_blob(BlobDescriptor(self.test_blob, blob_len), csv_ingest_props)
+            blob_len = 1578
+            self.ingest_client.ingest_from_blob(BlobDescriptor(self.test_blob, blob_len), csv_ingest_props)
 
-        await self.assert_rows_added(10)
+            await self.assert_rows_added(table, 10)
 
-        # Don't provide size hint
-        self.ingest_client.ingest_from_blob(BlobDescriptor(self.test_blob, size=None), csv_ingest_props)
+            # Don't provide size hint
+            self.ingest_client.ingest_from_blob(BlobDescriptor(self.test_blob, size=None), csv_ingest_props)
 
-        await self.assert_rows_added(10)
+            await self.assert_rows_added(table, 10)
+        finally:
+            await self.drop_table(table)
 
-    @pytest.mark.xdist_group("group1")
     @pytest.mark.asyncio
     async def test_streaming_ingest_from_opened_file(self, is_managed_streaming):
-        ingestion_properties = IngestionProperties(database=self.test_db, table=self.test_table, data_format=DataFormat.CSV)
+        table = await self.init_table("streaming_ingest_from_opened_file")
+        try:
+            ingestion_properties = IngestionProperties(database=self.test_db, table=table, data_format=DataFormat.CSV)
 
-        client = self.managed_streaming_ingest_client if is_managed_streaming else self.streaming_ingest_client
-        with open(self.csv_file_path, "r") as stream:
-            client.ingest_from_stream(stream, ingestion_properties=ingestion_properties)
+            client = self.managed_streaming_ingest_client if is_managed_streaming else self.streaming_ingest_client
+            with open(self.csv_file_path, "r") as stream:
+                client.ingest_from_stream(stream, ingestion_properties=ingestion_properties)
 
-        await self.assert_rows_added(10, timeout=120)
+            await self.assert_rows_added(table, 10, timeout=120)
+        finally:
+            await self.drop_table(table)
 
-    @pytest.mark.xdist_group("group1")
     @pytest.mark.asyncio
     async def test_streaming_ingest_from_csv_file(self):
-        ingestion_properties = IngestionProperties(database=self.test_db, table=self.test_table, flush_immediately=True, data_format=DataFormat.CSV)
+        table = await self.init_table("streaming_ingest_from_csv_file")
+        try:
+            ingestion_properties = IngestionProperties(database=self.test_db, table=table, flush_immediately=True, data_format=DataFormat.CSV)
 
-        for f in [self.csv_file_path, self.zipped_csv_file_path]:
-            self.streaming_ingest_client.ingest_from_file(f, ingestion_properties=ingestion_properties)
+            for f in [self.csv_file_path, self.zipped_csv_file_path]:
+                self.streaming_ingest_client.ingest_from_file(f, ingestion_properties=ingestion_properties)
 
-        await self.assert_rows_added(20, timeout=120)
+            await self.assert_rows_added(table, 20, timeout=120)
+        finally:
+            await self.drop_table(table)
 
-    @pytest.mark.xdist_group("group1")
     @pytest.mark.asyncio
     async def test_streaming_ingest_from_json_file(self):
-        ingestion_properties = IngestionProperties(
-            database=self.test_db,
-            table=self.test_table,
-            flush_immediately=True,
-            data_format=DataFormat.JSON,
-            ingestion_mapping_reference="JsonMapping",
-            ingestion_mapping_kind=IngestionMappingKind.JSON,
-        )
+        table = await self.init_table("streaming_ingest_from_json_file")
+        try:
+            ingestion_properties = IngestionProperties(
+                database=self.test_db,
+                table=table,
+                flush_immediately=True,
+                data_format=DataFormat.JSON,
+                ingestion_mapping_reference="JsonMapping",
+                ingestion_mapping_kind=IngestionMappingKind.JSON,
+            )
 
-        for f in [self.json_file_path, self.zipped_json_file_path]:
-            self.streaming_ingest_client.ingest_from_file(f, ingestion_properties=ingestion_properties)
+            for f in [self.json_file_path, self.zipped_json_file_path]:
+                self.streaming_ingest_client.ingest_from_file(f, ingestion_properties=ingestion_properties)
 
-        await self.assert_rows_added(4, timeout=120)
+            await self.assert_rows_added(table, 4, timeout=120)
+        finally:
+            await self.drop_table(table)
 
-    @pytest.mark.xdist_group("group1")
     @pytest.mark.asyncio
     async def test_streaming_ingest_from_csv_io_streams(self):
-        ingestion_properties = IngestionProperties(database=self.test_db, table=self.test_table, data_format=DataFormat.CSV)
-        byte_sequence = b'0,00000000-0000-0000-0001-020304050607,0,0,0,0,0,0,0,0,0,0,2014-01-01T01:01:01.0000000Z,Zero,"Zero",0,00:00:00,,null'
-        bytes_stream = io.BytesIO(byte_sequence)
-        self.streaming_ingest_client.ingest_from_stream(bytes_stream, ingestion_properties=ingestion_properties)
+        table = await self.init_table("streaming_ingest_from_csv_io_streams")
+        try:
+            ingestion_properties = IngestionProperties(database=self.test_db, table=table, data_format=DataFormat.CSV)
+            byte_sequence = b'0,00000000-0000-0000-0001-020304050607,0,0,0,0,0,0,0,0,0,0,2014-01-01T01:01:01.0000000Z,Zero,"Zero",0,00:00:00,,null'
+            bytes_stream = io.BytesIO(byte_sequence)
+            self.streaming_ingest_client.ingest_from_stream(bytes_stream, ingestion_properties=ingestion_properties)
 
-        str_sequence = '0,00000000-0000-0000-0001-020304050607,0,0,0,0,0,0,0,0,0,0,2014-01-01T01:01:01.0000000Z,Zero,"Zero",0,00:00:00,,null'
-        str_stream = io.StringIO(str_sequence)
-        self.streaming_ingest_client.ingest_from_stream(str_stream, ingestion_properties=ingestion_properties)
+            str_sequence = '0,00000000-0000-0000-0001-020304050607,0,0,0,0,0,0,0,0,0,0,2014-01-01T01:01:01.0000000Z,Zero,"Zero",0,00:00:00,,null'
+            str_stream = io.StringIO(str_sequence)
+            self.streaming_ingest_client.ingest_from_stream(str_stream, ingestion_properties=ingestion_properties)
 
-        await self.assert_rows_added(2, timeout=120)
+            await self.assert_rows_added(table, 2, timeout=120)
+        finally:
+            await self.drop_table(table)
 
-    @pytest.mark.xdist_group("group1")
     @pytest.mark.asyncio
     async def test_streaming_ingest_from_json_io_streams(self):
-        ingestion_properties = IngestionProperties(
-            database=self.test_db,
-            table=self.test_table,
-            data_format=DataFormat.JSON,
-            flush_immediately=True,
-            ingestion_mapping_reference="JsonMapping",
-            ingestion_mapping_kind=IngestionMappingKind.JSON,
-        )
+        table = await self.init_table("streaming_ingest_from_json_io_streams")
+        try:
+            ingestion_properties = IngestionProperties(
+                database=self.test_db,
+                table=table,
+                data_format=DataFormat.JSON,
+                flush_immediately=True,
+                ingestion_mapping_reference="JsonMapping",
+                ingestion_mapping_kind=IngestionMappingKind.JSON,
+            )
 
-        byte_sequence = b'{"rownumber": 0, "rowguid": "00000000-0000-0000-0001-020304050607", "xdouble": 0.0, "xfloat": 0.0, "xbool": 0, "xint16": 0, "xint32": 0, "xint64": 0, "xunit8": 0, "xuint16": 0, "xunit32": 0, "xunit64": 0, "xdate": "2014-01-01T01:01:01Z", "xsmalltext": "Zero", "xtext": "Zero", "xnumberAsText": "0", "xtime": "00:00:00", "xtextWithNulls": null, "xdynamicWithNulls": ""}'
-        bytes_stream = io.BytesIO(byte_sequence)
-        self.streaming_ingest_client.ingest_from_stream(bytes_stream, ingestion_properties=ingestion_properties)
+            byte_sequence = b'{"rownumber": 0, "rowguid": "00000000-0000-0000-0001-020304050607", "xdouble": 0.0, "xfloat": 0.0, "xbool": 0, "xint16": 0, "xint32": 0, "xint64": 0, "xunit8": 0, "xuint16": 0, "xunit32": 0, "xunit64": 0, "xdate": "2014-01-01T01:01:01Z", "xsmalltext": "Zero", "xtext": "Zero", "xnumberAsText": "0", "xtime": "00:00:00", "xtextWithNulls": null, "xdynamicWithNulls": ""}'
+            bytes_stream = io.BytesIO(byte_sequence)
+            self.streaming_ingest_client.ingest_from_stream(bytes_stream, ingestion_properties=ingestion_properties)
 
-        str_sequence = '{"rownumber": 0, "rowguid": "00000000-0000-0000-0001-020304050607", "xdouble": 0.0, "xfloat": 0.0, "xbool": 0, "xint16": 0, "xint32": 0, "xint64": 0, "xunit8": 0, "xuint16": 0, "xunit32": 0, "xunit64": 0, "xdate": "2014-01-01T01:01:01Z", "xsmalltext": "Zero", "xtext": "Zero", "xnumberAsText": "0", "xtime": "00:00:00", "xtextWithNulls": null, "xdynamicWithNulls": ""}'
-        str_stream = io.StringIO(str_sequence)
-        self.streaming_ingest_client.ingest_from_stream(str_stream, ingestion_properties=ingestion_properties)
+            str_sequence = '{"rownumber": 0, "rowguid": "00000000-0000-0000-0001-020304050607", "xdouble": 0.0, "xfloat": 0.0, "xbool": 0, "xint16": 0, "xint32": 0, "xint64": 0, "xunit8": 0, "xuint16": 0, "xunit32": 0, "xunit64": 0, "xdate": "2014-01-01T01:01:01Z", "xsmalltext": "Zero", "xtext": "Zero", "xnumberAsText": "0", "xtime": "00:00:00", "xtextWithNulls": null, "xdynamicWithNulls": ""}'
+            str_stream = io.StringIO(str_sequence)
+            self.streaming_ingest_client.ingest_from_stream(str_stream, ingestion_properties=ingestion_properties)
 
-        await self.assert_rows_added(2, timeout=120)
+            await self.assert_rows_added(table, 2, timeout=120)
+        finally:
+            await self.drop_table(table)
 
-    @pytest.mark.xdist_group("group1")
     @pytest.mark.asyncio
     async def test_streaming_ingest_from_dataframe(self):
-        from pandas import DataFrame
+        table = await self.init_table("streaming_ingest_from_dataframe")
+        try:
+            from pandas import DataFrame
 
-        fields = [
-            "rownumber",
-            "rowguid",
-            "xdouble",
-            "xfloat",
-            "xbool",
-            "xint16",
-            "xint32",
-            "xint64",
-            "xunit8",
-            "xuint16",
-            "xunit32",
-            "xunit64",
-            "xdate",
-            "xsmalltext",
-            "xtext",
-            "xnumberAsText",
-            "xtime",
-            "xtextWithNulls",
-            "xdynamicWithNulls",
-        ]
+            fields = [
+                "rownumber",
+                "rowguid",
+                "xdouble",
+                "xfloat",
+                "xbool",
+                "xint16",
+                "xint32",
+                "xint64",
+                "xunit8",
+                "xuint16",
+                "xunit32",
+                "xunit64",
+                "xdate",
+                "xsmalltext",
+                "xtext",
+                "xnumberAsText",
+                "xtime",
+                "xtextWithNulls",
+                "xdynamicWithNulls",
+            ]
 
-        guid = uuid.uuid4()
+            guid = uuid.uuid4()
 
-        dynamic_value = ["me@dummy.com", "you@dummy.com", "them@dummy.com"]
-        rows = [[0, str(guid), 0.0, 0.0, 0, 0, 0, 0, 0, 0, 0, 0, "2014-01-01T01:01:01Z", "Zero", "Zero", "0", "00:00:00", None, dynamic_value]]
-        df = DataFrame(data=rows, columns=fields)
-        ingestion_properties = IngestionProperties(database=self.test_db, table=self.test_table, flush_immediately=True)
-        self.ingest_client.ingest_from_dataframe(df, ingestion_properties)
+            dynamic_value = ["me@dummy.com", "you@dummy.com", "them@dummy.com"]
+            rows = [[0, str(guid), 0.0, 0.0, 0, 0, 0, 0, 0, 0, 0, 0, "2014-01-01T01:01:01Z", "Zero", "Zero", "0", "00:00:00", None, dynamic_value]]
+            df = DataFrame(data=rows, columns=fields)
+            ingestion_properties = IngestionProperties(database=self.test_db, table=table, flush_immediately=True)
+            self.ingest_client.ingest_from_dataframe(df, ingestion_properties)
 
-        await self.assert_rows_added(1, timeout=120)
+            await self.assert_rows_added(table, 1, timeout=120)
 
-        a = self.client.execute(self.test_db, f"{self.test_table} | where rowguid == '{guid}'")
-        assert a.primary_results[0].rows[0]["xdynamicWithNulls"] == dynamic_value
+            a = self.client.execute(self.test_db, f"{table} | where rowguid == '{guid}'")
+            assert a.primary_results[0].rows[0]["xdynamicWithNulls"] == dynamic_value
+        finally:
+            await self.drop_table(table)
 
-    @pytest.mark.xdist_group("group1")
     @pytest.mark.asyncio
     async def test_streaming_ingest_from_blob(self, is_managed_streaming):
-        ingestion_properties = IngestionProperties(
-            database=self.test_db,
-            table=self.test_table,
-            data_format=DataFormat.JSON,
-            ingestion_mapping_reference="JsonMapping",
-            ingestion_mapping_kind=IngestionMappingKind.JSON,
-        )
-        export_containers_list = self.ingest_client._resource_manager._kusto_client.execute("NetDefaultDB", ".show export containers")
-        containers = [_ResourceUri(s["StorageRoot"]) for s in export_containers_list.primary_results[0]]
-
-        for c in containers:
-            self.ingest_client._resource_manager._ranked_storage_account_set.add_storage_account(c.storage_account_name)
-
-        with FileDescriptor(self.json_file_path).open(False) as stream:
-            blob_descriptor = self.ingest_client.upload_blob(
-                containers,
-                FileDescriptor(self.json_file_path),
-                ingestion_properties.database,
-                ingestion_properties.table,
-                stream,
-                None,
-                10 * 60,
-                3,
+        table = await self.init_table("streaming_ingest_from_blob")
+        try:
+            ingestion_properties = IngestionProperties(
+                database=self.test_db,
+                table=table,
+                data_format=DataFormat.JSON,
+                ingestion_mapping_reference="JsonMapping",
+                ingestion_mapping_kind=IngestionMappingKind.JSON,
             )
-            if is_managed_streaming:
-                self.managed_streaming_ingest_client.ingest_from_blob(blob_descriptor, ingestion_properties)
-            else:
-                self.streaming_ingest_client.ingest_from_blob(blob_descriptor, ingestion_properties)
+            export_containers_list = self.ingest_client._resource_manager._kusto_client.execute("NetDefaultDB", ".show export containers")
+            containers = [_ResourceUri(s["StorageRoot"]) for s in export_containers_list.primary_results[0]]
 
-        await self.assert_rows_added(2, timeout=120)
+            for c in containers:
+                self.ingest_client._resource_manager._ranked_storage_account_set.add_storage_account(c.storage_account_name)
+
+            with FileDescriptor(self.json_file_path).open(False) as stream:
+                blob_descriptor = self.ingest_client.upload_blob(
+                    containers,
+                    FileDescriptor(self.json_file_path),
+                    ingestion_properties.database,
+                    ingestion_properties.table,
+                    stream,
+                    None,
+                    10 * 60,
+                    3,
+                )
+                if is_managed_streaming:
+                    self.managed_streaming_ingest_client.ingest_from_blob(blob_descriptor, ingestion_properties)
+                else:
+                    self.streaming_ingest_client.ingest_from_blob(blob_descriptor, ingestion_properties)
+
+            await self.assert_rows_added(table, 2, timeout=120)
+        finally:
+            await self.drop_table(table)
