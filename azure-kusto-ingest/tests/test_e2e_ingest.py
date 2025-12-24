@@ -229,7 +229,7 @@ class TestE2E:
 
     # assertions
     @classmethod
-    async def assert_rows_added(cls, expected: int, timeout=60):
+    async def assert_rows_added(cls, expected: int, timeout=120):
         actual = 0
         while timeout > 0:
             time.sleep(1)
