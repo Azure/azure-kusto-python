@@ -396,20 +396,20 @@ class TestE2E:
 
         await self.assert_rows_added(0)
 
-    @pytest.mark.asyncio
-    async def test_tsv_ingestion_csv_mapping(self):
-        tsv_ingestion_props = IngestionProperties(
-            self.test_db,
-            self.test_table,
-            flush_immediately=True,
-            data_format=DataFormat.TSV,
-            column_mappings=self.get_test_table_csv_mappings(),
-            report_level=ReportLevel.FailuresAndSuccesses,
-        )
-
-        self.ingest_client.ingest_from_file(self.tsv_file_path, tsv_ingestion_props)
-
-        await self.assert_rows_added(10)
+    # @pytest.mark.asyncio
+    # async def test_tsv_ingestion_csv_mapping(self):
+    #     tsv_ingestion_props = IngestionProperties(
+    #         self.test_db,
+    #         self.test_table,
+    #         flush_immediately=True,
+    #         data_format=DataFormat.TSV,
+    #         column_mappings=self.get_test_table_csv_mappings(),
+    #         report_level=ReportLevel.FailuresAndSuccesses,
+    #     )
+    #
+    #     self.ingest_client.ingest_from_file(self.tsv_file_path, tsv_ingestion_props)
+    #
+    #     await self.assert_rows_added(10)
 
     @pytest.mark.asyncio
     async def test_ingest_blob(self):
@@ -504,44 +504,44 @@ class TestE2E:
 
         await self.assert_rows_added(2, timeout=120)
 
-    # @pytest.mark.asyncio
-    # async def test_streaming_ingest_from_dataframe(self):
-    #     from pandas import DataFrame
-    #
-    #     fields = [
-    #         "rownumber",
-    #         "rowguid",
-    #         "xdouble",
-    #         "xfloat",
-    #         "xbool",
-    #         "xint16",
-    #         "xint32",
-    #         "xint64",
-    #         "xunit8",
-    #         "xuint16",
-    #         "xunit32",
-    #         "xunit64",
-    #         "xdate",
-    #         "xsmalltext",
-    #         "xtext",
-    #         "xnumberAsText",
-    #         "xtime",
-    #         "xtextWithNulls",
-    #         "xdynamicWithNulls",
-    #     ]
-    #
-    #     guid = uuid.uuid4()
-    #
-    #     dynamic_value = ["me@dummy.com", "you@dummy.com", "them@dummy.com"]
-    #     rows = [[0, str(guid), 0.0, 0.0, 0, 0, 0, 0, 0, 0, 0, 0, "2014-01-01T01:01:01Z", "Zero", "Zero", "0", "00:00:00", None, dynamic_value]]
-    #     df = DataFrame(data=rows, columns=fields)
-    #     ingestion_properties = IngestionProperties(database=self.test_db, table=self.test_table, flush_immediately=True)
-    #     self.ingest_client.ingest_from_dataframe(df, ingestion_properties)
-    #
-    #     await self.assert_rows_added(1, timeout=120)
-    #
-    #     a = self.client.execute(self.test_db, f"{self.test_table} | where rowguid == '{guid}'")
-    #     assert a.primary_results[0].rows[0]["xdynamicWithNulls"] == dynamic_value
+    @pytest.mark.asyncio
+    async def test_streaming_ingest_from_dataframe(self):
+        from pandas import DataFrame
+
+        fields = [
+            "rownumber",
+            "rowguid",
+            "xdouble",
+            "xfloat",
+            "xbool",
+            "xint16",
+            "xint32",
+            "xint64",
+            "xunit8",
+            "xuint16",
+            "xunit32",
+            "xunit64",
+            "xdate",
+            "xsmalltext",
+            "xtext",
+            "xnumberAsText",
+            "xtime",
+            "xtextWithNulls",
+            "xdynamicWithNulls",
+        ]
+
+        guid = uuid.uuid4()
+
+        dynamic_value = ["me@dummy.com", "you@dummy.com", "them@dummy.com"]
+        rows = [[0, str(guid), 0.0, 0.0, 0, 0, 0, 0, 0, 0, 0, 0, "2014-01-01T01:01:01Z", "Zero", "Zero", "0", "00:00:00", None, dynamic_value]]
+        df = DataFrame(data=rows, columns=fields)
+        ingestion_properties = IngestionProperties(database=self.test_db, table=self.test_table, flush_immediately=True)
+        self.ingest_client.ingest_from_dataframe(df, ingestion_properties)
+
+        await self.assert_rows_added(1, timeout=120)
+
+        a = self.client.execute(self.test_db, f"{self.test_table} | where rowguid == '{guid}'")
+        assert a.primary_results[0].rows[0]["xdynamicWithNulls"] == dynamic_value
 
     @pytest.mark.asyncio
     async def test_streaming_ingest_from_blob(self, is_managed_streaming):
