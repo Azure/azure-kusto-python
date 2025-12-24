@@ -203,10 +203,6 @@ class TestE2E:
 
         cls.current_count = 0
 
-        # Clear the cache to guarantee that subsequent streaming ingestion requests incorporate database and table schema changes
-        # See https://docs.microsoft.com/azure/data-explorer/kusto/management/data-ingestion/clear-schema-cache-command
-        cls.client.execute(cls.test_db, ".clear database cache streamingingestion schema")
-
     @classmethod
     def teardown_class(cls):
         cls.client.execute(cls.test_db, ".drop table {} ifexists".format(cls.test_table))
@@ -227,6 +223,9 @@ class TestE2E:
 
             await async_client.execute(cls.test_db, f".alter table {table_name} policy streamingingestion enable ")
 
+            # Clear the cache to guarantee that subsequent streaming ingestion requests incorporate database and table schema changes
+            # See https://docs.microsoft.com/azure/data-explorer/kusto/management/data-ingestion/clear-schema-cache-command
+            await async_client.execute(cls.test_db, ".clear database cache streamingingestion schema")
         return table_name
 
     @classmethod
