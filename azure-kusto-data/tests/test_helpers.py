@@ -130,6 +130,7 @@ def test_pandas_mixed_date():
     assert df["Date"][1] == pandas.Timestamp(year=2023, month=12, day=12, hour=1, minute=54, second=44, tzinfo=datetime.timezone.utc)
 
 
+@pytest.mark.xdist_group("outside")
 def test_parse_datetime():
     """Test parse_datetime function with different pandas versions and datetime formats"""
     from azure.kusto.data.helpers import parse_datetime
