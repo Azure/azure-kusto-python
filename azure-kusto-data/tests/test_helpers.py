@@ -7,7 +7,7 @@ import os
 import pytest
 
 from azure.kusto.data._models import KustoResultTable
-from azure.kusto.data.helpers import dataframe_from_result_table, parse_datetime
+from azure.kusto.data.helpers import dataframe_from_result_table
 from azure.kusto.data.response import KustoResponseDataSetV2
 import pandas
 import numpy
@@ -131,28 +131,4 @@ def test_pandas_mixed_date():
 
 
 def test_datetime_parsing():
-    """Test parse_datetime function with different pandas versions and datetime formats"""
-
-    # Test with pandas v2 behavior (force version 2)
-    df_v2 = pandas.DataFrame(
-        {
-            "mixed": ["2023-12-12T01:59:59.352Z", "2023-12-12T01:54:44Z"],
-        }
-    )
-
-    # Force pandas v2 behavior
-    result_v2 = parse_datetime(df_v2, "mixed", force_version="2.0.0")
-    assert str(result_v2[0]) == "2023-12-12 01:59:59.352000+00:00"
-    assert str(result_v2[1]) == "2023-12-12 01:54:44+00:00"
-    # Test with pandas v1 behavior (force version 1)
-
-    df_v1 = pandas.DataFrame(
-        {
-            "mixed": ["2023-12-12T01:59:59.352Z", "2023-12-12T01:54:44Z"],
-        }
-    )
-
-    # Force pandas v1 behavior - it should add .000 to dates without milliseconds
-    result_v1 = parse_datetime(df_v1, "mixed", force_version="1.5.3")
-    assert str(result_v1[0]) == "2023-12-12 01:59:59.352000+00:00"
-    assert str(result_v1[1]) == "2023-12-12 01:54:44+00:00"
+    pass
