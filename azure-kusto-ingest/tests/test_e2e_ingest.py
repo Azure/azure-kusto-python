@@ -302,7 +302,10 @@ class TestE2E:
             for f in [self.csv_file_path, self.zipped_csv_file_path]:
                 client.ingest_from_file(f, csv_ingest_props)
 
-            await self.assert_rows_added(table, 18)
+            if is_managed_streaming:
+                await self.assert_rows_added(table, 20)
+            else:
+                await self.assert_rows_added(table, 18)
         finally:
             await self.drop_table(table)
 
