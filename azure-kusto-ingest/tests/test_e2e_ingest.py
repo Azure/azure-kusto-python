@@ -396,20 +396,20 @@ class TestE2E:
 
         await self.assert_rows_added(0)
 
-    # @pytest.mark.asyncio
-    # async def test_tsv_ingestion_csv_mapping(self):
-    #     tsv_ingestion_props = IngestionProperties(
-    #         self.test_db,
-    #         self.test_table,
-    #         flush_immediately=True,
-    #         data_format=DataFormat.TSV,
-    #         column_mappings=self.get_test_table_csv_mappings(),
-    #         report_level=ReportLevel.FailuresAndSuccesses,
-    #     )
-    #
-    #     self.ingest_client.ingest_from_file(self.tsv_file_path, tsv_ingestion_props)
-    #
-    #     await self.assert_rows_added(10)
+    @pytest.mark.asyncio
+    async def test_tsv_ingestion_csv_mapping(self):
+        tsv_ingestion_props = IngestionProperties(
+            self.test_db,
+            self.test_table,
+            flush_immediately=True,
+            data_format=DataFormat.TSV,
+            column_mappings=self.get_test_table_csv_mappings(),
+            report_level=ReportLevel.FailuresAndSuccesses,
+        )
+
+        self.ingest_client.ingest_from_file(self.tsv_file_path, tsv_ingestion_props)
+
+        await self.assert_rows_added(10)
 
     @pytest.mark.asyncio
     async def test_ingest_blob(self):
