@@ -285,7 +285,7 @@ class TestE2E:
 
     @pytest.mark.asyncio
     async def test_csv_ingest_ignore_first_record(self, is_managed_streaming):
-        table = await self.init_table("csv_ingest_ignore_first_record")
+        table = await self.init_table("csv_ingest_ignore_first_record" + ("_managed" if is_managed_streaming else ""))
         try:
             csv_ingest_props = IngestionProperties(
                 self.test_db,
@@ -380,7 +380,7 @@ class TestE2E:
 
     @pytest.mark.asyncio
     async def test_ingest_from_stream(self, is_managed_streaming):
-        table = await self.init_table("ingest_from_stream")
+        table = await self.init_table("ingest_from_stream" + ("_managed" if is_managed_streaming else ""))
         try:
             validation_policy = ValidationPolicy(
                 validation_options=ValidationOptions.ValidateCsvInputConstantColumns,
@@ -483,7 +483,7 @@ class TestE2E:
 
     @pytest.mark.asyncio
     async def test_streaming_ingest_from_opened_file(self, is_managed_streaming):
-        table = await self.init_table("streaming_ingest_from_opened_file")
+        table = await self.init_table("streaming_ingest_from_opened_file" + ("_managed" if is_managed_streaming else ""))
         try:
             ingestion_properties = IngestionProperties(database=self.test_db, table=table, data_format=DataFormat.CSV)
 
@@ -615,7 +615,7 @@ class TestE2E:
 
     @pytest.mark.asyncio
     async def test_streaming_ingest_from_blob(self, is_managed_streaming):
-        table = await self.init_table("streaming_ingest_from_blob")
+        table = await self.init_table("streaming_ingest_from_blob" + ("_managed" if is_managed_streaming else ""))
         try:
             ingestion_properties = IngestionProperties(
                 database=self.test_db,
