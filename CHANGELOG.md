@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Changed extra's name back to `aio`
+- Fixed handling of datetime columns in old pandas versions. (#609)
 
 ## [6.0.0] - 2025-11-26
 
