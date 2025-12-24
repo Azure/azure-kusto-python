@@ -201,8 +201,6 @@ class TestE2E:
         cls.json_file_path = os.path.join(cls.input_folder_path, "dataset.json")
         cls.zipped_json_file_path = os.path.join(cls.input_folder_path, "dataset.jsonz.gz")
 
-        cls.current_count = 0
-
     @classmethod
     def teardown_class(cls):
         cls.client.execute(cls.test_db, ".drop table {} ifexists".format(cls.test_table))
@@ -256,13 +254,11 @@ class TestE2E:
             if response is not None:
                 row = response.primary_results[0][0]
                 row_async = response_from_async.primary_results[0][0]
-                actual = int(row["Count"]) - cls.current_count
+                actual = int(row["Count"])
                 # this is done to allow for data to arrive properly
                 if actual >= expected:
                     assert row_async == row, "Mismatch answers between async('{0}') and sync('{1}') clients".format(row_async, row)
                     break
-
-        cls.current_count += actual
         assert actual == expected, "Row count expected = {0}, while actual row count = {1}".format(expected, actual)
 
     @pytest.mark.asyncio
