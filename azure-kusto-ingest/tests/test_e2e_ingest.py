@@ -255,6 +255,7 @@ class TestE2E:
         cls.current_count += actual
         assert actual == expected, "Row count expected = {0}, while actual row count = {1}".format(expected, actual)
 
+    @pytest.mark.xdist_group("group1")
     @pytest.mark.asyncio
     async def test_csv_ingest_existing_table(self, is_managed_streaming):
         csv_ingest_props = IngestionProperties(
@@ -273,6 +274,7 @@ class TestE2E:
 
         await self.assert_rows_added(20)
 
+    @pytest.mark.xdist_group("group1")
     @pytest.mark.asyncio
     async def test_csv_ingest_ignore_first_record(self, is_managed_streaming):
         csv_ingest_props = IngestionProperties(
@@ -290,6 +292,7 @@ class TestE2E:
 
         await self.assert_rows_added(18)
 
+    @pytest.mark.xdist_group("group1")
     @pytest.mark.asyncio
     async def test_json_ingest_existing_table(self):
         json_ingestion_props = IngestionProperties(
@@ -306,6 +309,7 @@ class TestE2E:
 
         await self.assert_rows_added(4)
 
+    @pytest.mark.xdist_group("group1")
     @pytest.mark.asyncio
     async def test_json_ingest_existing_table_no_mapping(self):
         json_ingestion_props = IngestionProperties(
@@ -321,6 +325,7 @@ class TestE2E:
 
         await self.assert_rows_added(4)
 
+    @pytest.mark.xdist_group("group1")
     @pytest.mark.asyncio
     async def test_ingest_complicated_props(self):
         validation_policy = ValidationPolicy(
@@ -349,6 +354,7 @@ class TestE2E:
 
         await self.assert_rows_added(4)
 
+    @pytest.mark.xdist_group("group1")
     @pytest.mark.asyncio
     async def test_ingest_from_stream(self, is_managed_streaming):
         validation_policy = ValidationPolicy(
@@ -378,6 +384,7 @@ class TestE2E:
 
         await self.assert_rows_added(4)
 
+    @pytest.mark.xdist_group("group1")
     @pytest.mark.asyncio
     async def test_json_ingestion_ingest_by_tag(self):
         json_ingestion_props = IngestionProperties(
@@ -396,6 +403,7 @@ class TestE2E:
 
         await self.assert_rows_added(0)
 
+    @pytest.mark.xdist_group("group1")
     @pytest.mark.asyncio
     async def test_tsv_ingestion_csv_mapping(self):
         tsv_ingestion_props = IngestionProperties(
@@ -411,6 +419,7 @@ class TestE2E:
 
         await self.assert_rows_added(10)
 
+    @pytest.mark.xdist_group("group1")
     @pytest.mark.asyncio
     async def test_ingest_blob(self):
         if not self.test_blob:
@@ -435,6 +444,7 @@ class TestE2E:
 
         await self.assert_rows_added(10)
 
+    @pytest.mark.xdist_group("group1")
     @pytest.mark.asyncio
     async def test_streaming_ingest_from_opened_file(self, is_managed_streaming):
         ingestion_properties = IngestionProperties(database=self.test_db, table=self.test_table, data_format=DataFormat.CSV)
@@ -445,6 +455,7 @@ class TestE2E:
 
         await self.assert_rows_added(10, timeout=120)
 
+    @pytest.mark.xdist_group("group1")
     @pytest.mark.asyncio
     async def test_streaming_ingest_from_csv_file(self):
         ingestion_properties = IngestionProperties(database=self.test_db, table=self.test_table, flush_immediately=True, data_format=DataFormat.CSV)
@@ -454,6 +465,7 @@ class TestE2E:
 
         await self.assert_rows_added(20, timeout=120)
 
+    @pytest.mark.xdist_group("group1")
     @pytest.mark.asyncio
     async def test_streaming_ingest_from_json_file(self):
         ingestion_properties = IngestionProperties(
@@ -470,6 +482,7 @@ class TestE2E:
 
         await self.assert_rows_added(4, timeout=120)
 
+    @pytest.mark.xdist_group("group1")
     @pytest.mark.asyncio
     async def test_streaming_ingest_from_csv_io_streams(self):
         ingestion_properties = IngestionProperties(database=self.test_db, table=self.test_table, data_format=DataFormat.CSV)
@@ -483,6 +496,7 @@ class TestE2E:
 
         await self.assert_rows_added(2, timeout=120)
 
+    @pytest.mark.xdist_group("group1")
     @pytest.mark.asyncio
     async def test_streaming_ingest_from_json_io_streams(self):
         ingestion_properties = IngestionProperties(
@@ -504,6 +518,7 @@ class TestE2E:
 
         await self.assert_rows_added(2, timeout=120)
 
+    @pytest.mark.xdist_group("group1")
     @pytest.mark.asyncio
     async def test_streaming_ingest_from_dataframe(self):
         from pandas import DataFrame
@@ -543,6 +558,7 @@ class TestE2E:
         a = self.client.execute(self.test_db, f"{self.test_table} | where rowguid == '{guid}'")
         assert a.primary_results[0].rows[0]["xdynamicWithNulls"] == dynamic_value
 
+    @pytest.mark.xdist_group("group1")
     @pytest.mark.asyncio
     async def test_streaming_ingest_from_blob(self, is_managed_streaming):
         ingestion_properties = IngestionProperties(
