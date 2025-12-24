@@ -217,24 +217,22 @@ class TestE2E:
 
     @classmethod
     async def init_table(cls, test_name: str) -> str:
-        async_client = await cls.get_async_client()
-
         table_name = f"{cls.test_table}_{test_name}_{str(int(time.time()))}_{random.randint(1, 100000)}"
+        async with await cls.get_async_client() as async_client:
+            await async_client.execute(
+                cls.test_db,
+                f".create table {table_name} (rownumber: int, rowguid: string, xdouble: real, xfloat: real, xbool: bool, xint16: int, xint32: int, xint64: long, xuint8: long, xuint16: long, xuint32: long, xuint64: long, xdate: datetime, xsmalltext: string, xtext: string, xnumberAsText: string, xtime: timespan, xtextWithNulls: string, xdynamicWithNulls: dynamic)",
+            )
+            await async_client.execute(cls.test_db, f".create table {table_name} ingestion json mapping 'JsonMapping' {cls.table_json_mapping_reference()}")
 
-        await async_client.execute(
-            cls.test_db,
-            f".create table {table_name} (rownumber: int, rowguid: string, xdouble: real, xfloat: real, xbool: bool, xint16: int, xint32: int, xint64: long, xuint8: long, xuint16: long, xuint32: long, xuint64: long, xdate: datetime, xsmalltext: string, xtext: string, xnumberAsText: string, xtime: timespan, xtextWithNulls: string, xdynamicWithNulls: dynamic)",
-        )
-        await async_client.execute(cls.test_db, f".create table {table_name} ingestion json mapping 'JsonMapping' {cls.table_json_mapping_reference()}")
-
-        await async_client.execute(cls.test_db, f".alter table {table_name} policy streamingingestion enable ")
+            await async_client.execute(cls.test_db, f".alter table {table_name} policy streamingingestion enable ")
 
         return table_name
 
     @classmethod
     async def drop_table(cls, table_name: str):
-        async_client = await cls.get_async_client()
-        await async_client.execute(cls.test_db, f".drop table {table_name} ifexists")
+        async with await cls.get_async_client() as async_client:
+            await async_client.execute(cls.test_db, f".drop table {table_name} ifexists")
 
     @classmethod
     async def get_async_client(cls) -> AsyncKustoClient:
