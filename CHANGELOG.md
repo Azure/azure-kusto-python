@@ -8,7 +8,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
-- Managed Streaming Should Handle Throttling Events Correctly
 - Changed extra's name back to `aio`
 - Fixed encoding error in `ingest_from_dataframe` when using csv data format.
 

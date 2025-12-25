@@ -9,7 +9,7 @@ from azure.core.tracing.decorator import distributed_trace
 from azure.core.tracing import SpanKind
 
 from azure.kusto.data import KustoConnectionStringBuilder
-from azure.kusto.data.exceptions import KustoApiError, KustoClosedError, KustoThrottlingError
+from azure.kusto.data.exceptions import KustoApiError, KustoClosedError
 from azure.kusto.data._telemetry import MonitoredActivity
 
 from . import BlobDescriptor, FileDescriptor, IngestionProperties, StreamDescriptor
@@ -99,9 +99,7 @@ class ManagedStreamingIngestClient(BaseIngestClient):
             if error.permanent:
                 raise
             buffered_stream.seek(0, SEEK_SET)
-        except KustoThrottlingError:
-            _ = buffered_stream.seek(0, SEEK_SET)        
-        
+
         return self.queued_client.ingest_from_stream(stream_descriptor, ingestion_properties)
 
     @distributed_trace(kind=SpanKind.CLIENT)
@@ -129,9 +127,7 @@ class ManagedStreamingIngestClient(BaseIngestClient):
             error = ex.get_api_error()
             if error.permanent:
                 raise
-        except KustoThrottlingError:
-            pass
-        
+
         return self.queued_client.ingest_from_blob(blob_descriptor, ingestion_properties)
 
     def _stream_with_retries(
