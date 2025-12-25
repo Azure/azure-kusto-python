@@ -1,17 +1,17 @@
 import json
 from functools import lru_cache
 from pathlib import Path
-from typing import TYPE_CHECKING, Union, Callable, Dict, Optional
+from typing import TYPE_CHECKING, Any, Union, Callable, Optional
 
 if TYPE_CHECKING:
     import pandas as pd
     from azure.kusto.data._models import KustoResultTable, KustoStreamingResultTable
 
 # Alias for dataframe_from_result_table converter type
-Converter = Dict[str, Union[str, Callable[[str, "pd.DataFrame"], "pd.Series"]]]
+Converter = dict[str, Union[str, Callable[[str, "pd.DataFrame"], "pd.Series"]]]
 
 
-def load_bundled_json(file_name: str) -> Dict:
+def load_bundled_json(file_name: str) -> dict[Any, Any]:
     filename = Path(__file__).absolute().parent.joinpath(file_name)
     with filename.open("r", encoding="utf-8") as data:
         return json.load(data)
@@ -113,23 +113,24 @@ def parse_float(frame, col):
     import numpy as np
     import pandas as pd
 
-    frame[col] = frame[col].replace("NaN", np.nan).replace("Infinity", np.inf).replace("-Infinity", -np.inf)
+    frame[col] = frame[col].infer_objects(copy=False).replace({"NaN": np.nan, "Infinity": np.inf, "-Infinity": -np.inf})
     frame[col] = pd.to_numeric(frame[col], errors="coerce").astype(pd.Float64Dtype())  # pyright: ignore[reportCallIssue,reportArgumentType]
+
     return frame[col]
 
 
-def parse_datetime(frame, col):
+def parse_datetime(frame, col, force_version: Optional[str] = None) -> "pd.Series":
     # Pandas before version 2 doesn't support the "format" arg
     import pandas as pd
 
     args = {}
-    if pd.__version__.startswith("2."):
+    if (force_version or pd.__version__).startswith("2."):
         args = {"format": "ISO8601", "utc": True}
     else:
         # if frame contains ".", replace "Z" with ".000Z"
-        # == False is not a mistake - that's the pandas way to do it
-        contains_dot = frame[col].str.contains(".")
-        frame.loc[not contains_dot, col] = frame.loc[not contains_dot, col].str.replace("Z", ".000Z")
+        # Using bitwise NOT (~) on the boolean Series is the idiomatic pandas way to negate the mask
+        contains_dot = frame[col].str.contains("\\.")
+        frame.loc[~contains_dot, col] = frame.loc[~contains_dot, col].str.replace("Z", ".000Z")
     frame[col] = pd.to_datetime(frame[col], errors="coerce", **args)
     return frame[col]
 
