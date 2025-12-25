@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [6.0.1] - 2025-12-25
 
 ### Fixed
+- Managed Streaming Should Handle Throttling Events Correctly
 - Changed extra's name back to `aio`
 - Fixed handling of datetime columns in old pandas versions.
 - Fixed encoding error in `ingest_from_dataframe` when using csv data format.
