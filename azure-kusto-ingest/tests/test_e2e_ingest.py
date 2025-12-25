@@ -257,6 +257,8 @@ class TestE2E:
                 # this is done to allow for data to arrive properly
                 if actual >= expected:
                     if row_async != row:
+                        # retry once more to avoid transient issues
+                        await asyncio.sleep(5)
                         async with await cls.get_async_client() as async_client:
                             command = "{} | count".format(table_name)
                             response = cls.client.execute(cls.test_db, command)
