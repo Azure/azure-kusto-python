@@ -236,7 +236,7 @@ class TestE2E:
 
     # assertions
     @classmethod
-    async def assert_rows_added(cls, table_name: str, expected: int, timeout=120):
+    async def assert_rows_added(cls, table_name: str, expected: int, timeout: int=120):
         actual = 0
         while timeout > 0:
             time.sleep(1)
@@ -256,7 +256,15 @@ class TestE2E:
                 actual = int(row["Count"])
                 # this is done to allow for data to arrive properly
                 if actual >= expected:
-                    assert row_async == row, "Mismatch answers between async('{0}') and sync('{1}') clients".format(row_async, row)
+                    if row_async != row:
+                        async with await cls.get_async_client() as async_client:
+                            command = "{} | count".format(table_name)
+                            response = cls.client.execute(cls.test_db, command)
+                            response_from_async = await async_client.execute(cls.test_db, command)
+                            row = response.primary_results[0][0]
+                            row_async = response_from_async.primary_results[0][0]
+                            
+                            assert row_async == row, "Sync and Async clients returned different results: sync={0}, async={1}".format(row, row_async)
                     break
         assert actual == expected, "Row count expected = {0}, while actual row count = {1}".format(expected, actual)
 
