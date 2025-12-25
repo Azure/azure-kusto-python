@@ -26,7 +26,7 @@ def is_blob(request):
     return request.param == "Blob"
 
 
-def transient_error_callback(helper: TransientResponseHelper, request, custom_request_id=None):
+def transient_error_callback(helper: TransientResponseHelper, request, custom_request_id=None, use_kusto_throttling_error=False):
     if custom_request_id:
         assert request.headers["x-ms-client-request-id"] == custom_request_id
     else:
@@ -36,31 +36,44 @@ def transient_error_callback(helper: TransientResponseHelper, request, custom_re
     helper.total_calls += 1
 
     if helper.total_calls <= helper.times_to_fail:
-        response_status = 400
-        response_body = {
-            "error": {
-                "code": "General_InternalServerError",
-                "message": "Unknown error",
-                "@type": "Kusto.DataNode.Exceptions.InternalServerError",
-                "@message": "InternalServerError",
-                "@context": {
-                    "timestamp": "2021-10-21T14:12:00.7878847Z",
-                    "serviceAlias": "SomeCluster",
-                    "machineName": "KEngine000000",
-                    "processName": "Kusto.WinSvc.Svc",
-                    "processId": 3040,
-                    "threadId": 7524,
-                    "appDomainName": "Kusto.WinSvc.Svc.exe",
-                    "clientRequestId": "KNC.executeStreamingIngest;a4d80ca5-8729-404b-b745-0d5555737483",
-                    "activityId": "bace3d9d-d949-457e-b741-1d2c6bc56658",
-                    "subActivityId": "bace3d9d-d949-457e-b741-1d2c6bc56658",
-                    "activityType": "PO.OWIN.CallContext",
-                    "parentActivityId": "bace3d9d-d949-457e-b741-1d2c6bc56658",
-                    "activityStack": "(Activity stack: CRID=KNC.executeStreamingIngest;a4d80ca5-8729-404b-b745-0d5555737493 ARID=bace3d9d-d949-457e-b741-1d2c6bc56678 > PO.OWIN.CallContext/bace3d9d-d949-457e-b741-1d2c6bc56678 > PO.OWIN.CallContext/bace3d9d-d949-457e-b741-1d2c6bc56678)",
-                },
-                "@permanent": False,
+        if use_kusto_throttling_error:
+            response_status = 429
+            response_body = {
+                "error": {
+                    "code": "Throttling",
+                    "message": "Request was throttled.",
+                    "@type": "Kusto.DataNode.Exceptions.ThrottlingException",
+                    "@message": "ThrottlingException",
+                    "@context": {},
+                    "@permanent": False,
+                }
             }
-        }
+        else: 
+            response_status = 400
+            response_body = {
+                "error": {
+                    "code": "General_InternalServerError",
+                    "message": "Unknown error",
+                    "@type": "Kusto.DataNode.Exceptions.InternalServerError",
+                    "@message": "InternalServerError",
+                    "@context": {
+                        "timestamp": "2021-10-21T14:12:00.7878847Z",
+                        "serviceAlias": "SomeCluster",
+                        "machineName": "KEngine000000",
+                        "processName": "Kusto.WinSvc.Svc",
+                        "processId": 3040,
+                        "threadId": 7524,
+                        "appDomainName": "Kusto.WinSvc.Svc.exe",
+                        "clientRequestId": "KNC.executeStreamingIngest;a4d80ca5-8729-404b-b745-0d5555737483",
+                        "activityId": "bace3d9d-d949-457e-b741-1d2c6bc56658",
+                        "subActivityId": "bace3d9d-d949-457e-b741-1d2c6bc56658",
+                        "activityType": "PO.OWIN.CallContext",
+                        "parentActivityId": "bace3d9d-d949-457e-b741-1d2c6bc56658",
+                        "activityStack": "(Activity stack: CRID=KNC.executeStreamingIngest;a4d80ca5-8729-404b-b745-0d5555737493 ARID=bace3d9d-d949-457e-b741-1d2c6bc56678 > PO.OWIN.CallContext/bace3d9d-d949-457e-b741-1d2c6bc56678 > PO.OWIN.CallContext/bace3d9d-d949-457e-b741-1d2c6bc56678)",
+                    },
+                    "@permanent": False,
+                }
+            }
     else:
         response_status = 200
         response_body = {
@@ -205,7 +218,7 @@ class TestManagedStreamingIngestClient:
         responses.add_callback(
             responses.POST,
             "https://somecluster.kusto.windows.net/v1/rest/ingest/database/table",
-            callback=lambda request: transient_error_callback(helper, request),
+            callback=lambda request: transient_error_callback(helper, request, use_kusto_throttling_error=True),
             content_type="application/json",
         )
 
