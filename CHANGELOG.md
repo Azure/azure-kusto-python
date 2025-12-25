@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Changed extra's name back to `aio`
+- Fixed encoding error in `ingest_from_dataframe` when using csv data format.
 
 ## [6.0.0] - 2025-11-26
 
