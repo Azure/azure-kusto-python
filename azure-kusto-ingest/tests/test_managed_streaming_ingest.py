@@ -48,7 +48,7 @@ def transient_error_callback(helper: TransientResponseHelper, request, custom_re
                     "@permanent": False,
                 }
             }
-        else: 
+        else:
             response_status = 400
             response_body = {
                 "error": {
