@@ -243,10 +243,10 @@ class TestE2E:
             timeout -= 1
 
             try:
-                command = "{} | count".format(table_name)
                 async with await cls.get_async_client() as async_client:
+                    command = "{} | count".format(table_name)
+                    response = cls.client.execute(cls.test_db, command)
                     response_from_async = await async_client.execute(cls.test_db, command)
-                response = cls.client.execute(cls.test_db, command)
             except KustoServiceError:
                 continue
 
