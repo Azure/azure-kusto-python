@@ -8,7 +8,7 @@ if TYPE_CHECKING:
     from azure.kusto.data._models import KustoResultTable, KustoStreamingResultTable
 
 # Alias for dataframe_from_result_table converter type
-Converter = dict[str, Union[str, Callable[[str, "pd.DataFrame"], "pd.Series['Any']"]]]
+Converter = dict[str, Union[str, Callable[[str, "pd.DataFrame"], "pd.Series"]]]
 
 
 def load_bundled_json(file_name: str) -> dict[Any, Any]:
@@ -119,7 +119,7 @@ def parse_float(frame, col):
     return frame[col]
 
 
-def parse_datetime(frame, col, force_version: Optional[str] = None):
+def parse_datetime(frame, col, force_version: Optional[str] = None) -> "pd.Series":
     # Pandas before version 2 doesn't support the "format" arg
     import pandas as pd
 

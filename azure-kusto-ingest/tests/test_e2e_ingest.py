@@ -244,9 +244,9 @@ class TestE2E:
 
             try:
                 command = "{} | count".format(table_name)
-                response = cls.client.execute(cls.test_db, command)
                 async with await cls.get_async_client() as async_client:
                     response_from_async = await async_client.execute(cls.test_db, command)
+                response = cls.client.execute(cls.test_db, command)
             except KustoServiceError:
                 continue
 
