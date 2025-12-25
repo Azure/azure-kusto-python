@@ -263,7 +263,6 @@ class TestE2E:
                             response_from_async = await async_client.execute(cls.test_db, command)
                             row = response.primary_results[0][0]
                             row_async = response_from_async.primary_results[0][0]
-                            
                             assert row_async == row, "Sync and Async clients returned different results: sync={0}, async={1}".format(row, row_async)
                     break
         assert actual == expected, "Row count expected = {0}, while actual row count = {1}".format(expected, actual)
