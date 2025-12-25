@@ -254,18 +254,9 @@ class TestE2E:
                 row = response.primary_results[0][0]
                 row_async = response_from_async.primary_results[0][0]
                 actual = int(row["Count"])
+                actual_async = int(row_async["Count"])
                 # this is done to allow for data to arrive properly
-                if actual >= expected:
-                    if row_async != row:
-                        # retry once more to avoid transient issues
-                        await asyncio.sleep(5)
-                        async with await cls.get_async_client() as async_client:
-                            command = "{} | count".format(table_name)
-                            response = cls.client.execute(cls.test_db, command)
-                            response_from_async = await async_client.execute(cls.test_db, command)
-                            row = response.primary_results[0][0]
-                            row_async = response_from_async.primary_results[0][0]
-                            assert row_async == row, "Sync and Async clients returned different results: sync={0}, async={1}".format(row, row_async)
+                if actual >= expected and actual_async >= expected:
                     break
         assert actual == expected, "Row count expected = {0}, while actual row count = {1}".format(expected, actual)
 
