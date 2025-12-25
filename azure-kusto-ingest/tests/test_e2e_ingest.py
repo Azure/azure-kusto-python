@@ -479,7 +479,7 @@ class TestE2E:
             # Don't provide size hint
             self.ingest_client.ingest_from_blob(BlobDescriptor(self.test_blob, size=None), csv_ingest_props)
 
-            await self.assert_rows_added(table, 10)
+            await self.assert_rows_added(table, 20)
         finally:
             await self.drop_table(table)
 

@@ -100,8 +100,8 @@ class ManagedStreamingIngestClient(BaseIngestClient):
                 raise
             buffered_stream.seek(0, SEEK_SET)
         except KustoThrottlingError:
-            _ = buffered_stream.seek(0, SEEK_SET)        
-        
+            _ = buffered_stream.seek(0, SEEK_SET)
+
         return self.queued_client.ingest_from_stream(stream_descriptor, ingestion_properties)
 
     @distributed_trace(kind=SpanKind.CLIENT)
@@ -131,7 +131,7 @@ class ManagedStreamingIngestClient(BaseIngestClient):
                 raise
         except KustoThrottlingError:
             pass
-        
+
         return self.queued_client.ingest_from_blob(blob_descriptor, ingestion_properties)
 
     def _stream_with_retries(
