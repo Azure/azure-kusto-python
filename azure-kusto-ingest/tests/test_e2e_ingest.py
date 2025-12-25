@@ -203,7 +203,6 @@ class TestE2E:
 
     @classmethod
     def teardown_class(cls):
-        cls.client.execute(cls.test_db, ".drop table {} ifexists".format(cls.test_table))
         cls.client.close()
         cls.ingest_client.close()
         cls.streaming_ingest_client.close()
