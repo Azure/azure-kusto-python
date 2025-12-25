@@ -1,6 +1,6 @@
 [project]
 name = "quick-start"
-version = "6.0.0"
+version = "6.0.1"
 description = "Microsoft Azure Kusto Python SDK"
 dependencies = [
     "azure-kusto-data",
