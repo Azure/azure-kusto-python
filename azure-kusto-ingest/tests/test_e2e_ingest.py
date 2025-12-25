@@ -236,7 +236,7 @@ class TestE2E:
 
     # assertions
     @classmethod
-    async def assert_rows_added(cls, table_name: str, expected: int, timeout: int=120):
+    async def assert_rows_added(cls, table_name: str, expected: int, timeout: int = 120):
         actual = 0
         while timeout > 0:
             time.sleep(1)
