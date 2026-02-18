@@ -131,28 +131,38 @@ def test_pandas_mixed_date():
 
 
 def test_datetime_parsing():
-    """Test parse_datetime function with different pandas versions and datetime formats"""
-
-    # Test with pandas v2 behavior (force version 2)
-    df_v2 = pandas.DataFrame(
+    """Test parse_datetime correctly parses mixed datetime formats"""
+    df = pandas.DataFrame(
         {
             "mixed": ["2023-12-12T01:59:59.352Z", "2023-12-12T01:54:44Z"],
         }
     )
 
-    # Force pandas v2 behavior
-    result_v2 = parse_datetime(df_v2, "mixed", force_version="2.0.0")
-    assert str(result_v2[0]) == "2023-12-12 01:59:59.352000+00:00"
-    assert str(result_v2[1]) == "2023-12-12 01:54:44+00:00"
-    # Test with pandas v1 behavior (force version 1)
+    result = parse_datetime(df, "mixed")
+    assert str(result[0]) == "2023-12-12 01:59:59.352000+00:00"
+    assert str(result[1]) == "2023-12-12 01:54:44+00:00"
 
-    df_v1 = pandas.DataFrame(
-        {
-            "mixed": ["2023-12-12T01:59:59.352Z", "2023-12-12T01:54:44Z"],
-        }
+
+def test_all_null_datetime_column():
+    """Test dataframe_from_result_table with a column where all datetime values are null (pandas 3.0 regression)"""
+    df = dataframe_from_result_table(
+        KustoResultTable(
+            {
+                "TableName": "Table_0",
+                "Columns": [
+                    {"ColumnName": "timestamp", "ColumnType": "datetime"},
+                    {"ColumnName": "value", "ColumnType": "real"},
+                ],
+                "Rows": [
+                    [None, 10],
+                    [None, 11],
+                ],
+            }
+        )
     )
 
-    # Force pandas v1 behavior - it should add .000 to dates without milliseconds
-    result_v1 = parse_datetime(df_v1, "mixed", force_version="1.5.3")
-    assert str(result_v1[0]) == "2023-12-12 01:59:59.352000+00:00"
-    assert str(result_v1[1]) == "2023-12-12 01:54:44+00:00"
+    assert len(df) == 2
+    assert pandas.isnull(df["timestamp"][0])
+    assert pandas.isnull(df["timestamp"][1])
+    assert df["value"][0] == 10
+    assert df["value"][1] == 11
