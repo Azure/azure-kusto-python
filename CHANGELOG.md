@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.0.2] - 2026-02-19
+
+### Fixed
+- Fixed `dataframe_from_result_table` crashing with pandas 3.0 when a datetime column contains all null values.
+- Removed legacy pandas 1.x code path in `parse_datetime` (minimum supported pandas is now 2.3.1).
+
 ## [6.0.1] - 2025-12-25
 
 ### Fixed

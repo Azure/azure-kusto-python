@@ -119,19 +119,10 @@ def parse_float(frame, col):
     return frame[col]
 
 
-def parse_datetime(frame, col, force_version: Optional[str] = None) -> "pd.Series":
-    # Pandas before version 2 doesn't support the "format" arg
+def parse_datetime(frame, col) -> "pd.Series":
     import pandas as pd
 
-    args = {}
-    if (force_version or pd.__version__).startswith("2."):
-        args = {"format": "ISO8601", "utc": True}
-    else:
-        # if frame contains ".", replace "Z" with ".000Z"
-        # Using bitwise NOT (~) on the boolean Series is the idiomatic pandas way to negate the mask
-        contains_dot = frame[col].str.contains("\\.")
-        frame.loc[~contains_dot, col] = frame.loc[~contains_dot, col].str.replace("Z", ".000Z")
-    frame[col] = pd.to_datetime(frame[col], errors="coerce", **args)
+    frame[col] = pd.to_datetime(frame[col], format="ISO8601", utc=True, errors="coerce")
     return frame[col]
 
 
