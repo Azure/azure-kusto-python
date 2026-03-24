@@ -72,7 +72,7 @@ class ColumnMapping:
     FIELD_NAME = "Field"
 
     NEEDED_PROPERTIES: Dict[IngestionMappingKind, List[str]] = {
-        IngestionMappingKind.CSV: [ORDINAL, CONST_VALUE],
+        IngestionMappingKind.CSV: [ORDINAL, CONST_VALUE, TRANSFORMATION_METHOD],
         IngestionMappingKind.JSON: [PATH, CONST_VALUE, TRANSFORMATION_METHOD],
         IngestionMappingKind.AVRO: [PATH, CONST_VALUE, FIELD_NAME, TRANSFORMATION_METHOD],
         IngestionMappingKind.APACHEAVRO: [PATH, CONST_VALUE, FIELD_NAME, TRANSFORMATION_METHOD],
