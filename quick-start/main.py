@@ -8,6 +8,7 @@ Usage:
 Example:
     python main.py https://mycluster.centralus.kusto.windows.net mydb
 """
+
 import argparse
 import sys
 import time
