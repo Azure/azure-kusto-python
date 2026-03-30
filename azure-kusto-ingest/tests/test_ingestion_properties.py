@@ -90,3 +90,23 @@ def test_with_constant_value():
         data_format=DataFormat.PARQUET,
         ingestion_mapping_kind=IngestionMappingKind.PARQUET,
     )
+
+
+@pytest.mark.parametrize(
+    "transform,data_format,mapping_kind",
+    [
+        (TransformationMethod.SOURCE_LOCATION, DataFormat.CSV, IngestionMappingKind.CSV),
+        (TransformationMethod.SOURCE_LINE_NUMBER, DataFormat.CSV, IngestionMappingKind.CSV),
+        (TransformationMethod.SOURCE_LOCATION, DataFormat.TSV, IngestionMappingKind.CSV),
+        (TransformationMethod.SOURCE_LOCATION, DataFormat.SCSV, IngestionMappingKind.CSV),
+    ],
+)
+def test_csv_mapping_with_transform_only(transform, data_format, mapping_kind):
+    """Transform-only CSV column mappings should be valid without Ordinal or ConstValue. See #627."""
+    IngestionProperties(
+        database="database",
+        table="table",
+        column_mappings=[ColumnMapping("test", "string", transform=transform)],
+        data_format=data_format,
+        ingestion_mapping_kind=mapping_kind,
+    )
