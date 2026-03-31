@@ -262,7 +262,7 @@ wheels = [
 
 [[package]]
 name = "azure-kusto-data"
-version = "6.0.2"
+version = "6.0.3"
 source = { editable = "azure-kusto-data" }
 dependencies = [
     { name = "azure-core" },
@@ -298,7 +298,7 @@ provides-extras = ["pandas", "aio"]
 
 [[package]]
 name = "azure-kusto-ingest"
-version = "6.0.2"
+version = "6.0.3"
 source = { editable = "azure-kusto-ingest" }
 dependencies = [
     { name = "azure-kusto-data" },
@@ -324,7 +324,7 @@ provides-extras = ["pandas", "aio"]
 
 [[package]]
 name = "azure-kusto-python"
-version = "6.0.2"
+version = "6.0.3"
 source = { virtual = "." }
 dependencies = [
     { name = "azure-kusto-data" },
@@ -1844,7 +1844,7 @@ wheels = [
 
 [[package]]
 name = "quick-start"
-version = "6.0.2"
+version = "6.0.3"
 source = { virtual = "quick-start" }
 dependencies = [
     { name = "azure-core-tracing-opentelemetry" },
