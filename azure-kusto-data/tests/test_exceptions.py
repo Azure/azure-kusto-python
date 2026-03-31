@@ -104,12 +104,7 @@ def test_one_api_error_no_code_fail():
 
 
 def test_kusto_api_error_without_message_no_exception_raised():
-    error_dict = {
-        "error": {
-            "code": "400",
-            "message": "This is a sample error message."
-        }
-    }
+    error_dict = {"error": {"code": "400", "message": "This is a sample error message."}}
 
     try:
         KustoApiError(error_dict, http_response=None)
