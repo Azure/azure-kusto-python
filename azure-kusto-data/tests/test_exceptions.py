@@ -1,4 +1,4 @@
-from azure.kusto.data.exceptions import OneApiError
+from azure.kusto.data.exceptions import KustoApiError, OneApiError
 
 
 def test_parse_one_api_error():
@@ -101,3 +101,12 @@ def test_one_api_error_no_code_fail():
     assert result.code == "FailedToParse"
     assert result.type == "FailedToParseOneApiError"
     assert not result.permanent
+
+
+def test_kusto_api_error_without_message_no_exception_raised():
+    error_dict = {"error": {"code": "400", "message": "This is a sample error message."}}
+
+    try:
+        KustoApiError(error_dict, http_response=None)
+    except Exception:
+        assert False, "Exception was raised"
