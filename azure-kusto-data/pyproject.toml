@@ -1,6 +1,6 @@
 [project]
 name = "azure-kusto-data"
-version = "6.0.3"
+version = "6.0.4"
 description = "Kusto Data Client"
 authors = [
     { name = "Microsoft Corporation", email = "kustalk@microsoft.com" },
