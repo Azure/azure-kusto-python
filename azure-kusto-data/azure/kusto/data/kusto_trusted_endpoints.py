@@ -1,5 +1,5 @@
 import copy
-from typing import List, Dict
+from typing import Callable, List, Dict, Union
 from urllib.parse import urlparse
 
 from azure.kusto.data.helpers import get_string_tail_lower_case
@@ -73,23 +73,29 @@ class KustoTrustedEndpoints:
 
         self._additional_matcher = create_fast_suffix_matcher_from_existing(rules, None if replace else self._additional_matcher)
 
-    def validate_trusted_endpoint(self, endpoint: str, login_endpoint: str):
+    def validate_trusted_endpoint(self, endpoint: str, login_endpoint: Union[str, Callable[[], str]]):
         hostname = urlparse(endpoint).hostname
         self.validate_hostname_is_trusted(hostname if hostname is not None else endpoint, login_endpoint)
 
-    def validate_hostname_is_trusted(self, hostname: str, login_endpoint: str):
+    def validate_hostname_is_trusted(self, hostname: str, login_endpoint: Union[str, Callable[[], str]]):
         if _is_local_address(hostname):
             return
         if self._override_matcher is not None:
             if self._override_matcher(hostname):
                 return
         else:
-            matcher = self._matchers.get(login_endpoint.lower())
-            if matcher is not None and matcher.is_match(hostname):
+            additional_matcher = self._additional_matcher
+            if additional_matcher is not None and additional_matcher.is_match(hostname):
                 return
 
-        matcher = self._additional_matcher
-        if matcher is not None and matcher.is_match(hostname):
+            if any(matcher.is_match(hostname) for matcher in self._matchers.values()):
+                resolved_login_endpoint = login_endpoint() if callable(login_endpoint) else login_endpoint
+                matcher = self._matchers.get(resolved_login_endpoint.lower())
+                if matcher is not None and matcher.is_match(hostname):
+                    return
+
+        additional_matcher = self._additional_matcher
+        if additional_matcher is not None and additional_matcher.is_match(hostname):
             return
 
         raise KustoClientInvalidConnectionStringException(
