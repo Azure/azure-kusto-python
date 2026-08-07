@@ -9,7 +9,6 @@ from urllib.parse import urljoin
 from requests import Response, Session
 
 from azure.kusto.data._cloud_settings import CloudSettings
-from azure.kusto.data._token_providers import CloudInfoTokenProvider
 from .client_details import ClientDetails
 from .client_request_properties import ClientRequestProperties
 from .exceptions import KustoServiceError, KustoThrottlingError, KustoApiError
@@ -78,16 +77,14 @@ class _KustoClientBase(abc.ABC):
 
     def validate_endpoint(self):
         if not self._endpoint_validated and self._aad_helper is not None:
-            if isinstance(self._aad_helper.token_provider, CloudInfoTokenProvider):
-                endpoint = CloudSettings.get_cloud_info_for_cluster(
+            well_known_kusto_endpoints.validate_trusted_endpoint(
+                self._kusto_cluster,
+                lambda: CloudSettings.get_cloud_info_for_cluster(
                     self._kusto_cluster,
                     self._aad_helper.token_provider._proxy_dict,
                     self._session if isinstance(self._session, Session) else None,
-                ).login_endpoint
-                well_known_kusto_endpoints.validate_trusted_endpoint(
-                    self._kusto_cluster,
-                    endpoint,
-                )
+                ).login_endpoint,
+            )
             self._endpoint_validated = True
 
     @staticmethod
