@@ -1,5 +1,5 @@
 import copy
-from typing import List, Dict
+from typing import Callable, List, Dict, Union
 from urllib.parse import urlparse
 
 from azure.kusto.data.helpers import get_string_tail_lower_case
@@ -73,24 +73,37 @@ class KustoTrustedEndpoints:
 
         self._additional_matcher = create_fast_suffix_matcher_from_existing(rules, None if replace else self._additional_matcher)
 
-    def validate_trusted_endpoint(self, endpoint: str, login_endpoint: str):
+    def validate_trusted_endpoint(self, endpoint: str, login_endpoint: Union[str, Callable[[], str]]):
+        """Validates that the endpoint is trusted.
+
+        `login_endpoint` may be a callable, in which case it is only resolved if the built-in
+        per-cloud allow lists actually have to be consulted. Resolving it may require contacting
+        the cluster itself, so callers should pass a callable to avoid reaching out to hosts that
+        can never be trusted.
+        """
         hostname = urlparse(endpoint).hostname
         self.validate_hostname_is_trusted(hostname if hostname is not None else endpoint, login_endpoint)
 
-    def validate_hostname_is_trusted(self, hostname: str, login_endpoint: str):
+    def validate_hostname_is_trusted(self, hostname: str, login_endpoint: Union[str, Callable[[], str]]):
         if _is_local_address(hostname):
             return
         if self._override_matcher is not None:
             if self._override_matcher(hostname):
                 return
-        else:
-            matcher = self._matchers.get(login_endpoint.lower())
-            if matcher is not None and matcher.is_match(hostname):
-                return
 
         matcher = self._additional_matcher
         if matcher is not None and matcher.is_match(hostname):
             return
+
+        if self._override_matcher is None and any(matcher.is_match(hostname) for matcher in self._matchers.values()):
+            # Only resolve the login endpoint once the hostname is known to appear in at least one
+            # cloud's allow list. Resolving it may contact the cluster, so doing it first would let
+            # an untrusted connection string drive a request to an arbitrary host before it is
+            # rejected.
+            resolved_login_endpoint = login_endpoint() if callable(login_endpoint) else login_endpoint
+            matcher = self._matchers.get(resolved_login_endpoint.lower())
+            if matcher is not None and matcher.is_match(hostname):
+                return
 
         raise KustoClientInvalidConnectionStringException(
             f"Can't communicate with '{hostname}' as this hostname is currently not trusted; please see https://aka.ms/kustotrustedendpoints"

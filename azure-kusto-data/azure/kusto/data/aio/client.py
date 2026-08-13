@@ -171,7 +171,7 @@ class KustoClient(_KustoClientBase):
         """Executes given query against this client"""
         if self._is_closed:
             raise KustoClosedError()
-        self.validate_endpoint()
+        await self.validate_endpoint_async()
 
         request_headers = request.request_headers
         timeout = request.timeout
