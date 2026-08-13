@@ -1,4 +1,5 @@
 import abc
+import asyncio
 import io
 import json
 import uuid
@@ -92,6 +93,10 @@ class _KustoClientBase(abc.ABC):
                 ),
             )
             self._endpoint_validated = True
+
+    async def validate_endpoint_async(self):
+        if not self._endpoint_validated and self._aad_helper is not None:
+            await asyncio.get_running_loop().run_in_executor(None, self.validate_endpoint)
 
     @staticmethod
     def _kusto_parse_by_endpoint(endpoint: str, response_json: Any) -> KustoResponseDataSet:

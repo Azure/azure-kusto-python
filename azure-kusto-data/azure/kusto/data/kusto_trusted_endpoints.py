@@ -90,7 +90,12 @@ class KustoTrustedEndpoints:
         if self._override_matcher is not None:
             if self._override_matcher(hostname):
                 return
-        elif any(matcher.is_match(hostname) for matcher in self._matchers.values()):
+
+        matcher = self._additional_matcher
+        if matcher is not None and matcher.is_match(hostname):
+            return
+
+        if self._override_matcher is None and any(matcher.is_match(hostname) for matcher in self._matchers.values()):
             # Only resolve the login endpoint once the hostname is known to appear in at least one
             # cloud's allow list. Resolving it may contact the cluster, so doing it first would let
             # an untrusted connection string drive a request to an arbitrary host before it is
@@ -99,10 +104,6 @@ class KustoTrustedEndpoints:
             matcher = self._matchers.get(resolved_login_endpoint.lower())
             if matcher is not None and matcher.is_match(hostname):
                 return
-
-        matcher = self._additional_matcher
-        if matcher is not None and matcher.is_match(hostname):
-            return
 
         raise KustoClientInvalidConnectionStringException(
             f"Can't communicate with '{hostname}' as this hostname is currently not trusted; please see https://aka.ms/kustotrustedendpoints"
