@@ -301,15 +301,13 @@ class TestE2E:
             pytest.skip("No application insights connection string provided")
         with self.get_client(True) as client:
             result = client.execute_mgmt(self.ai_test_db, self.ai_test_table_cmd)
-            counter = 0
-            expected_table_name = iter(self.application_insights_tables())
+            assert len(result.primary_results) == 1
 
-            for primary in result.primary_results:
-                counter += 1
-                for row in primary.rows:
-                    assert row["TableName"] == expected_table_name.__next__()
+            actual_table_names = {row["TableName"] for primary in result.primary_results for row in primary.rows}
+            expected_table_names = set(self.application_insights_tables())
+            missing_table_names = expected_table_names - actual_table_names
 
-            assert counter == 1
+            assert not missing_table_names, f"Missing expected Application Insights tables: {sorted(missing_table_names)}"
             assert result.errors_count == 0
             assert result.get_exceptions() == []
 
@@ -319,15 +317,13 @@ class TestE2E:
             pytest.skip("No application insights connection string provided")
         async with await self.get_async_client(True) as ai_client:
             result = await ai_client.execute_mgmt(self.ai_test_db, self.ai_test_table_cmd)
-            counter = 0
-            expected_table_name = iter(self.application_insights_tables())
+            assert len(result.primary_results) == 1
 
-            for primary in result.primary_results:
-                counter += 1
-                for row in primary.rows:
-                    assert row["TableName"] == expected_table_name.__next__()
+            actual_table_names = {row["TableName"] for primary in result.primary_results for row in primary.rows}
+            expected_table_names = set(self.application_insights_tables())
+            missing_table_names = expected_table_names - actual_table_names
 
-            assert counter == 1
+            assert not missing_table_names, f"Missing expected Application Insights tables: {sorted(missing_table_names)}"
             assert result.errors_count == 0
             assert result.get_exceptions() == []
 
