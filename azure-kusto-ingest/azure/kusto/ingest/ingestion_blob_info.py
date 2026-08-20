@@ -1,7 +1,7 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -28,7 +28,9 @@ class IngestionBlobInfo:
         self.properties["IgnoreSizeLimit"] = False
         self.properties["ReportLevel"] = ingestion_properties.report_level.value
         self.properties["ReportMethod"] = ingestion_properties.report_method.value
-        self.properties["SourceMessageCreationTime"] = datetime.utcnow().isoformat()
+        self.properties["SourceMessageCreationTime"] = datetime.now(
+            tz=timezone.utc
+        ).isoformat()
         self.properties["Id"] = str(blob_descriptor.source_id)
         self.properties["ApplicationForTracing"] = application_for_tracing
         self.properties["ClientVersionForTracing"] = client_version_for_tracing
