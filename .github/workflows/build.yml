@@ -25,14 +25,14 @@ jobs:
 
     steps:
       - name: Azure login
-        uses: azure/login@7184910d9eb2b1c5e48f7073824a90609bb9b6d6 # v2.3.1
+        uses: azure/login@7ddb5af1ef8758cf1353cf3b42f940aee27ba21c # v3.0.2
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Install uv and set the python version
-        uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
         with:
           python-version: ${{ matrix.python-version }}
           enable-cache: true
@@ -62,7 +62,7 @@ jobs:
         if: matrix.python-version == '3.9' && failure() && (steps.ruff-formatter.outcome != 'success' || steps.ruff-linter.outcome != 'success')
         run: poe fix
 
-      - uses: parkerbxyz/suggest-changes@f09e88bbf08621677fa3f4d1f0dd8732ccfd7d70 # v2.0.7
+      - uses: parkerbxyz/suggest-changes@e24c62a5a3235e6090721c7b0355b825a3a4ba9a # v3.1.2
         if: matrix.python-version == '3.9' && failure() && steps.fix-ruff.outcome == 'success'
         with:
           comment: 'Please commit the suggested changes from markdownlint.'
@@ -78,14 +78,14 @@ jobs:
         run: poe docs --ci
         
       - name: "Upload Docs"
-        uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3.0.1
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         if: matrix.python-version == '3.9' && github.ref == 'refs/heads/master'
         with:
           path: docs/
           
       - name: Upload Unit Test Results
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: Unit Test Results (Python ${{ matrix.python-version }})
           path: pytest*.xml
@@ -101,7 +101,7 @@ jobs:
 
     steps:
       - name: Download Artifacts
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           path: artifacts
 
@@ -124,4 +124,4 @@ jobs:
       
     steps:
       - id: deployment
-        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4.0.5
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
