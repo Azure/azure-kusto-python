@@ -1,6 +1,6 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import List, Dict
 from urllib.parse import urlparse
 
@@ -85,7 +85,8 @@ class _ResourceManager:
     def _refresh_ingest_client_resources(self):
         if (
             not self._ingest_client_resources
-            or (self._ingest_client_resources_last_update + self._refresh_period) <= datetime.utcnow()
+            or (self._ingest_client_resources_last_update + self._refresh_period)
+            <= datetime.now(tz=timezone.utc)
             or not self._ingest_client_resources.is_applicable()
         ):
             self._ingest_client_resources = self._get_ingest_client_resources_from_service()
@@ -119,10 +120,11 @@ class _ResourceManager:
         if (
             not self._authorization_context
             or self._authorization_context.isspace()
-            or (self._authorization_context_last_update + self._refresh_period) <= datetime.utcnow()
+            or (self._authorization_context_last_update + self._refresh_period)
+            <= datetime.now(tz=timezone.utc)
         ):
             self._authorization_context = self._get_authorization_context_from_service()
-            self._authorization_context_last_update = datetime.utcnow()
+            self._authorization_context_last_update = datetime.now(tz=timezone.utc)
 
     def _get_authorization_context_from_service(self):
         # trace all calls to get identity token
