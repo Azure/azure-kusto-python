@@ -1,0 +1,14 @@
+# Temporary Azure Pipelines bootstrap for .github/workflows/build.yml
+
+trigger:
+- master
+
+pr:
+- master
+
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+- script: echo "Hello from Azure Pipelines"
+  displayName: Hello world
