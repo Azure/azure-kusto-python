@@ -17,6 +17,7 @@ jobs:
   displayName: Build and test
   timeoutInMinutes: 60
   strategy:
+    maxParallel: 1
     matrix:
       Python39:
         pythonVersion: '3.9'
@@ -59,8 +60,6 @@ jobs:
     env:
       TEST_DATABASE: $(TEST_DATABASE)
       ENGINE_CONNECTION_STRING: $(ENGINE_CONNECTION_STRING)
-      APPLICATION_INSIGHTS_ENGINE_CONNECTION_STRING: $(APPLICATION_INSIGHTS_ENGINE_CONNECTION_STRING)
-      APPLICATION_INSIGHTS_TEST_DATABASE: $(APPLICATION_INSIGHTS_TEST_DATABASE)
 
   - bash: poe check-format
     displayName: Run Ruff formatter check
