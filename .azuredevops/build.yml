@@ -1,14 +1,95 @@
-# Temporary Azure Pipelines bootstrap for .github/workflows/build.yml
-
 trigger:
 - master
 
 pr:
-- master
+  branches:
+    include:
+    - '*'
 
 pool:
   vmImage: ubuntu-latest
 
-steps:
-- script: echo "Hello from Azure Pipelines"
-  displayName: Hello world
+variables:
+- group: azure-kusto-python-e2e
+
+jobs:
+- job: BuildAndTest
+  displayName: Build and test
+  timeoutInMinutes: 60
+  strategy:
+    maxParallel: 1
+    matrix:
+      Python39:
+        pythonVersion: '3.9'
+      Python310:
+        pythonVersion: '3.10'
+      Python311:
+        pythonVersion: '3.11'
+      Python312:
+        pythonVersion: '3.12'
+      Python313:
+        pythonVersion: '3.13'
+  steps:
+  - checkout: self
+    clean: true
+
+  - task: UsePythonVersion@0
+    displayName: Use Python $(pythonVersion)
+    inputs:
+      versionSpec: $(pythonVersion)
+
+  - bash: |
+      set -euo pipefail
+      python -m pip install --disable-pip-version-check uv poethepoet
+      uv --version
+      poe --version
+    displayName: Install build tools
+
+  - bash: poe test --ci --no-e2e
+    displayName: Run tests without Azure credentials
+    condition: and(succeeded(), eq(variables['System.PullRequest.IsFork'], 'True'))
+
+  - task: AzureCLI@2
+    displayName: Run unit and Kusto E2E tests
+    condition: and(succeeded(), ne(variables['System.PullRequest.IsFork'], 'True'))
+    inputs:
+      azureSubscription: $(AZURE_SERVICE_CONNECTION)
+      scriptType: bash
+      scriptLocation: inlineScript
+      inlineScript: poe test --ci
+    env:
+      TEST_DATABASE: $(TEST_DATABASE)
+      ENGINE_CONNECTION_STRING: $(ENGINE_CONNECTION_STRING)
+
+  - bash: poe check-format
+    displayName: Run Ruff formatter check
+    condition: succeededOrFailed()
+
+  - bash: poe lint
+    displayName: Run Ruff linter
+    condition: succeededOrFailed()
+
+  - bash: poe types
+    displayName: Run type checking
+    condition: succeededOrFailed()
+    continueOnError: true
+
+  - bash: poe docs --ci
+    displayName: Generate documentation
+    condition: and(succeededOrFailed(), eq(variables['pythonVersion'], '3.9'), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+
+  - task: PublishTestResults@2
+    displayName: Publish test results
+    condition: succeededOrFailed()
+    inputs:
+      testResultsFormat: JUnit
+      testResultsFiles: pytest*.xml
+      testRunTitle: Python $(pythonVersion)
+      failTaskOnMissingResultsFile: true
+
+  - task: PublishPipelineArtifact@1
+    displayName: Publish documentation
+    condition: and(succeededOrFailed(), eq(variables['pythonVersion'], '3.9'), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+    inputs:
+      targetPath: docs
+      artifact: documentation
