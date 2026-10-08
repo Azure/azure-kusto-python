@@ -17,7 +17,6 @@ jobs:
   displayName: Build and test
   timeoutInMinutes: 60
   strategy:
-    failFast: false
     matrix:
       Python39:
         pythonVersion: '3.9'
