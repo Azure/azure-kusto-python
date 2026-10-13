@@ -53,7 +53,7 @@ jobs:
     displayName: Run unit and Kusto E2E tests
     condition: and(succeeded(), ne(variables['System.PullRequest.IsFork'], 'True'))
     inputs:
-      azureSubscription: $(AZURE_SERVICE_CONNECTION)
+      azureSubscription: kusto-connectors-arm-sc
       scriptType: bash
       scriptLocation: inlineScript
       inlineScript: poe test --ci
