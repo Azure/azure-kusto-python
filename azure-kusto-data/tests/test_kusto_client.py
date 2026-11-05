@@ -5,6 +5,7 @@ from unittest.mock import patch
 
 import pandas
 import pytest
+from requests import Response
 
 from azure.kusto.data import ClientRequestProperties, KustoClient, KustoConnectionStringBuilder
 from azure.kusto.data._cloud_settings import CloudSettings
@@ -21,6 +22,16 @@ def method(request):
 
 class TestKustoClient(KustoClientTestsMixin):
     """Tests class for KustoClient API"""
+
+    def test_no_redirects(self, redirect_server: tuple[str, int, list[str]]) -> None:
+        cluster, code, requests_seen = redirect_server
+        kcsb = KustoConnectionStringBuilder.with_aad_user_token_authentication(cluster, "test-token")
+        with KustoClient(kcsb) as client:
+            with pytest.raises(KustoServiceError) as error:
+                _ = client.execute("db", "table")
+            assert isinstance(error.value.http_response, Response)
+            assert error.value.http_response.status_code == code
+        assert requests_seen == ["/v2/rest/query"]
 
     def test_throws_on_close(self):
         """Test query V2."""
