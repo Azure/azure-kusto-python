@@ -4,11 +4,13 @@ import json
 from unittest.mock import patch
 
 import pytest
+from aiohttp import ClientResponse
 
+from azure.kusto.data import KustoConnectionStringBuilder
 from azure.kusto.data._cloud_settings import CloudSettings
 from azure.kusto.data._decorators import aio_documented_by
 from azure.kusto.data.client_request_properties import ClientRequestProperties
-from azure.kusto.data.exceptions import KustoClosedError, KustoMultiApiError, KustoNetworkError
+from azure.kusto.data.exceptions import KustoClosedError, KustoMultiApiError, KustoNetworkError, KustoServiceError
 from azure.kusto.data.helpers import dataframe_from_result_table
 from ..kusto_client_common import KustoClientTestsMixin, mocked_requests_post
 from ..test_kusto_client import TestKustoClient as KustoClientTestsSync
@@ -18,6 +20,18 @@ from aioresponses import aioresponses, CallbackResult
 
 @aio_documented_by(KustoClientTestsSync)
 class TestKustoClient(KustoClientTestsMixin):
+    @aio_documented_by(KustoClientTestsSync.test_no_redirects)
+    @pytest.mark.asyncio
+    async def test_no_redirects(self, redirect_server: tuple[str, int, list[str]]) -> None:
+        cluster, code, requests_seen = redirect_server
+        kcsb = KustoConnectionStringBuilder.with_aad_user_token_authentication(cluster, "test-token")
+        async with KustoClient(kcsb) as client:
+            with pytest.raises(KustoServiceError) as error:
+                _ = await client.execute("db", "table")
+            assert isinstance(error.value.http_response, ClientResponse)
+            assert error.value.http_response.status == code
+        assert requests_seen == ["/v2/rest/query"]
+
     @staticmethod
     def _mock_callback(url, **kwargs):
         body = json.dumps(mocked_requests_post(str(url), **kwargs).json())

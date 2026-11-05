@@ -1,10 +1,48 @@
 import asyncio
+from collections.abc import Iterator
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from threading import Thread
 from typing import Tuple
 
 import pytest
 from azure.kusto.data import KustoConnectionStringBuilder
+from azure.kusto.data._cloud_settings import CloudSettings
 
 from .kusto_client_common import KustoClientTestsMixin
+
+
+@pytest.fixture(params=[301, 302, 307, 308])
+def redirect_server(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) -> Iterator[tuple[str, int, list[str]]]:
+    code: int = request.param
+    requests_seen: list[str] = []
+
+    class RedirectHandler(BaseHTTPRequestHandler):
+        def do_GET(self) -> None:
+            self._respond()
+
+        def do_POST(self) -> None:
+            self._respond()
+
+        def _respond(self) -> None:
+            requests_seen.append(self.path)
+            self.send_response(200 if self.path == "/redirected" else code)
+            if self.path != "/redirected":
+                self.send_header("Location", "/redirected")
+            self.send_header("Content-Length", "0")
+            self.end_headers()
+
+    with ThreadingHTTPServer(("127.0.0.1", 0), RedirectHandler) as server:
+        cluster = f"http://127.0.0.1:{server.server_port}"
+        monkeypatch.setattr(CloudSettings, "_cloud_cache", {cluster: CloudSettings.DEFAULT_CLOUD})
+        monkeypatch.setenv("NO_PROXY", "127.0.0.1")
+        monkeypatch.setenv("no_proxy", "127.0.0.1")
+        thread = Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        try:
+            yield cluster, code, requests_seen
+        finally:
+            server.shutdown()
+            thread.join()
 
 
 @pytest.fixture(
