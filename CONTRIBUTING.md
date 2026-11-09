@@ -115,6 +115,38 @@ To test without E2E tests, you can run:
 poe test --no-e2e
 ```
 
+### Continuous integration
+
+The [Azure pipeline](.azuredevops/build.yml) uses the Python 3.9-3.13 matrix,
+uv dependency caching, formatting, linting, optional type checking,
+and test/documentation artifacts from the [GitHub Actions workflow](.github/workflows/build.yml).
+Azure matrix jobs run sequentially to reduce shared-test-data conflicts.
+Python versions are provisioned with `uv python install`, rather than the hosted
+agent's Python tool cache, so Python 3.9 does not depend on an Ubuntu-specific
+package in the GitHub Actions Python registry.
+GitHub Actions remains responsible for suggested-change PR reviews and GitHub Pages deployment;
+the Azure documentation artifact alone does not deploy the site.
+
+The Azure pipeline imports the `azure-kusto-python-e2e` variable group.
+Authorize this pipeline to use the group in Azure DevOps Library > Pipeline permissions.
+Configure these variables in the group:
+
+- `TEST_DATABASE` and `ENGINE_CONNECTION_STRING` are required.
+- Secret `TEST_BLOB` (a blob SAS URI for `dataset.csv`) enables blob-ingestion coverage.
+- `APPLICATION_INSIGHTS_ENGINE_CONNECTION_STRING` enables Application Insights coverage;
+  `APPLICATION_INSIGHTS_TEST_DATABASE` is required when that connection string is configured.
+
+The YAML explicitly maps these group variables into the test process environment,
+including variables marked secret. Missing required inputs fail with an error.
+Missing optional inputs generate warnings and disable their related coverage.
+Trusted builds authenticate through the `kusto-connectors-arm-sc` service connection,
+whose identity needs access to both the Kusto test database and the Application Insights resource.
+Authorize the pipeline to use this service connection and configure its workload identity
+federation in Azure DevOps.
+Fork builds, if enabled in the Azure project, run `poe test --ci --no-e2e` without Azure login.
+Project-level fork restrictions, same-repository PR approvals, and service-connection
+approvals must be configured in Azure DevOps; the YAML does not enforce those policies.
+
 ### Style
 
 This project uses [ruff](https://docs.astral.sh/ruff/) for linting and formatting.
