@@ -119,13 +119,13 @@ poe test --no-e2e
 
 The [Azure pipeline](.azuredevops/build.yml) uses the Python 3.9-3.13 matrix,
 uv dependency caching, formatting, linting, optional type checking,
-and test/documentation artifacts from the [GitHub Actions workflow](.github/workflows/build.yml).
+and test/documentation artifacts.
 Azure matrix jobs run sequentially to reduce shared-test-data conflicts.
 Python versions are provisioned with `uv python install`, rather than the hosted
 agent's Python tool cache, so Python 3.9 does not depend on an Ubuntu-specific
 package in the GitHub Actions Python registry.
-GitHub Actions remains responsible for suggested-change PR reviews and GitHub Pages deployment;
-the Azure documentation artifact alone does not deploy the site.
+The GitHub Actions build workflow has been removed, including its suggested-change PR reviews
+and GitHub Pages deployment. The Azure documentation artifact alone does not deploy the site.
 
 The Azure pipeline imports the `azure-kusto-python-e2e` variable group.
 Authorize this pipeline to use the group in Azure DevOps Library > Pipeline permissions.
@@ -176,6 +176,10 @@ To check the types, run:
 ```bash
 poe types
 ```
+
+The task reports only errors and exits successfully when there are no errors; warnings are non-blocking.
+To include warnings, run `uv run basedpyright` directly.
+The Azure pipeline currently treats type checking as optional, so even errors do not fail the overall job.
 
 Note that we have a `baseline.json` file that is used to ignore old type errors, as we gradually add types to the codebase.
 
