@@ -260,6 +260,24 @@ class TestE2E:
                     break
         assert actual == expected, "Row count expected = {0}, while actual row count = {1}".format(expected, actual)
 
+    @classmethod
+    async def assert_rows_unchanged(cls, table_name: str, expected: int, timeout: int = 120):
+        deadline = time.monotonic() + timeout
+        async with await cls.get_async_client() as async_client:
+            while True:
+                command = "{} | count".format(table_name)
+                response = await asyncio.to_thread(cls.client.execute, cls.test_db, command)
+                response_from_async = await async_client.execute(cls.test_db, command)
+                actual = int(response.primary_results[0][0]["Count"])
+                actual_async = int(response_from_async.primary_results[0][0]["Count"])
+                assert actual == expected, f"Row count expected = {expected}, while actual row count = {actual}"
+                assert actual_async == expected, f"Async row count expected = {expected}, while actual row count = {actual_async}"
+
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    return
+                await asyncio.sleep(min(1, remaining))
+
     @pytest.mark.asyncio
     async def test_csv_ingest_existing_table(self, is_managed_streaming):
         table = await self.init_table("csv_ingest_existing_table")
@@ -424,15 +442,20 @@ class TestE2E:
                 data_format=DataFormat.JSON,
                 column_mappings=self.table_json_mappings(),
                 ingest_if_not_exists=["ingestByTag"],
+                ingest_by_tags=["ingestByTag"],
                 report_level=ReportLevel.FailuresAndSuccesses,
                 drop_by_tags=["drop", "drop-by"],
                 flush_immediately=True,
             )
 
+            self.ingest_client.ingest_from_file(self.json_file_path, json_ingestion_props)
+            await self.assert_rows_added(table, 2)
+
             for f in [self.json_file_path, self.zipped_json_file_path]:
                 self.ingest_client.ingest_from_file(f, json_ingestion_props)
 
-            await self.assert_rows_added(table, 0)
+            # Observe the full window so delayed duplicate ingestion cannot pass an immediate count check.
+            await self.assert_rows_unchanged(table, 2)
         finally:
             await self.drop_table(table)
 
