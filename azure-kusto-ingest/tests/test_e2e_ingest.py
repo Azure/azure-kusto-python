@@ -54,7 +54,7 @@ class TestE2E:
     input_folder_path: ClassVar[str]
     engine_cs: ClassVar[Optional[str]]
     dm_cs: ClassVar[Optional[str]]
-    test_db: ClassVar[Optional[str]]
+    test_db: ClassVar[str]
     client: ClassVar[KustoClient]
     test_table: ClassVar[str]
     current_count: ClassVar[int]
@@ -599,7 +599,7 @@ class TestE2E:
     async def test_streaming_ingest_from_dataframe(self):
         table = await self.init_table("streaming_ingest_from_dataframe")
         try:
-            from pandas import DataFrame
+            from pandas import DataFrame, Index
 
             fields = [
                 "rownumber",
@@ -627,7 +627,7 @@ class TestE2E:
 
             dynamic_value = ["me@dummy.com", "you@dummy.com", "them@dummy.com"]
             rows = [[0, str(guid), 0.0, 0.0, 0, 0, 0, 0, 0, 0, 0, 0, "2014-01-01T01:01:01Z", "Zero", "Zero", "0", "00:00:00", None, dynamic_value]]
-            df = DataFrame(data=rows, columns=fields)
+            df = DataFrame(data=rows, columns=Index(fields))
             ingestion_properties = IngestionProperties(database=self.test_db, table=table, flush_immediately=True)
             self.ingest_client.ingest_from_dataframe(df, ingestion_properties)
 

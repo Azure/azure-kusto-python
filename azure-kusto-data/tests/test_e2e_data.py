@@ -13,6 +13,7 @@ from typing import Optional, ClassVar, Callable
 from urllib.parse import urljoin
 
 import pytest
+from requests import Response
 from azure.identity import DefaultAzureCredential
 from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
 from azure.kusto.data._cloud_settings import CloudSettings, DEFAULT_DEV_KUSTO_SERVICE_RESOURCE_ID
@@ -360,6 +361,7 @@ class TestE2E:
         ) as client:
             with pytest.raises(KustoServiceError) as ex:
                 client.execute("db", "table")
+            assert isinstance(ex.value.http_response, Response)
             assert ex.value.http_response.status_code == code
 
     @pytest.mark.asyncio
