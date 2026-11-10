@@ -62,6 +62,8 @@ jobs:
   - bash: poe test --ci --no-e2e
     displayName: Run tests without Azure credentials
     condition: and(succeeded(), eq(variables['System.PullRequest.IsFork'], 'True'))
+    env:
+      ENGINE_CONNECTION_STRING: https://dummy.kusto.windows.net
 
   - task: AzureCLI@2
     displayName: Run unit and Kusto E2E tests
