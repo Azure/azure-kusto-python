@@ -46,8 +46,8 @@
       "AllowedKustoSuffixes": [
         ".kusto.usgovcloudapi.net",
         ".kustomfa.usgovcloudapi.net",
-        ".arg.core.usgovcloudapi.net"
-
+        ".arg.core.usgovcloudapi.net",
+        ".securitycenter.windows.us"
       ],
       "AllowedKustoHostnames": [
         "adx.applicationinsights.azure.us",
