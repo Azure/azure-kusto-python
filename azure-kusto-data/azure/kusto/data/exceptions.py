@@ -7,12 +7,7 @@ from typing import List, Union, TYPE_CHECKING, Optional, Dict, Any
 if TYPE_CHECKING:
     import requests
 
-    try:
-        from aiohttp import ClientResponse
-    except ImportError:
-        # No aio installed, ignore
-        ClientResponse = None
-        pass
+    from aiohttp import ClientResponse
 
 
 class KustoError(Exception):
@@ -121,7 +116,11 @@ class KustoApiError(KustoServiceError):
     """
 
     def __init__(
-        self, error_dict: dict, message: Optional[str] = None, http_response: "Union[requests.Response, ClientResponse, None]" = None, kusto_response=None
+        self,
+        error_dict: dict[str, Any],
+        message: Optional[str] = None,
+        http_response: "Union[requests.Response, ClientResponse, None]" = None,
+        kusto_response=None,
     ):
         self.error = OneApiError.from_dict(error_dict["error"])
         service_error_message = message or self.error.description or "Unknown Kusto service error"

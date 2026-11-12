@@ -3,7 +3,7 @@
 import socket
 import sys
 from datetime import timedelta
-from typing import AnyStr, IO, List, Optional, TYPE_CHECKING, Tuple, Union
+from typing import AnyStr, IO, List, Optional, TYPE_CHECKING, Tuple, Union, cast
 
 import requests
 import requests.adapters
@@ -323,7 +323,7 @@ class KustoClient(_KustoClientBase):
             request_headers["Authorization"] = self._aad_helper.acquire_authorization_header()
 
         # trace http post call for response
-        invoker = lambda: self._session.post(
+        invoker = lambda: cast(requests.Session, self._session).post(
             endpoint,
             headers=request_headers,
             json=request.json_payload,
