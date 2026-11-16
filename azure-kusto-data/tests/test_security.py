@@ -1,8 +1,10 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
+from unittest.mock import patch
+
 import pytest
 
-from azure.kusto.data._cloud_settings import CloudSettings
+from azure.kusto.data._cloud_settings import CloudInfo, CloudSettings
 from azure.kusto.data._token_providers import CallbackTokenProvider, MsiTokenProvider, UserPassTokenProvider
 from azure.kusto.data import KustoConnectionStringBuilder
 from azure.kusto.data.exceptions import KustoAuthenticationError
@@ -11,26 +13,44 @@ from azure.kusto.data.security import _AadHelper
 KUSTO_TEST_URI = "https://thisclusterdoesnotexist.kusto.windows.net"
 TEST_INTERACTIVE_AUTH = False  # User interaction required, enable this when running test manually
 
-CloudSettings.add_to_cache(KUSTO_TEST_URI, CloudSettings.DEFAULT_CLOUD)
-CloudSettings.add_to_cache("https://somecluster.kusto.windows.net", CloudSettings.DEFAULT_CLOUD)
+
+@pytest.fixture(autouse=True)
+def cached_cloud_settings(isolated_cloud_cache: dict[str, CloudInfo]) -> None:
+    isolated_cloud_cache[KUSTO_TEST_URI] = CloudSettings.DEFAULT_CLOUD
+    isolated_cloud_cache["https://somecluster.kusto.windows.net"] = CloudSettings.DEFAULT_CLOUD
 
 
 def test_unauthorized_exception():
     """Test the exception thrown when authorization fails."""
     cluster = "https://somecluster.kusto.windows.net"
     username = "username@microsoft.com"
-    kcsb = KustoConnectionStringBuilder.with_aad_user_password_authentication(cluster, username, "StrongestPasswordEver", "authorityName")
-    aad_helper = _AadHelper(kcsb, False)
-    aad_helper.token_provider._init_resources()
+    password = "StrongestPasswordEver"
+    auth_error = {"error": "invalid_grant", "error_description": "Invalid test credentials"}
+    with (
+        patch("azure.kusto.data._token_providers.PublicClientApplication") as public_client,
+        patch("requests.sessions.Session.request", side_effect=AssertionError("Unexpected HTTP request")) as http_request,
+    ):
+        msal_client = public_client.return_value
+        msal_client.get_accounts.return_value = []
+        msal_client.acquire_token_silent.return_value = None
+        msal_client.acquire_token_by_username_password.return_value = auth_error
+        kcsb = KustoConnectionStringBuilder.with_aad_user_password_authentication(cluster, username, password, "authorityName")
+        aad_helper = _AadHelper(kcsb, False)
+        aad_helper.token_provider._init_resources()
 
-    try:
-        aad_helper.acquire_authorization_header()
-    except KustoAuthenticationError as error:
-        assert error.authentication_method == UserPassTokenProvider.name()
-        assert error.authority == "https://login.microsoftonline.com/authorityName"
-        assert error.kusto_cluster == cluster
-        assert error.kwargs["username"] == username
-        assert error.kwargs["client_id"] == CloudSettings.DEFAULT_CLOUD.kusto_client_app_id
+        with pytest.raises(KustoAuthenticationError) as error:
+            aad_helper.acquire_authorization_header()
+
+        assert error.value.authentication_method == UserPassTokenProvider.name()
+        assert error.value.authority == "https://login.microsoftonline.com/authorityName"
+        assert error.value.kusto_cluster == cluster
+        assert error.value.kwargs["username"] == username
+        assert error.value.kwargs["client_id"] == CloudSettings.DEFAULT_CLOUD.kusto_client_app_id
+        assert auth_error["error_description"] in str(error.value.exception)
+        msal_client.acquire_token_by_username_password.assert_called_once_with(
+            username=username, password=password, scopes=[CloudSettings.DEFAULT_CLOUD.kusto_service_resource_id + "/.default"]
+        )
+        http_request.assert_not_called()
 
 
 # TODO: remove this once we can control the timeout
@@ -60,23 +80,21 @@ def test_msi_auth():
     for h in helpers:
         h.token_provider._init_resources()
 
-    try:
+    with pytest.raises(KustoAuthenticationError) as error:
         helpers[0].acquire_authorization_header()
-    except KustoAuthenticationError as e:
-        assert e.authentication_method == MsiTokenProvider.name()
-        assert "client_id" not in e.kwargs
-        assert "object_id" not in e.kwargs
-        assert "msi_res_id" not in e.kwargs
+    assert error.value.authentication_method == MsiTokenProvider.name()
+    assert "client_id" not in error.value.kwargs
+    assert "object_id" not in error.value.kwargs
+    assert "msi_res_id" not in error.value.kwargs
 
-    try:
+    with pytest.raises(KustoAuthenticationError) as error:
         helpers[1].acquire_authorization_header()
-    except KustoAuthenticationError as e:
-        assert e.authentication_method == MsiTokenProvider.name()
-        assert e.kwargs["client_id"] == client_guid
-        assert "object_id" not in e.kwargs
-        assert "msi_res_id" not in e.kwargs
-        assert str(e.exception).index("client_id") > -1
-        assert str(e.exception).index(client_guid) > -1
+    assert error.value.authentication_method == MsiTokenProvider.name()
+    assert error.value.kwargs["client_id"] == client_guid
+    assert "object_id" not in error.value.kwargs
+    assert "msi_res_id" not in error.value.kwargs
+    assert str(error.value.exception).index("client_id") > -1
+    assert str(error.value.exception).index(client_guid) > -1
 
 
 def test_token_provider_auth():
@@ -94,11 +112,10 @@ def test_token_provider_auth():
     auth_header = valid_helper.acquire_authorization_header()
     assert auth_header.index(valid_token_provider()) > -1
 
-    try:
+    with pytest.raises(KustoAuthenticationError) as error:
         invalid_helper.acquire_authorization_header()
-    except KustoAuthenticationError as e:
-        assert e.authentication_method == CallbackTokenProvider.name()
-        assert str(e.exception).index(str(type(invalid_token_provider()))) > -1
+    assert error.value.authentication_method == CallbackTokenProvider.name()
+    assert str(error.value.exception).index(str(type(invalid_token_provider()))) > -1
 
 
 def test_user_app_token_auth():

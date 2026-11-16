@@ -7,7 +7,6 @@ import pytest
 from aiohttp import ClientResponse
 
 from azure.kusto.data import KustoConnectionStringBuilder
-from azure.kusto.data._cloud_settings import CloudSettings
 from azure.kusto.data._decorators import aio_documented_by
 from azure.kusto.data.client_request_properties import ClientRequestProperties
 from azure.kusto.data.exceptions import KustoClosedError, KustoMultiApiError, KustoNetworkError, KustoServiceError
@@ -175,7 +174,7 @@ range x from 1 to 10 step 1"""
 
     @aio_documented_by(KustoClientTestsSync.test_proxy_token_providers)
     @pytest.mark.asyncio
-    async def test_proxy_token_providers(self, proxy_kcsb):
+    async def test_proxy_token_providers(self, proxy_kcsb, isolated_cloud_cache):
         """Test query V2."""
         proxy = "https://my_proxy.sample"
         kcsb, auth_supports_proxy = proxy_kcsb
@@ -190,7 +189,7 @@ range x from 1 to 10 step 1"""
 
             assert client._aad_helper.token_provider._proxy_dict == expected_dict
 
-            CloudSettings._cloud_cache.clear()
+            isolated_cloud_cache.clear()
             with patch("requests.get", side_effect=mocked_requests_post) as mock_get:
                 client._aad_helper.token_provider._init_resources()
 

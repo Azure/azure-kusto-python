@@ -6,9 +6,16 @@ from typing import Tuple
 
 import pytest
 from azure.kusto.data import KustoConnectionStringBuilder
-from azure.kusto.data._cloud_settings import CloudSettings
+from azure.kusto.data._cloud_settings import CloudInfo, CloudSettings
 
 from .kusto_client_common import KustoClientTestsMixin
+
+
+@pytest.fixture
+def isolated_cloud_cache(monkeypatch: pytest.MonkeyPatch) -> dict[str, CloudInfo]:
+    cache: dict[str, CloudInfo] = {}
+    monkeypatch.setattr(CloudSettings, "_cloud_cache", cache)
+    return cache
 
 
 @pytest.fixture(params=[301, 302, 307, 308])

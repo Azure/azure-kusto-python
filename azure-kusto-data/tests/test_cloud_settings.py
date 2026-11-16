@@ -1,19 +1,6 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
-import pytest
-
 from azure.kusto.data._cloud_settings import CloudSettings, CloudInfo
-
-
-@pytest.fixture
-def clear_cache():
-    """Fixture to clear the CloudSettings cache before each test"""
-    with CloudSettings._cloud_cache_lock:
-        CloudSettings._cloud_cache.clear()
-    yield
-    # Clean up after test if needed
-    with CloudSettings._cloud_cache_lock:
-        CloudSettings._cloud_cache.clear()
 
 
 def test_normalize_uri_extracts_authority():
@@ -32,7 +19,7 @@ def test_normalize_uri_extracts_authority():
         assert CloudSettings._normalize_uri(input_uri) == expected_authority
 
 
-def test_cloud_info_cached_by_authority(clear_cache):
+def test_cloud_info_cached_by_authority(isolated_cloud_cache):
     """Test that CloudInfo is cached by authority part of the URI (schema, host, port)."""
     # Create a test CloudInfo object
     test_cloud_info = CloudInfo(
@@ -67,7 +54,7 @@ def test_cloud_info_cached_by_authority(clear_cache):
         assert retrieved_info is test_cloud_info
 
 
-def test_cloud_info_cached_with_port(clear_cache):
+def test_cloud_info_cached_with_port(isolated_cloud_cache):
     """Test that URIs with ports are cached separately from those without."""
     # Create two different CloudInfo objects
     cloud_info_default = CloudInfo(
