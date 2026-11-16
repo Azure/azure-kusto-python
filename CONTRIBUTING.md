@@ -120,7 +120,7 @@ poe test --no-e2e
 The [Azure pipeline](.azuredevops/build.yml) uses the Python 3.9-3.13 matrix,
 uv dependency caching, formatting, linting, optional type checking,
 and test/documentation artifacts.
-Azure matrix jobs run sequentially to reduce shared-test-data conflicts.
+Azure matrix jobs run in parallel, with up to five jobs at a time.
 Python versions are provisioned with `uv python install`, rather than the hosted
 agent's Python tool cache, so Python 3.9 does not depend on an Ubuntu-specific
 package in the GitHub Actions Python registry.

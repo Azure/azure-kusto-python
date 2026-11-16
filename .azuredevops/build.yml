@@ -21,7 +21,7 @@ jobs:
     UV_PYTHON: $(pythonVersion)
     UV_CACHE_DIR: $(Pipeline.Workspace)/uv-cache
   strategy:
-    maxParallel: '1'
+    maxParallel: '5'
     matrix:
       Python39:
         pythonVersion: '3.9'
