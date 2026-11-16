@@ -36,7 +36,7 @@ def redirect_server(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPa
         monkeypatch.setattr(CloudSettings, "_cloud_cache", {cluster: CloudSettings.DEFAULT_CLOUD})
         monkeypatch.setenv("NO_PROXY", "127.0.0.1")
         monkeypatch.setenv("no_proxy", "127.0.0.1")
-        thread = Thread(target=server.serve_forever, daemon=True)
+        thread = Thread(target=server.serve_forever, kwargs={"poll_interval": 0.05}, daemon=True)
         thread.start()
         try:
             yield cluster, code, requests_seen
