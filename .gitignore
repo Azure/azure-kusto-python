@@ -300,6 +300,7 @@ build/
 
 # pytest temp files
 .pytest_cache*
+test-results/
 
 # VS code files
 .vscode*

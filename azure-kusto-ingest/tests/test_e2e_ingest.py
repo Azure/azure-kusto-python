@@ -10,6 +10,8 @@ import random
 import sys
 import time
 import uuid
+from unittest.mock import AsyncMock, Mock
+from requests import Response
 from azure.identity import DefaultAzureCredential
 from typing import Optional, ClassVar, Callable
 
@@ -242,13 +244,10 @@ class TestE2E:
             time.sleep(1)
             timeout -= 1
 
-            try:
-                async with await cls.get_async_client() as async_client:
-                    command = "{} | count".format(table_name)
-                    response = cls.client.execute(cls.test_db, command)
-                    response_from_async = await async_client.execute(cls.test_db, command)
-            except KustoServiceError:
-                continue
+            async with await cls.get_async_client() as async_client:
+                command = "{} | count".format(table_name)
+                response = cls.client.execute(cls.test_db, command)
+                response_from_async = await async_client.execute(cls.test_db, command)
 
             if response is not None:
                 row = response.primary_results[0][0]
@@ -277,6 +276,23 @@ class TestE2E:
                 if remaining <= 0:
                     return
                 await asyncio.sleep(min(1, remaining))
+
+    @pytest.mark.asyncio
+    async def test_row_count_retry_exhaustion_is_not_swallowed(self, monkeypatch):
+        response = Response()
+        response.status_code = 503
+        response._content = b"Service unavailable"
+        post = Mock(return_value=response)
+        with KustoClient("https://dummy.kusto.windows.net") as client:
+            monkeypatch.setattr(client._session, "post", post)
+            monkeypatch.setattr(type(self), "client", client)
+            monkeypatch.setattr(type(self), "get_async_client", AsyncMock())
+            monkeypatch.setattr(time, "sleep", lambda _: None)
+
+            with pytest.raises(KustoServiceError):
+                await self.assert_rows_added("table", 1)
+
+        assert post.call_count == 5
 
     @pytest.mark.asyncio
     async def test_csv_ingest_existing_table(self, is_managed_streaming):

@@ -21,7 +21,7 @@ jobs:
     UV_PYTHON: $(pythonVersion)
     UV_CACHE_DIR: $(Pipeline.Workspace)/uv-cache
   strategy:
-    maxParallel: '1'
+    maxParallel: '5'
     matrix:
       Python39:
         pythonVersion: '3.9'
@@ -92,7 +92,14 @@ jobs:
           echo "##vso[task.logissue type=error]APPLICATION_INSIGHTS_TEST_DATABASE is required when APPLICATION_INSIGHTS_ENGINE_CONNECTION_STRING is configured."
           exit 1
         fi
-        poe test --ci
+        poe test --ci --no-e2e
+        timeout --verbose --signal=TERM --kill-after=30s 25m poe test-e2e --ci || {
+          exit_code=$?
+          if [[ "$exit_code" -eq 124 ]]; then
+            echo "##vso[task.logissue type=error]Kusto E2E tests exceeded the 25-minute process timeout."
+          fi
+          exit "$exit_code"
+        }
     env:
       TEST_DATABASE: $(TEST_DATABASE)
       TEST_BLOB: $(TEST_BLOB)
@@ -121,7 +128,7 @@ jobs:
     displayName: Upload test results
     condition: always()
     inputs:
-      targetPath: pytest.xml
+      targetPath: test-results
       artifact: Test Results (Python $(pythonVersion))
 
   - task: PublishTestResults@2
@@ -129,7 +136,8 @@ jobs:
     condition: always()
     inputs:
       testResultsFormat: JUnit
-      testResultsFiles: pytest*.xml
+      testResultsFiles: test-results/pytest*.xml
+      mergeTestResults: true
       testRunTitle: Python $(pythonVersion)
       failTaskOnMissingResultsFile: true
 
