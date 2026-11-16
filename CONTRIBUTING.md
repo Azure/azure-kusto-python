@@ -115,12 +115,23 @@ To test without E2E tests, you can run:
 poe test --no-e2e
 ```
 
+To run only E2E tests with one worker:
+
+```bash
+poe test-e2e
+```
+
 ### Continuous integration
 
 The [Azure pipeline](.azuredevops/build.yml) uses the Python 3.9-3.13 matrix,
 uv dependency caching, formatting, linting, optional type checking,
 and test/documentation artifacts.
 Azure matrix jobs run in parallel, with up to five jobs at a time.
+Each trusted job runs unit tests with eight pytest workers, followed by E2E tests
+with one worker to limit load on the shared Kusto backend.
+This allows up to five E2E workers per pipeline run; concurrent pipeline runs
+still share backend capacity.
+The suites write separate JUnit reports under `test-results/`, published together.
 Python versions are provisioned with `uv python install`, rather than the hosted
 agent's Python tool cache, so Python 3.9 does not depend on an Ubuntu-specific
 package in the GitHub Actions Python registry.

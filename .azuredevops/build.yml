@@ -66,7 +66,7 @@ jobs:
       ENGINE_CONNECTION_STRING: https://dummy.kusto.windows.net
 
   - task: AzureCLI@2
-    displayName: Run unit and Kusto E2E tests
+    displayName: Run unit tests (8 workers) and Kusto E2E tests (1 worker)
     condition: and(succeeded(), ne(variables['System.PullRequest.IsFork'], 'True'))
     inputs:
       azureSubscription: kusto-connectors-arm-sc
@@ -92,7 +92,8 @@ jobs:
           echo "##vso[task.logissue type=error]APPLICATION_INSIGHTS_TEST_DATABASE is required when APPLICATION_INSIGHTS_ENGINE_CONNECTION_STRING is configured."
           exit 1
         fi
-        poe test --ci
+        poe test --ci --no-e2e
+        poe test-e2e --ci
     env:
       TEST_DATABASE: $(TEST_DATABASE)
       TEST_BLOB: $(TEST_BLOB)
@@ -121,7 +122,7 @@ jobs:
     displayName: Upload test results
     condition: always()
     inputs:
-      targetPath: pytest.xml
+      targetPath: test-results
       artifact: Test Results (Python $(pythonVersion))
 
   - task: PublishTestResults@2
@@ -129,7 +130,8 @@ jobs:
     condition: always()
     inputs:
       testResultsFormat: JUnit
-      testResultsFiles: pytest*.xml
+      testResultsFiles: test-results/pytest*.xml
+      mergeTestResults: true
       testRunTitle: Python $(pythonVersion)
       failTaskOnMissingResultsFile: true
 
