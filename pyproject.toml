@@ -75,7 +75,7 @@ NO_E2E = { help = "Skip E2E tests", type = "boolean", options = ["--no-e2e"] }
 CI = { help = "Run tests in CI mode", type = "boolean", options = ["--ci"] }
 
 [tool.poe.tasks.test-e2e]
-sequence = ["sync", { cmd = 'pytest -n1 azure-kusto-data/tests/test_e2e_data.py azure-kusto-ingest/tests/test_e2e_ingest.py ${CI:+ --junit-xml test-results/pytest-e2e.xml}'}]
+sequence = ["sync", { cmd = 'pytest -n8 azure-kusto-data/tests/test_e2e_data.py azure-kusto-ingest/tests/test_e2e_ingest.py ${CI:+ --junit-xml test-results/pytest-e2e.xml}'}]
 
 [tool.poe.tasks.test-e2e.args]
 CI = { help = "Run tests in CI mode", type = "boolean", options = ["--ci"] }

@@ -66,7 +66,7 @@ jobs:
       ENGINE_CONNECTION_STRING: https://dummy.kusto.windows.net
 
   - task: AzureCLI@2
-    displayName: Run unit tests (8 workers) and Kusto E2E tests (1 worker)
+    displayName: Run unit and Kusto E2E tests (8 workers each)
     condition: and(succeeded(), ne(variables['System.PullRequest.IsFork'], 'True'))
     inputs:
       azureSubscription: kusto-connectors-arm-sc
@@ -93,7 +93,13 @@ jobs:
           exit 1
         fi
         poe test --ci --no-e2e
-        poe test-e2e --ci
+        timeout --verbose --signal=TERM --kill-after=30s 25m poe test-e2e --ci || {
+          exit_code=$?
+          if [[ "$exit_code" -eq 124 ]]; then
+            echo "##vso[task.logissue type=error]Kusto E2E tests exceeded the 25-minute process timeout."
+          fi
+          exit "$exit_code"
+        }
     env:
       TEST_DATABASE: $(TEST_DATABASE)
       TEST_BLOB: $(TEST_BLOB)

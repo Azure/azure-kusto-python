@@ -115,7 +115,7 @@ To test without E2E tests, you can run:
 poe test --no-e2e
 ```
 
-To run only E2E tests with one worker:
+To run only E2E tests with eight workers:
 
 ```bash
 poe test-e2e
@@ -128,9 +128,20 @@ uv dependency caching, formatting, linting, optional type checking,
 and test/documentation artifacts.
 Azure matrix jobs run in parallel, with up to five jobs at a time.
 Each trusted job runs unit tests with eight pytest workers, followed by E2E tests
-with one worker to limit load on the shared Kusto backend.
-This allows up to five E2E workers per pipeline run; concurrent pipeline runs
-still share backend capacity.
+with eight workers, allowing up to 40 E2E workers per pipeline run.
+E2E-only pytest fixtures retry individual Kusto requests up to five attempts with
+randomized exponential backoff capped at 30 seconds, honoring a longer
+`Retry-After` delay when supplied. Throttled requests are retried only when their
+bodies can be replayed; other transient HTTP and network failures are retried
+only for queries and read-only management commands. Ambiguous ingestion failures,
+permanent errors, and failed assertions are not retried.
+These fixtures also cover E2E class setup but do not change unit tests or the
+SDK's production behavior. Existing higher-level SDK retry and fallback policies
+remain in effect.
+On the Ubuntu CI agents, the entire E2E invocation has a 25-minute process timeout.
+Expiry fails the job and terminates the process group, with a forced kill after
+a further 30 seconds if needed. A hard timeout can interrupt table cleanup.
+Concurrent pipeline runs still share backend capacity.
 The suites write separate JUnit reports under `test-results/`, published together.
 Python versions are provisioned with `uv python install`, rather than the hosted
 agent's Python tool cache, so Python 3.9 does not depend on an Ubuntu-specific
