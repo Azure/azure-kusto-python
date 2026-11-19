@@ -5,9 +5,9 @@ from unittest.mock import patch
 
 import pandas
 import pytest
+from requests import Response
 
 from azure.kusto.data import ClientRequestProperties, KustoClient, KustoConnectionStringBuilder
-from azure.kusto.data._cloud_settings import CloudSettings
 from azure.kusto.data.exceptions import KustoClosedError, KustoMultiApiError, KustoNetworkError, KustoServiceError
 from azure.kusto.data.helpers import dataframe_from_result_table
 from azure.kusto.data.response import KustoStreamingResponseDataSet
@@ -21,6 +21,16 @@ def method(request):
 
 class TestKustoClient(KustoClientTestsMixin):
     """Tests class for KustoClient API"""
+
+    def test_no_redirects(self, redirect_server: tuple[str, int, list[str]]) -> None:
+        cluster, code, requests_seen = redirect_server
+        kcsb = KustoConnectionStringBuilder.with_aad_user_token_authentication(cluster, "test-token")
+        with KustoClient(kcsb) as client:
+            with pytest.raises(KustoServiceError) as error:
+                _ = client.execute("db", "table")
+            assert isinstance(error.value.http_response, Response)
+            assert error.value.http_response.status_code == code
+        assert requests_seen == ["/v2/rest/query"]
 
     def test_throws_on_close(self):
         """Test query V2."""
@@ -182,7 +192,7 @@ class TestKustoClient(KustoClientTestsMixin):
             self._assert_client_request_id(mock_post.call_args[-1], value=request_id)
 
     @patch("requests.Session.get", side_effect=mocked_requests_post)
-    def test_proxy_token_providers(self, mock_get, proxy_kcsb):
+    def test_proxy_token_providers(self, mock_get, proxy_kcsb, isolated_cloud_cache):
         """Test query V2."""
         proxy = "https://my_proxy.sample"
         kcsb, auth_supports_proxy = proxy_kcsb
@@ -198,7 +208,7 @@ class TestKustoClient(KustoClientTestsMixin):
             assert client._aad_helper.token_provider._proxy_dict == expected_dict
             assert client._session.proxies == expected_dict
 
-            CloudSettings._cloud_cache.clear()
+            isolated_cloud_cache.clear()
 
             client._aad_helper.token_provider._init_resources()
 

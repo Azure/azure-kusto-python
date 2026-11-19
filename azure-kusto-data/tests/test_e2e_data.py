@@ -3,7 +3,6 @@
 
 import asyncio
 import csv
-import dataclasses
 import json
 import os
 import platform
@@ -15,12 +14,11 @@ from urllib.parse import urljoin
 import pytest
 from azure.identity import DefaultAzureCredential
 from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
-from azure.kusto.data._cloud_settings import CloudSettings, DEFAULT_DEV_KUSTO_SERVICE_RESOURCE_ID
+from azure.kusto.data._cloud_settings import CloudSettings
 from azure.kusto.data._models import WellKnownDataSet
 from azure.kusto.data.aio import KustoClient as AsyncKustoClient
 from azure.kusto.data.env_utils import get_env, set_env, prepare_app_key_auth
 from azure.kusto.data.exceptions import KustoServiceError
-from azure.kusto.data.kusto_trusted_endpoints import MatchRule, well_known_kusto_endpoints
 from azure.kusto.data.streaming_response import FrameType
 
 
@@ -335,54 +333,6 @@ class TestE2E:
         assert cloud_info == CloudSettings.DEFAULT_CLOUD
         assert cloud_info is CloudSettings.get_cloud_info_for_cluster(self.engine_cs)
         assert cloud_info == CloudSettings.get_cloud_info_for_cluster(urljoin(self.engine_cs, "/test1/test2/test3"))
-
-    def test_cloud_info_404(self):
-        pytest.skip("This test is currently wrong - until all cluster are updated to the redirect uri, this test will fail")
-        cloud_info = CloudSettings.get_cloud_info_for_cluster("https://statusreturner.azurewebsites.net/404/test")
-        default_dev_cloud = dataclasses.replace(CloudSettings.DEFAULT_CLOUD, kusto_service_resource_id=DEFAULT_DEV_KUSTO_SERVICE_RESOURCE_ID)
-        assert cloud_info == CloudSettings.DEFAULT_CLOUD or cloud_info == default_dev_cloud
-
-    @pytest.mark.parametrize("code", [301, 302, 307, 308])
-    def test_no_redirects_fail_in_cloud(self, code):
-        pytest.skip("This test is currently not supported as it relies on the URI path witch we now ignore")
-        with KustoClient(
-            KustoConnectionStringBuilder.with_azure_token_credential(f"https://statusreturner.azurewebsites.net/{code}/nocloud", self.__class__.cred())
-        ) as client:
-            with pytest.raises(KustoServiceError) as ex:
-                client.execute("db", "table")
-            assert ex.value.http_response.status_code == code
-
-    @pytest.mark.parametrize("code", [301, 302, 307, 308])
-    def test_no_redirects_fail_in_client(self, code):
-        well_known_kusto_endpoints.add_trusted_hosts([MatchRule("statusreturner.azurewebsites.net", False)], False)
-        with KustoClient(
-            KustoConnectionStringBuilder.with_azure_token_credential(f"https://statusreturner.azurewebsites.net/{code}/segment", self.__class__.cred())
-        ) as client:
-            with pytest.raises(KustoServiceError) as ex:
-                client.execute("db", "table")
-            assert ex.value.http_response.status_code == code
-
-    @pytest.mark.asyncio
-    @pytest.mark.parametrize("code", [301, 302, 307, 308])
-    async def test_no_redirects_fail_in_cloud_async(self, code):
-        pytest.skip("This test is currently not supported as it relies on the URI path witch we now ignore")
-        async with AsyncKustoClient(
-            KustoConnectionStringBuilder.with_azure_token_credential(f"https://statusreturner.azurewebsites.net/{code}/nocloud", self.__class__.async_cred())
-        ) as client:
-            with pytest.raises(KustoServiceError) as ex:
-                await client.execute("db", "table")
-            assert ex.value.http_response.status_code == code
-
-    @pytest.mark.asyncio
-    @pytest.mark.parametrize("code", [301, 302, 307, 308])
-    async def test_no_redirects_fail_in_client_async(self, code):
-        well_known_kusto_endpoints.add_trusted_hosts([MatchRule("statusreturner.azurewebsites.net", False)], False)
-        async with AsyncKustoClient(
-            KustoConnectionStringBuilder.with_azure_token_credential(f"https://statusreturner.azurewebsites.net/{code}/segment", self.__class__.async_cred())
-        ) as client:
-            with pytest.raises(KustoServiceError) as ex:
-                await client.execute("db", "table")
-            assert ex.value.http_response.status == code
 
     def test_semantic_error(self):
         with self.get_client() as client:

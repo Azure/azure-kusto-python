@@ -162,7 +162,6 @@ def test_all_null_datetime_column():
     )
 
     assert len(df) == 2
-    assert pandas.isnull(df["timestamp"][0])
-    assert pandas.isnull(df["timestamp"][1])
+    assert df["timestamp"].isna().to_numpy().all()
     assert df["value"][0] == 10
     assert df["value"][1] == 11

@@ -4,7 +4,7 @@ import io
 import json
 import uuid
 from datetime import timedelta
-from typing import Union, Optional, Any, NoReturn, ClassVar, TYPE_CHECKING
+from typing import Union, Optional, Any, NoReturn, ClassVar, TYPE_CHECKING, cast
 from urllib.parse import urljoin
 
 from requests import Response, Session
@@ -78,15 +78,16 @@ class _KustoClientBase(abc.ABC):
 
     def validate_endpoint(self):
         if not self._endpoint_validated and self._aad_helper is not None:
+            kusto_cluster = cast(str, self._kusto_cluster)
             # Trusted-endpoint validation must run for every authentication method. Gating it on the
             # token provider type let token-based and callback-based flows send the Authorization
             # header to an arbitrary host named in the connection string.
             # The login endpoint is resolved lazily because doing so contacts the cluster itself.
             well_known_kusto_endpoints.validate_trusted_endpoint(
-                self._kusto_cluster,
+                kusto_cluster,
                 lambda: (
                     CloudSettings.get_cloud_info_for_cluster(
-                        self._kusto_cluster,
+                        kusto_cluster,
                         self._aad_helper.token_provider._proxy_dict,
                         self._session if isinstance(self._session, Session) else None,
                     ).login_endpoint

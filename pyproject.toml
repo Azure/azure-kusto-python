@@ -56,7 +56,7 @@ pythonpath = ["."]
 envfile = ".env"
 
 [tool.poe.tasks]
-types = "uv run basedpyright"
+types = "uv run basedpyright --level error"
 docs = {cmd = "uv run pdoc ./azure-kusto-data/azure/kusto/data ./azure-kusto-data/azure/kusto/data/aio ./azure-kusto-ingest/azure/kusto/ingest ${CI:+ -o ./docs}", args = { CI = { help = "Run in CI mode", type = "boolean", options = ["--ci"] } } }
 sync = "uv sync --all-packages --all-extras --dev --locked"
 build = "uv build --all-packages"
@@ -68,10 +68,16 @@ lint-fix-unsafe = "ruff check --fix --unsafe-fixes"
 fix = ["format", "lint-fix"]
 show-version = "uv version"
 [tool.poe.tasks.test]
-sequence = ["sync", { cmd = 'pytest ${NO_E2E:+ --ignore=azure-kusto-ingest/tests/test_e2e_ingest.py --ignore=azure-kusto-data/tests/test_e2e_data.py } ${CI:+ -n8 --junit-xml pytest.xml}'}]
+sequence = ["sync", { cmd = 'pytest ${NO_E2E:+ --ignore=azure-kusto-ingest/tests/test_e2e_ingest.py --ignore=azure-kusto-data/tests/test_e2e_data.py } ${CI:+ -n8 --junit-xml test-results/pytest.xml}'}]
 
 [tool.poe.tasks.test.args]
 NO_E2E = { help = "Skip E2E tests", type = "boolean", options = ["--no-e2e"] }
+CI = { help = "Run tests in CI mode", type = "boolean", options = ["--ci"] }
+
+[tool.poe.tasks.test-e2e]
+sequence = ["sync", { cmd = 'pytest -n8 azure-kusto-data/tests/test_e2e_data.py azure-kusto-ingest/tests/test_e2e_ingest.py ${CI:+ --junit-xml test-results/pytest-e2e.xml}'}]
+
+[tool.poe.tasks.test-e2e.args]
 CI = { help = "Run tests in CI mode", type = "boolean", options = ["--ci"] }
 
 [tool.poe.tasks.bump-version]
