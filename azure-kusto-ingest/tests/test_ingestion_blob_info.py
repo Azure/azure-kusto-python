@@ -3,6 +3,7 @@
 import json
 import re
 import unittest
+from datetime import datetime, timedelta
 from uuid import UUID
 
 from azure.kusto.data.data_format import DataFormat
@@ -125,6 +126,7 @@ class IngestionBlobInfoTest(unittest.TestCase):
         assert isinstance(result["ReportLevel"], int)
         assert isinstance(UUID(result["Id"]), UUID)
         assert re.match(TIMESTAMP_REGEX, result["SourceMessageCreationTime"])
+        assert datetime.fromisoformat(result["SourceMessageCreationTime"]).utcoffset() == timedelta(0)
         assert result["AdditionalProperties"]["authorizationContext"] == "authorizationContextText"
         assert result["AdditionalProperties"]["ingestIfNotExists"] == '["ingestIfNotExistTags"]'
         assert result["AdditionalProperties"]["ValidationPolicy"] in (

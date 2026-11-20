@@ -4,6 +4,7 @@ import io
 import json
 import os
 import uuid
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from unittest.mock import patch
 
@@ -567,6 +568,39 @@ class TestQueuedIngestClient:
         assert containers_selected_with_round_robin[0].storage_account_name == containers_selected_with_round_robin[2].storage_account_name
         assert containers_selected_with_round_robin[1].storage_account_name == containers_selected_with_round_robin[3].storage_account_name
         assert containers_selected_with_round_robin[1].storage_account_name != containers_selected_with_round_robin[2].storage_account_name
+
+    @pytest.mark.parametrize(
+        ("elapsed", "expected_fetches"),
+        [
+            (timedelta(minutes=59, seconds=59), 1),
+            (timedelta(hours=1), 2),
+            (timedelta(hours=1, seconds=1), 2),
+        ],
+    )
+    def test_ingestion_resources_cache_refresh(self, elapsed: timedelta, expected_fetches: int) -> None:
+        container = _resource_manager._ResourceUri(TEMP_STORAGE_URL)
+        queue = _resource_manager._ResourceUri(STORAGE_QUEUE_URL)
+        resources = _resource_manager._IngestClientResources(
+            secured_ready_for_aggregation_queues=[queue],
+            failed_ingestions_queues=[queue],
+            successful_ingestions_queues=[queue],
+            containers=[container],
+            status_tables=[container],
+        )
+        start = datetime(2025, 1, 1, tzinfo=timezone.utc)
+
+        with _resource_manager.KustoClient("https://ingest-somecluster.kusto.windows.net") as client:
+            resource_manager = _resource_manager._ResourceManager(client)
+            with patch.object(resource_manager, "_get_ingest_client_resources_from_service", return_value=resources) as get_resources:
+                with patch("azure.kusto.ingest._resource_manager.datetime", wraps=datetime) as mock_datetime:
+                    mock_datetime.now.return_value = start
+                    assert resource_manager.get_containers() == [container]
+
+                    mock_datetime.now.return_value = start + elapsed
+                    assert resource_manager.get_ingestion_queues() == [queue]
+                    assert resource_manager.get_containers() == [container]
+
+                assert get_resources.call_count == expected_fetches
 
     @responses.activate
     @patch(
