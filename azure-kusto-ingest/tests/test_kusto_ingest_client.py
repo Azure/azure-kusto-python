@@ -6,7 +6,7 @@ import os
 import uuid
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import call, patch
 
 import pytest
 import responses
@@ -599,8 +599,38 @@ class TestQueuedIngestClient:
                     mock_datetime.now.return_value = start + elapsed
                     assert resource_manager.get_ingestion_queues() == [queue]
                     assert resource_manager.get_containers() == [container]
+                    assert mock_datetime.now.call_args_list
+                    assert all(now_call == call(tz=timezone.utc) for now_call in mock_datetime.now.call_args_list)
 
                 assert get_resources.call_count == expected_fetches
+
+    @pytest.mark.parametrize(
+        ("elapsed", "expected_fetches", "expected_context"),
+        [
+            (timedelta(minutes=59, seconds=59), 1, "authorization_context"),
+            (timedelta(hours=1), 2, "refreshed_authorization_context"),
+            (timedelta(hours=1, seconds=1), 2, "refreshed_authorization_context"),
+        ],
+    )
+    def test_authorization_context_cache_refresh(self, elapsed: timedelta, expected_fetches: int, expected_context: str) -> None:
+        start = datetime(2025, 1, 1, tzinfo=timezone.utc)
+
+        with _resource_manager.KustoClient("https://ingest-somecluster.kusto.windows.net") as client:
+            resource_manager = _resource_manager._ResourceManager(client)
+            with patch.object(
+                resource_manager, "_get_authorization_context_from_service", side_effect=["authorization_context", "refreshed_authorization_context"]
+            ) as get_context:
+                with patch("azure.kusto.ingest._resource_manager.datetime", wraps=datetime) as mock_datetime:
+                    mock_datetime.now.return_value = start
+                    assert resource_manager.get_authorization_context() == "authorization_context"
+
+                    mock_datetime.now.return_value = start + elapsed
+                    assert resource_manager.get_authorization_context() == expected_context
+                    assert resource_manager.get_authorization_context() == expected_context
+                    assert mock_datetime.now.call_args_list
+                    assert all(now_call == call(tz=timezone.utc) for now_call in mock_datetime.now.call_args_list)
+
+                assert get_context.call_count == expected_fetches
 
     @responses.activate
     @patch(
