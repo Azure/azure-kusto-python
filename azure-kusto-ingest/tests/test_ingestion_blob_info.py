@@ -3,6 +3,8 @@
 import json
 import re
 import unittest
+from datetime import datetime, timezone
+from unittest.mock import patch
 from uuid import UUID
 
 from azure.kusto.data.data_format import DataFormat
@@ -18,7 +20,7 @@ from azure.kusto.ingest import (
 )
 from azure.kusto.ingest.ingestion_blob_info import IngestionBlobInfo
 
-TIMESTAMP_REGEX = "[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}.[0-9]{6}"
+TIMESTAMP_REGEX = r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\.[0-9]{6})?"
 
 
 class IngestionBlobInfoTest(unittest.TestCase):
@@ -110,6 +112,22 @@ class IngestionBlobInfoTest(unittest.TestCase):
         blob_info = IngestionBlobInfo(blob, properties, auth_context="authorizationContextText")
         self._verify_ingestion_blob_info_result(blob_info.to_json())
 
+    def test_source_message_creation_time_preserves_legacy_format(self):
+        properties = IngestionProperties(database="database", table="table", data_format=DataFormat.CSV)
+        blob = BlobDescriptor("somepath", 10)
+
+        for instant, expected in [
+            (datetime(2025, 1, 1, tzinfo=timezone.utc), "2025-01-01T00:00:00"),
+            (datetime(2025, 1, 1, 0, 0, 0, 123456, tzinfo=timezone.utc), "2025-01-01T00:00:00.123456"),
+        ]:
+            with self.subTest(microsecond=instant.microsecond):
+                with patch("azure.kusto.ingest.ingestion_blob_info.datetime", wraps=datetime) as mock_datetime:
+                    mock_datetime.now.return_value = instant
+                    timestamp = json.loads(IngestionBlobInfo(blob, properties).to_json())["SourceMessageCreationTime"]
+                    mock_datetime.now.assert_called_once_with(tz=timezone.utc)
+
+                assert timestamp == expected
+
     def _verify_ingestion_blob_info_result(self, ingestion_blob_info):
         result = json.loads(ingestion_blob_info)
         assert result is not None
@@ -124,7 +142,8 @@ class IngestionBlobInfoTest(unittest.TestCase):
         assert isinstance(result["ReportMethod"], int)
         assert isinstance(result["ReportLevel"], int)
         assert isinstance(UUID(result["Id"]), UUID)
-        assert re.match(TIMESTAMP_REGEX, result["SourceMessageCreationTime"])
+        assert re.fullmatch(TIMESTAMP_REGEX, result["SourceMessageCreationTime"])
+        assert datetime.fromisoformat(result["SourceMessageCreationTime"]).tzinfo is None
         assert result["AdditionalProperties"]["authorizationContext"] == "authorizationContextText"
         assert result["AdditionalProperties"]["ingestIfNotExists"] == '["ingestIfNotExistTags"]'
         assert result["AdditionalProperties"]["ValidationPolicy"] in (
