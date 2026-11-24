@@ -34,7 +34,7 @@ Download a zip of the code via GitHub or PyPi. Then follow the same instructions
     * `pip install azure-kusto-ingest[aio]`
 
 ## Minimum Requirements
-* Python 3.9 and above
+* Python 3.10 and above
 * See `pyproject.toml` files for dependencies
 
 ## Authentication methods:

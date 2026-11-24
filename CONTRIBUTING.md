@@ -123,12 +123,12 @@ poe test-e2e
 
 ### Continuous integration
 
-The [Azure pipeline](.azuredevops/build.yml) uses the Python 3.9-3.13 matrix,
+The [Azure pipeline](.azuredevops/build.yml) uses the Python 3.10-3.13 matrix,
 uv dependency caching, formatting, linting, optional type checking,
 and test/documentation artifacts.
-Azure matrix jobs run in parallel, with up to five jobs at a time.
+Azure matrix jobs run in parallel, with up to four jobs at a time.
 Each trusted job runs unit tests with eight pytest workers, followed by E2E tests
-with eight workers, allowing up to 40 E2E workers per pipeline run.
+with eight workers, allowing up to 32 E2E workers per pipeline run.
 E2E-only pytest fixtures retry individual Kusto requests up to five attempts with
 randomized exponential backoff capped at 30 seconds, honoring a longer
 `Retry-After` delay when supplied. Throttled requests are retried only when their
@@ -144,8 +144,7 @@ a further 30 seconds if needed. A hard timeout can interrupt table cleanup.
 Concurrent pipeline runs still share backend capacity.
 The suites write separate JUnit reports under `test-results/`, published together.
 Python versions are provisioned with `uv python install`, rather than the hosted
-agent's Python tool cache, so Python 3.9 does not depend on an Ubuntu-specific
-package in the GitHub Actions Python registry.
+agent's Python tool cache.
 The GitHub Actions build workflow has been removed, including its suggested-change PR reviews
 and GitHub Pages deployment. The Azure documentation artifact alone does not deploy the site.
 

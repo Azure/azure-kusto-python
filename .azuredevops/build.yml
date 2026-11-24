@@ -21,10 +21,8 @@ jobs:
     UV_PYTHON: $(pythonVersion)
     UV_CACHE_DIR: $(Pipeline.Workspace)/uv-cache
   strategy:
-    maxParallel: '5'
+    maxParallel: '4'
     matrix:
-      Python39:
-        pythonVersion: '3.9'
       Python310:
         pythonVersion: '3.10'
       Python311:
@@ -122,7 +120,7 @@ jobs:
 
   - bash: poe docs --ci
     displayName: Generate documentation
-    condition: and(succeeded(), eq(variables['pythonVersion'], '3.9'), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+    condition: and(succeeded(), eq(variables['pythonVersion'], '3.10'), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
 
   - task: PublishPipelineArtifact@1
     displayName: Upload test results
@@ -143,7 +141,7 @@ jobs:
 
   - task: PublishPipelineArtifact@1
     displayName: Publish documentation
-    condition: and(succeeded(), eq(variables['pythonVersion'], '3.9'), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+    condition: and(succeeded(), eq(variables['pythonVersion'], '3.10'), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
     inputs:
       targetPath: docs
       artifact: documentation

@@ -8,7 +8,7 @@ dependencies = [
     "quick-start",
 ]
 readme = "README.md"
-requires-python = ">= 3.9"
+requires-python = ">= 3.10"
 
 [[project.authors]]
 name = "Microsoft Corporation"
@@ -16,7 +16,7 @@ email = "kustalk@microsoft.com"
 
 [dependency-groups]
 dev = [
-    "pytest>=8.4.1",
+    "pytest>=9.0.3",
     "pytest-xdist[psutil]>=3.8.0",
     "pytest-asyncio>=1.1.0",
     "responses>=0.25.8",
@@ -38,7 +38,7 @@ quick-start = { workspace = true }
 
 [tool.ruff]
 line-length = 160
-target-version = 'py39'
+target-version = 'py310'
 
 [tool.ruff.lint]
 ignore = ["E731"] # E731 - dont assign lambdas. 
@@ -85,7 +85,7 @@ sequence = [{ cmd = "uv version --bump $bump" }, { cmd = "uv version --bump $bum
 args = { bump = { help = "Bump version [possible values: major, minor, patch, stable, alpha, beta, rc, post, dev]", positional = true, default = "patch" } }
 
 [tool.basedpyright]
-pythonVersion = "3.9"
+pythonVersion = "3.10"
 reportUnnecessaryTypeIgnoreComment = false
 reportExplicitAny = false
 reportAny = false

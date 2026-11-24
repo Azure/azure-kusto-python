@@ -1,6 +1,7 @@
 """Tests for KustoClient."""
 
 import json
+from datetime import timedelta
 from unittest.mock import patch
 
 import pytest
@@ -19,6 +20,12 @@ from aioresponses import aioresponses, CallbackResult
 
 @aio_documented_by(KustoClientTestsSync)
 class TestKustoClient(KustoClientTestsMixin):
+    _response_class = ClientResponse
+
+    @pytest.fixture(autouse=True)
+    def _mock_response_class(self, aiohttp_mock_response: type[ClientResponse]):
+        self._response_class = aiohttp_mock_response
+
     @aio_documented_by(KustoClientTestsSync.test_no_redirects)
     @pytest.mark.asyncio
     async def test_no_redirects(self, redirect_server: tuple[str, int, list[str]]) -> None:
@@ -31,10 +38,9 @@ class TestKustoClient(KustoClientTestsMixin):
             assert error.value.http_response.status == code
         assert requests_seen == ["/v2/rest/query"]
 
-    @staticmethod
-    def _mock_callback(url, **kwargs):
+    def _mock_callback(self, url, **kwargs):
         body = json.dumps(mocked_requests_post(str(url), **kwargs).json())
-        return CallbackResult(status=200, body=body)
+        return CallbackResult(status=200, body=body, response_class=self._response_class)
 
     def _mock_query(self, aioresponses_mock):
         url = "{host}/v2/rest/query".format(host=self.HOST)
@@ -67,6 +73,19 @@ class TestKustoClient(KustoClientTestsMixin):
             first_request = next(iter(aioresponses_mock.requests.values()))
             self._assert_client_request_id(first_request[0].kwargs)
         self._assert_sanity_query_response(response)
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("timeout, expected_seconds", [(None, 300), (timedelta(seconds=12), 42)])
+    async def test_request_timeout(self, timeout, expected_seconds):
+        properties = ClientRequestProperties()
+        if timeout is not None:
+            properties.set_option(ClientRequestProperties.request_timeout_option_name, timeout)
+        with aioresponses() as aioresponses_mock:
+            self._mock_query(aioresponses_mock)
+            async with KustoClient(self.HOST) as client:
+                await client.execute_query("PythonTest", "Deft", properties=properties)
+            first_request = next(iter(aioresponses_mock.requests.values()))
+            assert first_request[0].kwargs["timeout"].total == expected_seconds
 
     @pytest.mark.asyncio
     async def test_raise_network(self):

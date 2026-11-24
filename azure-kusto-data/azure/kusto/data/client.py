@@ -75,8 +75,10 @@ class KustoClient(_KustoClientBase):
         # Create a session object for connection pooling
         self._session = requests.Session()
 
+        # urllib3's nested ClassVar/Final annotation is misread by the type checker.
         adapter = HTTPAdapterWithSocketOptions(
-            socket_options=(HTTPConnection.default_socket_options or []) + self.compose_socket_options(), pool_maxsize=self._max_pool_size
+            socket_options=(HTTPConnection.default_socket_options or []) + self.compose_socket_options(),  # pyright: ignore[reportOperatorIssue]
+            pool_maxsize=self._max_pool_size,
         )
         self._session.mount("http://", adapter)
         self._session.mount("https://", adapter)
@@ -103,7 +105,7 @@ class KustoClient(_KustoClientBase):
         Set the number of HTTP retries to attempt
         """
         adapter = HTTPAdapterWithSocketOptions(
-            socket_options=(HTTPConnection.default_socket_options or []) + self.compose_socket_options(),
+            socket_options=(HTTPConnection.default_socket_options or []) + self.compose_socket_options(),  # pyright: ignore[reportOperatorIssue]
             pool_maxsize=self._max_pool_size,
             max_retries=max_retries,
         )

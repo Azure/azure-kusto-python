@@ -67,11 +67,15 @@ async def test_retry_transient_query_async(status):
 
 
 @pytest.mark.asyncio
-async def test_async_client_throttling_response_respects_retry_after(retry_sleeps):
+async def test_async_client_throttling_response_respects_retry_after(retry_sleeps, aiohttp_mock_response):
     endpoint = "https://dummy.kusto.windows.net/v1/rest/mgmt"
     with aioresponses() as responses:
-        responses.post(endpoint, status=429, payload={}, headers={"Retry-After": "60"})
-        responses.post(endpoint, payload={"Tables": [{"TableName": "Table_0", "Columns": [{"ColumnName": "TableName", "DataType": "String"}], "Rows": []}]})
+        responses.post(endpoint, status=429, payload={}, headers={"Retry-After": "60"}, response_class=aiohttp_mock_response)
+        responses.post(
+            endpoint,
+            payload={"Tables": [{"TableName": "Table_0", "Columns": [{"ColumnName": "TableName", "DataType": "String"}], "Rows": []}]},
+            response_class=aiohttp_mock_response,
+        )
         async with AsyncKustoClient("https://dummy.kusto.windows.net") as client:
             await retry_request_async(make_request(".show tables"), lambda: client.execute_mgmt("db", ".show tables"))
 

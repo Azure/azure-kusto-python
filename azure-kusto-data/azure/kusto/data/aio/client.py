@@ -18,7 +18,7 @@ from ..kcsb import KustoConnectionStringBuilder
 from ..response import KustoResponseDataSet
 
 try:
-    from aiohttp import ClientResponse, ClientSession
+    from aiohttp import ClientResponse, ClientSession, ClientTimeout
 except ImportError:
     raise KustoAioSyntaxError()
 
@@ -183,7 +183,7 @@ class KustoClient(_KustoClientBase):
             headers=request_headers,
             json=request.json_payload,
             data=request.payload,
-            timeout=timeout.seconds,
+            timeout=ClientTimeout(total=timeout.seconds),
             proxy=self._proxy_url,
             allow_redirects=False,
         )
