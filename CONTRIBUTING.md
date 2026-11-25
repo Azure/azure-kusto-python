@@ -230,6 +230,7 @@ There is no need to manually publish a GitHub Release for the normal automated f
 If a GitHub Release already exists, finalization preserves its notes and unrelated assets and attaches the missing distributions.
 Existing distribution assets must have identical content; conflicting assets are never overwritten.
 New releases are published after their assets are uploaded; an existing draft is completed and published.
+Recovered releases for stable version tags have their prerelease flag cleared without replacing notes or assets.
 Finalization finds drafts through the paginated release list.
 Only incomplete zero-byte `starter` upload placeholders are deleted and re-uploaded during recovery; completed assets are preserved.
 

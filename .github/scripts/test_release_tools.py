@@ -70,8 +70,15 @@ class ReleaseToolsTests(unittest.TestCase):
     def uploaded_asset(self, path: Path) -> dict[str, object]:
         return {"id": 456, "name": path.name, "state": "uploaded", "size": path.stat().st_size, "digest": f"sha256:{release.file_digest(path)}"}
 
-    def mock_release(self, assets: list[dict[str, object]] | None = None) -> None:
-        existing = {"id": 123, "tag_name": "v6.0.5", "draft": False, "body": "Maintainer notes", "html_url": "https://example.invalid/release"}
+    def mock_release(self, assets: list[dict[str, object]] | None = None, *, draft: bool = False, prerelease: bool = False) -> None:
+        existing = {
+            "id": 123,
+            "tag_name": "v6.0.5",
+            "draft": draft,
+            "prerelease": prerelease,
+            "body": "Maintainer notes",
+            "html_url": "https://example.invalid/release",
+        }
         self.github.pages.side_effect = [[existing], [] if assets is None else assets]
 
     def test_release_pr_transition_and_notes(self) -> None:
@@ -242,6 +249,21 @@ class ReleaseToolsTests(unittest.TestCase):
         release.finalize_release(self.repo, self.github, "refs/tags/v6.0.5", self.after, directory)
         self.github.request.assert_not_called()
         self.assertEqual(self.github.upload_asset.call_args_list, [call("v6.0.5", path) for path in files[1:]])
+
+    def test_recovered_stable_release_clears_prerelease_for_drafts_and_published_releases(self) -> None:
+        directory = self.make_distributions()
+        assets = [self.uploaded_asset(path) for path in release.distributions(directory, "6.0.5")]
+        for draft in (True, False):
+            with self.subTest(draft=draft):
+                self.github.reset_mock(side_effect=True)
+                self.mock_release(assets, draft=draft, prerelease=True)
+                release.finalize_release(self.repo, self.github, "refs/tags/v6.0.5", self.after, directory)
+                expected = {"prerelease": False}
+                if draft:
+                    expected["draft"] = False
+                self.github.request.assert_called_once_with("PATCH", "releases/123", expected)
+                self.github.upload_asset.assert_not_called()
+                self.github.downloaded_digest.assert_not_called()
 
     def test_matching_draft_on_later_page_resumes_with_its_assets(self) -> None:
         directory = self.make_distributions()

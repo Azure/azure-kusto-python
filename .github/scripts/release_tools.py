@@ -366,8 +366,13 @@ def finalize_release(repo: Repository, github: GitHub, ref: str, sha: str, direc
     for path in missing:
         github.upload_asset(release.tag, path)
         print(f"Uploaded {path.name}.")
+    updates: dict[str, object] = {}
     if existing.get("draft") is True:
-        github.request("PATCH", f"releases/{release_id}", {"draft": False})
+        updates["draft"] = False
+    if existing.get("prerelease") is True:
+        updates["prerelease"] = False
+    if updates:
+        github.request("PATCH", f"releases/{release_id}", updates)
     print(f"GitHub Release finalized: {url}")
 
 
