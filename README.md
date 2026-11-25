@@ -35,6 +35,8 @@ Download a zip of the code via GitHub or PyPi. Then follow the same instructions
 
 ## Minimum Requirements
 * Python 3.10 and above
+* Windows: 64-bit Python; the required `cryptography` release no longer supports 32-bit Windows.
+* macOS: ARM64 Python; the required `cryptography` release no longer supports Intel macOS.
 * See `pyproject.toml` files for dependencies
 
 ## Authentication methods:
