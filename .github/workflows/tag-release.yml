@@ -1,0 +1,82 @@
+name: prepare release
+
+on:
+  push:
+    branches: ["master"]
+  pull_request:
+    branches: ["master"]
+    paths:
+      - ".github/scripts/**"
+      - ".github/workflows/release.yml"
+      - ".github/workflows/tag-release.yml"
+      - "pyproject.toml"
+      - "azure-kusto-data/pyproject.toml"
+      - "azure-kusto-ingest/pyproject.toml"
+      - "quick-start/pyproject.toml"
+      - "uv.lock"
+      - "CHANGELOG.md"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          python-version: "3.11"
+          enable-cache: false
+      - name: Test release automation without credentials
+        run: uv run --no-project --python 3.11 python -m unittest discover -s .github/scripts -p test_release_tools.py -b
+
+  prepare:
+    needs: validate
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    outputs:
+      release: ${{ steps.plan.outputs.release }}
+      tag: ${{ steps.plan.outputs.tag }}
+      sha: ${{ steps.plan.outputs.sha }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          python-version: "3.11"
+          enable-cache: false
+      - name: Compare release metadata at the pushed commits
+        id: plan
+        run: uv run --no-project --python 3.11 python .github/scripts/release_tools.py prepare --event "$GITHUB_EVENT_PATH"
+
+  tag:
+    needs: prepare
+    if: needs.prepare.outputs.release == 'true'
+    runs-on: ubuntu-latest
+    concurrency:
+      group: tag-release-${{ needs.prepare.outputs.tag }}
+      cancel-in-progress: false
+    permissions:
+      contents: write
+      actions: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.prepare.outputs.sha }}
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          python-version: "3.11"
+          enable-cache: false
+      - name: Create immutable tag and explicitly dispatch publishing
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ needs.prepare.outputs.tag }}
+          RELEASE_SHA: ${{ needs.prepare.outputs.sha }}
+        run: uv run --no-project --python 3.11 python .github/scripts/release_tools.py tag --tag "$RELEASE_TAG" --sha "$RELEASE_SHA"

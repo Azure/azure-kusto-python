@@ -205,6 +205,59 @@ The Azure pipeline currently treats type checking as optional, so even errors do
 
 Note that we have a `baseline.json` file that is used to ignore old type errors, as we gradually add types to the codebase.
 
+## Releases
+
+Stable releases are automatic when synchronized project versions increase on protected `master`.
+This includes merged release-preparation PRs and direct version-bump pushes by administrators.
+Ordinary PR merges, dependency-only edits, and changes with unchanged versions do not publish.
+
+1. Prepare the version bump with `poe bump-version patch` (or `minor`/`major`).
+   Update the matching `CHANGELOG.md` section and check `uv lock --check`.
+   The root workspace, both SDKs, quick-start, and their four `uv.lock` records must share the same stable `major.minor.patch` version.
+2. Submit the metadata and changelog changes through the normal PR checks and merge them.
+3. The `prepare release` workflow creates `vX.Y.Z` at the exact pushed commit and explicitly dispatches `release.yml` at that tag.
+   The `release` workflow builds both SDKs, retains the distributions, publishes to PyPI, and finalizes the GitHub Release.
+
+The tag-creation job needs `contents: write` and `actions: write` for `GITHUB_TOKEN`;
+repository/organization policy must permit these job-scoped permissions.
+No personal access token or GitHub App is required.
+Explicit dispatch is necessary because tag pushes made with `GITHUB_TOKEN` do not themselves trigger push workflows.
+The publishing workflow retains the `release` environment and its PyPI trusted-publisher identity.
+
+A maintainer's manual push of a matching version tag still starts publishing.
+There is no need to manually publish a GitHub Release for the normal automated flow.
+If a GitHub Release already exists, finalization preserves its notes and unrelated assets and attaches the missing distributions.
+Existing distribution assets must have identical content; conflicting assets are never overwritten.
+New releases are published after their assets are uploaded; an existing draft is completed and published.
+
+If a tag exists but no publishing run started, dispatch the tagged workflow:
+
+```shell
+gh workflow run release.yml --repo Azure/azure-kusto-python --ref vX.Y.Z
+```
+
+Only dispatch a tag containing the updated workflow, and inspect existing runs first.
+Dispatches on branches fail validation rather than publish.
+Updating `master` does not update workflow definitions in older tags or existing runs.
+
+### Recovering a release
+
+Check individual jobs, not only the overall workflow status.
+If `publish` succeeded but `github-release` failed, the packages are already on PyPI.
+Choose **Re-run failed jobs**, or use `gh run rerun RUN_ID --failed --repo Azure/azure-kusto-python`.
+This retries GitHub finalization using the retained original distributions without rebuilding or republishing them.
+Do not rerun the entire workflow, move the version tag, or overwrite published assets.
+
+If PyPI publication failed, inspect the upload logs for partial publication before retrying.
+Keep the original build artifact and have a maintainer reconcile any partial uploads.
+If the artifact has expired, do not silently rebuild or substitute distributions for already-published files.
+
+The release tooling uses Python 3.11 and standard-library-only tests, independently of the SDK Python support matrix:
+
+```shell
+uv run --no-project --python 3.11 python -m unittest discover -s .github/scripts -p test_release_tools.py -b
+```
+
 ## PRs
 We welcome contributions. In order to make the PR process efficient, please follow the below checklist:
 

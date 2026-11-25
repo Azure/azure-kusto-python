@@ -86,6 +86,10 @@ args = { bump = { help = "Bump version [possible values: major, minor, patch, st
 
 [tool.basedpyright]
 pythonVersion = "3.9"
+executionEnvironments = [
+    { root = ".github/scripts", pythonVersion = "3.11" },
+    { root = "." },
+]
 reportUnnecessaryTypeIgnoreComment = false
 reportExplicitAny = false
 reportAny = false
