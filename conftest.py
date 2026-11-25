@@ -1,13 +1,26 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License
 from typing import Iterator, Optional
+from unittest.mock import Mock
 
 import pytest
+from aiohttp import ClientResponse
 
 from azure.kusto.data import ClientRequestProperties, KustoClient
 from azure.kusto.data.aio import KustoClient as AsyncKustoClient
 from azure.kusto.data.client_base import ExecuteRequestParams
 from e2e_retry import retry_request, retry_request_async
+
+
+@pytest.fixture
+def aiohttp_mock_response() -> type[ClientResponse]:
+    # aioresponses does not yet supply aiohttp 3.14's required stream_writer.
+    class MockClientResponse(ClientResponse):
+        def __init__(self, *args, **kwargs):
+            kwargs["stream_writer"] = Mock(output_size=0)
+            super().__init__(*args, **kwargs)
+
+    return MockClientResponse
 
 
 @pytest.fixture(scope="module", autouse=True)

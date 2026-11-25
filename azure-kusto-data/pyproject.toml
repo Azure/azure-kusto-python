@@ -1,6 +1,6 @@
 [project]
 name = "azure-kusto-data"
-version = "6.0.5"
+version = "7.0.0"
 description = "Kusto Data Client"
 authors = [
     { name = "Microsoft Corporation", email = "kustalk@microsoft.com" },
@@ -11,17 +11,18 @@ urls = { "Repository" = "https://github.com/Azure/azure-kusto-python" }
 
 dependencies = [
     "python-dateutil>=2.9.0",
-    "requests>=2.32.4",
+    "requests>=2.33.0",
+    "urllib3>=2.8.0",
+    "cryptography>=50.0.2",
     "azure-identity>=1.25.3,<2",
     "msal>=1.35.1,<2",
     "ijson>=3.4.0,<3.7.0",
     "azure-core>=1.35.0,<2"
 ]
-requires-python = ">= 3.9"
+requires-python = ">= 3.10"
 keywords = ["azure", "kusto", "data", "analytics"]
 classifiers = [
     "Programming Language :: Python",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -34,7 +35,7 @@ pandas = [
     "pandas>=2.3.1",
 ]
 aio = [
-    "aiohttp>=3.12.15",
+    "aiohttp>=3.14.4",
     "asgiref>=3.9.1",
 ]
 

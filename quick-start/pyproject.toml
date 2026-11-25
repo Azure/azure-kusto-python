@@ -1,18 +1,18 @@
 [project]
 name = "quick-start"
-version = "6.0.5"
+version = "7.0.0"
 description = "Microsoft Azure Kusto Python SDK"
 dependencies = [
     "azure-kusto-data",
     "azure-kusto-ingest",
     "azure-core-tracing-opentelemetry ~= 1.0.0b12",
-    "azure-monitor-opentelemetry-exporter ~= 1.0.0b41",
+    "azure-monitor-opentelemetry-exporter ~= 1.0.0b59",
     "inflection ~= 0.5.1",
-    "opentelemetry-sdk ~= 1.36.0",
+    "opentelemetry-sdk ~= 1.45.2",
     "tqdm ~= 4.67.1",
 ]
 readme = "README.md"
-requires-python = ">= 3.8"
+requires-python = ">= 3.10"
 
 [[project.authors]]
 name = "Microsoft Corporation"
