@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Updated vulnerable aiohttp, cryptography, OpenTelemetry, pytest, requests, and urllib3 dependencies.
-- Enforced patched urllib3 and data SDK minimums in published dependencies, including ingest-only upgrades.
+- Enforced patched urllib3, cryptography, and data SDK minimums in published dependencies, including ingest-only upgrades.
 - Aligned quick-start requirements with the workspace, including the patched tqdm minimum.
 
 ## [6.0.5] - 2026-11-24

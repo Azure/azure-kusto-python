@@ -13,6 +13,7 @@ dependencies = [
     "python-dateutil>=2.9.0",
     "requests>=2.33.0",
     "urllib3>=2.8.0",
+    "cryptography>=50.0.2",
     "azure-identity>=1.25.3,<2",
     "msal>=1.35.1,<2",
     "ijson>=3.4.0,<3.7.0",
