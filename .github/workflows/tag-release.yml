@@ -33,6 +33,9 @@ jobs:
           enable-cache: false
       - name: Test release automation without credentials
         run: uv run --no-project --python 3.11 python -m unittest discover -s .github/scripts -p test_release_tools.py -b
+      - name: Validate changed release metadata before merge
+        if: github.event_name == 'pull_request'
+        run: uv run --no-project --python 3.11 python .github/scripts/release_tools.py validate-pr --event "$GITHUB_EVENT_PATH" --sha "$GITHUB_SHA"
 
   prepare:
     needs: validate

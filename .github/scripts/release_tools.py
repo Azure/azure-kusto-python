@@ -135,12 +135,10 @@ def snapshot(repo: Repository, sha: str) -> Release:
     return Release(version, commit_sha(sha), release_notes(repo.read(sha, "CHANGELOG.md"), version))
 
 
-def prepare_push(repo: Repository, event: dict[str, object]) -> Release | None:
-    if event.get("ref") != "refs/heads/master" or event.get("deleted") is not False or event.get("forced") is not False:
-        raise ReleaseError("Release preparation requires a non-deleted, non-forced push to master.")
-    before, after = commit_sha(event.get("before")), commit_sha(event.get("after"))
+def compare_release(repo: Repository, before: str, after: str) -> Release | None:
+    before, after = commit_sha(before), commit_sha(after)
     if repo.head() != after:
-        raise ReleaseError("The checkout does not match the pushed commit.")
+        raise ReleaseError("The checkout does not match the commit being validated.")
     repo.ensure_commit(before)
     previous, current = repo.versions(before), repo.versions(after)
     if previous == current:
@@ -152,6 +150,19 @@ def prepare_push(repo: Repository, event: dict[str, object]) -> Release | None:
     if version_numbers(release.version) <= version_numbers(previous["azure-kusto-python"]):
         raise ReleaseError("The release version must increase.")
     return release
+
+
+def prepare_push(repo: Repository, event: dict[str, object]) -> Release | None:
+    if event.get("ref") != "refs/heads/master" or event.get("deleted") is not False or event.get("forced") is not False:
+        raise ReleaseError("Release preparation requires a non-deleted, non-forced push to master.")
+    return compare_release(repo, commit_sha(event.get("before")), commit_sha(event.get("after")))
+
+
+def validate_pr(repo: Repository, event: dict[str, object], sha: str) -> Release | None:
+    base = object_value(object_value(event.get("pull_request")).get("base"))
+    if base.get("ref") != "master":
+        raise ReleaseError("Release metadata validation requires a PR targeting master.")
+    return compare_release(repo, commit_sha(base.get("sha")), commit_sha(sha))
 
 
 class GitHub:
@@ -258,8 +269,12 @@ def tag_and_dispatch(repo: Repository, github: GitHub, tag: str, sha: str) -> No
             return
     if runs:
         raise ReleaseError(f"Inspect {string_value(runs[0].get('html_url'))} and retry its failed jobs; refusing to dispatch another publisher.")
-    dispatched = object_value(github.request("POST", "actions/workflows/release.yml/dispatches", {"ref": tag}))
-    print(f"Dispatched release workflow: {string_value(dispatched.get('html_url'))}. Dispatch does not imply publication succeeded.")
+    dispatched = github.request("POST", "actions/workflows/release.yml/dispatches", {"ref": tag, "return_run_details": True})
+    if dispatched is None:
+        print(f"Dispatched release workflow for {tag} at {sha}; the API returned no run details. Inspect the release workflow runs.")
+    else:
+        print(f"Dispatched release workflow: {string_value(object_value(dispatched).get('html_url'))}.")
+    print("Dispatch does not imply publication succeeded.")
 
 
 def distributions(directory: Path, version: str) -> list[Path]:
@@ -298,9 +313,14 @@ def file_digest(path: Path) -> str:
 def finalize_release(repo: Repository, github: GitHub, ref: str, sha: str, directory: Path) -> None:
     release = validate_tag(repo, github, ref, sha)
     files = distributions(directory, release.version)
-    response = github.request("GET", f"releases/tags/{release.tag}", missing_ok=True)
-    if response is None:
-        response = github.request("POST", "releases", {"tag_name": release.tag, "name": release.tag, "body": release.notes, "draft": True, "prerelease": False})
+    matches = [item for item in github.pages("releases") if item.get("tag_name") == release.tag]
+    if len(matches) > 1:
+        raise ReleaseError(f"Multiple GitHub releases match {release.tag}; refusing to choose one.")
+    response = (
+        matches[0]
+        if matches
+        else github.request("POST", "releases", {"tag_name": release.tag, "name": release.tag, "body": release.notes, "draft": True, "prerelease": False})
+    )
     existing = object_value(response)
     release_id = existing.get("id")
     if (
@@ -314,12 +334,25 @@ def finalize_release(repo: Repository, github: GitHub, ref: str, sha: str, direc
     url = string_value(existing.get("html_url"))
     assets = github.pages(f"releases/{release_id}/assets")
     missing: list[Path] = []
+    incomplete: list[int] = []
     for path in files:
         matches = [asset for asset in assets if asset.get("name") == path.name]
         if len(matches) > 1:
             raise ReleaseError(f"Multiple GitHub assets are named {path.name}.")
         if matches:
-            digest = matches[0].get("digest")
+            asset = matches[0]
+            if asset.get("state") == "starter":
+                size, asset_id = asset.get("size"), asset.get("id")
+                if not isinstance(size, int) or isinstance(size, bool) or size != 0:
+                    raise ReleaseError(f"Incomplete asset {path.name} is not an empty upload placeholder; refusing to delete it.")
+                if not isinstance(asset_id, int) or isinstance(asset_id, bool) or asset_id <= 0:
+                    raise ReleaseError(f"Incomplete asset {path.name} has an invalid ID.")
+                incomplete.append(asset_id)
+                missing.append(path)
+                continue
+            if asset.get("state") != "uploaded":
+                raise ReleaseError(f"Existing release asset {path.name} is not fully uploaded.")
+            digest = asset.get("digest")
             if digest is None:
                 digest = github.downloaded_digest(release.tag, path.name)
             if digest != f"sha256:{file_digest(path)}":
@@ -327,6 +360,9 @@ def finalize_release(repo: Repository, github: GitHub, ref: str, sha: str, direc
             print(f"Keeping identical release asset {path.name}.")
         else:
             missing.append(path)
+    for asset_id in incomplete:
+        github.request("DELETE", f"releases/assets/{asset_id}")
+        print(f"Removed incomplete zero-byte upload placeholder {asset_id}.")
     for path in missing:
         github.upload_asset(release.tag, path)
         print(f"Uploaded {path.name}.")
@@ -346,8 +382,11 @@ def emit_outputs(release: Release | None) -> None:
 def main() -> int:
     parser = argparse.ArgumentParser()
     commands = parser.add_subparsers(dest="action", required=True)
-    prepare = commands.add_parser("prepare")
-    prepare.add_argument("--event", type=Path, required=True)
+    for name in ("prepare", "validate-pr"):
+        prepare = commands.add_parser(name)
+        prepare.add_argument("--event", type=Path, required=True)
+        if name == "validate-pr":
+            prepare.add_argument("--sha", required=True)
     tag = commands.add_parser("tag")
     tag.add_argument("--tag", required=True)
     tag.add_argument("--sha", required=True)
@@ -363,10 +402,12 @@ def main() -> int:
     args = parser.parse_args()
     try:
         repo = Repository(Path.cwd())
-        if args.action == "prepare":
-            if os.environ.get("GITHUB_EVENT_NAME") != "push":
-                raise ReleaseError("Only a push event can prepare a release.")
-            emit_outputs(prepare_push(repo, object_value(json.loads(args.event.read_text(encoding="utf-8")))))
+        if args.action in ("prepare", "validate-pr"):
+            required_event = "push" if args.action == "prepare" else "pull_request"
+            if os.environ.get("GITHUB_EVENT_NAME") != required_event:
+                raise ReleaseError(f"{args.action} requires a {required_event} event.")
+            event = object_value(json.loads(args.event.read_text(encoding="utf-8")))
+            emit_outputs(prepare_push(repo, event) if args.action == "prepare" else validate_pr(repo, event, args.sha))
         elif args.action == "verify-dist":
             distributions(args.dist, args.version)
         else:

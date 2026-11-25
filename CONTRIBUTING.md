@@ -215,6 +215,7 @@ Ordinary PR merges, dependency-only edits, and changes with unchanged versions d
    Update the matching `CHANGELOG.md` section and check `uv lock --check`.
    The root workspace, both SDKs, quick-start, and their four `uv.lock` records must share the same stable `major.minor.patch` version.
 2. Submit the metadata and changelog changes through the normal PR checks and merge them.
+   Read-only PR validation compares the merge snapshot with the base commit and checks release metadata whenever project versions change.
 3. The `prepare release` workflow creates `vX.Y.Z` at the exact pushed commit and explicitly dispatches `release.yml` at that tag.
    The `release` workflow builds both SDKs, retains the distributions, publishes to PyPI, and finalizes the GitHub Release.
 
@@ -229,6 +230,8 @@ There is no need to manually publish a GitHub Release for the normal automated f
 If a GitHub Release already exists, finalization preserves its notes and unrelated assets and attaches the missing distributions.
 Existing distribution assets must have identical content; conflicting assets are never overwritten.
 New releases are published after their assets are uploaded; an existing draft is completed and published.
+Finalization finds drafts through the paginated release list.
+Only incomplete zero-byte `starter` upload placeholders are deleted and re-uploaded during recovery; completed assets are preserved.
 
 If a tag exists but no publishing run started, dispatch the tagged workflow:
 
@@ -241,6 +244,12 @@ Dispatches on branches fail validation rather than publish.
 Updating `master` does not update workflow definitions in older tags or existing runs.
 
 ### Recovering a release
+
+If `prepare` fails after merge before creating a tag, correct the release metadata through a PR.
+A metadata-only repair with unchanged versions will not start a release.
+After validating the corrected `master` commit, manually create and push the missing version tag at that commit.
+Do not rerun the original failed preparation job: it still validates the original broken commit.
+If that version tag already exists, do not move it; reconcile the release state with a maintainer instead.
 
 Check individual jobs, not only the overall workflow status.
 If `publish` succeeded but `github-release` failed, the packages are already on PyPI.
