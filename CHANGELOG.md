@@ -13,6 +13,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Added an error handling guide to the README.
 
+## [6.0.6] - 2026-11-26
+
+### Added
+- Expanded trusted Azure Monitor subdomains in public, US Government, and China clouds.
+- Added trusted Fabric endpoints in US Government, Bleu, and Delos, and Azure Monitor hosts in Bleu, Delos, and GovSG while preserving existing hosts.
+
 ## [6.0.5] - 2026-11-24
 
 ### Added
