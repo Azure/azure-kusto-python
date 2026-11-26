@@ -1,3 +1,5 @@
+import pytest
+
 from azure.kusto.data._cloud_settings import DEFAULT_PUBLIC_LOGIN_URL
 from azure.kusto.data.exceptions import KustoClientInvalidConnectionStringException
 from azure.kusto.data.kusto_trusted_endpoints import _well_known_kusto_endpoints_data, well_known_kusto_endpoints, MatchRule
@@ -154,13 +156,68 @@ def test_well_known_kusto_endpoints_proxy_test():
         _validate_endpoint(cluster_and_login_endpoint[0].upper(), cluster_and_login_endpoint[1].upper())
 
 
+@pytest.mark.parametrize(
+    "suffix, login_endpoint",
+    [
+        (".adx.loganalytics.azure.com", DEFAULT_PUBLIC_LOGIN_URL),
+        (".adx.applicationinsights.azure.com", DEFAULT_PUBLIC_LOGIN_URL),
+        (".adx.monitor.azure.com", DEFAULT_PUBLIC_LOGIN_URL),
+        (".adx.loganalytics.azure.us", "https://login.microsoftonline.us"),
+        (".adx.applicationinsights.azure.us", "https://login.microsoftonline.us"),
+        (".adx.monitor.azure.us", "https://login.microsoftonline.us"),
+        (".kusto.fabric.microsoft.us", "https://login.microsoftonline.us"),
+        (".adx.loganalytics.azure.cn", CHINA_CLOUD_LOGIN),
+        (".adx.applicationinsights.azure.cn", CHINA_CLOUD_LOGIN),
+        (".adx.monitor.azure.cn", CHINA_CLOUD_LOGIN),
+        (".kusto.fabric.sovcloud-api.fr", "https://login.sovcloud-identity.fr"),
+        (".kusto.fabric.sovcloud-api.de", "https://login.sovcloud-identity.de"),
+    ],
+)
+def test_well_known_kusto_endpoints_proxy_suffixes(suffix, login_endpoint):
+    endpoint = f"https://cluster{suffix}"
+    _validate_endpoint(endpoint, login_endpoint)
+    _validate_endpoint(endpoint.upper(), login_endpoint.upper())
+    _validate_endpoint(f"https://regional.cluster{suffix}", login_endpoint)
+    if suffix.startswith(".adx."):
+        _validate_endpoint(f"https://{suffix[1:]}", login_endpoint)
+
+    wrong_login_endpoint = CHINA_CLOUD_LOGIN if login_endpoint == DEFAULT_PUBLIC_LOGIN_URL else DEFAULT_PUBLIC_LOGIN_URL
+    with pytest.raises(KustoClientInvalidConnectionStringException):
+        _validate_endpoint(endpoint, wrong_login_endpoint)
+    for untrusted_endpoint in [f"{endpoint}.untrusted.example", f"https://cluster{suffix[1:]}"]:
+        with pytest.raises(KustoClientInvalidConnectionStringException):
+            _validate_endpoint(untrusted_endpoint, login_endpoint)
+
+
+@pytest.mark.parametrize(
+    "cloud_suffix, login_endpoint",
+    [
+        ("fr", "https://login.sovcloud-identity.fr"),
+        ("de", "https://login.sovcloud-identity.de"),
+        ("sg", "https://login.sovcloud-identity.sg"),
+    ],
+)
+@pytest.mark.parametrize("service", ["applicationinsights", "loganalytics", "monitor"])
+def test_well_known_kusto_endpoints_sovereign_proxy_hostnames(cloud_suffix, login_endpoint, service):
+    hostname = f"adx.{service}.sovcloud-api.{cloud_suffix}"
+    endpoint = f"https://{hostname}"
+    _validate_endpoint(endpoint, login_endpoint)
+    _validate_endpoint(endpoint.upper(), login_endpoint.upper())
+    _validate_endpoint(f"https://adx.{service}.azure.{cloud_suffix}", login_endpoint)
+
+    with pytest.raises(KustoClientInvalidConnectionStringException):
+        _validate_endpoint(endpoint, DEFAULT_PUBLIC_LOGIN_URL)
+    for untrusted_endpoint in [f"https://cluster.{hostname}", f"{endpoint}.untrusted.example"]:
+        with pytest.raises(KustoClientInvalidConnectionStringException):
+            _validate_endpoint(untrusted_endpoint, login_endpoint)
+
+
 def test_well_known_kusto_endpoints_proxy_negative_test():
     for clusterName in [
         "https://cluster.kusto.aria.microsoft.com",
         "https://cluster.eu.kusto.aria.microsoft.com",
         "https://cluster.ade.loganalytics.io",
         "https://cluster.ade.applicationinsights.io",
-        "https://cluster.adx.monitor.azure.com",
         "https://cluster.adx.applicationinsights.azure.cn",
         "https://cluster.adx.monitor.azure.eaglex.ic.gov",
     ]:
@@ -218,10 +275,8 @@ def test_well_known_kusto_endpoints_additional_websites():
 
 def _check_endpoint(cluster_name, default_public_login_url, expect_fail):
     if expect_fail:
-        try:
+        with pytest.raises(KustoClientInvalidConnectionStringException):
             _validate_endpoint(cluster_name, default_public_login_url)
-        except KustoClientInvalidConnectionStringException:
-            pass
     else:
         _validate_endpoint(cluster_name, default_public_login_url)
 
