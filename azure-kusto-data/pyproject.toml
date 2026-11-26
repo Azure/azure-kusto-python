@@ -1,7 +1,7 @@
 [project]
 name = "azure-kusto-data"
 version = "6.0.6"
-description = "Kusto Data Client"
+description = "Kusto Data Client: query Azure Data Explorer and Microsoft Fabric Eventhouse with KQL"
 authors = [
     { name = "Microsoft Corporation", email = "kustalk@microsoft.com" },
 ]
@@ -18,7 +18,7 @@ dependencies = [
     "azure-core>=1.35.0,<2"
 ]
 requires-python = ">= 3.9"
-keywords = ["azure", "kusto", "data", "analytics"]
+keywords = ["azure", "kusto", "data", "analytics", "azure-data-explorer", "adx", "kql", "eventhouse", "fabric", "real-time-intelligence"]
 classifiers = [
     "Programming Language :: Python",
     "Programming Language :: Python :: 3.9",
