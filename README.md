@@ -1,4 +1,7 @@
-# Microsoft Azure Kusto  (Azure Data Explorer) SDK  for Python
+# Microsoft Azure Kusto SDK for Python: Azure Data Explorer and Microsoft Fabric Eventhouse (Real-Time Intelligence)
+
+Python clients to query (`azure-kusto-data`) and ingest into (`azure-kusto-ingest`) Azure Data Explorer (ADX) clusters and Microsoft Fabric Eventhouse KQL databases, using KQL.
+Microsoft Learn quickstarts: [ingest data](https://learn.microsoft.com/en-us/azure/data-explorer/python-ingest-data) and [query data](https://learn.microsoft.com/en-us/azure/data-explorer/python-query-data).
 
 [*azure-kusto-data*]("https://github.com/Azure/azure-kusto-python/tree/master/azure-kusto-data") Package provides the capability to query Kusto clusters with Python.<br>
 [![PyPI version](https://badge.fury.io/py/azure-kusto-data.svg)](https://badge.fury.io/py/azure-kusto-data)
@@ -58,6 +61,64 @@ There is also a feature request for the adal team to work on implementing IWA (I
 * [Kusto query sample snippets](https://github.com/Azure/azure-kusto-python/blob/master/azure-kusto-data/tests/sample.py)
 
 * [Data ingest sample snippets](https://github.com/Azure/azure-kusto-python/blob/master/azure-kusto-ingest/tests/sample.py)
+
+## Handling errors
+
+Almost all exceptions derive from `KustoError` (`azure.kusto.data.exceptions`). The table lists what to do for the common cases; the sources are `azure-kusto-data/azure/kusto/data/exceptions.py` and `client_base.py` (`_handle_http_error`).
+
+| Situation | What the SDK raises | Retry? | What to change |
+|---|---|---|---|
+| Throttling (HTTP 429) | `KustoThrottlingError` | Yes, with exponential backoff and jitter. The queued ingest client already retries it internally (4 attempts, up to 30 s between attempts) when fetching ingestion resources, and `ManagedStreamingIngestClient` falls back to queued ingestion. | Lower the request rate or add your own backoff. |
+| Service error reported as permanent | `KustoApiError`; `get_api_error().permanent is True` | No. | Fix the query, mapping, schema or permissions named in `get_api_error().code` and `.message`. |
+| Service error reported as transient | `KustoApiError`; `get_api_error().permanent is False` | Yes, with backoff. | Nothing, unless it keeps failing. |
+| Permanence unknown | `KustoApiError`; `permanent is None` | Treat as unknown: retry a bounded number of times, then stop. | Read `code` and `message`. |
+| Several errors in one response (for example while reading a streaming query result) | `KustoMultiApiError`; `get_api_errors()` returns a list of `OneApiError` | Retry only if none of the errors has `permanent is True`. | Handle each error as above. |
+| Payload too large for streaming ingest | `KustoApiError` or `KustoServiceError` with the HTTP status and reason in the message | No, not unchanged. | `ManagedStreamingIngestClient` sends data over 4 MiB (`MAX_STREAMING_SIZE_IN_BYTES`) to queued ingestion on its own. With `KustoStreamingIngestClient`, split the data or switch to `QueuedIngestClient`. |
+| Authentication or authorization failure | `KustoAuthenticationError` or `KustoClientError` (token could not be obtained); `KustoServiceError("401. Missing adequate access rights.")` | No. | Check the credential, tenant and the role on the database (the Kusto Viewer role is needed to query and the Ingestor role to ingest). |
+| Network failure or timeout of the HTTP request | `KustoNetworkError` (has `endpoint` and `client_request_id`) | Yes, with backoff. | Check the URI, proxy and connectivity. |
+| Endpoint not found (HTTP 404) | `KustoServiceError` | No. | Check the URI. For streaming ingest the message also says to enable streaming ingestion on the cluster. |
+
+```python
+from azure.kusto.data.exceptions import KustoApiError, KustoMultiApiError, KustoThrottlingError
+
+try:
+    response = client.execute(db, query, properties)
+except KustoThrottlingError:
+    ...  # retry later with backoff
+except KustoApiError as e:
+    error = e.get_api_error()
+    print(error.code, error.permanent, error.message)
+except KustoMultiApiError as e:
+    for error in e.get_api_errors():
+        print(error.code, error.permanent, error.message)
+```
+
+### Request ID for support
+
+Set `client_request_id` on `ClientRequestProperties` and log it next to the failure, so support can trace the request on the service side. If it is not set, the SDK generates one per request.
+
+```python
+import logging
+import uuid
+
+from azure.kusto.data import ClientRequestProperties
+
+properties = ClientRequestProperties()
+properties.client_request_id = f"my-app;{uuid.uuid4()}"
+try:
+    client.execute(db, query, properties)
+except Exception:
+    logging.exception("Kusto request failed, client_request_id=%s", properties.client_request_id)
+    raise
+```
+
+### Submit failed versus queued ingestion failed later
+
+`QueuedIngestClient.ingest_from_file`, `ingest_from_stream` and `ingest_from_dataframe` only upload the data to a storage container and enqueue a message (`ingest_from_blob` only enqueues it). A returned `IngestionResult` with `status == IngestionStatus.QUEUED` means the message was enqueued, not that the rows are in the table.
+
+* If the call raises (`KustoBlobError` for the upload, `KustoQueueError` for the queue message), the submission failed. No queue message was confirmed, so a retry is the normal response (for `KustoQueueError`, the blob may already have been uploaded).
+* If the call returns `QUEUED`, do not resubmit the same data just because the rows are not visible yet: the service ingests asynchronously and a resubmission can create duplicates. Check for the rows with a query, or read the failure queue with `KustoIngestStatusQueues` (`FailureMessage` has `ErrorCode`, `FailureStatus`, `ShouldRetry` and `Details`; this requires `report_level` to be set to `FailuresOnly` or `FailuresAndSuccesses` in `IngestionProperties` before ingesting (the default is `DoNotReport`; `report_method` defaults to `Queue`)).
+* `IngestionStatus.SUCCESS` is returned by the streaming path, which is synchronous: the rows were ingested.
 
 ## Best Practices
 See the SDK [best practices guide](https://docs.microsoft.com/azure/data-explorer/kusto/api/netfx/kusto-ingest-best-practices), which though written for the .NET SDK, applies similarly here.

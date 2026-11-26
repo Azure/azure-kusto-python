@@ -1,7 +1,7 @@
 [project]
 name = "azure-kusto-ingest"
 version = "6.0.5"
-description = "Kusto Ingest Client"
+description = "Kusto Ingest Client: ingest data into Azure Data Explorer and Microsoft Fabric Eventhouse"
 authors = [
     { name = "Microsoft Corporation", email = "kustalk@microsoft.com" },
 ]
@@ -15,7 +15,7 @@ dependencies = [
 readme = "README.rst"
 requires-python = ">= 3.9"
 license = "MIT"
-keywords = ["azure", "kusto", "ingest", "data", "analytics"]
+keywords = ["azure", "kusto", "ingest", "data", "analytics", "azure-data-explorer", "adx", "kql", "eventhouse", "fabric", "real-time-intelligence"]
 classifiers = [
     "Programming Language :: Python",
     "Programming Language :: Python :: 3.9",
